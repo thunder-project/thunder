@@ -1,7 +1,7 @@
 # pca <master> <inputFile> <k> <outputFile>
 # 
 # - performs pca on a data matrix efficiently
-# when the number of observations samples is fewer
+# when the number of observations is fewer
 # than the number of dimensions
 # - each row is a dimension
 # - subtracts off the mean of each dimension
