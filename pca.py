@@ -32,10 +32,11 @@ lines = sc.textFile(sys.argv[2])
 k = int(sys.argv[3])
 fileOut = str(sys.argv[4])
 
+data = lines.map(parseVector).cache()
 n = data.count()
 meanVec = data.reduce(lambda x,y : x+y) / n
 sub = data.map(lambda x : x - meanVec)
-cov = sub.map(outerProd).reduce(lambda x,y : (x + y)) / (n)
+cov = sub.map(outerProd).reduce(lambda x,y : (x + y)) / (n - 1)
 w, v = la.eig(cov)
 inds = np.argsort(w)[::-1]
 sortedEigVecs = v[:,inds[0:k]].transpose()
