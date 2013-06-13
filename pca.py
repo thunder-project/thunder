@@ -1,14 +1,12 @@
 # pca <master> <inputFile> <k> <outputFile>
 # 
-# - performs pca on a data matrix efficiently
-# when the number of observations is fewer
-# than the number of dimensions
-# - each row is a dimension
-# - subtracts off the mean of each dimension
-# - returns k principal components for the k largest eigenvalues,
-# as well as the corresponding k eigenvectors ("scores")
-# 
-
+# performs pca on a data matrix
+# input is a text file or hdfs source
+# format should be rows of ' ' separated values
+# - example: space (rows) x time (cols)
+# - rows should be whichever dim is larger
+# subtracts means along dimension 'dim'
+# writes 'k' pcs (in both dims) and eigenvalues to text
 
 import sys
 
@@ -16,9 +14,9 @@ import numpy as np
 from numpy import linalg as la
 from pyspark import SparkContext
 
-if len(sys.argv) < 4:
+if len(sys.argv) < 6:
   print >> sys.stderr, \
-    "Usage: pca <master> <inputFile> <k> <outputFile>"
+    "(pca) usage: pca <master> <inputFile> <outputFile> <k> <dim>"
   exit(-1)
 
 def parseVector(line):
@@ -27,29 +25,38 @@ def parseVector(line):
 def outerProd(vec): 
 	return np.outer(vec,vec)
 
-sc = SparkContext("spark://"+sys.argv[1]+":7077", "pca")
+sc = SparkContext(sys.argv[1], "pca")
 lines = sc.textFile(sys.argv[2])
-k = int(sys.argv[3])
-fileOut = str(sys.argv[4])
+fileOut = str(sys.argv[3])
+k = int(sys.argv[4])
+dim = int(sys.argv[5])
 
 data = lines.map(parseVector).cache()
 n = data.count()
-meanVec = data.reduce(lambda x,y : x+y) / n
-sub = data.map(lambda x : x - meanVec)
+
+if dim==1:
+	meanVec = data.reduce(lambda x,y : x+y) / n
+	sub = data.map(lambda x : x - meanVec)
+elif dim==2:
+	meanVec = data.reduce(lambda x,y : x+y) / n
+	sub = data.map(lambda x : x - np.mean(x))
+else:
+ print >> sys.stderr, \
+ "(pca) dim must be 1 or 2"
+ exist(-1)
+
 cov = sub.map(outerProd).reduce(lambda x,y : (x + y)) / (n - 1)
 w, v = la.eig(cov)
 inds = np.argsort(w)[::-1]
-sortedEigVecs = v[:,inds[0:k]].transpose()
-sortedEigVals = w[inds[0:k]]
+sortedDim2 = v[:,inds[0:k]].transpose()
+sortedDim1 = sub.map(lambda x : np.inner(x,sortedDim2))
+latent = w[inds[0:k]]
 
 print("(pca) writing output...")
-np.savetxt("pca-output/out-time-"+fileOut+".txt",sortedEigVecs,fmt='%.8f')
-np.savetxt("pca-output/out-eigs-"+fileOut+".txt",sortedEigVals,fmt='%.8f')
-np.savetxt("pca-output/out-cov-"+fileOut+".txt",cov,fmt='%.8f')
+np.savetxt("out-dim1-"+fileOut+".txt",sortedDim1.collect(),fmt='%.8f')
+np.savetxt("out-dim2-"+fileOut+".txt",sortedDim2,fmt='%.8f')
+np.savetxt("out-latent-"+fileOut+".txt",latent,fmt='%.8f')
 
-for num in range(0,k):
-	princomp = sub.map(lambda x : np.inner(x,sortedEigVecs[num]))
-	princomp.saveAsTextFile("hdfs://"+sys.argv[1]+":9000"+"/pca-output/out-space-"+str(num)+"-"+fileOut)
 
 
 
