@@ -1,7 +1,7 @@
 # pca <master> <inputFile> <k> <outputFile>
 # 
 # performs pca on a data matrix
-# input is a text file or hdfs source
+# input is a local text file or a file in hdfs 
 # format should be rows of ' ' separated values
 # - example: space (rows) x time (cols)
 # - rows should be whichever dim is larger
