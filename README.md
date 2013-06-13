@@ -14,6 +14,9 @@ pca.py -- do PCA on a data matrix, e.g. space x time
 ## To-Do
 
 rpca.py -- do robust PCA
+
 ica.py -- do ICA (iteratively)
+
 cca.py -- do canonical correlation analysis
+
 fourier.py -- get amplitude and phase (in time)
