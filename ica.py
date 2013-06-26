@@ -45,8 +45,6 @@ kEigVals = w[inds[0:k]]
 whtMat = kEigVecs * inv(diag(kEigVals)) * transpose(kEigVecs)
 wht = sub.map(lambda x : dot(x,whtMat))
 
-# wht = kEigVecs
-
 # do multiple independent component extraction
 W = random.randn(c,k)
 Wold = zeros((c,k))
@@ -65,6 +63,8 @@ while (iterNum < iterMax) & ((1 - minAbsCos)>termtol)
 	minAbsCos = min(abs(diag(dot(W,Wold))))
 	Wold = W
 	errVec[iterNum] = (1 - minAbsCos)
+
+# need to add code to save output files
 
 
 

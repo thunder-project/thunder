@@ -9,16 +9,13 @@ Spark is a powerful new framework for cluster computing, particularly well suite
 
 ## Contents
 
-pca.py -- do PCA on a data matrix, e.g. space x time
+pca.py - do PCA on a data matrix, e.g. space x time
+ica.py - do ICA on a data matrix, e.g. space x time
 
 ## To-Do
 
-rpca.py -- do robust PCA
-
-ica.py -- do ICA (iteratively)
-
-cca.py -- do canonical correlation analysis
-
-fourier.py -- get amplitude and phase (in time)
+rpca.py - do robust PCA
+cca.py - do canonical correlation analysis
+fourier.py - get amplitude and phase (in time)
 
 scala versions
