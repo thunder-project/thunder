@@ -5,20 +5,36 @@ Library for neural data analysis with the Spark cluster computing framework
 
 ## About
 
-Spark is a powerful new framework for cluster computing, particularly well suited to iterative computations applied to large data sets; see the [project webpage](http://spark-project.org/documentation.html). Thunder is a collection of model-fitting routines for analyzing high-dimensional spatiotemporal neural data implemented in Spark.
+Spark is a powerful new framework for cluster computing, particularly well suited to iterative computations; see the [project webpage](http://spark-project.org/documentation.html). Thunder is a collection of model-fitting routines for analyzing high-dimensional spatiotemporal neural data implemented in Spark.
+
+## Use
+
+To run these functions, first [install Spark](http://spark-project.org/downloads/) and [scala](http://www.scala-lang.org/downloads), then call like this:
+
+SPARK_HOME/pyspark pca.py local data/pca_test.txt test 2 1
+
+If running on a cluster (e.g. Amazon's EC2), numpy, and any other dependencies, must be installed on all workers. See the helper scripts for doing this.
 
 ## Contents
 
-pca.py - do PCA on a data matrix, e.g. space x time
+#### main
+pca.py - PCA on a data matrix, e.g. space x time
 
-ica.py - do ICA on a data matrix, e.g. space x time
+ica.py - ICA on a data matrix, e.g. space x time
+
+#### data
+ica_test.txt - example data for running ICA (from [FastICA for Matlab](http://research.ics.aalto.fi/ica/fastica/code/dlcode.shtml))
+
+#### helper
+copy-numpy-ec2.sh - copy numpy to all workers on an EC2 cluster
+
 
 ## To-Do
 
-rpca.py - do robust PCA
+rpca.py - robust PCA
 
-cca.py - do canonical correlation analysis
+cca.py - canonical correlation analysis
 
-fourier.py - get amplitude and phase (in time)
+fourier.py - amplitude and phase (of time series)
 
 scala versions

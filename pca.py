@@ -43,7 +43,7 @@ elif dim==2:
 else:
  print >> sys.stderr, \
  "(pca) dim must be 1 or 2"
- exist(-1)
+ exit(-1)
 
 cov = sub.map(outerProd).reduce(lambda x,y : (x + y)) / (n - 1)
 w, v = la.eig(cov)
