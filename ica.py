@@ -15,9 +15,9 @@ from numpy import *
 from scipy.linalg import *
 from pyspark import SparkContext
 
-if len(sys.argv) < 7:
+if len(sys.argv) < 6:
   print >> sys.stderr, \
-  "(ica) usage: ica <master> <inputFile> <k> <c> <outputFile_Components> <outputFile_Weights>"
+  "(ica) usage: ica <master> <inputFile> <outputFile> <k> <c>"
   exit(-1)
 
 def parseVector(line):
@@ -26,10 +26,9 @@ def parseVector(line):
 # parse inputs
 sc = SparkContext(sys.argv[1], "ica")
 lines = sc.textFile(sys.argv[2])
-k = int(sys.argv[3])
-c = int(sys.argv[4])
-fileOutComp = str(sys.argv[5])
-fileOutWeight = str(sys.argv[6])
+outputFile = str(sys.argv[3])
+k = int(sys.argv[4])
+c = int(sys.argv[5])
 
 # compute covariance matrix
 data = lines.map(parseVector).cache()
@@ -59,9 +58,10 @@ termTol = 0.0001
 iterMax = 1000
 errVec = zeros(iterMax)
 
-while (iterNum < iterMax) & ((1 - minAbsCos)>termTol):
+while (iterNum < iterMax) & ((1 - minAbsCos) > termTol):
 	iterNum += 1
-	# update rule for pow3 nonlinearity (add other nonlins)
+	print "(ica) starting iteration " + str(iterNum)
+	# update rule for pow3 nonlinearity (todo: add other nonlins)
 	B = wht.map(lambda x : outer(x,dot(x,B) ** 3)).reduce(lambda x,y : x + y) / n - 3 * B
 	# orthognalize
 	B = dot(B,real(sqrtm(inv(dot(transpose(B),B)))))
@@ -71,11 +71,16 @@ while (iterNum < iterMax) & ((1 - minAbsCos)>termTol):
 	Bold = B
 	errVec[iterNum-1] = (1 - minAbsCos)
 
+# get unmixing matrix
 W = dot(transpose(B),whtMat)
 
-print "W:" + str(W)
+# get unmixed signals
+sigs = sub.map(lambda x : dot(W,x)).collect()
 
-# need to save output files
+# save output files
+print("(ica) writing output...")
+savetxt("out-W-"+outputFile+".txt",W,fmt='%.8f')
+savetxt("out-sigs-"+outputFile+".txt",sigs,fmt='%.8f')
 
 
 
