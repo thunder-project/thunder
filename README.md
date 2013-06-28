@@ -26,7 +26,7 @@ ica.py - ICA on a data matrix, e.g. space x time
 ica_test.txt - example data for running ICA (from [FastICA for Matlab](http://research.ics.aalto.fi/ica/fastica/code/dlcode.shtml))
 
 #### helper
-copy-numpy-scipy-ec2.sh - copy numpy to all workers on an EC2 cluster
+copy-numpy-scipy-ec2.sh - copy numpy and scipy to all workers on an EC2 cluster
 
 
 ## To-Do
