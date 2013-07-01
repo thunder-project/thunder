@@ -10,13 +10,14 @@
 # writes unmixing matrix and independent components to text
 
 import sys
+import os
 from numpy import *
 from scipy.linalg import *
 from pyspark import SparkContext
 
-if len(sys.argv) < 6:
+if len(sys.argv) < 7:
   print >> sys.stderr, \
-  "(ica) usage: ica <master> <inputFile> <outputFile> <k> <c>"
+  "(ica) usage: ica <master> <inputFile> <outputFile> <slices> <k> <c>"
   exit(-1)
 
 def parseVector(line):
@@ -24,24 +25,32 @@ def parseVector(line):
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "ica")
-lines = sc.textFile(sys.argv[2])
+inputFile = str(sys.argv[2]);
 outputFile = str(sys.argv[3])
-k = int(sys.argv[4])
-c = int(sys.argv[5])
+slices = int(sys.argv[4])
+k = int(sys.argv[5])
+c = int(sys.argv[6])
+if not os.path.exists(outputFile):
+    os.makedirs(outputFile)
+
+# load data
+print "(ica) loading data"
+lines = sc.textFile(inputFile,slices)
 
 # compute covariance matrix
-print "(ica) computing data covariance"
 data = lines.map(parseVector).cache()
 n = data.count()
 m = len(data.first())
+print "(ica) mean subtraction"
 meanVec = data.reduce(lambda x,y : x+y) / n
 sub = data.map(lambda x : x - meanVec)
+print "(ica) computing covariance"
 cov = sub.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y)) / n
 
 # do eigenvector decomposition
 print "(ica) doing eigendecomposition"
 w, v = eig(cov)
-inds = argsort(w)[::1]
+inds = argsort(w)[::-1]
 kEigVecs = v[:,inds[0:k]]
 kEigVals = w[inds[0:k]]
 
@@ -81,11 +90,12 @@ W = dot(transpose(B),whtMat)
 # save output files
 print("(ica) finished after "+str(iterNum)+"iterations")
 print("(ica) writing output...")
-savetxt("out-W-"+outputFile+".txt",W,fmt='%.8f')
+savetxt(outputFile+"/"+"out-W-"+outputFile+".txt",W,fmt='%.8f')
+
 for ic in range(0,c):
 	# get unmixed signals
-	sigs = wht.map(lambda x : dot(dot(W[ic,:],unwhtMat),x)).collect()
-	savetxt("out-sigs-"+str(ic)+"-"+outputFile+".txt",sigs,fmt='%.8f')
+	sigs = sub.map(lambda x : dot(W[ic,:],x)).collect()
+	savetxt(outputFile+"/"+"out-sigs-"+str(ic)+"-"+outputFile+".txt",sigs,fmt='%.8f')
 
 
 

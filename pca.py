@@ -11,30 +11,34 @@
 
 import sys
 
-import numpy as np
-from numpy import linalg as la
+from numpy import *
+from scipy.linalg import *
 from pyspark import SparkContext
 
-if len(sys.argv) < 6:
+if len(sys.argv) < 7:
   print >> sys.stderr, \
-    "(pca) usage: pca <master> <inputFile> <outputFile> <k> <dim>"
+    "(pca) usage: pca <master> <inputFile> <outputFile> <slices> <k> <dim>"
   exit(-1)
 
 def parseVector(line):
-    return np.array([float(x) for x in line.split(' ')])
+    return array([float(x) for x in line.split(' ')])
 
-def outerProd(vec): 
-	return np.outer(vec,vec)
-
+# parse inputs
 sc = SparkContext(sys.argv[1], "pca")
-lines = sc.textFile(sys.argv[2])
-fileOut = str(sys.argv[3])
-k = int(sys.argv[4])
-dim = int(sys.argv[5])
+inputFile = str(sys.argv[2])
+outputFile = str(sys.argv[3])
+slices = int(sys.argv[4])
+k = int(sys.argv[5])
+dim = int(sys.argv[6])
+if not os.path.exists(outputFile):
+    os.makedirs(outputFile)
 
+# load data
+lines = sc.textFile(inputFile,slices)
 data = lines.map(parseVector).cache()
 n = data.count()
 
+# do mean subtraction
 if dim==1:
 	meanVec = data.reduce(lambda x,y : x+y) / n
 	sub = data.map(lambda x : x - meanVec)
@@ -46,18 +50,18 @@ else:
  "(pca) dim must be 1 or 2"
  exit(-1)
 
-cov = sub.map(outerProd).reduce(lambda x,y : (x + y)) / (n - 1)
-w, v = la.eig(cov)
-inds = np.argsort(w)[::-1]
-sortedDim2 = v[:,inds[0:k]].transpose()
-sortedDim1 = sub.map(lambda x : np.inner(x,sortedDim2))
+# do eigendecomposition
+cov = sub.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y)) / (n - 1)
+w, v = eig(cov)
+inds = argsort(w)[::-1]
+sortedDim2 = transpose(v[:,inds[0:k]])
 latent = w[inds[0:k]]
 
 print("(pca) writing output...")
-np.savetxt("out-dim1-"+fileOut+".txt",sortedDim1.collect(),fmt='%.8f')
-np.savetxt("out-dim2-"+fileOut+".txt",sortedDim2,fmt='%.8f')
-np.savetxt("out-latent-"+fileOut+".txt",latent,fmt='%.8f')
-
-
+np.savetxt(outputFile+"/"+"out-dim2-"+outputFile+".txt",sortedDim2,fmt='%.8f')
+np.savetxt(outputFile+"/"+"out-latent-"+outputFile+".txt",latent,fmt='%.8f')
+for ik in range(0,k):
+	sortedDim1 = sub.map(lambda x : inner(x,sortedDim2[ik,:]))
+	np.savetxt(outputFile+"/"+"out-dim1-"+str(ik)+"-"-outputFile+".txt",sortedDim1.collect(),fmt='%.8f')
 
 
