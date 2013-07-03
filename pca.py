@@ -10,7 +10,7 @@
 # writes pcs (in both dims) and eigenvalues to text
 
 import sys
-
+import os
 from numpy import *
 from scipy.linalg import *
 from pyspark import SparkContext
