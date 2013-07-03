@@ -1,4 +1,4 @@
-# pca <master> <inputFile> <k> <outputFile>
+# pca <master> <inputFile> <outputFile> <slices> <k> <dim>
 # 
 # performs pca on a data matrix
 # input is a local text file or a file in hdfs 
