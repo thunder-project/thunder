@@ -1,4 +1,4 @@
-# ica <master> <inputFile> <outputFile_Components> <outputFile_Weights>
+# ica <master> <inputFile> <outputFile> <slices> <k> <c>
 # 
 # perform ica on a data matrix.
 # input is a local text file or a file in HDFS
