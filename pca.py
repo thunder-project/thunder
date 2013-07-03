@@ -44,7 +44,7 @@ if dim==1:
 	sub = data.map(lambda x : x - meanVec)
 elif dim==2:
 	meanVec = data.reduce(lambda x,y : x+y) / n
-	sub = data.map(lambda x : x - np.mean(x))
+	sub = data.map(lambda x : x - mean(x))
 else:
  print >> sys.stderr, \
  "(pca) dim must be 1 or 2"
@@ -58,10 +58,10 @@ sortedDim2 = transpose(v[:,inds[0:k]])
 latent = w[inds[0:k]]
 
 print("(pca) writing output...")
-np.savetxt(outputFile+"/"+"out-dim2-"+outputFile+".txt",sortedDim2,fmt='%.8f')
-np.savetxt(outputFile+"/"+"out-latent-"+outputFile+".txt",latent,fmt='%.8f')
+savetxt(outputFile+"/"+"out-dim2-"+outputFile+".txt",sortedDim2,fmt='%.8f')
+savetxt(outputFile+"/"+"out-latent-"+outputFile+".txt",latent,fmt='%.8f')
 for ik in range(0,k):
 	sortedDim1 = sub.map(lambda x : inner(x,sortedDim2[ik,:]))
-	np.savetxt(outputFile+"/"+"out-dim1-"+str(ik)+"-"-outputFile+".txt",sortedDim1.collect(),fmt='%.8f')
+	savetxt(outputFile+"/"+"out-dim1-"+str(ik)+"-"-outputFile+".txt",sortedDim1.collect(),fmt='%.8f')
 
 
