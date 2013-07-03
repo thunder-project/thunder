@@ -62,6 +62,4 @@ savetxt(outputFile+"/"+"out-dim2-"+outputFile+".txt",sortedDim2,fmt='%.8f')
 savetxt(outputFile+"/"+"out-latent-"+outputFile+".txt",latent,fmt='%.8f')
 for ik in range(0,k):
 	sortedDim1 = sub.map(lambda x : inner(x,sortedDim2[ik,:]))
-	savetxt(outputFile+"/"+"out-dim1-"+str(ik)+"-"-outputFile+".txt",sortedDim1.collect(),fmt='%.8f')
-
-
+	savetxt(outputFile+"/"+"out-dim1-"+str(ik)+"-"+outputFile+".txt",sortedDim1.collect(),fmt='%.8f')
