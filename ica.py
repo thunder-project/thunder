@@ -35,7 +35,7 @@ if not os.path.exists(outputFile):
 
 # load data
 print "(ica) loading data"
-lines = sc.textFile(inputFile,slices)
+lines = sc.textFile(inputFile)
 
 # compute covariance matrix
 data = lines.map(parseVector).cache()
@@ -66,7 +66,7 @@ B = orth(random.randn(k,c))
 Bold = zeros((k,c))
 iterNum = 0
 minAbsCos = 0
-termTol = 0.0001
+termTol = 0.000001
 iterMax = 1000
 errVec = zeros(iterMax)
 
