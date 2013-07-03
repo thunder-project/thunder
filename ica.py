@@ -56,8 +56,8 @@ kEigVals = w[inds[0:k]]
 
 # whiten data
 print "(ica) whitening data"
-whtMat = real(dot(inv(sqrtm(diag(kEigVals))),transpose(kEigVecs)))
-unwhtMat = real(dot(kEigVecs,sqrtm(diag(kEigVals))))
+whtMat = real(dot(inv(diag(sqrt(kEigVals))),transpose(kEigVecs)))
+unwhtMat = real(dot(kEigVecs,diag(sqrt(kEigVals))))
 wht = sub.map(lambda x : dot(whtMat,x))
 
 # do multiple independent component extraction
