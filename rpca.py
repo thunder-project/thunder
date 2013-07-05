@@ -19,7 +19,7 @@ def shrinkVec(x,thresh):
 	tmp[tmp<0] = 0
 	return tmp
 
-def svdThreshold(RDD,thresh,n):
+def svdThreshold(RDD,thresh):
 	cov = RDD.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y))
 	w, v = eig(cov)
 	sw = sqrt(w)
@@ -51,14 +51,10 @@ m = len(data.first())
 
 # create broadcast variables
 print "(rpca) broadcasting variables"
-M = array(data)
+M = array(data.collect())
 L = zeros((n,m))
 S = zeros((n,m))
 Y = zeros((n,m))
-Mb = sc.broadcast(M)
-Lb = sc.broadcast(L)
-Sb = sc.broadcast(S)
-Yb = sc.broadcast(Y)
 
 mu = float(12)
 lam = 1/sqrt(n)
@@ -69,18 +65,12 @@ iterMax = 50
 while iterNum < iterMax:
 	print "(rpca) starting iteration " + str(iterNum)
 	iterNum += 1
-	MSY = sc.parallelize(range(n),slices).map(
-		lambda x : Mb.value[x,:] - Sb.value[x,:] + (1/mu)*Yb.value[x,:])
-	L = svdThreshold(MSY,1/mu,n).collect()
-	Lb = sc.broadcast(array(L))
-	MLY = sc.parallelize(range(n),slices).map(
-		lambda x : Mb.value[x,:] - Lb.value[x,:] + (1/mu)*Yb.value[x,:])
+	MSY = sc.parallelize(M - S + (1/mu)*Y).cache()
+	L = svdThreshold(MSY,1/mu).collect()
+	MLY = sc.parallelize(M - L + (1/mu)*Y)
 	S = shrinkage(MLY,lam/mu).collect()
-	Sb = sc.broadcast(array(S))
-	Y = sc.parallelize(range(n),slices).map(
-		lambda x : Yb.value[x,:] + mu*(Mb.value[x,:] - Lb.value[x,:] - Sb.value[x,:])).collect()
-	Yb = sc.broadcast(array(Y))
+	Y = Y + mu*(M - L - S)
 
-savetxt(outputFile+"/"+"out-L-"+outputFile+".txt",Lb.value,fmt='%.8f')
-savetxt(outputFile+"/"+"out-S-"+outputFile+".txt",Sb.value,fmt='%.8f')
+savetxt(outputFile+"/"+"out-L-"+outputFile+".txt",L,fmt='%.8f')
+savetxt(outputFile+"/"+"out-S-"+outputFile+".txt",S,fmt='%.8f')
 
