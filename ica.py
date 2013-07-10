@@ -15,9 +15,9 @@ from numpy import *
 from scipy.linalg import *
 from pyspark import SparkContext
 
-if len(sys.argv) < 8:
+if len(sys.argv) < 7:
   print >> sys.stderr, \
-  "(ica) usage: ica <master> <inputFile> <outputFile> <slices> <k> <c> <lag>"
+  "(ica) usage: ica <master> <inputFile> <outputFile> <slices> <k> <c>"
   exit(-1)
 
 def parseVector(line):
@@ -30,39 +30,20 @@ outputFile = str(sys.argv[3])
 slices = int(sys.argv[4])
 k = int(sys.argv[5])
 c = int(sys.argv[6])
-lag = int(sys.argv[7])
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 
 # load data
 print "(ica) loading data"
 lines = sc.textFile(inputFile)
-data = lines.map(parseVector)
-m = len(data.first())
-n = data.count()
 
-# subtract the mean
+# compute covariance matrix
+data = lines.map(parseVector).cache()
+n = data.count()
+m = len(data.first())
 print "(ica) mean subtraction"
 meanVec = data.reduce(lambda x,y : x+y) / n
 sub = data.map(lambda x : x - meanVec)
-
-# create time-lagged versions if requested
-if (lag > 0):
-	print "(ica) creating time lags"
-	subold = sub
-	for ilag in range(lag):
-		# pad with zeros
-		sublag = subold.map(lambda x :  hstack((zeros(ilag+1),x[0:m-ilag-1])))
-		sub = sub.union(sublag)
-	# chop off front
-	sub = sub.map(lambda x : x[lag:m])
-	m = len(sub.first())
-	n = sub.count()
-
-# cache the current data
-sub.cache()	
-
-# compute covariance matrix
 print "(ica) computing covariance"
 cov = sub.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y)) / n
 
@@ -107,7 +88,7 @@ while (iterNum < iterMax) & ((1 - minAbsCos) > termTol):
 W = dot(transpose(B),whtMat)
 
 # save output files
-print("(ica) finished after "+str(iterNum)+" iterations")
+print("(ica) finished after "+str(iterNum)+"iterations")
 print("(ica) writing output...")
 savetxt(outputFile+"/"+"out-W-"+outputFile+".txt",W,fmt='%.8f')
 
