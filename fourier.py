@@ -19,6 +19,8 @@ def parseVector(line):
   return array([float(x) for x in line.split(' ')])
 
 def getFourier(vec,freq):
+	vec = vec - 1
+	vec = vec[32:32+42*8]
 	nframes = len(vec)
 	ft = fft(vec)
 	ft = ft[0:int(fix(nframes/2))]
@@ -44,7 +46,10 @@ if not os.path.exists(outputFile):
 # do fourier on each time series
 lines = sc.textFile(inputFile)
 data = lines.map(parseVector)
-out = data.map(lambda x : getFourier(x,freq)).collect()
+out = data.map(lambda x : getFourier(x,freq))
+co = out.map(lambda x : x[0]).collect()
+ph = out.map(lambda x : x[1]).collect()
 
-savetxt(outputFile+"/"+"out-co-ph-freq-"+str(freq)+".txt",out,fmt='%.8f')
+savetxt(outputFile+"/"+"out-co-freq-"+str(freq)+".txt",co,fmt='%.8f')
+savetxt(outputFile+"/"+"out-ph-freq-"+str(freq)+".txt",ph,fmt='%.8f')
 
