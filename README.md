@@ -22,19 +22,25 @@ pca.py - PCA on a data matrix, e.g. space x time
 
 ica.py - ICA on a data matrix, e.g. space x time
 
+cca.py - CCA on a data matrix, e.g. space x time
+
+rpca.py - robust PCA on a data matrix, e.g. space x time
+
+fourier.py - fourier analysis on a time series matrix
+
+
 #### data
 ica_test.txt - example data for running ICA (from [FastICA for Matlab](http://research.ics.aalto.fi/ica/fastica/code/dlcode.shtml))
 
-#### helper
-copy-numpy-scipy-ec2.sh - copy numpy and scipy to all workers on an EC2 cluster
+fourier_test.txt - example signals for fourier analysis
+
+rpca_test.txt - example input matrices for rpca
+
+cca_test.txt - example input matrices for cca
 
 
 ## To-Do
 
-rpca.py - robust PCA
-
-cca.py - canonical correlation analysis
-
-fourier.py - amplitude and phase (of time series)
+PCA with EM
 
 scala versions
