@@ -45,6 +45,4 @@ cca_test.txt - example input matrices for cca
 
 ## To-Do
 
-PCA with EM
-
 scala versions
