@@ -20,6 +20,8 @@ If running on a cluster (e.g. Amazon's EC2), numpy, and any other dependencies, 
 #### main
 pca.py - PCA on a data matrix, e.g. space x time
 
+empca.py - iterative PCA using EM algorithm
+
 ica.py - ICA on a data matrix, e.g. space x time
 
 cca.py - CCA on a data matrix, e.g. space x time
@@ -31,6 +33,8 @@ fourier.py - fourier analysis on a time series matrix
 
 #### data
 ica_test.txt - example data for running ICA (from [FastICA for Matlab](http://research.ics.aalto.fi/ica/fastica/code/dlcode.shtml))
+
+pca_test.txt - example data for running PCA and emPCA (from [Sam Roweis](http://www.cs.nyu.edu/~roweis/code.html))
 
 fourier_test.txt - example signals for fourier analysis
 
