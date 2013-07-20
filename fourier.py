@@ -12,7 +12,7 @@ from pyspark import SparkContext
 
 if len(sys.argv) < 6:
   print >> sys.stderr, \
-  "(ica) usage: cca <master> <inputFile> <outputFile> <slices> <freq>"
+  "(fourier) usage: fourier <master> <inputFile> <outputFile> <slices> <freq>"
   exit(-1)
 
 def parseVector(line):
@@ -35,7 +35,7 @@ def getFourier(vec,freq):
 	return array([co,ph])
 
 # parse inputs
-sc = SparkContext(sys.argv[1], "cca")
+sc = SparkContext(sys.argv[1], "fourier")
 inputFile = str(sys.argv[2]);
 outputFile = str(sys.argv[3])
 slices = int(sys.argv[4])
