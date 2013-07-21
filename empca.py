@@ -31,7 +31,7 @@ def outerProd(x):
 sc = SparkContext(sys.argv[1], "empca")
 inputFile = str(sys.argv[2])
 k = int(sys.argv[4])
-outputFile = "empca-"+str(sys.argv[3])
+outputFile = "empca-"+str(sys.argv[3])+"-pcs-"+str(k)
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -55,12 +55,16 @@ for iter in range(nIter):
 	logging.info('(empca) doing iteration ' + str(iter))
 	Cold = C
 	Cinv = dot(transpose(C),inv(dot(C,transpose(C))))
+	logging.info('(empca) broadcasting C')
 	Cinvb = sc.broadcast(Cinv)
+	logging.info('(empca) E step')
 	XX = sub.map(
 		lambda x : outerProd(dot(x,Cinvb.value))).reduce(
 		lambda x,y : x + y)
 	XXinv = inv(XX)
+	logging.info('(empca) broadcasting X')
 	XXinvb = sc.broadcast(XXinv)
+	logging.info('(empca) M step')
 	C = sub.map(lambda x : outer(x,dot(dot(x,Cinvb.value),XXinvb.value))).reduce(
 		lambda x,y: x + y)
 	C = transpose(C)
@@ -84,7 +88,8 @@ evals = w[inds[0:k]]
 
 # save the results
 logging.info('(empca) saving to text')
-savetxt(outputFile+"/"+"evecs-pcs-"+str(k)+".txt",evecs,fmt='%.8f')
-savetxt(outputFile+"/"+"evals-pcs-"+str(k)+".txt",evals,fmt='%.8f')
-
+savetxt(outputFile+"/"+"evecs.txt",evecs,fmt='%.8f')
+savetxt(outputFile+"/"+"evals.txt",evals,fmt='%.8f')
+for ik in range(0,k):
+	sub.map(lambda x : str(inner(x,evecs[ik,:]))).saveAsTextFile(outputFile+"/"+"scores-"+str(ik))
 

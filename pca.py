@@ -1,4 +1,4 @@
-# pca <master> <inputFile> <outputFile> <slices> <k> <dim>
+# pca <master> <inputFile> <outputFile> <k> <dim>
 # 
 # performs pca on a data matrix
 # input is a local text file or a file in hdfs 
@@ -13,11 +13,12 @@ import sys
 import os
 from numpy import *
 from scipy.linalg import *
+import logging
 from pyspark import SparkContext
 
-if len(sys.argv) < 7:
+if len(sys.argv) < 6:
   print >> sys.stderr, \
-    "(pca) usage: pca <master> <inputFile> <outputFile> <slices> <k> <dim>"
+    "(pca) usage: pca <master> <inputFile> <outputFile> <k> <dim>"
   exit(-1)
 
 def parseVector(line):
@@ -26,15 +27,14 @@ def parseVector(line):
 # parse inputs
 sc = SparkContext(sys.argv[1], "pca")
 inputFile = str(sys.argv[2])
-outputFile = str(sys.argv[3])
-slices = int(sys.argv[4])
-k = int(sys.argv[5])
-dim = int(sys.argv[6])
+k = int(sys.argv[4])
+outputFile = "pca-"+str(sys.argv[3]) + "-pcs-" + str(k)
+dim = int(sys.argv[5])
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 
 # load data
-lines = sc.textFile(inputFile,slices)
+lines = sc.textFile(inputFile)
 data = lines.map(parseVector).cache()
 n = data.count()
 
@@ -51,15 +51,20 @@ else:
  exit(-1)
 
 # do eigendecomposition
-cov = sub.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y)) / (n - 1)
+logging.info("(pca) computing covariance")
+cov = sub.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y)) / n
+print(cov)
+logging.info("(pca) doing eigendecomposition")
 w, v = eig(cov)
+w = real(w)
+v = real(v)
 inds = argsort(w)[::-1]
 sortedDim2 = transpose(v[:,inds[0:k]])
 latent = w[inds[0:k]]
 
-print("(pca) writing output...")
-savetxt(outputFile+"/"+"out-dim2-"+outputFile+".txt",sortedDim2,fmt='%.8f')
-savetxt(outputFile+"/"+"out-latent-"+outputFile+".txt",latent,fmt='%.8f')
+logging.info("(pca) writing output...")
+savetxt(outputFile+"/"+"evecs.txt",sortedDim2,fmt='%.8f')
+savetxt(outputFile+"/"+"evals.txt",latent,fmt='%.8f')
 for ik in range(0,k):
-	sortedDim1 = sub.map(lambda x : inner(x,sortedDim2[ik,:]))
-	savetxt(outputFile+"/"+"out-dim1-"+str(ik)+"-"+outputFile+".txt",sortedDim1.collect(),fmt='%.8f')
+	sub.map(lambda x : str(inner(x,sortedDim2[ik,:]))).saveAsTextFile(outputFile+"/"+"scores-"+str(ik))
+	
