@@ -91,10 +91,8 @@ W = dot(transpose(B),whtMat)
 logging.info('(ica) finished after ' + str(iterNum) + ' iterations')
 logging.info('(ica) writing output...')
 savetxt(outputFile+"/"+"W-comps-"+str(c)+".txt",W,fmt='%.8f')
+sub.map(lambda x : str(dot(W,x))[1:-1]).saveAsTextFile(outputFile+"/"+"sigs-comps-"+str(c))
 
-for ic in range(0,c):
-	# get unmixed signals
-	sigs = sub.map(lambda x : str(dot(W[ic,:],x))[1:-1]).saveAsTextFile(outputFile+"/"+"sigs-comps-"+str(c))
 
 
 
