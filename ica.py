@@ -93,8 +93,7 @@ logging.info('(ica) writing output...')
 savetxt(outputFile+"/"+"W-comps-"+str(c)+".txt",W,fmt='%.8f')
 
 for ic in range(0,c):
-	# get unmixed signals
-	sigs = sub.map(lambda x : str(dot(W[ic,:],x))[1:-1]).saveAsTextFile(outputFile+"/"+"sigs-comps-"+str(c))
+	sigs = sub.map(lambda x : str(dot(W[ic,:],x))).saveAsTextFile(outputFile+"/"+"sig-"+str(ic)+"-comps-"+str(c))
 
 
 
