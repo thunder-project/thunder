@@ -91,5 +91,6 @@ logging.info('(empca) saving to text')
 savetxt(outputFile+"/"+"evecs.txt",evecs,fmt='%.8f')
 savetxt(outputFile+"/"+"evals.txt",evals,fmt='%.8f')
 for ik in range(0,k):
-	sub.map(lambda x : str(inner(x,evecs[ik,:]))).saveAsTextFile(outputFile+"/"+"scores-"+str(ik))
+	out = sub.map(lambda x : inner(x,evecs[ik,:]))
+	savetxt(outputFile+"/"+"scores-"+str(ik),out.collect(),fmt='%.8f')
 

@@ -53,7 +53,6 @@ else:
 # do eigendecomposition
 logging.info("(pca) computing covariance")
 cov = sub.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y)) / n
-print(cov)
 logging.info("(pca) doing eigendecomposition")
 w, v = eig(cov)
 w = real(w)
@@ -66,5 +65,6 @@ logging.info("(pca) writing output...")
 savetxt(outputFile+"/"+"evecs.txt",sortedDim2,fmt='%.8f')
 savetxt(outputFile+"/"+"evals.txt",latent,fmt='%.8f')
 for ik in range(0,k):
-	sub.map(lambda x : str(inner(x,sortedDim2[ik,:]))).saveAsTextFile(outputFile+"/"+"scores-"+str(ik))
+	out = sub.map(lambda x : inner(x,sortedDim2[ik,:]))
+	savetxt(outputFile+"/"+"scores-"+str(ik),out.collect(),fmt='%.8f')
 	
