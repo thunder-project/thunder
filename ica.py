@@ -1,4 +1,4 @@
-# ica <master> <inputFile> <outputFile> <slices> <k> <c>
+# ica <master> <inputFile> <outputFile> <k> <c>
 # 
 # perform ica on a data matrix.
 # input is a local text file or a file in HDFS
@@ -16,9 +16,9 @@ from scipy.linalg import *
 from pyspark import SparkContext
 import logging
 
-if len(sys.argv) < 7:
+if len(sys.argv) < 6:
   print >> sys.stderr, \
-  "(ica) usage: ica <master> <inputFile> <outputFile> <slices> <k> <c>"
+  "(ica) usage: ica <master> <inputFile> <outputFile> <k> <c>"
   exit(-1)
 
 def parseVector(line):
@@ -28,42 +28,40 @@ def parseVector(line):
 sc = SparkContext(sys.argv[1], "ica")
 inputFile = str(sys.argv[2]);
 outputFile = str(sys.argv[3])
-slices = int(sys.argv[4])
-k = int(sys.argv[5])
-c = int(sys.argv[6])
+k = int(sys.argv[4])
+c = int(sys.argv[5])
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
-logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
 
 # load data
-logging.info('(ica) loading data')
+print "(ica) loading data"
 lines = sc.textFile(inputFile)
 
 # compute covariance matrix
 data = lines.map(parseVector).cache()
 n = data.count()
 m = len(data.first())
-logging.info('(ica) mean subtraction')
+print "(ica) mean subtraction"
 meanVec = data.reduce(lambda x,y : x+y) / n
 sub = data.map(lambda x : x - meanVec)
-logging.info('(ica) computing covariance')
+print "(ica) computing covariance"
 cov = sub.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y)) / n
 
 # do eigenvector decomposition
-logging.info('(ica) doing eigendecomposition')
+print "(ica) doing eigendecomposition"
 w, v = eig(cov)
 inds = argsort(w)[::-1]
 kEigVecs = v[:,inds[0:k]]
 kEigVals = w[inds[0:k]]
 
 # whiten data
-logging.info('(ica) whitening data')
+print "(ica) whitening data"
 whtMat = real(dot(inv(diag(sqrt(kEigVals))),transpose(kEigVecs)))
 unwhtMat = real(dot(kEigVecs,diag(sqrt(kEigVals))))
 wht = sub.map(lambda x : dot(whtMat,x))
 
 # do multiple independent component extraction
-logging.info('(ica) starting iterations')
+print "(ica) starting iterative ica"
 B = orth(random.randn(k,c))
 Bold = zeros((k,c))
 iterNum = 0
@@ -74,9 +72,10 @@ errVec = zeros(iterMax)
 
 while (iterNum < iterMax) & ((1 - minAbsCos) > termTol):
 	iterNum += 1
-	logging.info('(ica) iteration ' + strNum(iterNum))
+	print "(ica) starting iteration " + str(iterNum)
 	# update rule for pow3 nonlinearity (todo: add other nonlins)
 	B = wht.map(lambda x : outer(x,dot(x,B) ** 3)).reduce(lambda x,y : x + y) / n - 3 * B
+	print "(ica) orthogonalizing"
 	# orthognalize
 	B = dot(B,real(sqrtm(inv(dot(transpose(B),B)))))
 	# evaluate error
@@ -89,8 +88,8 @@ while (iterNum < iterMax) & ((1 - minAbsCos) > termTol):
 W = dot(transpose(B),whtMat)
 
 # save output files
-logging.info('(ica) finished after ' + strNum(iterNum) + ' iterations')
-logging.info('(ica) writing output')
+print("(ica) finished after "+str(iterNum)+"iterations")
+print("(ica) writing output...")
 savetxt(outputFile+"/"+"out-W-"+outputFile+".txt",W,fmt='%.8f')
 
 for ic in range(0,c):
