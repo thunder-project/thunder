@@ -1,4 +1,4 @@
-# cca <master> <inputFile> <outputFile> <slices> <label1> <label2> <k> <c>
+# cca <master> <inputFile> <outputFile> <label1> <label2> <k> <c>
 # 
 # compute canonical correlations on two data sets
 # input is a local text file or a file in HDFS
@@ -16,30 +16,44 @@ import sys
 import os
 from numpy import *
 from scipy.linalg import *
+from scipy.signal import butter, lfilter
+import logging
 from pyspark import SparkContext
 
-if len(sys.argv) < 9:
+if len(sys.argv) < 8:
   print >> sys.stderr, \
-  "(ica) usage: cca <master> <inputFile> <outputFile> <slices> <label1> <label2> <k> <c>"
+  "(ica) usage: cca <master> <inputFile> <outputFile> <label1> <label2> <k> <c>"
   exit(-1)
 
 def parseVector(line):
     return array([float(x) for x in line.split(' ')])
 
+def butterBandpass(lowcut, highcut, fs, order=5):
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    b, a = butter(order, [low, high], btype='band')
+    return b, a
+
+def butterBandpassFilter(data, lowcut, highcut, fs, order=5):
+    b, a = butterBandpass(lowcut, highcut, fs, order=order)
+    y = lfilter(b, a, data)
+    return y
+
 # parse inputs
 sc = SparkContext(sys.argv[1], "cca")
-inputFile = str(sys.argv[2]);
-outputFile = str(sys.argv[3])
-slices = int(sys.argv[4])
-label1 = int(sys.argv[5])
-label2 = int(sys.argv[6])
-k = int(sys.argv[7])
-c = int(sys.argv[8])
+inputFile = str(sys.argv[2])
+label1 = int(sys.argv[4])
+label2 = int(sys.argv[5])
+k = int(sys.argv[6])
+c = int(sys.argv[7])
+outputFile = "cca-"+str(sys.argv[3])+"-labels-"+str(label1)+"-"+str(label2)+"-k-"+str(k)+"-cc-"+str(c)
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
+logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
 
 # load data and split according to label
-print("(cca) loading data...")
+logging.info("(cca) loading data...")
 lines = sc.textFile(inputFile)
 data = lines.map(parseVector)
 data1 = data.filter(lambda x : x[0] == label1).cache()
@@ -56,14 +70,18 @@ data1 = data1.map(lambda x : x[1:m1+1])
 data2 = data2.map(lambda x : x[1:m2+1])
 
 # remove means
-print("(cca) mean subtraction")
+logging.info("(cca) mean subtraction")
 data1mean = data1.reduce(lambda x,y : x+y) / n1
 data1sub = data1.map(lambda x : x - data1mean)
 data2mean = data2.reduce(lambda x,y : x+y) / n2
 data2sub = data2.map(lambda x : x - data2mean)
 
+# filter data
+logging.info("(cca) bandpass filtering")
+data1sub = data1sub.map(lambda x : butterBandpassFilter(x,0.02,0.4,1,6))
+
 # do dimensionality reduction
-print("(cca) reducing dimensionality")
+logging.info("(cca) reducing dimensionality")
 cov1 = data1sub.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y)) / (n1 - 1)
 w1, v1 = eig(cov1)
 v1 = v1[:,argsort(w1)[::-1]];
@@ -78,7 +96,7 @@ x1 = x1-mean(x1,axis=0)
 x2 = x2-mean(x2,axis=0)
 
 # do cca
-print("(cca) computing canonical correlations")
+logging.info("(cca) computing canonical correlations")
 q1,r1,p1 = qr(x1,mode='economic',pivoting=True)
 q2,r2,p2 = qr(x2,mode='economic',pivoting=True)
 l,d,m = svd(dot(transpose(q1),q2))
@@ -88,15 +106,15 @@ A = A[argsort(p1)[::1],:]
 B = B[argsort(p2)[::1],:]
 
 # write output
-print("(cca) writing results...")
+logging.info("(cca) writing results...")
 for ic in range(0,c):
 	time1 = dot(v1[:,0:k],A[:,ic])
 	out1 = data1sub.map(lambda x : inner(x,dot(v1[:,0:k],A[:,ic])))
-	savetxt(outputFile+"/"+"out-label-"+str(label1)+"-cc-"+str(ic)+"-"+outputFile+".txt",out1.collect(),fmt='%.8f')
-	savetxt(outputFile+"/"+"out-label-"+str(label1)+"-time-"+str(ic)+"-"+outputFile+".txt",time1,fmt='%.8f')
+	savetxt(outputFile+"/"+"label-"+str(label1)+"-cc-"+str(ic)+".txt",out1.collect(),fmt='%.8f')
+	savetxt(outputFile+"/"+"label-"+str(label1)+"-time-"+str(ic)+".txt",time1,fmt='%.8f')
 	time2 = dot(v2[:,0:k],B[:,ic])
 	out2 = data2sub.map(lambda x : inner(x,dot(v2[:,0:k],B[:,ic])))
-	savetxt(outputFile+"/"+"out-label-"+str(label2)+"-cc-"+str(ic)+"-"+outputFile+".txt",out2.collect(),fmt='%.8f')
-	savetxt(outputFile+"/"+"out-label-"+str(label2)+"-time-"+str(ic)+"-"+outputFile+".txt",time2,fmt='%.8f')
+	savetxt(outputFile+"/"+"label-"+str(label2)+"-cc-"+str(ic)+".txt",out2.collect(),fmt='%.8f')
+	savetxt(outputFile+"/"+"label-"+str(label2)+"-time-"+str(ic)+".txt",time2,fmt='%.8f')
 
 
