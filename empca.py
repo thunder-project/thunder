@@ -55,17 +55,13 @@ for iter in range(nIter):
 	logging.info('(empca) doing iteration ' + str(iter))
 	Cold = C
 	Cinv = dot(transpose(C),inv(dot(C,transpose(C))))
-	logging.info('(empca) broadcasting C')
-	Cinvb = sc.broadcast(Cinv)
 	logging.info('(empca) E step')
 	XX = sub.map(
-		lambda x : outerProd(dot(x,Cinvb.value))).reduce(
+		lambda x : outerProd(dot(x,Cinv))).reduce(
 		lambda x,y : x + y)
 	XXinv = inv(XX)
-	logging.info('(empca) broadcasting X')
-	XXinvb = sc.broadcast(XXinv)
 	logging.info('(empca) M step')
-	C = sub.map(lambda x : outer(x,dot(dot(x,Cinvb.value),XXinvb.value))).reduce(
+	C = sub.map(lambda x : outer(x,dot(dot(x,Cinv),XXinv))).reduce(
 		lambda x,y: x + y)
 	C = transpose(C)
 	error = sum((C-Cold) ** 2)
@@ -76,8 +72,7 @@ logging.info('(empca) finished after ' + str(iter) + ' iterations')
 # find ordered orthogonal basis for the subspace
 logging.info('(empca) orthogalizing result')
 C = transpose(orth(transpose(C)))
-Cb = sc.broadcast(C)
-cov = sub.map(lambda x : outerProd(dot(x,transpose(Cb.value)))).reduce(
+cov = sub.map(lambda x : outerProd(dot(x,transpose(C)))).reduce(
 	lambda x,y : x + y) / n
 w, v = eig(cov)
 w = real(w)
@@ -92,5 +87,5 @@ savetxt(outputFile+"/"+"evecs.txt",evecs,fmt='%.8f')
 savetxt(outputFile+"/"+"evals.txt",evals,fmt='%.8f')
 for ik in range(0,k):
 	out = sub.map(lambda x : inner(x,evecs[ik,:]))
-	savetxt(outputFile+"/"+"scores-"+str(ik),out.collect(),fmt='%.8f')
+	savetxt(outputFile+"/"+"scores-"+str(ik)+".txt",out.collect(),fmt='%.4f')
 
