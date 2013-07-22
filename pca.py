@@ -32,6 +32,7 @@ outputFile = "pca-"+str(sys.argv[3]) + "-pcs-" + str(k)
 dim = int(sys.argv[5])
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
+logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
 
 # load data
 lines = sc.textFile(inputFile)
@@ -66,5 +67,5 @@ savetxt(outputFile+"/"+"evecs.txt",sortedDim2,fmt='%.8f')
 savetxt(outputFile+"/"+"evals.txt",latent,fmt='%.8f')
 for ik in range(0,k):
 	out = sub.map(lambda x : inner(x,sortedDim2[ik,:]))
-	savetxt(outputFile+"/"+"scores-"+str(ik),out.collect(),fmt='%.8f')
+	savetxt(outputFile+"/"+"scores-"+str(ik)+".txt",out.collect(),fmt='%.4f')
 	
