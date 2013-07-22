@@ -27,9 +27,9 @@ def parseVector(line):
 # parse inputs
 sc = SparkContext(sys.argv[1], "ica")
 inputFile = str(sys.argv[2]);
-outputFile = str(sys.argv[3])
 k = int(sys.argv[4])
 c = int(sys.argv[5])
+outputFile = "ica-"+str(sys.argv[3])+"-pcs-"+str(k)+"-ics-"+str(c)
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -93,7 +93,8 @@ logging.info('(ica) writing output...')
 savetxt(outputFile+"/"+"W-comps-"+str(c)+".txt",W,fmt='%.8f')
 
 for ic in range(0,c):
-	sigs = sub.map(lambda x : str(dot(W[ic,:],x))).saveAsTextFile(outputFile+"/"+"sig-"+str(ic)+"-comps-"+str(c))
+	sigs = sub.map(lambda x : dot(W[ic,:],x))
+	savetxt(outputFile+"/"+"sig-"+str(ic)+"-comps-"+str(c)+".txt",sigs.collect(),fmt='%.4f')
 
 
 
