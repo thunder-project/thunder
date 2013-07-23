@@ -82,10 +82,10 @@ data1sub = data1sub.map(lambda x : butterBandpassFilter(x,0.02,0.4,1,6))
 
 # do dimensionality reduction
 logging.info("(cca) reducing dimensionality")
-cov1 = data1sub.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y)) / (n1 - 1)
+cov1 = data1sub.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y)) / n1
 w1, v1 = eig(cov1)
 v1 = v1[:,argsort(w1)[::-1]];
-cov2 = data2sub.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y)) / (n1 - 1)
+cov2 = data2sub.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y)) / n2
 w2, v2 = eig(cov2)
 v2 = v2[:,argsort(w2)[::-1]];
 
