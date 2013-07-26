@@ -38,7 +38,7 @@ def getFourier(vec,freq):
 sc = SparkContext(sys.argv[1], "fourier")
 inputFile = str(sys.argv[2])
 freq = int(sys.argv[4])
-outputFile = "fourier-"+str(sys.argv[3])
+outputFile = str(sys.argv[3])+"-fourier"
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')

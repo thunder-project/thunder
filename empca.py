@@ -31,7 +31,7 @@ def outerProd(x):
 sc = SparkContext(sys.argv[1], "empca")
 inputFile = str(sys.argv[2])
 k = int(sys.argv[4])
-outputFile = "empca-"+str(sys.argv[3])+"-pcs-"+str(k)
+outputFile = str(sys.argv[3])+"-empca-pcs-"+str(k)
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')

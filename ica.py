@@ -29,7 +29,7 @@ sc = SparkContext(sys.argv[1], "ica")
 inputFile = str(sys.argv[2]);
 k = int(sys.argv[4])
 c = int(sys.argv[5])
-outputFile = "ica-"+str(sys.argv[3])+"-pcs-"+str(k)+"-ics-"+str(c)
+outputFile = str(sys.argv[3])+"-ica-pcs-"+str(k)+"-ics-"+str(c)
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')

@@ -28,7 +28,7 @@ def parseVector(line):
 sc = SparkContext(sys.argv[1], "pca")
 inputFile = str(sys.argv[2])
 k = int(sys.argv[4])
-outputFile = "pca-"+str(sys.argv[3]) + "-pcs-" + str(k)
+outputFile = str(sys.argv[3]) + "-pca-pcs-" + str(k)
 dim = int(sys.argv[5])
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
