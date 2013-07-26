@@ -35,11 +35,6 @@ def butterBandpass(lowcut, highcut, fs, order=5):
     b, a = butter(order, [low, high], btype='band')
     return b, a
 
-def butterBandpassFilter(data, lowcut, highcut, fs, order=5):
-    b, a = butterBandpass(lowcut, highcut, fs, order=order)
-    y = lfilter(b, a, data)
-    return y
-
 # parse inputs
 sc = SparkContext(sys.argv[1], "cca")
 inputFile = str(sys.argv[2])
@@ -47,7 +42,7 @@ label1 = int(sys.argv[4])
 label2 = int(sys.argv[5])
 k = int(sys.argv[6])
 c = int(sys.argv[7])
-outputFile = "cca-"+str(sys.argv[3])+"-labels-"+str(label1)+"-"+str(label2)+"-k-"+str(k)+"-cc-"+str(c)
+outputFile = str(sys.argv[3])+"cca-labels-"+str(label1)+"-"+str(label2)+"-k-"+str(k)+"-cc-"+str(c)
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -78,16 +73,24 @@ data2sub = data2.map(lambda x : x - data2mean)
 
 # filter data
 logging.info("(cca) bandpass filtering")
-data1sub = data1sub.map(lambda x : butterBandpassFilter(x,0.02,0.4,1,6))
+b, a = butterBandpass(0.006, 0.4, 1, 6)
+data1sub = data1sub.map(lambda x : lfilter(b,a,x))
+data2sub = data2sub.map(lambda x : lfilter(b,a,x))
 
 # do dimensionality reduction
-logging.info("(cca) reducing dimensionality")
+logging.info("(cca) reducing dimensionality area " +str(label1))
 cov1 = data1sub.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y)) / n1
 w1, v1 = eig(cov1)
+w1 = real(w1)
+v1 = real(v1)
 v1 = v1[:,argsort(w1)[::-1]];
+logging.info("(cca) reducing dimensionality area " +str(label2))
 cov2 = data2sub.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y)) / n2
 w2, v2 = eig(cov2)
+w2 = real(w2)
+v2 = real(v2)
 v2 = v2[:,argsort(w2)[::-1]];
+
 
 # mean subtract inputs to cca
 x1 = v1[:,0:k]
@@ -110,11 +113,11 @@ logging.info("(cca) writing results...")
 for ic in range(0,c):
 	time1 = dot(v1[:,0:k],A[:,ic])
 	out1 = data1sub.map(lambda x : inner(x,dot(v1[:,0:k],A[:,ic])))
-	savetxt(outputFile+"/"+"label-"+str(label1)+"-cc-"+str(ic)+".txt",out1.collect(),fmt='%.8f')
+	savetxt(outputFile+"/"+"label-"+str(label1)+"-cc-"+str(ic)+".txt",out1.collect(),fmt='%.4f')
 	savetxt(outputFile+"/"+"label-"+str(label1)+"-time-"+str(ic)+".txt",time1,fmt='%.8f')
 	time2 = dot(v2[:,0:k],B[:,ic])
 	out2 = data2sub.map(lambda x : inner(x,dot(v2[:,0:k],B[:,ic])))
-	savetxt(outputFile+"/"+"label-"+str(label2)+"-cc-"+str(ic)+".txt",out2.collect(),fmt='%.8f')
+	savetxt(outputFile+"/"+"label-"+str(label2)+"-cc-"+str(ic)+".txt",out2.collect(),fmt='%.4f')
 	savetxt(outputFile+"/"+"label-"+str(label2)+"-time-"+str(ic)+".txt",time2,fmt='%.8f')
 
 
