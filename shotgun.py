@@ -15,6 +15,9 @@ def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	return (int(vec[0]),array(vec[1:]))
 
+def prodtest(x,b,k):
+	return x * b[k,0]
+
 def updateFeature(x,y,Ab,b,lam):
 	AA = dot(x,x)
 	Ay = dot(x,y)
@@ -47,7 +50,7 @@ d = A.count()
 n = len(A.first()[1])
 
 # initialize sparse weight vector
-b = csr_matrix((d,1))
+b = csc_matrix((d,1))
 # initialize product Ab
 Ab = zeros((n,1))
 # precompute constants (d x 1)
@@ -69,6 +72,7 @@ while (iIter < nIter) & (deltaCheck > tol):
 	nUpdate = len(update)
 	logging.info("(shotgun) features to update: " + str(nUpdate))
 	logging.info("(shotgun) updating features")
+	
 	b = b.todok()
 	diff = zeros((nUpdate,1))
 	for i in range(nUpdate):
@@ -76,14 +80,14 @@ while (iIter < nIter) & (deltaCheck > tol):
 		value = update[i][1]
 		diff[i] = abs(value - b[key,0])
 		b[key,0] = value
-	b = b.tocsr()
+	b = b.tocsc()
 	
 	deltaCheck = amax(diff)
 	logging.info("(shotgun) change in b: " + str(deltaCheck))
 
 	logging.info("(shotgun) updating Ab")
 	Ab = A.filter(lambda (k,x) : b[k,0] != 0).map(lambda (k,x) : x*b[k,0]).reduce(lambda x,y : x+y)	
-
+	
 	iIter = iIter + 1
 
 logging.info("(shotgun) finised after " + str(iIter) + " iterations")
