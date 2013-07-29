@@ -107,16 +107,17 @@ B = lstsq(r2,transpose(m) * sqrt(m2-1))[0]
 A = A[argsort(p1)[::1],:]
 B = B[argsort(p2)[::1],:]
 
+print(shape(data1sub.first()))
+print(shape(dot(v1[:,0:k],A)))
+
+
 # write output
 logging.info("(cca) writing results...")
-for ic in range(0,c):
-	time1 = dot(v1[:,0:k],A[:,ic])
-	out1 = data1sub.map(lambda x : inner(x,dot(v1[:,0:k],A[:,ic])))
-	savetxt(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-cc-"+str(ic)+".txt",out1.collect(),fmt='%.4f')
-	savetxt(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-time-"+str(ic)+".txt",time1,fmt='%.8f')
-	time2 = dot(v2[:,0:k],B[:,ic])
-	out2 = data2sub.map(lambda x : inner(x,dot(v2[:,0:k],B[:,ic])))
-	savetxt(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-cc-"+str(ic)+".txt",out2.collect(),fmt='%.4f')
-	savetxt(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-time-"+str(ic)+".txt",time2,fmt='%.8f')
-
-
+time1 = dot(v1[:,0:k],A)
+time2 = dot(v2[:,0:k],B)
+savetxt(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-time.txt",time1,fmt='%.8f')
+savetxt(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-time.txt",time2,fmt='%.8f')
+out1 = data1sub.map(lambda x : str(dot(transpose(x),dot(v1[:,0:k],A)))[1:-1])
+out2 = data2sub.map(lambda x : str(dot(transpose(x),dot(v2[:,0:k],B)))[1:-1])
+out1.saveAsTextFile(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",","))
+out2.saveAsTextFile(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",","))
