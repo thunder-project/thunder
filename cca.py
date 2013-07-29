@@ -7,10 +7,10 @@
 # - example: space (rows) x time (cols)
 # - rows should be whichever dim is larger
 # 'label1' and 'label2' specify the datasets
+# - in the form of a number (e.g. "1") or a list (e.g. "1,2,3")
 # 'k' is number of principal components for dim reduction
 # 'c' is the number of canonical correlations to return
 # writes components to text (in input space)
-
 
 import sys
 import os
@@ -20,7 +20,7 @@ from scipy.signal import butter, lfilter
 import logging
 from pyspark import SparkContext
 
-if len(sys.argv) < 8:
+if len(sys.argv) < 7:
   print >> sys.stderr, \
   "(ica) usage: cca <master> <inputFile> <outputFile> <label1> <label2> <k> <c>"
   exit(-1)
@@ -38,11 +38,11 @@ def butterBandpass(lowcut, highcut, fs, order=5):
 # parse inputs
 sc = SparkContext(sys.argv[1], "cca")
 inputFile = str(sys.argv[2])
-label1 = int(sys.argv[4])
-label2 = int(sys.argv[5])
+label1 = fromstring(sys.argv[4], dtype=int, sep=',') # ints, or lists
+label2 = fromstring(sys.argv[5], dtype=int, sep=',')
 k = int(sys.argv[6])
 c = int(sys.argv[7])
-outputFile = str(sys.argv[3])+"cca-labels-"+str(label1)+"-"+str(label2)+"-k-"+str(k)+"-cc-"+str(c)
+outputFile = str(sys.argv[3])+"-cca-labels-"+str(label1)[1:-1].replace(" ",",")+"-"+str(label2)[1:-1].replace(" ",",")+"-k-"+str(k)+"-cc-"+str(c)
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -51,8 +51,8 @@ logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,form
 logging.info("(cca) loading data...")
 lines = sc.textFile(inputFile)
 data = lines.map(parseVector)
-data1 = data.filter(lambda x : x[0] == label1).cache()
-data2 = data.filter(lambda x : x[0] == label2).cache()
+data1 = data.filter(lambda x : x[0] in label1).cache()
+data2 = data.filter(lambda x : x[0] in label2).cache()
 
 # get dims
 n1 = data1.count()
@@ -74,8 +74,8 @@ data2sub = data2.map(lambda x : x - data2mean)
 # filter data
 logging.info("(cca) bandpass filtering")
 b, a = butterBandpass(0.006, 0.4, 1, 6)
-data1sub = data1sub.map(lambda x : lfilter(b,a,x))
-data2sub = data2sub.map(lambda x : lfilter(b,a,x))
+#data1sub = data1sub.map(lambda x : lfilter(b,a,x))
+#data2sub = data2sub.map(lambda x : lfilter(b,a,x))
 
 # do dimensionality reduction
 logging.info("(cca) reducing dimensionality area " +str(label1))
@@ -91,7 +91,6 @@ w2 = real(w2)
 v2 = real(v2)
 v2 = v2[:,argsort(w2)[::-1]];
 
-
 # mean subtract inputs to cca
 x1 = v1[:,0:k]
 x2 = v2[:,0:k]
@@ -103,8 +102,8 @@ logging.info("(cca) computing canonical correlations")
 q1,r1,p1 = qr(x1,mode='economic',pivoting=True)
 q2,r2,p2 = qr(x2,mode='economic',pivoting=True)
 l,d,m = svd(dot(transpose(q1),q2))
-A = lstsq(r1,l * sqrt(n1-1))[0]
-B = lstsq(r2,transpose(m) * sqrt(n2-1))[0]
+A = lstsq(r1,l * sqrt(m1-1))[0]
+B = lstsq(r2,transpose(m) * sqrt(m2-1))[0]
 A = A[argsort(p1)[::1],:]
 B = B[argsort(p2)[::1],:]
 
@@ -113,11 +112,11 @@ logging.info("(cca) writing results...")
 for ic in range(0,c):
 	time1 = dot(v1[:,0:k],A[:,ic])
 	out1 = data1sub.map(lambda x : inner(x,dot(v1[:,0:k],A[:,ic])))
-	savetxt(outputFile+"/"+"label-"+str(label1)+"-cc-"+str(ic)+".txt",out1.collect(),fmt='%.4f')
-	savetxt(outputFile+"/"+"label-"+str(label1)+"-time-"+str(ic)+".txt",time1,fmt='%.8f')
+	savetxt(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-cc-"+str(ic)+".txt",out1.collect(),fmt='%.4f')
+	savetxt(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-time-"+str(ic)+".txt",time1,fmt='%.8f')
 	time2 = dot(v2[:,0:k],B[:,ic])
 	out2 = data2sub.map(lambda x : inner(x,dot(v2[:,0:k],B[:,ic])))
-	savetxt(outputFile+"/"+"label-"+str(label2)+"-cc-"+str(ic)+".txt",out2.collect(),fmt='%.4f')
-	savetxt(outputFile+"/"+"label-"+str(label2)+"-time-"+str(ic)+".txt",time2,fmt='%.8f')
+	savetxt(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-cc-"+str(ic)+".txt",out2.collect(),fmt='%.4f')
+	savetxt(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-time-"+str(ic)+".txt",time2,fmt='%.8f')
 
 
