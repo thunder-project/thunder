@@ -47,8 +47,8 @@ d = A.count()
 n = len(A.first()[1])
 
 # initialize sparse weight vector
-b = lil_matrix((d,1))
-bOld = lil_matrix((d,1))
+b = lil_matrix((n,1))
+bOld = lil_matrix((n,1))
 Ab = zeros((n,1))
 # precompute constants (d x 1)
 #logging.info("(shotgun) precomputing vectors")
