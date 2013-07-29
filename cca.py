@@ -107,10 +107,6 @@ B = lstsq(r2,transpose(m) * sqrt(m2-1))[0]
 A = A[argsort(p1)[::1],:]
 B = B[argsort(p2)[::1],:]
 
-print(shape(data1sub.first()))
-print(shape(dot(v1[:,0:k],A)))
-
-
 # write output
 logging.info("(cca) writing results...")
 time1 = dot(v1[:,0:k],A)
@@ -119,5 +115,5 @@ savetxt(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-time.txt",t
 savetxt(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-time.txt",time2,fmt='%.8f')
 out1 = data1sub.map(lambda x : str(dot(transpose(x),dot(v1[:,0:k],A)))[1:-1])
 out2 = data2sub.map(lambda x : str(dot(transpose(x),dot(v2[:,0:k],B)))[1:-1])
-out1.saveAsTextFile(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",","))
-out2.saveAsTextFile(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",","))
+out1.saveAsTextFile(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-space")
+out2.saveAsTextFile(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-space")
