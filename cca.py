@@ -64,18 +64,16 @@ m2 = len(data2.first())-1
 data1 = data1.map(lambda x : x[1:m1+1])
 data2 = data2.map(lambda x : x[1:m2+1])
 
-# remove means
+# compute means
 logging.info("(cca) mean subtraction")
 data1mean = data1.reduce(lambda x,y : x+y) / n1
-data1sub = data1.map(lambda x : x - data1mean)
 data2mean = data2.reduce(lambda x,y : x+y) / n2
-data2sub = data2.map(lambda x : x - data2mean)
 
 # filter data
-logging.info("(cca) bandpass filtering")
+logging.info("(cca) bandpass filtering and mean subtraction")
 b, a = butterBandpass(0.006, 0.4, 1, 6)
-data1sub = data1sub.map(lambda x : lfilter(b,a,x))
-data2sub = data2sub.map(lambda x : lfilter(b,a,x))
+data1sub = data1sub.map(lambda x : lfilter(b,a,x - data1mean))
+data2sub = data2sub.map(lambda x : lfilter(b,a,x - data2mean))
 
 # do dimensionality reduction
 logging.info("(cca) reducing dimensionality area " +str(label1))
