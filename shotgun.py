@@ -48,7 +48,6 @@ n = len(A.first()[1])
 
 # initialize sparse weight vector
 b = csr_matrix((d,1))
-bOld = csr_matrix((d,1))
 Ab = zeros((n,1))
 # precompute constants (d x 1)
 #logging.info("(shotgun) precomputing vectors")
@@ -67,18 +66,22 @@ while (iIter < nIter) & (deltaCheck > tol):
 	logging.info("(shotgun) updating features")
 	update = A.map(lambda (k,x) : (k,updateFeature(x,y,Ab,b[k,0],lam))).filter(lambda (k,x) : x != b[k,0]).collect()
 	nUpdate = len(update)
+	logging.info("(shotgun) features updated: " + str(nUpdate))
+	logging.info("(shotgun) converting to lil")
+	b.tolil()
 	diff = zeros((nUpdate,1))
 	for i in range(nUpdate):
 		key = update[i][0]
 		value = update[i][1]
-		bOld[key,0] = b[key,0]
+		diff[i] = abs(value - b[key,0])
 		b[key,0] = value
-		diff[i] = abs(b[key,0] - bOld[key,0])
 
 	deltaCheck = amax(diff)
-	logging.info("(shotgun) features updated: " + str(nUpdate))
 	logging.info("(shotgun) change in b: " + str(deltaCheck))
 	
+	logging.info("(shotgun) converting to csr")
+	b.tocsr()
+
 	logging.info("(shotgun) updating Ab")
 	Ab = A.filter(lambda (k,x) : b[k,0] != 0).map(lambda (k,x) : x*b[k,0]).reduce(lambda x,y : x+y)	
 
