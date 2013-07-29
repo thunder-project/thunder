@@ -49,7 +49,7 @@ logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,form
 
 # load data and split according to label
 logging.info("(cca) loading data...")
-lines = sc.textFile(inputFile)
+lines = sc.textFile(inputFile,1000)
 data = lines.map(parseVector)
 data1 = data.filter(lambda x : x[0] in label1).cache()
 data2 = data.filter(lambda x : x[0] in label2).cache()
