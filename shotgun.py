@@ -47,8 +47,8 @@ d = A.count()
 n = len(A.first()[1])
 
 # initialize sparse weight vector
-b = lil_matrix((n,1))
-bOld = lil_matrix((n,1))
+b = csr_matrix((d,1))
+bOld = csr_matrix((d,1))
 Ab = zeros((n,1))
 # precompute constants (d x 1)
 #logging.info("(shotgun) precomputing vectors")
@@ -65,7 +65,7 @@ logging.info("(shotgun) beginning iterative estimation...")
 while (iIter < nIter) & (deltaCheck > tol):
 	logging.info("(shotgun) starting iteration " + str(iIter))
 	logging.info("(shotgun) updating features")
-	update = A.map(lambda (k,x) : (k,updateFeature(x,y,Ab,b[k,0],lam))).filter(lambda (k,x) : x != b[k,0]).collect()
+	update = A.map(lambda (k,x) : (k,updateFeature(x,y,Ab,b[k,0],k,lam))).filter(lambda (k,x) : x != b[k,0]).collect()
 	nUpdate = len(update)
 	diff = zeros((nUpdate,1))
 	for i in range(nUpdate):
