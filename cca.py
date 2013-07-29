@@ -49,7 +49,7 @@ logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,form
 
 # load data and split according to label
 logging.info("(cca) loading data...")
-lines = sc.textFile(inputFile,14000)
+lines = sc.textFile(inputFile)
 data = lines.map(parseVector)
 data1 = data.filter(lambda x : x[0] in label1).cache()
 data2 = data.filter(lambda x : x[0] in label2).cache()
@@ -72,8 +72,8 @@ data2mean = data2.reduce(lambda x,y : x+y) / n2
 # filter data
 logging.info("(cca) bandpass filtering and mean subtraction")
 b, a = butterBandpass(0.006, 0.4, 1, 6)
-data1sub = data1sub.map(lambda x : lfilter(b,a,x - data1mean))
-data2sub = data2sub.map(lambda x : lfilter(b,a,x - data2mean))
+data1sub = data1.map(lambda x : lfilter(b,a,x - data1mean))
+data2sub = data2.map(lambda x : lfilter(b,a,x - data2mean))
 
 # do dimensionality reduction
 logging.info("(cca) reducing dimensionality area " +str(label1))
@@ -112,7 +112,5 @@ time2 = dot(v2[:,0:k],B)
 savetxt(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-time.txt",time1,fmt='%.8f')
 savetxt(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-time.txt",time2,fmt='%.8f')
 for ic in range(0,c):
-  out1 = data1sub.map(lambda x : dot(transpose(x),dot(v1[:,0:k],A[:,ic])))
-  out2 = data2sub.map(lambda x : dot(transpose(x),dot(v2[:,0:k],B[:,ic])))
-  out1.saveAsTextFile(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-cc-"+str(ic)+"-space")
-  out2.saveAsTextFile(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-cc-"+str(ic)+"-space")
+  savetxt(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-space-cc-"+str(ic)+".txt",data1sub.map(lambda x : dot(transpose(x),dot(v1[:,0:k],A[:,ic]))).collect(),fmt='%.4f')
+  savetxt(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-space-cc-"+str(ic)+".txt",data2sub.map(lambda x : dot(transpose(x),dot(v2[:,0:k],B[:,ic]))).collect(),fmt='%.4f')
