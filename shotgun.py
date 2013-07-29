@@ -47,7 +47,7 @@ d = A.count()
 n = len(A.first()[1])
 
 # initialize sparse weight vector
-b = dok_matrix((d,1))
+b = csr_matrix((d,1))
 # initialize product Ab
 Ab = zeros((n,1))
 # precompute constants (d x 1)
@@ -69,13 +69,15 @@ while (iIter < nIter) & (deltaCheck > tol):
 	nUpdate = len(update)
 	logging.info("(shotgun) features to update: " + str(nUpdate))
 	logging.info("(shotgun) updating features")
+	b = b.todok()
 	diff = zeros((nUpdate,1))
 	for i in range(nUpdate):
 		key = update[i][0]
 		value = update[i][1]
 		diff[i] = abs(value - b[key,0])
 		b[key,0] = value
-
+	b = b.tocsr()
+	
 	deltaCheck = amax(diff)
 	logging.info("(shotgun) change in b: " + str(deltaCheck))
 
