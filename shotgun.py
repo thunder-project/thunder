@@ -15,7 +15,9 @@ def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	return (int(vec[0]),array(vec[1:]))
 
-def updateFeature(x,Ab,Ay,AA,b,lam):
+def updateFeature(x,y,Ab,b,lam):
+	AA = dot(x,x)
+	Ay = dot(x,y)
 	d_j = Ay - dot(x,Ab) + AA*b
 	if d_j < -lam :
 		new_value = (d_j + lam)/AA
@@ -49,9 +51,9 @@ b = lil_matrix((d,1))
 bOld = lil_matrix((d,1))
 
 # precompute constants (d x 1)
-logging.info("(shotgun) precomputing vectors")
-Ay = A.map(lambda (k,x) : dot(x,y)).collect()
-AA = A.map(lambda (k,x) : dot(x,x)).collect()
+#logging.info("(shotgun) precomputing vectors")
+#Ay = A.map(lambda (k,x) : dot(x,y)).collect()
+#AA = A.map(lambda (k,x) : dot(x,x)).collect()
 
 iIter = 1
 nIter = 50
@@ -63,7 +65,7 @@ logging.info("(shotgun) beginning iterative estimation...")
 while (iIter < nIter) & (deltaCheck > tol):
 	logging.info("(shotgun) starting iteration " + str(iIter))
 	Ab = A.map(lambda (k,x) : x*b[k,0]).reduce(lambda x,y : x+y)
-	update = A.map(lambda (k,x) : (k,updateFeature(x,Ab,Ay[k],AA[k],b[k,0],lam))).filter(lambda (k,x) : x != b[k,0]).collect()
+	update = A.map(lambda (k,x) : (k,updateFeature(x,y,Ab,b[k,0],lam))).filter(lambda (k,x) : x != b[k,0]).collect()
 
 	nUpdate = len(update)
 	diff = zeros((nUpdate,1))
