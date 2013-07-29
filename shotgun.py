@@ -64,9 +64,10 @@ logging.info("(shotgun) beginning iterative estimation...")
 
 while (iIter < nIter) & (deltaCheck > tol):
 	logging.info("(shotgun) starting iteration " + str(iIter))
+	logging.info("(shotgun) computing Ab")
 	Ab = A.map(lambda (k,x) : x*b[k,0]).reduce(lambda x,y : x+y)
+	logging.info("(shotgun) updating features")
 	update = A.map(lambda (k,x) : (k,updateFeature(x,y,Ab,b[k,0],lam))).filter(lambda (k,x) : x != b[k,0]).collect()
-
 	nUpdate = len(update)
 	diff = zeros((nUpdate,1))
 	for i in range(nUpdate):
