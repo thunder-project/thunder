@@ -74,8 +74,8 @@ data2sub = data2.map(lambda x : x - data2mean)
 # filter data
 logging.info("(cca) bandpass filtering")
 b, a = butterBandpass(0.006, 0.4, 1, 6)
-#data1sub = data1sub.map(lambda x : lfilter(b,a,x))
-#data2sub = data2sub.map(lambda x : lfilter(b,a,x))
+data1sub = data1sub.map(lambda x : lfilter(b,a,x))
+data2sub = data2sub.map(lambda x : lfilter(b,a,x))
 
 # do dimensionality reduction
 logging.info("(cca) reducing dimensionality area " +str(label1))
