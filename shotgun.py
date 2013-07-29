@@ -25,7 +25,7 @@ def updateFeature(x,y,Ab,b,lam):
 		new_value = (d_j - lam)/AA
 	else :
 		new_value = 0
-	return new_value
+	return float(new_value)
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "shotgun")
