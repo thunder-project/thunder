@@ -49,7 +49,7 @@ n = len(A.first()[1])
 # initialize sparse weight vector
 b = lil_matrix((d,1))
 bOld = lil_matrix((d,1))
-
+Ab = zeros((n,1))
 # precompute constants (d x 1)
 #logging.info("(shotgun) precomputing vectors")
 #Ay = A.map(lambda (k,x) : dot(x,y)).collect()
@@ -64,8 +64,6 @@ logging.info("(shotgun) beginning iterative estimation...")
 
 while (iIter < nIter) & (deltaCheck > tol):
 	logging.info("(shotgun) starting iteration " + str(iIter))
-	logging.info("(shotgun) computing Ab")
-	Ab = A.filter(lambda (k,x) : b[k,0] != 0).map(lambda (k,x) : x*b[k,0]).reduce(lambda x,y : x+y)
 	logging.info("(shotgun) updating features")
 	update = A.map(lambda (k,x) : (k,updateFeature(x,y,Ab,b[k,0],lam))).filter(lambda (k,x) : x != b[k,0]).collect()
 	nUpdate = len(update)
@@ -80,6 +78,10 @@ while (iIter < nIter) & (deltaCheck > tol):
 	deltaCheck = amax(diff)
 	logging.info("(shotgun) features updated: " + str(nUpdate))
 	logging.info("(shotgun) change in b: " + str(deltaCheck))
+	
+	logging.info("(shotgun) updating Ab")
+	Ab = A.filter(lambda (k,x) : b[k,0] != 0).map(lambda (k,x) : x*b[k,0]).reduce(lambda x,y : x+y)	
+
 	iIter = iIter + 1
 
 logging.info("(shotgun) finised after " + str(iIter) + " iterations")
