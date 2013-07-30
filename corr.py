@@ -16,8 +16,8 @@ def parseVector(line):
 	ts = (ts - mean(ts))/std(ts)
 	return (int(vec[0]),ts)
 
-def correlate(line):
-	r,p = pearson(x,y)
+def correlate(x,y):
+	r,p = pearsonr(x,y)
 	return r
 
 # parse inputs
@@ -43,8 +43,8 @@ n = len(A.first()[1])
 lags = arange(2*mxLag) - floor(2*mxLag/2)
 
 # compute correlations
-for lag in lags
+for lag in lags:
 	logging.info('(corr) computing correlation with time lag ' + str(lag))
-	out = data.map(lambda (k,x) : correlate(x,roll(y,lag)))
+	out = A.map(lambda (k,x) : correlate(x,roll(y,int(lag))))
 	logging.info('(corr) saving results')
-	savetxt(outputFile+"/"+"corr-"+str(lag)+".txt",out.collect(),fmt='%.4f')
+	savetxt(outputFile+"/"+"corr-"+str(int(lag))+".txt",out.collect(),fmt='%.4f')
