@@ -23,6 +23,7 @@ inputFile_A = str(sys.argv[2])
 inputFile_y = str(sys.argv[3])
 mxLag = int(sys.argv[5])
 outputFile = str(sys.argv[4]) + "-sta-mxLag-" + str(mxLag)
+lags = arange(2*mxLag) - floor(2*mxLag/2)
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
