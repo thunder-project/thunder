@@ -17,9 +17,6 @@ def parseVector(line):
 	ts = (ts - mean(ts))/std(ts)
 	return (int(vec[0]),ts)
 
-def prodtest(x,b,k):
-	return x * b[k,0]
-
 def updateFeature(x,y,Ab,b,lam):
 	AA = dot(x,x)
 	Ay = dot(x,y)
