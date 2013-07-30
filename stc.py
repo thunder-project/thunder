@@ -33,8 +33,7 @@ lines_A = sc.textFile(inputFile_A)
 lines_y = sc.textFile(inputFile_y)
 y = array([float(x) for x in lines_y.collect()[0].split(' ')])
 A = lines_A.map(parseVector)
-d = A.count()
-n = len(A.first())
+n = A.count()
 
 # subtract the mean and cache
 logging.info("(stc) subtracting mean")
@@ -50,8 +49,8 @@ logging.info('(stc) computing triggered covariance')
 covTrig = sub.map(lambda x : outer(x*y,x*y)).reduce(lambda x,y : (x + y)) / n
 
 # save results
-savetxt(outputFile+"/"+"stc-covRaw.txt",covRaw,fmt='%.4f')
-savetxt(outputFile+"/"+"stc-covTrig.txt",covTrig,fmt='%.4f')
+savemat(outputFile+"/"+"stc-covRaw.mat",mdict={'covRaw':covRaw},do_compression='true')
+savemat(outputFile+"/"+"stc-covTrig.mat",mdict={'covTrig':covTrig},do_compression='true')
 
 # do eigenvector decomposition of raw covariance
 # logging.info('(stc) doing eigendecomposition')
