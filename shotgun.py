@@ -45,11 +45,12 @@ logging.info("(shotgun) loading data")
 lines_A = sc.textFile(inputFile_A)
 lines_y = sc.textFile(inputFile_y)
 y = array([float(x) for x in lines_y.collect()[0].split(' ')])
-y = y + random.randn(n,1) * 0.1
-print(y)
 A = lines_A.map(parseVector).cache()
 d = A.count()
 n = len(A.first()[1])
+
+y = y + random.randn(n,1) * 0.1
+print(y)
 
 # initialize sparse weight vector
 b = csc_matrix((d,1))
