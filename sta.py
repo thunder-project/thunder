@@ -3,6 +3,7 @@ import os
 from numpy import *
 from scipy.linalg import *
 from scipy.sparse import *
+from scipy.io import * 
 from pyspark import SparkContext
 import logging
 
@@ -34,8 +35,7 @@ lines_A = sc.textFile(inputFile_A)
 lines_y = sc.textFile(inputFile_y)
 y = array([float(x) for x in lines_y.collect()[0].split(' ')])
 A = lines_A.map(parseVector)
-d = A.count()
-n = len(A.first())
+n = A.count()
 
 # subtract the mean and cache
 logging.info("(sta) subtracting mean")
@@ -50,4 +50,5 @@ for lag in lags:
 	nm = str(int(lag))
 	if (lag < 0):
 		nm = "n" + nm[1:]
-	savetxt(outputFile+"/"+"sta-lag-"+nm+".txt",sta.collect(),fmt='%.4f')
+	savemat(outputFile+"/"+"sta-lag-"+nm+".mat",mdict={'sta':sta.collect()},oned_as='column',do_compression='true')
+	#savetxt(outputFile+"/"+"sta-lag-"+nm+".txt",sta.collect(),fmt='%.4f')
