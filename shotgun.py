@@ -48,6 +48,8 @@ y = array([float(x) for x in lines_y.collect()[0].split(' ')])
 A = lines_A.map(parseVector).cache()
 d = A.count()
 n = len(A.first()[1])
+y = y + random.randn(1,n) * 0.1
+y = y[0]
 
 # initialize sparse weight vector
 b = csc_matrix((d,1))
