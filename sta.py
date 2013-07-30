@@ -35,13 +35,7 @@ lines_A = sc.textFile(inputFile_A)
 lines_y = sc.textFile(inputFile_y)
 y = array([float(x) for x in lines_y.collect()[0].split(' ')])
 y = (y - mean(y))/std(y)
-A = lines_A.map(parseVector)
-n = A.count()
-
-# subtract the mean and cache
-logging.info("(sta) subtracting mean")
-meanVec = A.reduce(lambda x,y : x+y) / n
-sub = A.map(lambda x : x - meanVec).cache()
+A = lines_A.map(parseVector).cache()
 
 # compute sta
 for lag in lags:
