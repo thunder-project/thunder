@@ -24,7 +24,7 @@ def correlate(x,y):
 sc = SparkContext(sys.argv[1], "corr")
 inputFile_A = str(sys.argv[2])
 inputFile_y = str(sys.argv[3])
-mxLag = double(sys.argv[5])
+mxLag = int(sys.argv[5])
 outputFile = str(sys.argv[4]) + "-corr-mxLag-" + str(mxLag)
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
@@ -47,4 +47,7 @@ for lag in lags:
 	logging.info('(corr) computing correlation with time lag ' + str(lag))
 	out = A.map(lambda (k,x) : correlate(x,roll(y,int(lag))))
 	logging.info('(corr) saving results')
-	savetxt(outputFile+"/"+"corr-"+str(int(lag))+".txt",out.collect(),fmt='%.4f')
+	nm = str(int(lag))
+	if (lag < 0):
+		nm = "n" + nm[1:]
+	savetxt(outputFile+"/"+"corr-lag-"+nm+".txt",out.collect(),fmt='%.4f')
