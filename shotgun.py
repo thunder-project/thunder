@@ -81,12 +81,12 @@ while (iIter < nIter) & (deltaCheck > tol):
 		diff[i] = abs(value - b[key,0])
 		b[key,0] = value
 	b = b.tocsc()
-	
+
 	deltaCheck = amax(diff)
 	logging.info("(shotgun) change in b: " + str(deltaCheck))
 
 	logging.info("(shotgun) updating Ab")
-	Ab = A.filter(lambda (k,x) : b[k,0] != 0).map(lambda (k,x) : x*b[k,0]).reduce(lambda x,y : x+y)	
+	Ab = A.map(lambda (k,x) : x*b[k,0]).reduce(lambda x,y : x+y)	
 	
 	iIter = iIter + 1
 
