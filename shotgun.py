@@ -13,7 +13,9 @@ if len(sys.argv) < 6:
 
 def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
-	return (int(vec[0]),array(vec[1:]))
+	ts = array(vec[1:])
+	ts = (ts - mean(ts))/std(ts)
+	return (int(vec[0]),ts)
 
 def prodtest(x,b,k):
 	return x * b[k,0]
@@ -48,8 +50,6 @@ y = array([float(x) for x in lines_y.collect()[0].split(' ')])
 A = lines_A.map(parseVector).cache()
 d = A.count()
 n = len(A.first()[1])
-
-print(mean(A.first()[1]))
 
 # initialize sparse weight vector
 b = csc_matrix((d,1))
