@@ -40,7 +40,7 @@ A = lines_A.map(parseVector).cache()
 # compute sta
 for lag in lags:
 	logging.info('(sta) computing sta with time lag ' + str(lag))
-	sta = sub.map(lambda x : mean(x * roll(y,int(lag))))
+	sta = A.map(lambda x : mean(x * roll(y,int(lag))))
 	logging.info('(sta) saving results...')
 	nm = str(int(lag))
 	if (lag < 0):
