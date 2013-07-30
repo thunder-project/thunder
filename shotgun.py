@@ -82,6 +82,8 @@ while (iIter < nIter) & (deltaCheck > tol):
 		b[key,0] = value
 	b = b.tocsc()
 
+	lam = lam * 2
+
 	deltaCheck = amax(diff)
 	logging.info("(shotgun) change in b: " + str(deltaCheck))
 
