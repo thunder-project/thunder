@@ -109,8 +109,14 @@ B = B[argsort(p2)[::1],:]
 logging.info("(cca) writing results...")
 time1 = dot(v1[:,0:k],A)
 time2 = dot(v2[:,0:k],B)
-savetxt(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-time.txt",time1,fmt='%.8f')
-savetxt(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-time.txt",time2,fmt='%.8f')
+savemat(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-time.mat",mdict={'time':time1},oned_as='column',do_compression='true')
+savemat(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-time.mat",mdict={'time':time2},oned_as='column',do_compression='true')
 for ic in range(0,c):
-  savetxt(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-space-cc-"+str(ic)+".txt",data1sub.map(lambda x : dot(transpose(x),dot(v1[:,0:k],A[:,ic]))).collect(),fmt='%.4f')
-  savetxt(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-space-cc-"+str(ic)+".txt",data2sub.map(lambda x : dot(transpose(x),dot(v2[:,0:k],B[:,ic]))).collect(),fmt='%.4f')
+  savemat(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-space-cc-"+str(ic)+".txt",mdict={'space':data1sub.map(lambda x : dot(transpose(x),dot(v1[:,0:k],A[:,ic]))).collect()},oned_as='column',do_compression='true')
+  savemat(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-space-cc-"+str(ic)+".txt",mdict={'space':data2sub.map(lambda x : dot(transpose(x),dot(v2[:,0:k],B[:,ic]))).collect()},oned_as='column',do_compression='true')
+
+#savetxt(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-time.txt",time1,fmt='%.8f')
+#savetxt(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-time.txt",time2,fmt='%.8f')
+#for ic in range(0,c):
+#  savetxt(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-space-cc-"+str(ic)+".txt",data1sub.map(lambda x : dot(transpose(x),dot(v1[:,0:k],A[:,ic]))).collect(),fmt='%.4f')
+#  savetxt(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-space-cc-"+str(ic)+".txt",data2sub.map(lambda x : dot(transpose(x),dot(v2[:,0:k],B[:,ic]))).collect(),fmt='%.4f')
