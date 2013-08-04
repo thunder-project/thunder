@@ -2,54 +2,62 @@ import sys
 import os
 from numpy import *
 from scipy.linalg import *
-from scipy.sparse import *
+from scipy.io import * 
 from pyspark import SparkContext
 import logging
 
-if len(sys.argv) < 6:
+if len(sys.argv) < 7:
   print >> sys.stderr, \
-  "(regress) usage: regress <master> <inputFile_A> <inputFile_y1> <inputFile_y2> <outputFile> <mxLag>"
+  "(regress) usage: regress <master> <inputFile_Y> <inputFile_x1> <inputFile_x2> <outputFile> <mxLag>"
   exit(-1)
 
 def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[1:])
-	ts = (ts - mean(ts))/std(ts)
+	#ts = (ts - mean(ts))
 	return ts
 
+def getRegStats(y,X):
+	betaest = dot(transpose(y),pinv(X))
+	predic = dot(betaest,X)
+	SSE = sum((predic - y) ** 2)
+	SST = sum((y - mean(y)) ** 2)
+	r2 = 1 - SSE/SST
+	return hstack((betaest,r2))
+
 # parse inputs
-sc = SparkContext(sys.argv[1], "sta")
-inputFile_A = str(sys.argv[2])
-inputFile_y1 = str(sys.argv[3])
-inputFile_y2 = str(sys.argv[4])
+sc = SparkContext(sys.argv[1], "regress")
+inputFile_Y = str(sys.argv[2])
+inputFile_x1 = str(sys.argv[3])
+inputFile_x2 = str(sys.argv[4])
 mxLag = int(sys.argv[6])
-outputFile = str(sys.argv[5]) + "-sta-mxLag-" + str(mxLag)
+outputFile = str(sys.argv[5]) + "-regress-mxLag-" + str(mxLag)
+lags = arange(2*mxLag) - floor(2*mxLag/2)
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
 
 # parse data
 logging.info("(sta) loading data")
-lines_A = sc.textFile(inputFile_A)
-lines_y1 = sc.textFile(inputFile_y1)
-lines_y2 = sc.textFile(inputFile_y2)
-y1 = array([float(x) for x in lines_y1.collect()[0].split(' ')])
-y2 = array([float(x) for x in lines_y2.collect()[0].split(' ')])
-A = lines_A.map(parseVector)
-d = A.count()
-n = len(A.first())
-
-# subtract the mean and cache
-logging.info("(sta) subtracting mean")
-meanVec = A.reduce(lambda x,y : x+y) / n
-sub = A.map(lambda x : x - meanVec).cache()
+lines_Y = sc.textFile(inputFile_Y)
+lines_x1 = sc.textFile(inputFile_x1)
+lines_x2 = sc.textFile(inputFile_x2)
+x1 = array([float(x) for x in lines_x1.collect()[0].split(' ')])
+x2 = array([float(x) for x in lines_x2.collect()[0].split(' ')])
+Y = lines_Y.map(parseVector).cache()
+n = len(x1)
 
 # compute sta
 for lag in lags:
 	logging.info('(sta) computing sta with time lag ' + str(lag))
-	sta = sub.map(lambda x : mean(x * y))
+	X = vstack((ones((n,)),roll(x1,int(lag)),roll(x2,int(lag)),roll(x1*x2,int(lag))))
+	betas = Y.map(lambda y : getRegStats(y,X))
 	logging.info('(sta) saving results...')
 	nm = str(int(lag))
 	if (lag < 0):
 		nm = "n" + nm[1:]
-	savetxt(outputFile+"/"+"sta-lag-"+nm+".txt",sta.collect(),fmt='%.4f')
+	savemat(outputFile+"/"+"b1-lag-"+nm+".mat",mdict={'b1':betas.map(lambda x : x[1]).collect()},oned_as='column',do_compression='true')
+	savemat(outputFile+"/"+"b2-lag-"+nm+".mat",mdict={'b2':betas.map(lambda x : x[2]).collect()},oned_as='column',do_compression='true')
+	savemat(outputFile+"/"+"b12-lag-"+nm+".mat",mdict={'b12':betas.map(lambda x : x[3]).collect()},oned_as='column',do_compression='true')
+	savemat(outputFile+"/"+"r2-lag-"+nm+".mat",mdict={'r2':betas.map(lambda x : x[4]).collect()},oned_as='column',do_compression='true')
+	#savetxt(outputFile+"/"+"sta-lag-"+nm+".txt",sta.collect(),fmt='%.4f')
