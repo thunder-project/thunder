@@ -55,7 +55,7 @@ out = data.map(lambda x : getFourier(x,freq))
 
 # save results
 logging.info('(fourier) saving results')
-co = out.map(lambda x : x[0]).saveAsTextFile(outputFile+"/"+"co-freq-"+str(freq))
-ph = out.map(lambda x : x[1]).saveAsTextFile(outputFile+"/"+"ph-freq-"+str(freq))
+co = out.map(lambda x : x[0])
+ph = out.map(lambda x : x[1])
 savemat(outputFile+"/"+"co-freq-"+str(freq)+".mat",mdict={'co':co.collect()},oned_as='column',do_compression='true')
 savemat(outputFile+"/"+"ph-freq-"+str(freq)+".mat",mdict={'ph':ph.collect()},oned_as='column',do_compression='true')
