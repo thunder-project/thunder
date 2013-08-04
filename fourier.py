@@ -1,7 +1,7 @@
 # fourier <master> <inputFile> <outputFile> <freq>
 # 
 # computes the amplitude and phase of each time series
-# (stored as rows of a text file)
+# (stored as rows of a text file, with first entry as the index)
 #
 
 import sys
@@ -18,7 +18,10 @@ if len(sys.argv) < 5:
   exit(-1)
 
 def parseVector(line):
-  return array([float(x) for x in line.split(' ')])
+	vec = [float(x) for x in line.split(' ')]
+	ts = array(vec[1:])
+	ts = (ts - mean(ts))
+  return ts
 
 def getFourier(vec,freq):
 	vec = vec - mean(vec)
