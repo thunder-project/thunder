@@ -20,8 +20,8 @@ if len(sys.argv) < 5:
 def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[1:])
-	ts = (ts - mean(ts))
-  return ts
+	ts = ts - mean(ts)
+	return ts
 
 def getFourier(vec,freq):
 	vec = vec - mean(vec)
