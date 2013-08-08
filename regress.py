@@ -38,7 +38,7 @@ if not os.path.exists(outputFile):
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
 
 # parse data
-logging.info("(sta) loading data")
+logging.info("(regress) loading data")
 lines_Y = sc.textFile(inputFile_Y)
 lines_x1 = sc.textFile(inputFile_x1)
 lines_x2 = sc.textFile(inputFile_x2)
@@ -49,10 +49,10 @@ n = len(x1)
 
 # compute sta
 for lag in lags:
-	logging.info('(sta) computing sta with time lag ' + str(lag))
+	logging.info('(regress) doing regression with time lag ' + str(lag))
 	X = vstack((ones((n,)),roll(x1,int(lag)),roll(x2,int(lag)),roll(x1*x2,int(lag))))
 	betas = Y.map(lambda y : getRegStats(y,X))
-	logging.info('(sta) saving results...')
+	logging.info('(regress) saving results...')
 	nm = str(int(lag))
 	if (lag < 0):
 		nm = "n" + nm[1:]
@@ -60,4 +60,3 @@ for lag in lags:
 	savemat(outputFile+"/"+"b2-lag-"+nm+".mat",mdict={'b2':betas.map(lambda x : x[2]).collect()},oned_as='column',do_compression='true')
 	savemat(outputFile+"/"+"b12-lag-"+nm+".mat",mdict={'b12':betas.map(lambda x : x[3]).collect()},oned_as='column',do_compression='true')
 	savemat(outputFile+"/"+"r2-lag-"+nm+".mat",mdict={'r2':betas.map(lambda x : x[4]).collect()},oned_as='column',do_compression='true')
-	#savetxt(outputFile+"/"+"sta-lag-"+nm+".txt",sta.collect(),fmt='%.4f')
