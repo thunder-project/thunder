@@ -19,7 +19,7 @@ def parseVector(line):
 def getResp(y,X,lag):
 	X = X[:,hstack((arange(0,93),arange(130,259)))]
 	y = y[hstack((arange(0,93),arange(130,259)))]
-	inds1 = (X[0,:] == 1) & (X[1,:] == lag)
+	inds1 = (X[0,:] == 0) & (X[1,:] == lag)
 	return mean(y[inds1])
 
 # parse inputs
