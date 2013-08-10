@@ -17,8 +17,9 @@ def parseVector(line):
 	#ts = (ts - mean(ts))
 	return ts
 
-def getRegStats(y,X):
-	betaest = dot(transpose(y),pinv(X))
+def getRegStats(y,pinvX):
+	y = y[hstack((arange(0,93),arange(130,259)))]
+	betaest = dot(transpose(y),pinvX)
 	predic = dot(betaest,X)
 	SSE = sum((predic - y) ** 2)
 	SST = sum((y - mean(y)) ** 2)
@@ -51,7 +52,9 @@ n = len(x1)
 for lag in lags:
 	logging.info('(regress) doing regression with time lag ' + str(lag))
 	X = vstack((ones((n,)),roll(x1,int(lag)),roll(x2,int(lag)),roll(x1*x2,int(lag))))
-	betas = Y.map(lambda y : getRegStats(y,X))
+	X = X[:,hstack((arange(0,93),arange(130,259)))]
+	Xpinv = pinv(X)
+	betas = Y.map(lambda y : getRegStats(y,Xpinv))
 	logging.info('(regress) saving results...')
 	nm = str(int(lag))
 	if (lag < 0):
