@@ -46,7 +46,7 @@ y = (y - mean(y))/std(y)
 A = lines_A.map(parseVector).cache()
 
 # compute sta
-logging.info('(delay) computing delay'
+logging.info('(delay) computing delay')
 sta = A.map(lambda x : getSta(x,y,lags))
 logging.info('(delay) saving results...')
 savemat(outputFile+"/"+"ph.mat",mdict={'ph':sta.map(lambda x : x[0]).collect()},oned_as='column',do_compression='true')
