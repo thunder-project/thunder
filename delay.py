@@ -25,6 +25,8 @@ def getSta(x,y,lags):
 	w = zeros((len(lags),1))
 	for i in arange(len(lags)):
 		w[i] = mean(x * roll(y,int(lags[i])))
+	print(dot(x,w))
+	print(max(w))
 	return [dot(x,w)/sum(w),max(w)]
 
 # parse inputs
