@@ -18,6 +18,7 @@ def parseVector(line):
 	#ts = (ts - mean(ts))/std(ts)
 	med = median(ts)
 	ts = (ts - med) / (med)
+	ts = (ts - mean(ts)) / std(ts)
 	return ts
 
 # parse inputs
