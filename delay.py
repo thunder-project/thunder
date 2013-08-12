@@ -23,7 +23,7 @@ def parseVector(line):
 
 def getSta(x,y,lags):
 	for i in arange(len(lags)):
-		w[i] = mean(x * roll(y,int(lag[i])))
+		w[i] = mean(x * roll(y,int(lags[i])))
 	return [dot(x,w)/sum(w),max(w)]
 
 # parse inputs
