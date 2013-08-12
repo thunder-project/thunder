@@ -21,7 +21,7 @@ def parseVector(line):
 	ts = (ts - mean(ts)) / std(ts)
 	return ts
 
-def getSta(x,y,lags)
+def getSta(x,y,lags):
 	for i in arange(length(lags)):
 		w[i] = mean(x * roll(y,int(lag[i])))
 	return [dot(x,w)/sum(w),max(w)]
@@ -47,7 +47,7 @@ A = lines_A.map(parseVector).cache()
 
 # compute sta
 logging.info('(delay) computing delay'
-sta = A.map(lambda x : getSta(x))
+sta = A.map(lambda x : getSta(x,y,lags))
 logging.info('(delay) saving results...')
 savemat(outputFile+"/"+"ph.mat",mdict={'ph':sta.map(lambda x : x[0]).collect()},oned_as='column',do_compression='true')
 savemat(outputFile+"/"+"co.mat",mdict={'co':sta.map(lambda x : x[1]).collect()},oned_as='column',do_compression='true')
