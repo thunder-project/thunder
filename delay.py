@@ -25,8 +25,6 @@ def getSta(x,y,lags):
 	w = zeros((len(lags),1))
 	for i in arange(len(lags)):
 		w[i] = mean(x * roll(y,int(lags[i])))
-	print(dot(lags,w))
-	print(max(w))
 	return [dot(lags,w)/sum(w),max(w)]
 
 # parse inputs
@@ -46,7 +44,7 @@ lines_A = sc.textFile(inputFile_A)
 lines_y = sc.textFile(inputFile_y)
 y = array([float(x) for x in lines_y.collect()[0].split(' ')])
 y = (y - mean(y))/std(y)
-A = lines_A.map(parseVector).cache()
+A = lines_A.map(parseVector)
 
 # compute sta
 logging.info('(delay) computing delay')
