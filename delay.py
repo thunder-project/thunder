@@ -2,7 +2,6 @@ import sys
 import os
 from numpy import *
 from scipy.linalg import *
-from scipy.sparse import *
 from scipy.io import * 
 from pyspark import SparkContext
 import logging
@@ -25,10 +24,7 @@ def getSta(x,y,lags):
 	w = zeros((len(lags),1))
 	for i in arange(len(lags)):
 		w[i] = mean(x * roll(y,int(lags[i])))
-	if abs(min(w)) >= abs(max(w)):
-		co = min(w)
-	if abs(max(w)) > abs(min(w)):
-		co = max(w)
+	co = norm(w)
 	wscale = w - min(w)
 	wscale = wscale / max(wscale)
 	ph = dot(lags,wscale/sum(wscale))
