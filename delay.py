@@ -25,9 +25,9 @@ def getSta(x,y,lags):
 	w = zeros((len(lags),1))
 	for i in arange(len(lags)):
 		w[i] = mean(x * roll(y,int(lags[i])))
-	print(dot(x,w))
+	print(dot(lags,w))
 	print(max(w))
-	return [dot(x,w)/sum(w),max(w)]
+	return [dot(lags,w)/sum(w),max(w)]
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "delay")
