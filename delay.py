@@ -25,7 +25,10 @@ def getSta(x,y,lags):
 	w = zeros((len(lags),1))
 	for i in arange(len(lags)):
 		w[i] = mean(x * roll(y,int(lags[i])))
-	co = mean(w)
+	if abs(min(w)) >= abs(max(w)):
+		co = min(w)
+	if abs(max(w)) > abs(min(w)):
+		co = max(w)
 	wscale = w - min(w)
 	wscale = wscale / max(wscale)
 	ph = dot(lags,wscale/sum(wscale))
