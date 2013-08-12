@@ -14,8 +14,8 @@ if len(sys.argv) < 4:
 
 def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
-	ts = array(vec[1:])
-	return (int(vec[0]),ts)
+	ts = array(vec[3:])
+	return ts
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "ref")
@@ -29,7 +29,7 @@ Y = lines_Y.map(parseVector)
 
 # compute ref
 logging.info('(ref) computing reference image')
-ref = Y.map(lambda (k,x) : median(x))
+ref = Y.map(lambda x : median(x))
 logging.info('(ref) saving results...')
 savemat(outputFile+"-ref.mat",mdict={'ref':ref.collect()},oned_as='column',do_compression='true')
 #savetxt(outputFile+"/"+"sta-lag-"+nm+".txt",sta.collect(),fmt='%.4f')
