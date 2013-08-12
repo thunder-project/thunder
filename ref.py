@@ -7,7 +7,7 @@ from scipy.io import *
 from pyspark import SparkContext
 import logging
 
-if len(sys.argv) < 3:
+if len(sys.argv) < 4:
   print >> sys.stderr, \
   "(sta) usage: ref <master> <inputFile_Y> <outputFile>"
   exit(-1)
@@ -25,7 +25,7 @@ outputFile = str(sys.argv[3])
 # parse data
 logging.info("(ref) loading data")
 lines_Y = sc.textFile(inputFile_Y)
-Y = lines_Y.map(parseVector).cache()
+Y = lines_Y.map(parseVector)
 
 # compute ref
 logging.info('(ref) computing reference image')
