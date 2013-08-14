@@ -14,8 +14,8 @@ if len(sys.argv) < 4:
 
 def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
-	ts = ((int(vec[0]),int(vec[1]),int(vec[2])),array(vec[3:]))
-	return ts
+	ts = array(vec[3:]) # get tseries
+	return ((int(vec[0]),int(vec[1]),int(vec[2])),ts) # (x,y,z),(tseries) pair 
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "ref")
@@ -28,11 +28,16 @@ lines_X = sc.textFile(inputFile_X)
 X = lines_X.map(parseVector)
 
 # get z ordering
-zvals = X.filter(lambda (k,d) : k[0] == 1 & k[1] == 1).map(lambda (k,d) : k[2]).collect()
+zvals = X.filter(lambda (k,x) : k[0] == 1 & k[1] == 1).map(lambda (k,x) : k[2]).collect()
+savemat(outputFile+"/"+"zinds.mat",mdict={'zinds':resp.collect()},oned_as='column',do_compression='true')
 
 # compute ref
 logging.info('(ref) computing reference image')
-ref = X.mapValues(lambda x : median(x))
+med = X.mapValues(lambda x : median(x))
+ref = med.map(lambda (k,x) : x).collect()
 logging.info('(ref) saving results...')
-savemat(outputFile+"ref.mat",mdict={'ref':ref.collect()},oned_as='column',do_compression='true')
-#savetxt(outputFile+"/"+"sta-lag-"+nm+".txt",sta.collect(),fmt='%.4f')
+savemat(outputFile+"ref.mat",mdict={'ref':ref},oned_as='column',do_compression='true')
+
+# compute x projection
+xproj = med.map(lambda (k,x) : (k[0],x)).reduceByKey(lambda x,y : x+y).collect()
+savemat(outputFile+"xproj.mat",mdict={'xproj':xproj},oned_as='column',do_compression='true')
