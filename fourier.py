@@ -22,7 +22,6 @@ def parseVector(line):
 	ts = array(vec[3:]) # get tseries
 	med = median(ts)
 	ts = (ts - med) / (med) # convert to dff
-	ts = ts - mean(ts)
 	return ts
 
 def getFourier(vec,freq):
