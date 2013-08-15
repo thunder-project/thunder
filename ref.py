@@ -28,8 +28,8 @@ lines_X = sc.textFile(inputFile_X)
 X = lines_X.map(parseVector).cache()
 
 # get z ordering
-#zinds = X.filter(lambda (k,x) : k[0] == 1 & k[1] == 1).map(lambda (k,x) : k[2]).collect()
-#savemat(outputFile+"/"+"zinds.mat",mdict={'zinds':zinds},oned_as='column',do_compression='true')
+zinds = X.filter(lambda (k,x) : k[0] == 1000 & k[1] == 1000).map(lambda (k,x) : k[2]).collect()
+savemat(outputFile+"/"+"zinds.mat",mdict={'zinds':zinds},oned_as='column',do_compression='true')
 
 # compute ref
 #logging.info('(ref) computing reference image')
@@ -39,11 +39,11 @@ X = lines_X.map(parseVector).cache()
 #savemat(outputFile+"ref.mat",mdict={'ref':ref},oned_as='column',do_compression='true')
 
 # compute projection
-xproj = X.map(lambda (k,x) : (k[0],median(x))).reduceByKey(lambda x,y : x+y, 3000).collect()
-savemat(outputFile+"xproj.mat",mdict={'xproj':xproj},oned_as='column',do_compression='true')
+#xproj = X.map(lambda (k,x) : (k[0],median(x))).reduceByKey(lambda x,y : x+y, 3000).collect()
+#savemat(outputFile+"xproj.mat",mdict={'xproj':xproj},oned_as='column',do_compression='true')
 
-yproj = X.map(lambda (k,x) : (k[1],median(x))).reduceByKey(lambda x,y : x+y, 3000).collect()
-savemat(outputFile+"yproj.mat",mdict={'yproj':yproj},oned_as='column',do_compression='true')
+#yproj = X.map(lambda (k,x) : (k[1],median(x))).reduceByKey(lambda x,y : x+y, 3000).collect()
+#savemat(outputFile+"yproj.mat",mdict={'yproj':yproj},oned_as='column',do_compression='true')
 
-zproj = X.map(lambda (k,x) : (k[2],median(x))).reduceByKey(lambda x,y : x+y, 3000).collect()
-savemat(outputFile+"zproj.mat",mdict={'zproj':zproj},oned_as='column',do_compression='true')
+#zproj = X.map(lambda (k,x) : (k[2],median(x))).reduceByKey(lambda x,y : x+y, 3000).collect()
+#savemat(outputFile+"zproj.mat",mdict={'zproj':zproj},oned_as='column',do_compression='true')
