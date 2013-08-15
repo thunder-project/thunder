@@ -6,7 +6,7 @@ from scipy.io import *
 from pyspark import SparkContext
 import logging
 
-if len(sys.argv) < 7:
+if len(sys.argv) < 5:
   print >> sys.stderr, \
   "(trigger) usage: trigger <master> <inputFile_X> <inputFile_t> <outputFile>"
   exit(-1)
@@ -15,6 +15,11 @@ def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
 	return ((int(vec[0]),int(vec[1]),int(vec[2])),ts) # (x,y,z),(tseries) pair 
+
+def getResp(x,t,it):
+	md = median(x)
+	x = (x - md) / md # convert to dff
+	resp = mean(x[t==it]) # get mean response for desired inds
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "trigger")
@@ -30,15 +35,10 @@ logging.info("(trigger) loading data")
 lines_X = sc.textFile(inputFile_X) # the data
 X = lines_X.map(parseVector).cache()
 t = loadmat(inputFile_t)['trigInds'][0] # the triggers
-n = len(t)
-
-# get z ordering
-zvals = X.filter(lambda (k,d) : k[0] == 1 & k[1] == 1).map(lambda (k,d) : k[2]).collect()
-savemat(outputFile+"/"+"zinds.mat",mdict={'zinds':resp.collect()},oned_as='column',do_compression='true')
 
 # compute triggered movie
 for it in unique(t):
 	logging.info('(trigger) getting triggered response at frame ' + str(it))
-	resp = X.map(lambda x : mean(x[t==it])).collect()
+	resp = X.map(lambda x : getResp(x,t,it)).collect()
 	logging.info('(trigger) saving results...')
 	savemat(outputFile+"/"+"resp-frame-"+str(int(it))+".mat",mdict={'resp':resp},oned_as='column',do_compression='true')
