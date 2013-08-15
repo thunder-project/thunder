@@ -39,6 +39,6 @@ t = loadmat(inputFile_t)['trigInds'][0] # the triggers
 # compute triggered movie
 for it in unique(t):
 	logging.info('(trigger) getting triggered response at frame ' + str(it))
-	resp = X.map(lambda x : getResp(x,t,it)).collect()
+	resp = X.mapValues(lambda x : getResp(x,t,it)).collect()
 	logging.info('(trigger) saving results...')
 	savemat(outputFile+"/"+"resp-frame-"+str(int(it))+".mat",mdict={'resp':resp},oned_as='column',do_compression='true')
