@@ -38,6 +38,12 @@ ref = med.map(lambda (k,x) : x).collect()
 logging.info('(ref) saving results...')
 savemat(outputFile+"ref.mat",mdict={'ref':ref},oned_as='column',do_compression='true')
 
-# compute x projection
+# compute projection
 xproj = med.map(lambda (k,x) : (k[0],x)).reduceByKey(lambda x,y : x+y).collect()
 savemat(outputFile+"xproj.mat",mdict={'xproj':xproj},oned_as='column',do_compression='true')
+
+yproj = med.map(lambda (k,x) : (k[1],x)).reduceByKey(lambda x,y : x+y).collect()
+savemat(outputFile+"yproj.mat",mdict={'yproj':yproj},oned_as='column',do_compression='true')
+
+zproj = med.map(lambda (k,x) : (k[2],x)).reduceByKey(lambda x,y : x+y).collect()
+savemat(outputFile+"zproj.mat",mdict={'zproj':zproj},oned_as='column',do_compression='true')
