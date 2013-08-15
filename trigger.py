@@ -14,13 +14,9 @@ if len(sys.argv) < 5:
 def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
-	return ((int(vec[0]),int(vec[1]),int(vec[2])),ts) # (x,y,z),(tseries) pair 
-
-def getResp(x,t,it):
-	md = median(x)
-	x = (x - md) / md # convert to dff
-	resp = mean(x[t==it]) # get mean response for desired inds
-	return resp
+	med = median(ts)
+	ts = (ts - med) / (med) # convert to dff
+	return ts
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "trigger")
@@ -40,6 +36,6 @@ t = loadmat(inputFile_t)['trigInds'][0] # the triggers
 # compute triggered movie
 for it in unique(t):
 	logging.info('(trigger) getting triggered response at frame ' + str(it))
-	resp = X.mapValues(lambda x : getResp(x,t,it)).collect()
+	resp = X.map(lambda x : mean(x[t==it]))
 	logging.info('(trigger) saving results...')
-	savemat(outputFile+"/"+"resp-frame-"+str(int(it))+".mat",mdict={'resp':resp},oned_as='column',do_compression='true')
+	savemat(outputFile+"/"+"resp-frame-"+str(int(it))+".mat",mdict={'resp':resp.collect()},oned_as='column',do_compression='true')
