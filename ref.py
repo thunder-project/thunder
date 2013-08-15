@@ -28,8 +28,8 @@ lines_X = sc.textFile(inputFile_X)
 X = lines_X.map(parseVector).cache()
 
 # get z ordering
-zvals = X.filter(lambda (k,x) : k[0] == 1 & k[1] == 1).map(lambda (k,x) : k[2]).collect()
-savemat(outputFile+"/"+"zinds.mat",mdict={'zinds':resp.collect()},oned_as='column',do_compression='true')
+zinds = X.filter(lambda (k,x) : k[0] == 1 & k[1] == 1).map(lambda (k,x) : k[2]).collect()
+savemat(outputFile+"/"+"zinds.mat",mdict={'zinds':zinds},oned_as='column',do_compression='true')
 
 # compute ref
 logging.info('(ref) computing reference image')
