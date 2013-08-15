@@ -20,6 +20,7 @@ def getResp(x,t,it):
 	md = median(x)
 	x = (x - md) / md # convert to dff
 	resp = mean(x[t==it]) # get mean response for desired inds
+	return resp
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "trigger")
