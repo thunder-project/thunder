@@ -34,8 +34,7 @@ logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,form
 # parse data
 logging.info("(delay) loading data")
 lines_X = sc.textFile(inputFile_X)
-lines_y = sc.textFile(inputFile_y)
-y = array([float(x) for x in lines_y.collect()[0].split(' ')])
+y = loadmat(inputFile_y)['boutFrames'][0] # the triggers
 y = (y - mean(y))/std(y)
 A = lines_A.map(parseVector)
 
