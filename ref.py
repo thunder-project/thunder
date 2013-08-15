@@ -25,7 +25,7 @@ outputFile = str(sys.argv[3])
 # parse data
 logging.info("(ref) loading data")
 lines_X = sc.textFile(inputFile_X)
-X = lines_X.map(parseVector)
+X = lines_X.map(parseVector).cache()
 
 # get z ordering
 zvals = X.filter(lambda (k,x) : k[0] == 1 & k[1] == 1).map(lambda (k,x) : k[2]).collect()
