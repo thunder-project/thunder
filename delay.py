@@ -33,7 +33,7 @@ logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,form
 
 # parse data
 logging.info("(delay) loading data")
-lines_X = sc.textFile(inputFile_A)
+lines_X = sc.textFile(inputFile_X)
 lines_y = sc.textFile(inputFile_y)
 y = array([float(x) for x in lines_y.collect()[0].split(' ')])
 y = (y - mean(y))/std(y)
