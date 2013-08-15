@@ -33,17 +33,17 @@ X = lines_X.map(parseVector).cache()
 
 # compute ref
 #logging.info('(ref) computing reference image')
-med = X.mapValues(lambda x : median(x))
+#med = X.mapValues(lambda x : median(x))
 #ref = med.map(lambda (k,x) : x).collect()
 #logging.info('(ref) saving results...')
 #savemat(outputFile+"ref.mat",mdict={'ref':ref},oned_as='column',do_compression='true')
 
 # compute projection
-xproj = med.map(lambda (k,x) : (k[0],x)).reduceByKey(lambda x,y : x+y, 3000).collect()
+xproj = X.map(lambda (k,x) : (k[0],median(x))).reduceByKey(lambda x,y : x+y, 3000).collect()
 savemat(outputFile+"xproj.mat",mdict={'xproj':xproj},oned_as='column',do_compression='true')
 
-yproj = med.map(lambda (k,x) : (k[1],x)).reduceByKey(lambda x,y : x+y, 3000).collect()
+yproj = X.map(lambda (k,x) : (k[1],median(x))).reduceByKey(lambda x,y : x+y, 3000).collect()
 savemat(outputFile+"yproj.mat",mdict={'yproj':yproj},oned_as='column',do_compression='true')
 
-zproj = med.map(lambda (k,x) : (k[2],x)).reduceByKey(lambda x,y : x+y, 3000).collect()
+zproj = X.map(lambda (k,x) : (k[2],median(x))).reduceByKey(lambda x,y : x+y, 3000).collect()
 savemat(outputFile+"zproj.mat",mdict={'zproj':zproj},oned_as='column',do_compression='true')
