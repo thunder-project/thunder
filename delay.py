@@ -36,7 +36,7 @@ logging.info("(delay) loading data")
 lines_X = sc.textFile(inputFile_X)
 y = loadmat(inputFile_y)['boutFrames'][0] # the triggers
 y = (y - mean(y))/std(y)
-A = lines_A.map(parseVector)
+X = lines_X.map(parseVector)
 
 # make predictor
 Y = zeros((len(lags),len(y)))
@@ -51,7 +51,7 @@ for i in arange(len(lags)):
 
 # compute sta
 logging.info('(delay) computing delay')
-sta = A.map(lambda x : dot(Y,x))
+sta = X.map(lambda x : dot(Y,x))
 norm = sta.map(lambda x : norm(x)).collect()
 
 logging.info('(delay) saving results...')
