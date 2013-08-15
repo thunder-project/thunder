@@ -37,7 +37,7 @@ zvals = X.filter(lambda (k,d) : k[0] == 1 & k[1] == 1).map(lambda (k,d) : k[2]).
 savemat(outputFile+"/"+"zinds.mat",mdict={'zinds':resp.collect()},oned_as='column',do_compression='true')
 
 # compute triggered movie
-for it in unique(t)
+for it in unique(t):
 	logging.info('(trigger) getting triggered response at frame ' + str(it))
 	resp = X.map(lambda x : mean(x[t==it])).collect()
 	logging.info('(trigger) saving results...')
