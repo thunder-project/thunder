@@ -31,11 +31,18 @@ logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,form
 logging.info("(trigger) loading data")
 lines_X = sc.textFile(inputFile_X) # the data
 X = lines_X.map(parseVector).cache()
-t = loadmat(inputFile_t)['trigInds'][0] # the triggers
+t = loadmat(inputFile_t)['trigInds'] # the triggers
 
 # compute triggered movie
-for it in unique(t):
-	logging.info('(trigger) getting triggered response at frame ' + str(it))
-	resp = X.map(lambda x : mean(x[t==it]))
-	logging.info('(trigger) saving results...')
-	savemat(outputFile+"/"+"resp-frame-"+str(int(it))+".mat",mdict={'resp':resp.collect()},oned_as='column',do_compression='true')
+if min(shape(t)) == 1 :
+	for it in unique(t):
+		logging.info('(trigger) getting triggered response at frame ' + str(it))
+		resp = X.map(lambda x : mean(x[t[0]==it]))
+		logging.info('(trigger) saving results...')
+		savemat(outputFile+"/"+"resp-frame-"+str(int(it))+".mat",mdict={'resp':resp.collect()},oned_as='column',do_compression='true')
+else :
+	for it in range(shape(t)[0])
+		logging.info('(trigger) getting triggered response at frame ' + str(it))
+		resp = X.map(lambda x : dot(t,x))
+		logging.info('(trigger) saving results...')
+		savemat(outputFile+"/"+"resp-frame-"+str(int(it))+".mat",mdict={'resp':resp.collect()},oned_as='column',do_compression='true')
