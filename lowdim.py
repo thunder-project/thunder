@@ -23,6 +23,7 @@ sc = SparkContext(sys.argv[1], "lowdim")
 inputFile_X = str(sys.argv[2])
 inputFile_t = str(sys.argv[3])
 outputFile = str(sys.argv[4]) + "-lowdim"
+k = int(sys.argv[5])
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -30,18 +31,18 @@ logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,form
 # parse data
 logging.info("(lowdim) loading data")
 lines_X = sc.textFile(inputFile_X) # the data
-X = lines_X.map(parseVector).cache()
+X = lines_X.map(parseVector)
 t = loadmat(inputFile_t)['trigInds'] # the triggers
 
 # compute triggered responses
 if min(shape(t)) == 1 :
-		resp = X.map(lambda x : mean(x[t[0]==it]))
+		resp = X.map(lambda x : mean(x[t[0]==it])).cache()
 else :
-		resp = X.map(lambda x : dot(t,x))
+		resp = X.map(lambda x : dot(t,x)).cache()
 
 # compute covariance
 n = resp.count()
-meanVec = resp.reduce(lambda x,y : x+y) / resp.count()
+meanVec = resp.reduce(lambda x,y : x+y) / n
 cov = resp.map(lambda x : outer(x-meanVec,x-meanVec)).reduce(lambda x,y : (x + y)) / n
 
 logging.info("(lowdim) doing eigendecomposition")
