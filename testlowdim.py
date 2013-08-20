@@ -35,4 +35,4 @@ X = lines_X.map(parseVector)
 t = loadmat(inputFile_t)['trigInds'] # the triggers
 
 out = X.map(lambda x : mean(x))
-savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
+savemat(outputFile+"/"+"scores.mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
