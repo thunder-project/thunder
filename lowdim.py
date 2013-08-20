@@ -6,7 +6,7 @@ from scipy.io import *
 from pyspark import SparkContext
 import logging
 
-if len(sys.argv) < 5:
+if len(sys.argv) < 6:
   print >> sys.stderr, \
   "(lowdim) usage: lowdim <master> <inputFile_X> <inputFile_t> <outputFile> <k>"
   exit(-1)
