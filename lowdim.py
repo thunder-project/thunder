@@ -56,7 +56,7 @@ logging.info("(lowdim) writing evecs and evals")
 savemat(outputFile+"/"+"evecs.mat",mdict={'evecs':sortedDim2},oned_as='column',do_compression='true')
 savemat(outputFile+"/"+"evals.mat",mdict={'evals':latent},oned_as='column',do_compression='true')
 
-for ik in range(0,k)
+for ik in range(0,k):
 	logging.info("(lowdim) writing scores for pc " + str(ik))
 	out = resp.map(lambda x : inner(x-meanVec,sortedDim2[ik,:]))
 	savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
