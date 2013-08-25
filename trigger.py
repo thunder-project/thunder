@@ -42,7 +42,7 @@ if min(shape(t)) == 1 :
 		logging.info('(trigger) saving results...')
 		savemat(outputFile+"/"+"resp-frame-"+str(int(it))+".mat",mdict={'resp':resp.collect()},oned_as='column',do_compression='true')
 else :
-	for it in range(shape(t)[0])
+	for it in range(shape(t)[0]) :
 		logging.info('(trigger) getting triggered response at frame ' + str(it))
 		resp = X.map(lambda x : dot(t,x))
 		logging.info('(trigger) saving results...')
