@@ -37,7 +37,8 @@ t = loadmat(inputFile_t)['trigInds'] # the triggers
 
 # compute triggered responses
 if min(shape(t)) == 1 :
-		resp = X.map(lambda x : mean(x[t[0]==it]))
+		# option not yet implemented!
+		#resp = X.map(lambda x : mean(x[t[0]==it]))
 else :
 		resp = X.map(lambda x : dot(t,x))
 
