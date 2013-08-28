@@ -15,7 +15,7 @@ def loadFile(index,iterator):
 	nCols = 2034
 	nRows = 1134
 	nTime = 3430
-	plane = int(floor(index/nCols))
+	plane = int(floor(index/nCols))+1
 	col = int(mod(index,nCols))
 	inputfilename = inputDir + '/Plane{:02g}.stack'.format(plane)
 	fid = open(inputfilename, 'rb')
