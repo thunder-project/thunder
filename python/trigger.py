@@ -29,7 +29,7 @@ if not os.path.exists(outputFile):
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
 
 # parse data
-logging.info("(trigger) loading data")
+#logging.info("(trigger) loading data")
 lines_X = sc.textFile(inputFile_X) # the data
 X = lines_X.map(parseVector).cache()
 t = loadmat(inputFile_t)['trigInds'] # the triggers
