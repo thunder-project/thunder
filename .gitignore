@@ -1,4 +1,7 @@
 $ cat .gitignore
 .idea
+.idea_modules
 .DS_Store
 thunder.iml
+project*
+target*
