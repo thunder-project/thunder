@@ -14,9 +14,9 @@ if len(sys.argv) < 6:
 def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
-	#med = median(ts)
-	#ts = (ts - med) / (med) # convert to dff
-	ts = ts / 5000
+	med = median(ts)
+	ts = (ts - med) / (med) # convert to dff
+	#ts = ts / 5000
 	return ts
 
 # parse inputs
@@ -40,7 +40,7 @@ if min(shape(t)) == 1 :
 		# option not yet implemented!
 		resp = X.map(lambda x : mean(x[t[0]==it]))
 else :
-		resp = X.map(lambda x : dot(t,x) - mean(dot(t,x)))
+		resp = X.map(lambda x : dot(t,x))
 
 # compute covariance
 logging.info("(lowdim) getting count")
@@ -64,5 +64,5 @@ savemat(outputFile+"/"+"evals.mat",mdict={'evals':latent},oned_as='column',do_co
 
 for ik in range(0,k):
 	logging.info("(lowdim) writing scores for pc " + str(ik))
-	out = X.map(lambda x : float16(inner(dot(t,x)-mean(dot(t,x)) - meanVec,sortedDim2[ik,:])))
+	out = X.map(lambda x : float16(inner(dot(t,x) - meanVec,sortedDim2[ik,:])))
 	savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
