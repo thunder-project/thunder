@@ -45,10 +45,10 @@ else :
 # compute covariance
 logging.info("(lowdim) getting count")
 n = resp.count()
-logging.info("(lowdim) computing mean")
-meanVec = resp.reduce(lambda x,y : x+y) / n
+#logging.info("(lowdim) computing mean")
+#meanVec = resp.reduce(lambda x,y : x+y) / n
 logging.info("(lowdim) computing covariance")
-cov = resp.map(lambda x : outer(x-meanVec,x-meanVec)).reduce(lambda x,y : (x + y)) / n
+cov = resp.map(lambda x : outer(x-mean(x),x-mean(x))).reduce(lambda x,y : (x + y)) / n
 
 logging.info("(lowdim) doing eigendecomposition")
 w, v = eig(cov)
