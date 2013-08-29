@@ -40,15 +40,15 @@ if min(shape(t)) == 1 :
 		# option not yet implemented!
 		resp = X.map(lambda x : mean(x[t[0]==it]))
 else :
-		resp = X.map(lambda x : dot(t,x))
+		resp = X.map(lambda x : dot(t,x) - mean(dot(t,x)))
 
 # compute covariance
 logging.info("(lowdim) getting count")
 n = resp.count()
-#logging.info("(lowdim) computing mean")
-#meanVec = resp.reduce(lambda x,y : x+y) / n
+logging.info("(lowdim) computing mean")
+meanVec = resp.reduce(lambda x,y : x+y) / n
 logging.info("(lowdim) computing covariance")
-cov = resp.map(lambda x : outer(x-mean(x),x-mean(x))).reduce(lambda x,y : (x + y)) / n
+cov = resp.map(lambda x : outer(x-meanVec,x-meanVec)).reduce(lambda x,y : (x + y)) / n
 
 logging.info("(lowdim) doing eigendecomposition")
 w, v = eig(cov)
@@ -64,5 +64,5 @@ savemat(outputFile+"/"+"evals.mat",mdict={'evals':latent},oned_as='column',do_co
 
 for ik in range(0,k):
 	logging.info("(lowdim) writing scores for pc " + str(ik))
-	out = X.map(lambda x : float16(inner(dot(t,x)-mean(dot(t,x)),sortedDim2[ik,:])))
+	out = X.map(lambda x : float16(inner(dot(t,x)-mean(dot(t,x)) - meanVec,sortedDim2[ik,:])))
 	savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
