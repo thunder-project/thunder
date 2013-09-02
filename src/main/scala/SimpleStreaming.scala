@@ -1,34 +1,69 @@
-
+import spark.SparkContext._
 import spark.streaming.{Seconds, StreamingContext}
 import spark.streaming.StreamingContext._
+import spark.util.Vector
 
-/**
- * Counts words in new text files created in the given directory
- * Usage: HdfsWordCount <master> <directory>
- *   <master> is the Spark master URL.
- *   <directory> is the directory that Spark Streaming will use to find and read new text files.
- *
- * To run this on your local machine on directory `localdir`, run this example
- *    `$ ./run spark.streaming.examples.HdfsWordCount local[2] localdir`
- * Then create a text file in `localdir` and the words in the file will get counted.
- */
 object SimpleStreaming {
+
+  def parseVector(line: String): (Int,Vector) = {
+    val nums = line.split(' ') // split line into numbers
+    val k = nums(0).toInt  // get index as key
+    val v = Vector(nums.slice(1,nums.length).map(_ toDouble) :+ 1.toDouble) // get values, append 1 for counting
+    return (k,v)
+  }
+
   def main(args: Array[String]) {
     if (args.length < 2) {
-      System.err.println("Usage: HdfsWordCount <master> <directory>")
+      System.err.println("Usage: SimpleStreaming <master> <directory>")
       System.exit(1)
     }
 
-    // Create the context
+    // create spark context
     val ssc = new StreamingContext(args(0), "SimpleStreaming", Seconds(2),
       System.getenv("SPARK_HOME"), List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
+    ssc.checkpoint("/Users/freemanj11/streamingresults/")
 
-    // Create the FileInputDStream on the directory and use the
-    // stream to count words in new files created
-    val lines = ssc.textFileStream(args(1))
-    val words = lines.flatMap(_.split(" "))
-    val wordCounts = words.map(x => (x, 1)).reduceByKey(_ + _)
-    wordCounts.print()
+    // update state
+    val updateFunc = (values: Seq[Vector], state: Option[Vector]) => {
+      val currentState = values.foldLeft(Vector(0,0,0,0))(_+_) // ca, ephys, swim, count
+      val previousState = state.getOrElse(Vector(0,0,0,0,0)) // baseLineTot, baseLine, diff1, diff2, count
+      val count = currentState(3) + previousState(4) // update count
+      var baseLineTot, baseLine, diff1, diff2 = 0.toDouble // initialize vars
+      if (currentState(3) != 0.toDouble) { // if we have data, update states
+        baseLineTot = currentState(0) + previousState(0)
+        baseLine = baseLineTot / count
+        if (currentState(2) == 0) { // if condition is 0
+          diff1 = previousState(2) + ((currentState(0) - baseLine) / (baseLine + 0.1))
+        }
+        else{
+          diff2 = previousState(3) + ((currentState(0) - baseLine) / (baseLine + 0.1))
+        }
+      }
+      else { // otherwise use previous
+        baseLineTot = previousState(0)
+        baseLine = previousState(1)
+        diff1 = previousState(2)
+        diff2 = previousState(3)
+      }
+      Some(Vector(baseLineTot,baseLine,diff1,diff2,count))
+    }
+
+    // main streaming operations
+    val lines = ssc.textFileStream(args(1)) // directory to monitor
+    val dataStream = lines.map(parseVector _) // parse data
+    val stateStream = dataStream.updateStateByKey(updateFunc) // update state
+    stateStream.print()
+
+    val output = stateStream.map{ x => (x._1,x._2(2)) }.transform(rdd => rdd.sortByKey(true)) // compute summary statistics
+    //output.print()
+
+    //wordDstream.reduceByKeyAndWindow(_+_,Seconds(10)).print()
+    //lines.window(Seconds(10),Seconds(2)).map(parseVector _).map(x => x.sum).print()
+    //println(partialSum)
+    //val sums = lines.map(parseVector _).map(x => (1,1))
+    //sums.print()
+    //val counts = sums.updateStateByKey(updateFunc).map(_._2)
+    //counts.print()
     ssc.start()
   }
 }
