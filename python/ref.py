@@ -37,7 +37,7 @@ savemat(outputFile+"/"+"zinds.mat",mdict={'zinds':zinds},oned_as='column',do_com
 logging.info('(ref) computing reference image')
 ref = X.map(lambda (k,x) : median(x)).collect()
 logging.info('(ref) saving results...')
-savemat(outputFile+"ref.mat",mdict={'ref':ref},oned_as='column',do_compression='true')
+savemat(outputFile+"/"+"ref.mat",mdict={'ref':ref},oned_as='column',do_compression='true')
 
 # compute projection
 #xproj = X.map(lambda (k,x) : (k[0],median(x))).reduceByKey(lambda x,y : x+y, 3000).collect()
