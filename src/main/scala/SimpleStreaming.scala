@@ -20,7 +20,7 @@ object SimpleStreaming {
 
   def printVector(rdd: spark.RDD[Vector]): Unit = {
     val data = rdd.collect().map(_.toString).map(x => x.slice(1,x.length-1)).map(_.replace(",",""))
-    printToFile(new File("/Users/freemanj11/streamingresults/test.txt"))(p => {
+    printToFile(new File("/groups/freeman/home/freemanj11/streamingresults/test.txt"))(p => {
       data.foreach(p.println)
     })
   }
@@ -34,7 +34,7 @@ object SimpleStreaming {
     // create spark context
     val ssc = new StreamingContext(args(0), "SimpleStreaming", Seconds(10),
       System.getenv("SPARK_HOME"), List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
-    ssc.checkpoint("/Users/freemanj11/streamingresults/")
+    ssc.checkpoint("/groups/freeman/home/freemanj11/streamingresults/")
 
     // update state
     val updateFunc = (values: Seq[Vector], state: Option[Vector]) => {
