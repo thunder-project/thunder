@@ -18,15 +18,15 @@ object SimpleStreaming {
     try { op(p) } finally { p.close() }
   }
 
-  def printVector(rdd: spark.RDD[Vector]): Unit = {
+  def printVector(rdd: spark.RDD[Vector], saveFile: String): Unit = {
     val data = rdd.collect().map(_.toString).map(x => x.slice(1,x.length-1)).map(_.replace(",",""))
-    printToFile(new File("/groups/freeman/freemanlab/Janelia/streamingresults/test.txt"))(p => {
+    printToFile(new File(saveFile))(p => {
       data.foreach(p.println)
     })
   }
 
   def main(args: Array[String]) {
-    if (args.length < 2) {
+    if (args.length < 3) {
       System.err.println("Usage: SimpleStreaming <master> <directory>")
       System.exit(1)
     }
@@ -34,7 +34,7 @@ object SimpleStreaming {
     // create spark context
     val ssc = new StreamingContext(args(0), "SimpleStreaming", Seconds(2),
       System.getenv("SPARK_HOME"), List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
-    ssc.checkpoint("/groups/freeman/freemanlab/Janelia/streamingresults/")
+    ssc.checkpoint(System.getenv("CHECKPOINT"))
 
     // update state
     val updateFunc = (values: Seq[Vector], state: Option[Vector]) => {
@@ -70,7 +70,7 @@ object SimpleStreaming {
     //dataStream.updateStateByKey(updateFunc).saveAsTextFiles("test") // update state
     //stateStream.print()
     val sortedStates = stateStream.transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(2),x._2(3)))
-    sortedStates.foreach(printVector _)
+    sortedStates.foreach(rdd => printVector(rdd,args(2)))
     stateStream.print()
     //rdd => rdd.collect().foreach(println)
     //val output = stateStream.map{ x => (x._1,x._2(2)) }.transform(rdd => rdd.sortByKey(true)) // compute summary statistics
