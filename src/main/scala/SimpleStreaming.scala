@@ -10,7 +10,7 @@ object SimpleStreaming {
     val nums = line.split(' ') // split line into numbers
     val k = nums(0).toInt  // get index as key
     val vraw = Vector(nums.slice(1,nums.length).map(_ toDouble)) // ca, ephys, swim
-    var v = Vector(0,0,0,0)
+    var v = Vector(0,0,0,0) // extract ca0, ca1, n0, n1
     if (vraw(2) == 0) {
       v = v + Vector(vraw(0),0,1,0)
     }
@@ -66,6 +66,7 @@ object SimpleStreaming {
     //stateStream.print()
     val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(0),x._2(1)))
     sortedStates.foreach(rdd => printVector(rdd,args(2)))
+    sortedStates.print
     //sortedStates.print()
     //rdd => rdd.collect().foreach(println)
     //val output = stateStream.map{ x => (x._1,x._2(2)) }.transform(rdd => rdd.sortByKey(true)) // compute summary statistics
