@@ -32,7 +32,7 @@ object SimpleStreaming {
     }
 
     // create spark context
-    val ssc = new StreamingContext(args(0), "SimpleStreaming", Seconds(10),
+    val ssc = new StreamingContext(args(0), "SimpleStreaming", Seconds(2),
       System.getenv("SPARK_HOME"), List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
     ssc.checkpoint("/groups/freeman/home/freemanj11/streamingresults/")
 
