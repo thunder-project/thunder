@@ -61,16 +61,9 @@ object SimpleStreaming {
     val lines = ssc.textFileStream(args(1)) // directory to monitor
     val dataStream = lines.map(parseVector _) // parse data
     val stateStream = dataStream.updateStateByKey(updateFunc)
-    //stateStream.print()
-    //dataStream.updateStateByKey(updateFunc).saveAsTextFiles("test") // update state
-    //stateStream.print()
+    stateStream.print()
     val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(0),x._2(1)))
     sortedStates.foreach(rdd => printVector(rdd,args(2)))
-    sortedStates.print
-    //sortedStates.print()
-    //rdd => rdd.collect().foreach(println)
-    //val output = stateStream.map{ x => (x._1,x._2(2)) }.transform(rdd => rdd.sortByKey(true)) // compute summary statistics
-    //output.print()
 
     //wordDstream.reduceByKeyAndWindow(_+_,Seconds(10)).print()
     //lines.window(Seconds(10),Seconds(2)).map(parseVector _).map(x => x.sum).print()
