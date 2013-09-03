@@ -9,7 +9,7 @@ import logging
 
 if len(sys.argv) < 4:
   print >> sys.stderr, \
-  "(sta) usage: ref <master> <inputFile_X> <outputFile>"
+  "(ref) usage: ref <master> <inputFile_X> <outputFile>"
   exit(-1)
 
 def parseVector(line):
