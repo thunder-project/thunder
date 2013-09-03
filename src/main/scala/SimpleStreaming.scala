@@ -9,8 +9,22 @@ object SimpleStreaming {
   def parseVector(line: String): (Int,Vector) = {
     val nums = line.split(' ') // split line into numbers
     val k = nums(0).toInt  // get index as key
-    val v = Vector(nums.slice(1,nums.length).map(_ toDouble) :+ 1.toDouble) // get values, append 1 for counting
+    val vraw = Vector(nums.slice(1,nums.length).map(_ toDouble)) // ca, ephys, swim
+    var v = Vector(0,0,0,0)
+    if (vraw(2) == 0) {
+      v = v + Vector(vraw(0),0,1,0)
+    }
+    else {
+      v = v + Vector(0,vraw(0),0,1)
+    }
     return (k,v)
+  }
+
+  def getDiffs(vals: (Int,Vector)): (Int,Vector) = {
+    val baseLine = (vals._2(0) + vals._2(1)) / (vals._2(2) + vals._2(3))
+    val diff0 = ((vals._2(0) / vals._2(2)) - baseLine) / baseLine
+    val diff1 = ((vals._2(1) / vals._2(3)) - baseLine) / baseLine
+    return (vals._1, Vector(diff0,diff1))
   }
 
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
@@ -32,46 +46,27 @@ object SimpleStreaming {
     }
 
     // create spark context
-    val ssc = new StreamingContext(args(0), "SimpleStreaming", Seconds(2),
+    val ssc = new StreamingContext(args(0), "SimpleStreaming", Seconds(10),
       System.getenv("SPARK_HOME"), List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
     ssc.checkpoint(System.getenv("CHECKPOINT"))
 
     // update state
     val updateFunc = (values: Seq[Vector], state: Option[Vector]) => {
-      val currentState = values.foldLeft(Vector(0,0,0,0))(_+_) // ca, ephys, swim, count
-      val previousState = state.getOrElse(Vector(0,0,0,0,0)) // baseLineTot, baseLine, diff1, diff2, count
-      val count = currentState(3) + previousState(4) // update count
-      var baseLineTot, baseLine, diff1, diff2 = 0.toDouble // initialize vars
-      if (currentState(3) != 0.toDouble) { // if we have data, update states
-        baseLineTot = currentState(0) + previousState(0)
-        baseLine = baseLineTot / count
-        if (currentState(2) == 0) { // if condition is 0
-          diff1 = previousState(2) + ((currentState(0) - baseLine) / (baseLine + 0.1))
-          diff2 = previousState(3)
-        }
-        else{
-          diff2 = previousState(3) + ((currentState(0) - baseLine) / (baseLine + 0.1))
-          diff1 = previousState(2)
-        }
-      }
-      else { // otherwise use previous
-        baseLineTot = previousState(0)
-        baseLine = previousState(1)
-        diff1 = previousState(2)
-        diff2 = previousState(3)
-      }
-      Some(Vector(baseLineTot,baseLine,diff1,diff2,count))
+      val currentState = values.foldLeft(Vector(0,0,0,0))(_+_) // ca0, ca1, n0, n1
+      val previousState = state.getOrElse(Vector(0,0,0,0))
+      Some(currentState + previousState)
     }
 
     // main streaming operations
     val lines = ssc.textFileStream(args(1)) // directory to monitor
     val dataStream = lines.map(parseVector _) // parse data
     val stateStream = dataStream.updateStateByKey(updateFunc)
+    //stateStream.print()
     //dataStream.updateStateByKey(updateFunc).saveAsTextFiles("test") // update state
     //stateStream.print()
-    val sortedStates = stateStream.transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(2),x._2(3)))
+    val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(0),x._2(1)))
     sortedStates.foreach(rdd => printVector(rdd,args(2)))
-    stateStream.print()
+    //sortedStates.print()
     //rdd => rdd.collect().foreach(println)
     //val output = stateStream.map{ x => (x._1,x._2(2)) }.transform(rdd => rdd.sortByKey(true)) // compute summary statistics
     //output.print()
