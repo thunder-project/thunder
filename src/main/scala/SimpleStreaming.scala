@@ -71,7 +71,7 @@ object SimpleStreaming {
     //stateStream.print()
     val sortedStates = stateStream.transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(2),x._2(3)))
     sortedStates.foreach(printVector _)
-
+    sortedStates.print()
     //rdd => rdd.collect().foreach(println)
     //val output = stateStream.map{ x => (x._1,x._2(2)) }.transform(rdd => rdd.sortByKey(true)) // compute summary statistics
     //output.print()
