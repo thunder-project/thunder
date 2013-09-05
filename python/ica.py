@@ -29,7 +29,6 @@ def parseVector(line):
 	#ts = ts / 5000
 	return ts
 
-
 # parse inputs
 sc = SparkContext(sys.argv[1], "ica")
 inputFile = str(sys.argv[2]);
@@ -100,7 +99,7 @@ savemat(outputFile+"/"+"W-comps-"+str(c)+".mat",,mdict={'W':W},oned_as='column',
 
 for ic in range(0,c):
 	sigs = sub.map(lambda x : dot(W[ic,:],x))
-	savemat(outputFile+"/"+"sig-"+str(ic)+"-comps-"+str(c)+".mat",,mdict={'sigs':sigs.collect()},oned_as='column',do_compression='true')
+	savemat(outputFile+"/"+"sig-"+str(ic)+"-comps-"+str(c)+".mat",mdict={'sigs':sigs.collect()},oned_as='column',do_compression='true')
 
 
 
