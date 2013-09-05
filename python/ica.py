@@ -95,7 +95,7 @@ W = dot(transpose(B),whtMat)
 # save output files
 logging.info('(ica) finished after ' + str(iterNum) + ' iterations')
 logging.info('(ica) writing output...')
-savemat(outputFile+"/"+"W-comps-"+str(c)+".mat",,mdict={'W':W},oned_as='column',do_compression='true')
+savemat(outputFile+"/"+"W-comps-"+str(c)+".mat",mdict={'W':W},oned_as='column',do_compression='true')
 
 for ic in range(0,c):
 	sigs = sub.map(lambda x : dot(W[ic,:],x))
