@@ -22,7 +22,13 @@ if len(sys.argv) < 6:
   exit(-1)
 
 def parseVector(line):
-    return array([float(x) for x in line.split(' ')])
+	vec = [float(x) for x in line.split(' ')]
+	ts = array(vec[3:]) # get tseries, drop x,y,z coords
+	med = median(ts)
+	ts = (ts - med) / (med) # convert to dff
+	#ts = ts / 5000
+	return ts
+
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "ica")
