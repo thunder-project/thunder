@@ -30,8 +30,8 @@ if len(sys.argv) < 6:
 sc = SparkContext(sys.argv[1], "kmeans")
 inputFile_X = str(sys.argv[2])
 inputFile_t = str(sys.argv[3])
-outputFile = str(sys.argv[4]) + "-kmeans"
 k = int(sys.argv[5])
+outputFile = str(sys.argv[4]) + "-kmeans-" + str(k)
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -61,3 +61,6 @@ while tempDist > convergeDist:
 	    kPoints[x] = y
 
 	iteration = iteration + 1
+
+labels = X.map( lambda p : closestPoint(p, kPoints)).collect()
+savemat(outputFile+"/"+"labels.mat",mdict={'labels':labels},oned_as='column',do_compression='true')
