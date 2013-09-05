@@ -22,7 +22,7 @@ def closestPoint(p, centers):
       bestIndex = i
   return bestIndex
 
-if len(sys.argv) < 6:
+if len(sys.argv) < 5:
   print >> sys.stderr, \
   "(kmeans) usage: kmeans <master> <inputFile> <outputFile> <k>"
   exit(-1)
