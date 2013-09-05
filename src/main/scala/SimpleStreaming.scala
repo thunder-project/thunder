@@ -10,13 +10,14 @@ object SimpleStreaming {
     val nums = line.split(' ') // split line into numbers
     val k = nums(0).toInt  // get index as key
     val vraw = Vector(nums.slice(1,nums.length).map(_ toDouble)) // ca, ephys, swim
-    var v = Vector(0,0,0,0) // extract ca0, ca1, n0, n1
-    if (vraw(2) == 0) {
-      v = v + Vector(vraw(0),0,1,0)
-    }
-    else {
-      v = v + Vector(0,vraw(0),0,1)
-    }
+    //var v = Vector(0,0,0,0) // extract ca0, ca1, n0, n1
+    //if (vraw(2) == 0) {
+    //  v = v + Vector(vraw(0),0,1,0)
+    //}
+    //else {
+    //  v = v + Vector(0,vraw(0),0,1)
+    //}
+    val v = Vector(vraw(0),0,1,0)
     return (k,v)
   }
 
