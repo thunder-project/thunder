@@ -50,7 +50,7 @@ n = data.count()
 m = len(data.first())
 logging.info('(ica) mean subtraction')
 meanVec = data.reduce(lambda x,y : x+y) / n
-sub = data.map(lambda x : x - meanVec)
+sub = data.map(lambda x : x)
 logging.info('(ica) computing covariance')
 cov = sub.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y)) / n
 
