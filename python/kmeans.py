@@ -39,7 +39,7 @@ logging.info("(kmeans) loading data")
 lines_X = sc.textFile(inputFile_X)
 X = lines_X.map(parseVector).cache()
 
-kPoints = X.takeSample(False, K, 34)
+kPoints = X.take(k)
 
 convergeDist = 0.001
 tempDist = 1.0
