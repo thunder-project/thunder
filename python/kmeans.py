@@ -16,7 +16,7 @@ def closestPoint(p, centers):
   bestIndex = 0
   closest = float("+inf")
   for i in range(len(centers)):
-    tempDist = np.sum((p - centers[i]) ** 2)
+    tempDist = sum((p - centers[i]) ** 2)
     if tempDist < closest:
       closest = tempDist
       bestIndex = i
