@@ -61,5 +61,7 @@ while tempDist > convergeDist:
 
 	iteration = iteration + 1
 
+logging.info("(kmeans) saving results")
 labels = X.map( lambda p : closestPoint(p, kPoints)).collect()
 savemat(outputFile+"/"+"labels.mat",mdict={'labels':labels},oned_as='column',do_compression='true')
+savemat(outputFile+"/"+"centers.mat",mdict={'kPoints':kPoints},oned_as='column',do_compression='true')
