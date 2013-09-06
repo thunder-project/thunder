@@ -51,7 +51,7 @@ kPoints = X.take(k)
 if dist == 'corr':
 	kPoints = map(lambda x : x - mean(x), kPoints);
 
-convergeDist = 0.001
+convergeDist = 0.0001
 tempDist = 1.0
 iteration = 0
 mxIteration = 100
