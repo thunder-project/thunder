@@ -7,11 +7,10 @@ from pyspark import SparkContext
 import logging
 
 def parseVector(line):
-	vec = array([float(x) for x in line.split(' ')])
-	#ts = array(vec[3:]) # get tseries, drop x,y,z coords
-	#med = median(ts)
-	#ts = (ts - med) / (med) # convert to dff
-	ts = vec
+	vec = [float(x) for x in line.split(' ')]
+	ts = array(vec[3:]) # get tseries, drop x,y,z coords
+	med = median(ts)
+	ts = (ts - med) / (med) # convert to dff
 	return ts
 
 def closestPoint(p, centers, dist):
