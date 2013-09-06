@@ -36,7 +36,7 @@ sc = SparkContext(sys.argv[1], "kmeans")
 inputFile_X = str(sys.argv[2])
 k = int(sys.argv[4])
 dist = str(sys.argv[5])
-outputFile = str(sys.argv[3]) + "-kmeans-" + str(k)
+outputFile = str(sys.argv[3]) + "-kmeans-" + str(k) + "-" + dist
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
