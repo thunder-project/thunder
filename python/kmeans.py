@@ -46,11 +46,12 @@ kPoints = array(X.take(k))
 for i in range(len(kPoints)): 
 	kPoints[i] = kPoints[i] - mean(kPoints[i])
 
-convergeDist = 0.001
+convergeDist = 0.01
 tempDist = 1.0
 iteration = 0
+mxIteration = 100
 
-while tempDist > convergeDist:
+while (tempDist > convergeDist) & (iteration < mxIteration):
 	logging.info("(kmeans) starting iteration " + str(iteration))
 	closest = X.map(
 	    lambda p : (closestPoint(p, kPoints)[0], (p, 1)))
