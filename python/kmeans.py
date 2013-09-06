@@ -1,6 +1,7 @@
 import sys
 import os
 from numpy import *
+from numpy.linalg import *
 from scipy.io import * 
 from pyspark import SparkContext
 import logging
@@ -37,7 +38,9 @@ logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,form
 
 logging.info("(kmeans) loading data")
 lines_X = sc.textFile(inputFile_X)
-X = lines_X.map(parseVector).cache()
+X = lines_X.map(parseVector)
+norms = X.map(lambda x : norm(x)).collect()
+X = X.map(lambda x : x / norm(x))
 
 kPoints = X.take(k)
 
@@ -64,4 +67,5 @@ while tempDist > convergeDist:
 logging.info("(kmeans) saving results")
 labels = X.map( lambda p : closestPoint(p, kPoints)).collect()
 savemat(outputFile+"/"+"labels.mat",mdict={'labels':labels},oned_as='column',do_compression='true')
-savemat(outputFile+"/"+"centers.mat",mdict={'kPoints':kPoints},oned_as='column',do_compression='true')
+savemat(outputFile+"/"+"centers.mat",mdict={'centers':centers},oned_as='column',do_compression='true')
+savemat(outputFile+"/"+"norms.mat",mdict={'norms':norms},oned_as='column',do_compression='true')
