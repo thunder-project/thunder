@@ -40,7 +40,7 @@ logging.info("(kmeans) loading data")
 lines_X = sc.textFile(inputFile_X)
 X = lines_X.map(parseVector)
 norms = X.map(lambda x : norm(x)).collect()
-X = X.map(lambda x : x / norm(x))
+X = X.map(lambda x : x / norm(x)).cache()
 
 kPoints = X.take(k)
 
