@@ -29,7 +29,7 @@ def closestPoint(p, centers, dist):
 
 if len(sys.argv) < 6:
   print >> sys.stderr, \
-  "(kmeans) usage: kmeans <master> <inputFile> <outputFile> <k>"
+  "(kmeans) usage: kmeans <master> <inputFile> <outputFile> <k> <dist>"
   exit(-1)
 
 sc = SparkContext(sys.argv[1], "kmeans")
