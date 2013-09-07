@@ -46,7 +46,7 @@ lines_X = sc.textFile(inputFile_X)
 if dist == 'corr':
 	X = lines_X.map(parseVector)
 	X = X.map(lambda x : (x - mean(x)) / norm(x)).cache()
-elif dist == 'euclidean'
+elif dist == 'euclidean':
 	X = lines_X.map(parseVector).cache()
 
 kPoints = X.take(k)
