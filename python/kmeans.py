@@ -42,9 +42,12 @@ logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,form
 
 logging.info("(kmeans) loading data")
 lines_X = sc.textFile(inputFile_X)
-X = lines_X.map(parseVector)
+
 if dist == 'corr':
+	X = lines_X.map(parseVector)
 	X = X.map(lambda x : (x - mean(x)) / norm(x)).cache()
+elif dist == 'euclidean'
+	X = lines_X.map(parseVector).cache()
 
 kPoints = X.take(k)
 if dist == 'corr':
