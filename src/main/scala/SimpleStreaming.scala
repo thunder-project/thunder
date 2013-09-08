@@ -46,7 +46,6 @@ object SimpleStreaming {
       System.getenv("SPARK_HOME"), List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
     ssc.checkpoint(System.getenv("CHECKPOINT"))
 
-
     // update state
     val updateFunc = (values: Seq[Vector], state: Option[Vector]) => {
       val currentState = values(0) // ca0, ca1, n0, n1
@@ -57,7 +56,7 @@ object SimpleStreaming {
     // main streaming operations
     val lines = ssc.textFileStream(args(1)) // directory to monitor
     val dataStream = lines.map(parseVector _) // parse data
-    val stateStream = dataStream.reduceByKey(_+_).updateStateByKey(updateFunc).checkpoint(Seconds(5*args(2).toLong))
+    val stateStream = dataStream.reduceByKey(_+_).updateStateByKey(updateFunc).checkpoint(Seconds(30))
     stateStream.print()
     //val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(0),x._2(1)))
     //sortedStates.print()
