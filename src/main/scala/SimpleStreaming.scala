@@ -48,7 +48,11 @@ object SimpleStreaming {
 
     // update state
     val updateFunc = (values: Seq[Vector], state: Option[Vector]) => {
-      val currentState = values(0) // ca0, ca1, n0, n1
+      var currentState = Vector(0,0,0,0)
+      if (values.length > 0) {
+        currentState = currentState + values(0)
+      }
+      //val currentState = values(0) // ca0, ca1, n0, n1
       val previousState = state.getOrElse(Vector(0,0,0,0))
       Some(currentState + previousState)
     }
