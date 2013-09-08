@@ -46,6 +46,7 @@ object SimpleStreaming {
       System.getenv("SPARK_HOME"), List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
     ssc.checkpoint(System.getenv("CHECKPOINT"))
 
+
     // update state
     val updateFunc = (values: Seq[Vector], state: Option[Vector]) => {
       val currentState = values(0) // ca0, ca1, n0, n1
@@ -60,6 +61,8 @@ object SimpleStreaming {
     stateStream.print()
     val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(0),x._2(1)))
     sortedStates.print()
+
+    lines.checkpoint(Seconds(5*args(2).toLong))
     //sortedStates.foreach(rdd => printVector(rdd,args(2)))
 
     //wordDstream.reduceByKeyAndWindow(_+_,Seconds(10)).print()
