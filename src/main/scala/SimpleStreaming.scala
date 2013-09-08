@@ -40,13 +40,13 @@ object SimpleStreaming {
   }
 
   def main(args: Array[String]) {
-    if (args.length < 3) {
-      System.err.println("Usage: SimpleStreaming <master> <directory>")
+    if (args.length < 2) {
+      System.err.println("Usage: SimpleStreaming <master> <directory> <batchTime>")
       System.exit(1)
     }
 
     // create spark context
-    val ssc = new StreamingContext(args(0), "SimpleStreaming", Seconds(5),
+    val ssc = new StreamingContext(args(0), "SimpleStreaming", Seconds(args(2).toLong),
       System.getenv("SPARK_HOME"), List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
     ssc.checkpoint(System.getenv("CHECKPOINT"))
 
@@ -60,7 +60,7 @@ object SimpleStreaming {
     // main streaming operations
     val lines = ssc.textFileStream(args(1)) // directory to monitor
     val dataStream = lines.map(parseVector _) // parse data
-    val stateStream = dataStream.updateStateByKey(updateFunc)
+    val stateStream = dataStream.reduceByKey(_+_).updateStateByKey(updateFunc)
     stateStream.print()
     //val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(0),x._2(1)))
     //sortedStates.foreach(rdd => printVector(rdd,args(2)))
