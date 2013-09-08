@@ -4,6 +4,11 @@
 # test a streaming app by dumping files from one directory
 # into another, at a specified rate
 #
+# <streaming_test> srcPath targetPath waitTime
+#
+# example:
+# data/streaming_test.py /groups/ahrens/ahrenslab/Misha/forJeremy_SparkStreamingSample/ /nobackup/freeman/buffer/ 1
+#
 
 import sys, os, time, glob;
 
