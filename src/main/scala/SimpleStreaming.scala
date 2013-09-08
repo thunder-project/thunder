@@ -42,6 +42,7 @@ object SimpleStreaming {
     // create spark context
     System.setProperty("spark.executor.memory","120g")
     System.setProperty("spark.serializer", "spark.KryoSerializer")
+    System.setProperty("spark.default.parallelism", "900")
     val ssc = new StreamingContext(args(0), "SimpleStreaming", Seconds(args(2).toLong),
       System.getenv("SPARK_HOME"), List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
     ssc.checkpoint(System.getenv("CHECKPOINT"))
@@ -56,7 +57,7 @@ object SimpleStreaming {
     // main streaming operations
     val lines = ssc.textFileStream(args(1)) // directory to monitor
     val dataStream = lines.map(parseVector _) // parse data
-    val stateStream = dataStream.reduceByKey(_+_,5).updateStateByKey(updateFunc)
+    val stateStream = dataStream.reduceByKey(_+_).updateStateByKey(updateFunc)
     stateStream.print()
     //val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(0),x._2(1)))
     //sortedStates.print()
