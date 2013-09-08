@@ -57,12 +57,11 @@ object SimpleStreaming {
     // main streaming operations
     val lines = ssc.textFileStream(args(1)) // directory to monitor
     val dataStream = lines.map(parseVector _) // parse data
-    val stateStream = dataStream.reduceByKey(_+_).updateStateByKey(updateFunc)
+    val stateStream = dataStream.reduceByKey(_+_).updateStateByKey(updateFunc).checkpoint(Seconds(5*args(2).toLong))
     stateStream.print()
     val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(0),x._2(1)))
     sortedStates.print()
 
-    stateStream.checkpoint(Seconds(5*args(2).toLong))
     //sortedStates.foreach(rdd => printVector(rdd,args(2)))
 
     //wordDstream.reduceByKeyAndWindow(_+_,Seconds(10)).print()
