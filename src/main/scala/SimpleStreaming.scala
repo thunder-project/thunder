@@ -59,8 +59,8 @@ object SimpleStreaming {
     val dataStream = lines.map(parseVector _) // parse data
     val stateStream = dataStream.reduceByKey(_+_).updateStateByKey(updateFunc).checkpoint(Seconds(5*args(2).toLong))
     stateStream.print()
-    val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(0),x._2(1)))
-    sortedStates.print()
+    //val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(0),x._2(1)))
+    //sortedStates.print()
 
     //sortedStates.foreach(rdd => printVector(rdd,args(2)))
 
