@@ -62,7 +62,7 @@ object SimpleStreaming {
     val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(0),x._2(1)))
     sortedStates.print()
 
-    lines.checkpoint(Seconds(5*args(2).toLong))
+    stateStream.checkpoint(Seconds(5*args(2).toLong))
     //sortedStates.foreach(rdd => printVector(rdd,args(2)))
 
     //wordDstream.reduceByKeyAndWindow(_+_,Seconds(10)).print()
