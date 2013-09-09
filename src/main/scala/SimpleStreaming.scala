@@ -35,14 +35,16 @@ object SimpleStreaming {
 
   def main(args: Array[String]) {
     if (args.length < 2) {
-      System.err.println("Usage: SimpleStreaming <master> <directory> <batchTime>")
+      System.err.println("Usage: SimpleStreaming <master> <directory> <batchTime> <nSlices>")
       System.exit(1)
     }
 
     // create spark context
     System.setProperty("spark.executor.memory","120g")
     System.setProperty("spark.serializer", "spark.KryoSerializer")
-    System.setProperty("spark.default.parallelism", "100")
+    if (args(3).toInt != 0) {
+      System.setProperty("spark.default.parallelism", args(3).toString)
+    }
     val ssc = new StreamingContext(args(0), "SimpleStreaming", Seconds(args(2).toLong),
       System.getenv("SPARK_HOME"), List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
     ssc.checkpoint(System.getenv("CHECKPOINT"))
