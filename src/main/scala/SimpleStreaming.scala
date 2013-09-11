@@ -2,22 +2,27 @@ import spark.SparkContext._
 import spark.streaming.{Seconds, StreamingContext}
 import spark.streaming.StreamingContext._
 import spark.util.Vector
-import java.io._
+import javax.imageio.ImageIO
+import java.awt.image.BufferedImage
+import java.io.File
+
 
 object SimpleStreaming {
 
   def parseVector(line: String): (Int,Vector) = {
-    val nums = line.split(' ') // split line into numbers
+    val nums = line.split(' ') // split line into numbers: (0) key (1) ca (2) ephys (3) id
     val k = nums(0).toInt  // get index as key
-    val vraw = Vector(nums.slice(1,nums.length).map(_ toDouble)) // ca, ephys, swim
-    val v = Vector(vraw(0)*(1-vraw(2)),vraw(0)*vraw(2),1*(1-vraw(2)),1*vraw(2))
-    return (k,v)
+    val id = nums(3).toInt
+    val vals, counts = Array.fill[Double](2)(0)
+    vals(id) = nums(1).toDouble
+    counts(id) += 1
+    return (k,Vector(vals ++ counts))
   }
 
   def getDiffs(vals: (Int,Vector)): (Int,Vector) = {
     val baseLine = (vals._2(0) + vals._2(1)) / (vals._2(2) + vals._2(3))
-    val diff0 = ((vals._2(0) / vals._2(2)) - baseLine) / (baseLine + 0.1)
-    val diff1 = ((vals._2(1) / vals._2(3)) - baseLine) / (baseLine + 0.1)
+    val diff0 = ((vals._2(0) / vals._2(2)) - baseLine) / (baseLine)
+    val diff1 = ((vals._2(1) / vals._2(3)) - baseLine) / (baseLine)
     return (vals._1, Vector(diff0,diff1))
   }
 
@@ -31,6 +36,16 @@ object SimpleStreaming {
     printToFile(new File(saveFile))(p => {
       data.foreach(p.println)
     })
+  }
+
+  def printToImage(rdd: spark.RDD[Double], width: Int, height: Int, fileName: String): Unit = {
+    val nPixels = width*height
+    val R,G,B = rdd.collect().map(_ * 20000).map(_ + 255/2).map(_ toInt).map(x => if (x<0) {0} else if (x>255) {255} else {x})
+    val RGB = Array.range(0,nPixels).flatMap(x => Array(R(x),G(x),B(x)))
+    val img = new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB)
+    val raster = img.getRaster()
+    raster.setPixels(0,0,width,height,RGB)
+    ImageIO.write(img, "png", new File(fileName))
   }
 
   def main(args: Array[String]) {
@@ -63,10 +78,12 @@ object SimpleStreaming {
     // main streaming operations
     val lines = ssc.textFileStream(args(1)) // directory to monitor
     val dataStream = lines.map(parseVector _) // parse data
-    val stateStream = dataStream.reduceByKey(_+_).updateStateByKey(updateFunc)
-    //stateStream.print()
-    val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(0),x._2(1)))
+    val stateStream = dataStream.reduceByKeyAndWindow(_+_,_-_,Seconds(30),Seconds(10))//.updateStateByKey(updateFunc)
+    val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => x._2(0))
     sortedStates.print()
+    sortedStates.foreach(rdd => printToImage(rdd,250,129,"test.png"))
+    //val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(0),x._2(1)))
+    //sortedStates.print()
 
     //sortedStates.foreach(rdd => printVector(rdd,args(2)))
 
