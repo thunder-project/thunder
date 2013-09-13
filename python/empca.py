@@ -2,12 +2,6 @@
 # 
 # uses iterative EM to do pca on a data matrix
 # algorithm by Sam Roweis (NIPS, 1997)
-# input is a text file
-# format should be rows of ' ' separated values
-# - example: space (rows) x time (cols)
-# - rows should be whichever dim is larger
-# 'k' is number of pcs to return
-# writes pcs and eigenvalues to text
 
 import sys
 import os

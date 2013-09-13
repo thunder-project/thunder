@@ -15,7 +15,6 @@ if len(sys.argv) < 6:
 def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:])
-	#ts = (ts - mean(ts))/std(ts)
 	med = median(ts)
 	ts = (ts - med) / (med)
 	ts = (ts - mean(ts)) / std(ts)

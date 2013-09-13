@@ -7,7 +7,7 @@ import java.awt.image.BufferedImage
 import java.io.File
 
 
-object SimpleStreaming {
+object mantis {
 
   def parseVector(line: String): (Int,Vector) = {
     val nums = line.split(' ') // split line into numbers: (0) key (1) ca (2) ephys (3) id
@@ -40,7 +40,7 @@ object SimpleStreaming {
 
   def printToImage(rdd: spark.RDD[Double], width: Int, height: Int, fileName: String): Unit = {
     val nPixels = width*height
-    val R,G,B = rdd.collect().map(_ * 20000).map(_ + 255/2).map(_ toInt).map(x => if (x<0) {0} else if (x>255) {255} else {x})
+    val R,G,B = rdd.collect().map(_ * 1000).map(_ + 255/2).map(_ toInt).map(x => if (x<0) {0} else if (x>255) {255} else {x})
     val RGB = Array.range(0,nPixels).flatMap(x => Array(R(x),G(x),B(x)))
     val img = new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
@@ -50,7 +50,7 @@ object SimpleStreaming {
 
   def main(args: Array[String]) {
     if (args.length < 2) {
-      System.err.println("Usage: SimpleStreaming <master> <directory> <batchTime> <nSlices>")
+      System.err.println("Usage: mantis <master> <directory> <batchTime> <nSlices>")
       System.exit(1)
     }
 

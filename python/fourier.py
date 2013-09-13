@@ -1,7 +1,6 @@
 # fourier <master> <inputFile> <outputFile> <freq>
 # 
 # computes the amplitude and phase of each time series
-# (stored as rows of a text file, with first entry as the index)
 #
 
 import sys

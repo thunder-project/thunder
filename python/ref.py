@@ -1,3 +1,5 @@
+
+
 import sys
 import os
 from numpy import *
@@ -38,13 +40,3 @@ logging.info('(ref) computing reference image')
 ref = X.map(lambda (k,x) : median(x)).collect()
 logging.info('(ref) saving results...')
 savemat(outputFile+"ref.mat",mdict={'ref':ref},oned_as='column',do_compression='true')
-
-# compute projection
-#xproj = X.map(lambda (k,x) : (k[0],median(x))).reduceByKey(lambda x,y : x+y, 3000).collect()
-#savemat(outputFile+"xproj.mat",mdict={'xproj':xproj},oned_as='column',do_compression='true')
-
-#yproj = X.map(lambda (k,x) : (k[1],median(x))).reduceByKey(lambda x,y : x+y, 3000).collect()
-#savemat(outputFile+"yproj.mat",mdict={'yproj':yproj},oned_as='column',do_compression='true')
-
-#zproj = X.map(lambda (k,x) : (k[2],median(x))).reduceByKey(lambda x,y : x+y, 3000).collect()
-#savemat(outputFile+"zproj.mat",mdict={'zproj':zproj},oned_as='column',do_compression='true')

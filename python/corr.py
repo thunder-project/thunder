@@ -1,3 +1,8 @@
+# corr <master> <inputFile_A> <inputFile_y> <outputFile> <mxLag>
+# 
+# 
+
+
 import sys
 import os
 from numpy import *

@@ -1,13 +1,6 @@
 # ica <master> <inputFile> <outputFile> <k> <c>
 # 
-# perform ica on a data matrix.
-# input is a local text file or a file in HDFS
-# format should be rows of ' ' separated values
-# - example: space (rows) x time (cols)
-# - rows should be whichever dim is larger
-# 'k' is number of principal components for dim reduction
-# 'c' is the number of ica components to return
-# writes unmixing matrix and independent components to text
+# perform ica on a data matrix
 
 import sys
 import os
@@ -27,7 +20,6 @@ def parseVector(line):
 	ts = array(vec[3:]) # get tseries, drop x,y,z coords
 	med = median(ts)
 	ts = (ts - med) / (med) # convert to dff
-	#ts = ts / 5000
 	return ts
 
 # parse inputs

@@ -1,3 +1,7 @@
+# kmeans <master> <inputFile> <outputFile> <k> <dist>
+# 
+# perform kmeans on a data matrix
+
 import sys
 import os
 from numpy import *

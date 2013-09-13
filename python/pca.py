@@ -1,13 +1,6 @@
 # pca <master> <inputFile> <outputFile> <k> <dim>
 # 
 # performs pca on a data matrix
-# input is a local text file or a file in hdfs 
-# format should be rows of ' ' separated values
-# - example: space (rows) x time (cols)
-# - rows should be whichever dim is larger
-# 'dim' is dimension to subtract mean along
-# 'k' is number of pcs to return
-# writes pcs (in both dims) and eigenvalues to text
 
 import sys
 import os
