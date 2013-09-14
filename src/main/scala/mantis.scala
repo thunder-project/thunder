@@ -57,17 +57,19 @@ object mantis {
 
   def main(args: Array[String]) {
     if (args.length < 2) {
-      System.err.println("Usage: mantis <master> <directory> <batchTime> <nSlices>")
+      System.err.println("Usage: mantis <master> <directory> <outputFile> <batchTime> <windowTime> <width> <height> <nSlices>")
       System.exit(1)
     }
 
     // create spark context
     System.setProperty("spark.executor.memory","120g")
     System.setProperty("spark.serializer", "spark.KryoSerializer")
-    if (args(3).toInt != 0) {
-      System.setProperty("spark.default.parallelism", args(3).toString)
+    if (args(7).toInt != 0) {
+      System.setProperty("spark.default.parallelism", args(7).toString)
     }
-    val ssc = new StreamingContext(args(0), "SimpleStreaming", Seconds(args(2).toLong),
+    val batchTime = args(3).toLong
+    val windowTime = args(4).toLong
+    val ssc = new StreamingContext(args(0), "SimpleStreaming", Seconds(batchTime),
       System.getenv("SPARK_HOME"), List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
     ssc.checkpoint(System.getenv("CHECKPOINT"))
 
@@ -85,10 +87,10 @@ object mantis {
     // main streaming operations
     val lines = ssc.textFileStream(args(1)) // directory to monitor
     val dataStream = lines.map(parseVector _) // parse data
-    val stateStream = dataStream.reduceByKeyAndWindow(_+_,_-_,Seconds(30),Seconds(10))//.updateStateByKey(updateFunc)
-    val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => x._2(0))
+    val stateStream = dataStream.reduceByKeyAndWindow(_+_,_-_,Seconds(windowTime),Seconds(batchTime))
+    val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => x._2(1))
     sortedStates.print()
-    sortedStates.foreach(rdd => printToImage(rdd,250,129,"test.png"))
+    sortedStates.foreach(rdd => printToImage(rdd,args(5).toInt,args(6).toInt,args(2)))
     //val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(0),x._2(1)))
     //sortedStates.print()
 
