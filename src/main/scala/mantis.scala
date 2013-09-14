@@ -1,3 +1,11 @@
+/**
+ * hierarchical <master> <inputFile>
+ *
+ * hierarchical clustering using the nearest neighbor chain algorithm
+ * write result to JSON for visualization in D3
+ *
+ */
+
 import spark.SparkContext._
 import spark.streaming.{Seconds, StreamingContext}
 import spark.streaming.StreamingContext._
@@ -5,7 +13,6 @@ import spark.util.Vector
 import javax.imageio.ImageIO
 import java.awt.image.BufferedImage
 import java.io.File
-
 
 object mantis {
 
