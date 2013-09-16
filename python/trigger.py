@@ -14,8 +14,6 @@ if len(sys.argv) < 5:
 def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
-	med = median(ts)
-	ts = (ts - med) / (med + 0.1) # convert to dff
 	return ts
 
 # parse inputs
@@ -42,7 +40,7 @@ if min(shape(t)) == 1 :
 		savemat(outputFile+"/"+"resp-frame-"+str(int(it))+".mat",mdict={'resp':resp.collect()},oned_as='column',do_compression='true')
 else :
 	logging.info('(trigger) getting triggered respses')
-	resp = X.map(lambda x : dot(t,x))
+	resp = X.map(lambda x : dot(t,x)).map(lambda x : (x - median(x)) / (median(x) + 0.1))
 	for it in range(shape(t)[0]) :
 		logging.info('(trigger) saving results for frame ...' + str(it))
 		savemat(outputFile+"/"+"resp-frame-"+str(int(it))+".mat",mdict={'resp':resp.map(lambda x : x[it]).collect()},oned_as='column',do_compression='true')
