@@ -66,7 +66,7 @@ object hierarchical {
 
     val n = data.count().toInt
     var iter = 0
-    val clusters = Array.fill(n-1)(Vector(0,0,0))
+    //val clusters = Array.fill(n-1)(Vector(0,0,0))
 
     while (data.count() > 1) {
 
@@ -86,7 +86,7 @@ object hierarchical {
       }
 
       data = data.map(x => updateKey(x,p._1,nn._1,iter + n)).reduceByKey(merge _)
-      clusters(iter) = Vector(p._1,nn._1,math.sqrt(distance(p._2,nn._2)*2))
+      //clusters(iter) = Vector(p._1,nn._1,math.sqrt(distance(p._2,nn._2)*2))
       iter += 1
       println(iter)
 //      if (iterChain > 1) {
@@ -96,6 +96,6 @@ object hierarchical {
 //      }
     }
 
-    printVector(clusters,args(3))
+    //printVector(clusters,args(3))
   }
 }
