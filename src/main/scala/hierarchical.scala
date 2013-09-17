@@ -18,7 +18,7 @@ object hierarchical {
     val nums = line.split(' ')
     //val k = nums(0).toDouble.toInt
     //val vec = nums.slice(1,nums.length).map(_.toDouble)
-    val k3 = nums.slice(0,2).map(_.toDouble) // get xyz coordinates
+    val k3 = nums.slice(0,3).map(_.toDouble) // get xyz coordinates
     val k = (k3(0) + (k3(1) - 1)*2034 + (k3(2) - 1)*2034*1134).toInt // convert to linear index
     val vec = nums.slice(3,nums.length).map(_.toDouble)
     return (k,(1.toDouble,Vector(vec)))
