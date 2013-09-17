@@ -54,7 +54,7 @@ object hierarchical {
 
   def main(args: Array[String]) {
 
-    if (args.length < 4) {
+    if (args.length < 3) {
       System.err.println("Usage: hierarchical <master> <inputFile> <outputFile> ")
       System.exit(1)
     }
