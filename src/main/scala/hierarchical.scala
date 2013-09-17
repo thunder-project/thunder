@@ -61,7 +61,9 @@ object hierarchical {
       System.err.println("Usage: hierarchical <master> <inputFile> <outputFile> ")
       System.exit(1)
     }
-    
+
+    System.setProperty("spark.executor.memory","120g")
+    System.setProperty("spark.serializer", "spark.KryoSerializer")
     val sc = new SparkContext(args(0), "hierarchical", System.getenv("SPARK_HOME"),
         List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
 
