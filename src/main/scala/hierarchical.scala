@@ -102,8 +102,10 @@ object hierarchical {
       }
       data = data.map(x => updateKey(x,p._1,nn._1,iter + n)).reduceByKey(merge _)
 
-      data.checkpoint()
-
+      if ((iter % 10) == 0) {
+        data.checkpoint()
+      }
+      
       //clusters(iter) = Vector(p._1,nn._1,math.sqrt(distance(p._2,nn._2)*2))
       iter += 1
       println("iteration" + iter)
