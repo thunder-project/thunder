@@ -75,7 +75,7 @@ object hierarchical {
     //System.setProperty("spark.default.parallelism", "50")
     val sc = new SparkContext(args(0), "hierarchical", System.getenv("SPARK_HOME"),
         List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
-
+    sc.setCheckpointDir(System.getenv("CHECKPOINT"))
 
     var data = sc.textFile(args(1)).map(parseVector _).cache()
 
