@@ -72,7 +72,7 @@ object hierarchical {
 
     System.setProperty("spark.executor.memory","120g")
     //System.setProperty("spark.serializer", "spark.KryoSerializer")
-    //System.setProperty("spark.default.parallelism", "50")
+    System.setProperty("spark.default.parallelism", "50")
     val sc = new SparkContext(args(0), "hierarchical", System.getenv("SPARK_HOME"),
         List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
     sc.setCheckpointDir(System.getenv("CHECKPOINT"))
@@ -102,10 +102,10 @@ object hierarchical {
       }
       data = data.map(x => updateKey(x,p._1,nn._1,iter + n)).reduceByKey(merge _)
 
-      if ((iter % 10) == 0) {
+      if ((iter % 10) == 0) { // checkpoint
         data.checkpoint()
       }
-      
+
       //clusters(iter) = Vector(p._1,nn._1,math.sqrt(distance(p._2,nn._2)*2))
       iter += 1
       println("iteration" + iter)

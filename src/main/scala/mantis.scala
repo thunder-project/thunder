@@ -71,7 +71,7 @@ object mantis {
     val windowTime = args(4).toLong
     val ssc = new StreamingContext(args(0), "SimpleStreaming", Seconds(batchTime),
       System.getenv("SPARK_HOME"), List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
-    ssc.checkpoint(System.getenv("CHECKPOINT"))
+    ssc.checkpoint(System.getenv("CHECKPOINTSTREAMING"))
 
     // update state
     val updateFunc = (values: Seq[Vector], state: Option[Vector]) => {
