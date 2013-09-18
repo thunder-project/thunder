@@ -89,7 +89,7 @@ object hierarchical {
       var p = data.first() // start at first point for first iteration
       var pOld, nn = p // initialize auxillary points
       while (rnn == 0) { // grow NN chain till we find an RNN
-        nn = data.filter(x => x._1 != p._1) // eliminate self
+        nn = data.filter(x => x._1 != p._1).distinct() // eliminate self
           .map(x => (distance(x._2,p._2),x)) // compute distances
           .reduce((x,y) => findMin(x,y))._2 // get nearest neighbor
           //.sortByKey(true).first()._2 // get nearest neighbor
