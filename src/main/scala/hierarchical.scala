@@ -41,6 +41,14 @@ object hierarchical {
     return p1._2.squaredDist(p2._2) * ((p1._1 * p2._1) / (p1._1 + p2._1))
   }
 
+  def findMin(p1: (Double,(Int,(Double,Vector))), p2: (Double,(Int,(Double,Vector)))): (Double,(Int,(Double,Vector))) = {
+    if (p1._1 < p2._1) {
+      return p1
+    } else {
+      return p2
+    }
+  }
+
   def merge(p1: (Double,Vector), p2: (Double,Vector)): (Double,Vector) = {
     // merge two clusters, keeping track of the number of points in the cluster
     return ((p1._1 + p2._1), (p1._1 * p1._2 + p2._1 * p2._2) / (p1._1 + p2._1))
@@ -82,7 +90,8 @@ object hierarchical {
       while (rnn == 0) { // grow NN chain till we find an RNN
         nn = data.filter(x => x._1 != p._1) // eliminate self
           .map(x => (distance(x._2,p._2),x)) // compute distances
-          .first()._2 // get nearest neighbor
+          .reduce((x,y) => findMin(x,y))._2
+          //.sortByKey(true).first()._2 // get nearest neighbor
         if (nn._1 == pOld._1) {
           rnn = 1 // nearest neighbor is last point, RNN found
         } else {
