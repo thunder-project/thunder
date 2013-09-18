@@ -16,11 +16,11 @@ object hierarchical {
 
   def parseVector(line: String): (Int,(Double,Vector)) = {
     val nums = line.split(' ')
-    //val k = nums(0).toDouble.toInt
-    //val vec = nums.slice(1,nums.length).map(_.toDouble)
-    val k3 = nums.slice(0,3).map(_.toDouble) // get xyz coordinates
-    val k = (k3(0) + (k3(1) - 1)*2034 + (k3(2) - 1)*2034*1134).toInt // convert to linear index
-    val vec = nums.slice(3,nums.length).map(_.toDouble)
+    val k = nums(0).toDouble.toInt
+    val vec = nums.slice(1,nums.length).map(_.toDouble)
+    //val k3 = nums.slice(0,3).map(_.toDouble) // get xyz coordinates
+    //val k = (k3(0) + (k3(1) - 1)*2034 + (k3(2) - 1)*2034*1134).toInt // convert to linear index
+    //val vec = nums.slice(3,nums.length).map(_.toDouble)
     return (k,(1.toDouble,Vector(vec)))
   }
 
@@ -54,10 +54,19 @@ object hierarchical {
     return ((p1._1 + p2._1), (p1._1 * p1._2 + p2._1 * p2._2) / (p1._1 + p2._1))
   }
 
-  def updateKey(p: (Int,(Double,Vector)), p1: (Int,(Double,Vector)), p2: (Int,(Double,Vector)), newInd: Int): (Int,(Double,Vector)) = {
-    // if a point has either ind1 or ind2, switch its index to newInd and merge
-    if ((p._1 == p1._1) | (p._1 == p2._1)) {
-      return (newInd,merge(p1._2,p2._2))
+//  def updateKey(p: (Int,(Double,Vector)), p1: (Int,(Double,Vector)), p2: (Int,(Double,Vector)), newInd: Int): (Int,(Double,Vector)) = {
+//    // if a point has either ind1 or ind2, switch its index to newInd and merge
+//    if ((p._1 == p1._1) | (p._1 == p2._1)) {
+//      return (newInd,merge(p1._2,p2._2))
+//    } else {
+//      return p
+//    }
+//  }
+
+  def updateKey(p: (Int,(Double,Vector)), ind1: Int, ind2: Int, newInd: Int): (Int,(Double,Vector)) = {
+    // if a point has either ind1 or ind2, switch its index to newInd
+    if ((p._1 == ind1) | (p._1 == ind2)) {
+      return (newInd,p._2)
     } else {
       return p
     }
@@ -81,7 +90,7 @@ object hierarchical {
 
     val n = data.count().toInt
     var iter = 0
-    //val clusters = Array.fill(n-1)(Vector(0,0,0))
+    val clusters = Array.fill(n-1)(Vector(0,0,0))
 
     while (data.count() > 1) {
 
@@ -92,7 +101,7 @@ object hierarchical {
         nn = data.filter(x => x._1 != p._1) // eliminate self
           .map(x => (distance(x._2,p._2),x)) // compute distances
           .reduce((x,y) => findMin(x,y))._2 // get nearest neighbor
-          //.sortByKey(true).first()._2 // get nearest neighbor
+          //.sortByKey(true).first()._2 // ge.t nearest neighbor
         if (nn._1 == pOld._1) {
           rnn = 1 // nearest neighbor is last point, RNN found
         } else {
@@ -100,15 +109,15 @@ object hierarchical {
           p = nn
         }
       }
-      //data = data.map(x => updateKey(x,p._1,nn._1,iter + n)).reduceByKey(merge _)
+      data = data.map(x => updateKey(x,p._1,nn._1,iter + n)).reduceByKey(merge _)
       //data = data.map(x => updateKey(x,p._1,nn._1,iter + n))
-      data = data.map(x => updateKey(x,p,nn,iter+n))
+      //data = data.map(x => updateKey(x,p,nn,iter+n))
 
       if ((iter % 10) == 0) { // checkpoint
         data.checkpoint()
       }
 
-      //clusters(iter) = Vector(p._1,nn._1,math.sqrt(distance(p._2,nn._2)*2))
+      clusters(iter) = Vector(p._1,nn._1,math.sqrt(distance(p._2,nn._2)*2))
       iter += 1
       println("iteration" + iter)
 //      if (iterChain > 1) {
@@ -118,6 +127,6 @@ object hierarchical {
 //      }
     }
 
-    //printVector(clusters,args(2))
+    printVector(clusters,args(2))
   }
 }
