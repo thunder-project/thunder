@@ -47,6 +47,8 @@ object bisecting {
       val mid = (clusters(0).count() / 2).toInt
       val data1 = clusters(0).sample(false,0.5,1)
       val data2 = clusters(0).sample(false,0.5,2)
+      val clusters1 = data1.reduce((x,y) => (1,(x._2._1+y._2._1,x._2._2+y._2._2)))
+      val clusters2 = data2.reduce((x,y) => (1,(x._2._1+y._2._1,x._2._2+y._2._2)))
       clusters.remove(ind)
       clusters.append(data1)
       clusters.append(data2)
