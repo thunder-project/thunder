@@ -71,8 +71,8 @@ object hierarchical {
     }
 
     System.setProperty("spark.executor.memory","120g")
-    System.setProperty("spark.serializer", "spark.KryoSerializer")
-    System.setProperty("spark.default.parallelism", "50")
+    //System.setProperty("spark.serializer", "spark.KryoSerializer")
+    //System.setProperty("spark.default.parallelism", "50")
     val sc = new SparkContext(args(0), "hierarchical", System.getenv("SPARK_HOME"),
         List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
 
@@ -90,7 +90,7 @@ object hierarchical {
       while (rnn == 0) { // grow NN chain till we find an RNN
         nn = data.filter(x => x._1 != p._1) // eliminate self
           .map(x => (distance(x._2,p._2),x)) // compute distances
-          .reduce((x,y) => findMin(x,y))._2
+          .reduce((x,y) => findMin(x,y))._2 // get nearest neighbor
           //.sortByKey(true).first()._2 // get nearest neighbor
         if (nn._1 == pOld._1) {
           rnn = 1 // nearest neighbor is last point, RNN found
@@ -111,6 +111,6 @@ object hierarchical {
 //      }
     }
 
-    //printVector(clusters,args(3))
+    //printVector(clusters,args(2))
   }
 }
