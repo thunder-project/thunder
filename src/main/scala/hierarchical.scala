@@ -76,6 +76,7 @@ object hierarchical {
     val sc = new SparkContext(args(0), "hierarchical", System.getenv("SPARK_HOME"),
         List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
 
+
     var data = sc.textFile(args(1)).map(parseVector _).cache()
 
     val n = data.count().toInt
@@ -99,8 +100,10 @@ object hierarchical {
           p = nn
         }
       }
-
       data = data.map(x => updateKey(x,p._1,nn._1,iter + n)).reduceByKey(merge _)
+
+      data.checkpoint()
+
       //clusters(iter) = Vector(p._1,nn._1,math.sqrt(distance(p._2,nn._2)*2))
       iter += 1
       println("iteration" + iter)
