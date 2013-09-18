@@ -77,7 +77,7 @@ object hierarchical {
         List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
     sc.setCheckpointDir(System.getenv("CHECKPOINT"))
 
-    val data = sc.textFile(args(1)).map(parseVector _).cache()
+    var data = sc.textFile(args(1)).map(parseVector _).cache()
 
     val n = data.count().toInt
     var iter = 0
@@ -101,6 +101,7 @@ object hierarchical {
         }
       }
       //data = data.map(x => updateKey(x,p._1,nn._1,iter + n)).reduceByKey(merge _)
+      data = data.map(x => updateKey(x,p._1,nn._1,iter + n))
 
       if ((iter % 10) == 0) { // checkpoint
         data.checkpoint()
