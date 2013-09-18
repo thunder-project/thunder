@@ -16,42 +16,52 @@ import java.io.File
 
 object mantis {
 
-  def parseVector(line: String): (Int,Vector) = {
+  def parseVector(line: String): (Int, Vector) = {
     val nums = line.split(' ') // split line into numbers: (0) key (1) ca (2) ephys (3) id
-    val k = nums(0).toInt  // get index as key
+    val k = nums(0).toInt // get index as key
     val id = nums(3).toInt
     val vals, counts = Array.fill[Double](2)(0)
     vals(id) = nums(1).toDouble
     counts(id) += 1
-    return (k,Vector(vals ++ counts))
+    return (k, Vector(vals ++ counts))
   }
 
-  def getDiffs(vals: (Int,Vector)): (Int,Vector) = {
+  def getDiffs(vals: (Int, Vector)): (Int, Vector) = {
     val baseLine = (vals._2(0) + vals._2(1)) / (vals._2(2) + vals._2(3))
     val diff0 = ((vals._2(0) / vals._2(2)) - baseLine) / (baseLine)
     val diff1 = ((vals._2(1) / vals._2(3)) - baseLine) / (baseLine)
-    return (vals._1, Vector(diff0,diff1))
+    return (vals._1, Vector(diff0, diff1))
   }
 
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
     val p = new java.io.PrintWriter(f)
-    try { op(p) } finally { p.close() }
+    try {
+      op(p)
+    } finally {
+      p.close()
+    }
   }
 
   def printVector(rdd: spark.RDD[Vector], saveFile: String): Unit = {
-    val data = rdd.collect().map(_.toString).map(x => x.slice(1,x.length-1)).map(_.replace(",",""))
+    val data = rdd.collect().map(_.toString).map(x => x.slice(1, x.length - 1)).map(_.replace(",", ""))
     printToFile(new File(saveFile))(p => {
       data.foreach(p.println)
     })
   }
 
   def printToImage(rdd: spark.RDD[Double], width: Int, height: Int, fileName: String): Unit = {
-    val nPixels = width*height
-    val R,G,B = rdd.collect().map(_ * 1000).map(_ + 255/2).map(_ toInt).map(x => if (x<0) {0} else if (x>255) {255} else {x})
-    val RGB = Array.range(0,nPixels).flatMap(x => Array(R(x),G(x),B(x)))
-    val img = new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB)
+    val nPixels = width * height
+    val R, G, B = rdd.collect().map(_ * 1000).map(_ + 255 / 2).map(_ toInt).map(x => if (x < 0) {
+      0
+    } else if (x > 255) {
+      255
+    } else {
+      x
+    })
+    val RGB = Array.range(0, nPixels).flatMap(x => Array(R(x), G(x), B(x)))
+    val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
-    raster.setPixels(0,0,width,height,RGB)
+    raster.setPixels(0, 0, width, height, RGB)
     ImageIO.write(img, "png", new File(fileName))
   }
 
@@ -62,7 +72,7 @@ object mantis {
     }
 
     // create spark context
-    System.setProperty("spark.executor.memory","120g")
+    System.setProperty("spark.executor.memory", "120g")
     System.setProperty("spark.serializer", "spark.KryoSerializer")
     if (args(7).toInt != 0) {
       System.setProperty("spark.default.parallelism", args(7).toString)
@@ -75,22 +85,22 @@ object mantis {
 
     // update state
     val updateFunc = (values: Seq[Vector], state: Option[Vector]) => {
-      var currentState = Vector(0,0,0,0)
+      var currentState = Vector(0, 0, 0, 0)
       if (values.length > 0) {
         currentState = currentState + values(0)
       }
       //val currentState = values(0) // ca0, ca1, n0, n1
-      val previousState = state.getOrElse(Vector(0,0,0,0))
+      val previousState = state.getOrElse(Vector(0, 0, 0, 0))
       Some(currentState + previousState)
     }
 
     // main streaming operations
     val lines = ssc.textFileStream(args(1)) // directory to monitor
     val dataStream = lines.map(parseVector _) // parse data
-    val stateStream = dataStream.reduceByKeyAndWindow(_+_,_-_,Seconds(windowTime),Seconds(batchTime))
+    val stateStream = dataStream.reduceByKeyAndWindow(_ + _, _ - _, Seconds(windowTime), Seconds(batchTime))
     val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => x._2(1))
     sortedStates.print()
-    sortedStates.foreach(rdd => printToImage(rdd,args(5).toInt,args(6).toInt,args(2)))
+    sortedStates.foreach(rdd => printToImage(rdd, args(5).toInt, args(6).toInt, args(2)))
     //val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(0),x._2(1)))
     //sortedStates.print()
 
