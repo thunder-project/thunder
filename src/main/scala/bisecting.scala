@@ -37,7 +37,7 @@ object bisecting {
       List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
     //sc.setCheckpointDir(System.getenv("CHECKPOINT"))
 
-    val k = 5
+    val k = 20
     val data = sc.textFile(args(1)).map(parseVector _).cache()
 
     val clusters = ArrayBuffer(data)
