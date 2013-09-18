@@ -54,10 +54,10 @@ object hierarchical {
     return ((p1._1 + p2._1), (p1._1 * p1._2 + p2._1 * p2._2) / (p1._1 + p2._1))
   }
 
-  def updateKey(p: (Int,(Double,Vector)), ind1: Int, ind2: Int, newInd: Int): (Int,(Double,Vector)) = {
-    // if a point has either ind1 or ind2, switch its index to newInd
-    if ((p._1 == ind1) | (p._1 == ind2)) {
-      return (newInd,p._2)
+  def updateKey(p: (Int,(Double,Vector)), p1: (Int,(Double,Vector)), p2: (Int,(Double,Vector)), newInd: Int): (Int,(Double,Vector)) = {
+    // if a point has either ind1 or ind2, switch its index to newInd and merge
+    if ((p._1 == p1._1) | (p._1 == p2._1)) {
+      return (newInd,merge(p1._2,p2._2))
     } else {
       return p
     }
@@ -89,7 +89,7 @@ object hierarchical {
       var p = data.first() // start at first point for first iteration
       var pOld, nn = p // initialize auxillary points
       while (rnn == 0) { // grow NN chain till we find an RNN
-        nn = data.filter(x => x._1 != p._1).distinct() // eliminate self
+        nn = data.filter(x => x._1 != p._1) // eliminate self
           .map(x => (distance(x._2,p._2),x)) // compute distances
           .reduce((x,y) => findMin(x,y))._2 // get nearest neighbor
           //.sortByKey(true).first()._2 // get nearest neighbor
@@ -101,7 +101,8 @@ object hierarchical {
         }
       }
       //data = data.map(x => updateKey(x,p._1,nn._1,iter + n)).reduceByKey(merge _)
-      data = data.map(x => updateKey(x,p._1,nn._1,iter + n))
+      //data = data.map(x => updateKey(x,p._1,nn._1,iter + n))
+      data = data.map(x => updateKey(x,p,nn,iter+n))
 
       if ((iter % 10) == 0) { // checkpoint
         data.checkpoint()
