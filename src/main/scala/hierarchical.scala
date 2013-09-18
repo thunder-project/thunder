@@ -100,7 +100,7 @@ object hierarchical {
         }
       }
 
-      data = data.map(x => updateKey(x,p._1,nn._1,iter + n)).reduceByKey(merge _).cache()
+      data = data.map(x => updateKey(x,p._1,nn._1,iter + n)).reduceByKey(merge _)
       //clusters(iter) = Vector(p._1,nn._1,math.sqrt(distance(p._2,nn._2)*2))
       iter += 1
       println("iteration" + iter)
