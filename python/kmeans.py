@@ -15,7 +15,7 @@ def parseVector(line):
 	ts = array(vec[3:]) # get tseries, drop x,y,z coords
 	med = median(ts)
 	ts = (ts - med) / (med + 0.1) # convert to dff
-	ts = ts[0:9];
+	ts = ts[0:19];
 	return ts
 
 def closestPoint(p, centers, dist):
