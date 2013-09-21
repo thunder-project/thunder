@@ -8,7 +8,11 @@ ivyXML := <dependency org="org.eclipse.jetty.orbit" name="javax.servlet" rev="3.
 
 libraryDependencies += "org.spark-project" %% "spark-core" % "0.7.3"
 
+libraryDependencies += "io.spray" %%  "spray-json" % "1.2.5"
+
 libraryDependencies += "org.spark-project" %% "spark-streaming" % "0.7.3"
+
+resolvers += "spray" at "http://repo.spray.io/"
 
 resolvers ++= Seq(
   "Akka Repository" at "http://repo.akka.io/releases/",

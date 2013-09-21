@@ -20,7 +20,7 @@ def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
 	med = median(ts)
-	ts = (ts - med) / (med) # convert to dff
+	ts = (ts - med) / (med + 0.1) # convert to dff
 	return ts
 
 def getFourier(vec,freq):
