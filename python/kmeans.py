@@ -83,16 +83,17 @@ while (tempDist > convergeDist) & (iteration < mxIteration):
 
 	iteration = iteration + 1
 
-if dist == 'corr':
-	kPoints = map(lambda x : x / norm(x), kPoints)
-
 logging.info("(kmeans) saving results")
-labels = X.map( lambda p : closestPoint(p, kPoints, dist)[0]).collect()
-dists = X.map( lambda p : closestPoint(p, kPoints, dist)[1]).collect()
-savemat(outputFile+"/"+"labels.mat",mdict={'labels':labels},oned_as='column',do_compression='true')
-savemat(outputFile+"/"+"dists.mat",mdict={'dists':dists},oned_as='column',do_compression='true')
-savemat(outputFile+"/"+"centers.mat",mdict={'centers':kPoints},oned_as='column',do_compression='true')
 
-if dist == 'euclidean':
-	normDists = X.map( lambda p : closestPoint((p - mean(p))/norm(p), map(lambda x : x / norm(x), kPoints), 'corr')[1]).collect()
-	savemat(outputFile+"/"+"normDists.mat",mdict={'normDists':normDists},oned_as='column',do_compression='true')
+# if dist == 'corr':
+# 	kPoints = map(lambda x : x / norm(x), kPoints)
+
+# labels = X.map( lambda p : closestPoint(p, kPoints, dist)[0]).collect()
+# dists = X.map( lambda p : closestPoint(p, kPoints, dist)[1]).collect()
+# savemat(outputFile+"/"+"labels.mat",mdict={'labels':labels},oned_as='column',do_compression='true')
+# savemat(outputFile+"/"+"dists.mat",mdict={'dists':dists},oned_as='column',do_compression='true')
+# savemat(outputFile+"/"+"centers.mat",mdict={'centers':kPoints},oned_as='column',do_compression='true')
+
+# if dist == 'euclidean':
+# 	normDists = X.map( lambda p : closestPoint((p - mean(p))/norm(p), map(lambda x : x / norm(x), kPoints), 'corr')[1]).collect()
+# 	savemat(outputFile+"/"+"normDists.mat",mdict={'normDists':normDists},oned_as='column',do_compression='true')
