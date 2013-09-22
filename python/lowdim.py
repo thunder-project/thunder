@@ -8,7 +8,7 @@ import logging
 
 if len(sys.argv) < 6:
   print >> sys.stderr, \
-  "(lowdim) usage: lowdim <master> <inputFile_X> <inputFile_t> <outputFile> <k>"
+  "(lowdim) usage: lowdim <master> <inputFile_X> <inputFile_y> <mode> <outputFile> <k>"
   exit(-1)
 
 def parseVector(line):
@@ -21,9 +21,10 @@ def parseVector(line):
 # parse inputs
 sc = SparkContext(sys.argv[1], "lowdim")
 inputFile_X = str(sys.argv[2])
-inputFile_t = str(sys.argv[3])
-outputFile = str(sys.argv[4]) + "-lowdim"
-k = int(sys.argv[5])
+inputFile_y = str(sys.argv[3])
+mode = str(sys.argv[4])
+outputFile = str(sys.argv[5]) + "-lowdim"
+k = int(sys.argv[6])
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -32,20 +33,16 @@ logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,form
 logging.info("(lowdim) loading data")
 lines_X = sc.textFile(inputFile_X) # the data
 X = lines_X.map(parseVector).cache()
-t = loadmat(inputFile_t)['trigInds'] # the triggers
-
-# compute triggered responses
-if min(shape(t)) == 1 :
-		# option not yet implemented!
-		resp = X.map(lambda x : mean(x[t[0]==it]))
-else :
-		resp = X.map(lambda x : dot(t,x))
+y = loadmat(inputFile_y)['y']
+if mode == 'mean'
+	resp = X.map(lambda x : dot(y,x))
+if mode == 'regress'
+	yhat = dot(inv(dot(transpose(y),y)),transpose(y)) 
+	resp = X.map(lambda x : dot(yhat,x)[1:])
 
 # compute covariance
 logging.info("(lowdim) getting count")
 n = resp.count()
-# logging.info("(lowdim) computing mean")
-# meanVec = resp.reduce(lambda x,y : x+y) / n
 logging.info("(lowdim) computing covariance")
 cov = resp.map(lambda x : outer(x-mean(x),x-mean(x))).reduce(lambda x,y : (x + y)) / n
 
@@ -63,5 +60,5 @@ savemat(outputFile+"/"+"evals.mat",mdict={'evals':latent},oned_as='column',do_co
 
 for ik in range(0,k):
 	logging.info("(lowdim) writing scores for pc " + str(ik))
-	out = X.map(lambda x : float16(inner(dot(t,x) - mean(dot(t,x)),sortedDim2[ik,:])))
+	out = X.map(lambda x : float16(inner(dot(y,x) - mean(dot(y,x)),sortedDim2[ik,:])))
 	savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
