@@ -33,7 +33,7 @@ lines_X = sc.textFile(inputFile_X) # the data
 X = lines_X.map(parseVector)
 
 inds = loadmat(indsFile)['inds']
-n = length(inds)
+n = len(inds)
 
 ts = data.filter(lambda (k,x) : k in inds).map(lambda (k,x) : x).reduce(lambda x,y :x+y) / n
 
