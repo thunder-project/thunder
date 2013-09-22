@@ -8,7 +8,7 @@ import logging
 
 if len(sys.argv) < 4:
   print >> sys.stderr, \
-  "(query) usage: query <master> <inputFile_X> <inds> <outputFile>"
+  "(query) usage: query <master> <inputFile> <inds> <outputFile>"
   exit(-1)
 
 def parseVector(line):
@@ -21,7 +21,7 @@ def parseVector(line):
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "query")
-inputFile_X = str(sys.argv[2])
+inputFile = str(sys.argv[2])
 indsFile = str(sys.argv[3])
 outputFile = str(sys.argv[4]) + "-query"
 if not os.path.exists(outputFile):
@@ -29,8 +29,7 @@ if not os.path.exists(outputFile):
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
 
 logging.info("(query) loading data")
-lines_X = sc.textFile(inputFile_X) # the data
-X = lines_X.map(parseVector)
+data = sc.textFile(inputFile).map(parseVector) # the data
 
 inds = loadmat(indsFile)['inds']
 n = len(inds)
