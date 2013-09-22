@@ -14,7 +14,7 @@ if len(sys.argv) < 4:
 def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
-	k = int(vec[0]) + int((vec[1] - 1)*2000) + int((vec[2] - 1)*1025*2000)
+	k = int(vec[0]) + int((vec[1] - 1)*1235) + int((vec[2] - 1)*1248*1235)
 	med = median(ts)
 	ts = (ts - med) / (med + 0.1) # convert to dff
 	return (k,ts)
