@@ -14,7 +14,7 @@ if len(sys.argv) < 4:
 def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
-	k = int(vec[0]) + int((vec[1] - 1)*1025) + int((vec[2] - 1)*1025*2000)
+	k = int(vec[0]) + int((vec[1] - 1)*2000) + int((vec[2] - 1)*1025*2000)
 	med = median(ts)
 	ts = (ts - med) / (med + 0.1) # convert to dff
 	return (k,ts)
@@ -26,7 +26,7 @@ indsFile = str(sys.argv[3])
 outputFile = str(sys.argv[4]) + "-query"
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
-logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
+logging.basicConfig(filename=outputFile+'-stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
 
 logging.info("(query) loading data")
 data = sc.textFile(inputFile).map(parseVector) # the data
@@ -36,6 +36,6 @@ n = len(inds)
 
 ts = data.filter(lambda (k,x) : k in inds).map(lambda (k,x) : x).reduce(lambda x,y :x+y) / n
 
-savemat(outputFile+"ts.mat",mdict={'ts':ts},oned_as='column',do_compression='true')
+savemat(outputFile+"-ts.mat",mdict={'ts':ts},oned_as='column',do_compression='true')
 
 
