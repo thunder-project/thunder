@@ -18,6 +18,10 @@ def parseVector(line):
 	ts = (ts - med) / (med + 0.1) # convert to dff
 	return ts
 
+def xcorr(x,y):
+	x1 = 
+	return ts
+
 # parse inputs
 sc = SparkContext(sys.argv[1], "lowdim")
 inputFile_X = str(sys.argv[2])
@@ -60,5 +64,5 @@ savemat(outputFile+"/"+"evals.mat",mdict={'evals':latent},oned_as='column',do_co
 for ik in range(0,k):
 	logging.info("(lowdim) writing scores for pc " + str(ik))
 	#out = X.map(lambda x : float16(inner(dot(y,x) - mean(dot(y,x)),sortedDim2[ik,:])))
-	out = X.map(lambda x : float16(inner(dot(y,(x-mean(x))/norm(x))) - mean(dot(y,(x-mean(x))/norm(x)))),sortedDim2[ik,:])
+	out = X.map(lambda x : float16(inner(dot(y,(x-mean(x))/norm(x)) - mean(dot(y,(x-mean(x))/norm(x))),sortedDim2[ik,:])))
 	savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
