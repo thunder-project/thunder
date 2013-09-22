@@ -18,10 +18,6 @@ def parseVector(line):
 	ts = (ts - med) / (med + 0.1) # convert to dff
 	return ts
 
-def xcorr(x,y):
-	x1 = 
-	return ts
-
 # parse inputs
 sc = SparkContext(sys.argv[1], "lowdim")
 inputFile_X = str(sys.argv[2])
