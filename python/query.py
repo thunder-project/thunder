@@ -6,7 +6,7 @@ from scipy.io import *
 from pyspark import SparkContext
 import logging
 
-if len(sys.argv) < 6:
+if len(sys.argv) < 4:
   print >> sys.stderr, \
   "(query) usage: query <master> <inputFile_X> <inds> <outputFile>"
   exit(-1)
