@@ -29,8 +29,8 @@ object mantis {
 
   def getDiffs(vals: (Int, Vector)): (Int, Vector) = {
     val baseLine = (vals._2(0) + vals._2(1)) / (vals._2(2) + vals._2(3))
-    val diff0 = ((vals._2(0) / vals._2(2)) - baseLine) / (baseLine)
-    val diff1 = ((vals._2(1) / vals._2(3)) - baseLine) / (baseLine)
+    val diff0 = ((vals._2(0) / vals._2(2)) - baseLine) / (baseLine + 0.1)
+    val diff1 = ((vals._2(1) / vals._2(3)) - baseLine) / (baseLine + 0.1)
     return (vals._1, Vector(diff0, diff1))
   }
 
