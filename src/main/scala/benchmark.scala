@@ -24,7 +24,7 @@ object benchmark {
   }
 
   def outerProd(vec1: DoubleMatrix1D, vec2: DoubleMatrix1D): DoubleMatrix2D = {
-    val out = factory2D.make(v1.size,v2.size)
+    val out = factory2D.make(vec1.size,vec2.size)
     algebra.multOuter(vec1,vec2,out)
     return out
   }
