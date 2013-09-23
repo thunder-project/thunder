@@ -43,7 +43,7 @@ object benchmark {
     val n = data.count()
 
     /** calculating a covariance matrix **/
-    val cov = data.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus)) / n
+    val cov = data.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus))
 
     /** do regression on each pixel **/
 
