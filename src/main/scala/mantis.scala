@@ -67,7 +67,7 @@ object mantis {
   }
 
   def main(args: Array[String]) {
-    if (args.length < 2) {
+    if (args.length < 8) {
       System.err.println("Usage: mantis <master> <directory> <outputFile> <batchTime> <windowTime> <width> <height> <nSlices>")
       System.exit(1)
     }
@@ -101,7 +101,7 @@ object mantis {
     val stateStream = dataStream.reduceByKeyAndWindow(_ + _, _ - _, Seconds(windowTime), Seconds(batchTime))
     val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => x._2(1))
     sortedStates.print()
-    sortedStates.foreach(rdd => printToImage(rdd, args(5).toInt, args(6).toInt, args(2)))
+    //sortedStates.foreach(rdd => printToImage(rdd, args(5).toInt, args(6).toInt, args(2)))
     //val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(0),x._2(1)))
     //sortedStates.print()
 

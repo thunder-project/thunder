@@ -47,7 +47,7 @@ bisecting - divisive hierarchlal clustering using bisecting k-means
 
 hierarchical - agglomerative hierachical clustering
 
-mantis - streaming analysis of 
+mantis - streaming analysis of neuroimaging data
 
 ## To-Do
 
