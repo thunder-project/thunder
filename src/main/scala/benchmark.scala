@@ -23,6 +23,8 @@ object benchmark {
     val vec = nums.slice(1, nums.length).map(_.toDouble)
     return Vector(vec)
 
+  }
+  
   def parseVectorColt(line: String): DoubleMatrix1D = {
     val nums = line.split(' ')
     val vec = nums.slice(1, nums.length).map(_.toDouble)
