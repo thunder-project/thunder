@@ -1,6 +1,8 @@
 # pca <master> <inputFile> <outputFile> <k> <dim>
 # 
 # performs pca on a data matrix
+# each row is (x,y,z,timeseries)
+#
 
 import sys
 import os

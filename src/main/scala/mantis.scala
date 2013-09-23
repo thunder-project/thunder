@@ -1,8 +1,9 @@
 /**
- * hierarchical <master> <inputFile>
+ * mantis <master> <directory> <outputFile> <batchTime> <windowTime> <width> <height> <nSlices>
  *
- * hierarchical clustering using the nearest neighbor chain algorithm
- * write result to JSON for visualization in D3
+ * real time processing of streaming neuroimaging data
+ *
+ * (in progress)
  *
  */
 

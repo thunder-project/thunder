@@ -1,8 +1,10 @@
 /**
- * hierarchical <master> <inputFile>
+ * hierarchical <master> <inputFile> <outputFile>
  *
  * efficient hierarchical clustering using the nearest neighbor chain algorithm
  * writes result to JSON for visualization in D3
+ *
+ * (in progress)
  *
  */
 
@@ -10,7 +12,6 @@ import java.io.File
 import spark.SparkContext
 import spark.SparkContext._
 import spark.util.Vector
-import scala.collection.mutable.Stack
 
 object hierarchical {
 
@@ -58,15 +59,6 @@ object hierarchical {
     return ((p1._1 + p2._1), (p1._1 * p1._2 + p2._1 * p2._2) / (p1._1 + p2._1))
   }
 
-  //  def updateKey(p: (Int,(Double,Vector)), p1: (Int,(Double,Vector)), p2: (Int,(Double,Vector)), newInd: Int): (Int,(Double,Vector)) = {
-  //    // if a point has either ind1 or ind2, switch its index to newInd and merge
-  //    if ((p._1 == p1._1) | (p._1 == p2._1)) {
-  //      return (newInd,merge(p1._2,p2._2))
-  //    } else {
-  //      return p
-  //    }
-  //  }
-
   def updateKey(p: (Int, (Double, Vector)), ind1: Int, ind2: Int, newInd: Int): (Int, (Double, Vector)) = {
     // if a point has either ind1 or ind2, switch its index to newInd
     if ((p._1 == ind1) | (p._1 == ind2)) {
@@ -88,7 +80,7 @@ object hierarchical {
     //System.setProperty("spark.default.parallelism", "50")
     val sc = new SparkContext(args(0), "hierarchical", System.getenv("SPARK_HOME"),
       List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
-    sc.setCheckpointDir(System.getenv("CHECKPOINT"))
+    //sc.setCheckpointDir(System.getenv("CHECKPOINT"))
 
     var data = sc.textFile(args(1)).map(parseVector _).cache()
 
@@ -120,7 +112,7 @@ object hierarchical {
 
       if ((iter % 10) == 0) {
         // checkpoint
-        data.checkpoint()
+        //data.checkpoint()
       }
 
       clusters(iter) = Vector(p._1, nn._1, math.sqrt(distance(p._2, nn._2) * 2))

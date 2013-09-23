@@ -1,3 +1,9 @@
+# query <master> <inputFile> <inds> <outputFile>
+# 
+# quickly query a data set by averaging together points
+# each row is (x,y,z,timeseries)
+#
+
 import sys
 import os
 from numpy import *

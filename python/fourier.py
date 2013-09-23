@@ -1,6 +1,7 @@
 # fourier <master> <inputFile> <outputFile> <freq>
 # 
-# computes the amplitude and phase of each time series
+# computes the amplitude and phase of data
+# each row is (x,y,z,timeseries)
 #
 
 import sys

@@ -1,4 +1,8 @@
-
+# ref <master> <inputFile> <inds> <outputFile>
+# 
+# compute a reference image of an xyz stack
+# each row is (x,y,z,time series)
+#
 
 import sys
 import os
@@ -11,7 +15,7 @@ import logging
 
 if len(sys.argv) < 4:
   print >> sys.stderr, \
-  "(ref) usage: ref <master> <inputFile_X> <outputFile>"
+  "(ref) usage: ref <master> <inputFile> <outputFile>"
   exit(-1)
 
 def parseVector(line):
@@ -21,14 +25,14 @@ def parseVector(line):
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "ref")
-inputFile_X = str(sys.argv[2])
+inputFile = str(sys.argv[2])
 outputFile = str(sys.argv[3])
 logging.basicConfig(filename=outputFile+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
 
 # parse data
 logging.info("(ref) loading data")
-lines_X = sc.textFile(inputFile_X)
-X = lines_X.map(parseVector)
+lines = sc.textFile(inputFile)
+X = lines.map(parseVector)
 
 # get z ordering
 logging.info("(ref) getting z ordering")

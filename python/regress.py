@@ -1,3 +1,12 @@
+# regress <master> <inputFile_Y> <inputFile_x1> <inputFile_x2> <outputFile> <mxLag>
+# 
+# time series regression on a data matrix
+# each row is (x,y,z,timeseries)
+# inputs are signals to regress against
+#
+# TODO: add options for number of regressors and interactions
+#
+
 import sys
 import os
 from numpy import *
@@ -13,8 +22,9 @@ if len(sys.argv) < 7:
 
 def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
-	ts = array(vec[1:])
-	#ts = (ts - mean(ts))
+	ts = array(vec[3:]) # get tseries
+	med = median(ts)
+	ts = (ts - med) / (med + 0.1) # convert to dff
 	return ts
 
 def getRegStats(y,pinvX):

@@ -9,40 +9,46 @@ Spark is a powerful new framework for cluster computing, particularly well suite
 
 ## Use
 
-To run these functions, first [install Spark](http://spark-project.org/downloads/) and [scala](http://www.scala-lang.org/downloads), then call like this:
+To run these functions, first [install Spark](http://spark-project.org/downloads/) and [scala](http://www.scala-lang.org/downloads).
 
-SPARK_HOME/pyspark ica.py local data/ica_test.txt test 4 4
+For python functions, call like this:
 
-If running on a cluster (e.g. Amazon's EC2), numpy, and any other dependencies, must be installed on all workers. See the helper scripts for doing this.
+		SPARK_HOME/pyspark ica.py local data/ica_test.txt test 4 4
+
+For scala functions, build and run in sbt like this:
+
+		sbt package
+		sbt "run local data/hierarchical_test.txt foo.txt"
+
+If running on a cluster (e.g. Amazon's EC2), numpy, and any other dependencies, must be installed on all workers. See the helper scripts for doing this on EC2.
 
 ## Contents
 
-#### main
-pca.py - PCA on a data matrix, e.g. space x time
+#### python
+pca - principal components analysis
 
-empca.py - iterative PCA using EM algorithm
+empca - iterative PCA using EM algorithm
 
-ica.py - ICA on a data matrix, e.g. space x time
+ica - independent components analysis
 
-cca.py - CCA on a data matrix, e.g. space x time
+cca - canonical correlation analysis
 
-rpca.py - robust PCA on a data matrix, e.g. space x time
+rpca - robust PCA
 
-fourier.py - fourier analysis on a time series matrix
+fourier - fourier analysis on time series data
 
+query - get average time series with desired indices
 
-#### data
-ica_test.txt - example data for running ICA (from [FastICA for Matlab](http://research.ics.aalto.fi/ica/fastica/code/dlcode.shtml))
+kmeans - k-means clustering
 
-pca_test.txt - example data for running PCA and emPCA (from [Sam Roweis](http://www.cs.nyu.edu/~roweis/code.html))
+#### scala
 
-fourier_test.txt - example signals for fourier analysis
+bisecting - divisive hierarchlal clustering using bisecting k-means
 
-rpca_test.txt - example input matrices for rpca
+hierarchical - agglomerative hierachical clustering
 
-cca_test.txt - example input matrices for cca
-
+mantis - streaming analysis of 
 
 ## To-Do
 
-scala versions
+scala versions of all functions

@@ -1,3 +1,11 @@
+# shotgun <master> <inputFile_A> <inputFile_y> <outputFile> <lambda>
+# 
+# use the "shotgun" approach to fit a L1 regularized regression
+# parallelizing over features
+# algorithm by Bradley et al., 2011, ICML
+#
+
+
 import sys
 import os
 from numpy import *
@@ -53,10 +61,6 @@ n = len(A.first()[1])
 b = csc_matrix((d,1))
 # initialize product Ab
 Ab = zeros((n,1))
-# precompute constants (d x 1)
-#logging.info("(shotgun) precomputing vectors")
-#Ay = A.map(lambda (k,x) : dot(x,y)).collect()
-#AA = A.map(lambda (k,x) : dot(x,x)).collect()
 
 iIter = 1
 nIter = 50

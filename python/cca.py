@@ -1,16 +1,8 @@
 # cca <master> <inputFile> <outputFile> <label1> <label2> <k> <c>
 # 
-# compute canonical correlations on two data sets
-# input is a local text file or a file in HDFS
-# format should be rows of ' ' separated values
-# first entry in each row indicates which dataset
-# - example: space (rows) x time (cols)
-# - rows should be whichever dim is larger
-# 'label1' and 'label2' specify the datasets
-# - in the form of a number (e.g. "1") or a list (e.g. "1,2,3")
-# 'k' is number of principal components for dim reduction
-# 'c' is the number of canonical correlations to return
-# writes components to text (in input space)
+# compute canonical correlation analysis on two data sets
+# each row is (label,timeseries)
+#
 
 import sys
 import os
@@ -23,18 +15,11 @@ from pyspark import SparkContext
 
 if len(sys.argv) < 7:
   print >> sys.stderr, \
-  "(ica) usage: cca <master> <inputFile> <outputFile> <label1> <label2> <k> <c>"
+  "(cca) usage: cca <master> <inputFile> <outputFile> <label1> <label2> <k> <c>"
   exit(-1)
 
 def parseVector(line):
     return array([float(x) for x in line.split(' ')])
-
-def butterBandpass(lowcut, highcut, fs, order=5):
-    nyq = 0.5 * fs
-    low = lowcut / nyq
-    high = highcut / nyq
-    b, a = butter(order, [low, high], btype='band')
-    return b, a
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "cca")
@@ -115,9 +100,3 @@ savemat(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-time.mat",m
 for ic in range(0,c):
   savemat(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-space-cc-"+str(ic)+".mat",mdict={'space':data1sub.map(lambda x : dot(transpose(x),dot(v1[:,0:k],A[:,ic]))).collect()},oned_as='column',do_compression='true')
   savemat(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-space-cc-"+str(ic)+".mat",mdict={'space':data2sub.map(lambda x : dot(transpose(x),dot(v2[:,0:k],B[:,ic]))).collect()},oned_as='column',do_compression='true')
-
-#savetxt(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-time.txt",time1,fmt='%.8f')
-#savetxt(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-time.txt",time2,fmt='%.8f')
-#for ic in range(0,c):
-#  savetxt(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-space-cc-"+str(ic)+".txt",data1sub.map(lambda x : dot(transpose(x),dot(v1[:,0:k],A[:,ic]))).collect(),fmt='%.4f')
-#  savetxt(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-space-cc-"+str(ic)+".txt",data2sub.map(lambda x : dot(transpose(x),dot(v2[:,0:k],B[:,ic]))).collect(),fmt='%.4f')

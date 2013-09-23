@@ -1,6 +1,9 @@
 # kmeans <master> <inputFile> <outputFile> <k> <dist>
 # 
 # perform kmeans on a data matrix
+# each row is (x,y,z,timeseries)
+# based on example included with spark
+#
 
 import sys
 import os
@@ -15,7 +18,6 @@ def parseVector(line):
 	ts = array(vec[3:]) # get tseries, drop x,y,z coords
 	med = median(ts)
 	ts = (ts - med) / (med + 0.1) # convert to dff
-	ts = ts[0:19];
 	return ts
 
 def closestPoint(p, centers, dist):
@@ -86,15 +88,15 @@ while (tempDist > convergeDist) & (iteration < mxIteration):
 
 logging.info("(kmeans) saving results")
 
-# if dist == 'corr':
-# 	kPoints = map(lambda x : x / norm(x), kPoints)
+if dist == 'corr':
+	kPoints = map(lambda x : x / norm(x), kPoints)
 
-# labels = X.map( lambda p : closestPoint(p, kPoints, dist)[0]).collect()
-# dists = X.map( lambda p : closestPoint(p, kPoints, dist)[1]).collect()
-# savemat(outputFile+"/"+"labels.mat",mdict={'labels':labels},oned_as='column',do_compression='true')
-# savemat(outputFile+"/"+"dists.mat",mdict={'dists':dists},oned_as='column',do_compression='true')
-# savemat(outputFile+"/"+"centers.mat",mdict={'centers':kPoints},oned_as='column',do_compression='true')
+labels = X.map( lambda p : closestPoint(p, kPoints, dist)[0]).collect()
+dists = X.map( lambda p : closestPoint(p, kPoints, dist)[1]).collect()
+savemat(outputFile+"/"+"labels.mat",mdict={'labels':labels},oned_as='column',do_compression='true')
+savemat(outputFile+"/"+"dists.mat",mdict={'dists':dists},oned_as='column',do_compression='true')
+savemat(outputFile+"/"+"centers.mat",mdict={'centers':kPoints},oned_as='column',do_compression='true')
 
-# if dist == 'euclidean':
-# 	normDists = X.map( lambda p : closestPoint((p - mean(p))/norm(p), map(lambda x : x / norm(x), kPoints), 'corr')[1]).collect()
-# 	savemat(outputFile+"/"+"normDists.mat",mdict={'normDists':normDists},oned_as='column',do_compression='true')
+if dist == 'euclidean':
+	normDists = X.map( lambda p : closestPoint((p - mean(p))/norm(p), map(lambda x : x / norm(x), kPoints), 'corr')[1]).collect()
+	savemat(outputFile+"/"+"normDists.mat",mdict={'normDists':normDists},oned_as='column',do_compression='true')

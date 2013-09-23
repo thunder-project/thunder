@@ -1,3 +1,11 @@
+# lowdim <master> <inputFile_X> <inputFile_y> <mode> <outputFile> <k>"
+# 
+# perform two stages of dimensionality reduction
+# first reduce each time series using the specified method
+# then do PCA
+# each row is (x,y,z,timeseries)
+#
+
 import sys
 import os
 from numpy import *

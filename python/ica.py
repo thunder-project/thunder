@@ -1,6 +1,8 @@
 # ica <master> <inputFile> <outputFile> <k> <c>
 # 
 # perform ica on a data matrix
+# each row is (x,y,z,timeseries)
+#
 
 import sys
 import os
@@ -19,7 +21,7 @@ def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries, drop x,y,z coords
 	med = median(ts)
-	ts = (ts - med) / (med) # convert to dff
+	ts = (ts - med) / (med + 0.1) # convert to dff
 	return ts
 
 # parse inputs

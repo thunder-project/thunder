@@ -4,6 +4,8 @@
  * divisive hierarchical clustering using bisecting k-means
  * writes result to JSON for display using d3
  *
+ * (in progress)
+ *
  */
 
 import java.io.File

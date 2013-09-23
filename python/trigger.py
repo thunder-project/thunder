@@ -1,3 +1,11 @@
+# trigger <master> <inputFile_X> <inputFile_y> <mode> <outputFile> <k>"
+# 
+# compute average image conditional on the value of a trigger
+# each row is (x,y,z,timeseries)
+# inputFile_y is either a vector of trigger indices, or a matrix 
+#
+
+
 import sys
 import os
 from numpy import *
@@ -8,7 +16,7 @@ import logging
 
 if len(sys.argv) < 5:
   print >> sys.stderr, \
-  "(trigger) usage: trigger <master> <inputFile_X> <inputFile_t> <outputFile>"
+  "(trigger) usage: trigger <master> <inputFile_X> <inputFile_y> <outputFile>"
   exit(-1)
 
 def parseVector(line):
@@ -31,18 +39,18 @@ logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,form
 #logging.info("(trigger) loading data")
 lines_X = sc.textFile(inputFile_X) # the data
 X = lines_X.map(parseVector).cache()
-t = loadmat(inputFile_t)['trigInds'] # the triggers
+y = loadmat(inputFile_y)['y'] # the triggers
 
 # compute triggered movie
-if min(shape(t)) == 1 :
-	for it in unique(t):
+if min(shape(y)) == 1 :
+	for it in unique(y):
 		logging.info('(trigger) getting triggered response at frame ' + str(it))
-		resp = X.map(lambda x : mean(x[t[0]==it]))
+		resp = X.map(lambda x : mean(x[y[0]==it]))
 		logging.info('(trigger) saving results...')
 		savemat(outputFile+"/"+"resp-frame-"+str(int(it))+".mat",mdict={'resp':resp.collect()},oned_as='column',do_compression='true')
 else :
 	logging.info('(trigger) getting triggered respses')
-	resp = X.map(lambda x : dot(t,x))
-	for it in range(shape(t)[0]) :
+	resp = X.map(lambda x : dot(y,x))
+	for it in range(shape(y)[0]) :
 		logging.info('(trigger) saving results for frame ...' + str(it))
 		savemat(outputFile+"/"+"resp-frame-"+str(int(it))+".mat",mdict={'resp':resp.map(lambda x : x[it]).collect()},oned_as='column',do_compression='true')

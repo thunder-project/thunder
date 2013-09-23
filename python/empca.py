@@ -1,7 +1,9 @@
 # empca <master> <inputFile> <outputFile> <k>
 # 
 # uses iterative EM to do pca on a data matrix
+# each row is (x,y,z,timeseries)
 # algorithm by Sam Roweis (NIPS, 1997)
+#
 
 import sys
 import os
@@ -16,7 +18,11 @@ if len(sys.argv) < 5:
   exit(-1)
 
 def parseVector(line):
-    return array([float(x) for x in line.split(' ')])
+  vec = [float(x) for x in line.split(' ')]
+	ts = array(vec[3:]) # get tseries
+	med = median(ts)
+	ts = (ts - med) / (med + 0.1) # convert to dff
+	return ts
 
 def outerProd(x):
 	return outer(x,x)
