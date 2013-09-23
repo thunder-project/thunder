@@ -11,14 +11,14 @@ Spark is a powerful new framework for cluster computing, particularly well suite
 
 To run these functions, first [install Spark](http://spark-project.org/downloads/) and [scala](http://www.scala-lang.org/downloads).
 
-For python functions, call like this:
+For python functions, call using pyspark:
 
-	SPARK_HOME/pyspark ica.py local data/ica_test.txt test 4 4
+	SPARK_HOME/pyspark ica.py local data/ica_test.txt results 4 4
 
-For scala functions, build and run in sbt like this:
+For scala functions, build and run in sbt:
 
 	sbt package
-	sbt "run local data/hierarchical_test.txt foo.txt"
+	sbt "run local data/hierarchical_test.txt results.txt"
 
 If running on a cluster (e.g. Amazon's EC2), numpy, and any other dependencies, must be installed on all workers. See the helper scripts for doing this on EC2.
 
