@@ -78,7 +78,7 @@ object benchmark {
       val m = data.first().size()
       val y = factory1D.random(m)
       println(algorithm + " start")
-      val out = data.map(x => algebra.mult(x,y)).collect()
+      val out = data.map(x => algebra.mult(x,y)).reduce(_+_)
       println(algorithm + " done")
     }
 
