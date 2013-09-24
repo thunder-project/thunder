@@ -79,6 +79,7 @@ object benchmark {
       val y = factory1D.random(m)
       println(algorithm + " start")
       val out = data.map(x => algebra.mult(x,y)).reduce(_+_)
+      println(out.toString())
       println(algorithm + " done")
     }
 
@@ -86,7 +87,7 @@ object benchmark {
       /** one iteration of kmeans with k = 3 **/
       val data = sc.textFile(args(2)).map(parseVector _).cache()
       val n = data.count()
-      val kPoints = data.takeSample(false, 3, 42).toArray
+      val kPoints = data.takeSample(false, 5, 42).toArray
       println(algorithm + " start")
       val closest = data.map (p => (closestPoint(p, kPoints), (p, 1)))
       val pointStats = closest.reduceByKey{case ((x1, y1), (x2, y2)) => (x1 + x2, y1 + y2)}
