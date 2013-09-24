@@ -64,7 +64,7 @@ object benchmark {
 
     if (algorithm == "cov") {
       /** calculating a covariance matrix **/
-      val data = sc.textFile(args(1)).map(parseVectorColt _).cache()
+      val data = sc.textFile(args(2)).map(parseVectorColt _).cache()
       val n = data.count()
       println(algorithm + " start")
       val cov = data.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus))
@@ -73,7 +73,7 @@ object benchmark {
 
     if (algorithm == "regress") {
       /** do regression on each pixel **/
-      val data = sc.textFile(args(1)).map(parseVectorColt _).cache()
+      val data = sc.textFile(args(2)).map(parseVectorColt _).cache()
       val n = data.count()
       val m = data.first().size()
       val y = factory1D.random(m)
@@ -84,7 +84,7 @@ object benchmark {
 
     if (algorithm == "kmeans") {
       /** one iteration of kmeans with k = 3 **/
-      val data = sc.textFile(args(1)).map(parseVector _).cache()
+      val data = sc.textFile(args(2)).map(parseVector _).cache()
       val n = data.count()
       val kPoints = data.takeSample(false, 3, 42).toArray
       println(algorithm + " start")
