@@ -1,7 +1,7 @@
 /**
  * benchmark <master> <directory> <outputFile> <batchTime> <windowTime> <width> <height> <nSlices>
  *
- * time several different operations
+ * testing timing for several different operations
  *
  */
 
@@ -22,7 +22,13 @@ object benchmark {
     val nums = line.split(' ')
     val vec = nums.slice(1, nums.length).map(_.toDouble)
     return Vector(vec)
+  }
 
+  def time[A](f: => A) = {
+    val s = System.nanoTime
+    val ret = f
+    println("time: "+(System.nanoTime-s)/1e9+"s")
+    ret
   }
 
   def parseVectorColt(line: String): DoubleMatrix1D = {
@@ -66,9 +72,9 @@ object benchmark {
       /** calculating a covariance matrix **/
       val data = sc.textFile(args(2)).map(parseVectorColt _).cache()
       val n = data.count()
-      println(algorithm + " start")
+      time {
       val cov = data.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus))
-      println(algorithm + " done")
+      }
     }
 
     if (algorithm == "regress") {
@@ -77,10 +83,9 @@ object benchmark {
       val n = data.count()
       val m = data.first().size()
       val y = factory1D.random(m)
-      println(algorithm + " start")
-      val out = data.map(x => algebra.mult(x,y)).reduce(_+_)
-      println(out.toString())
-      println(algorithm + " done")
+      time {
+        val out = data.map(x => algebra.mult(x,y)).reduce(_+_)
+      }
     }
 
     if (algorithm == "kmeans") {
@@ -88,12 +93,11 @@ object benchmark {
       val data = sc.textFile(args(2)).map(parseVector _).cache()
       val n = data.count()
       val kPoints = data.takeSample(false, 5, 42).toArray
-      println(algorithm + " start")
-      val closest = data.map (p => (closestPoint(p, kPoints), (p, 1)))
-      val pointStats = closest.reduceByKey{case ((x1, y1), (x2, y2)) => (x1 + x2, y1 + y2)}
-      val newPoints = pointStats.map {pair => (pair._1, pair._2._1 / pair._2._2)}.collectAsMap()
-      println(algorithm + " done")
-
+      time {
+        val closest = data.map (p => (closestPoint(p, kPoints), (p, 1)))
+        val pointStats = closest.reduceByKey{case ((x1, y1), (x2, y2)) => (x1 + x2, y1 + y2)}
+        val newPoints = pointStats.map {pair => (pair._1, pair._2._1 / pair._2._2)}.collectAsMap()
+      }
     }
 
 
