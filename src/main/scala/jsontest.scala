@@ -2,7 +2,7 @@ import cc.spray.json._
 
 object jsontest {
 
-  case class Cluster(var key: Int, var center: Array[Double], var children: Option[List[Cluster]])
+  case class Cluster(var key: Int, var center: List[Map[String,Double]], var children: Option[List[Cluster]])
 
   object MyJsonProtocol extends DefaultJsonProtocol {
     implicit val menuItemFormat: JsonFormat[Cluster] = lazyFormat(jsonFormat(Cluster, "key", "center", "children"))
@@ -24,12 +24,13 @@ object jsontest {
 
   def main(args: Array[String]) {
 
-    val child1 = Cluster(1,Array(0.1,0.4),None)
-    val child2 = Cluster(2,Array(0.25,0.25),None)
-    val child3 = Cluster(3,Array(0.3,0.6),None)
-    val child4 = Cluster(4,Array(0.5,0.15),None)
+    val center1 = List(7.0,2.0,1.0)
+    val child1 = Cluster(1,center1.zipWithIndex.map(x => Map("x"->x._2.toDouble,"y"->x._1)),None)
+    val child2 = Cluster(2,center1.zipWithIndex.map(x => Map("x"->x._2.toDouble,"y"->x._1)),None)
+    val child3 = Cluster(3,center1.zipWithIndex.map(x => Map("x"->x._2.toDouble,"y"->x._1)),None)
+    val child4 = Cluster(4,center1.zipWithIndex.map(x => Map("x"->x._2.toDouble,"y"->x._1)),None)
 
-    val base = Cluster(0,Array(0.5,0.5),None)
+    val base = Cluster(0,center1.zipWithIndex.map(x => Map("x"->x._2.toDouble,"y"->x._1)),None)
     insert(base,0,List(child1,child2))
     insert(base,1,List(child3,child4))
 
