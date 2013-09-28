@@ -8,6 +8,7 @@
 import spark.SparkContext
 import spark.SparkContext._
 import spark.util.Vector
+import cc.spray.json._
 import cern.jet.math._
 import cern.colt.matrix._
 import cern.colt.matrix.linalg._

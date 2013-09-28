@@ -1,11 +1,4 @@
-import spark.SparkContext
-import spark.SparkContext._
-import spark.util.Vector
-import scala.collection.mutable.ArrayBuffer
 import cc.spray.json._
-import cc.spray.json.DefaultJsonProtocol._
-
-//
 
 object jsontest {
 
@@ -17,18 +10,29 @@ object jsontest {
 
   import MyJsonProtocol._
 
-  def main(args: Array[String]) {
+  def insert(node: Cluster, key: Int, children: List[Cluster]) {
+    // recursively search cluster tree for desired key and insert children
+    if (node.key == key) {
+      node.children = Some(children)
+    } else {
+      if (node.children.getOrElse(0) != 0) {
+        insert(node.children.get(0),key,children)
+        insert(node.children.get(1),key,children)
+      }
+    }
+  }
 
-    //val foo = new Item("j","test",Some(Item("j","test",Some(Item("j","test",None)))))
-    //val foo = new Item("j","test",Some(Item("j","test",None)))
+  def main(args: Array[String]) {
 
     val child1 = Cluster(1,Array(0.1,0.4),None)
     val child2 = Cluster(2,Array(0.25,0.25),None)
-    val root = Cluster(0,Array(0.5,0.5),Some(List(child1,child2)))
-    println(root.toJson.prettyPrint)
+    val child3 = Cluster(3,Array(0.3,0.6),None)
+    val child4 = Cluster(4,Array(0.5,0.15),None)
 
     val base = Cluster(0,Array(0.5,0.5),None)
-    base.children = Some(List(child1,child2))
+    insert(base,0,List(child1,child2))
+    insert(base,1,List(child3,child4))
+
     println(base.toJson.prettyPrint)
   }
 

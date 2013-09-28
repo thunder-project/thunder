@@ -19,6 +19,26 @@ import cc.spray.json.DefaultJsonProtocol._
 
 object bisecting {
 
+  case class Cluster(var key: Int, var center: Array[Double], var children: Option[List[Cluster]])
+
+  object MyJsonProtocol extends DefaultJsonProtocol {
+    implicit val menuItemFormat: JsonFormat[Cluster] = lazyFormat(jsonFormat(Cluster, "key", "center", "children"))
+  }
+
+  import MyJsonProtocol._
+
+  def insert(node: Cluster, key: Int, children: List[Cluster]) {
+    // recursively search cluster tree for desired key and insert children
+    if (node.key == key) {
+      node.children = Some(children)
+    } else {
+      if (node.children.getOrElse(0) != 0) {
+        insert(node.children.get(0),key,children)
+        insert(node.children.get(1),key,children)
+      }
+    }
+  }
+
   def parseVector(line: String): Vector = {
     val nums = line.split(' ')
     val k = nums(0).toDouble.toInt
@@ -95,11 +115,12 @@ object bisecting {
       List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
     //sc.setCheckpointDir(System.getenv("CHECKPOINT"))
 
-
     val k = 1
     val data = sc.textFile(args(1)).map(parseVector _).cache()
 
     val clusters = ArrayBuffer(data)
+    val center = data.reduce(_+_).elements
+    val tree = Cluster(0,center,None)
 
     while (clusters.size < k) {
 
@@ -116,8 +137,8 @@ object bisecting {
       clusters.append(cluster1)
       clusters.append(cluster2)
 
-      // keep track of results
-
+      // update tree with results
+      insert(tree,ind,List(Cluster(1,centers(0).elements,None),Cluster(2,centers(1).elements,None)))
 
     }
   }
