@@ -39,6 +39,11 @@ object bisecting {
     }
   }
 
+  def std(vec: Vector): Double = {
+    val mean = Vector(Array.fill(vec.length)(vec.sum / vec.length))
+    return scala.math.sqrt(vec.squaredDist(mean)/(vec.length - 1))
+  }
+
   def makeXYmap(vec: Array[Double]): List[Map[String,Double]] = {
     return vec.toList.zipWithIndex.map(x => Map("x"->x._2.toDouble,"y"->x._1))
   }
@@ -122,7 +127,7 @@ object bisecting {
   def main(args: Array[String]) {
 
     if (args.length < 3) {
-      System.err.println("Usage: bisecting <master> <inputFile> <outputFile> <k> <subIters>")
+      System.err.println("Usage: bisecting <master> <inputFile> <outputFile> <k> <subIters> <threshold>")
       System.exit(1)
     }
 
@@ -135,7 +140,8 @@ object bisecting {
 
     val k = args(3).toDouble
     val subIters = args(4).toInt
-    val data = sc.textFile(args(1)).map(parseVector _).cache()
+    val threshold = args(5).toDouble
+    val data = sc.textFile(args(1)).map(parseVector _).filter(x => std(x) > threshold).cache()
 
     val clusters = ArrayBuffer((0,data))
     val center = data.reduce(_+_).elements.map(x => x / data.count())
