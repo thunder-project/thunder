@@ -45,10 +45,10 @@ object bisecting {
 
   def parseVector(line: String): Vector = {
     val nums = line.split(' ')
-    //val vec = nums.slice(1, nums.length).map(_.toDouble)
-    var vec = nums.slice(3,nums.length).map(_.toDouble)
-    val mean = vec.sum / vec.length
-    vec = (vec.map(x => (x - mean)/(mean + 0.1)))
+    val vec = nums.slice(1, nums.length).map(_.toDouble)
+//    var vec = nums.slice(3,nums.length).map(_.toDouble)
+//    val mean = vec.sum / vec.length
+//    vec = (vec.map(x => (x - mean)/(mean + 0.1)))
     return Vector(vec)
   }
 
@@ -63,23 +63,30 @@ object bisecting {
 
   def closestPoint(p: Vector, centers: Array[Vector]): Int = {
 
-    var bestIndex = 0
-    var closest = Double.PositiveInfinity
-    for (i <- 0 until centers.length) {
-      val tempDist = p.squaredDist(centers(i))
-      if (tempDist < closest) {
-        closest = tempDist
-        bestIndex = i
-      }
+    if (p.squaredDist(centers(0)) < p.squaredDist(centers(1))) {
+      return 0
     }
-    return bestIndex
+    else {
+      return 1
+    }
+
+//    var bestIndex = 0
+//    var closest = Double.PositiveInfinity
+//    for (i <- 0 until centers.length) {
+//      val tempDist = p.squaredDist(centers(i))
+//      if (tempDist < closest) {
+//        closest = tempDist
+//        bestIndex = i
+//      }
+//    }
+//    return bestIndex
   }
 
   def split(cluster: spark.RDD[Vector], subIters: Int): Array[Vector] = {
 
     // use k-means with k=2 to split a cluster in two
     // try multiple splits and keep the best
-    val convergeDist = 0.0001
+    val convergeDist = 0.001
     var best = Double.PositiveInfinity
     var centersFinal = cluster.takeSample(false,2,1).toArray
     for (iter <- 0 until subIters) {
@@ -121,7 +128,7 @@ object bisecting {
 
     System.setProperty("spark.executor.memory", "120g")
     System.setProperty("spark.serializer", "spark.KryoSerializer")
-    //System.setProperty("spark.default.parallelism", "50")
+    System.setProperty("spark.default.parallelism", "50")
     val sc = new SparkContext(args(0), "hierarchical", System.getenv("SPARK_HOME"),
       List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
     //sc.setCheckpointDir(System.getenv("CHECKPOINT"))
