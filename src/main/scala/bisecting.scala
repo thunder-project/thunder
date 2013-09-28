@@ -141,7 +141,7 @@ object bisecting {
     val k = args(3).toDouble
     val subIters = args(4).toInt
     val threshold = args(5).toDouble
-    val data = sc.textFile(args(1)).map(parseVector _).filter(x => std(x) > threshold).cache()
+    val data = sc.textFile(args(1)).map(parseVector _).filter(x => std(x) > threshold).map(x => x / std(x)).cache()
 
     val clusters = ArrayBuffer((0,data))
     val center = data.reduce(_+_).elements.map(x => x / data.count())
