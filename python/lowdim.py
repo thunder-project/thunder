@@ -62,6 +62,7 @@ sortedDim2 = transpose(v[:,inds[0:k]])
 latent = w[inds[0:k]]
 
 logging.info("(lowdim) writing evecs and evals")
+savemat(outputFile+"/"+"cov.mat",mdict={'cov':cov},oned_as='column',do_compression='true')
 savemat(outputFile+"/"+"evecs.mat",mdict={'evecs':sortedDim2},oned_as='column',do_compression='true')
 savemat(outputFile+"/"+"evals.mat",mdict={'evals':latent},oned_as='column',do_compression='true')
 
