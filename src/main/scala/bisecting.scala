@@ -75,15 +75,14 @@ object bisecting {
     return bestIndex
   }
 
-  def split(cluster: spark.RDD[Vector]): Array[Vector] = {
+  def split(cluster: spark.RDD[Vector], subIters: Int): Array[Vector] = {
 
     // use k-means with k=2 to split a cluster in two
     // try multiple splits and keep the best
     val convergeDist = 0.0001
-    val iters = 5
     var best = Double.PositiveInfinity
     var centersFinal = cluster.takeSample(false,2,1).toArray
-    for (iter <- 0 until iters) {
+    for (iter <- 0 until subIters) {
       val centers = cluster.takeSample(false, 2, iter).toArray
       var tempDist = 1.0
       // do k-means iterations till convergence
@@ -116,7 +115,7 @@ object bisecting {
   def main(args: Array[String]) {
 
     if (args.length < 3) {
-      System.err.println("Usage: bisecting <master> <inputFile> <outputFile> <k>")
+      System.err.println("Usage: bisecting <master> <inputFile> <outputFile> <k> <subIters>")
       System.exit(1)
     }
 
@@ -128,6 +127,7 @@ object bisecting {
     //sc.setCheckpointDir(System.getenv("CHECKPOINT"))
 
     val k = args(3).toDouble
+    val subIters = args(4).toInt
     val data = sc.textFile(args(1)).map(parseVector _).cache()
 
     val clusters = ArrayBuffer((0,data))
@@ -141,7 +141,7 @@ object bisecting {
       val ind = clusters.map(_._2.count()).view.zipWithIndex.max._2
 
       // split into 2 clusters using k-means
-      val centers = split(clusters(ind)._2) // find 2 cluster centers
+      val centers = split(clusters(ind)._2,subIters) // find 2 cluster centers
       val cluster1 = clusters(ind)._2.filter(x => closestPoint(x,centers) == 0)
       val cluster2 = clusters(ind)._2.filter(x => closestPoint(x,centers) == 1)
 
