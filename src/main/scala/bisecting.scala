@@ -19,7 +19,7 @@ import cc.spray.json.DefaultJsonProtocol._
 
 object bisecting {
 
-  case class Cluster(var key: Int, var center: Array[Double], var children: Option[List[Cluster]])
+  case class Cluster(var key: Int, var center: List[Map[String,Double]], var children: Option[List[Cluster]])
 
   object MyJsonProtocol extends DefaultJsonProtocol {
     implicit val menuItemFormat: JsonFormat[Cluster] = lazyFormat(jsonFormat(Cluster, "key", "center", "children"))
@@ -39,6 +39,10 @@ object bisecting {
     }
   }
 
+  def makeXYmap(vec: Array[Double]): List[Map[String,Double]] = {
+    return vec.toList.zipWithIndex.map(x => Map("x"->x._2.toDouble,"y"->x._1))
+  }
+
   def parseVector(line: String): Vector = {
     val nums = line.split(' ')
     val k = nums(0).toDouble.toInt
@@ -47,6 +51,15 @@ object bisecting {
     //val k = (k3(0) + (k3(1) - 1)*2034 + (k3(2) - 1)*2034*1134).toInt // convert to linear index
     //val vec = nums.slice(3,nums.length).map(_.toDouble)
     return Vector(vec)
+  }
+
+  def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
+    val p = new java.io.PrintWriter(f)
+    try {
+      op(p)
+    } finally {
+      p.close()
+    }
   }
 
   def closestPoint(p: Vector, centers: Array[Vector]): Int = {
@@ -65,7 +78,7 @@ object bisecting {
 
   def split(cluster: spark.RDD[Vector]): Array[Vector] = {
 
-    // use k-means to split a cluster in two
+    // use k-means with k=2 to split a cluster in two
     // try multiple splits and keep the best
     val convergeDist = 0.0001
     val iters = 5
@@ -104,7 +117,7 @@ object bisecting {
   def main(args: Array[String]) {
 
     if (args.length < 3) {
-      System.err.println("Usage: bisecting <master> <inputFile> <outputFile> ")
+      System.err.println("Usage: bisecting <master> <inputFile> <outputFile> <k>")
       System.exit(1)
     }
 
@@ -115,31 +128,45 @@ object bisecting {
       List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
     //sc.setCheckpointDir(System.getenv("CHECKPOINT"))
 
-    val k = 1
+    val k = args(3).toDouble
     val data = sc.textFile(args(1)).map(parseVector _).cache()
 
-    val clusters = ArrayBuffer(data)
-    val center = data.reduce(_+_).elements
-    val tree = Cluster(0,center,None)
+    val clusters = ArrayBuffer((0,data))
+    val center = data.reduce(_+_).elements.map(x => x / data.count())
+    val tree = Cluster(0,makeXYmap(center),None)
+    var count = 1
 
     while (clusters.size < k) {
 
       // find largest cluster for splitting
-      val ind = clusters.map(_.count()).view.zipWithIndex.max._2
+      val ind = clusters.map(_._2.count()).view.zipWithIndex.max._2
 
       // split into 2 clusters using k-means
-      val centers = split(clusters(ind)) // find 2 cluster centers
-      val cluster1 = clusters(ind).filter(x => closestPoint(x,centers) == 0)
-      val cluster2 = clusters(ind).filter(x => closestPoint(x,centers) == 1)
+      val centers = split(clusters(ind)._2) // find 2 cluster centers
+      val cluster1 = clusters(ind)._2.filter(x => closestPoint(x,centers) == 0)
+      val cluster2 = clusters(ind)._2.filter(x => closestPoint(x,centers) == 1)
+
+      // get new indices
+      val newInd1 = count
+      val newInd2 = count + 1
+      count += 2
+
+      // update tree with results
+      insert(tree,clusters(ind)._1,List(
+        Cluster(newInd1,makeXYmap(centers(0).elements),None),
+        Cluster(newInd2,makeXYmap(centers(1).elements),None)))
 
       // remove old cluster, add the 2 new ones
       clusters.remove(ind)
-      clusters.append(cluster1)
-      clusters.append(cluster2)
-
-      // update tree with results
-      insert(tree,ind,List(Cluster(1,centers(0).elements,None),Cluster(2,centers(1).elements,None)))
+      clusters.append((newInd1,cluster1))
+      clusters.append((newInd2,cluster2))
 
     }
+
+    val out = Array(tree.toJson.prettyPrint)
+    printToFile(new File(args(2).toString))(p => {
+      out.foreach(p.println)
+    })
+
   }
  }
