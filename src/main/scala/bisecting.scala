@@ -45,10 +45,10 @@ object bisecting {
 
   def parseVector(line: String): Vector = {
     val nums = line.split(' ')
-    val vec = nums.slice(1, nums.length).map(_.toDouble)
-//    var vec = nums.slice(3,nums.length).map(_.toDouble)
-//    val mean = vec.sum / vec.length
-//    vec = (vec.map(x => (x - mean)/(mean + 0.1)))
+    //val vec = nums.slice(1, nums.length).map(_.toDouble)
+    var vec = nums.slice(3,nums.length).map(_.toDouble)
+    val mean = vec.sum / vec.length
+    vec = (vec.map(x => (x - mean)/(mean + 0.1)))
     return Vector(vec)
   }
 
