@@ -1,7 +1,7 @@
 # ref <master> <inputFile> <inds> <outputFile>
 # 
-# compute a reference image of an xyz stack
-# each row is (x,y,z,time series)
+# compute summary statistics on an xyz stack
+# each row is (x,y,z,timeseries)
 #
 
 import sys
@@ -15,7 +15,7 @@ import logging
 
 if len(sys.argv) < 4:
   print >> sys.stderr, \
-  "(ref) usage: ref <master> <inputFile> <outputFile>"
+  "(ref) usage: ref <master> <inputFile> <outputFile> <mode>"
   exit(-1)
 
 def parseVector(line):
@@ -41,6 +41,9 @@ savemat(outputFile+"zinds.mat",mdict={'zinds':zinds},oned_as='column',do_compres
 
 # compute ref
 logging.info('(ref) computing reference image')
-ref = X.map(lambda (k,x) : median(x)).collect()
+if mode == 'med'
+	ref = X.map(lambda (k,x) : median(x)).collect()
+if mode == 'std'
+	ref = X.map(lambda (k,x) : std(x))
 logging.info('(ref) saving results...')
-savemat(outputFile+"ref.mat",mdict={'ref':ref},oned_as='column',do_compression='true')
+savemat(outputFile+mode+".mat",mdict={'ref':ref},oned_as='column',do_compression='true')
