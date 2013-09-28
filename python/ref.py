@@ -27,6 +27,7 @@ def parseVector(line):
 sc = SparkContext(sys.argv[1], "ref")
 inputFile = str(sys.argv[2])
 outputFile = str(sys.argv[3])
+mode = str(sys.argv[4])
 logging.basicConfig(filename=outputFile+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
 
 # parse data
@@ -44,6 +45,6 @@ logging.info('(ref) computing reference image')
 if mode == 'med':
 	ref = X.map(lambda (k,x) : median(x)).collect()
 if mode == 'std':
-	ref = X.map(lambda (k,x) : std(x))
+	ref = X.map(lambda (k,x) : std((x - median(x))/(median(x)+0.1))).collect()
 logging.info('(ref) saving results...')
 savemat(outputFile+mode+".mat",mdict={'ref':ref},oned_as='column',do_compression='true')
