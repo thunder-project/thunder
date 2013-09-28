@@ -137,6 +137,8 @@ object bisecting {
 
     while (clusters.size < k) {
 
+      println(clusters.size.toString + " clusters, starting new iteration")
+
       // find largest cluster for splitting
       val ind = clusters.map(_._2.count()).view.zipWithIndex.max._2
 
