@@ -47,12 +47,6 @@ object bisecting {
     return vec.toList.zipWithIndex.map(x => Map("x"->x._2.toDouble,"y"->x._1))
   }
 
-  def toYesOrNo(choice: Int): String = choice match {
-    case 1 => "yes"
-    case 0 => "no"
-    case _ => "error"
-  }
-
   def parseVector(line: String, mode: String): Vector = mode match {
     case "raw" => Vector(line.split(' ').map(_.toDouble))
     case "ca" => {
