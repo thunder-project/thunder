@@ -45,7 +45,7 @@ y = loadmat(inputFile_y)['y']
 if mode == 'mean' :
 	resp = X.map(lambda x : dot(y,x))
 if mode == 'standardize' :
-	resp = X.map(lambda x : dot(y,(x-mean(x))/norm(x))))
+	resp = X.map(lambda x : dot(y,(x-mean(x))/norm(x)))
 if mode == 'regress' : 
 	yhat = dot(inv(dot(y,transpose(y))),y)
 	resp = X.map(lambda x : dot(yhat,x))
