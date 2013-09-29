@@ -44,6 +44,8 @@ savemat(outputFile+"zinds.mat",mdict={'zinds':zinds},oned_as='column',do_compres
 logging.info('(ref) computing reference image')
 if mode == 'med':
 	ref = X.map(lambda (k,x) : median(x)).collect()
+if mode == 'mean':
+	ref = X.map(lambda (k,x) : mean(x)).collect()
 if mode == 'std':
 	ref = X.map(lambda (k,x) : std((x - median(x))/(median(x)+0.1))).collect()
 logging.info('(ref) saving results...')
