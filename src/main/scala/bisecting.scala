@@ -173,7 +173,7 @@ object bisecting {
     var count = 1
 
     val startTime = System.nanoTime
-    
+
     while (clusters.size < k) {
 
       println(clusters.size.toString + " clusters, starting new iteration")
