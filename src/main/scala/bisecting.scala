@@ -16,7 +16,6 @@ import scala.collection.mutable.ArrayBuffer
 import cc.spray.json._
 import cc.spray.json.DefaultJsonProtocol._
 
-
 object bisecting {
 
   case class Cluster(var key: Int, var center: List[Map[String,Double]], var children: Option[List[Cluster]])
@@ -48,13 +47,23 @@ object bisecting {
     return vec.toList.zipWithIndex.map(x => Map("x"->x._2.toDouble,"y"->x._1))
   }
 
-  def parseVector(line: String): Vector = {
-    val nums = line.split(' ')
-    //val vec = nums.slice(1, nums.length).map(_.toDouble)
-    var vec = nums.slice(3,nums.length).map(_.toDouble)
-    val mean = vec.sum / vec.length
-    vec = (vec.map(x => (x - mean)/(mean + 0.1)))
-    return Vector(vec)
+  def toYesOrNo(choice: Int): String = choice match {
+    case 1 => "yes"
+    case 0 => "no"
+    case _ => "error"
+  }
+
+  def parseVector(line: String, mode: String): Vector = mode match {
+    case "raw" => Vector(line.split(' ').map(_.toDouble))
+    case "ca" => {
+      Vector(line.split(' ').drop(3).map(_.toDouble))
+    }
+    case "dff" => {
+      val vec = line.split(' ').drop(3).map(_.toDouble)
+      val mean = vec.sum / vec.length
+      Vector(vec.map(x => (x - mean)/(mean + 0.1)))
+    }
+    case _ => Vector(line.split(' ').map(_.toDouble))
   }
 
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
@@ -97,7 +106,7 @@ object bisecting {
     for (iter <- 0 until subIters) {
       val centers = cluster.takeSample(false, 2, iter).toArray
       var tempDist = 1.0
-      // do k-means iterations till convergence
+      // do iterations of k-means till convergence
       while(tempDist > convergeDist) {
         val closest = cluster.map (p => (closestPoint(p, centers), (p, 1)))
         val pointStats = closest.reduceByKey{case ((x1, y1), (x2, y2)) => (x1 + x2, y1 + y2)}
@@ -126,23 +135,38 @@ object bisecting {
 
   def main(args: Array[String]) {
 
-    if (args.length < 3) {
-      System.err.println("Usage: bisecting <master> <inputFile> <outputFile> <k> <subIters> <threshold>")
+    if (args.length < 8) {
+      System.err.println("Usage: bisecting <master> <inputFile> <outputFile> <inputMode> <k> <subIters> <threshold> <nSlices>")
       System.exit(1)
     }
 
+    // collect arguments
+    val master = args(0)
+    val inputFile = args(1)
+    val outputFile = args(2)
+    val inputMode = args(3)
+    val k = args(4).toDouble
+    val subIters = args(5).toInt
+    val threshold = args(6).toDouble
+    val nSlices = args(7).toInt
+    val startTime = System.nanoTime
+
     System.setProperty("spark.executor.memory", "120g")
     System.setProperty("spark.serializer", "spark.KryoSerializer")
-    System.setProperty("spark.default.parallelism", "50")
-    val sc = new SparkContext(args(0), "hierarchical", System.getenv("SPARK_HOME"),
+    if (nSlices != 0) {
+      System.setProperty("spark.default.parallelism", nSlices.toString)
+    }
+    val sc = new SparkContext(master, "hierarchical", System.getenv("SPARK_HOME"),
       List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
     //sc.setCheckpointDir(System.getenv("CHECKPOINT"))
 
-    val k = args(3).toDouble
-    val subIters = args(4).toInt
-    val threshold = args(5).toDouble
-    val data = sc.textFile(args(1)).map(parseVector _).filter(x => std(x) > threshold).map(x => x / std(x)).cache()
+    // load data
+    val data = threshold match {
+      case 0 => sc.textFile(inputFile).map(parseVector (_,inputMode)).cache()
+      case _ => sc.textFile(inputFile).map(parseVector (_,inputMode)).filter(x => std(x) > threshold).map(x => x / std(x)).cache()
+    }
 
+    // create array with first cluster and compute its center
     val clusters = ArrayBuffer((0,data))
     val center = data.reduce(_+_).elements.map(x => x / data.count())
     val tree = Cluster(0,makeXYmap(center),None)
@@ -178,9 +202,11 @@ object bisecting {
     }
 
     val out = Array(tree.toJson.prettyPrint)
-    printToFile(new File(args(2).toString))(p => {
+    printToFile(new File(outputFile))(p => {
       out.foreach(p.println)
     })
+
+    println("Bisecting took: "+(System.nanoTime-startTime)/1e9+"s")
 
   }
  }
