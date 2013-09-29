@@ -154,6 +154,7 @@ object bisecting {
     System.setProperty("spark.executor.memory", "120g")
     System.setProperty("spark.serializer", "spark.KryoSerializer")
     if (nSlices != 0) {
+      println("changing parallelism")
       System.setProperty("spark.default.parallelism", nSlices.toString)
     }
     val sc = new SparkContext(master, "hierarchical", System.getenv("SPARK_HOME"),
