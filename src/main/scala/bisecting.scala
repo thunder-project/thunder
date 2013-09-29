@@ -149,7 +149,6 @@ object bisecting {
     val subIters = args(5).toInt
     val threshold = args(6).toDouble
     val nSlices = args(7).toInt
-    val startTime = System.nanoTime
 
     System.setProperty("spark.executor.memory", "120g")
     System.setProperty("spark.serializer", "spark.KryoSerializer")
@@ -173,6 +172,8 @@ object bisecting {
     val tree = Cluster(0,makeXYmap(center),None)
     var count = 1
 
+    val startTime = System.nanoTime
+    
     while (clusters.size < k) {
 
       println(clusters.size.toString + " clusters, starting new iteration")
