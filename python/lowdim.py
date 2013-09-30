@@ -26,8 +26,8 @@ def parseVector(line):
 	ts = (ts - meanVal) / (meanVal + 0.1) # convert to dff
 	return ts
 
-def clip(vec):
-	vec[vec<0] = 0
+def clip(vec,val):
+	vec[vec<val] = val
 	return vec
 
 # parse inputs
