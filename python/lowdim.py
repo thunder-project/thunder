@@ -53,13 +53,17 @@ if mode == 'standardize' :
 if mode == 'regress' : 
 	yhat = dot(inv(dot(y,transpose(y))),y)
 	resp = X.map(lambda x : dot(yhat,x))
+	r2 = X.map(lambda x : 1 - sum((dot(dot(yhat,x),y) - x) ** 2) / sum((x - mean(x)) ** 2)).collect()
+
+savemat(outputFile+"/"+"r2.mat",mdict={'r2':r2},oned_as='column',do_compression='true')
 
 vals = array([0,2,4,6,8,10,12,14,16,20,25,30])
 tuning = resp.map(lambda x : clip(x,0)).map(lambda x : x / sum(x)).map(lambda x : dot(x,vals)).collect()
 savemat(outputFile+"/"+"tuning.mat",mdict={'tuning':tuning},oned_as='column',do_compression='true')
 
-norm = resp.map(lambda x : norm(x)).collect()
-savemat(outputFile+"/"+"norm.mat",mdict={'norm':norm},oned_as='column',do_compression='true')
+std = X.map(lambda x : std(x)).collect()
+savemat(outputFile+"/"+"std.mat",mdict={'std':std},oned_as='column',do_compression='true')
+
 
 
 # compute covariance
