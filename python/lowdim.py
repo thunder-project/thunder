@@ -22,8 +22,8 @@ if len(sys.argv) < 6:
 def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
-	mean = mean(ts)
-	ts = (ts - mean) / (mean + 0.1) # convert to dff
+	#mean = mean(ts)
+	#ts = (ts - mean) / (mean + 0.1) # convert to dff
 	return ts
 
 # parse inputs
