@@ -46,6 +46,7 @@ logging.info("(lowdim) loading data")
 lines_X = sc.textFile(inputFile_X) # the data
 X = lines_X.map(parseVector).cache()
 y = loadmat(inputFile_y)['y']
+print(shape(y))
 if mode == 'mean' :
 	resp = X.map(lambda x : dot(y,x))
 if mode == 'standardize' :
