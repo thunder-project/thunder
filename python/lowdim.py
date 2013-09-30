@@ -48,8 +48,7 @@ if mode == 'standardize' :
 	resp = X.map(lambda x : dot(y,(x-mean(x))/norm(x)))
 if mode == 'regress' : 
 	yhat = dot(inv(dot(y,transpose(y))),y)
-	print(shape(yhat))
-	print(shape(inv(dot(y,transpose(y)))))
+	print(X.first())
 	resp = X.map(lambda x : dot(yhat,x))
 
 # compute covariance
