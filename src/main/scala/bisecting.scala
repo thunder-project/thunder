@@ -8,7 +8,9 @@
  *
  */
 
+import java.awt.image.BufferedImage
 import java.io.File
+import javax.imageio.ImageIO
 import spark.SparkContext
 import spark.SparkContext._
 import spark.util.Vector
@@ -47,17 +49,12 @@ object bisecting {
     return vec.toList.zipWithIndex.map(x => Map("x"->x._2.toDouble,"y"->x._1))
   }
 
-  def parseVector(line: String, mode: String): Vector = mode match {
-    case "raw" => Vector(line.split(' ').map(_.toDouble))
-    case "ca" => {
-      Vector(line.split(' ').drop(3).map(_.toDouble))
-    }
-    case "dff" => {
-      val vec = line.split(' ').drop(3).map(_.toDouble)
-      val mean = vec.sum / vec.length
-      Vector(vec.map(x => (x - mean)/(mean + 0.1)))
-    }
-    case _ => Vector(line.split(' ').map(_.toDouble))
+  def parseVector(line: String): ((Array[Int]),Vector) = {
+    var vec = line.split(' ').drop(3).map(_.toDouble)
+    val inds = line.split(' ').take(3).map(_.toInt)
+    val mean = vec.sum / vec.length
+    vec = vec.map(x => (x - mean)/(mean + 0.1))
+    return (inds,Vector(vec))
   }
 
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
@@ -69,25 +66,23 @@ object bisecting {
     }
   }
 
-  def closestPoint(p: Vector, centers: Array[Vector]): Int = {
+  def printToImage(rdd: spark.RDD[(Array[Int],Int)], w: Int, h: Int, fileName: String): Unit = {
+    val X = rdd.map(_._1(0)).collect()
+    val Y = rdd.map(_._1(1)).collect()
+    val RGB = rdd.map(_._2).collect()
+    val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
+    val raster = img.getRaster()
+    (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x, y, Array(rgb,rgb,rgb))}
+    ImageIO.write(img, "png", new File(fileName))
+  }
 
+  def closestPoint(p: Vector, centers: Array[Vector]): Int = {
     if (p.squaredDist(centers(0)) < p.squaredDist(centers(1))) {
       return 0
     }
     else {
       return 1
     }
-
-//    var bestIndex = 0
-//    var closest = Double.PositiveInfinity
-//    for (i <- 0 until centers.length) {
-//      val tempDist = p.squaredDist(centers(i))
-//      if (tempDist < closest) {
-//        closest = tempDist
-//        bestIndex = i
-//      }
-//    }
-//    return bestIndex
   }
 
   def split(cluster: spark.RDD[Vector], subIters: Int): Array[Vector] = {
@@ -130,19 +125,21 @@ object bisecting {
   def main(args: Array[String]) {
 
     if (args.length < 8) {
-      System.err.println("Usage: bisecting <master> <inputFile> <outputFile> <inputMode> <k> <subIters> <threshold> <nSlices>")
+      System.err.println("Usage: bisecting <master> <inputFile> <outputFileTree> <outputFileImg> <k> <subIters> <threshold> <nSlices> <w> <h>")
       System.exit(1)
     }
 
     // collect arguments
     val master = args(0)
     val inputFile = args(1)
-    val outputFile = args(2)
-    val inputMode = args(3)
+    val outputFileTree = args(2)
+    val outputFileImg = args(3)
     val k = args(4).toDouble
     val subIters = args(5).toInt
     val threshold = args(6).toDouble
     val nSlices = args(7).toInt
+    val w = args(8).toInt
+    val h = args(9).toInt
 
     System.setProperty("spark.executor.memory", "120g")
     System.setProperty("spark.serializer", "spark.KryoSerializer")
@@ -156,13 +153,13 @@ object bisecting {
 
     // load data
     val data = threshold match {
-      case 0 => sc.textFile(inputFile).map(parseVector (_,inputMode)).cache()
-      case _ => sc.textFile(inputFile).map(parseVector (_,inputMode)).filter(x => std(x) > threshold).map(x => x / std(x)).cache()
+      case 0 => sc.textFile(inputFile).map(parseVector _).cache()
+      case _ => sc.textFile(inputFile).map(parseVector _).filter{case (k,x) => std(x) > threshold}.mapValues(x => x / std(x)).cache()
     }
 
     // create array with first cluster and compute its center
     val clusters = ArrayBuffer((0,data))
-    val center = data.reduce(_+_).elements.map(x => x / data.count())
+    val center = data.map(_._2).reduce(_+_).elements.map(x => x / data.count())
     val tree = Cluster(0,makeXYmap(center),None)
     var count = 1
 
@@ -176,9 +173,9 @@ object bisecting {
       val ind = clusters.map(_._2.count()).view.zipWithIndex.max._2
 
       // split into 2 clusters using k-means
-      val centers = split(clusters(ind)._2,subIters) // find 2 cluster centers
-      val cluster1 = clusters(ind)._2.filter(x => closestPoint(x,centers) == 0)
-      val cluster2 = clusters(ind)._2.filter(x => closestPoint(x,centers) == 1)
+      val centers = split(clusters(ind)._2.map(_._2),subIters) // find 2 cluster centers
+      val cluster1 = clusters(ind)._2.filter(x => closestPoint(x._2,centers) == 0)
+      val cluster2 = clusters(ind)._2.filter(x => closestPoint(x._2,centers) == 1)
 
       // get new indices
       val newInd1 = count
@@ -190,17 +187,22 @@ object bisecting {
         Cluster(newInd1,makeXYmap(centers(0).elements),None),
         Cluster(newInd2,makeXYmap(centers(1).elements),None)))
 
+      // write clusters to images
+      printToImage(cluster1.map{case (k,v) => (k,255)}, w, h, outputFileImg + newInd1.toString + ".png")
+      printToImage(cluster2.map{case (k,v) => (k,255)}, w, h, outputFileImg + newInd2.toString + ".png")
+
       // remove old cluster, add the 2 new ones
       clusters.remove(ind)
       clusters.append((newInd1,cluster1))
       clusters.append((newInd2,cluster2))
 
-    }
+      // print current tree
+      val out = Array(tree.toJson.prettyPrint)
+      printToFile(new File(outputFileTree))(p => {
+        out.foreach(p.println)
+      })
 
-    val out = Array(tree.toJson.prettyPrint)
-    printToFile(new File(outputFile))(p => {
-      out.foreach(p.println)
-    })
+    }
 
     println("Bisecting took: "+(System.nanoTime-startTime)/1e9+"s")
 
