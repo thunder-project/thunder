@@ -51,7 +51,7 @@ object bisecting {
 
   def parseVector(line: String): ((Array[Int]),Vector) = {
     var vec = line.split(' ').drop(3).map(_.toDouble)
-    val inds = line.split(' ').take(3).map(_.toInt)
+    val inds = line.split(' ').take(3).map(_.toDouble.toInt)
     val mean = vec.sum / vec.length
     vec = vec.map(x => (x - mean)/(mean + 0.1))
     return (inds,Vector(vec))
@@ -72,7 +72,7 @@ object bisecting {
     val RGB = rdd.map(_._2).collect()
     val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
-    (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x, y, Array(rgb,rgb,rgb))}
+    (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
     ImageIO.write(img, "png", new File(fileName))
   }
 
@@ -162,6 +162,8 @@ object bisecting {
     val center = data.map(_._2).reduce(_+_).elements.map(x => x / data.count())
     val tree = Cluster(0,makeXYmap(center),None)
     var count = 1
+
+    println(data.take(10))
 
     val startTime = System.nanoTime
 
