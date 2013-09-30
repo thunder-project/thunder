@@ -26,6 +26,10 @@ def parseVector(line):
 	ts = (ts - meanVal) / (meanVal + 0.1) # convert to dff
 	return ts
 
+def clip(vec):
+	vec(vec<0) = 0
+	return vec
+
 # parse inputs
 sc = SparkContext(sys.argv[1], "lowdim")
 inputFile_X = str(sys.argv[2])
@@ -51,7 +55,7 @@ if mode == 'regress' :
 	resp = X.map(lambda x : dot(yhat,x))
 
 vals = array([0,2,4,6,8,10,12,14,16,20,25,30])
-tuning = resp.map(lambda x : dot(x,vals)).collect()
+tuning = resp.map(lambda x : clip(x,0)).map(lambda x : x / max(x)).map(lambda x : dot(x,vals)).collect()
 savemat(outputFile+"/"+"tuning.mat",mdict={'tuning':tuning},oned_as='column',do_compression='true')
 
 # compute covariance
