@@ -52,7 +52,7 @@ if mode == 'regress' :
 
 vals = array([0,2,4,6,8,10,12,14,16,20,25,30])
 tuning = resp.map(lambda x : dot(x,vals)).collect()
-savemat(outputFile+"/"+"tuning-"+str(ik)+".mat",mdict={'tuning':tuning},oned_as='column',do_compression='true')
+savemat(outputFile+"/"+"tuning.mat",mdict={'tuning':tuning},oned_as='column',do_compression='true')
 
 # compute covariance
 logging.info("(lowdim) getting count")
