@@ -50,6 +50,10 @@ if mode == 'regress' :
 	yhat = dot(inv(dot(y,transpose(y))),y)
 	resp = X.map(lambda x : dot(yhat,x))
 
+vals = array([0,2,4,6,8,10,12,14,16,20,25,30])
+tuning = resp.map(lambda x : dot(x,vals)).collect()
+savemat(outputFile+"/"+"tuning-"+str(ik)+".mat",mdict={'tuning':tuning},oned_as='column',do_compression='true')
+
 # compute covariance
 logging.info("(lowdim) getting count")
 n = resp.count()
