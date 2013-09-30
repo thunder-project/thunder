@@ -27,7 +27,7 @@ def parseVector(line):
 	return ts
 
 def clip(vec):
-	vec(vec<0) = 0
+	vec[vec<0] = 0
 	return vec
 
 # parse inputs
