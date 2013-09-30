@@ -53,7 +53,7 @@ if mode == 'standardize' :
 if mode == 'regress' : 
 	yhat = dot(inv(dot(y,transpose(y))),y)
 	resp = X.map(lambda x : dot(yhat,x)[1:])
-	r2 = X.map(lambda x : 1 - sum((dot(dot(yhat,x),y) - x) ** 2) / sum((x - mean(x)) ** 2)).collect()
+	r2 = X.map(lambda x : 1.0 - sum((dot(dot(yhat,x),y) - x) ** 2) / sum((x - mean(x)) ** 2)).collect()
 
 savemat(outputFile+"/"+"r2.mat",mdict={'r2':r2},oned_as='column',do_compression='true')
 
