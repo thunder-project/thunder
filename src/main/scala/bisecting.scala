@@ -125,7 +125,7 @@ object bisecting {
   def main(args: Array[String]) {
 
     if (args.length < 8) {
-      System.err.println("Usage: bisecting <master> <inputFile> <outputFileTree> <outputFileImg> <k> <subIters> <threshold> <nSlices> <w> <h>")
+      System.err.println("Usage: bisecting <master> <inputFile> <outputFileTree> <outputFileImg> <k> <subIters> <threshold> <nSlices>")
       System.exit(1)
     }
 
@@ -138,8 +138,6 @@ object bisecting {
     val subIters = args(5).toInt
     val threshold = args(6).toDouble
     val nSlices = args(7).toInt
-    val w = args(8).toInt
-    val h = args(9).toInt
 
     System.setProperty("spark.executor.memory", "120g")
     System.setProperty("spark.serializer", "spark.KryoSerializer")
@@ -163,6 +161,10 @@ object bisecting {
     val tree = Cluster(0,makeXYmap(center),None)
     var count = 1
 
+    val w = data.map{case (k,v) => (k(0),1)}.sortByKey(true).first()._1
+    val h = data.map{case (k,v) => (k(1),1)}.sortByKey(true).first()._1
+    println(w)
+    println(h)
     println(data.take(10))
 
     val startTime = System.nanoTime
