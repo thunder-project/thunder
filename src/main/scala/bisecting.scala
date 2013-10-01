@@ -167,9 +167,6 @@ object bisecting {
     val tree = Cluster(0,makeXYmap(center),None)
     var count = 1
 
-    println(w)
-    println(h)
-
     // print first cluster as an image
     printToImage(data.map{case (k,v) => (k,255)}, w, h, outputFileImg + 0.toString + ".png")
 
