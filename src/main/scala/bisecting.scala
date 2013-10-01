@@ -74,6 +74,7 @@ object bisecting {
     val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
     (X,Y,RGB).zipped.foreach{case(x,y,rgb) => println(x); println(y); raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
+    ImageIO.write(img, "png", new File(fileName))
   }
 
   def closestPoint(p: Vector, centers: Array[Vector]): Int = {
