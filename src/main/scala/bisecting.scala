@@ -67,13 +67,13 @@ object bisecting {
   }
 
   def printToImage(rdd: spark.RDD[(Array[Int],Int)], w: Int, h: Int, fileName: String): Unit = {
+    // TODO: incorporate different z planes
     val X = rdd.map(_._1(0)).collect()
     val Y = rdd.map(_._1(1)).collect()
     val RGB = rdd.map(_._2).collect()
     val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
     (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
-    ImageIO.write(img, "png", new File(fileName))
   }
 
   def closestPoint(p: Vector, centers: Array[Vector]): Int = {
@@ -86,7 +86,6 @@ object bisecting {
   }
 
   def split(cluster: spark.RDD[Vector], subIters: Int): Array[Vector] = {
-
     // use k-means with k=2 to split a cluster in two
     // try multiple splits and keep the best
     val convergeDist = 0.001
@@ -120,7 +119,6 @@ object bisecting {
     }
     return centersFinal
   }
-
 
   def main(args: Array[String]) {
 
@@ -161,12 +159,17 @@ object bisecting {
     val tree = Cluster(0,makeXYmap(center),None)
     var count = 1
 
-    val w = data.map{case (k,v) => (k(0),1)}.sortByKey(true).first()._1
-    val h = data.map{case (k,v) => (k(1),1)}.sortByKey(true).first()._1
+    // sort x and y keys to get bounds
+    val w = data.map{case (k,v) => (k(0),1)}.sortByKey(false).first()._1
+    val h = data.map{case (k,v) => (k(1),1)}.sortByKey(false).first()._1
+
     println(w)
     println(h)
-    println(data.take(10))
 
+    // print first cluster as an image
+    printToImage(data.map{case (k,v) => (k,255)}, w, h, outputFileImg + 0.toString + ".png")
+
+    // start timer
     val startTime = System.nanoTime
 
     while (clusters.size < k) {
