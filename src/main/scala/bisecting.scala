@@ -73,7 +73,7 @@ object bisecting {
     val RGB = rdd.map(_._2).collect()
     val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
-    (X,Y,RGB).zipped.foreach{case(x,y,rgb) => println(x); println(y); raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
+    (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
     ImageIO.write(img, "png", new File(fileName))
   }
 
@@ -148,10 +148,17 @@ object bisecting {
       List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
     //sc.setCheckpointDir(System.getenv("CHECKPOINT"))
 
+    // load raw data
+    val dataRaw = sc.textFile(inputFile).map(parseVector _)
+
+    // sort x and y keys to get bounds
+    val w = dataRaw.map{case (k,v) => (k(0),1)}.sortByKey(false).first()._1
+    val h = dataRaw.map{case (k,v) => (k(1),1)}.sortByKey(false).first()._1
+
     // load data
     val data = threshold match {
-      case 0 => sc.textFile(inputFile).map(parseVector _).cache()
-      case _ => sc.textFile(inputFile).map(parseVector _).filter{case (k,x) => std(x) > threshold}.mapValues(x => x / std(x)).cache()
+      case 0 => dataRaw.cache()
+      case _ => dataRaw.filter{case (k,x) => std(x) > threshold}.mapValues(x => x / std(x)).cache()
     }
 
     // create array with first cluster and compute its center
@@ -159,10 +166,6 @@ object bisecting {
     val center = data.map(_._2).reduce(_+_).elements.map(x => x / data.count())
     val tree = Cluster(0,makeXYmap(center),None)
     var count = 1
-
-    // sort x and y keys to get bounds
-    val w = data.map{case (k,v) => (k(0),1)}.sortByKey(false).first()._1
-    val h = data.map{case (k,v) => (k(1),1)}.sortByKey(false).first()._1
 
     println(w)
     println(h)
