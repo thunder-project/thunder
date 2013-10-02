@@ -13,6 +13,7 @@ import java.io.File
 import javax.imageio.ImageIO
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
+import org.apache.spark.rdd._
 import spark.util.Vector
 import scala.collection.mutable.ArrayBuffer
 import cc.spray.json._
@@ -66,7 +67,7 @@ object bisecting {
     }
   }
 
-  def printToImage(rdd: spark.RDD[(Array[Int],Int)], w: Int, h: Int, fileName: String): Unit = {
+  def printToImage(rdd: RDD[(Array[Int],Int)], w: Int, h: Int, fileName: String): Unit = {
     // TODO: incorporate different z planes
     val X = rdd.map(_._1(0)).collect()
     val Y = rdd.map(_._1(1)).collect()
@@ -86,7 +87,7 @@ object bisecting {
     }
   }
 
-  def split(cluster: spark.RDD[Vector], subIters: Int): Array[Vector] = {
+  def split(cluster: RDD[Vector], subIters: Int): Array[Vector] = {
     // use k-means with k=2 to split a cluster in two
     // try multiple splits and keep the best
     val convergeDist = 0.001
@@ -139,7 +140,7 @@ object bisecting {
     val nSlices = args(7).toInt
 
     System.setProperty("spark.executor.memory", "120g")
-    System.setProperty("spark.serializer", "spark.KryoSerializer")
+    System.setProperty("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     if (nSlices != 0) {
       println("changing parallelism")
       System.setProperty("spark.default.parallelism", nSlices.toString)
