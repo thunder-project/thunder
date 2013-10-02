@@ -11,8 +11,8 @@
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
-import spark.SparkContext
-import spark.SparkContext._
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkContext._
 import spark.util.Vector
 import scala.collection.mutable.ArrayBuffer
 import cc.spray.json._
