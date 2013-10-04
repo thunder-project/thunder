@@ -37,7 +37,7 @@ X = lines.map(parseVector)
 
 # get z ordering
 logging.info("(ref) getting z ordering")
-zinds = X.filter(lambda (k,x) : (k[0] == 1000) & (k[1] == 1000)).map(lambda (k,x) : k[2]).collect()
+zinds = X.filter(lambda (k,x) : (k[0] == 1) & (k[1] == 1)).map(lambda (k,x) : k[2]).collect()
 savemat(outputFile+"zinds.mat",mdict={'zinds':zinds},oned_as='column',do_compression='true')
 
 # compute ref
