@@ -47,6 +47,6 @@ if mode == 'med':
 if mode == 'mean':
 	ref = X.map(lambda (k,x) : mean(x)).collect()
 if mode == 'std':
-	ref = X.map(lambda (k,x) : std((x - median(x))/(median(x)+0.1))).collect()
+	ref = X.map(lambda (k,x) : std((x - mean(x))/(mean(x)+0.1))).collect()
 logging.info('(ref) saving results...')
 savemat(outputFile+mode+".mat",mdict={'ref':ref},oned_as='column',do_compression='true')
