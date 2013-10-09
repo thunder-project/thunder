@@ -49,6 +49,6 @@ if mode == 'mean':
 if mode == 'std':
 	ref = X.map(lambda (k,x) : std((x - mean(x))/(mean(x)+0.1))).collect()
 if mode == 'perc':
-	ref = X.map(lambda (k,x) : percentile((x - mean(x))/(mean(x)+0.1),90)).collect()
+	ref = X.map(lambda (k,x) : percentile(x,90)).collect()
 logging.info('(ref) saving results...')
 savemat(outputFile+mode+".mat",mdict={'ref':ref},oned_as='column',do_compression='true')
