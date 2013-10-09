@@ -59,7 +59,8 @@ if mode == 'regress' :
 
 savemat(outputFile+"/"+"r2.mat",mdict={'r2':r2},oned_as='column',do_compression='true')
 
-vals = array([0,2,4,6,8,10,12,14,16,20,25,30])
+#vals = array([0,2,4,6,8,10,12,14,16,20,25,30])
+vals = array([2.5,7.5,12.5,17.5,22.5,27.5,32.5,37.5,42.5,47.5])
 tuning = resp.map(lambda x : clip(x,0)).map(lambda x : x / sum(x)).map(lambda x : dot(x,vals)).collect()
 savemat(outputFile+"/"+"tuning.mat",mdict={'tuning':tuning},oned_as='column',do_compression='true')
 
