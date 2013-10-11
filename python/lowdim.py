@@ -49,7 +49,7 @@ y = loadmat(inputFile_y)['y']
 y = y.astype(float)
 
 if mode == 'mean' :
-	resp = X.map(lambda x : dot(y,x) / sum(y))
+	resp = X.map(lambda x : dot(y,x))
 if mode == 'standardize' :
 	resp = X.map(lambda x : dot(y,(x-mean(x))/norm(x)))
 if mode == 'regress' : 
