@@ -14,7 +14,7 @@ import javax.imageio.ImageIO
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd._
-import spark.util.Vector
+import org.apache.spark.util.Vector
 import scala.collection.mutable.ArrayBuffer
 import cc.spray.json._
 import cc.spray.json.DefaultJsonProtocol._
