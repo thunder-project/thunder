@@ -1,10 +1,10 @@
 /**
- * bisecting <master> <inputFile> <outputFile>
+ * bisecting <master> <inputFile> <outputFileTree> <outputFileImg> <k> <subIters> <threshold> <nSlices>
  *
  * divisive hierarchical clustering using bisecting k-means
- * writes result to JSON for display using d3
- *
- * (in progress)
+ * assumes input is a text file of spatio-temporal time series data
+ * with each row containing x,y,z,t1,t2,t3,...
+ * writes results to images and JSON for easy display, e.g. using D3.js
  *
  */
 
@@ -52,9 +52,9 @@ object bisecting {
 
   def parseVector(line: String): ((Array[Int]),Vector) = {
     var vec = line.split(' ').drop(3).map(_.toDouble)
-    val inds = line.split(' ').take(3).map(_.toDouble.toInt)
+    val inds = line.split(' ').take(3).map(_.toDouble.toInt) // xyz coords
     val mean = vec.sum / vec.length
-    vec = vec.map(x => (x - mean)/(mean + 0.1))
+    vec = vec.map(x => (x - mean)/(mean + 0.1)) // time series
     return (inds,Vector(vec))
   }
 
@@ -139,16 +139,13 @@ object bisecting {
     val threshold = args(6).toDouble
     val nSlices = args(7).toInt
 
-    System.setProperty("spark.executor.memory", "120g")
-    System.setProperty("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     if (nSlices != 0) {
       println("changing parallelism")
       System.setProperty("spark.default.parallelism", nSlices.toString)
     }
     val sc = new SparkContext(master, "hierarchical", System.getenv("SPARK_HOME"),
       List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
-    //sc.setCheckpointDir(System.getenv("CHECKPOINT"))
-
+   
     // load raw data
     val dataRaw = sc.textFile(inputFile).map(parseVector _)
 
