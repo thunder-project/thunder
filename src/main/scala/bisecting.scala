@@ -22,7 +22,7 @@ import cc.spray.json.DefaultJsonProtocol._
 case class Cluster(var key: Int, var center: List[Map[String,Double]], var children: Option[List[Cluster]])
 
 object MyJsonProtocol extends DefaultJsonProtocol {
-  implicit val menuItemFormat: JsonFormat[Cluster] = lazyFormat(jsonFormat(Cluster, "key", "center", "children"))
+      implicit val menuItemFormat: JsonFormat[Cluster] = lazyFormat(jsonFormat(Cluster, "key", "center", "children"))
 }
 
 import MyJsonProtocol._
@@ -206,10 +206,10 @@ object bisecting {
       clusters.append((newInd2,cluster2))
 
       // print current tree
-      val out = Array(tree.toJson.prettyPrint)
-      printToFile(new File(outputFileTree))(p => {
-        out.foreach(p.println)
-      })
+//      val out = Array(tree.toJson.prettyPrint)
+//      printToFile(new File(outputFileTree))(p => {
+//        out.foreach(p.println)
+//      })
 
     }
 
