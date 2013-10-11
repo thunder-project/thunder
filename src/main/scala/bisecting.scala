@@ -206,10 +206,10 @@ object bisecting {
       clusters.append((newInd2,cluster2))
 
       // print current tree
-//      val out = Array(tree.toJson.prettyPrint)
-//      printToFile(new File(outputFileTree))(p => {
-//        out.foreach(p.println)
-//      })
+      val out = Array(tree.toJson.prettyPrint)
+      printToFile(new File(outputFileTree))(p => {
+        out.foreach(p.println)
+      })
 
     }
 
