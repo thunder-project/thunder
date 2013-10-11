@@ -20,8 +20,6 @@ For scala functions, build and run in sbt:
 	sbt package
 	sbt "run local data/hierarchical_test.txt results.txt"
 
-If running on a cluster (e.g. Amazon's EC2), numpy, and any other dependencies, must be installed on all workers. See the helper scripts for doing this on EC2.
-
 ## Contents
 
 #### python
@@ -47,7 +45,7 @@ bisecting - divisive hierarchlal clustering using bisecting k-means
 
 hierarchical - agglomerative hierachical clustering
 
-mantis - streaming analysis of neuroimaging data
+mantis - streaming analysis of neuroimaging data (prototype)
 
 ## To-Do
 
