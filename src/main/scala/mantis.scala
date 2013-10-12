@@ -7,10 +7,11 @@
  *
  */
 
-import spark.SparkContext._
-import spark.streaming.{Seconds, StreamingContext}
-import spark.streaming.StreamingContext._
-import spark.util.Vector
+import org.apache.spark.streaming._
+import org.apache.spark.streaming.StreamingContext._
+import org.apache.spark.SparkContext._
+import org.apache.spark.rdd.RDD
+import org.apache.spark.util.Vector
 import javax.imageio.ImageIO
 import java.awt.image.BufferedImage
 import java.io.File
@@ -43,14 +44,14 @@ object mantis {
     }
   }
 
-  def printVector(rdd: spark.RDD[Vector], saveFile: String): Unit = {
+  def printVector(rdd: RDD[Vector], saveFile: String): Unit = {
     val data = rdd.collect().map(_.toString).map(x => x.slice(1, x.length - 1)).map(_.replace(",", ""))
     printToFile(new File(saveFile))(p => {
       data.foreach(p.println)
     })
   }
 
-  def printToImage(rdd: spark.RDD[Double], width: Int, height: Int, fileName: String): Unit = {
+  def printToImage(rdd: RDD[Double], width: Int, height: Int, fileName: String): Unit = {
     val nPixels = width * height
     val R, G, B = rdd.collect().map(_ * 1000).map(_ + 255 / 2).map(_ toInt).map(x => if (x < 0) {
       0

@@ -5,19 +5,15 @@
  *
  */
 
-import spark.SparkContext
-import spark.SparkContext._
-import spark.util.Vector
-import cc.spray.json._
-import cern.jet.math._
-import cern.colt.matrix._
-import cern.colt.matrix.linalg._
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkContext._
+import org.apache.spark.util.Vector
 
 object benchmark {
 
-  val factory2D = DoubleFactory2D.dense
-  val factory1D = DoubleFactory1D.dense
-  val algebra = Algebra.DEFAULT
+//  val factory2D = DoubleFactory2D.dense
+//  val factory1D = DoubleFactory1D.dense
+//  val algebra = Algebra.DEFAULT
 
   def parseVector(line: String): Vector = {
     val nums = line.split(' ')
@@ -32,17 +28,17 @@ object benchmark {
     ret
   }
 
-  def parseVectorColt(line: String): DoubleMatrix1D = {
-    val nums = line.split(' ')
-    val vec = nums.slice(1, nums.length).map(_.toDouble)
-    return factory1D.make(vec)
-  }
+//  def parseVectorColt(line: String): DoubleMatrix1D = {
+//    val nums = line.split(' ')
+//    val vec = nums.slice(1, nums.length).map(_.toDouble)
+//    return factory1D.make(vec)
+//  }
 
-  def outerProd(vec1: DoubleMatrix1D, vec2: DoubleMatrix1D): DoubleMatrix2D = {
-    val out = factory2D.make(vec1.size,vec2.size)
-    algebra.multOuter(vec1,vec2,out)
-    return out
-  }
+//  def outerProd(vec1: DoubleMatrix1D, vec2: DoubleMatrix1D): DoubleMatrix2D = {
+//    val out = factory2D.make(vec1.size,vec2.size)
+//    algebra.multOuter(vec1,vec2,out)
+//    return out
+//  }
 
   def closestPoint(p: Vector, centers: Array[Vector]): Int = {
     var index = 0
@@ -69,25 +65,25 @@ object benchmark {
     val algorithm = args(1)
 
 
-    if (algorithm == "cov") {
-      /** calculating a covariance matrix **/
-      val data = sc.textFile(args(2)).map(parseVectorColt _).cache()
-      val n = data.count()
-      time {
-      val cov = data.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus))
-      }
-    }
+//    if (algorithm == "cov") {
+//      /** calculating a covariance matrix **/
+//      val data = sc.textFile(args(2)).map(parseVectorColt _).cache()
+//      val n = data.count()
+//      time {
+//      val cov = data.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus))
+//      }
+//    }
 
-    if (algorithm == "regress") {
-      /** do regression on each pixel **/
-      val data = sc.textFile(args(2)).map(parseVectorColt _).cache()
-      val n = data.count()
-      val m = data.first().size()
-      val y = factory1D.random(m)
-      time {
-        val out = data.map(x => algebra.mult(x,y)).reduce(_+_)
-      }
-    }
+//    if (algorithm == "regress") {
+//      /** do regression on each pixel **/
+//      val data = sc.textFile(args(2)).map(parseVectorColt _).cache()
+//      val n = data.count()
+//      val m = data.first().size()
+//      val y = factory1D.random(m)
+//      time {
+//        val out = data.map(x => algebra.mult(x,y)).reduce(_+_)
+//      }
+//    }
 
     if (algorithm == "kmeans") {
       /** one iteration of kmeans with k = 3 **/

@@ -16,8 +16,8 @@ import org.apache.spark.SparkContext._
 import org.apache.spark.rdd._
 import org.apache.spark.util.Vector
 import scala.collection.mutable.ArrayBuffer
-import cc.spray.json._
-import cc.spray.json.DefaultJsonProtocol._
+import spray.json._
+import spray.json.DefaultJsonProtocol._
 
 case class Cluster(var key: Int, var center: List[Map[String,Double]], var children: Option[List[Cluster]])
 

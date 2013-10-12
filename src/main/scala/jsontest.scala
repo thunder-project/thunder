@@ -1,4 +1,4 @@
-import cc.spray.json._
+import spray.json._
 
 object jsontest {
 

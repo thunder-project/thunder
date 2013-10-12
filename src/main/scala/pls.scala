@@ -1,7 +1,7 @@
 
-import spark.SparkContext
-import spark.SparkContext._
-import spark.util.Vector
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkContext._
+import org.apache.spark.util.Vector
 
 object pls {
 
