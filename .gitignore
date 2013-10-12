@@ -3,5 +3,6 @@ $ cat .gitignore
 .idea_modules
 .DS_Store
 thunder.iml
-project*
+project/project
+project/target
 target*
