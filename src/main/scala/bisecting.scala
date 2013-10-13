@@ -153,8 +153,8 @@ object bisecting {
     val dataRaw = sc.textFile(inputFile).map(parseVector _)
 
     // sort x and y keys to get bounds
-    val w = dataRaw.map{case (k,v) => (k(0),1)}.sortByKey(false).first()._1
-    val h = dataRaw.map{case (k,v) => (k(1),1)}.sortByKey(false).first()._1
+    val w = dataRaw.map{case (k,v) => k(0)}.top(1).take(1)(0)
+    val h = dataRaw.map{case (k,v) => k(1)}.top(1).take(1)(0)
 
     // load data
     val data = threshold match {
