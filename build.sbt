@@ -22,18 +22,18 @@ resolvers ++= Seq(
   "Akka Repository" at "http://repo.akka.io/releases/",
   "Spray Repository" at "http://repo.spray.cc/")
 
-assemblySettings
-
-  mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
-  {
-    case PathList("javax", "servlet", xs @ _*) => MergeStrategy.first
-    case PathList("org", "apache", "commons", "beanutils", xs @ _*) => MergeStrategy.last
-    case PathList("org", "apache", "commons", "collections", xs @ _*) => MergeStrategy.last
-    case PathList("com", "esotericsoftware", xs @ _*) => MergeStrategy.last
-    case "about.html" => MergeStrategy.discard
-    case x => old(x)
-  }
-  }
+//assemblySettings
+//
+//  mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
+//  {
+//    case PathList("javax", "servlet", xs @ _*) => MergeStrategy.first
+//    case PathList("org", "apache", "commons", "beanutils", xs @ _*) => MergeStrategy.last
+//    case PathList("org", "apache", "commons", "collections", xs @ _*) => MergeStrategy.last
+//    case PathList("com", "esotericsoftware", xs @ _*) => MergeStrategy.last
+//    case "about.html" => MergeStrategy.discard
+//    case x => old(x)
+//  }
+//  }
 
 
 
