@@ -98,6 +98,7 @@ object nnmf {
 
     while (iter < nIter) {
 
+      println("starting" + iter.toString)
       // compute inv(w0' * w0)
       val winv = algebra.inverse(v.map( x => outerProd(x,x)).reduce(_.assign(_,Functions.plus)))
 
