@@ -65,7 +65,8 @@ latent = w[inds[0:k]]
 
 for ik in range(0,k):
 	scores = resp.mapValues(lambda x : inner(x - mean(x),sortedDim2[ik,:]))
-	traj = X2.join(scores).map(lambda (k,x) : x[:-1] * x[-1:]).reduce(lambda x,y : x+y)
+	println(X2.join(scores).first())
+	#traj = X2.join(scores).map(lambda (k,x) : x[:-1] * x[-1:]).reduce(lambda x,y : x+y)
 
 
 
