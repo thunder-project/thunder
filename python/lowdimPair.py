@@ -25,8 +25,8 @@ def parseVector(line):
 	ts = array(vec[3:]) # get tseries
 	meanVal = mean(ts)
 	ts = (ts - meanVal) / (meanVal + 0.1) # convert to dff
-	ind = int(vec[0]) + int((vec[1] - 1)*2048) + int((vec[2] - 1)*1364*2048)
-	return (ind,ts) # (x,y,z),(tseries) pair 
+	#ind = int(vec[0]) + int((vec[1] - 1)*2048) + int((vec[2] - 1)*1364*2048)
+	return ((int(vec[0]),int(vec[1]),int(vec[2])),ts) # (x,y,z),(tseries) pair 
 
 sc = SparkContext(sys.argv[1], "lowdim")
 inputFile_X1 = str(sys.argv[2])
