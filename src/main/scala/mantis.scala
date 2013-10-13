@@ -75,7 +75,7 @@ object mantis {
 
     // create spark context
     System.setProperty("spark.executor.memory", "120g")
-    System.setProperty("spark.serializer", "spark.KryoSerializer")
+    System.setProperty("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     if (args(7).toInt != 0) {
       System.setProperty("spark.default.parallelism", args(7).toString)
     }

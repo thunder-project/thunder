@@ -17,7 +17,7 @@ import logging
 
 if len(sys.argv) < 6:
   print >> sys.stderr, \
-  "(lowdim) usage: lowdimPair <master> <inputFile_X1> <inputFile_X2> <inputFile_y1> <mode> <outputFile> <k>"
+  "(lowdimPair) usage: lowdimPair <master> <inputFile_X1> <inputFile_X2> <inputFile_y1> <mode> <outputFile> <k>"
   exit(-1)
 
 def parseVector(line):
@@ -28,7 +28,7 @@ def parseVector(line):
 	#ind = int(vec[0]) + int((vec[1] - 1)*2048) + int((vec[2] - 1)*1364*2048)
 	return ((int(vec[0]),int(vec[1]),int(vec[2])),ts) # (x,y,z),(tseries) pair 
 
-sc = SparkContext(sys.argv[1], "lowdim")
+sc = SparkContext(sys.argv[1], "lowdimPair")
 inputFile_X1 = str(sys.argv[2])
 inputFile_X2 = str(sys.argv[3])
 inputFile_y = str(sys.argv[4])
@@ -39,7 +39,7 @@ if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
 
-logging.info("(lowdim) loading data")
+logging.info("(lowdimPair) loading data")
 lines_X1 = sc.textFile(inputFile_X1) # the first data set
 X1 = lines_X1.map(parseVector).cache()
 lines_X2 = sc.textFile(inputFile_X2) # the first data set
@@ -51,12 +51,12 @@ if mode == 'mean' :
 	resp = X1.mapValues(lambda x : dot(y,x))
 
 # compute covariance
-logging.info("(lowdim) getting count")
+logging.info("(lowdimPair) getting count")
 n = resp.count()
-logging.info("(lowdim) computing covariance")
+logging.info("(lowdimPair) computing covariance")
 cov = resp.map(lambda (k,x) : outer(x-mean(x),x-mean(x))).reduce(lambda x,y : (x + y)) / n
 
-logging.info("(lowdim) doing eigendecomposition")
+logging.info("(lowdimPair) doing eigendecomposition")
 w, v = eig(cov)
 w = real(w)
 v = real(v)
@@ -65,8 +65,8 @@ sortedDim2 = transpose(v[:,inds[0:k]])
 latent = w[inds[0:k]]
 
 for ik in range(0,k):
+	logging.info("(lowdimPair) writing trajectories")
 	scores = resp.mapValues(lambda x : inner(x - mean(x),sortedDim2[ik,:]))
-	print(X2.join(scores).first())
 	traj = X2.join(scores).map(lambda (k,x) : x[0] * x[1]).reduce(lambda x,y : x+y)
 	savemat(outputFile+"/"+"traj-"+str(ik)+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
