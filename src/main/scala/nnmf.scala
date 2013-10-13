@@ -73,6 +73,7 @@ object nnmf {
     val outputFileImg = args(2)
     //val seed1 = args(2).toInt
 
+    System.setProperty("spark.executor.memory", "120g")
     val sc = new SparkContext(master, "nnmf", System.getenv("SPARK_HOME"),
       List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
 
@@ -91,6 +92,8 @@ object nnmf {
     var u = factory2D.make(k,m)
     val seed1 = Random.nextInt*1000
     var v = data.map{case (k,v) => k(0) + (k(1)-1)*h}.map(randomVector(_,seed1,k))
+
+    println(v.count())
 
     // fixed initialization
     //var u = factory2D.make(sc.textFile("data/h0.txt").map(parseLine _).toArray())
