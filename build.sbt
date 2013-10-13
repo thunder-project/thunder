@@ -16,6 +16,11 @@ libraryDependencies += "org.apache.spark" %% "spark-streaming" % "0.8.0-incubati
 
 libraryDependencies += "io.spray" %%  "spray-json" % "1.2.5"
 
+libraryDependencies ++= Seq(
+  "org.eclipse.jetty" % "jetty-webapp" % "8.1.7.v20120910" % "container",
+  "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container" artifacts Artifact("javax.servlet", "jar", "jar")
+)
+
 //libraryDependencies += "org.spark-project" %% "spark-streaming" % "0.7.3"
 
 //libraryDependencies += "org.scalanlp" % "jblas" % "1.2.1"
@@ -30,11 +35,4 @@ resolvers ++= Seq(
 
 classpathTypes ~= (_ + "orbit")
 
-libraryDependencies ++= Seq(
-  "org.eclipse.jetty.orbit" % "javax.servlet" % "2.5.0.v201103041518" % "container" artifacts (Artifact("javax.servlet", "jar", "jar")
-  )
-)
 
-libraryDependencies ++= Seq(
-  "org.eclipse.jetty" % "jetty-webapp" % "8.1.4.v20120524" % "container" artifacts (Artifact("jetty-webapp", "jar", "jar"))
-)
