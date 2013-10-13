@@ -53,10 +53,10 @@ object nnmf {
 
   def printToImage(rdd: RDD[(Array[Int],Int)], w: Int, h: Int, fileName: String): Unit = {
     // TODO: incorporate different z planes
-    val X = rdd.map(_._1(0)).collect()
-    val Y = rdd.map(_._1(1)).collect()
-    println(X.take(10))
-    println(Y.take(10))
+    val X = rdd.map(_._1(0)).toArray()
+    val Y = rdd.map(_._1(1)).toArray()
+    println(X)
+    println(Y)
     val RGB = rdd.map(_._2).collect()
     val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
