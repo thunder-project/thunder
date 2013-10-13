@@ -163,6 +163,8 @@ object bisecting {
       case _ => dataRaw.filter{case (k,x) => std(x) > threshold}.mapValues(x => x / std(x)).cache()
     }
 
+    println("starting")
+
     // create array with first cluster and compute its center
     val clusters = ArrayBuffer((0,data))
     val center = data.map(_._2).reduce(_+_).elements.map(x => x / data.count())
