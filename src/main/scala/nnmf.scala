@@ -84,7 +84,7 @@ object nnmf {
     val h = data.map{case (k,v) => k(1)}.top(1).take(1)(0)
     val n = data.count().toInt
     val m = data.first()._2.size
-    val k = 2
+    val k = 5
     var iter = 0
     val nIter = 10
 
@@ -128,11 +128,11 @@ object nnmf {
 
     }
 
-    val result1 = v.map(x => x.get(0))
-    printToImage(data.map(_._1).zip(result1).map{case (k,v) => (k,(v/2).toInt)}, w, h, outputFileImg + 1.toString + ".png")
-    val result2 = v.map(x => x.get(1))
-    printToImage(data.map(_._1).zip(result2).map{case (k,v) => (k,(v/2).toInt)}, w, h, outputFileImg + 2.toString + ".png")
-
+    for (i <- 0 until k) {
+      val result1 = v.map(x => x.get(0))
+      printToImage(data.map(_._1).zip(result1).map{case (k,v) => (k,(v/2).toInt)}, w, h, outputFileImg + 1.toString + ".png")
+    }
+    
   }
 
 }

@@ -26,7 +26,11 @@ assemblySettings
 
   mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
   {
-    case "javax/servlet/SingleThreadModel.class" => MergeStrategy.first
+    case PathList("javax", "servlet", xs @ _*) => MergeStrategy.first
+    case PathList("org", "apache", "commons", "beanutils", xs @ _*) => MergeStrategy.last
+    case PathList("org", "apache", "commons", "collections", xs @ _*) => MergeStrategy.last
+    case PathList("com", "esotericsoftware", xs @ _*) => MergeStrategy.last
+    case "about.html" => MergeStrategy.discard
     case x => old(x)
   }
   }
