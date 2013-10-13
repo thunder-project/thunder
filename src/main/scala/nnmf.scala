@@ -58,7 +58,7 @@ object nnmf {
     val RGB = rdd.map(_._2).collect()
     val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
-    (Y,X,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
+    (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
     ImageIO.write(img, "png", new File(fileName))
   }
 
@@ -129,9 +129,9 @@ object nnmf {
     }
 
     val result1 = v.map(x => x.get(0))
-    printToImage(data.map(_._1).zip(result1).map{case (k,v) => (k,(v*40).toInt)}, h, w, outputFileImg + 1.toString + ".png")
+    printToImage(data.map(_._1).zip(result1).map{case (k,v) => (k,(v*20).toInt)}, w, h, outputFileImg + 1.toString + ".png")
     val result2 = v.map(x => x.get(1))
-    printToImage(data.map(_._1).zip(result2).map{case (k,v) => (k,(v*40).toInt)}, h, w, outputFileImg + 2.toString + ".png")
+    printToImage(data.map(_._1).zip(result2).map{case (k,v) => (k,(v*20).toInt)}, w, h, outputFileImg + 2.toString + ".png")
 
   }
 
