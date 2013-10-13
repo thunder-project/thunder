@@ -12,7 +12,7 @@ ivyXML := <dependency org="org.eclipse.jetty.orbit" name="javax.servlet" rev= "2
 
 libraryDependencies += "org.apache.spark" %% "spark-core" % "0.8.0-incubating"
 
-libraryDependencies += "org.apache.spark" %% "spark-streaming" % "0.8.0-incubating" % "provided"
+libraryDependencies += "org.apache.spark" %% "spark-streaming" % "0.8.0-incubating"
 
 libraryDependencies += "io.spray" %%  "spray-json" % "1.2.5"
 
