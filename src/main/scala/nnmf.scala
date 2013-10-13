@@ -55,8 +55,10 @@ object nnmf {
     // TODO: incorporate different z planes
     val X = rdd.map(_._1(0)).toArray()
     val Y = rdd.map(_._1(1)).toArray()
-    println(X)
-    println(Y)
+    println(X(0))
+    println(X(1))
+    println(Y(0))
+    println(Y(1))
     val RGB = rdd.map(_._2).collect()
     val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
