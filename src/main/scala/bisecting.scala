@@ -139,7 +139,7 @@ object bisecting {
     val threshold = args(6).toDouble
     val nSlices = args(7).toInt
 
-    prinln("starting")
+    println("starting")
 
     if (nSlices != 0) {
       println("changing parallelism")
