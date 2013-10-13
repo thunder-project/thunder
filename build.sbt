@@ -8,7 +8,9 @@ version := "1.0"
 
 scalaVersion := "2.9.3"
 
-ivyXML := <dependency org="org.eclipse.jetty.orbit" name="javax.servlet" rev="2.5.0.v201103041518"><artifact name="javax.servlet" type="orbit" ext="jar"/></dependency>
+//ivyXML := <dependency org="org.eclipse.jetty.orbit" name="javax.servlet" rev="2.5.0.v201103041518"><artifact name="javax.servlet" type="orbit" ext="jar"/></dependency>
+
+libraryDependencies += "org.eclipse.jetty.orbit" % "javax.servlet" % "2.5.0.v201103041518"
 
 libraryDependencies += "org.apache.spark" %% "spark-core" % "0.8.0-incubating" % "provided"
 
