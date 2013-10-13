@@ -139,6 +139,8 @@ object bisecting {
     val threshold = args(6).toDouble
     val nSlices = args(7).toInt
 
+    prinln("starting")
+
     if (nSlices != 0) {
       println("changing parallelism")
       System.setProperty("spark.default.parallelism", nSlices.toString)
@@ -146,7 +148,7 @@ object bisecting {
     System.setProperty("spark.executor.memory", "120g")
     //System.setProperty("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
 
-    val sc = new SparkContext(master, "hierarchical", System.getenv("SPARK_HOME"),
+    val sc = new SparkContext(master, "bisecting", System.getenv("SPARK_HOME"),
       List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
    
     // load raw data
