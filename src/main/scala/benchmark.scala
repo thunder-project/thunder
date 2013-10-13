@@ -58,7 +58,7 @@ object benchmark {
   def main(args: Array[String]) {
 
     System.setProperty("spark.executor.memory", "120g")
-    System.setProperty("spark.serializer", "spark.KryoSerializer")
+    //System.setProperty("spark.serializer", "spark.KryoSerializer")
     //System.setProperty("spark.default.parallelism", "50")
     val sc = new SparkContext(args(0), "benchmark", System.getenv("SPARK_HOME"),
       List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
