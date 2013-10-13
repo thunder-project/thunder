@@ -129,6 +129,8 @@ object bisecting {
       System.exit(1)
     }
 
+    println("starting")
+
     // collect arguments
     val master = args(0)
     val inputFile = args(1)
