@@ -42,7 +42,7 @@ logging.info("(lowdim) loading data")
 lines_X1 = sc.textFile(inputFile_X1) # the first data set
 X1 = lines_X1.map(parseVector).cache()
 lines_X2 = sc.textFile(inputFile_X2) # the first data set
-X2 = lines_X1.map(parseVector).cache()
+X2 = lines_X2.map(parseVector).cache()
 y = loadmat(inputFile_y)['y']
 y = y.astype(float)
 
