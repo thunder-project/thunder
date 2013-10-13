@@ -90,7 +90,7 @@ object nnmf {
     // random initialization
     var u = factory2D.make(k,m)
     val seed1 = Random.nextInt*1000
-    var v = sc.parallelize(0 until n).map(randomVector(_,seed1,k))
+    var v = data.map{case (k,v) => k(0) + (k(1)-1)*h}.map(randomVector(_,seed1,k))
 
     // fixed initialization
     //var u = factory2D.make(sc.textFile("data/h0.txt").map(parseLine _).toArray())
