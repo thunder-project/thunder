@@ -148,7 +148,7 @@ object bisecting {
     //System.setProperty("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
 
     val sc = new SparkContext(master, "bisecting", System.getenv("SPARK_HOME"),
-      List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
+      List("target/scala-2.9.3/thunder_2.9.3-1.0.jar","project/spray-json_2.9.3-1.2.5.jar"))
    
     // load raw data
     val dataRaw = sc.textFile(inputFile).map(parseVector _)
