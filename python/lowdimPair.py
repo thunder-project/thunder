@@ -25,7 +25,8 @@ def parseVector(line):
 	ts = array(vec[3:]) # get tseries
 	meanVal = mean(ts)
 	ts = (ts - meanVal) / (meanVal + 0.1) # convert to dff
-	return ((int(vec[0]),int(vec[1]),int(vec[2])),ts) # (x,y,z),(tseries) pair 
+	ind = int(vec[0]) + int((vec[1] - 1)*2048) + int((vec[2] - 1)*1364*2048)
+	return (ind,ts) # (x,y,z),(tseries) pair 
 
 sc = SparkContext(sys.argv[1], "lowdim")
 inputFile_X1 = str(sys.argv[2])
@@ -53,7 +54,7 @@ if mode == 'mean' :
 logging.info("(lowdim) getting count")
 n = resp.count()
 logging.info("(lowdim) computing covariance")
-cov = resp.map(lambda (key,x) : outer(x-mean(x),x-mean(x))).reduce(lambda x,y : (x + y)) / n
+cov = resp.map(lambda (k,x) : outer(x-mean(x),x-mean(x))).reduce(lambda x,y : (x + y)) / n
 
 logging.info("(lowdim) doing eigendecomposition")
 w, v = eig(cov)
