@@ -31,7 +31,7 @@ resolvers ++= Seq(
 classpathTypes ~= (_ + "orbit")
 
 libraryDependencies ++= Seq(
-  "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container" artifacts (Artifact("javax.servlet", "jar", "jar")
+  "org.eclipse.jetty.orbit" % "javax.servlet" % "2.5.0.v201103041518" % "container" artifacts (Artifact("javax.servlet", "jar", "jar")
   )
 )
 
