@@ -1,6 +1,6 @@
-import AssemblyKeys._
-
-assemblySettings
+import sbtassembly.Plugin.AssemblyKeys._
+import sbtassembly.Plugin._
+import sbtassembly.Plugin.MergeStrategy
 
 name := "Thunder"
 
@@ -12,21 +12,26 @@ ivyXML := <dependency org="org.eclipse.jetty.orbit" name="javax.servlet" rev= "2
 
 libraryDependencies += "org.apache.spark" %% "spark-core" % "0.8.0-incubating"
 
-libraryDependencies += "org.apache.spark" %% "spark-streaming" % "0.8.0-incubating"
+libraryDependencies += "org.apache.spark" %% "spark-streaming" % "0.8.0-incubating" % "provided"
 
 libraryDependencies += "io.spray" %%  "spray-json" % "1.2.5"
-
-//libraryDependencies += "org.spark-project" %% "spark-streaming" % "0.7.3"
-
-//libraryDependencies += "org.scalanlp" % "jblas" % "1.2.1"
-
-//libraryDependencies += "colt" % "colt" % "1.0.3"
 
 resolvers += "spray" at "http://repo.spray.io/"
 
 resolvers ++= Seq(
   "Akka Repository" at "http://repo.akka.io/releases/",
   "Spray Repository" at "http://repo.spray.cc/")
+
+assemblySettings
+
+  mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
+  {
+    case "javax/servlet/SingleThreadModel.class" => MergeStrategy.first
+    case x => old(x)
+  }
+  }
+
+
 
 
 
