@@ -56,7 +56,7 @@ object nnmf {
     val RGB = rdd.map(_._2).collect()
     val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
-    (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
+    (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(y-1, x-1, Array(rgb,rgb,rgb))}
     ImageIO.write(img, "png", new File(fileName))
   }
 
@@ -94,6 +94,8 @@ object nnmf {
     var v = data.map{case (k,v) => k(0) + (k(1)-1)*h}.map(randomVector(_,seed1,k))
 
     println(v.count())
+    println(w)
+    println(h)
 
     // fixed initialization
     //var u = factory2D.make(sc.textFile("data/h0.txt").map(parseLine _).toArray())
