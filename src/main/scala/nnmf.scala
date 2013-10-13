@@ -84,7 +84,7 @@ object nnmf {
     val m = data.first()._2.size
     val k = 2
     var iter = 0
-    val nIter = 100
+    val nIter = 10
 
     // assuming m >> n
 
@@ -122,14 +122,12 @@ object nnmf {
 
       iter += 1
 
-      println(u)
-
     }
 
     val result1 = v.map(x => x.get(0))
-    printToImage(data.map(_._1).zip(result1).map{case (k,v) => (k,(v*40).toInt)}, w, h, outputFileImg + 1.toString + ".png")
+    printToImage(data.map(_._1).zip(result1).map{case (k,v) => (k,(v*40).toInt)}, h, w, outputFileImg + 1.toString + ".png")
     val result2 = v.map(x => x.get(1))
-    printToImage(data.map(_._1).zip(result2).map{case (k,v) => (k,(v*40).toInt)}, w, h, outputFileImg + 2.toString + ".png")
+    printToImage(data.map(_._1).zip(result2).map{case (k,v) => (k,(v*40).toInt)}, h, w, outputFileImg + 2.toString + ".png")
 
   }
 
