@@ -109,7 +109,7 @@ r = X.map(lambda x : getR(x,y,sortedDim2)).collect()
 savemat(outputFile+"/"+"r"+".mat",mdict={'r':r},oned_as='column',do_compression='true')
 
 t = X.map(lambda x : getT(x,y,sortedDim2)).collect()
-savemat(outputFile+"/"+"r"+".mat",mdict={'t':t},oned_as='column',do_compression='true')
+savemat(outputFile+"/"+"t"+".mat",mdict={'t':t},oned_as='column',do_compression='true')
 
 
 # for ik in range(0,k):
