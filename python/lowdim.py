@@ -32,6 +32,15 @@ def clip(vec,val):
 	vec[vec<val] = val
 	return vec
 
+def threshMap(x,y,eigs,rng1,rng2):
+	vals = inner(dot(y,x) - mean(dot(y,x)),eigs)
+	r = sqrt(vals[0]**2 + vals[1]**2)
+	t = arctan2(vals[0], vals[1])
+	out = zeros(shape(x))
+	if (t > rng1) & (t < rng2):
+		out = x * r
+	return out
+
 # parse inputs
 sc = SparkContext(sys.argv[1], "lowdim")
 inputFile_X = str(sys.argv[2])
@@ -83,17 +92,20 @@ savemat(outputFile+"/"+"cov.mat",mdict={'cov':cov},oned_as='column',do_compressi
 savemat(outputFile+"/"+"evecs.mat",mdict={'evecs':sortedDim2},oned_as='column',do_compression='true')
 savemat(outputFile+"/"+"evals.mat",mdict={'evals':latent},oned_as='column',do_compression='true')
 
-for ik in range(0,k):
-	logging.info("(lowdim) writing trajectories for pc " + str(ik))
-	traj = X.map(lambda x : x * inner(dot(y,x) - mean(dot(y,x)),sortedDim2[ik,:]) ).reduce(lambda x,y : x + y)
-	savemat(outputFile+"/"+"traj-"+str(ik)+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
+traj = X.map(lambda x : threshMap(x,y,sortedDim2,-0.8,0.0)).reduce(lambda x,y: x + y)
+savemat(outputFile+"/"+"traj-"+str(ik)+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
-for ik in range(0,k):
-	logging.info("(lowdim) writing scores for pc " + str(ik))
-	#out = X.map(lambda x : float16(inner(dot(y,x) - mean(dot(y,x)),sortedDim2[ik,:])))
-	#out = X.map(lambda x : float16(inner(dot(y,(x-mean(x))/norm(x)) - mean(dot(y,(x-mean(x))/norm(x))),sortedDim2[ik,:])))
-	out = resp.map(lambda x : float16(inner(x - mean(x),sortedDim2[ik,:])))
-	savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
+# for ik in range(0,k):
+# 	logging.info("(lowdim) writing trajectories for pc " + str(ik))
+# 	traj = X.map(lambda x : x * inner(dot(y,x) - mean(dot(y,x)),sortedDim2[ik,:]) ).reduce(lambda x,y : x + y)
+# 	savemat(outputFile+"/"+"traj-"+str(ik)+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
+
+# for ik in range(0,k):
+# 	logging.info("(lowdim) writing scores for pc " + str(ik))
+# 	#out = X.map(lambda x : float16(inner(dot(y,x) - mean(dot(y,x)),sortedDim2[ik,:])))
+# 	#out = X.map(lambda x : float16(inner(dot(y,(x-mean(x))/norm(x)) - mean(dot(y,(x-mean(x))/norm(x))),sortedDim2[ik,:])))
+# 	out = resp.map(lambda x : float16(inner(x - mean(x),sortedDim2[ik,:])))
+# 	savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
 
 
 
