@@ -77,7 +77,7 @@ inds = argsort(w)[::-1]
 sortedDim2 = transpose(v[:,inds[0:k]])
 latent = w[inds[0:k]]
 
-pol = X.mapValues(lambda x : getPol(x,y,sortedDim2))
+pol = X1.mapValues(lambda x : getPol(x,y,sortedDim2))
 traj = X2.join(pol).map(lambda (k,x) : mapThresh(x[0],x[1],-0.8,0)).reduce(lambda x,y : x+y)
 
 savemat(outputFile+"/"+"traj-"+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
