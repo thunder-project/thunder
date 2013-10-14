@@ -28,6 +28,13 @@ def parseVector(line):
 	#ind = int(vec[0]) + int((vec[1] - 1)*2048) + int((vec[2] - 1)*1364*2048)
 	return ((int(vec[0]),int(vec[1]),int(vec[2])),ts) # (x,y,z),(tseries) pair 
 
+def getPol(x,y,eigs):
+	vals = inner(dot(y,x) - mean(dot(y,x)),eigs)
+	vals[0] = -vals[0]
+	r = sqrt(vals[0]**2 + vals[1]**2)
+	t = arctan2(vals[1], vals[0])
+	return (r,t)
+
 sc = SparkContext(sys.argv[1], "lowdimPair")
 inputFile_X1 = str(sys.argv[2])
 inputFile_X2 = str(sys.argv[3])
@@ -64,11 +71,15 @@ inds = argsort(w)[::-1]
 sortedDim2 = transpose(v[:,inds[0:k]])
 latent = w[inds[0:k]]
 
-for ik in range(0,k):
-	logging.info("(lowdimPair) writing trajectories")
-	scores = resp.mapValues(lambda x : inner(x - mean(x),sortedDim2[ik,:]))
-	traj = X2.join(scores).map(lambda (k,x) : x[0] * x[1]).reduce(lambda x,y : x+y)
-	savemat(outputFile+"/"+"traj-"+str(ik)+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
+traj = X.map(lambda x : threshMap(x,y,sortedDim2,-0.8,0)).reduce(lambda x,y: x + y)
+savemat(outputFile+"/"+"traj-"+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
+
+
+# for ik in range(0,k):
+# 	logging.info("(lowdimPair) writing trajectories")
+# 	scores = resp.mapValues(lambda x : inner(x - mean(x),sortedDim2[ik,:]))
+# 	traj = X2.join(scores).map(lambda (k,x) : x[0] * x[1]).reduce(lambda x,y : x+y)
+# 	savemat(outputFile+"/"+"traj-"+str(ik)+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
 
 
