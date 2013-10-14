@@ -34,6 +34,7 @@ def clip(vec,val):
 
 def threshMap(x,y,eigs,rng1,rng2):
 	vals = inner(dot(y,x) - mean(dot(y,x)),eigs)
+	vals[0] = -vals[0]
 	r = sqrt(vals[0]**2 + vals[1]**2)
 	t = arctan2(vals[1], vals[0])
 	out = zeros(shape(x))
