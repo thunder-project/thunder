@@ -41,6 +41,16 @@ def threshMap(x,y,eigs,rng1,rng2):
 		out = x * r
 	return out
 
+def getT(x,y,eigs):
+	vals = inner(dot(y,x) - mean(dot(y,x)),eigs)
+	t = arctan2(vals[1], vals[0])
+	return t
+
+def getR(x,y,eigs):
+	vals = inner(dot(y,x) - mean(dot(y,x)),eigs)
+	r = sqrt(vals[0]**2 + vals[1]**2)
+	return r
+
 # parse inputs
 sc = SparkContext(sys.argv[1], "lowdim")
 inputFile_X = str(sys.argv[2])
@@ -92,8 +102,15 @@ savemat(outputFile+"/"+"cov.mat",mdict={'cov':cov},oned_as='column',do_compressi
 savemat(outputFile+"/"+"evecs.mat",mdict={'evecs':sortedDim2},oned_as='column',do_compression='true')
 savemat(outputFile+"/"+"evals.mat",mdict={'evals':latent},oned_as='column',do_compression='true')
 
-traj = X.map(lambda x : threshMap(x,y,sortedDim2,0,0.8)).reduce(lambda x,y: x + y)
-savemat(outputFile+"/"+"traj-"+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
+# traj = X.map(lambda x : threshMap(x,y,sortedDim2,0,0.8)).reduce(lambda x,y: x + y)
+# savemat(outputFile+"/"+"traj-"+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
+
+r = X.map(lambda x : getR(x,y,sortedDim2)).collect()
+savemat(outputFile+"/"+"r"+".mat",mdict={'r':r},oned_as='column',do_compression='true')
+
+t = X.map(lambda x : getT(x,y,sortedDim2)).collect()
+savemat(outputFile+"/"+"r"+".mat",mdict={'t':t},oned_as='column',do_compression='true')
+
 
 # for ik in range(0,k):
 # 	logging.info("(lowdim) writing trajectories for pc " + str(ik))
