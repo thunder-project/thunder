@@ -93,7 +93,7 @@ savemat(outputFile+"/"+"evecs.mat",mdict={'evecs':sortedDim2},oned_as='column',d
 savemat(outputFile+"/"+"evals.mat",mdict={'evals':latent},oned_as='column',do_compression='true')
 
 traj = X.map(lambda x : threshMap(x,y,sortedDim2,-0.8,0.0)).reduce(lambda x,y: x + y)
-savemat(outputFile+"/"+"traj-"+str(ik)+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
+savemat(outputFile+"/"+"traj-"+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
 # for ik in range(0,k):
 # 	logging.info("(lowdim) writing trajectories for pc " + str(ik))
