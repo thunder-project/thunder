@@ -80,6 +80,7 @@ latent = w[inds[0:k]]
 pol = X1.mapValues(lambda x : getPol(x,y,sortedDim2))
 traj = X2.join(pol).map(lambda (k,x) : mapThresh(x[0],x[1],1.2,2.7)).reduce(lambda x,y : x+y)
 
+savemat(outputFile+"/"+"evecs.mat",mdict={'evecs':sortedDim2},oned_as='column',do_compression='true')
 savemat(outputFile+"/"+"traj-"+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
 
