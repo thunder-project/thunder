@@ -38,7 +38,7 @@ def threshMap(x,y,eigs,rng1,rng2):
 	r = sqrt(vals[0]**2 + vals[1]**2)
 	t = arctan2(vals[1], vals[0])
 	out = zeros(shape(x))
-	if (t > rng1) & (t < rng2):
+	if (t > rng1) | (t < rng2):
 		out = x * r
 	return out
 
@@ -103,7 +103,7 @@ savemat(outputFile+"/"+"cov.mat",mdict={'cov':cov},oned_as='column',do_compressi
 savemat(outputFile+"/"+"evecs.mat",mdict={'evecs':sortedDim2},oned_as='column',do_compression='true')
 savemat(outputFile+"/"+"evals.mat",mdict={'evals':latent},oned_as='column',do_compression='true')
 
-traj = X.map(lambda x : threshMap(x,y,sortedDim2,1.2,2.7)).reduce(lambda x,y: x + y)
+traj = X.map(lambda x : threshMap(x,y,sortedDim2,2.4,-2.3)).reduce(lambda x,y: x + y)
 savemat(outputFile+"/"+"traj-"+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
 # r = X.map(lambda x : getR(x,y,sortedDim2)).collect()

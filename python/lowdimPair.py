@@ -35,6 +35,9 @@ def getPol(x,y,eigs):
 	t = arctan2(vals[1], vals[0])
 	return (r,t)
 
+def mapThresh(x,y):
+	
+
 sc = SparkContext(sys.argv[1], "lowdimPair")
 inputFile_X1 = str(sys.argv[2])
 inputFile_X2 = str(sys.argv[3])
@@ -71,7 +74,10 @@ inds = argsort(w)[::-1]
 sortedDim2 = transpose(v[:,inds[0:k]])
 latent = w[inds[0:k]]
 
-traj = X.map(lambda x : threshMap(x,y,sortedDim2,-0.8,0)).reduce(lambda x,y: x + y)
+pol = X.mapValues(lambda x : getPol(x,y,sortedDim2))
+traj = X2.join(pol).map(lambda (k,x) : mapThresh(x[0],x[1])).reduce(lambda x,y : x+y)
+
+	threshMap(x,y,sortedDim2,-0.8,0)).reduce(lambda x,y: x + y)
 savemat(outputFile+"/"+"traj-"+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
 
