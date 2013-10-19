@@ -7,6 +7,8 @@
 *
 */
 
+package thunder
+
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.StreamingContext._
 import org.apache.spark.SparkContext._

@@ -46,7 +46,7 @@ object bisecting {
     return scala.math.sqrt(vec.squaredDist(mean)/(vec.length - 1))
   }
 
-  def makeXYmap(vec: Array[Double]): List[Map[String,Double]] = {
+  def makeMap(vec: Array[Double]): List[Map[String,Double]] = {
     return vec.toList.zipWithIndex.map(x => Map("x"->x._2.toDouble,"y"->x._1))
   }
 
@@ -67,15 +67,17 @@ object bisecting {
     }
   }
 
-  def printToImage(rdd: RDD[(Array[Int],Int)], w: Int, h: Int, fileName: String): Unit = {
-    // TODO: incorporate different z planes
-    val X = rdd.map(_._1(0)).collect()
-    val Y = rdd.map(_._1(1)).collect()
-    val RGB = rdd.map(_._2).collect()
-    val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
-    val raster = img.getRaster()
-    (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
-    ImageIO.write(img, "png", new File(fileName))
+  def printToImage(rdd: RDD[(Array[Int],Int)], w: Int, h: Int, d: Int, fileName: String): Unit = {
+    for (id <- 0 until d) {
+      val plane = rdd.filter(_._1(2) == d)
+      val X = plane.map(_._1(0)).collect()
+      val Y = plane.map(_._1(1)).collect()
+      val RGB = plane.map(_._2).collect()
+      val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
+      val raster = img.getRaster()
+      (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
+      ImageIO.write(img, "png", new File("plane"+id.toString+"-"+fileName))
+    }
   }
 
   def closestPoint(p: Vector, centers: Array[Vector]): Int = {
@@ -129,7 +131,6 @@ object bisecting {
       System.exit(1)
     }
 
-
     // collect arguments
     val master = args(0)
     val inputFile = args(1)
@@ -156,6 +157,7 @@ object bisecting {
     // sort x and y keys to get bounds
     val w = dataRaw.map{case (k,v) => k(0)}.top(1).take(1)(0)
     val h = dataRaw.map{case (k,v) => k(1)}.top(1).take(1)(0)
+    val d = dataRaw.map{case (k,v) => k(2)}.top(1).take(1)(0)
 
     // load data
     val data = threshold match {
@@ -168,11 +170,11 @@ object bisecting {
     // create array with first cluster and compute its center
     val clusters = ArrayBuffer((0,data))
     val center = data.map(_._2).reduce(_+_).elements.map(x => x / data.count())
-    val tree = Cluster(0,makeXYmap(center),None)
+    val tree = Cluster(0,makeMap(center),None)
     var count = 1
 
     // print first cluster as an image
-    printToImage(data.map{case (k,v) => (k,255)}, w, h, outputFileImg + 0.toString + ".png")
+    printToImage(data.map{case (k,v) => (k,255)}, w, h, d, outputFileImg + 0.toString + ".png")
 
     // start timer
     val startTime = System.nanoTime
@@ -196,12 +198,12 @@ object bisecting {
 
       // update tree with results
       insert(tree,clusters(ind)._1,List(
-        Cluster(newInd1,makeXYmap(centers(0).elements),None),
-        Cluster(newInd2,makeXYmap(centers(1).elements),None)))
+        Cluster(newInd1,makeMap(centers(0).elements),None),
+        Cluster(newInd2,makeMap(centers(1).elements),None)))
 
       // write clusters to images
-      printToImage(cluster1.map{case (k,v) => (k,255)}, w, h, outputFileImg + newInd1.toString + ".png")
-      printToImage(cluster2.map{case (k,v) => (k,255)}, w, h, outputFileImg + newInd2.toString + ".png")
+      printToImage(cluster1.map{case (k,v) => (k,255)}, w, h, d, outputFileImg + "-cluster" + newInd1.toString + ".png")
+      printToImage(cluster2.map{case (k,v) => (k,255)}, w, h, d, outputFileImg + "-cluster" + newInd2.toString + ".png")
 
       // remove old cluster, add the 2 new ones
       clusters.remove(ind)

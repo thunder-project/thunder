@@ -8,6 +8,8 @@
  *
  */
 
+package thunder
+
 import java.io.File
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._

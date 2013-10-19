@@ -6,6 +6,8 @@
  * To change this template use File | Settings | File Templates.
  */
 
+package thunder
+
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO

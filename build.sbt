@@ -1,6 +1,6 @@
-import sbtassembly.Plugin.AssemblyKeys._
-import sbtassembly.Plugin._
-import sbtassembly.Plugin.MergeStrategy
+//import sbtassembly.Plugin.AssemblyKeys._
+//import sbtassembly.Plugin._
+//import sbtassembly.Plugin.MergeStrategy
 
 name := "Thunder"
 
