@@ -17,23 +17,20 @@ import javax.imageio.ImageIO
 import java.io.File
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
-import cern.colt.matrix._
-import cern.colt.matrix.linalg._
+import org.jblas.DoubleMatrix
+import org.jblas.Solve
 import thunder.util.MatrixRDD
 import cern.jet.math.Functions
 
 object rrr {
 
-  val factory2D = DoubleFactory2D.dense
-  val factory1D = DoubleFactory1D.dense
-  val alg = Algebra.DEFAULT
 
-  def parseVector(line: String): ((Array[Int]), DoubleMatrix1D) = {
+  def parseVector(line: String): ((Array[Int]), DoubleMatrix) = {
     val vec = line.split(' ').drop(3).map(_.toDouble)
     val inds = line.split(' ').take(3).map(_.toDouble.toInt) // xyz coords
     //val mean = vec.sum / vec.length
     //vec = vec.map(x => (x - mean)/(mean + 0.1)) // time series
-    return (inds,factory1D.make(vec))
+    return (inds,new DoubleMatrix(vec))
   }
 
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
@@ -59,33 +56,13 @@ object rrr {
     }
   }
 
-  def printMatrix(data: DoubleMatrix2D, saveFile: String): Unit = {
-    // print a DoubleMatrix2D to text by writing each row as a string
-    val out = data.toArray()
-    printToFile(new File(saveFile))(p => {
-      out.foreach(x => p.println(x.mkString(" ")))
-    })
-  }
-
-  def svd(mat1: RDD[DoubleMatrix1D], k: Int, m: Int, normMode: String): (RDD[DoubleMatrix1D], DoubleMatrix2D) = {
-    // get the rank-k svd of an RDD matrix
-    val cov = mat1.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus))
-    val svd = new SingularValueDecomposition(cov)
-    val S = svd.getSingularValues().take(k)
-    val inds = Range(0,k).toArray
-    println(S)
-    val V = factory2D.make(svd.getU().viewSelection(Range(0,m).toArray,inds).toArray())
-    println(V)
-    val multFac = alg.mult(V,factory2D.diagonal(factory1D.make(S.map(x => 1 / scala.math.sqrt(x)))))
-    val U = mat1.map(x => alg.mult(alg.transpose(multFac),x))
-    return (U,alg.transpose(V))
-  }
-
-  def outerProd(vec1: DoubleMatrix1D, vec2: DoubleMatrix1D): DoubleMatrix2D = {
-    val out = factory2D.make(vec1.size,vec2.size)
-    alg.multOuter(vec1,vec2,out)
-    return out
-  }
+//  def printMatrix(data: DoubleMatrix2D, saveFile: String): Unit = {
+//    // print a DoubleMatrix2D to text by writing each row as a string
+//    val out = data.toArray()
+//    printToFile(new File(saveFile))(p => {
+//      out.foreach(x => p.println(x.mkString(" ")))
+//    })
+//  }
 
   def main(args: Array[String]) {
 
@@ -105,8 +82,8 @@ object rrr {
       List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
 
     val data = sc.textFile(inputFileR).map(parseVector _).cache()
-    val X = factory2D.make(sc.textFile(inputFileX).map(x => x.split(' ').map(_.toDouble)).toArray())
-
+    val X = new DoubleMatrix(sc.textFile(inputFileX).map(x => x.split(' ').map(_.toDouble)).toArray())
+//
     println("getting dimensions")
     val w = data.map{case (k,v) => k(0)}.top(1).take(1)(0)
     val h = data.map{case (k,v) => k(1)}.top(1).take(1)(0)
@@ -114,27 +91,29 @@ object rrr {
 
     println("initializing variables")
     val n = data.count().toInt
-    val m = data.first()._2.size
-    val c = X.viewColumn(0).size
+    val m = data.first()._2.length
+    val c = X.rows
 
     val k1 = 3
 
     // strip keys
     val R = data.map{case (k,v) => v}
 
-    // compute OLS estimate of C for Y = C * X
-    println("getting initial OLS estimate")
-    val Xinv = alg.inverse(alg.transpose(X))
-    val Xpre = alg.transpose(X)
-    val C1X = R.map(x => alg.mult(Xpre,alg.mult(Xinv,x)))
+//    // compute OLS estimate of C for Y = C * X
+//    println("getting initial OLS estimate")
+    val C1 = R.map(x => Solve.solve(X,x))
 
-    val cov = C1X.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus))
-
-    // compute U using the SVD: [U S V] = svd(C * X)
-    println("computing SVD")
-    //val U = svd(C1X, k1, m,"basic")._1
-    val eigs = new EigenvalueDecomposition(cov)
-    println(eigs)
+//    val Xinv = alg.inverse(alg.transpose(X))
+//    val Xpre = alg.transpose(X)
+//    val C1X = R.map(x => alg.mult(Xpre,alg.mult(Xinv,x)))
+//
+//    val cov = C1X.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus))
+//
+//    // compute U using the SVD: [U S V] = svd(C * X)
+//    println("computing SVD")
+//    //val U = svd(C1X, k1, m,"basic")._1
+//    val eigs = new EigenvalueDecomposition(cov)
+//    println(eigs)
 //
 //    // project U back into C : C2 = U * U' * C
 //    println("computing outer products")

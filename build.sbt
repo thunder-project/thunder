@@ -16,6 +16,8 @@ libraryDependencies += "org.apache.spark" %% "spark-streaming" % "0.8.0-incubati
 
 libraryDependencies += "io.spray" %%  "spray-json" % "1.2.5"
 
+libraryDependencies += "org.jblas" %  "jblas" % "1.2.3"
+
 resolvers += "spray" at "http://repo.spray.io/"
 
 resolvers ++= Seq(

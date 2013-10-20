@@ -24,7 +24,7 @@ object nnmf {
 
   val factory2D = DoubleFactory2D.dense
   val factory1D = DoubleFactory1D.dense
-  val algebra = Algebra.DEFAULT
+  val alg = Algebra.DEFAULT
 
   def parseVector(line: String): (Array[Int],DoubleMatrix1D) = {
     var vec = line.split(' ').drop(3).map(_.toDouble)
@@ -66,7 +66,7 @@ object nnmf {
 
   def outerProd(vec1: DoubleMatrix1D, vec2: DoubleMatrix1D): DoubleMatrix2D = {
     val out = factory2D.make(vec1.size,vec2.size)
-    algebra.multOuter(vec1,vec2,out)
+    alg.multOuter(vec1,vec2,out)
     return out
   }
 
@@ -109,19 +109,19 @@ object nnmf {
 
       println("starting" + iter.toString)
       // compute inv(w0' * w0)
-      val winv = algebra.inverse(v.map( x => outerProd(x,x)).reduce(_.assign(_,Functions.plus)))
+      val winv = alg.inverse(v.map( x => outerProd(x,x)).reduce(_.assign(_,Functions.plus)))
 
       // update u using least squares
-      u = data.map(_._2).zip(v.map (x => algebra.mult(winv,x))).map( x => outerProd(x._2,x._1)).reduce(_.assign(_,Functions.plus))
+      u = data.map(_._2).zip(v.map (x => alg.mult(winv,x))).map( x => outerProd(x._2,x._1)).reduce(_.assign(_,Functions.plus))
 
       // clip negative values
       u.assign(Functions.bindArg1(Functions.max,0))
 
       // compute u'*inv(u*u')
-      val hinv = algebra.mult(algebra.transpose(u),algebra.inverse(algebra.mult(u,algebra.transpose(u))))
+      val hinv = alg.mult(alg.transpose(u),alg.inverse(alg.mult(u,alg.transpose(u))))
 
       // update v using least squares
-      v = data.map(_._2).map( x => algebra.mult(algebra.transpose(hinv),x))
+      v = data.map(_._2).map( x => alg.mult(alg.transpose(hinv),x))
 
       // clip negative values
       v = v.map(_.assign(Functions.bindArg1(Functions.max,0)))
