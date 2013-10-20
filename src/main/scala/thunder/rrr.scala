@@ -126,16 +126,11 @@ object rrr {
     val Xpre = alg.transpose(X)
     val C1X = R.map(x => alg.mult(Xpre,alg.mult(Xinv,x)))
 
-    //println("computing CX")
-    //val C1X = C1.map(x => alg.mult(alg.transpose(X),x))
+    // compute U using the SVD: [U S V] = svd(C * X)
+    println("computing SVD")
+    val U = svd(C1X, k1, m,"basic")._1
 
-    println(C1X.first())
-    println(C1X.count())
-//    println(C1X.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus)))
-//
-//    // compute U using the SVD: [U S V] = svd(C * X)
-//    println("computing SVD")
-//    val U = svd(C1X, k1, m,"basic")._1
+    println(U.first())
 //
 //    // project U back into C : C2 = U * U' * C
 //    println("computing outer products")
