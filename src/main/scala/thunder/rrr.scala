@@ -70,11 +70,12 @@ object rrr {
   def svd(mat1: RDD[DoubleMatrix1D], k: Int, m: Int, normMode: String): (RDD[DoubleMatrix1D], DoubleMatrix2D) = {
     // get the rank-k svd of an RDD matrix
     val cov = mat1.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus))
-    println(cov)
     val svd = new SingularValueDecomposition(cov)
     val S = svd.getSingularValues().take(k)
     val inds = Range(0,k).toArray
+    println(S)
     val V = factory2D.make(svd.getU().viewSelection(Range(0,m).toArray,inds).toArray())
+    println(V)
     val multFac = alg.mult(V,factory2D.diagonal(factory1D.make(S.map(x => 1 / scala.math.sqrt(x)))))
     val U = mat1.map(x => alg.mult(alg.transpose(multFac),x))
     return (U,alg.transpose(V))
