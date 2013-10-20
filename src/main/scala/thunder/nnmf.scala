@@ -111,7 +111,7 @@ object nnmf {
       // compute inv(w0' * w0)
       val winv = algebra.inverse(v.map( x => outerProd(x,x)).reduce(_.assign(_,Functions.plus)))
 
-      // update h using least squares
+      // update u using least squares
       u = data.map(_._2).zip(v.map (x => algebra.mult(winv,x))).map( x => outerProd(x._2,x._1)).reduce(_.assign(_,Functions.plus))
 
       // clip negative values
@@ -120,7 +120,7 @@ object nnmf {
       // compute u'*inv(u*u')
       val hinv = algebra.mult(algebra.transpose(u),algebra.inverse(algebra.mult(u,algebra.transpose(u))))
 
-      // update w using least squares
+      // update v using least squares
       v = data.map(_._2).map( x => algebra.mult(algebra.transpose(hinv),x))
 
       // clip negative values
