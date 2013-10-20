@@ -122,13 +122,13 @@ object rrr {
 
     // compute OLS estimate of C for Y = C * X
     println("getting initial OLS estimate")
-    val C1X = R.map(x => alg.mult(alg.inverse(alg.transpose(X)),x))
+    val C1X = R.map(x => alg.mult(alg.transpose(X),x))
 
     //println("computing CX")
     //val C1X = C1.map(x => alg.mult(alg.transpose(X),x))
 
-    println(R.first())
-    println(R.count())
+    println(C1X.first())
+    println(C1X.count())
 //    println(C1X.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus)))
 //
 //    // compute U using the SVD: [U S V] = svd(C * X)
