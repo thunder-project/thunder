@@ -122,41 +122,41 @@ object rrr {
 
     // compute OLS estimate of C for Y = C * X
     println("getting initial OLS estimate")
-    val C1 = R.map(x => alg.mult(alg.inverse(alg.transpose(X)),x))
+    val C1X = R.map(x => alg.mult(alg.inverse(alg.transpose(X)),x)).map(x => alg.mult(alg.transpose(X),x))
 
-    println("computing CX")
-    val C1X = C1.map(x => alg.mult(alg.transpose(X),x))
+    //println("computing CX")
+    //val C1X = C1.map(x => alg.mult(alg.transpose(X),x))
 
     println(C1X.first())
     println(C1X.count())
-    println(C1X.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus)))
-
-    // compute U using the SVD: [U S V] = svd(C * X)
-    println("computing SVD")
-    val U = svd(C1X, k1, m,"basic")._1
-
-    // project U back into C : C2 = U * U' * C
-    println("computing outer products")
-    val UC1 = U.zip(C1).map{case (x,y) => outerProd(x,y)}.reduce(_.assign(_,Functions.plus))
-    println("computing corrected estimate")
-    val C = U.map(x => alg.mult(alg.transpose(UC1),x))
-
-    // recompute U and V using the SVD: [U S V] = svd(C2)
-    println("computing SVD again")
-    val result = svd(C,k1, c,"basic")
-    val U2 = result._1
-    val V2 = result._2
-
-    // add keys back in
-    val out = data.map{case (k,v) => k}.zip(U2)
-
-    // print time series
-    printMatrix(V2, outputFileTxt)
-
-    // print images
-    for (ik <- 0 until k1) {
-      printToImage(out.map{case (k,v) => (k,v.get(ik)*100)}, w, h, d, outputFileImg + "-comp" + ik.toString() + ".png")
-    }
+//    println(C1X.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus)))
+//
+//    // compute U using the SVD: [U S V] = svd(C * X)
+//    println("computing SVD")
+//    val U = svd(C1X, k1, m,"basic")._1
+//
+//    // project U back into C : C2 = U * U' * C
+//    println("computing outer products")
+//    val UC1 = U.zip(C1).map{case (x,y) => outerProd(x,y)}.reduce(_.assign(_,Functions.plus))
+//    println("computing corrected estimate")
+//    val C = U.map(x => alg.mult(alg.transpose(UC1),x))
+//
+//    // recompute U and V using the SVD: [U S V] = svd(C2)
+//    println("computing SVD again")
+//    val result = svd(C,k1, c,"basic")
+//    val U2 = result._1
+//    val V2 = result._2
+//
+//    // add keys back in
+//    val out = data.map{case (k,v) => k}.zip(U2)
+//
+//    // print time series
+//    printMatrix(V2, outputFileTxt)
+//
+//    // print images
+//    for (ik <- 0 until k1) {
+//      printToImage(out.map{case (k,v) => (k,v.get(ik)*100)}, w, h, d, outputFileImg + "-comp" + ik.toString() + ".png")
+//    }
 
   }
 
