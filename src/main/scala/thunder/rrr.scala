@@ -122,7 +122,7 @@ object rrr {
 
     // compute OLS estimate of C for Y = C * X
     println("getting initial OLS estimate")
-    val C1X = R.map(x => alg.mult(X,x))
+    val C1X = R.map(x => alg.mult(alg.transpose(alg.inverse(X)),x))
 
     //println("computing CX")
     //val C1X = C1.map(x => alg.mult(alg.transpose(X),x))
