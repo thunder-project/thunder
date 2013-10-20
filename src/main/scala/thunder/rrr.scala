@@ -127,6 +127,10 @@ object rrr {
     println("computing CX")
     val C1X = C1.map(x => alg.mult(alg.transpose(X),x))
 
+    println(C1X.first())
+    println(C1X.count())
+    println(C1X.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus)))
+
     // compute U using the SVD: [U S V] = svd(C * X)
     println("computing SVD")
     val U = svd(C1X, k1, m,"basic")._1
