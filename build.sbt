@@ -22,6 +22,8 @@ resolvers ++= Seq(
   "Akka Repository" at "http://repo.akka.io/releases/",
   "Spray Repository" at "http://repo.spray.cc/")
 
+
+
 //assemblySettings
 //
 //  mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>

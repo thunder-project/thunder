@@ -87,10 +87,12 @@ object rrr {
     val data = sc.textFile(inputFileR).map(parseVector _).cache()
     val X = factory2D.make(sc.textFile(inputFileX).map(x => x.split(' ').map(_.toDouble)).toArray())
 
+    println("getting dimensions")
     val w = data.map{case (k,v) => k(0)}.top(1).take(1)(0)
     val h = data.map{case (k,v) => k(1)}.top(1).take(1)(0)
     val d = data.map{case (k,v) => k(2)}.top(1).take(1)(0)
 
+    println("initializing variables")
     val n = data.count().toInt
     val m = data.first()._2.size
     val c = X.viewColumn(0).size
@@ -101,6 +103,7 @@ object rrr {
     val R = MatrixRDD(data.map{case (k,v) => v})
 
     // compute OLS estimate of C for Y = C * X
+    println("getting initial OLS estimate")
     val C1 = R / X
 
     // compute U using the SVD: [U S V] = svd(C * X)
@@ -110,6 +113,7 @@ object rrr {
     val C = U * (U ** C1)
 
     // recompute U and V using the SVD: [U S V] = svd(C2)
+    println("getting corrected estimate")
     val result = C.svd(k1, c,"basic")
     val U2 = result._1
     val V2 = result._2
