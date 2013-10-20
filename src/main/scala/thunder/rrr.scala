@@ -3,6 +3,9 @@
  *
  * reduced rank regression
  *
+ * solve the problem R = CX + e subject to rank(C) = k
+ * by estimating U and V, the left and right singular vectors of C
+ *
  * (in progress)
  *
  */
@@ -17,6 +20,7 @@ import org.apache.spark.SparkContext
 import cern.colt.matrix._
 import cern.colt.matrix.linalg._
 import thunder.util.MatrixRDD
+import cern.jet.math.Functions
 
 object rrr {
 
@@ -94,22 +98,19 @@ object rrr {
     val k1 = 3
 
     // strip keys
-    val R = new MatrixRDD(data.map{case (k,v) => v})
+    val R = MatrixRDD(data.map{case (k,v) => v})
 
     // compute OLS estimate of C for Y = C * X
-    val C = R / X
-
-    // compute C * X
-    val CX = C * X
+    val C1 = R / X
 
     // compute U using the SVD: [U S V] = svd(C * X)
-    val U = CX.svd(k1, m)._1
+    val U = (C1 * X).svd(k1, m,"basic")._1
 
     // project U back into C : C2 = U * U' * C
-    val C2 = U * (U ** C)
+    val C = U * (U ** C1)
 
     // recompute U and V using the SVD: [U S V] = svd(C2)
-    val result = C2.svd(k1, c)
+    val result = C.svd(k1, c,"basic")
     val U2 = result._1
     val V2 = result._2
 
