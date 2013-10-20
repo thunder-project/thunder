@@ -103,6 +103,8 @@ object rrr {
 //    println("getting initial OLS estimate")
     val C1 = R.map(x => Solve.solve(X,x))
 
+    println(C1.first())
+
 //    val Xinv = alg.inverse(alg.transpose(X))
 //    val Xpre = alg.transpose(X)
 //    val C1X = R.map(x => alg.mult(Xpre,alg.mult(Xinv,x)))
