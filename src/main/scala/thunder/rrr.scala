@@ -67,6 +67,24 @@ object rrr {
     })
   }
 
+  def svd(mat1: RDD[DoubleMatrix1D], k: Int, m: Int, normMode: String): (RDD[DoubleMatrix1D], DoubleMatrix2D) = {
+    // get the rank-k svd of an RDD matrix
+    val cov = mat1.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus))
+    val svd = new SingularValueDecomposition(cov)
+    val S = svd.getSingularValues().take(k)
+    val inds = Range(0,k).toArray
+    val V = factory2D.make(svd.getU().viewSelection(Range(0,m).toArray,inds).toArray())
+    val multFac = alg.mult(V,factory2D.diagonal(factory1D.make(S.map(x => 1 / scala.math.sqrt(x)))))
+    val U = mat1.map(x => alg.mult(alg.transpose(multFac),x))
+    return (U,alg.transpose(V))
+  }
+
+  def outerProd(vec1: DoubleMatrix1D, vec2: DoubleMatrix1D): DoubleMatrix2D = {
+    val out = factory2D.make(vec1.size,vec2.size)
+    alg.multOuter(vec1,vec2,out)
+    return out
+  }
+
   def main(args: Array[String]) {
 
     if (args.length < 5) {
@@ -100,26 +118,33 @@ object rrr {
     val k1 = 3
 
     // strip keys
-    val R = MatrixRDD(data.map{case (k,v) => v})
+    val R = data.map{case (k,v) => v}
 
     // compute OLS estimate of C for Y = C * X
     println("getting initial OLS estimate")
-    val C1 = R / X
+    val C1 = R.map(x => alg.mult(alg.inverse(alg.transpose(X)),x))
+
+    println("computing CX")
+    val C1X = C1.map(x => alg.mult(alg.transpose(X),x))
 
     // compute U using the SVD: [U S V] = svd(C * X)
-    val U = (C1 * X).svd(k1, m,"basic")._1
+    println("computing SVD")
+    val U = svd(C1X, k1, m,"basic")._1
 
     // project U back into C : C2 = U * U' * C
-    val C = U * (U ** C1)
+    println("computing outer products")
+    val UC1 = U.zip(C1).map{case (x,y) => outerProd(x,y)}.reduce(_.assign(_,Functions.plus))
+    println("computing corrected estimate")
+    val C = U.map(x => alg.mult(alg.transpose(UC1),x))
 
     // recompute U and V using the SVD: [U S V] = svd(C2)
-    println("getting corrected estimate")
-    val result = C.svd(k1, c,"basic")
+    println("computing SVD again")
+    val result = svd(C,k1, c,"basic")
     val U2 = result._1
     val V2 = result._2
 
     // add keys back in
-    val out = data.map{case (k,v) => k}.zip(U2.mat)
+    val out = data.map{case (k,v) => k}.zip(U2)
 
     // print time series
     printMatrix(V2, outputFileTxt)
