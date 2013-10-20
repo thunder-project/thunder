@@ -79,7 +79,7 @@ object rrr {
 
     System.setProperty("spark.executor.memory", "120g")
     val sc = new SparkContext(master, "rrr", System.getenv("SPARK_HOME"),
-      List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
+      List("target/scala-2.9.3/thunder_2.9.3-1.0.jar","target/jblas-1.2.3.jar"))
 
     val data = sc.textFile(inputFileR).map(parseVector _).cache()
     val X = new DoubleMatrix(sc.textFile(inputFileX).map(x => x.split(' ').map(_.toDouble)).toArray())
