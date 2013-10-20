@@ -133,8 +133,8 @@ object rrr {
     // compute U using the SVD: [U S V] = svd(C * X)
     println("computing SVD")
     //val U = svd(C1X, k1, m,"basic")._1
-    val thissvd = new SingularValueDecomposition(cov)
-    println(thissvd)
+    val eigs = new EigenvalueDecomposition(cov)
+    println(eigs)
 //
 //    // project U back into C : C2 = U * U' * C
 //    println("computing outer products")
