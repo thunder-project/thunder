@@ -68,6 +68,8 @@ neighbors = X.flatMap(lambda (k,v) : mapToNeighborhood(k,v,sz,mxX,mxY))
 # reduceByKey to get the average time series for each neighborhood
 means = neighbors.reduceByKey(lambda x,y : x + y).map(lambda (k,v) : (k, v / ((2*sz+1)**2)))
 
+print(means.first())
+
 # join with the original time series data to compute correlations
 result = X.join(means)
 
