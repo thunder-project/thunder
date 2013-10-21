@@ -22,7 +22,7 @@ def parseVector(line):
 	ts = array(vec[3:]) # get tseries
 	#meanVal = mean(ts)
 	#ts = (ts - meanVal) / (meanVal + 0.1) # convert to dff
-	return ((int(vec[0]),int(vec[1]),int(vec[2])),ts) # (x,y,z),(tseries) pair 
+	return ((int(vec[0]),int(vec[1])),ts) # (x,y,z),(tseries) pair 
 
 def clip(val,mn,mx):
 	if (val < mn) : 
@@ -41,7 +41,7 @@ def mapToNeighborhood(ind,ts,sz,mxX,mxY):
 		for y in rngY :
 			newX = clip(ind[0] + x,1,mxX)
 			newY = clip(ind[1] + y,1,mxY)
-			newind = (newX, newY, ind[2])
+			newind = (newX, newY)
 			out.append((newind,ts))
 	return out
 
