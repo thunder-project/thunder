@@ -71,6 +71,8 @@ means = neighbors.reduceByKey(lambda x,y : x + y).map(lambda (k,v) : (k, v / ((2
 # join with the original time series data to compute correlations
 result = X.join(means)
 
+print(result.first())
+
 # get correlations
 corr = result.map(lambda (k,v) : mean(v[0]))
 
