@@ -68,8 +68,12 @@ neighbors = X.flatMap(lambda (k,v) : mapToNeighborhood(k,v,sz,mxX,mxY))
 # reduceByKey to get the average time series for each neighborhood
 means = neighbors.reduceByKey(lambda x,y : x + y).map(lambda (k,v) : (k, v / ((2*sz+1)**2)))
 
+print(means.first()[0:10])
+
 # join with the original time series data to compute correlations
 result = X.join(means).map(lambda (k,v) : corrcoef(v[0],v[1])[0,1])
+
+print(result.first())
 
 # return keys because we'll need to sort on them post-hoc
 # TODO: use sortByKey once implemented in pyspark
