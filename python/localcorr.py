@@ -62,32 +62,22 @@ logging.info("(lowdim) loading data")
 lines_X = sc.textFile(inputFile_X) # the data
 X = lines_X.map(parseVector).cache()
 
-vals = X.map(lambda (k,v) : mean(v))
-keys = X.map(lambda (k,v) : k);
+# flatmap each time series to key value pairs where the key is a neighborhood identifier and the value is the time series
+neighbors = X.flatMap(lambda (k,v) : mapToNeighborhood(k,v,sz,mxX,mxY))
 
-savemat(outputFile+"/"+"corr.mat",mdict={'corr':vals.collect()},oned_as='column',do_compression='true')
+# reduceByKey to get the average time series for each neighborhood
+means = neighbors.reduceByKey(lambda x,y : x + y).map(lambda (k,v) : (k, v / ((2*sz+1)**2)))
+
+# join with the original time series data to compute correlations
+result = X.join(means)
+
+# get correlations
+corr = result.map(lambda (k,v) : mean(v[0]))
+
+# return keys because we'll need to sort on them post-hoc
+# TODO: use sortByKey once implemented in pyspark
+keys = result.map(lambda (k,v) : k)
+
+savemat(outputFile+"/"+"corr.mat",mdict={'corr':result.collect()},oned_as='column',do_compression='true')
 
 savemat(outputFile+"/"+"keys.mat",mdict={'keys':keys.collect()},oned_as='column',do_compression='true')
-
-# # flatmap each time series to key value pairs where the key is a neighborhood identifier and the value is the time series
-# neighbors = X.flatMap(lambda (k,v) : mapToNeighborhood(k,v,sz,mxX,mxY))
-
-# print(neighbors.first())
-
-# # reduceByKey to get the average time series for each neighborhood
-# means = neighbors.reduceByKey(lambda x,y : x + y).map(lambda (k,v) : (k, v / ((2*sz+1)**2)))
-
-# print(means.first())
-
-# # join with the original time series data to compute correlations
-# result = X.join(means).map(lambda (k,v) : mean(v[0]))
-
-# print(result.first())
-
-# # return keys because we'll need to sort on them post-hoc
-# # TODO: use sortByKey once implemented in pyspark
-# keys = X.join(means).map(lambda (k,v) : k)
-
-# savemat(outputFile+"/"+"corr.mat",mdict={'corr':result.collect()},oned_as='column',do_compression='true')
-
-# savemat(outputFile+"/"+"keys.mat",mdict={'keys':keys.collect()},oned_as='column',do_compression='true')
