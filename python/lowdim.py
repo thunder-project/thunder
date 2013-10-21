@@ -112,10 +112,10 @@ savemat(outputFile+"/"+"evals.mat",mdict={'evals':latent},oned_as='column',do_co
 # t = X.map(lambda x : getT(x,y,sortedDim2)).collect()
 # savemat(outputFile+"/"+"t"+".mat",mdict={'t':t},oned_as='column',do_compression='true')
 
-for ik in range(0,k):
-	logging.info("(lowdim) writing trajectories for pc " + str(ik))
-	traj = X.map(lambda x : x * inner(dot(y,x) - mean(dot(y,x)),sortedDim2[ik,:]) ).reduce(lambda x,y : x + y)
-	savemat(outputFile+"/"+"traj-"+str(ik)+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
+# for ik in range(0,k):
+# 	logging.info("(lowdim) writing trajectories for pc " + str(ik))
+# 	traj = X.map(lambda x : x * inner(dot(y,x) - mean(dot(y,x)),sortedDim2[ik,:]) ).reduce(lambda x,y : x + y)
+# 	savemat(outputFile+"/"+"traj-"+str(ik)+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
 for ik in range(0,k):
 	logging.info("(lowdim) writing scores for pc " + str(ik))

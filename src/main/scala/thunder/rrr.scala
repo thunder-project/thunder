@@ -21,16 +21,22 @@ import org.jblas.DoubleMatrix
 import org.jblas.Solve
 import thunder.util.MatrixRDD
 import cern.jet.math.Functions
+import cern.colt.matrix.{DoubleMatrix1D, DoubleFactory1D, DoubleFactory2D}
+import cern.colt.matrix.linalg.Algebra
 
 object rrr {
 
+  val factory2D = DoubleFactory2D.dense
+  val factory1D = DoubleFactory1D.dense
+  val alg = Algebra.DEFAULT
 
-  def parseVector(line: String): ((Array[Int]), DoubleMatrix) = {
+
+  def parseVector(line: String): ((Array[Int]), DoubleMatrix1D) = {
     val vec = line.split(' ').drop(3).map(_.toDouble)
     val inds = line.split(' ').take(3).map(_.toDouble.toInt) // xyz coords
     //val mean = vec.sum / vec.length
     //vec = vec.map(x => (x - mean)/(mean + 0.1)) // time series
-    return (inds,new DoubleMatrix(vec))
+    return (inds,factory1D.make(vec))
   }
 
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
@@ -79,11 +85,11 @@ object rrr {
 
     System.setProperty("spark.executor.memory", "120g")
     val sc = new SparkContext(master, "rrr", System.getenv("SPARK_HOME"),
-      List("target/scala-2.9.3/thunder_2.9.3-1.0.jar","project/jblas-1.2.3.jar"))
+      List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
 
     val data = sc.textFile(inputFileR).map(parseVector _).cache()
-    val X = new DoubleMatrix(sc.textFile(inputFileX).map(x => x.split(' ').map(_.toDouble)).toArray())
-//
+    val X = factory2D.make(sc.textFile(inputFileX).map(x => x.split(' ').map(_.toDouble)).toArray())
+
     println("getting dimensions")
     val w = data.map{case (k,v) => k(0)}.top(1).take(1)(0)
     val h = data.map{case (k,v) => k(1)}.top(1).take(1)(0)
@@ -91,7 +97,7 @@ object rrr {
 
     println("initializing variables")
     val n = data.count().toInt
-    val m = data.first()._2.length
+    val m = data.first()._2.size()
     val c = X.rows
 
     val k1 = 3
@@ -99,11 +105,15 @@ object rrr {
     // strip keys
     val R = data.map{case (k,v) => v}
 
+    val foo = DoubleMatrix.zeros(1,1)
+
+    println(foo)
+
 //    // compute OLS estimate of C for Y = C * X
 //    println("getting initial OLS estimate")
-    val C1 = R.map(x => Solve.solve(X,x))
+    //val C1 = R.map(x => Solve.solve(X,x))
 
-    println(C1.first())
+    //println(C1.first())
 
 //    val Xinv = alg.inverse(alg.transpose(X))
 //    val Xpre = alg.transpose(X)

@@ -14,17 +14,15 @@ libraryDependencies += "org.apache.spark" %% "spark-core" % "0.8.0-incubating"
 
 libraryDependencies += "org.apache.spark" %% "spark-streaming" % "0.8.0-incubating"
 
-libraryDependencies += "io.spray" %%  "spray-json" % "1.2.5"
+libraryDependencies += "io.spray" %% "spray-json" % "1.2.5"
 
-libraryDependencies += "org.jblas" %  "jblas" % "1.2.3"
+libraryDependencies += "org.jblas" % "jblas" % "1.2.3"
 
 resolvers += "spray" at "http://repo.spray.io/"
 
 resolvers ++= Seq(
   "Akka Repository" at "http://repo.akka.io/releases/",
   "Spray Repository" at "http://repo.spray.cc/")
-
-
 
 //assemblySettings
 //
@@ -34,6 +32,7 @@ resolvers ++= Seq(
 //    case PathList("org", "apache", "commons", "beanutils", xs @ _*) => MergeStrategy.last
 //    case PathList("org", "apache", "commons", "collections", xs @ _*) => MergeStrategy.last
 //    case PathList("com", "esotericsoftware", xs @ _*) => MergeStrategy.last
+//    case PathList("com", "apache", "hadoop", xs @ _*) => MergeStrategy.last
 //    case "about.html" => MergeStrategy.discard
 //    case x => old(x)
 //  }
