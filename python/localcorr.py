@@ -73,7 +73,7 @@ result = X.join(means).map(lambda (k,v) : corrcoef(v[0],v[1])[0,1])
 
 # return keys because we'll need to sort on them post-hoc
 # TODO: use sortByKey once implemented in pyspark
-keys = means.join(X).map(lambda (k,v) : k)
+keys = X.join(means).map(lambda (k,v) : k)
 
 savemat(outputFile+"/"+"corr.mat",mdict={'corr':result.collect()},oned_as='column',do_compression='true')
 
