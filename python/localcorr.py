@@ -77,4 +77,4 @@ keys = X.join(means).map(lambda (k,v) : k)
 
 savemat(outputFile+"/"+"corr.mat",mdict={'corr':result.collect()},oned_as='column',do_compression='true')
 
-savemat(outputFile+"/"+"keys.mat",mdict={'keys':finalkeys.collect()},oned_as='column',do_compression='true')
+savemat(outputFile+"/"+"keys.mat",mdict={'keys':keys.collect()},oned_as='column',do_compression='true')
