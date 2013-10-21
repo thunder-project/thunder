@@ -20,8 +20,8 @@ if len(sys.argv) < 6:
 def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
-	#meanVal = mean(ts)
-	#ts = (ts - meanVal) / (meanVal + 0.1) # convert to dff
+	meanVal = mean(ts)
+	ts = (ts - meanVal) / (meanVal + 0.1) # convert to dff
 	return ((int(vec[0]),int(vec[1]),int(vec[2])),ts) # (x,y,z),(tseries) pair 
 
 def clip(val,mn,mx):
