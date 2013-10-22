@@ -39,6 +39,8 @@ data = sc.textFile(inputFile).map(parseVector) # the data
 inds = loadmat(indsFile)['inds']
 n = len(inds)
 
+print(data.map(lambda (k,x) : k))
+
 ts = data.filter(lambda (k,x) : k in inds).map(lambda (k,x) : x).reduce(lambda x,y :x+y) / n
 
 savemat(outputFile+"-ts.mat",mdict={'ts':ts},oned_as='column',do_compression='true')
