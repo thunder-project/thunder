@@ -84,6 +84,6 @@ corr = result.map(lambda (k,v) : mean(v[0]))
 # # TODO: use sortByKey once implemented in pyspark
 keys = result.map(lambda (k,v) : k)
 
-savemat(outputFile+"/"+"corr.mat",mdict={'corr':result.collect()},oned_as='column',do_compression='true')
+savemat(outputFile+"/"+"corr.mat",mdict={'corr':corr.collect()},oned_as='column',do_compression='true')
 
 savemat(outputFile+"/"+"keys.mat",mdict={'keys':keys.collect()},oned_as='column',do_compression='true')
