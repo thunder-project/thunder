@@ -21,7 +21,7 @@ def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
 	#k = int(vec[0]) + int((vec[1] - 1)*1235) + int((vec[2] - 1)*1248*1235)
-	k = int(vec[0]) + int((vec[1] - 1)*924)
+	k = int(vec[1]) + int((vec[0] - 1)*924)
 	#meanVal = mean(ts)
 	#ts = (ts - meanVal) / (meanVal + 0.1) # convert to dff
 	return (k,ts)
@@ -38,8 +38,6 @@ data = sc.textFile(inputFile).map(parseVector) # the data
 
 inds = loadmat(indsFile)['inds']
 n = len(inds)
-
-print(data.map(lambda (k,x) : k).collect())
 
 ts = data.filter(lambda (k,x) : k in inds).map(lambda (k,x) : x).reduce(lambda x,y :x+y) / n
 
