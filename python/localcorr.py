@@ -73,17 +73,17 @@ means = neighbors.reduceByKey(lambda x,y : x + y).map(lambda (k,v) : (k, v / ((2
 print(means.first())
 
 # join with the original time series data to compute correlations
-# result = X.join(means)
+result = X.join(means)
 
 # print(result.first())
 
 # # get correlations
-# corr = result.map(lambda (k,v) : mean(v[0]))
+corr = result.map(lambda (k,v) : mean(v[0]))
 
 # # return keys because we'll need to sort on them post-hoc
 # # TODO: use sortByKey once implemented in pyspark
-# keys = result.map(lambda (k,v) : k)
+keys = result.map(lambda (k,v) : k)
 
-# savemat(outputFile+"/"+"corr.mat",mdict={'corr':result.collect()},oned_as='column',do_compression='true')
+savemat(outputFile+"/"+"corr.mat",mdict={'corr':result.collect()},oned_as='column',do_compression='true')
 
-# savemat(outputFile+"/"+"keys.mat",mdict={'keys':keys.collect()},oned_as='column',do_compression='true')
+savemat(outputFile+"/"+"keys.mat",mdict={'keys':keys.collect()},oned_as='column',do_compression='true')
