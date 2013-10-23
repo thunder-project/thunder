@@ -17,9 +17,10 @@ if len(sys.argv) < 6:
   "(localcorr) usage: localcorr <master> <inputFile_X> <outputFile> <sz> <mxX> <mxY>"
   exit(-1)
 
-def parseVector(line):
+def parseVector(line,inds):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
+	ts = ts[inds]
 	#meanVal = mean(ts)
 	#ts = (ts - meanVal) / (meanVal + 0.1) # convert to dff
 	return ((int(vec[0]),int(vec[1])),ts) # (x,y,z),(tseries) pair 
@@ -48,10 +49,11 @@ def mapToNeighborhood(ind,ts,sz,mxX,mxY):
 # parse inputs
 sc = SparkContext(sys.argv[1], "localcorr")
 inputFile_X = str(sys.argv[2])
-outputFile = str(sys.argv[3]) + "-localcorr"
-sz = int(sys.argv[4])
-mxX = float(sys.argv[5])
-mxY = float(sys.argv[6])
+inputFile_y = str(sys.argv[3])
+outputFile = str(sys.argv[4]) + "-localcorr"
+sz = int(sys.argv[5])
+mxX = float(sys.argv[6])
+mxY = float(sys.argv[7])
 
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
@@ -59,8 +61,12 @@ logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,form
 
 # parse data
 logging.info("(lowdim) loading data")
+y = loadmat(inputFile_y)['y']
+y = y.astype(float)
+inds = sum(y,axis=0)!=0
+y = y[inds,:]
 lines_X = sc.textFile(inputFile_X) # the data
-X = lines_X.map(parseVector).cache()
+X = lines_X.map(lambda x : parseVector(x,inds)).cache()
 
 # flatmap each time series to key value pairs where the key is a neighborhood identifier and the value is the time series
 neighbors = X.flatMap(lambda (k,v) : mapToNeighborhood(k,v,sz,mxX,mxY))
@@ -73,9 +79,7 @@ means = neighbors.reduceByKey(lambda x,y : x + y).map(lambda (k,v) : (k, v / ((2
 # join with the original time series data to compute correlations
 result = X.join(means)
 
-# print(result.first())
-
-# # get correlations
+# get correlations
 corr = result.map(lambda (k,v) : (k,corrcoef(v[0],v[1])[0,1]))
 
 # # return keys because we'll need to sort on them post-hoc
