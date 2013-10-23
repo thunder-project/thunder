@@ -15,7 +15,7 @@ import logging
 
 if len(sys.argv) < 4:
   print >> sys.stderr, \
-  "(ref) usage: ref <master> <inputFile> <outputFile> <mode>"
+  "(ref) usage: ref <master> <inputFileX> <inputFileY> <outputFile> <mode>"
   exit(-1)
 
 def parseVector(line):
@@ -25,15 +25,20 @@ def parseVector(line):
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "ref")
-inputFile = str(sys.argv[2])
-outputFile = str(sys.argv[3])
-mode = str(sys.argv[4])
+inputFile_X = str(sys.argv[2])
+inputFile_y = str(sys.argv[3])
+outputFile = str(sys.argv[4])
+mode = str(sys.argv[5])
 logging.basicConfig(filename=outputFile+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
 
 # parse data
 logging.info("(ref) loading data")
-lines = sc.textFile(inputFile)
-X = lines.map(parseVector)
+y = loadmat(inputFile_y)['y']
+y = y.astype(float)
+inds = sum(y,axis=0)!=0
+y = y[:,inds] 
+lines_X = sc.textFile(inputFile_X) # the data
+X = lines_X.map(lambda x : parseVector(x,inds)).cache()
 
 # get z ordering
 logging.info("(ref) getting z ordering")
