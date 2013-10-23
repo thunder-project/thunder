@@ -75,6 +75,7 @@ object nnmf {
     val master = args(0)
     val inputFile = args(1)
     val outputFileImg = args(2)
+    val k = args(3).toInt
     //val seed1 = args(2).toInt
 
     System.setProperty("spark.executor.memory", "120g")
@@ -86,7 +87,6 @@ object nnmf {
     val h = data.map{case (k,v) => k(1)}.top(1).take(1)(0)
     val n = data.count().toInt
     val m = data.first()._2.size
-    val k = 5
     var iter = 0
     val nIter = 10
 
