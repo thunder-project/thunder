@@ -125,11 +125,12 @@ if outputMode == 'maps':
 		savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
 
 if outputMode == 'pie':
-	nT = 20
+	nT = 10
 	ts = linspace(-pi,pi,nT)
 	traj = zeros((nT-1,len(X.first())))
 	for it in  range(0,nT-1):
-		traj[it,:] = X.filter(lambda x : inRange(getT(x,y,sortedDim2),ts[it],ts[it+1])).map(lambda x : x * getR(x,y,sortedDim2)).reduce(lambda x,y : x + y)
+		subset = X.filter(lambda x : inRange(getT(x,y,sortedDim2),ts[it],ts[it+1]))
+		traj[it,:] = subset.map(lambda x : x * getR(x,y,sortedDim2)).reduce(lambda x,y : x + y) / subset.count()
 	savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
 # r = X.map(lambda x : getR(x,y,sortedDim2)).collect()
