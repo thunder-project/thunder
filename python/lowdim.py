@@ -127,6 +127,7 @@ if outputMode == 'maps':
 if outputMode == 'pie':
 	nT = 20
 	ts = linspace(-pi,pi,nT)
+	traj = zeros((nT,len(X.first())))
 	for it in  range(0,nT-1):
 		traj[ik,:] = X.filter(lambda x : inRange(getT(x,y,sortedDim2),ts[it],ts[it+1])).map(lambda x : x * getR(x,y,sortedDim2)).reduce(lambda x,y : x + y)
 
