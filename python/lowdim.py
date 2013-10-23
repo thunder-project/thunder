@@ -18,7 +18,7 @@ import logging
 
 if len(sys.argv) < 6:
   print >> sys.stderr, \
-  "(lowdim) usage: lowdim <master> <inputFile_X> <inputFile_y> <mode> <outputFile> <k>"
+  "(lowdim) usage: lowdim <master> <inputFile_X> <inputFile_y> <mode> <k> <outputMode> <outputFile>"
   exit(-1)
 
 def parseVector(line,inds):
@@ -58,8 +58,9 @@ sc = SparkContext(sys.argv[1], "lowdim")
 inputFile_X = str(sys.argv[2])
 inputFile_y = str(sys.argv[3])
 mode = str(sys.argv[4])
-outputFile = str(sys.argv[5]) + "-lowdim"
-k = int(sys.argv[6])
+k = int(sys.argv[5])
+outputMode = str(sys.argv[6])
+outputFile = str(sys.argv[7]) + "-lowdim"
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -107,8 +108,17 @@ savemat(outputFile+"/"+"cov.mat",mdict={'cov':cov},oned_as='column',do_compressi
 savemat(outputFile+"/"+"evecs.mat",mdict={'evecs':sortedDim2},oned_as='column',do_compression='true')
 savemat(outputFile+"/"+"evals.mat",mdict={'evals':latent},oned_as='column',do_compression='true')
 
-#traj = X.map(lambda x : threshMap(x,y,sortedDim2,2.4,-2.3)).reduce(lambda x,y: x + y)
-#savemat(outputFile+"/"+"traj-"+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
+if outputMode == 'traj':
+	for ik in range(0,k):
+		logging.info("(lowdim) writing trajectories for pc " + str(ik))
+		traj[ik,:] = X.map(lambda x : x * inner(dot(y,x) - mean(dot(y,x)),sortedDim2[ik,:]) ).reduce(lambda x,y : x + y)
+	savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
+
+if outputMode == 'maps':
+	for ik in range(0,k):
+		logging.info("(lowdim) writing scores for pc " + str(ik))
+		out = X.map(lambda x : float16(inner(dot(y,x) - mean(dot(y,x)),sortedDim2[ik,:])))
+		savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
 
 # r = X.map(lambda x : getR(x,y,sortedDim2)).collect()
 # savemat(outputFile+"/"+"r"+".mat",mdict={'r':r},oned_as='column',do_compression='true')
@@ -116,17 +126,8 @@ savemat(outputFile+"/"+"evals.mat",mdict={'evals':latent},oned_as='column',do_co
 # t = X.map(lambda x : getT(x,y,sortedDim2)).collect()
 # savemat(outputFile+"/"+"t"+".mat",mdict={'t':t},oned_as='column',do_compression='true')
 
-# for ik in range(0,k):
-# 	logging.info("(lowdim) writing trajectories for pc " + str(ik))
-# 	traj = X.map(lambda x : x * inner(dot(y,x) - mean(dot(y,x)),sortedDim2[ik,:]) ).reduce(lambda x,y : x + y)
-# 	savemat(outputFile+"/"+"traj-"+str(ik)+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
-# for ik in range(0,k):
-# 	logging.info("(lowdim) writing scores for pc " + str(ik))
-# 	#out = X.map(lambda x : float16(inner(dot(y,x) - mean(dot(y,x)),sortedDim2[ik,:])))
-# 	#out = X.map(lambda x : float16(inner(dot(y,(x-mean(x))/norm(x)) - mean(dot(y,(x-mean(x))/norm(x))),sortedDim2[ik,:])))
-# 	out = X.map(lambda x : float16(inner(dot(y,x) - mean(dot(y,x)),sortedDim2[ik,:])))
-# 	savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
+# 
 
 
 
