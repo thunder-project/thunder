@@ -53,11 +53,12 @@ object nnmf {
     return vec
   }
 
-  def printToImage(rdd: RDD[(Array[Int],Int)], w: Int, h: Int, fileName: String): Unit = {
+  def printToImage(rdd: RDD[(Array[Int],Double)], w: Int, h: Int, fileName: String): Unit = {
     // TODO: incorporate different z planes
     val X = rdd.map(_._1(0)).toArray()
     val Y = rdd.map(_._1(1)).toArray()
-    val RGB = rdd.map(_._2).collect()
+    val vals = rdd.map(_._2).collect()
+    val RGB = vals.map(rgb => (255*(rgb - vals.min)/(vals.max - vals.min)).toInt)
     val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
     (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
@@ -132,7 +133,7 @@ object nnmf {
 
     for (i <- 0 until k) {
       val result1 = v.map(x => x.get(0))
-      printToImage(data.map(_._1).zip(result1).map{case (k,v) => (k,(v/2).toInt)}, w, h, outputFileImg + i.toString + ".png")
+      printToImage(data.map(_._1).zip(result1).map{case (k,v) => (k,v)}, w, h, outputFileImg + i.toString + ".png")
     }
 
   }
