@@ -24,6 +24,7 @@ import thunder.util.MatrixRDD
 import cern.jet.math.Functions
 import cern.colt.matrix.{DoubleMatrix1D, DoubleMatrix2D, DoubleFactory1D, DoubleFactory2D}
 import cern.colt.matrix.linalg.Algebra
+import cern.colt.matrix.linalg.EigenvalueDecomposition
 
 object rrr {
 
@@ -141,8 +142,8 @@ object rrr {
 //    // compute U using the SVD: [U S V] = svd(C * X)
 //    println("computing SVD")
 //    //val U = svd(C1X, k1, m,"basic")._1
-//    val eigs = new EigenvalueDecomposition(cov)
-//    println(eigs)
+    val eigs = new EigenvalueDecomposition(cov)
+    println(eigs)
 //
 //    // project U back into C : C2 = U * U' * C
 //    println("computing outer products")
