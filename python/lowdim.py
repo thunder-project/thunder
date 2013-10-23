@@ -52,6 +52,12 @@ def getR(x,y,eigs):
 	r = sqrt(vals[0]**2 + vals[1]**2)
 	return r
 
+def inRange(val,rng1,rng2):
+	if (val > rng1) & (val < rng2):
+		return true
+	else:
+		return false
+
 # parse inputs
 sc = SparkContext(sys.argv[1], "lowdim")
 inputFile_X = str(sys.argv[2])
@@ -119,8 +125,10 @@ if outputMode == 'maps':
 		savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
 
 if outputMode == 'pie':
-	for ik in  range(0,k):
-		traj[ik,:] = X.filter(lambda x : getT(x,y,sortedDim2) in range).map(lambda x : x * getR(x,y,sortedDim2)).reduce(lambda x,y : x + y)
+	nT = 20
+	ts = linspace(-pi,pi,nT)
+	for it in  range(0,nT-1):
+		traj[ik,:] = X.filter(lambda x : inRange(getT(x,y,sortedDim2),ts[it],ts[it+1])).map(lambda x : x * getR(x,y,sortedDim2)).reduce(lambda x,y : x + y)
 
 # r = X.map(lambda x : getR(x,y,sortedDim2)).collect()
 # savemat(outputFile+"/"+"r"+".mat",mdict={'r':r},oned_as='column',do_compression='true')
