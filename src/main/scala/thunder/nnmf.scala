@@ -132,7 +132,7 @@ object nnmf {
     }
 
     for (i <- 0 until k) {
-      val result1 = v.map(x => x.get(0))
+      val result1 = v.map(x => x.get(i))
       printToImage(data.map(_._1).zip(result1).map{case (k,v) => (k,v)}, w, h, outputFileImg + i.toString + ".png")
     }
 
