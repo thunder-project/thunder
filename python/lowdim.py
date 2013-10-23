@@ -18,7 +18,7 @@ import logging
 
 if len(sys.argv) < 6:
   print >> sys.stderr, \
-  "(lowdim) usage: lowdim <master> <inputFile_X> <inputFile_y> <mode> <k> <outputMode> <outputFile>"
+  "(lowdim) usage: lowdim <master> <inputFile_X> <inputFile_y> <outputFile> <mode> <k> <outputMode>"
   exit(-1)
 
 def parseVector(line):
@@ -56,10 +56,10 @@ def getR(x,y,eigs):
 sc = SparkContext(sys.argv[1], "lowdim")
 inputFile_X = str(sys.argv[2])
 inputFile_y = str(sys.argv[3])
-mode = str(sys.argv[4])
-k = int(sys.argv[5])
-outputMode = str(sys.argv[6])
-outputFile = str(sys.argv[7]) + "-lowdim"
+outputFile = str(sys.argv[4]) + "-lowdim"
+mode = str(sys.argv[5])
+k = int(sys.argv[6])
+outputMode = str(sys.argv[7])
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
