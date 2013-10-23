@@ -25,6 +25,7 @@ import cern.jet.math.Functions
 import cern.colt.matrix.{DoubleMatrix1D, DoubleMatrix2D, DoubleFactory1D, DoubleFactory2D}
 import cern.colt.matrix.linalg.Algebra
 import cern.colt.matrix.linalg.EigenvalueDecomposition
+import scala.util.Random
 
 object rrr {
 
@@ -38,6 +39,11 @@ object rrr {
     //val mean = vec.sum / vec.length
     //vec = vec.map(x => (x - mean)/(mean + 0.1)) // time series
     return (inds,factory1D.make(vec))
+  }
+
+  def randomVector(index: Int, seed1: Int, k: Int) : DoubleMatrix1D ={
+    val rand = new Random(index*seed1)
+    return factory1D.make(Array.fill(k)(rand.nextDouble))
   }
 
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
@@ -89,6 +95,7 @@ object rrr {
     val inputFileX = args(2)
     val outputFileTxt = args(3)
     val outputFileImg = args(4)
+    val k = args(5).toInt
 
     System.setProperty("spark.executor.memory", "120g")
     val sc = new SparkContext(master, "rrr", System.getenv("SPARK_HOME"),
@@ -108,65 +115,47 @@ object rrr {
     val c = X.rows
 
     val k1 = 3
+    var iter = 0
+    val nIter = 10
 
-    // strip keys
-    val R = data.map{case (k,v) => v}
-
-    val Xinv = alg.inverse(alg.transpose(X))
-    val Xpre = alg.transpose(X)
-    val C1X = R.map(x => alg.mult(Xpre,alg.mult(Xinv,x)))
-
-    val cov = C1X.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus)).assign(Functions.div(n))
-
-    println(cov)
-
-    // compute OLS estimate of C for R = C * X
-    //println("getting initial OLS estimate")
-    //val C1X = R.map(r => X.mmul(Solve.solveLeastSquares(X,r)))
-
-    //println(C1X.first())
-
-    //val foo = C1X.first()
-    //val duh = DoubleMatrix.ones(5)
-    //val duh2 = DoubleMatrix.ones(5)
-    //println(duh.mmul(duh2.transpose()))
-    //println(foo.mmul(foo.transpose()))
-
-    //val cov = C1X.map(x => outerProduct(x,x)).reduce(_.add(_)).rdiv(n)
-
-    //println(cov)
-
-    //println(Eigen.eigenvectors(cov))
+    var u = factory2D.make(k,m)
+    val seed1 = Random.nextInt*1000
+    var v = data.map{case (k,v) => k(0) + (k(1)-1)*h}.map(randomVector(_,seed1,k))
 
 
-//    // compute U using the SVD: [U S V] = svd(C * X)
-//    println("computing SVD")
-//    //val U = svd(C1X, k1, m,"basic")._1
-    val eigs = new EigenvalueDecomposition(cov)
-    println(eigs)
-//
-//    // project U back into C : C2 = U * U' * C
-//    println("computing outer products")
-//    val UC1 = U.zip(C1).map{case (x,y) => outerProd(x,y)}.reduce(_.assign(_,Functions.plus))
-//    println("computing corrected estimate")
-//    val C = U.map(x => alg.mult(alg.transpose(UC1),x))
-//
-//    // recompute U and V using the SVD: [U S V] = svd(C2)
-//    println("computing SVD again")
-//    val result = svd(C,k1, c,"basic")
-//    val U2 = result._1
-//    val V2 = result._2
-//
-//    // add keys back in
-//    val out = data.map{case (k,v) => k}.zip(U2)
-//
-//    // print time series
-//    printMatrix(V2, outputFileTxt)
-//
-//    // print images
-//    for (ik <- 0 until k1) {
-//      printToImage(out.map{case (k,v) => (k,v.get(ik)*100)}, w, h, d, outputFileImg + "-comp" + ik.toString() + ".png")
-//    }
+    while (iter < nIter) {
+
+      // goal is to solve R = VU subject to U,V > 0
+      // by iteratively updating U and V with least squares and clipping
+
+      println("starting" + iter.toString)
+
+      // precompute inv(V' * V)
+      val vinv = alg.inverse(v.map( x => outerProd(x,x)).reduce(_.assign(_,Functions.plus)))
+
+      // update U using least squares by premultiplying R component wise with inv(V' * V) * V and postmultiply by pinv(X)
+      u = alg.mult(data.map(_._2).zip(v.map (x => alg.mult(vinv,x))).map( x => outerProd(x._2,x._1)).reduce(_.assign(_,Functions.plus)),alg.transpose(alg.inverse(alg.transpose(X))))
+
+      // clip negative values
+      //u.assign(Functions.bindArg1(Functions.max,0))
+
+      // precompute pinv(U * X)
+      val ux = alg.mult(u,X)
+      val uxinv = alg.transpose(alg.inverse(alg.transpose(ux)))
+
+      // update V using least squares by multiplying R component wise with pinv(U * X)
+      v = data.map(_._2).map( x => alg.mult(alg.transpose(uxinv),x))
+
+      // clip negative values
+      //v = v.map(_.assign(Functions.bindArg1(Functions.max,0)))
+
+      iter += 1
+
+    }
+
+    println(u)
+
+
 
   }
 

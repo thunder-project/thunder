@@ -121,10 +121,10 @@ object nnmf {
       // clip negative values
       u.assign(Functions.bindArg1(Functions.max,0))
 
-      // precompute U' * inv(U * U')
-      val uinv = alg.mult(alg.transpose(u),alg.inverse(alg.mult(u,alg.transpose(u))))
+      // precompute pinv(U)
+      val uinv = alg.transpose(alg.inverse(alg.transpose(u)))
 
-      // update V using least squares by multiplying R component wise with U' * inv(U * U')
+      // update V using least squares by multiplying R component wise with pinv(U)
       v = data.map(_._2).map( x => alg.mult(alg.transpose(uinv),x))
 
       // clip negative values
