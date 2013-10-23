@@ -101,6 +101,9 @@ object nnmf {
     println(w)
     println(h)
 
+    // strip keys
+    val R = data.map{case (k,v) => v}
+
     // fixed initialization
     //var u = factory2D.make(sc.textFile("data/h0.txt").map(parseLine _).toArray())
     //var w = sc.textFile("data/w0.txt").map(parseVector2 _)
@@ -116,7 +119,7 @@ object nnmf {
       val vinv = alg.inverse(v.map( x => outerProd(x,x)).reduce(_.assign(_,Functions.plus)))
 
       // update U using least squares by premultiplying R component wise with inv(V' * V) * V
-      u = data.map(_._2).zip(v.map (x => alg.mult(vinv,x))).map( x => outerProd(x._2,x._1)).reduce(_.assign(_,Functions.plus))
+      u = R.zip(v.map (x => alg.mult(vinv,x))).map( x => outerProd(x._2,x._1)).reduce(_.assign(_,Functions.plus))
 
       // clip negative values
       u.assign(Functions.bindArg1(Functions.max,0))
@@ -125,7 +128,7 @@ object nnmf {
       val uinv = alg.mult(alg.transpose(u),alg.inverse(alg.mult(u,alg.transpose(u))))
 
       // update V using least squares by multiplying R component wise with U' * inv(U * U')
-      v = data.map(_._2).map( x => alg.mult(alg.transpose(uinv),x))
+      v = R.map( x => alg.mult(alg.transpose(uinv),x))
 
       // clip negative values
       v = v.map(_.assign(Functions.bindArg1(Functions.max,0)))
