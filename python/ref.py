@@ -26,9 +26,8 @@ def parseVector(line,inds):
 # parse inputs
 sc = SparkContext(sys.argv[1], "ref")
 inputFile_X = str(sys.argv[2])
-inputFile_y = str(sys.argv[3])
-outputFile = str(sys.argv[4])
-mode = str(sys.argv[5])
+outputFile = str(sys.argv[3])
+mode = str(sys.argv[4])
 logging.basicConfig(filename=outputFile+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
 
 # parse data
