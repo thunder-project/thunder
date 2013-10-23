@@ -54,9 +54,9 @@ def getR(x,y,eigs):
 
 def inRange(val,rng1,rng2):
 	if (val > rng1) & (val < rng2):
-		return true
+		return True
 	else:
-		return false
+		return False
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "lowdim")
