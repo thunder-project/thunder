@@ -115,7 +115,7 @@ object rrr {
     val Xpre = alg.transpose(X)
     val C1X = R.map(x => alg.mult(Xpre,alg.mult(Xinv,x)))
 
-    val cov = C1X.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus))
+    val cov = C1X.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus)).assign(Functions.div(n))
 
     println(cov)
 
