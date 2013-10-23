@@ -35,8 +35,6 @@ logging.info("(ref) loading data")
 lines_X = sc.textFile(inputFile_X) # the data
 X = lines_X.map(parseVector).cache()
 
-print(X.count())
-
 # get z ordering
 logging.info("(ref) getting z ordering")
 zinds = X.filter(lambda (k,x) : (k[0] == 1) & (k[1] == 1)).map(lambda (k,x) : k[2]).collect()
