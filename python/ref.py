@@ -18,9 +18,10 @@ if len(sys.argv) < 4:
   "(ref) usage: ref <master> <inputFileX> <inputFileY> <outputFile> <mode>"
   exit(-1)
 
-def parseVector(line):
+def parseVector(line,inds):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
+	ts = ts[inds]
 	return ((int(vec[0]),int(vec[1]),int(vec[2])),ts) # (x,y,z),(tseries) pair 
 
 # parse inputs
@@ -36,7 +37,6 @@ logging.info("(ref) loading data")
 y = loadmat(inputFile_y)['y']
 y = y.astype(float)
 inds = sum(y,axis=0)!=0
-y = y[:,inds] 
 lines_X = sc.textFile(inputFile_X) # the data
 X = lines_X.map(lambda x : parseVector(x,inds)).cache()
 
