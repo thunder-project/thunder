@@ -15,13 +15,12 @@ import logging
 
 if len(sys.argv) < 4:
   print >> sys.stderr, \
-  "(ref) usage: ref <master> <inputFileX> <inputFileY> <outputFile> <mode>"
+  "(ref) usage: ref <master> <inputFileX> <outputFile> <mode>"
   exit(-1)
 
 def parseVector(line,inds):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
-	ts = ts[inds]
 	return ((int(vec[0]),int(vec[1]),int(vec[2])),ts) # (x,y,z),(tseries) pair 
 
 # parse inputs
@@ -34,11 +33,8 @@ logging.basicConfig(filename=outputFile+'stdout.log',level=logging.INFO,format='
 
 # parse data
 logging.info("(ref) loading data")
-y = loadmat(inputFile_y)['y']
-y = y.astype(float)
-inds = sum(y,axis=0)!=0
 lines_X = sc.textFile(inputFile_X) # the data
-X = lines_X.map(lambda x : parseVector(x,inds)).cache()
+X = lines_X.map(parseVector).cache()
 
 # get z ordering
 logging.info("(ref) getting z ordering")

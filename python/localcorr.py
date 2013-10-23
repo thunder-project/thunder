@@ -20,9 +20,8 @@ if len(sys.argv) < 6:
 def parseVector(line,inds):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
-	ts = ts[inds]
-	#meanVal = mean(ts)
-	#ts = (ts - meanVal) / (meanVal + 0.1) # convert to dff
+	meanVal = mean(ts)
+	ts = (ts - meanVal) / (meanVal + 0.1) # convert to dff
 	return ((int(vec[0]),int(vec[1])),ts) # (x,y,z),(tseries) pair 
 
 def clip(val,mn,mx):
@@ -63,9 +62,8 @@ logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,form
 logging.info("(lowdim) loading data")
 y = loadmat(inputFile_y)['y']
 y = y.astype(float)
-inds = sum(y,axis=0)!=0
 lines_X = sc.textFile(inputFile_X) # the data
-X = lines_X.map(lambda x : parseVector(x,inds)).cache()
+X = lines_X.map(parseVector).cache()
 
 # flatmap each time series to key value pairs where the key is a neighborhood identifier and the value is the time series
 neighbors = X.flatMap(lambda (k,v) : mapToNeighborhood(k,v,sz,mxX,mxY))
