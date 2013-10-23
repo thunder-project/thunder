@@ -83,8 +83,8 @@ if mode == 'regress' :
 	resp = X.map(lambda x : dot(yhat,x)[1:])
 	r2 = X.map(lambda x : 1.0 - sum((dot(transpose(y),dot(yhat,x)) - x) ** 2) / sum((x - mean(x)) ** 2)).collect()
 	savemat(outputFile+"/"+"r2.mat",mdict={'r2':r2},oned_as='column',do_compression='true')
-	#vals = array([0,2,4,6,8,10,12,14,16,20,25,30])
-	vals = array([2.5,7.5,12.5,17.5,22.5,27.5,32.5,37.5,42.5,47.5])
+	vals = array([0,2,4,6,8,10,12,14,16,20,25,30])
+	#vals = array([2.5,7.5,12.5,17.5,22.5,27.5,32.5,37.5,42.5,47.5])
 	tuning = resp.map(lambda x : clip(x,0)).map(lambda x : x / sum(x)).map(lambda x : dot(x,vals)).collect()
 	savemat(outputFile+"/"+"tuning.mat",mdict={'tuning':tuning},oned_as='column',do_compression='true')
 
@@ -121,12 +121,12 @@ savemat(outputFile+"/"+"evals.mat",mdict={'evals':latent},oned_as='column',do_co
 # 	traj = X.map(lambda x : x * inner(dot(y,x) - mean(dot(y,x)),sortedDim2[ik,:]) ).reduce(lambda x,y : x + y)
 # 	savemat(outputFile+"/"+"traj-"+str(ik)+".mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
-for ik in range(0,k):
-	logging.info("(lowdim) writing scores for pc " + str(ik))
-	#out = X.map(lambda x : float16(inner(dot(y,x) - mean(dot(y,x)),sortedDim2[ik,:])))
-	#out = X.map(lambda x : float16(inner(dot(y,(x-mean(x))/norm(x)) - mean(dot(y,(x-mean(x))/norm(x))),sortedDim2[ik,:])))
-	out = X.map(lambda x : float16(inner(dot(y,x) - mean(dot(y,x)),sortedDim2[ik,:])))
-	savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
+# for ik in range(0,k):
+# 	logging.info("(lowdim) writing scores for pc " + str(ik))
+# 	#out = X.map(lambda x : float16(inner(dot(y,x) - mean(dot(y,x)),sortedDim2[ik,:])))
+# 	#out = X.map(lambda x : float16(inner(dot(y,(x-mean(x))/norm(x)) - mean(dot(y,(x-mean(x))/norm(x))),sortedDim2[ik,:])))
+# 	out = X.map(lambda x : float16(inner(dot(y,x) - mean(dot(y,x)),sortedDim2[ik,:])))
+# 	savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
 
 
 
