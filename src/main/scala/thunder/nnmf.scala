@@ -58,8 +58,6 @@ object nnmf {
     val X = rdd.map(_._1(0)).toArray()
     val Y = rdd.map(_._1(1)).toArray()
     val RGB = rdd.map(_._2).collect()
-    println("rescaling")
-    //val RGB = vals.map(rgb => (255*(rgb - vals.min)/(vals.max - vals.min)).toInt)
     val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
     (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
@@ -133,8 +131,9 @@ object nnmf {
     }
 
     for (i <- 0 until k) {
-      val result1 = v.map(x => x.get(i))
-      printToImage(data.map(_._1).zip(result1).map{case (k,v) => (k,v*5)}, w, h, outputFileImg + i.toString + ".png")
+      val result = v.map(x => x.get(i))
+      val mx = result.top(1).take(1)(0)
+      printToImage(data.map(_._1).zip(result).map{case (k,v) => (k,255*(v/mx).toInt)}, w, h, outputFileImg + i.toString + ".png")
     }
 
   }
