@@ -107,13 +107,15 @@ object nnmf {
 
     while (iter < nIter) {
 
-      // trying to solve R = VU subject to U,V > 0
+      // goal is to solve R = VU subject to U,V > 0
+      // by iteratively updating U and V with least squares and clipping
 
       println("starting" + iter.toString)
+
       // precompute inv(V' * V)
       val vinv = alg.inverse(v.map( x => outerProd(x,x)).reduce(_.assign(_,Functions.plus)))
 
-      // update u using least squares by premultiplying R component wise with inv(V' * V) * V
+      // update U using least squares by premultiplying R component wise with inv(V' * V) * V
       u = data.map(_._2).zip(v.map (x => alg.mult(vinv,x))).map( x => outerProd(x._2,x._1)).reduce(_.assign(_,Functions.plus))
 
       // clip negative values
@@ -122,7 +124,7 @@ object nnmf {
       // precompute U' * inv(U * U')
       val uinv = alg.mult(alg.transpose(u),alg.inverse(alg.mult(u,alg.transpose(u))))
 
-      // update v using least squares by multiplying R component wise with U' * inv(U * U')
+      // update V using least squares by multiplying R component wise with U' * inv(U * U')
       v = data.map(_._2).map( x => alg.mult(alg.transpose(uinv),x))
 
       // clip negative values
