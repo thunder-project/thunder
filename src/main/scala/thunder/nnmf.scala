@@ -43,25 +43,18 @@ object nnmf {
     return Functions.max(num,0)
   }
 
-  def parseVector2(line: String): DoubleMatrix1D = {
-    val vec = line.split(' ').map(_.toDouble)
-    return factory1D.make(vec)
-  }
 
-  def parseLine(line: String): Array[Double] = {
-    val vec = line.split(' ').map(_.toDouble)
-    return vec
-  }
-
-  def printToImage(rdd: RDD[(Array[Int],Double)], w: Int, h: Int, fileName: String): Unit = {
-    // TODO: incorporate different z planes
-    val X = rdd.map(_._1(0)).toArray()
-    val Y = rdd.map(_._1(1)).toArray()
-    val RGB = rdd.map(_._2).collect()
-    val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
-    val raster = img.getRaster()
-    (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
-    ImageIO.write(img, "png", new File(fileName))
+  def printToImage(rdd: RDD[(Array[Int],Double)], w: Int, h: Int, d: Int, fileName: String): Unit = {
+    for (id <- 0 until d) {
+      val plane = rdd.filter(_._1(2) == d)
+      val X = plane.map(_._1(0)).collect()
+      val Y = plane.map(_._1(1)).collect()
+      val RGB = plane.map(_._2).collect()
+      val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
+      val raster = img.getRaster()
+      (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
+      ImageIO.write(img, "png", new File("plane"+id.toString+"-"+fileName))
+    }
   }
 
   def outerProd(vec1: DoubleMatrix1D, vec2: DoubleMatrix1D): DoubleMatrix2D = {
@@ -70,36 +63,49 @@ object nnmf {
     return out
   }
 
+  def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
+    val p = new java.io.PrintWriter(f)
+    try {
+      op(p)
+    } finally {
+      p.close()
+    }
+  }
+
+  def printMatrix(data: DoubleMatrix2D, saveFile: String): Unit = {
+    // print a DoubleMatrix2D to text by writing each row as a string
+    val out = data.toArray()
+    printToFile(new File(saveFile))(p => {
+      out.foreach(x => p.println(x.mkString(" ")))
+    })
+  }
+
   def main(args: Array[String]) {
 
     val master = args(0)
     val inputFile = args(1)
-    val outputFileImg = args(2)
-    val k = args(3).toInt
-    //val seed1 = args(2).toInt
+    val outputFileTxt = args(2)
+    val outputFileImg = args(3)
+    val k = args(4).toInt
 
     System.setProperty("spark.executor.memory", "120g")
     val sc = new SparkContext(master, "nnmf", System.getenv("SPARK_HOME"),
       List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
 
+    // parsing data
     val data = sc.textFile(inputFile).map(parseVector _).cache()
     val w = data.map{case (k,v) => k(0)}.top(1).take(1)(0)
     val h = data.map{case (k,v) => k(1)}.top(1).take(1)(0)
+    val d = data.map{case (k,v) => k(2)}.top(1).take(1)(0)
     val n = data.count().toInt
     val m = data.first()._2.size
     var iter = 0
     val nIter = 10
 
-    // assuming m >> n
-
     // random initialization
     var u = factory2D.make(k,m)
     val seed1 = Random.nextInt*1000
     var v = data.map{case (k,v) => k(0) + (k(1)-1)*h}.map(randomVector(_,seed1,k))
-
-    println(v.count())
-    println(w)
-    println(h)
 
     // fixed initialization
     //var u = factory2D.make(sc.textFile("data/h0.txt").map(parseLine _).toArray())
@@ -115,7 +121,7 @@ object nnmf {
       // precompute inv(V' * V)
       val vinv = alg.inverse(v.map( x => outerProd(x,x)).reduce(_.assign(_,Functions.plus)))
 
-      // update U using least squares by premultiplying R component wise with inv(V' * V) * V
+      // update U using least squares row-wise with inv(V' * V) * V * R (same as pinv(V) * R)
       u = data.map(_._2).zip(v.map (x => alg.mult(vinv,x))).map( x => outerProd(x._2,x._1)).reduce(_.assign(_,Functions.plus))
 
       // clip negative values
@@ -124,7 +130,7 @@ object nnmf {
       // precompute pinv(U)
       val uinv = alg.transpose(alg.inverse(alg.transpose(u)))
 
-      // update V using least squares by multiplying R component wise with pinv(U)
+      // update V using least squares row-wise with R * pinv(U)
       v = data.map(_._2).map( x => alg.mult(alg.transpose(uinv),x))
 
       // clip negative values
@@ -134,10 +140,12 @@ object nnmf {
 
     }
 
+    printMatrix(u,outputFileTxt + ".txt")
+
     for (i <- 0 until k) {
       val result = v.map(x => x.get(i))
       val mx = result.top(1).take(1)(0)
-      printToImage(data.map(_._1).zip(result).map{case (k,v) => (k,(255*(v/mx)).toInt)}, w, h, outputFileImg + i.toString + ".png")
+      printToImage(data.map(_._1).zip(result).map{case (k,v) => (k,(255*(v/mx)).toInt)}, w, h, d, outputFileImg + i.toString + ".png")
     }
 
   }
