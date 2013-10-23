@@ -64,6 +64,7 @@ logging.info("(lowdim) loading data")
 y = loadmat(inputFile_y)['y']
 y = y.astype(float)
 inds = sum(y,axis=0)!=0
+print(inds)
 lines_X = sc.textFile(inputFile_X) # the data
 X = lines_X.map(lambda x : parseVector(x,inds)).cache()
 
