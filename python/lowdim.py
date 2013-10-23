@@ -129,7 +129,8 @@ if outputMode == 'pie':
 	ts = linspace(-pi,pi,nT)
 	traj = zeros((nT-1,len(X.first())))
 	for it in  range(0,nT-1):
-		traj[ik,:] = X.filter(lambda x : inRange(getT(x,y,sortedDim2),ts[it],ts[it+1])).map(lambda x : x * getR(x,y,sortedDim2)).reduce(lambda x,y : x + y)
+		traj[it,:] = X.filter(lambda x : inRange(getT(x,y,sortedDim2),ts[it],ts[it+1])).map(lambda x : x * getR(x,y,sortedDim2)).reduce(lambda x,y : x + y)
+	savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
 # r = X.map(lambda x : getR(x,y,sortedDim2)).collect()
 # savemat(outputFile+"/"+"r"+".mat",mdict={'r':r},oned_as='column',do_compression='true')
