@@ -118,11 +118,11 @@ object rrr {
     //println(duh.mmul(duh2.transpose()))
     //println(foo.mmul(foo.transpose()))
 
-    val cov = C1X.map(x => outerProduct(x,x)).reduce(_.add(_))
+    val cov = C1X.map(x => outerProduct(x,x)).reduce(_.add(_)).rdiv(n)
 
-    println(cov)
+    //println(cov)
 
-    //println(Eigen.eigenvectors(cov))
+    println(Eigen.eigenvectors(cov))
 
 
 //    // compute U using the SVD: [U S V] = svd(C * X)
