@@ -17,14 +17,10 @@ import javax.imageio.ImageIO
 import java.io.File
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
-import org.jblas.DoubleMatrix
-import org.jblas.Solve
-import org.jblas.Eigen
 import thunder.util.MatrixRDD
 import cern.jet.math.Functions
 import cern.colt.matrix.{DoubleMatrix1D, DoubleMatrix2D, DoubleFactory1D, DoubleFactory2D}
 import cern.colt.matrix.linalg.Algebra
-import cern.colt.matrix.linalg.EigenvalueDecomposition
 import scala.util.Random
 
 object rrr {
@@ -60,8 +56,7 @@ object rrr {
       val plane = rdd.filter(_._1(2) == d)
       val X = plane.map(_._1(0)).collect()
       val Y = plane.map(_._1(1)).collect()
-      val vals = plane.map(_._2).collect()
-      val RGB = vals.map(rgb => (255*(rgb - vals.min)/(vals.max - vals.min)).toInt)
+      val RGB = plane.map(_._2).collect()
       val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
       val raster = img.getRaster()
       (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
@@ -75,13 +70,13 @@ object rrr {
     return out
   }
 
-//  def printMatrix(data: DoubleMatrix2D, saveFile: String): Unit = {
-//    // print a DoubleMatrix2D to text by writing each row as a string
-//    val out = data.toArray()
-//    printToFile(new File(saveFile))(p => {
-//      out.foreach(x => p.println(x.mkString(" ")))
-//    })
-//  }
+  def printMatrix(data: DoubleMatrix2D, saveFile: String): Unit = {
+    // print a DoubleMatrix2D to text by writing each row as a string
+    val out = data.toArray()
+    printToFile(new File(saveFile))(p => {
+      out.foreach(x => p.println(x.mkString(" ")))
+    })
+  }
 
   def main(args: Array[String]) {
 
@@ -125,15 +120,15 @@ object rrr {
 
     while (iter < nIter) {
 
-      // goal is to solve R = VU subject to U,V > 0
-      // by iteratively updating U and V with least squares and clipping
+      // goal is to solve R = C * X = V * U * X subject to rank(C) = k
+      // by iteratively updating U and V with least squares
 
       println("starting" + iter.toString)
 
       // precompute inv(V' * V)
       val vinv = alg.inverse(v.map( x => outerProd(x,x)).reduce(_.assign(_,Functions.plus)))
 
-      // update U using least squares by premultiplying R component wise with inv(V' * V) * V and postmultiply by pinv(X)
+      // update U using least squares row-wise as inv(V' * V) * V * R * pinv(X) (same as pinv(V) * R * pinv(X))
       u = alg.mult(data.map(_._2).zip(v.map (x => alg.mult(vinv,x))).map( x => outerProd(x._2,x._1)).reduce(_.assign(_,Functions.plus)),alg.transpose(alg.inverse(alg.transpose(X))))
 
       // clip negative values
@@ -143,7 +138,7 @@ object rrr {
       val ux = alg.mult(u,X)
       val uxinv = alg.transpose(alg.inverse(alg.transpose(ux)))
 
-      // update V using least squares by multiplying R component wise with pinv(U * X)
+      // update V using least squares row-wise using R * pinv(U * X)
       v = data.map(_._2).map( x => alg.mult(alg.transpose(uxinv),x))
 
       // clip negative values
@@ -153,7 +148,13 @@ object rrr {
 
     }
 
-    println(u)
+    printMatrix(u,outputFileTxt + ".txt")
+
+    for (i <- 0 until k) {
+      val result = v.map(x => x.get(i))
+      val mx = result.top(1).take(1)(0)
+      printToImage(data.map(_._1).zip(result).map{case (k,v) => (k,(255*(v/mx)).toInt)}, w, h, d, outputFileImg + i.toString + ".png")
+    }
 
 
 
