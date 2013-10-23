@@ -22,18 +22,21 @@ import org.jblas.Solve
 import org.jblas.Eigen
 import thunder.util.MatrixRDD
 import cern.jet.math.Functions
-import cern.colt.matrix.{DoubleMatrix1D, DoubleFactory1D, DoubleFactory2D}
+import cern.colt.matrix.{DoubleMatrix1D, DoubleMatrix2D, DoubleFactory1D, DoubleFactory2D}
 import cern.colt.matrix.linalg.Algebra
 
 object rrr {
 
+  val factory2D = DoubleFactory2D.dense
+  val factory1D = DoubleFactory1D.dense
+  val alg = Algebra.DEFAULT
 
-  def parseVector(line: String): ((Array[Int]), DoubleMatrix) = {
+  def parseVector(line: String): ((Array[Int]), DoubleMatrix1D) = {
     val vec = line.split(' ').drop(3).map(_.toDouble)
     val inds = line.split(' ').take(3).map(_.toDouble.toInt) // xyz coords
     //val mean = vec.sum / vec.length
     //vec = vec.map(x => (x - mean)/(mean + 0.1)) // time series
-    return (inds,new DoubleMatrix(vec))
+    return (inds,factory1D.make(vec))
   }
 
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
@@ -59,8 +62,10 @@ object rrr {
     }
   }
 
-  def outerProduct(vec1: DoubleMatrix, vec2: DoubleMatrix): DoubleMatrix = {
-    return vec1.mmul(vec2.transpose())
+  def outerProd(vec1: DoubleMatrix1D, vec2: DoubleMatrix1D): DoubleMatrix2D = {
+    val out = factory2D.make(vec1.size,vec2.size)
+    alg.multOuter(vec1,vec2,out)
+    return out
   }
 
 //  def printMatrix(data: DoubleMatrix2D, saveFile: String): Unit = {
@@ -89,7 +94,7 @@ object rrr {
       List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
 
     val data = sc.textFile(inputFileR).map(parseVector _).cache()
-    val X = new DoubleMatrix(sc.textFile(inputFileX).map(x => x.split(' ').map(_.toDouble)).toArray()).transpose()
+    val X = factory2D.make(sc.textFile(inputFileX).map(x => x.split(' ').map(_.toDouble)).toArray())
 
     println("getting dimensions")
     val w = data.map{case (k,v) => k(0)}.top(1).take(1)(0)
@@ -98,17 +103,25 @@ object rrr {
 
     println("initializing variables")
     val n = data.count().toInt
-    val m = data.first()._2.length
-    val c = X.columns
+    val m = data.first()._2.size()
+    val c = X.rows
 
     val k1 = 3
 
     // strip keys
     val R = data.map{case (k,v) => v}
 
+    val Xinv = alg.inverse(alg.transpose(X))
+    val Xpre = alg.transpose(X)
+    val C1X = R.map(x => alg.mult(Xpre,alg.mult(Xinv,x)))
+
+    val cov = C1X.map(x => outerProd(x,x)).reduce(_.assign(_,Functions.plus))
+
+    println(cov)
+
     // compute OLS estimate of C for R = C * X
     //println("getting initial OLS estimate")
-    val C1X = R.map(r => X.mmul(Solve.solveLeastSquares(X,r)))
+    //val C1X = R.map(r => X.mmul(Solve.solveLeastSquares(X,r)))
 
     //println(C1X.first())
 
@@ -118,11 +131,11 @@ object rrr {
     //println(duh.mmul(duh2.transpose()))
     //println(foo.mmul(foo.transpose()))
 
-    val cov = C1X.map(x => outerProduct(x,x)).reduce(_.add(_)).rdiv(n)
+    //val cov = C1X.map(x => outerProduct(x,x)).reduce(_.add(_)).rdiv(n)
 
     //println(cov)
 
-    println(Eigen.eigenvectors(cov))
+    //println(Eigen.eigenvectors(cov))
 
 
 //    // compute U using the SVD: [U S V] = svd(C * X)
