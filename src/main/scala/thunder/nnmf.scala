@@ -53,7 +53,7 @@ object nnmf {
       val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
       val raster = img.getRaster()
       (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
-      ImageIO.write(img, "png", new File("plane"+id.toString+"-"+fileName))
+      ImageIO.write(img, "png", new File(fileName + "-plane"+id.toString+".png"))
     }
   }
 
@@ -145,7 +145,7 @@ object nnmf {
     for (i <- 0 until k) {
       val result = v.map(x => x.get(i))
       val mx = result.top(1).take(1)(0)
-      printToImage(data.map(_._1).zip(result).map{case (k,v) => (k,(255*(v/mx)).toInt)}, w, h, d, outputFileImg + i.toString + ".png")
+      printToImage(data.map(_._1).zip(result).map{case (k,v) => (k,(255*(v/mx)).toInt)}, w, h, d, outputFileImg + i.toString)
     }
 
   }
