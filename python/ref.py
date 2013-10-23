@@ -18,7 +18,7 @@ if len(sys.argv) < 4:
   "(ref) usage: ref <master> <inputFileX> <outputFile> <mode>"
   exit(-1)
 
-def parseVector(line,inds):
+def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
 	return ((int(vec[0]),int(vec[1]),int(vec[2])),ts) # (x,y,z),(tseries) pair 

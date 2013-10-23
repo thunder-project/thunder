@@ -17,7 +17,7 @@ if len(sys.argv) < 6:
   "(localcorr) usage: localcorr <master> <inputFile_X> <outputFile> <sz> <mxX> <mxY>"
   exit(-1)
 
-def parseVector(line,inds):
+def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
 	meanVal = mean(ts)
