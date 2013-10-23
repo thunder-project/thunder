@@ -107,21 +107,23 @@ object nnmf {
 
     while (iter < nIter) {
 
-      println("starting" + iter.toString)
-      // compute inv(w0' * w0)
-      val winv = alg.inverse(v.map( x => outerProd(x,x)).reduce(_.assign(_,Functions.plus)))
+      // trying to solve R = VU subject to U,V > 0
 
-      // update u using least squares
-      u = data.map(_._2).zip(v.map (x => alg.mult(winv,x))).map( x => outerProd(x._2,x._1)).reduce(_.assign(_,Functions.plus))
+      println("starting" + iter.toString)
+      // precompute inv(V' * V)
+      val vinv = alg.inverse(v.map( x => outerProd(x,x)).reduce(_.assign(_,Functions.plus)))
+
+      // update u using least squares by premultiplying R component wise with inv(V' * V) * V
+      u = data.map(_._2).zip(v.map (x => alg.mult(vinv,x))).map( x => outerProd(x._2,x._1)).reduce(_.assign(_,Functions.plus))
 
       // clip negative values
       u.assign(Functions.bindArg1(Functions.max,0))
 
-      // compute u'*inv(u*u')
-      val hinv = alg.mult(alg.transpose(u),alg.inverse(alg.mult(u,alg.transpose(u))))
+      // precompute U' * inv(U * U')
+      val uinv = alg.mult(alg.transpose(u),alg.inverse(alg.mult(u,alg.transpose(u))))
 
-      // update v using least squares
-      v = data.map(_._2).map( x => alg.mult(alg.transpose(hinv),x))
+      // update v using least squares by multiplying R component wise with U' * inv(U * U')
+      v = data.map(_._2).map( x => alg.mult(alg.transpose(uinv),x))
 
       // clip negative values
       v = v.map(_.assign(Functions.bindArg1(Functions.max,0)))
