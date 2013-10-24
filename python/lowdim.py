@@ -80,7 +80,7 @@ lines_X = sc.textFile(inputFile_X) # the data
 X = lines_X.map(parseVector).cache()
 
 if len(argsIn) > 6 :
-	loggin.info("(lowdim) using specified indices")
+	logging.info("(lowdim) using specified indices")
 	startInd = float(argsIn[7])
 	endInd = float(argsIn[8])
 	X = X.map(lambda x : x[startInd:endInd])
