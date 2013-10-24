@@ -92,7 +92,7 @@ if len(argsIn) > 6 :
 	endInd = float(argsIn[9])
 	X = data.map(lambda x : x[startInd:endInd]).map(lambda x : convert(x,inputMode))
 	y = y[:,startInd:endInd]
-else
+else :
 	X = data.map(lambda x : convert(x,inputMode))
 
 if analMode == 'mean' :
