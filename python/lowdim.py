@@ -90,6 +90,7 @@ if len(argsIn) > 8 :
 	logging.info("(lowdim) using specified indices")
 	startInd = float(argsIn[8])
 	endInd = float(argsIn[9])
+	y = y[:,startInd:endInd]
 	X = lines_X.map(lambda x : parseVector(x,"dff",None,(startInd,endInd))).cache()
 else :
 	X = lines_X.map(parseVector).cache()
