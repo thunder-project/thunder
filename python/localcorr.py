@@ -73,7 +73,6 @@ if len(argsIn) > 6 :
 	logging.info("(lowdim) using specified indices")
 	startInd = float(argsIn[6])
 	endInd = float(argsIn[7])
-	y = y[:,startInd:endInd]
 	X = lines_X.map(lambda x : parseVector(x,"raw",1,(startInd,endInd))).cache()
 else :
 	X = lines_X.map(lambda x : parseVector(x,"raw",1)).cache()
