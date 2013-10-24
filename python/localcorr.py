@@ -54,12 +54,12 @@ def mapToNeighborhood(ind,ts,sz,mxX,mxY):
 	return out
 
 # parse inputs
-sc = SparkContext(argIn[0], "localcorr")
-inputFile_X = str(argIn[1])
-outputFile = str(argIn[2]) + "-localcorr"
-sz = int(argIn[3])
-mxX = float(argIn[4])
-mxY = float(argIn[5])
+sc = SparkContext(argsIn[0], "localcorr")
+inputFile_X = str(argsIn[1])
+outputFile = str(argsIn[2]) + "-localcorr"
+sz = int(argsIn[3])
+mxX = float(argsIn[4])
+mxY = float(argsIn[5])
 
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
