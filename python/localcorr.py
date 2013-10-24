@@ -19,12 +19,18 @@ if len(argsIn) < 6:
   "(localcorr) usage: localcorr <master> <inputFile_X> <outputFile> <sz> <mxX> <mxY> <startInd> <endInd>"
   exit(-1)
 
-def parseVector(line):
+def parseVector(line,mode="raw",xyz=0,inds=None):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
-	meanVal = mean(ts)
-	ts = (ts - meanVal) / (meanVal + 0.1) # convert to dff
-	return ((int(vec[0]),int(vec[1])),ts) # (x,y,z),(tseries) pair 
+	if inds is not None :
+		ts = ts[inds[0]:inds[1]]
+	if mode == "dff" :
+		meanVal = mean(ts)
+		ts = (ts - meanVal) / (meanVal + 0.1)
+	if xyz == 1 :
+		return ((int(vec[0]),int(vec[1]),int(vec[2])),ts)
+	else :
+		return ts
 
 def clip(val,mn,mx):
 	if (val < mn) : 
@@ -43,7 +49,7 @@ def mapToNeighborhood(ind,ts,sz,mxX,mxY):
 		for y in rngY :
 			newX = clip(ind[0] + x,1,mxX)
 			newY = clip(ind[1] + y,1,mxY)
-			newind = (newX, newY)
+			newind = (newX, newY, ind[2])
 			out.append((newind,ts))
 	return out
 
@@ -62,15 +68,21 @@ logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,form
 # parse data
 logging.info("(lowdim) loading data")
 lines_X = sc.textFile(inputFile_X) # the data
-X = lines_X.map(parseVector).cache()
+
+if len(argsIn) > 6 :
+	logging.info("(lowdim) using specified indices")
+	startInd = float(argsIn[6])
+	endInd = float(argsIn[7])
+	y = y[:,startInd:endInd]
+	X = lines_X.map(lambda x : parseVector(x,"raw",1,(startInd,endInd))).cache()
+else :
+	X = lines_X.map(lambda x : parseVector(x,"raw",1)).cache()
 
 if len(argsIn) > 4 :
 	loggin.info("(lowdim) using specified indices")
 	startInd = float(argsIn[7])
 	endInd = float(argsIn[8])
 	X = X.map(lambda (k,x) : (k,x[startInd:endInd]))
-
-
 
 # flatmap each time series to key value pairs where the key is a neighborhood identifier and the value is the time series
 neighbors = X.flatMap(lambda (k,v) : mapToNeighborhood(k,v,sz,mxX,mxY))
@@ -83,12 +95,9 @@ means = neighbors.reduceByKey(lambda x,y : x + y).map(lambda (k,v) : (k, v / ((2
 # join with the original time series data to compute correlations
 result = X.join(means)
 
-# get correlations
+# get correlations and keys
+# TODO: use sortByKey to avoid returning keys once implemented in pyspark
 corr = result.map(lambda (k,v) : (k,corrcoef(v[0],v[1])[0,1]))
-
-# # return keys because we'll need to sort on them post-hoc
-# # TODO: use sortByKey once implemented in pyspark
-#keys = result.map(lambda (k,v) : k)
 
 savemat(outputFile+"/"+"corr.mat",mdict={'corr':corr.collect()},oned_as='column',do_compression='true')
 
