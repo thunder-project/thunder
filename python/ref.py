@@ -21,10 +21,18 @@ if len(argsIn) < 4:
   "(ref) usage: ref <master> <inputFileX> <outputFile> <mode> <startInd> <endInd>"
   exit(-1)
 
-def parseVector(line):
+def parseVector(line,mode="raw",xyz=0,inds=None):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
-	return ((int(vec[0]),int(vec[1]),int(vec[2])),ts) # (x,y,z),(tseries) pair 
+	if inds is not None :
+		ts = ts[inds[0]:inds[1]]
+	if mode == "dff" :
+		meanVal = mean(ts)
+		ts = (ts - meanVal) / (meanVal + 0.1)
+	if xyz == 1 :
+		return ((int(vec[0]),int(vec[1]),int(vec[2])),ts)
+	else :
+		return ts
 
 # parse inputs
 sc = SparkContext(argsIn[0], "ref")
@@ -36,13 +44,14 @@ logging.basicConfig(filename=outputFile+'stdout.log',level=logging.INFO,format='
 # parse data
 logging.info("(ref) loading data")
 lines_X = sc.textFile(inputFile_X) # the data
-X = lines_X.map(parseVector).cache()
 
 if len(argsIn) > 4 :
 	loggin.info("(lowdim) using specified indices")
 	startInd = float(argsIn[4])
 	endInd = float(argsIn[5])
-	X = X.map(lambda (k,x) : (k,x[startInd:endInd]))
+	X = X.map(lambda x : parseVector(x,"raw",1,(startInd,endInd))).cache()
+else :
+	X = lines_X.map(lambda x : parseVector(x,"raw",1)).cache()
 
 # get z ordering
 logging.info("(ref) getting z ordering")

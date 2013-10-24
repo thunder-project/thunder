@@ -23,7 +23,7 @@ if len(argsIn) < 8:
   "(lowdim) usage: lowdim <master> <inputFile_X> <inputFile_y> <outputFile> <analMode> <k> <inputMode> <outputMode> <startInd> <endInd>"
   exit(-1)
 
-def parseVector(line,mode=None,xyz=None,inds=None):
+def parseVector(line,mode="raw",xyz=0,inds=None):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
 	if inds is not None :
@@ -31,7 +31,7 @@ def parseVector(line,mode=None,xyz=None,inds=None):
 	if mode == "dff" :
 		meanVal = mean(ts)
 		ts = (ts - meanVal) / (meanVal + 0.1)
-	if xyz is not None :
+	if xyz == 1 :
 		return ((int(vec[0]),int(vec[1]),int(vec[2])),ts)
 	else :
 		return ts
