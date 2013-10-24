@@ -16,9 +16,7 @@ import logging
 
 argsIn = sys.argv[1:]
 
-print(argsIn)
-
-if len(sys.argv) < 5:
+if len(argsIn) < 4:
   print >> sys.stderr, \
   "(ref) usage: ref <master> <inputFileX> <outputFile> <mode> <startInds> <endInd>"
   exit(-1)
@@ -29,10 +27,10 @@ def parseVector(line):
 	return ((int(vec[0]),int(vec[1]),int(vec[2])),ts) # (x,y,z),(tseries) pair 
 
 # parse inputs
-sc = SparkContext(sys.argv[1], "ref")
-inputFile_X = str(sys.argv[2])
-outputFile = str(sys.argv[3])
-mode = str(sys.argv[4])
+sc = SparkContext(argsIn[0], "ref")
+inputFile_X = str(argsIn[1])
+outputFile = str(argsIn[2])
+mode = str(argsIn[3])
 logging.basicConfig(filename=outputFile+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
 
 # parse data
@@ -40,9 +38,9 @@ logging.info("(ref) loading data")
 lines_X = sc.textFile(inputFile_X) # the data
 X = lines_X.map(parseVector).cache()
 
-if len(sys.argv) > 5 :
-	startInd = float(sys.argv[5])
-	endInd = float(sys.argv[6])
+if len(argsIn) > 4 :
+	startInd = float(argsIn[4])
+	endInd = float(argsIn[5])
 	X = X.map(lambda (k,x) : (k,x[startInd:endInd]))
 
 # get z ordering
