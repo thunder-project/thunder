@@ -61,13 +61,13 @@ def inRange(val,rng1,rng2):
 		return False
 
 # parse inputs
-sc = SparkContext(argsIn, "lowdim")
-inputFile_X = str(argsIn)
-inputFile_y = str(argsIn)
-outputFile = str(argsIn) + "-lowdim"
-mode = str(argsIn)
-k = int(argsIn)
-outputMode = str(argsIn)
+sc = SparkContext(argsIn[0], "lowdim")
+inputFile_X = str(argsIn[1])
+inputFile_y = str(argsIn[2])
+outputFile = str(argsIn[3]) + "-lowdim"
+mode = str(argsIn[4])
+k = int(argsIn[5])
+outputMode = str(argsIn[6])
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -81,8 +81,8 @@ X = lines_X.map(parseVector).cache()
 
 if len(argsIn) > 6 :
 	loggin.info("(lowdim) using specified indices")
-	startInd = float(argsIn)
-	endInd = float(argsIn)
+	startInd = float(argsIn[7])
+	endInd = float(argsIn[8])
 	X = X.map(lambda x : x[startInd:endInd])
 	y = y[:,startInd:endInd]
 
