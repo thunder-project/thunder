@@ -18,7 +18,7 @@ argsIn = sys.argv[1:]
 
 if len(argsIn) < 4:
   print >> sys.stderr, \
-  "(ref) usage: ref <master> <inputFileX> <outputFile> <mode> <startInds> <endInd>"
+  "(ref) usage: ref <master> <inputFileX> <outputFile> <mode> <startInd> <endInd>"
   exit(-1)
 
 def parseVector(line):

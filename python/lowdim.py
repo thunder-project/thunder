@@ -16,9 +16,11 @@ from scipy.io import *
 from pyspark import SparkContext
 import logging
 
-if len(sys.argv) < 6:
+argsIn = sys.argv[1:]
+
+if len(argsIn) < 7:
   print >> sys.stderr, \
-  "(lowdim) usage: lowdim <master> <inputFile_X> <inputFile_y> <outputFile> <mode> <k> <outputMode>"
+  "(lowdim) usage: lowdim <master> <inputFile_X> <inputFile_y> <outputFile> <mode> <k> <outputMode> <startInd> <endInd>"
   exit(-1)
 
 def parseVector(line):
@@ -59,13 +61,13 @@ def inRange(val,rng1,rng2):
 		return False
 
 # parse inputs
-sc = SparkContext(sys.argv[1], "lowdim")
-inputFile_X = str(sys.argv[2])
-inputFile_y = str(sys.argv[3])
-outputFile = str(sys.argv[4]) + "-lowdim"
-mode = str(sys.argv[5])
-k = int(sys.argv[6])
-outputMode = str(sys.argv[7])
+sc = SparkContext(sys.argv[0], "lowdim")
+inputFile_X = str(sys.argv[1])
+inputFile_y = str(sys.argv[2])
+outputFile = str(sys.argv[3]) + "-lowdim"
+mode = str(sys.argv[4])
+k = int(sys.argv[5])
+outputMode = str(sys.argv[6])
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -76,6 +78,12 @@ y = loadmat(inputFile_y)['y']
 y = y.astype(float)
 lines_X = sc.textFile(inputFile_X) # the data
 X = lines_X.map(parseVector).cache()
+
+if len(argsIn) > 6 :
+	startInd = float(argsIn[7])
+	endInd = float(argsIn[8])
+	X = X.map(lambda x : x[startInd:endInd])
+	y = y[:,startInd:endInd]
 
 if mode == 'mean' :
 	resp = X.map(lambda x : dot(y,x))
