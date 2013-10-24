@@ -20,15 +20,20 @@ argsIn = sys.argv[1:]
 
 if len(argsIn) < 7:
   print >> sys.stderr, \
-  "(lowdim) usage: lowdim <master> <inputFile_X> <inputFile_y> <outputFile> <mode> <k> <outputMode> <startInd> <endInd>"
+  "(lowdim) usage: lowdim <master> <inputFile_X> <inputFile_y> <outputFile> <analMode> <k> <inputMode> <outputMode> <startInd> <endInd>"
   exit(-1)
 
 def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
-	meanVal = mean(ts)
-	ts = (ts - meanVal) / (meanVal + 0.1) # convert to dff
 	return ts
+
+def convert(vec,mode):
+	if (mode == "dff") :
+		meanVal = mean(vec)
+		return (vec - meanVal) / (meanVal + 0.1)
+	if (mode == "raw") :
+		return vec
 
 def clip(vec,val):
 	vec[vec<val] = val
@@ -65,9 +70,11 @@ sc = SparkContext(argsIn[0], "lowdim")
 inputFile_X = str(argsIn[1])
 inputFile_y = str(argsIn[2])
 outputFile = str(argsIn[3]) + "-lowdim"
-mode = str(argsIn[4])
+analMode = str(argsIn[4])
 k = int(argsIn[5])
-outputMode = str(argsIn[6])
+inputMode = str(argsIn[6])
+outputMode = str(argsIn[7])
+
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -77,26 +84,28 @@ logging.info("(lowdim) loading data")
 y = loadmat(inputFile_y)['y']
 y = y.astype(float)
 lines_X = sc.textFile(inputFile_X) # the data
-X = lines_X.map(parseVector).cache()
+data = lines_X.map(parseVector)
 
 if len(argsIn) > 6 :
 	logging.info("(lowdim) using specified indices")
-	startInd = float(argsIn[7])
-	endInd = float(argsIn[8])
-	X = X.map(lambda x : x[startInd:endInd])
+	startInd = float(argsIn[8])
+	endInd = float(argsIn[9])
+	X = data.map(lambda x : x[startInd:endInd]).map(lambda x : convert(x,inputMode))
 	y = y[:,startInd:endInd]
+else
+	X = data.map(lambda x : convert(x,inputMode))
 
-if mode == 'mean' :
+if analMode == 'mean' :
 	resp = X.map(lambda x : dot(y,x))
-if mode == 'standardize' :
+if analMode == 'standardize' :
 	resp = X.map(lambda x : dot(y,(x-mean(x))/norm(x)))
-if mode == 'regress' : 
+if analMode == 'regress' : 
 	yhat = dot(inv(dot(y,transpose(y))),y)
 	resp = X.map(lambda x : dot(yhat,x)[1:])
 	r2 = X.map(lambda x : 1.0 - sum((dot(transpose(y),dot(yhat,x)) - x) ** 2) / sum((x - mean(x)) ** 2)).collect()
 	savemat(outputFile+"/"+"r2.mat",mdict={'r2':r2},oned_as='column',do_compression='true')
-	#vals = array([0,2,4,6,8,10,12,14,16,20,25,30])
-	vals = array([2.5,7.5,12.5,17.5,22.5,27.5,32.5,37.5,42.5,47.5])
+	vals = array([0,2,4,6,8,10,12,14,16,20,25,30])
+	#vals = array([2.5,7.5,12.5,17.5,22.5,27.5,32.5,37.5,42.5,47.5])
 	tuning = resp.map(lambda x : clip(x,0)).map(lambda x : x / sum(x)).map(lambda x : dot(x,vals)).collect()
 	savemat(outputFile+"/"+"tuning.mat",mdict={'tuning':tuning},oned_as='column',do_compression='true')
 

@@ -12,9 +12,11 @@ from scipy.io import *
 from pyspark import SparkContext
 import logging
 
-if len(sys.argv) < 6:
+argsIn = sys.argv[1:]
+
+if len(argsIn) < 6:
   print >> sys.stderr, \
-  "(localcorr) usage: localcorr <master> <inputFile_X> <outputFile> <sz> <mxX> <mxY>"
+  "(localcorr) usage: localcorr <master> <inputFile_X> <outputFile> <sz> <mxX> <mxY> <startInd> <endInd>"
   exit(-1)
 
 def parseVector(line):
@@ -46,12 +48,12 @@ def mapToNeighborhood(ind,ts,sz,mxX,mxY):
 	return out
 
 # parse inputs
-sc = SparkContext(sys.argv[1], "localcorr")
-inputFile_X = str(sys.argv[2])
-outputFile = str(sys.argv[3]) + "-localcorr"
-sz = int(sys.argv[4])
-mxX = float(sys.argv[5])
-mxY = float(sys.argv[6])
+sc = SparkContext(argIn[0], "localcorr")
+inputFile_X = str(argIn[1])
+outputFile = str(argIn[2]) + "-localcorr"
+sz = int(argIn[3])
+mxX = float(argIn[4])
+mxY = float(argIn[5])
 
 if not os.path.exists(outputFile):
     os.makedirs(outputFile)
@@ -59,10 +61,16 @@ logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,form
 
 # parse data
 logging.info("(lowdim) loading data")
-y = loadmat(inputFile_y)['y']
-y = y.astype(float)
 lines_X = sc.textFile(inputFile_X) # the data
 X = lines_X.map(parseVector).cache()
+
+if len(argsIn) > 4 :
+	loggin.info("(lowdim) using specified indices")
+	startInd = float(argsIn[7])
+	endInd = float(argsIn[8])
+	X = X.map(lambda (k,x) : (k,x[startInd:endInd]))
+
+
 
 # flatmap each time series to key value pairs where the key is a neighborhood identifier and the value is the time series
 neighbors = X.flatMap(lambda (k,v) : mapToNeighborhood(k,v,sz,mxX,mxY))
