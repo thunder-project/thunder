@@ -91,9 +91,9 @@ if len(argsIn) > 8 :
 	startInd = float(argsIn[8])
 	endInd = float(argsIn[9])
 	y = y[:,startInd:endInd]
-	X = lines_X.map(lambda x : parseVector(x,"dff",None,(startInd,endInd))).cache()
+	X = lines_X.map(lambda x : parseVector(x,"dff",0,(startInd,endInd))).cache()
 else :
-	X = lines_X.map(parseVector).cache()
+	X = lines_X.map(lambda x : parseVector(x,"dff")).cache()
 
 if analMode == 'mean' :
 	resp = X.map(lambda x : dot(y,x))
