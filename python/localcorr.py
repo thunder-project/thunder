@@ -78,7 +78,7 @@ else :
 	X = lines_X.map(lambda x : parseVector(x,"raw",1)).cache()
 
 if len(argsIn) > 4 :
-	loggin.info("(lowdim) using specified indices")
+	logging.info("(lowdim) using specified indices")
 	startInd = float(argsIn[7])
 	endInd = float(argsIn[8])
 	X = X.map(lambda (k,x) : (k,x[startInd:endInd]))
