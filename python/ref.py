@@ -15,7 +15,7 @@ import logging
 
 if len(sys.argv) < 4:
   print >> sys.stderr, \
-  "(ref) usage: ref <master> <inputFileX> <outputFile> <mode>"
+  "(ref) usage: ref <master> <inputFileX> <outputFile> <mode> <startInds> <endInd>"
   exit(-1)
 
 def parseVector(line):
@@ -34,6 +34,11 @@ logging.basicConfig(filename=outputFile+'stdout.log',level=logging.INFO,format='
 logging.info("(ref) loading data")
 lines_X = sc.textFile(inputFile_X) # the data
 X = lines_X.map(parseVector).cache()
+
+if len(sys.argv > 4) :
+	startInd = float(sys.argv[5])
+	endInd = float(sys.argv[6])
+	X = X.map(lambda (k,x) : (k,x[startInd:endInd]))
 
 # get z ordering
 logging.info("(ref) getting z ordering")
