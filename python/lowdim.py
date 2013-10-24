@@ -86,7 +86,7 @@ y = loadmat(inputFile_y)['y']
 y = y.astype(float)
 lines_X = sc.textFile(inputFile_X) # the data
 
-if len(argsIn) > 6 :
+if len(argsIn) > 7 :
 	logging.info("(lowdim) using specified indices")
 	startInd = float(argsIn[8])
 	endInd = float(argsIn[9])
