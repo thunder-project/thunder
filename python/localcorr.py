@@ -77,12 +77,6 @@ if len(argsIn) > 6 :
 else :
 	X = lines_X.map(lambda x : parseVector(x,"raw",1)).cache()
 
-if len(argsIn) > 4 :
-	logging.info("(lowdim) using specified indices")
-	startInd = float(argsIn[7])
-	endInd = float(argsIn[8])
-	X = X.map(lambda (k,x) : (k,x[startInd:endInd]))
-
 # flatmap each time series to key value pairs where the key is a neighborhood identifier and the value is the time series
 neighbors = X.flatMap(lambda (k,v) : mapToNeighborhood(k,v,sz,mxX,mxY))
 
