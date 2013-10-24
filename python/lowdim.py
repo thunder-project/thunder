@@ -23,17 +23,18 @@ if len(argsIn) < 7:
   "(lowdim) usage: lowdim <master> <inputFile_X> <inputFile_y> <outputFile> <analMode> <k> <inputMode> <outputMode> <startInd> <endInd>"
   exit(-1)
 
-def parseVector(line):
+def parseVector(line,mode=None,xyz=None,inds=None):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
-	return ts
-
-def convert(vec,mode):
-	if (mode == "dff") :
-		meanVal = mean(vec)
-		return (vec - meanVal) / (meanVal + 0.1)
-	if (mode == "raw") :
-		return vec
+	if inds is not None :
+		ts = ts[inds[0]:inds[1]]
+	if mode == "dff" :
+		meanVal = mean(ts)
+		ts = (ts - meanVal) / (meanVal + 0.1)
+	if xyz is not None :
+		return ((int(vec[0]),int(vec[1]),int(vec[2])),ts)
+	else :
+		return ts
 
 def clip(vec,val):
 	vec[vec<val] = val
@@ -84,16 +85,14 @@ logging.info("(lowdim) loading data")
 y = loadmat(inputFile_y)['y']
 y = y.astype(float)
 lines_X = sc.textFile(inputFile_X) # the data
-data = lines_X.map(parseVector)
 
 if len(argsIn) > 6 :
 	logging.info("(lowdim) using specified indices")
 	startInd = float(argsIn[8])
 	endInd = float(argsIn[9])
-	X = data.map(lambda x : x[startInd:endInd]).map(lambda x : convert(x,inputMode))
-	y = y[:,startInd:endInd]
+	X = lines_X.map(lambda x : parseVector(x,"dff",None,(startInd,endInd))).cache()
 else :
-	X = data.map(lambda x : convert(x,inputMode))
+	X = lines_X.map(parseVector).cache()
 
 if analMode == 'mean' :
 	resp = X.map(lambda x : dot(y,x))
