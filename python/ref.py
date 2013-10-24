@@ -13,6 +13,8 @@ from scipy.io import *
 from pyspark import SparkContext
 import logging
 
+print(len(sys.argv))
+
 if len(sys.argv) < 3:
   print >> sys.stderr, \
   "(ref) usage: ref <master> <inputFileX> <outputFile> <mode> <startInds> <endInd>"
