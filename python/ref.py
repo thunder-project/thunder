@@ -13,7 +13,7 @@ from scipy.io import *
 from pyspark import SparkContext
 import logging
 
-print(len(sys.argv))
+print(sys.argv)
 
 if len(sys.argv) < 5:
   print >> sys.stderr, \
@@ -37,7 +37,7 @@ logging.info("(ref) loading data")
 lines_X = sc.textFile(inputFile_X) # the data
 X = lines_X.map(parseVector).cache()
 
-if len(sys.argv > 4) :
+if len(sys.argv) > 5 :
 	startInd = float(sys.argv[5])
 	endInd = float(sys.argv[6])
 	X = X.map(lambda (k,x) : (k,x[startInd:endInd]))
