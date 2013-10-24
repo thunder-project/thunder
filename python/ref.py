@@ -39,6 +39,7 @@ lines_X = sc.textFile(inputFile_X) # the data
 X = lines_X.map(parseVector).cache()
 
 if len(argsIn) > 4 :
+	loggin.info("(lowdim) using specified indices")
 	startInd = float(argsIn[4])
 	endInd = float(argsIn[5])
 	X = X.map(lambda (k,x) : (k,x[startInd:endInd]))
