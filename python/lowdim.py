@@ -18,7 +18,7 @@ import logging
 
 argsIn = sys.argv[1:]
 
-if len(argsIn) < 7:
+if len(argsIn) < 8:
   print >> sys.stderr, \
   "(lowdim) usage: lowdim <master> <inputFile_X> <inputFile_y> <outputFile> <analMode> <k> <inputMode> <outputMode> <startInd> <endInd>"
   exit(-1)
@@ -86,7 +86,7 @@ y = loadmat(inputFile_y)['y']
 y = y.astype(float)
 lines_X = sc.textFile(inputFile_X) # the data
 
-if len(argsIn) > 7 :
+if len(argsIn) > 8 :
 	logging.info("(lowdim) using specified indices")
 	startInd = float(argsIn[8])
 	endInd = float(argsIn[9])
