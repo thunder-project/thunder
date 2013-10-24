@@ -15,7 +15,7 @@ import logging
 
 print(len(sys.argv))
 
-if len(sys.argv) < 3:
+if len(sys.argv) < 5:
   print >> sys.stderr, \
   "(ref) usage: ref <master> <inputFileX> <outputFile> <mode> <startInds> <endInd>"
   exit(-1)
