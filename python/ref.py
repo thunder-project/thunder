@@ -13,7 +13,10 @@ from scipy.io import *
 from pyspark import SparkContext
 import logging
 
-print(sys.argv)
+
+argsIn = sys.argv[1:]
+
+print(argsIn)
 
 if len(sys.argv) < 5:
   print >> sys.stderr, \
