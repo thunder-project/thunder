@@ -29,7 +29,9 @@ object nnmf {
   def parseVector(line: String): (Array[Int],DoubleMatrix1D) = {
     var vec = line.split(' ').drop(3).map(_.toDouble)
     val inds = line.split(' ').take(3).map(_.toDouble.toInt) // xyz coords
-    val mean = vec.sum / vec.length
+    //val sortVals = vec.sorted
+    val mean = vec.min
+    //val mean = vec.sum / vec.length
     vec = vec.map(x => (x - mean)/(mean + 0.1)) // time series
     return (inds,factory1D.make(vec))
   }
