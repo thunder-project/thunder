@@ -20,7 +20,7 @@ argsIn = sys.argv[1:]
 
 if len(argsIn) < 8:
   print >> sys.stderr, \
-  "(lowdim) usage: lowdim <master> <inputFile_X> <inputFile_y> <outputFile> <analMode> <k> <inputMode> <outputMode> <startInd> <endInd>"
+  "(lowdim) usage: lowdim <master> <inputFile_X> <inputFile_y> <outputFile> <analMode> <k> <inputMode> <outputMode> <startInd> <endInd> <shuf>"
   exit(-1)
 
 def parseVector(line,mode="raw",xyz=0,inds=None):
@@ -94,6 +94,11 @@ if len(argsIn) > 8 :
 	X = lines_X.map(lambda x : parseVector(x,"dff",0,(startInd,endInd))).cache()
 else :
 	X = lines_X.map(lambda x : parseVector(x,"dff")).cache()
+
+if len(argsIn) > 9 :
+	for iy in  range(0,y.shape[0]) :
+		shift = int(round(random.rand(1)*y.shape[1]))
+		y[iy,:] = roll(y[iy,:],shift)
 
 if analMode == 'mean' :
 	resp = X.map(lambda x : dot(y,x))
