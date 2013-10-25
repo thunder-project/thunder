@@ -56,7 +56,7 @@ object rrr {
 
   def printToImage(rdd: RDD[(Array[Int],Double)], w: Int, h: Int, d: Array[Int], fileName: String): Unit = {
     for (id <- d) {
-      val plane = rdd.filter(_._1(2) == d)
+      val plane = rdd.filter(_._1(2) == id)
       val X = plane.map(_._1(0)).collect()
       val Y = plane.map(_._1(1)).collect()
       val RGB = plane.map(_._2).collect()
