@@ -95,12 +95,17 @@ if len(argsIn) > 8 :
 else :
 	X = lines_X.map(lambda x : parseVector(x,"dff")).cache()
 
+print(y[:,0])
+
 if len(argsIn) > 9 :
 	if argsIn[10] == 1 :
 		for iy in  range(0,y.shape[0]) :
 			#shift = int(round(random.rand(1)*y.shape[1]))
 			#y[iy,:] = roll(y[iy,:],shift)
 			random.shuffle(y[iy,:])
+
+print(y[:,0])
+
 
 if analMode == 'mean' :
 	resp = X.map(lambda x : dot(y,x))
