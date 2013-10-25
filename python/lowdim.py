@@ -96,9 +96,10 @@ else :
 	X = lines_X.map(lambda x : parseVector(x,"dff")).cache()
 
 if len(argsIn) > 9 :
-	for iy in  range(0,y.shape[0]) :
-		shift = int(round(random.rand(1)*y.shape[1]))
-		y[iy,:] = roll(y[iy,:],shift)
+	if argsIn[10] == 1 :
+		for iy in  range(0,y.shape[0]) :
+			shift = int(round(random.rand(1)*y.shape[1]))
+			y[iy,:] = roll(y[iy,:],shift)
 
 if analMode == 'mean' :
 	resp = X.map(lambda x : dot(y,x))
