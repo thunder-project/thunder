@@ -97,7 +97,8 @@ else :
 
 print(y[:,0])
 
-if len(argsIn) > 9 :
+if len(argsIn) > 10 :
+	print(argsIn[10])
 	if argsIn[10] == 1 :
 		print("shuffling")
 		for iy in range(0,y.shape[0]) :
