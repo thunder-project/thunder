@@ -44,9 +44,9 @@ object nnmf {
   }
 
 
-  def printToImage(rdd: RDD[(Array[Int],Double)], w: Int, h: Int, d: Int, fileName: String): Unit = {
-    for (id <- 0 until d) {
-      val plane = rdd.filter(_._1(2) == d)
+  def printToImage(rdd: RDD[(Array[Int],Double)], w: Int, h: Int, d: Array[Int], fileName: String): Unit = {
+    for (id <- d) {
+      val plane = rdd.filter(_._1(2) == id)
       val X = plane.map(_._1(0)).collect()
       val Y = plane.map(_._1(1)).collect()
       val RGB = plane.map(_._2).collect()
@@ -101,11 +101,11 @@ object nnmf {
     val data = sc.textFile(inputFile).map(parseVector _).cache()
     val w = data.map{case (k,v) => k(0)}.top(1).take(1)(0)
     val h = data.map{case (k,v) => k(1)}.top(1).take(1)(0)
-    val d = data.map{case (k,v) => k(2)}.top(1).take(1)(0)
+    val d = data.filter{case (k,v) => (k(0) == 1) & (k(1) == 1)}.map{case (k,v) => k(2)}.toArray()
     val n = data.count().toInt
     val m = data.first()._2.size
     var iter = 0
-    val nIter = 10
+    val nIter = 20
 
     // random initialization
     var u = factory2D.make(k,m)
