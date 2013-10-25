@@ -32,7 +32,10 @@ object rrr {
   def parseVector(line: String): ((Array[Int]), DoubleMatrix1D) = {
     var vec = line.split(' ').drop(3).map(_.toDouble)
     val inds = line.split(' ').take(3).map(_.toDouble.toInt) // xyz coords
-    val mean = vec.sum / vec.length
+    val n = vec.length
+    val sortVals = vec.sorted
+    val mean = sortVals((n/4).toInt)
+    //val mean = vec.sum / vec.length
     vec = vec.map(x => (x - mean)/(mean + 0.1)) // time series
     return (inds,factory1D.make(vec))
   }
@@ -51,8 +54,8 @@ object rrr {
     }
   }
 
-  def printToImage(rdd: RDD[(Array[Int],Double)], w: Int, h: Int, d: Int, fileName: String): Unit = {
-    for (id <- 0 until d) {
+  def printToImage(rdd: RDD[(Array[Int],Double)], w: Int, h: Int, d: Array[Int], fileName: String): Unit = {
+    for (id <- d) {
       val plane = rdd.filter(_._1(2) == d)
       val X = plane.map(_._1(0)).collect()
       val Y = plane.map(_._1(1)).collect()
@@ -102,7 +105,7 @@ object rrr {
     println("getting dimensions")
     val w = data.map{case (k,v) => k(0)}.top(1).take(1)(0)
     val h = data.map{case (k,v) => k(1)}.top(1).take(1)(0)
-    val d = data.map{case (k,v) => k(2)}.top(1).take(1)(0)
+    val d = data.filter{case (k,v) => (k(0) == 1) & (k(1) == 1)}.map{case (k,v) => k(2)}.toArray()
 
     println("initializing variables")
     val n = data.count().toInt
@@ -132,7 +135,7 @@ object rrr {
       u = alg.mult(data.map(_._2).zip(v.map (x => alg.mult(vinv,x))).map( x => outerProd(x._2,x._1)).reduce(_.assign(_,Functions.plus)),alg.transpose(alg.inverse(alg.transpose(X))))
 
       // clip negative values
-      //u.assign(Functions.bindArg1(Functions.max,0))
+      u.assign(Functions.bindArg1(Functions.max,0))
 
       // precompute pinv(U * X)
       val ux = alg.mult(u,X)
@@ -142,7 +145,7 @@ object rrr {
       v = data.map(_._2).map( x => alg.mult(alg.transpose(uxinv),x))
 
       // clip negative values
-      //v = v.map(_.assign(Functions.bindArg1(Functions.max,0)))
+      v = v.map(_.assign(Functions.bindArg1(Functions.max,0)))
 
       iter += 1
 
