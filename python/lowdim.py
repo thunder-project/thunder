@@ -99,6 +99,7 @@ print(y[:,0])
 
 if len(argsIn) > 9 :
 	if argsIn[10] == 1 :
+		print("shuffling")
 		for iy in range(0,y.shape[0]) :
 			#shift = int(round(random.rand(1)*y.shape[1]))
 			#y[iy,:] = roll(y[iy,:],shift)
