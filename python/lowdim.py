@@ -98,8 +98,9 @@ else :
 if len(argsIn) > 9 :
 	if argsIn[10] == 1 :
 		for iy in  range(0,y.shape[0]) :
-			shift = int(round(random.rand(1)*y.shape[1]))
-			y[iy,:] = roll(y[iy,:],shift)
+			#shift = int(round(random.rand(1)*y.shape[1]))
+			#y[iy,:] = roll(y[iy,:],shift)
+			random.shuffle(y[iy,:])
 
 if analMode == 'mean' :
 	resp = X.map(lambda x : dot(y,x))
