@@ -104,9 +104,9 @@ if len(argsIn) > 10 :
 	if shufType == 'stimrand':
 		for iy in range(0,y.shape[0]) :
 			random.shuffle(y[iy,:])
-	if shufType = 'resprnd':
+	if shufType == 'resprnd':
 		X = X.map(lambda x : random.shuffle(x))
-	if shufType = 'respcirc':
+	if shufType == 'respcirc':
 		n = len(X.first())
 		X = X.map(lambda x : roll(x,int(round(random.rand(1)*n))))
 
