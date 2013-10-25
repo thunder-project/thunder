@@ -82,6 +82,11 @@ object nnmf {
 
   def main(args: Array[String]) {
 
+    if (args.length < 5) {
+      System.err.println("Usage: nnmf <master> <inputFile> <outputFileTxt> <outputFileImg> <k>")
+      System.exit(1)
+    }
+
     val master = args(0)
     val inputFile = args(1)
     val outputFileTxt = args(2)
