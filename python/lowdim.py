@@ -102,7 +102,9 @@ if len(argsIn) > 9 :
 		for iy in  range(0,y.shape[0]) :
 			#shift = int(round(random.rand(1)*y.shape[1]))
 			#y[iy,:] = roll(y[iy,:],shift)
-			random.shuffle(y[iy,:],random.random)
+			tmp = y[iy,:]
+			random.shuffle(tmp)
+			y[iy,:] = tmp
 
 print(y[:,0])
 
