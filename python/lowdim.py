@@ -96,12 +96,19 @@ else :
 	X = lines_X.map(lambda x : parseVector(x,"dff")).cache()
 
 if len(argsIn) > 10 :
-	if int(argsIn[10]) == 1 :
-		print("shuffling")
+	shufType = argsIn[10]
+	if shufType == 'stimcirc' :
 		for iy in range(0,y.shape[0]) :
 			shift = int(round(random.rand(1)*y.shape[1]))
 			y[iy,:] = roll(y[iy,:],shift)
-			#random.shuffle(y[iy,:])
+	if shufType == 'stimrand':
+		for iy in range(0,y.shape[0]) :
+			random.shuffle(y[iy,:])
+	if shufType = 'resprnd':
+		X = X.map(lambda x : random.shuffle(x))
+	if shufType = 'respcirc':
+		n = len(X.first())
+		X = X.map(lambda x : roll(x,int(round(random.rand(1)*n))))
 
 if analMode == 'mean' :
 	resp = X.map(lambda x : dot(y,x))
