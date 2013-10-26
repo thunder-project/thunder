@@ -56,10 +56,10 @@ object rrr {
 
   def printToImage(rdd: RDD[(Array[Int],Double)], w: Int, h: Int, d: Array[Int], fileName: String): Unit = {
     for (id <- d) {
-      val plane = rdd.filter(_._1(2) == id)
-      val X = plane.map(_._1(0)).collect()
-      val Y = plane.map(_._1(1)).collect()
-      val RGB = plane.map(_._2).collect()
+      val plane = rdd.filter(_._1(2) == id).map{case (k,v) => (k(0),k(1),v)}
+      val X = plane.map(_._1)
+      val Y = plane.map(_._2)
+      val RGB = plane.map(_._3)
       val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
       val raster = img.getRaster()
       (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
@@ -135,7 +135,7 @@ object rrr {
       u = alg.mult(data.map(_._2).zip(v.map (x => alg.mult(vinv,x))).map( x => outerProd(x._2,x._1)).reduce(_.assign(_,Functions.plus)),alg.transpose(alg.inverse(alg.transpose(X))))
 
       // clip negative values
-      u.assign(Functions.bindArg1(Functions.max,0))
+      //u.assign(Functions.bindArg1(Functions.max,0))
 
       // precompute pinv(U * X)
       val ux = alg.mult(u,X)
@@ -145,7 +145,7 @@ object rrr {
       v = data.map(_._2).map( x => alg.mult(alg.transpose(uxinv),x))
 
       // clip negative values
-      v = v.map(_.assign(Functions.bindArg1(Functions.max,0)))
+      //v = v.map(_.assign(Functions.bindArg1(Functions.max,0)))
 
       iter += 1
 
@@ -155,11 +155,11 @@ object rrr {
 
     for (i <- 0 until k) {
       val result = v.map(x => x.get(i))
-      val mx = result.top(1).take(1)(0)
-      printToImage(data.map(_._1).zip(result).map{case (k,v) => (k,(255*(v/mx)).toInt)}, w, h, d, outputFileImg + i.toString)
       //val mx = result.top(1).take(1)(0)
-      //val mn = -result.map(x => -x).top(1).take(1)(0)
-      //printToImage(data.map(_._1).zip(result).map{case (k,v) => (k,(255*((v-mn)/(mn-mx))).toInt)},w,h,d,outputFileImg + i.toString)
+      //printToImage(data.map(_._1).zip(result).map{case (k,v) => (k,(255*(v/mx)).toInt)}, w, h, d, outputFileImg + i.toString)
+      val mx = result.top(1).take(1)(0)
+      val mn = -result.map(x => -x).top(1).take(1)(0)
+      printToImage(data.map(_._1).zip(result).map{case (k,v) => (k,(255*((v-mn)/(mn-mx))).toInt)},w,h,d,outputFileImg + i.toString)
     }
 
 
