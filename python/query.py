@@ -50,6 +50,7 @@ else :
 		indsTmp = inds[i]
 		n = len(indsTmp)
 		ts[:,i] = data.filter(lambda (k,x) : k in indsTmp).map(lambda (k,x) : x).reduce(lambda x,y :x+y) / n
+		print(data.filter(lambda (k,x) : k in indsTmp).map(lambda (k,x) : k).collect())
 	savemat(outputFile+"-ts.mat",mdict={'ts':ts},oned_as='column',do_compression='true')
 
 
