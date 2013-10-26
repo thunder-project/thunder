@@ -43,7 +43,7 @@ object rrr {
 
   def randomVector(index: Int, seed1: Int, k: Int) : DoubleMatrix1D ={
     val rand = new Random(index*seed1)
-    return factory1D.make(Array.fill(k)(rand.nextDouble))
+    return factory1D.make(Array.fill(k)(rand.nextDouble - 0.5))
   }
 
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
