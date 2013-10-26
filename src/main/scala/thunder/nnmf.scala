@@ -133,7 +133,7 @@ object nnmf {
       u = data.map(_._2).zip(v.map (x => alg.mult(vinv,x))).map( x => outerProd(x._2,x._1)).reduce(_.assign(_,Functions.plus))
 
       // clip negative values
-      //u.assign(Functions.bindArg1(Functions.max,0))
+      u.assign(Functions.bindArg1(Functions.max,0))
 
       // precompute pinv(U)
       val uinv = alg.transpose(alg.inverse(alg.transpose(u)))
@@ -142,7 +142,7 @@ object nnmf {
       v = data.map(_._2).map( x => alg.mult(alg.transpose(uinv),x))
 
       // clip negative values
-      //v = v.map(_.assign(Functions.bindArg1(Functions.max,0)))
+      v = v.map(_.assign(Functions.bindArg1(Functions.max,0)))
 
       iter += 1
 
@@ -152,11 +152,8 @@ object nnmf {
 
     for (i <- 0 until k) {
       val result = v.map(x => x.get(i))
-      //val mx = result.top(1).take(1)(0)
-      //printToImage(data.map(_._1).zip(result).map{case (k,v) => (k,(255*(v/mx)).toInt)}, w, h, d, outputFileImg + i.toString)
       val mx = result.top(1).take(1)(0)
-      val mn = -result.map(x => -x).top(1).take(1)(0)
-      printToImage(data.map(_._1).zip(result).map{case (k,v) => (k,(255*((v-mn)/(mn-mx))).toInt)},w,h,d,outputFileImg + i.toString)
+      printToImage(data.map(_._1).zip(result).map{case (k,v) => (k,(255*(v/mx)).toInt)}, w, h, d, outputFileImg + i.toString)
     }
 
   }
