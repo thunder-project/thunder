@@ -21,10 +21,11 @@ def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
 	#k = int(vec[0]) + int((vec[1] - 1)*1235) + int((vec[2] - 1)*1248*1235)
-	k = int(vec[0]) + int((vec[1] - 1)*1235)
+	k = (int(vec[0]),int(vec[1]))
+	k2 = int(vec[0]) + int((vec[1] - 1)*1235)
 	meanVal = mean(ts)
 	ts = (ts - meanVal) / (meanVal + 0.1) # convert to dff
-	return (k,ts)
+	return (k,k2,ts)
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "query")
@@ -41,8 +42,8 @@ inds = loadmat(indsFile)['inds'][0]
 if len(inds) == 1 :
 	indsTmp = inds[0]
 	n = len(indsTmp)
-	ts = data.filter(lambda (k,x) : k in indsTmp).map(lambda (k,x) : x).reduce(lambda x,y :x+y) / n
-	print(data.filter(lambda (k,x) : k in indsTmp).map(lambda (k,x) : k).collect())
+	ts = data.filter(lambda (k,k2,x) : k2 in indsTmp).map(lambda (k,k2,x) : x).reduce(lambda x,y :x+y) / n
+	print(data.filter(lambda (k,k2,x) : k2 in indsTmp).map(lambda (k,k2,x) : k).collect())
 	savemat(outputFile+"-ts.mat",mdict={'ts':ts},oned_as='column',do_compression='true')
 else :
 	nInds = len(inds)
