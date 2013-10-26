@@ -49,8 +49,8 @@ else :
 	for i in range(0,nInds) :
 		indsTmp = inds[i]
 		n = len(indsTmp)
-		ts = data.filter(lambda (k,x) : k in indsTmp).map(lambda (k,x) : x).reduce(lambda x,y :x+y) / n
-		savemat(outputFile+str(i)+"-ts.mat",mdict={'ts':ts},oned_as='column',do_compression='true')
+		ts[:,i] = data.filter(lambda (k,x) : k in indsTmp).map(lambda (k,x) : x).reduce(lambda x,y :x+y) / n
+	savemat(outputFile+"-ts.mat",mdict={'ts':ts},oned_as='column',do_compression='true')
 
 
 
