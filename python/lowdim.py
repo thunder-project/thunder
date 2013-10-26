@@ -148,7 +148,7 @@ if outputMode == 'traj':
 	traj = zeros((k,len(X.first())))
 	for ik in range(0,k):
 		logging.info("(lowdim) writing trajectories for pc " + str(ik))
-		traj[ik,:] = X.map(lambda x : x * inner(dot(y,x) - mean(dot(y,x)),sortedDim2) ).reduce(lambda x,y : x + y)
+		traj[ik,:] = X.map(lambda x : outer(x,inner(dot(y,x) - mean(dot(y,x)),sortedDim2))).reduce(lambda x,y : x + y)
 	savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
 if outputMode == 'maps':
