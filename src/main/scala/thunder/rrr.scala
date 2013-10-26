@@ -162,7 +162,7 @@ object rrr {
       printToImage(data.map(_._1).zip(result).map{case (k,v) => (k,(255*((v-mn)/(mn-mx))).toInt)},w,h,d,outputFileImg + i.toString)
     }
 
-
+    System.exit(1)
 
   }
 
