@@ -23,7 +23,7 @@ def parseVector(line):
 	k = int(vec[0]) + int((vec[1] - 1)*1248) # constant is the max value along first dimension
 	meanVal = mean(ts)
 	ts = (ts - meanVal) / (meanVal + 0.1) # convert to dff
-	return (k,k2,ts)
+	return (k,ts)
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "query")
