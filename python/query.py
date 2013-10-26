@@ -21,9 +21,9 @@ def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
 	#k = int(vec[0]) + int((vec[1] - 1)*1235) + int((vec[2] - 1)*1248*1235)
-	k = int(vec[1]) + int((vec[0] - 1)*924)
-	#meanVal = mean(ts)
-	#ts = (ts - meanVal) / (meanVal + 0.1) # convert to dff
+	k = int(vec[1]) + int((vec[0] - 1)*1235)
+	meanVal = mean(ts)
+	ts = (ts - meanVal) / (meanVal + 0.1) # convert to dff
 	return (k,ts)
 
 # parse inputs
@@ -36,11 +36,22 @@ logging.basicConfig(filename=outputFile+'-stdout.log',level=logging.INFO,format=
 logging.info("(query) loading data")
 data = sc.textFile(inputFile).map(parseVector) # the data
 
-inds = loadmat(indsFile)['inds']
-n = len(inds)
+inds = loadmat(indsFile)['inds'][0]
 
-ts = data.filter(lambda (k,x) : k in inds).map(lambda (k,x) : x).reduce(lambda x,y :x+y) / n
+if len(inds) == 1 :
+	indsTmp = inds[0]
+	n = len(indsTmp)
+	ts = data.filter(lambda (k,x) : k in indsTmp).map(lambda (k,x) : x).reduce(lambda x,y :x+y) / n
+	savemat(outputFile+"-ts.mat",mdict={'ts':ts},oned_as='column',do_compression='true')
+else :
+	nInds = len(inds)
+	ts = zeros((len(data.first()(1)),nInds))
+	for i in range(0,nInds) :
+		indsTmp = inds[i]
+		n = len(indsTmp)
+		ts = data.filter(lambda (k,x) : k in indsTmp).map(lambda (k,x) : x).reduce(lambda x,y :x+y) / n
+		savemat(outputFile+str(i)+"-ts.mat",mdict={'ts':ts},oned_as='column',do_compression='true')
 
-savemat(outputFile+"-ts.mat",mdict={'ts':ts},oned_as='column',do_compression='true')
+
 
 
