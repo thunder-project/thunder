@@ -37,6 +37,7 @@ object rrr {
     //val mean = sortVals((n/4).toInt)
     val mean = vec.sum / vec.length
     vec = vec.map(x => (x - mean)/(mean + 0.1)) // time series
+    vec = vec.map(x => x - vec.sum / vec.length)
     return (inds,factory1D.make(vec))
   }
 
@@ -119,7 +120,6 @@ object rrr {
     var u = factory2D.make(k,m)
     val seed1 = Random.nextInt*1000
     var v = data.map{case (k,v) => k(0) + (k(1)-1)*h}.map(randomVector(_,seed1,k))
-
 
     while (iter < nIter) {
 
