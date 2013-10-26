@@ -45,7 +45,7 @@ if len(inds) == 1 :
 	savemat(outputFile+"-ts.mat",mdict={'ts':ts},oned_as='column',do_compression='true')
 else :
 	nInds = len(inds)
-	ts = zeros((len(data.first()(1)),nInds))
+	ts = zeros((len(data.first()[1]),nInds))
 	for i in range(0,nInds) :
 		indsTmp = inds[i]
 		n = len(indsTmp)
