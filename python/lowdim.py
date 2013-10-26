@@ -112,7 +112,7 @@ if len(argsIn) > 10 :
 
 if analMode == 'mean' :
 	resp = X.map(lambda x : dot(y,x))
-if analMode == 'standardize' :
+if analMode == 'corr' :
 	resp = X.map(lambda x : dot(y,(x-mean(x))/norm(x)))
 if analMode == 'regress' : 
 	yhat = dot(inv(dot(y,transpose(y))),y)
