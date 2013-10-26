@@ -34,7 +34,7 @@ outputFile = str(sys.argv[4]) + "-query"
 logging.basicConfig(filename=outputFile+'-stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
 
 logging.info("(query) loading data")
-data = sc.textFile(inputFile).map(parseVector) # the data
+data = sc.textFile(inputFile).map(parseVector).cache() # the data
 
 inds = loadmat(indsFile)['inds'][0]
 
