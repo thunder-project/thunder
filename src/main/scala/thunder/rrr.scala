@@ -113,9 +113,8 @@ object rrr {
     val m = data.first()._2.size()
     val c = X.rows
 
-    val k1 = 3
     var iter = 0
-    val nIter = 10
+    val nIter = 20
 
     var u = factory2D.make(k,m)
     val seed1 = Random.nextInt*1000
