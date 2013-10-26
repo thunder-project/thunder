@@ -135,7 +135,7 @@ object rrr {
       u = alg.mult(data.map(_._2).zip(v.map (x => alg.mult(vinv,x))).map( x => outerProd(x._2,x._1)).reduce(_.assign(_,Functions.plus)),alg.transpose(alg.inverse(alg.transpose(X))))
 
       // clip negative values
-      u.assign(Functions.bindArg1(Functions.max,0))
+      //u.assign(Functions.bindArg1(Functions.max,0))
 
       // precompute pinv(U * X)
       val ux = alg.mult(u,X)
@@ -145,7 +145,7 @@ object rrr {
       v = data.map(_._2).map( x => alg.mult(alg.transpose(uxinv),x))
 
       // clip negative values
-      v = v.map(_.assign(Functions.bindArg1(Functions.max,0)))
+      //v = v.map(_.assign(Functions.bindArg1(Functions.max,0)))
 
       iter += 1
 
