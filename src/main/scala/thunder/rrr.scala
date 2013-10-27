@@ -153,7 +153,7 @@ object rrr {
     printMatrix(u,outputFileTxt + ".txt")
 
     for (i <- 0 until k) {
-      val result = v.map(x => x.get(i))
+      val result = v.map(x => x.get(i)).cache()
       //val mx = result.top(1).take(1)(0)
       //printToImage(data.map(_._1).zip(result).map{case (k,v) => (k,(255*(v/mx)).toInt)}, w, h, d, outputFileImg + i.toString)
       val mx = result.top(1).take(1)(0)
