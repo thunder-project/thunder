@@ -171,7 +171,7 @@ if outputMode == 'tuning':
 	r = resp.map(lambda x : float16(sqrt(sum(inner(x,sortedDim2) ** 2))))
 	savemat(outputFile+"/"+"r.mat",mdict={'r':r.collect()},oned_as='column',do_compression='true')
 	p = resp.map(lambda x : getTuningParams(xvals,dot(inner(x,sortedDim2),sortedDim2)))
-	savemat(outputFile+"/"+"tuning-param.mat",mdict={'p':p.toArray()},oned_as='column',do_compression='true')
+	savemat(outputFile+"/"+"tuning-param.mat",mdict={'p':p.collect()},oned_as='column',do_compression='true')
 
 if outputMode == 'pie':
 	nT = 10
