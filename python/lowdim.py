@@ -168,12 +168,10 @@ if outputMode == 'maps':
 
 if outputMode == 'tuning':
 	xvals = arange(0,2*pi,2*pi/12)
-	r = resp.map(lambda x : sqrt(sum(inner(x,sortedDim2) ** 2)))
+	r = resp.map(lambda x : float16(sqrt(sum(inner(x,sortedDim2) ** 2))))
 	savemat(outputFile+"/"+"r.mat",mdict={'r':r.collect()},oned_as='column',do_compression='true')
-	params = resp.map(lambda x : getTuningParams(xvals,dot(inner(x,sortedDim2),sortedDim2)))
-	for ip in range(0,2) :
-		p = params.map(lambda x : float16(x[ip]))
-		savemat(outputFile+"/"+"tuning-param-"+str(ip)+".mat",mdict={'p':p.collect()},oned_as='column',do_compression='true')
+	p = resp.map(lambda x : getTuningParams(xvals,dot(inner(x,sortedDim2),sortedDim2)))
+	savemat(outputFile+"/"+"tuning-param-"+str(ip)+".mat",mdict={'p':p.toArray()},oned_as='column',do_compression='true')
 
 if outputMode == 'pie':
 	nT = 10
