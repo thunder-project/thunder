@@ -167,7 +167,7 @@ if outputMode == 'maps':
 		savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
 
 if outputMode == 'tuning':
-	xvals = arange(-pi,pi,2*pi/12)
+	xvals = arange(0,2*pi,2*pi/12)
 	r = resp.map(lambda x : sqrt(sum(inner(x,sortedDim2) ** 2)))
 	savemat(outputFile+"/"+"r.mat",mdict={'r':r.collect()},oned_as='column',do_compression='true')
 	params = resp.map(lambda x : getTuningParams(xvals,dot(inner(x,sortedDim2),sortedDim2)))
