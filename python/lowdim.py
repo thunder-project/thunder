@@ -68,7 +68,7 @@ def inRange(val,rng1,rng2):
 
 def getTuningParams(valx,valy) :
 	y = (valy - valy.min())/(valy.max() - valy.min())
-	r = inner(y,exp(1j*valx))[0]
+	r = inner(y,exp(1j*valx))
 	mu = angle(r)
 	v = absolute(r)/sum(y)
 	return (mu,v)
