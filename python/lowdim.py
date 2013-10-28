@@ -66,6 +66,13 @@ def inRange(val,rng1,rng2):
 	else:
 		return False
 
+def getTuningParams(valx,valy) :
+	y = (valy - valy.min())/(valy.max() - valy.min())
+	r = inner(y,exp(1j*valx))[0]
+	mu = angle(r)
+	v = absolute(r)/sum(y)
+	return (mu,v)
+
 # parse inputs
 sc = SparkContext(argsIn[0], "lowdim")
 inputFile_X = str(argsIn[1])
@@ -160,11 +167,13 @@ if outputMode == 'maps':
 		savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
 
 if outputMode == 'tuning':
-	for ik in range(0,k):
-		logging.info("(lowdim) writing scores for pc " + str(ik))
-		#out = X.map(lambda x : float16(inner(dot(y,x) - mean(dot(y,x)),sortedDim2[ik,:])))
-		out = resp.map(lambda x : float16(inner(x,sortedDim2[ik,:])))
-		savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
+	xvals = arange(0,2*pi,2*pi/12)
+	r = resp.map(lambda x : sqrt(sum(inner(x,sortedDim2) ** 2)))
+	savemat(outputFile+"/"+"r.mat",mdict={'r':r.collect()},oned_as='column',do_compression='true')
+	params = resp.map(lambda x : getTuningParams(xvals,inner(x,sortedDim2) * sortedDim2))
+	for ip in range(0,2) :
+		p = params.map(lambda x : float16(params[ip]))
+		savemat(outputFile+"/"+"tuning-param-"+str(ip)+".mat",mdict={'p':p.collect()},oned_as='column',do_compression='true')
 
 if outputMode == 'pie':
 	nT = 10
