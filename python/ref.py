@@ -46,7 +46,7 @@ logging.info("(ref) loading data")
 lines_X = sc.textFile(inputFile_X) # the data
 
 if len(argsIn) > 4 :
-	logging.info("(lowdim) using specified indices")
+	logging.info("(ref) using specified indices")
 	startInd = float(argsIn[4])
 	endInd = float(argsIn[5])
 	X = lines_X.map(lambda x : parseVector(x,"raw",1,(startInd,endInd))).cache()
