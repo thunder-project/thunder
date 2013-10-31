@@ -80,12 +80,6 @@ def getRegression(x,y) :
 	resp = concatenate((resp[inds1] - mean(resp[inds1]),resp[inds2] - mean(resp[inds2])))
 	return resp
 
-def signedNorm(x) :
-	if abs(max(x)) > abs(min(x)) :
-		return sign(max(x)) * norm(x)
-	if abs(max(x)) <= abs(min(x)) :
-		return sign(min(x)) * norm(x)
-
 def getTiming(r) : 
 	x = arange(0,20)
 	r = (r - min(r)) / (max(r) - min(r))
@@ -152,8 +146,8 @@ if analMode == 'regress' :
 if analMode == 'regress2' : 
 	yhat = dot(inv(dot(y,transpose(y))),y)
 	resp = X.map(lambda x : getRegression(x,yhat))
-	p1 = resp.map(lambda r : signedNorm(r[0:20])).collect()
-	p2 = resp.map(lambda r : signedNorm(r[20:40])).collect()
+	p1 = resp.map(lambda r : norm(r[0:20])).collect()
+	p2 = resp.map(lambda r : norm(r[20:40])).collect()
 	p3 = resp.map(lambda x : getTiming(r[20:40])).collect()
 	savemat(outputFile+"/"+"p1.mat",mdict={'p1':p1},oned_as='column',do_compression='true')
 	savemat(outputFile+"/"+"p2.mat",mdict={'p2':p2},oned_as='column',do_compression='true')
