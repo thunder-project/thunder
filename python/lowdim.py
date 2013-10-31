@@ -147,9 +147,11 @@ if analMode == 'regress' :
 if analMode == 'regress2' : 
 	yhat = dot(inv(dot(y,transpose(y))),y)
 	resp = X.map(lambda x : getRegression(x,yhat))
+	r = X.map(lambda x : norm(x))
 	p1 = resp.map(lambda r : norm(r[0:20])).collect()
 	p2 = resp.map(lambda r : norm(r[20:40])).collect()
 	p3 = resp.map(lambda r : getTiming(r[20:40])).collect()
+	savemat(outputFile+"/"+"r.mat",mdict={'r':r},oned_as='column',do_compression='true')
 	savemat(outputFile+"/"+"p1.mat",mdict={'p1':p1},oned_as='column',do_compression='true')
 	savemat(outputFile+"/"+"p2.mat",mdict={'p2':p2},oned_as='column',do_compression='true')
 	savemat(outputFile+"/"+"p3.mat",mdict={'p3':p3},oned_as='column',do_compression='true')
