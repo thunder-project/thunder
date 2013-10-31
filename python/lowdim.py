@@ -73,6 +73,12 @@ def getTuningParams(valx,valy) :
 	v = absolute(r)/sum(y)
 	return (mu,v)
 
+def getRegression(x,y) :
+	resp = dot(y,x)[1:]
+	inds1 = range(0,20)
+	inds2 = range(20,40)
+	resp = concatenate((resp[inds1] - mean(resp[inds1]),resp[inds2] - mean(resp[inds2])))
+
 # parse inputs
 sc = SparkContext(argsIn[0], "lowdim")
 inputFile_X = str(argsIn[1])
@@ -131,6 +137,9 @@ if analMode == 'regress' :
 	vals = range(0,360,360/12)
 	tuning = resp.map(lambda x : clip(x,0)).map(lambda x : x / sum(x)).map(lambda x : dot(x,vals)).collect()
 	savemat(outputFile+"/"+"tuning.mat",mdict={'tuning':tuning},oned_as='column',do_compression='true')
+if analMode == 'regress2' : 
+	yhat = dot(inv(dot(y,transpose(y))),y)
+	resp = X.map(lambda x : getRegression(x,yhat))
 
 # compute covariance
 logging.info("(lowdim) getting count")
