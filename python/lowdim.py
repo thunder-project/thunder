@@ -147,7 +147,7 @@ if analMode == 'regress' :
 if analMode == 'regress2' : 
 	yhat = dot(inv(dot(y,transpose(y))),y)
 	resp = X.map(lambda x : getRegression(x,yhat))
-	r = X.map(lambda x : norm(x)).collect()
+	r = resp.map(lambda r : norm(r)).collect()
 	p1 = resp.map(lambda r : norm(r[0:20])).collect()
 	p2 = resp.map(lambda r : norm(r[20:40])).collect()
 	p3 = resp.map(lambda r : getTiming(r[20:40])).collect()
