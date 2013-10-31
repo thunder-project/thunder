@@ -141,6 +141,8 @@ if analMode == 'regress' :
 if analMode == 'regress2' : 
 	yhat = dot(inv(dot(y,transpose(y))),y)
 	resp = X.map(lambda x : getRegression(x,yhat))
+	p1 = resp.map(lambda r : norm(r[0,20]))
+	p2 = resp.map(lambda r : norm(r[20,40]))
 
 # compute covariance
 logging.info("(lowdim) getting count")
