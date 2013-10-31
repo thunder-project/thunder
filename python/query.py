@@ -37,6 +37,9 @@ data = sc.textFile(inputFile).map(parseVector).cache() # the data
 
 inds = loadmat(indsFile)['inds'][0]
 
+
+print(data.filter(lambda (k,x) : k in inds[1]).map(lambda (k,x) : k).collect())
+
 if len(inds) == 1 :
 	indsTmp = inds[0]
 	n = len(indsTmp)
