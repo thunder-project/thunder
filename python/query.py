@@ -21,9 +21,10 @@ def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
 	k = int(vec[0]) + int((vec[1] - 1)*2048) # constant is the max value along first dimension
+	kraw = (int(vec[0]),int(vec[1]))
 	meanVal = mean(ts)
 	ts = (ts - meanVal) / (meanVal + 0.1) # convert to dff
-	return (k,ts)
+	return (k,kraw,ts)
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "query")
@@ -38,7 +39,7 @@ data = sc.textFile(inputFile).map(parseVector).cache() # the data
 inds = loadmat(indsFile)['inds'][0]
 
 
-print(data.filter(lambda (k,x) : k in inds[0]).map(lambda (k,x) : k).collect())
+print(data.filter(lambda (k,kraw,x) : k in inds[0]).map(lambda (k,kraw,x) : kraw).collect())
 
 if len(inds) == 1 :
 	indsTmp = inds[0]
