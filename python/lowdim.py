@@ -83,7 +83,8 @@ def getRegression(x,y) :
 def getTiming(r) : 
 	x = arange(0,20)
 	r = (r - min(r)) / (max(r) - min(r))
-	return sum(x * r)
+	r = r / sum(r)
+	return dot(x,r)
 
 # parse inputs
 sc = SparkContext(argsIn[0], "lowdim")
