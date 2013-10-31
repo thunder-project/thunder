@@ -81,9 +81,9 @@ def getRegression(x,y) :
 	return resp
 
 def signedNorm(x) :
-	if max(x) > min(x)
+	if max(x) > min(x) :
 		return sign(max(x)) * norm(x)
-	if max(x) <= min(x)
+	if max(x) <= min(x) :
 		return sign(min(x)) * norm(x)
 
 # parse inputs
