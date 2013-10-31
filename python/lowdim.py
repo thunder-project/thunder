@@ -78,6 +78,7 @@ def getRegression(x,y) :
 	inds1 = range(0,20)
 	inds2 = range(20,40)
 	resp = concatenate((resp[inds1] - mean(resp[inds1]),resp[inds2] - mean(resp[inds2])))
+	return resp
 
 # parse inputs
 sc = SparkContext(argsIn[0], "lowdim")
