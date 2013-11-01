@@ -104,7 +104,7 @@ if outputMode == 'pca' :
 	for ik in range(0,k) :
 		scores = Y.map(lambda y : float16(inner(getRegression(y,model) - mean(getRegression(y,model)),comps[ik,:])))
 		savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':scores.collect()},oned_as='column',do_compression='true')
-	traj = Y.map(lambda x : outer(x,inner(getRegression(y,model) - mean(getRegression(y,model)),comps))).reduce(lambda x,y : x + y) / n
+	traj = Y.map(lambda y : outer(y,inner(getRegression(y,model) - mean(getRegression(y,model)),comps))).reduce(lambda x,y : x + y) / n
 	savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
 # process output with a parametric tuning curve
