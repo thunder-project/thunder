@@ -39,7 +39,10 @@ def getRegression(y,model) :
 	if model.regressMode == 'mean' :
 		return dot(model.X,y)
 	if model.regressMode == 'linear' :
-		return dot(model.Xhat,y)[1:]
+		b = dot(model.Xhat,y)[1:]
+		inds1 = range(0,20)
+		inds2 = range(20,40)
+		return concatenate((b[inds1] - mean(b[inds1]),b[inds2] - mean(b[inds2])))
 	if model.regressMode == 'bilinear' :
 		return dot(model.Xhat,y)
 
@@ -73,7 +76,7 @@ if regressMode == 'linear' :
 	Xhat = dot(inv(dot(X,transpose(X))),X)
 	model.X = X
 	model.Xhat = Xhat
-if regressMode == 'bilinear' :
+if (regressMode == 'bilinear') :
 	X1 = loadmat(inputFile_X + "_X1.mat")['X1']
 	X2 = loadmat(inputFile_X + "_X2.mat")['X2']
 	X1hat = dot(inv(dot(X1,transpose(X1))),X1)
