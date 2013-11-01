@@ -17,7 +17,7 @@ import logging
 
 argsIn = sys.argv[1:]
 
-if len(argsIn) < 7:
+if len(argsIn) < 6:
   print >> sys.stderr, \
   "(regress) usage: regress <master> <inputFile_Y> <inputFile_X> <outputFile> <analMode> <outputMode>"
   exit(-1)
