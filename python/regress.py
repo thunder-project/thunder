@@ -57,9 +57,9 @@ def getRegression(y,model) :
 		X3hat = dot(inv(dot(X3,transpose(X3))),X3)
 		b2 = dot(X3hat,y)
 		b = b2[1:]
-		if model.outputMode == 'tuning'
+		if model.outputMode == 'tuning' :
 			return b
-		if model.outputMode == 'pca'
+		if model.outputMode == 'pca' :
 			return (b1 - mean(b1))
 
 
