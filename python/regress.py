@@ -54,7 +54,8 @@ def getRegression(y,model) :
 		b1hat = dot(transpose(model.X1),b1)
 		X3 = X2 * b1hat
 		print(shape(X3))
-		X3 = concatenate((ones((shape(X3)[0],1)),X3))
+		print(shape(ones((1,shape(X3)[1]))))
+		X3 = concatenate((ones((1,shape(X3)[1])),X3))
 		X3hat = dot(inv(dot(X3,transpose(X3))),X3)
 		b2 = dot(X3hat,y)
 		b = b2[1:]
