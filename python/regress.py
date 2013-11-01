@@ -121,11 +121,11 @@ if (regressMode == 'bilinear') :
 	model.X1 = X1
 	model.X2 = X2
 	model.X1hat = X1hat
-if outputMode == 'tuning'
+if outputMode == 'tuning' :
 	s = loadmat(inputFile_X + "_s.mat")['s']
 	model.s = s
 	model.tuningMode = opts
-if outputMode == 'pca'
+if outputMode == 'pca' :
 	model.k = int(opts)
 
 # compute parameter estimates
@@ -151,7 +151,7 @@ if outputMode == 'pca' :
 
 # process output with a parametric tuning curve
 if outputMode == 'tuning' :
-	if model.tuningMode == 'circular'
+	if model.tuningMode == 'circular' :
 		p = B.map(lambda b : getTuning(b,model))
 
 
