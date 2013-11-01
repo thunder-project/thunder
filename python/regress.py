@@ -40,6 +40,7 @@ def getRegression(y,model) :
 		b = dot(model.X,y)
 	if model.regressMode == 'linear' :
 		b = dot(model.Xhat,y)[1:]
+		# subtract mean separately for each group of regressors
 		for ig in range(0,len(unique(model.g))) :
 			ginds = model.g==ig
 			b[ginds] = b[ginds] - mean(b[ginds])
