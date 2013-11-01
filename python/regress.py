@@ -48,13 +48,10 @@ def getRegression(y,model) :
 			b[ginds] = b[ginds] - mean(b[ginds])
 		return b
 	if model.regressMode == 'bilinear' :
-		# TODO: check
 		b1 = dot(model.X1hat,y)
 		b1 = b1 - min(b1)
 		b1hat = dot(transpose(model.X1),b1)
 		X3 = X2 * b1hat
-		print(shape(X3))
-		print(shape(ones((1,shape(X3)[1]))))
 		X3 = concatenate((ones((1,shape(X3)[1])),X3))
 		X3hat = dot(inv(dot(X3,transpose(X3))),X3)
 		b2 = dot(X3hat,y)
@@ -67,8 +64,7 @@ def getRegression(y,model) :
 
 def getTuning(y,model) :
 	if model.tuningMode == 'circular' :
-		z = norm(y)
-		#if model.regressMode == 'linear' :
+		z = norm(y-mean(y))
 		y = y - min(y)
 		y = y/sum(y)
 		r = inner(y,exp(1j*model.s))
@@ -137,7 +133,7 @@ B = Y.map(lambda y : getRegression(y,model))
 
 # process outputs using pca
 if outputMode == 'pca' :
-	k = 3
+	k = model.k
 	n = B.count()
 	cov = B.map(lambda b : outer(b,b)).reduce(lambda x,y : (x + y)) / n
 	w, v = eig(cov)
@@ -156,11 +152,12 @@ if outputMode == 'pca' :
 # process output with a parametric tuning curve
 if outputMode == 'tuning' :
 	if model.tuningMode == 'circular' :
-		P = B.map(lambda b : getTuning(b,model))
+		P = B.map(lambda b : float16(getTuning(b,model))).collect()
 		nOut = len(P.first())
-		for ip in range(0,nOut) :
-			p = P.map(lambda p : float16(p[ip])).collect()
-			savemat(outputFile+"/"+"p-"+str(ip)+".mat",mdict={'p':p},oned_as='column',do_compression='true')
+		savemat(outputFile+"/"+"P.mat",mdict={'P':P},oned_as='column',do_compression='true')
+		#for ip in range(0,nOut) :
+		#	p = P.map(lambda p : float16(p[ip])).collect()
+		#	savemat(outputFile+"/"+"p-"+str(ip)+".mat",mdict={'p':p},oned_as='column',do_compression='true')
 
 
 
