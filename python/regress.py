@@ -16,7 +16,7 @@ from pyspark import SparkContext
 import logging
 
 argsIn = sys.argv[1:]
-
+print(argsIn)
 if len(argsIn) < 6:
   print >> sys.stderr, \
   "(regress) usage: regress <master> <inputFile_Y> <inputFile_X> <outputFile> <analMode> <outputMode>"
