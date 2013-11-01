@@ -66,8 +66,8 @@ def getRegression(y,model) :
 def getTuning(y,model) :
 	if model.tuningMode == 'circular' :
 		z = norm(y)
-		if min(y) < 0 :
-			y = y - min(y)
+		y = y - min(y)
+		#	y = y - min(y)
 		y = y/sum(y)
 		r = inner(y,exp(1j*model.s))
 		mu = angle(r)
