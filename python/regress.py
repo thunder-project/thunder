@@ -46,7 +46,10 @@ def getRegression(y,model) :
 		for ig in range(0,len(unique(model.g))) :
 			ginds = model.g==ig
 			b[ginds] = b[ginds] - mean(b[ginds])
-		return b
+		if model.outputMode == 'tuning' :
+			return (b - min(b))
+		if model.outputMode == 'pca' :
+			return b
 	if model.regressMode == 'bilinear' :
 		# TODO: check
 		b1 = dot(model.X1hat,y)
