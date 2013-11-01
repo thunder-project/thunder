@@ -64,20 +64,18 @@ def getRegression(y,model) :
 
 def getTuning(y,model) :
 	if model.tuningMode == 'circular' :
-		z = norm(y-mean(y))
 		y = y - min(y)
 		y = y/sum(y)
 		r = inner(y,exp(1j*model.s))
 		mu = angle(r)
 		v = absolute(r)/sum(y)
-		n = len(y)
 		if v < 0.53 :
 			k = 2*v + (v**3) + 5*(v**5)/6
 		elif (v>=0.53) & (v<0.85) :
 			k = -.4 + 1.39*v + 0.43/(1-v)
 		else :
 			k = 1/(v**3 - 4*(v**2) + 3*v)
-		return (z,mu,k)
+		return (mu,k)
 
 # parse inputs
 sc = SparkContext(argsIn[0], "regress")
@@ -147,9 +145,11 @@ if outputMode == 'pca' :
 	comps = transpose(v[:,inds[0:k]])
 	savemat(outputFile+"/"+"comps.mat",mdict={'comps':comps},oned_as='column',do_compression='true')
 	latent = w[inds[0:k]]
-	for ik in range(0,k) :
-		scores = Y.map(lambda y : float16(inner(getRegression(y,model),comps[ik,:])))
-		savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':scores.collect()},oned_as='column',do_compression='true')
+	scores = Y.map(lambda y : float16(inner(getRegression(y,model),comps))).collect()
+	savemat(outputFile+"/"+"scores.mat",mdict={'scores':scores},oned_as='column',do_compression='true')
+	#for ik in range(0,k) :
+	#	scores = Y.map(lambda y : float16(inner(getRegression(y,model),comps[ik,:])))
+	#	savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':scores.collect()},oned_as='column',do_compression='true')
 	traj = Y.map(lambda y : outer(y,inner(getRegression(y,model),comps))).reduce(lambda x,y : x + y) / n
 	savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
