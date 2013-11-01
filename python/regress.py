@@ -75,8 +75,7 @@ if regressMode == 'linear' :
 	X = loadmat(inputFile_X + "_X.mat")['X']
 	X = X.astype(float)
 	g = loadmat(inputFile_X + "_g.mat")['g']
-	g = array(g.astype(float))
-	print(g)
+	g = g.astype(float)[0]
 	Xhat = dot(inv(dot(X,transpose(X))),X)
 	model.X = X
 	model.Xhat = Xhat
