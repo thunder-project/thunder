@@ -153,7 +153,7 @@ if outputMode == 'pca' :
 if outputMode == 'tuning' :
 	if model.tuningMode == 'circular' :
 		P = B.map(lambda b : getTuning(b,model))
-		nOut = len(P.first)
+		nOut = len(P.first())
 		for ip in range(0,nOut) :
 			p = P.map(lambda p : float16(p[ip])).collect()
 			savemat(outputFile+"/"+"p-"+str(ip)+".mat",mdict={'p':p},oned_as='column',do_compression='true')
