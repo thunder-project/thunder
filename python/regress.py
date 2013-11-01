@@ -51,7 +51,7 @@ def getRegression(y,model) :
 		# TODO: check
 		b1 = dot(model.X1hat,y)
 		b1 = b1 - min(b1)
-		b1hat = dot(model.X1,b1)
+		b1hat = dot(transpose(model.X1),b1)
 		X3 = X2 * b1hat
 		X3 = concatenate((ones(1,shape(X3)[0]),X3))
 		X3hat = dot(inv(dot(X3,transpose(X3))),X3)
