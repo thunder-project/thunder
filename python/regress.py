@@ -89,7 +89,8 @@ if outputMode == 'tuning' :
 B = Y.map(lambda y : getRegression(y,model))
 
 # process outputs using pca
-if outputMode == 'pca'
+if outputMode == 'pca' :
+	k = 3
 	n = B.count()
 	cov = B.map(lambda b : outer(b-mean(b),b-mean(b))).reduce(lambda x,y : (x + y)) / n
 	w, v = eig(cov)
