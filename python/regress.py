@@ -16,7 +16,7 @@ from pyspark import SparkContext
 import logging
 
 argsIn = sys.argv[1:]
-print(argsIn)
+
 if len(argsIn) < 6:
   print >> sys.stderr, \
   "(regress) usage: regress <master> <inputFile_Y> <inputFile_X> <outputFile> <analMode> <outputMode>"
@@ -58,6 +58,7 @@ logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,form
 # parse data
 logging.info("(regress) loading data")
 lines_Y = sc.textFile(inputFile_Y)
+Y = lines_Y.map(lambda y : parseVector(y,"dff")).cache()
 
 # parse model
 class model : pass
