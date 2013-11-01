@@ -20,7 +20,7 @@ argsIn = sys.argv[1:]
 
 if len(argsIn) < 6:
   print >> sys.stderr, \
-  "(regress) usage: regress <master> <inputFile_Y> <inputFile_X> <outputFile> <analMode> <outputMode> <opts>"
+  "(regress) usage: regress <master> <inputFile_Y> <inputFile_X> <outputFile> <regressMode> <outputMode> <opts>"
   exit(-1)
 
 def parseVector(line,mode="raw",xyz=0,inds=None):
@@ -101,6 +101,7 @@ Y = lines_Y.map(lambda y : parseVector(y,"dff")).cache()
 class model : pass
 model.regressMode = regressMode
 model.outputMode = outputMode
+print(regressMode)
 if regressMode == 'mean' :
 	X = loadmat(inputFile_X + "_X.mat")['X']
 	X = X.astype(float)
@@ -114,7 +115,7 @@ if regressMode == 'linear' :
 	model.X = X
 	model.Xhat = Xhat
 	model.g = g
-if (regressMode == 'bilinear') :
+if regressMode == 'bilinear' :
 	X1 = loadmat(inputFile_X + "_X1.mat")['X1']
 	X2 = loadmat(inputFile_X + "_X2.mat")['X2']
 	X1hat = dot(inv(dot(X1,transpose(X1))),X1)
