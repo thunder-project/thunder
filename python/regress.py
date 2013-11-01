@@ -37,14 +37,15 @@ def parseVector(line,mode="raw",xyz=0,inds=None):
 
 def getRegression(y,model) :
 	if model.regressMode == 'mean' :
-		return dot(model.X,y)
+		b = dot(model.X,y)
 	if model.regressMode == 'linear' :
 		b = dot(model.Xhat,y)[1:]
-		inds1 = range(0,20)
-		inds2 = range(20,40)
-		return concatenate((b[inds1] - mean(b[inds1]),b[inds2] - mean(b[inds2])))
+		for ig in range(0,len(unique(model.g))) :
+			ginds = model.g==ig
+			b[ginds] = b[ginds] - mean(b[ginds])
 	if model.regressMode == 'bilinear' :
-		return dot(model.Xhat,y)
+		b = dot(model.Xhat,y)
+	return b
 
 # parse inputs
 sc = SparkContext(argsIn[0], "regress")
@@ -73,9 +74,12 @@ if regressMode == 'mean' :
 if regressMode == 'linear' :
 	X = loadmat(inputFile_X + "_X.mat")['X']
 	X = X.astype(float)
+	g = loadmat(inputFile_X + "_g.mat")['g']
+	g = g.astype(float)
 	Xhat = dot(inv(dot(X,transpose(X))),X)
 	model.X = X
 	model.Xhat = Xhat
+	model.g = g
 if (regressMode == 'bilinear') :
 	X1 = loadmat(inputFile_X + "_X1.mat")['X1']
 	X2 = loadmat(inputFile_X + "_X2.mat")['X2']
@@ -96,7 +100,7 @@ B = Y.map(lambda y : getRegression(y,model))
 if outputMode == 'pca' :
 	k = 3
 	n = B.count()
-	cov = B.map(lambda b : outer(b-mean(b),b-mean(b))).reduce(lambda x,y : (x + y)) / n
+	cov = B.map(lambda b : outer(b,b)).reduce(lambda x,y : (x + y)) / n
 	w, v = eig(cov)
 	w = real(w)
 	v = real(v)
@@ -105,9 +109,9 @@ if outputMode == 'pca' :
 	savemat(outputFile+"/"+"comps.mat",mdict={'comps':comps},oned_as='column',do_compression='true')
 	latent = w[inds[0:k]]
 	for ik in range(0,k) :
-		scores = Y.map(lambda y : float16(inner(getRegression(y,model) - mean(getRegression(y,model)),comps[ik,:])))
+		scores = Y.map(lambda y : float16(inner(getRegression(y,model),comps[ik,:])))
 		savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':scores.collect()},oned_as='column',do_compression='true')
-	traj = Y.map(lambda y : outer(y,inner(getRegression(y,model) - mean(getRegression(y,model)),comps))).reduce(lambda x,y : x + y) / n
+	traj = Y.map(lambda y : outer(y,inner(getRegression(y,model)),comps))).reduce(lambda x,y : x + y) / n
 	savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
 # process output with a parametric tuning curve
