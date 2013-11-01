@@ -12,6 +12,7 @@ import os
 from numpy import *
 from scipy.linalg import *
 from scipy.io import * 
+from scipy.stats import vonmises
 from pyspark import SparkContext
 import logging
 
@@ -45,8 +46,31 @@ def getRegression(y,model) :
 			ginds = model.g==ig
 			b[ginds] = b[ginds] - mean(b[ginds])
 	if model.regressMode == 'bilinear' :
-		b = dot(model.Xhat,y)
+		b1 = dot(model.X1hat,y)
+		b1 = b1 - min(b)
+		bhat = dot(model.X1,b)
+		X3 = X2 * bhat
+		X3 = concatenate((ones(1,shape(X3)[0]),X3))
+		X3hat = dot(inv(dot(X3,transpose(X3))),X3)
+		b2 = dot(X3hat,y)
+		b = b2[1:]
 	return b
+
+def getTuning(y,model) :
+	if model.tuningMode == 'tuning-circular' :
+		z = norm(y)
+		y = y/sum(y)
+		r = inner(y,exp(1j*model.s))
+		mu = angle(r)
+		v = absolute(r)/sum(y)
+		n = len(y)
+		if v < 0.53 :
+			k = 2*v + (v**3) + 5*(v**5)/6
+		elif (v>=0.53) & (v<0.85) :
+			k = -.4 + 1.39*v + 0.43/(1-v)
+		else :
+			k = 1/(v**3 - 4*(v**2) + 3*v)
+		return (z,mu,k)
 
 # parse inputs
 sc = SparkContext(argsIn[0], "regress")
@@ -90,9 +114,10 @@ if (regressMode == 'bilinear') :
 	model.X2 = X2
 	model.X1hat = X1hat
 	model.X2hat = X2hat
-if outputMode == 'tuning' :
+if (outputMode == 'tuning-circular') | (outputMode == 'tuning-linear') :
 	s = loadmat(inputFile_X + "_s.mat")['s']
 	model.s = s
+	model.tuningMode = outputMode
 
 # compute parameter estimates
 B = Y.map(lambda y : getRegression(y,model))
@@ -116,7 +141,11 @@ if outputMode == 'pca' :
 	savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
 # process output with a parametric tuning curve
-#if outputMode == 'tuning' :
+if outputMode == 'tuning-circular' :
+	p = B.map(lambda b : getTuning(b,model))
+
+
+
 
 
 
