@@ -20,7 +20,7 @@ if len(sys.argv) < 4:
 def parseVector(line):
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
-	k = int(vec[0]) + int((vec[1] - 1)*1408) # constant is the max value along second (?) dimension
+	k = int(vec[0]) + int((vec[1] - 1)*1212) # constant is the max value along second (?) dimension
 	#kraw = (int(vec[0]),int(vec[1]))
 	meanVal = mean(ts)
 	ts = (ts - meanVal) / (meanVal + 0.1) # convert to dff
