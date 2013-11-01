@@ -20,7 +20,7 @@ argsIn = sys.argv[1:]
 
 if len(argsIn) < 6:
   print >> sys.stderr, \
-  "(regress) usage: regress <master> <inputFile_Y> <inputFile_X> <outputFile> <analMode> <outputMode>"
+  "(regress) usage: regress <master> <inputFile_Y> <inputFile_X> <outputFile> <analMode> <outputMode> <opts>"
   exit(-1)
 
 def parseVector(line,mode="raw",xyz=0,inds=None):
@@ -39,25 +39,32 @@ def parseVector(line,mode="raw",xyz=0,inds=None):
 def getRegression(y,model) :
 	if model.regressMode == 'mean' :
 		b = dot(model.X,y)
+		return b
 	if model.regressMode == 'linear' :
 		b = dot(model.Xhat,y)[1:]
 		# subtract mean separately for each group of regressors
 		for ig in range(0,len(unique(model.g))) :
 			ginds = model.g==ig
 			b[ginds] = b[ginds] - mean(b[ginds])
+		return b
 	if model.regressMode == 'bilinear' :
+		# TODO: check
 		b1 = dot(model.X1hat,y)
-		b1 = b1 - min(b)
-		bhat = dot(model.X1,b)
-		X3 = X2 * bhat
+		b1 = b1 - min(b1)
+		b1hat = dot(model.X1,b1)
+		X3 = X2 * b1hat
 		X3 = concatenate((ones(1,shape(X3)[0]),X3))
 		X3hat = dot(inv(dot(X3,transpose(X3))),X3)
 		b2 = dot(X3hat,y)
 		b = b2[1:]
-	return b
+		if model.outputMode == 'tuning'
+			return b
+		if model.outputMode == 'pca'
+			return (b1 - mean(b1))
+
 
 def getTuning(y,model) :
-	if model.tuningMode == 'tuning-circular' :
+	if model.tuningMode == 'circular' :
 		z = norm(y)
 		y = y/sum(y)
 		r = inner(y,exp(1j*model.s))
@@ -79,6 +86,7 @@ inputFile_X = str(argsIn[2])
 outputFile = str(argsIn[3]) + "-regress"
 regressMode = str(argsIn[4])
 outputMode = str(argsIn[5])
+opts = str(argsIn[6])
 
 if not os.path.exists(outputFile) :
 	os.makedirs(outputFile)
@@ -92,6 +100,7 @@ Y = lines_Y.map(lambda y : parseVector(y,"dff")).cache()
 # parse model
 class model : pass
 model.regressMode = regressMode
+model.outputMode = outputMode
 if regressMode == 'mean' :
 	X = loadmat(inputFile_X + "_X.mat")['X']
 	X = X.astype(float)
@@ -114,10 +123,12 @@ if (regressMode == 'bilinear') :
 	model.X2 = X2
 	model.X1hat = X1hat
 	model.X2hat = X2hat
-if (outputMode == 'tuning-circular') | (outputMode == 'tuning-linear') :
+if outputMode == 'tuning'
 	s = loadmat(inputFile_X + "_s.mat")['s']
 	model.s = s
-	model.tuningMode = outputMode
+	model.tuningMode = opts
+if outputMode == 'pca'
+	model.k = int(opts)
 
 # compute parameter estimates
 B = Y.map(lambda y : getRegression(y,model))
@@ -141,8 +152,9 @@ if outputMode == 'pca' :
 	savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
 # process output with a parametric tuning curve
-if outputMode == 'tuning-circular' :
-	p = B.map(lambda b : getTuning(b,model))
+if outputMode == 'tuning' :
+	if model.tuningMode == 'circular'
+		p = B.map(lambda b : getTuning(b,model))
 
 
 
