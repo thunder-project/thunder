@@ -101,7 +101,6 @@ Y = lines_Y.map(lambda y : parseVector(y,"dff")).cache()
 class model : pass
 model.regressMode = regressMode
 model.outputMode = outputMode
-print(regressMode)
 if regressMode == 'mean' :
 	X = loadmat(inputFile_X + "_X.mat")['X']
 	X = X.astype(float)
@@ -128,6 +127,8 @@ if outputMode == 'tuning' :
 	model.tuningMode = opts
 if outputMode == 'pca' :
 	model.k = int(opts)
+
+print(regressMode)
 
 # compute parameter estimates
 B = Y.map(lambda y : getRegression(y,model))
