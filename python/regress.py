@@ -107,7 +107,7 @@ if outputMode == 'pca' :
 	savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
 # process output with a parametric tuning curve
-if outputMode == 'tuning' :
+#if outputMode == 'tuning' :
 
 
 
