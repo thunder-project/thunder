@@ -128,6 +128,10 @@ if outputMode == 'tuning' :
 if outputMode == 'pca' :
 	model.k = int(opts)
 
+# get simple measure of response strength
+r = Y.map(lambda y : float16(norm(y-mean(y)))).collect()
+savemat(outputFile+"/"+"r.mat",mdict={'r':r},oned_as='column',do_compression='true')
+
 # compute parameter estimates
 B = Y.map(lambda y : getRegression(y,model))
 
@@ -152,9 +156,9 @@ if outputMode == 'pca' :
 # process output with a parametric tuning curve
 if outputMode == 'tuning' :
 	if model.tuningMode == 'circular' :
-		P = B.map(lambda b : float16(getTuning(b,model))).collect()
+		p = B.map(lambda b : float16(getTuning(b,model))).collect()
 		#nOut = len(P.first())
-		savemat(outputFile+"/"+"P.mat",mdict={'P':P},oned_as='column',do_compression='true')
+		savemat(outputFile+"/"+"p.mat",mdict={'p':p},oned_as='column',do_compression='true')
 		#for ip in range(0,nOut) :
 		#	p = P.map(lambda p : float16(p[ip])).collect()
 		#	savemat(outputFile+"/"+"p-"+str(ip)+".mat",mdict={'p':p},oned_as='column',do_compression='true')
