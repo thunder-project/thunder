@@ -118,11 +118,9 @@ if (regressMode == 'bilinear') :
 	X1 = loadmat(inputFile_X + "_X1.mat")['X1']
 	X2 = loadmat(inputFile_X + "_X2.mat")['X2']
 	X1hat = dot(inv(dot(X1,transpose(X1))),X1)
-	X2hat = dot(inv(dot(X2,transpose(X2))),X2)
 	model.X1 = X1
 	model.X2 = X2
 	model.X1hat = X1hat
-	model.X2hat = X2hat
 if outputMode == 'tuning'
 	s = loadmat(inputFile_X + "_s.mat")['s']
 	model.s = s
