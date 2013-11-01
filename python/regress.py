@@ -128,8 +128,6 @@ if outputMode == 'tuning' :
 if outputMode == 'pca' :
 	model.k = int(opts)
 
-print(regressMode)
-
 # compute parameter estimates
 B = Y.map(lambda y : getRegression(y,model))
 
@@ -154,7 +152,11 @@ if outputMode == 'pca' :
 # process output with a parametric tuning curve
 if outputMode == 'tuning' :
 	if model.tuningMode == 'circular' :
-		p = B.map(lambda b : getTuning(b,model))
+		P = B.map(lambda b : getTuning(b,model))
+		nOut = len(P.first)
+		for ip in range(0,nOut) :
+			p = P.map(lambda p : float16(p[ip])).collect()
+			savemat(outputFile+"/"+"p-"+str(ip)+".mat",mdict={'p':p},oned_as='column',do_compression='true')
 
 
 
