@@ -37,16 +37,19 @@ def parseVector(line,mode="raw",xyz=0,inds=None):
 		return ts
 
 def getRegression(y,model) :
+
 	if model.regressMode == 'mean' :
 		b = dot(model.X,y)
 		return b
+
 	if model.regressMode == 'linear' :
 		b = dot(model.Xhat,y)[1:]
 		# subtract mean separately for each group of regressors
-		for ig in range(0,len(unique(model.g))) :
+		for ig in range(0,model.nG) :
 			ginds = model.g==ig
 			b[ginds] = b[ginds] - mean(b[ginds])
 		return b
+
 	if model.regressMode == 'bilinear' :
 		b1 = dot(model.X1hat,y)
 		b1 = b1 - min(b1)
@@ -76,6 +79,13 @@ def getTuning(y,model) :
 		else :
 			k = 1/(v**3 - 4*(v**2) + 3*v)
 		return (mu,k)
+
+def getNorms(y,model) : 
+	b = getRegression(y,model)
+	n = zeros((model.nG,))
+	for ig in range(0,model.nG) :
+		n[ig] = norm(b[model.g==ig])
+	return n
 
 # parse inputs
 sc = SparkContext(argsIn[0], "regress")
@@ -112,6 +122,7 @@ if regressMode == 'linear' :
 	model.X = X
 	model.Xhat = Xhat
 	model.g = g
+	model.nG = length(unique(model.g))
 if regressMode == 'bilinear' :
 	X1 = loadmat(inputFile_X + "_X1.mat")['X1']
 	X2 = loadmat(inputFile_X + "_X2.mat")['X2']
@@ -130,11 +141,9 @@ if outputMode == 'pca' :
 r = Y.map(lambda y : float16(norm(y-mean(y)))).collect()
 savemat(outputFile+"/"+"r.mat",mdict={'r':r},oned_as='column',do_compression='true')
 
-# compute parameter estimates
-B = Y.map(lambda y : getRegression(y,model))
-
-# process outputs using pca
+# reduce dimensionality of regression coefficients using pca
 if outputMode == 'pca' :
+	B = Y.map(lambda y : getRegression(y,model))
 	k = model.k
 	n = B.count()
 	cov = B.map(lambda b : outer(b,b)).reduce(lambda x,y : (x + y)) / n
@@ -147,23 +156,24 @@ if outputMode == 'pca' :
 	latent = w[inds[0:k]]
 	scores = Y.map(lambda y : float16(inner(getRegression(y,model),comps))).collect()
 	savemat(outputFile+"/"+"scores.mat",mdict={'scores':scores},oned_as='column',do_compression='true')
-	#for ik in range(0,k) :
-	#	scores = Y.map(lambda y : float16(inner(getRegression(y,model),comps[ik,:])))
-	#	savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':scores.collect()},oned_as='column',do_compression='true')
 	traj = Y.map(lambda y : outer(y,inner(getRegression(y,model),comps))).reduce(lambda x,y : x + y) / n
 	savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
 # process output with a parametric tuning curve
 if outputMode == 'tuning' :
+	B = Y.map(lambda y : getRegression(y,model))
 	if model.tuningMode == 'circular' :
 		p = B.map(lambda b : float16(getTuning(b,model))).collect()
-		#nOut = len(P.first())
 		savemat(outputFile+"/"+"p.mat",mdict={'p':p},oned_as='column',do_compression='true')
-		#for ip in range(0,nOut) :
-		#	p = P.map(lambda p : float16(p[ip])).collect()
-		#	savemat(outputFile+"/"+"p-"+str(ip)+".mat",mdict={'p':p},oned_as='column',do_compression='true')
 
-
+# get norms of coefficients to make a contrast map
+if outputMode == 'norms'
+	B = Y.map(lambda y : (y,getNorms(y,model)))
+	for ic in range(0,2)
+		traj[ic,:] = B.filter(lambda (y,b) : b[ic] > b[1-ic]).map(lambda (y,b) : y * b[ic]).reduce(lambda x,y : x + y) / n
+	norms = B.map(lambda (y,b) : float16(b)).collect()
+	savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
+	savemat(outputFile+"/"+"norms.mat",mdict={'norms':norms},oned_as='column',do_compression='true')
 
 
 
