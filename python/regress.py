@@ -122,7 +122,7 @@ if regressMode == 'linear' :
 	model.X = X
 	model.Xhat = Xhat
 	model.g = g
-	model.nG = length(unique(model.g))
+	model.nG = len(unique(model.g))
 if regressMode == 'bilinear' :
 	X1 = loadmat(inputFile_X + "_X1.mat")['X1']
 	X2 = loadmat(inputFile_X + "_X2.mat")['X2']
