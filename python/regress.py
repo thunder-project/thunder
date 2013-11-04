@@ -80,7 +80,7 @@ def getTuning(y,model) :
 			k = 1/(v**3 - 4*(v**2) + 3*v)
 		return (mu,k)
 
-def getNorms(y,model) : 
+def getNorm(y,model) : 
 	b = getRegression(y,model)
 	n = zeros((model.nG,))
 	for ig in range(0,model.nG) :
@@ -167,8 +167,8 @@ if outputMode == 'tuning' :
 		savemat(outputFile+"/"+"p.mat",mdict={'p':p},oned_as='column',do_compression='true')
 
 # get norms of coefficients to make a contrast map
-if outputMode == 'norms'
-	B = Y.map(lambda y : (y,getNorms(y,model)))
+if outputMode == 'norm' :
+	B = Y.map(lambda y : (y,getNorm(y,model)))
 	for ic in range(0,2)
 		traj[ic,:] = B.filter(lambda (y,b) : b[ic] > b[1-ic]).map(lambda (y,b) : y * b[ic]).reduce(lambda x,y : x + y) / n
 	norms = B.map(lambda (y,b) : float16(b)).collect()
