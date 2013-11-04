@@ -173,7 +173,7 @@ if outputMode == 'norm' :
 	m = len(Y.first())
 	traj = zeros((2,m))
 	for ic in range(0,2) :
-		traj[ic,:] = B.filter(lambda (y,b) : b[ic] > b[1-ic]).map(lambda (y,b) : y * b[ic]).reduce(lambda x,y : x + y) / n
+		traj[ic,:] = B.filter(lambda (y,b) : (b[ic] - b[1-ic])>0.01).map(lambda (y,b) : y * b[ic]).reduce(lambda x,y : x + y) / n
 	norms = B.map(lambda (y,b) : float16(b)).collect()
 	savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 	savemat(outputFile+"/"+"norms.mat",mdict={'norms':norms},oned_as='column',do_compression='true')
