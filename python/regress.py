@@ -171,7 +171,7 @@ if outputMode == 'norm' :
 	B = Y.map(lambda y : (y,getNorm(y,model)))
 	n = B.count()
 	m = len(Y.first())
-	traj = zeros((n,m))
+	traj = zeros((2,m))
 	for ic in range(0,2) :
 		traj[ic,:] = B.filter(lambda (y,b) : b[ic] > b[1-ic]).map(lambda (y,b) : y * b[ic]).reduce(lambda x,y : x + y) / n
 	norms = B.map(lambda (y,b) : float16(b)).collect()
