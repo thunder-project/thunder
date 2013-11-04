@@ -169,6 +169,7 @@ if outputMode == 'tuning' :
 # get norms of coefficients to make a contrast map
 if outputMode == 'norm' :
 	B = Y.map(lambda y : (y,getNorm(y,model)))
+	n = B.count()
 	for ic in range(0,2) :
 		traj[ic,:] = B.filter(lambda (y,b) : b[ic] > b[1-ic]).map(lambda (y,b) : y * b[ic]).reduce(lambda x,y : x + y) / n
 	norms = B.map(lambda (y,b) : float16(b)).collect()
