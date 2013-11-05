@@ -154,7 +154,7 @@ object bisecting {
       List("target/scala-2.9.3/thunder_2.9.3-1.0.jar","project/spray-json_2.9.3-1.2.5.jar"))
    
     // load raw data
-    val dataRaw = sc.textFile(inputFile).map(parseVector _).cache()
+    val dataRaw = sc.textFile(inputFile).map(parseVector _).filter{case (k,x) => std(x) > threshold}.mapValues(x => x / std(x)).cache()
 
     // sort x and y keys to get bounds
     val w = dataRaw.map{case (k,v) => k(0)}.top(1).take(1)(0)
@@ -167,19 +167,19 @@ object bisecting {
     //  case _ => dataRaw.filter{case (k,x) => std(x) > threshold}.mapValues(x => x / std(x)).cache()
     //}
 
-    val data = dataRaw.filter{case (k,x) => std(x) > threshold}.mapValues(x => x / std(x))
+    val data = dataRaw
 
     println("starting")
 
     // create array with first cluster and compute its center
-    val clusters = ArrayBuffer((0,data))
-    val n = data.count()
-    val center = data.map(_._2).reduce(_+_).elements.map(x => x / n)
+    val clusters = ArrayBuffer((0,dataRaw))
+    val n = dataRaw.count()
+    val center = dataRaw.map(_._2).reduce(_+_).elements.map(x => x / n)
     val tree = Cluster(0,makeMap(center),None)
     var count = 1
 
     // print first cluster as an image
-    printToImage(data.map{case (k,v) => (k,255)}, w, h, d, outputFileImg + "-cluster" + 0.toString)
+    printToImage(dataRaw.map{case (k,v) => (k,255)}, w, h, d, outputFileImg + "-cluster" + 0.toString)
 
     // start timer
     val startTime = System.nanoTime
