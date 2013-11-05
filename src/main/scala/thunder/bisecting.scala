@@ -70,11 +70,11 @@ object bisecting {
   }
 
   def printToImage(rdd: RDD[(Array[Int],Int)], w: Int, h: Int, d: Int, fileName: String): Unit = {
-    for (id <- 0 until d) {
-      val plane = rdd.filter(_._1(2) == d)
-      val X = plane.map(_._1(0)).collect()
-      val Y = plane.map(_._1(1)).collect()
-      val RGB = plane.map(_._2).collect()
+    for (id <- d) {
+      val plane = rdd.filter(_._1(2) == id).map{case (k,v) => (k(0),k(1),v)}.toArray()
+      val X = plane.map(_._1)
+      val Y = plane.map(_._2)
+      val RGB = plane.map(_._3)
       val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
       val raster = img.getRaster()
       (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
@@ -159,7 +159,7 @@ object bisecting {
     // sort x and y keys to get bounds
     val w = dataRaw.map{case (k,v) => k(0)}.top(1).take(1)(0)
     val h = dataRaw.map{case (k,v) => k(1)}.top(1).take(1)(0)
-    val d = dataRaw.map{case (k,v) => k(2)}.top(1).take(1)(0)
+    val d = data.filter{case (k,v) => (k(0) == 1) & (k(1) == 1)}.map{case (k,v) => k(2)}.toArray()
 
     // load data
     val data = threshold match {
