@@ -46,7 +46,7 @@ object bisecting {
   def std(vec: Vector): Double = {
     //val mean = Vector(Array.fill(vec.length)(vec.sum / vec.length))
     //return scala.math.sqrt(vec.squaredDist(mean)/(vec.length - 1))
-    return scala.math.sqrt(vec.squaredDist(vec))
+    return scala.math.sqrt(vec.dot(vec)/(vec.length - 1))
   }
 
   def makeMap(vec: Array[Double]): List[Map[String,Double]] = {
