@@ -171,12 +171,13 @@ object bisecting {
 
     // create array with first cluster and compute its center
     val clusters = ArrayBuffer((0,data))
-    val center = data.map(_._2).reduce(_+_).elements.map(x => x / data.count())
+    val n = dataRaw.count()
+    val center = dataRaw.map(_._2).reduce(_+_).elements.map(x => x / n)
     val tree = Cluster(0,makeMap(center),None)
     var count = 1
 
     // print first cluster as an image
-    printToImage(data.map{case (k,v) => (k,255)}, w, h, d, outputFileImg + 0.toString)
+    printToImage(data.map{case (k,v) => (k,255)}, w, h, d, outputFileImg + "-cluster" + 0.toString)
 
     // start timer
     val startTime = System.nanoTime
