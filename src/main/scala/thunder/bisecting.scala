@@ -154,7 +154,7 @@ object bisecting {
       List("target/scala-2.9.3/thunder_2.9.3-1.0.jar","project/spray-json_2.9.3-1.2.5.jar"))
    
     // load raw data
-    val dataRaw = sc.textFile(inputFile).map(parseVector _).cache()
+    val dataRaw = sc.textFile(inputFile).map(parseVector _).filter{case (k,x) => std(x) > threshold}.cache()
 
     // sort x and y keys to get bounds
     val w = dataRaw.map{case (k,v) => k(0)}.top(1).take(1)(0)
