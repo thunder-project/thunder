@@ -159,7 +159,7 @@ object bisecting {
     // sort x and y keys to get bounds
     val w = dataRaw.map{case (k,v) => k(0)}.top(1).take(1)(0)
     val h = dataRaw.map{case (k,v) => k(1)}.top(1).take(1)(0)
-    val d = data.filter{case (k,v) => (k(0) == 1) & (k(1) == 1)}.map{case (k,v) => k(2)}.toArray()
+    val d = dataRaw.filter{case (k,v) => (k(0) == 1) & (k(1) == 1)}.map{case (k,v) => k(2)}.toArray()
 
     // load data
     val data = threshold match {
