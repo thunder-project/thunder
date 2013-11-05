@@ -167,7 +167,7 @@ object bisecting {
     //  case _ => dataRaw.filter{case (k,x) => std(x) > threshold}.mapValues(x => x / std(x)).cache()
     //}
 
-    data = dataRaw.filter{case (k,x) => std(x) > threshold}.mapValues(x => x / std(x))
+    val data = dataRaw.filter{case (k,x) => std(x) > threshold}.mapValues(x => x / std(x))
 
     println("starting")
 
