@@ -154,7 +154,7 @@ object bisecting {
       List("target/scala-2.9.3/thunder_2.9.3-1.0.jar","project/spray-json_2.9.3-1.2.5.jar"))
    
     // load raw data
-    val dataRaw = sc.textFile(inputFile).map(parseVector _)
+    val dataRaw = sc.textFile(inputFile).map(parseVector _).cache()
 
     // sort x and y keys to get bounds
     val w = dataRaw.map{case (k,v) => k(0)}.top(1).take(1)(0)
@@ -162,17 +162,19 @@ object bisecting {
     val d = dataRaw.filter{case (k,v) => (k(0) == 1) & (k(1) == 1)}.map{case (k,v) => k(2)}.toArray()
 
     // load data
-    val data = threshold match {
-      case 0 => dataRaw.cache()
-      case _ => dataRaw.filter{case (k,x) => std(x) > threshold}.mapValues(x => x / std(x)).cache()
-    }
+    //val data = threshold match {
+    //  case 0 => dataRaw.cache()
+    //  case _ => dataRaw.filter{case (k,x) => std(x) > threshold}.mapValues(x => x / std(x)).cache()
+    //}
+
+    data = dataRaw.filter{case (k,x) => std(x) > threshold}.mapValues(x => x / std(x))
 
     println("starting")
 
     // create array with first cluster and compute its center
     val clusters = ArrayBuffer((0,data))
-    val n = dataRaw.count()
-    val center = dataRaw.map(_._2).reduce(_+_).elements.map(x => x / n)
+    val n = data.count()
+    val center = data.map(_._2).reduce(_+_).elements.map(x => x / n)
     val tree = Cluster(0,makeMap(center),None)
     var count = 1
 
