@@ -48,7 +48,7 @@ object bisecting {
     //return scala.math.sqrt(vec.squaredDist(mean)/(vec.length - 1))
     return scala.math.sqrt(vec.dot(vec)/(vec.length - 1))
   }
-  
+
   def makeMap(vec: Array[Double]): List[Map[String,Double]] = {
     return vec.toList.zipWithIndex.map(x => Map("x"->x._2.toDouble,"y"->x._1))
   }
@@ -172,7 +172,8 @@ object bisecting {
 
     // create array with first cluster and compute its center
     val clusters = ArrayBuffer((0,data))
-    val center = data.map(_._2).reduce(_+_).elements.map(x => x / data.count())
+    val n = data.count()
+    val center = data.map(_._2).reduce(_+_).elements.map(x => x / n)
     val tree = Cluster(0,makeMap(center),None)
     var count = 1
 
