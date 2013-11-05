@@ -72,10 +72,10 @@ object bisecting {
   def printToImage(rdd: RDD[(Array[Int],Int)], w: Int, h: Int, d: Array[Int], fileName: String): Unit = {
     for (id <- d) {
       val plane = rdd.filter(_._1(2) == id).map{case (k,v) => (k(0),k(1),v)}.toArray()
-      val X = plane.map(_._1)
-      val Y = plane.map(_._2)
+      val X = plane.map(_._2)
+      val Y = plane.map(_._1)
       val RGB = plane.map(_._3)
-      val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
+      val img = new BufferedImage(h, w, BufferedImage.TYPE_INT_RGB)
       val raster = img.getRaster()
       (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
       ImageIO.write(img, "png", new File(fileName+"-plane"+id.toString+".png"))
