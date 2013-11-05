@@ -78,7 +78,7 @@ object bisecting {
       val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
       val raster = img.getRaster()
       (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
-      ImageIO.write(img, "png", new File("plane"+id.toString+"-"+fileName))
+      ImageIO.write(img, "png", new File(fileName+"-plane"+id.toString+".png"))
     }
   }
 
@@ -176,7 +176,7 @@ object bisecting {
     var count = 1
 
     // print first cluster as an image
-    printToImage(data.map{case (k,v) => (k,255)}, w, h, d, outputFileImg + 0.toString + ".png")
+    printToImage(data.map{case (k,v) => (k,255)}, w, h, d, outputFileImg + 0.toString)
 
     // start timer
     val startTime = System.nanoTime
@@ -204,8 +204,8 @@ object bisecting {
         Cluster(newInd2,makeMap(centers(1).elements),None)))
 
       // write clusters to images
-      printToImage(cluster1.map{case (k,v) => (k,255)}, w, h, d, outputFileImg + "-cluster" + newInd1.toString + ".png")
-      printToImage(cluster2.map{case (k,v) => (k,255)}, w, h, d, outputFileImg + "-cluster" + newInd2.toString + ".png")
+      printToImage(cluster1.map{case (k,v) => (k,255)}, w, h, d, outputFileImg + "-cluster" + newInd1.toString)
+      printToImage(cluster2.map{case (k,v) => (k,255)}, w, h, d, outputFileImg + "-cluster" + newInd2.toString)
 
       // remove old cluster, add the 2 new ones
       clusters.remove(ind)
