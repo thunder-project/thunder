@@ -8,6 +8,7 @@ import sys
 import os
 from numpy import *
 from scipy.linalg import *
+from scipy.io import * 
 import logging
 from pyspark import SparkContext
 
