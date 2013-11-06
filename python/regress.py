@@ -156,7 +156,7 @@ if outputMode == 'pca' :
 	comps = transpose(v[:,inds[0:k]])
 	savemat(outputFile+"/"+"comps.mat",mdict={'comps':comps},oned_as='column',do_compression='true')
 	latent = w
-		savemat(outputFile+"/"+"latent.mat",mdict={'latent':latent},oned_as='column',do_compression='true')
+	savemat(outputFile+"/"+"latent.mat",mdict={'latent':latent},oned_as='column',do_compression='true')
 	scores = Y.map(lambda y : float16(inner(getRegression(y,model),comps))).collect()
 	savemat(outputFile+"/"+"scores.mat",mdict={'scores':scores},oned_as='column',do_compression='true')
 	traj = Y.map(lambda y : outer(y,inner(getRegression(y,model),comps))).reduce(lambda x,y : x + y) / n
