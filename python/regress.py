@@ -3,8 +3,11 @@
 # time series regression on a data matrix
 # each row is (x,y,z,timeseries)
 # inputs are signals to regress against
-# can process results either by doing dimensionality reduction
-# or by fitting a parametric model
+#
+# can return results either by:
+#		- doing dimensionality reduction on coeffieints
+# 	- fitting a parametric model to the coefficients
+#   - computing norms of coefficients (individuals or groups)
 #
 
 import sys
@@ -63,7 +66,6 @@ def getRegression(y,model) :
 			return b
 		if model.outputMode == 'pca' :
 			return (b1 - mean(b1))
-
 
 def getTuning(y,model) :
 	if model.tuningMode == 'circular' :
@@ -153,7 +155,8 @@ if outputMode == 'pca' :
 	inds = argsort(w)[::-1]
 	comps = transpose(v[:,inds[0:k]])
 	savemat(outputFile+"/"+"comps.mat",mdict={'comps':comps},oned_as='column',do_compression='true')
-	latent = w[inds[0:k]]
+	latent = w
+		savemat(outputFile+"/"+"latent.mat",mdict={'latent':latent},oned_as='column',do_compression='true')
 	scores = Y.map(lambda y : float16(inner(getRegression(y,model),comps))).collect()
 	savemat(outputFile+"/"+"scores.mat",mdict={'scores':scores},oned_as='column',do_compression='true')
 	traj = Y.map(lambda y : outer(y,inner(getRegression(y,model),comps))).reduce(lambda x,y : x + y) / n
@@ -177,27 +180,4 @@ if outputMode == 'norm' :
 	norms = B.map(lambda (y,b) : float16(b)).collect()
 	savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 	savemat(outputFile+"/"+"norms.mat",mdict={'norms':norms},oned_as='column',do_compression='true')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
