@@ -60,7 +60,11 @@ comps = transpose(v[:,inds[0:k]])
 savemat(outputFile+"/"+"comps.mat",mdict={'comps':comps},oned_as='column',do_compression='true')
 latent = w
 savemat(outputFile+"/"+"latent.mat",mdict={'latent':latent},oned_as='column',do_compression='true')
-scores = sub.map(lambda y : float16(inner(y,comps))).collect()
-savemat(outputFile+"/"+"scores.mat",mdict={'scores':scores},oned_as='column',do_compression='true')
+
 traj = Y.map(lambda y : outer(y,inner(y,comps))).reduce(lambda x,y : x + y) / n
 savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
+
+for ik in range(0,k):
+		logging.info("(lowdim) writing scores for pc " + str(ik))
+		out = sub.map(lambda y : float16(y,sortedDim2[ik,:])))
+		savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
