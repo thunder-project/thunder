@@ -50,21 +50,16 @@ else:
  "(pca) dim must be 1 or 2"
  exit(-1)
 
-# do eigendecomposition
-logging.info("(pca) computing covariance")
-cov = sub.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y)) / n
-logging.info("(pca) doing eigendecomposition")
+cov = sub.map(lambda b : outer(b,b)).reduce(lambda x,y : (x + y)) / n
 w, v = eig(cov)
 w = real(w)
 v = real(v)
 inds = argsort(w)[::-1]
-sortedDim2 = transpose(v[:,inds[0:k]])
-latent = w[inds[0:k]]
-
-logging.info("(pca) writing output...")
-savetxt(outputFile+"/"+"evecs.txt",sortedDim2,fmt='%.8f')
-savetxt(outputFile+"/"+"evals.txt",latent,fmt='%.8f')
-for ik in range(0,k):
-	out = sub.map(lambda x : inner(x,sortedDim2[ik,:]))
-	savetxt(outputFile+"/"+"scores-"+str(ik)+".txt",out.collect(),fmt='%.4f')
-	
+comps = transpose(v[:,inds[0:k]])
+savemat(outputFile+"/"+"comps.mat",mdict={'comps':comps},oned_as='column',do_compression='true')
+latent = w
+savemat(outputFile+"/"+"latent.mat",mdict={'latent':latent},oned_as='column',do_compression='true')
+scores = sub.map(lambda y : float16(inner(y,comps))).collect()
+savemat(outputFile+"/"+"scores.mat",mdict={'scores':scores},oned_as='column',do_compression='true')
+traj = Y.map(lambda y : outer(y,inner(y,comps))).reduce(lambda x,y : x + y) / n
+savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
