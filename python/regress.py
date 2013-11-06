@@ -157,8 +157,11 @@ if outputMode == 'pca' :
 	savemat(outputFile+"/"+"comps.mat",mdict={'comps':comps},oned_as='column',do_compression='true')
 	latent = w
 	savemat(outputFile+"/"+"latent.mat",mdict={'latent':latent},oned_as='column',do_compression='true')
-	scores = Y.map(lambda y : float16(inner(getRegression(y,model),comps))).collect()
-	savemat(outputFile+"/"+"scores.mat",mdict={'scores':scores},oned_as='column',do_compression='true')
+	
+	for ik in range(0,k):
+		scores = Y.map(lambda y : float16(inner(getRegression(y,model),comps[ik,:]))).collect()
+		savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':scores},oned_as='column',do_compression='true')
+		
 	traj = Y.map(lambda y : outer(y,inner(getRegression(y,model),comps))).reduce(lambda x,y : x + y) / n
 	savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
