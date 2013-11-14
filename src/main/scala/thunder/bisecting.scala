@@ -46,11 +46,11 @@ object bisecting {
   def std(vec: Vector): Double = {
     //val mean = Vector(Array.fill(vec.length)(vec.sum / vec.length))
     //return scala.math.sqrt(vec.squaredDist(mean)/(vec.length - 1))
-    return scala.math.sqrt(vec.dot(vec)/(vec.length - 1))
+    scala.math.sqrt(vec.dot(vec)/(vec.length - 1))
   }
 
   def makeMap(vec: Array[Double]): List[Map[String,Double]] = {
-    return vec.toList.zipWithIndex.map(x => Map("x"->x._2.toDouble,"y"->x._1))
+    vec.toList.zipWithIndex.map(x => Map("x"->x._2.toDouble,"y"->x._1))
   }
 
   def parseVector(line: String): ((Array[Int]),Vector) = {
@@ -58,7 +58,7 @@ object bisecting {
     val inds = line.split(' ').take(3).map(_.toDouble.toInt) // xyz coords
     val mean = vec.sum / vec.length
     vec = vec.map(x => (x - mean)/(mean + 0.1)) // time series
-    return (inds,Vector(vec))
+    (inds,Vector(vec))
   }
 
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
