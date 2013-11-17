@@ -117,7 +117,7 @@ def getTuning(y,model) :
 
 	if model.tuningMode == 'gaussian' :
 		y[y<0] = 0
-		coeff,varMat = curve_fit(gaussian, model.s, y, p0=[1., mean(model.s), 1.], maxfev=100000)
+		coeff,varMat = curve_fit(gaussian, model.s, y, p0=[1., mean(model.s), 1.], maxfev=100000,gtol=0.00001)
 		return (coeff[1],coeff[2]) # return mu and sigma
 
 def getNorm(y,model) : 
@@ -212,7 +212,7 @@ if outputMode == 'tuning' :
 	savemat(outputFile+"/"+"p.mat",mdict={'p':p},oned_as='column',do_compression='true')
 	# get average tuning for groups of pixels
 	vals = linspace(min(model.s),max(model.s),len(model.s))
-	tuningCurves = zeros((len(model.s)-1),len(B.first()[0]))
+	tuningCurves = zeros((len(model.s)-1),len(model.s))
 	for iv in range(0,len(model.s)-1) :
 		subset = B.filter(lambda b : inRange(getTuning(b[0],model),vals[iv],vals[iv+1]))
 		tuningCurves[iv,:] = subset.map(lambda b : b[0]).reduce(lambda x,y : x + y) / subset.count()
