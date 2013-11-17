@@ -15,6 +15,7 @@ import os
 from numpy import *
 from scipy.linalg import *
 from scipy.io import * 
+from scipy.optimize import curve_fit
 from scipy.stats import vonmises
 from pyspark import SparkContext
 import logging
@@ -39,6 +40,16 @@ def parseVector(line,mode="raw",xyz=0,inds=None):
 	else :
 		return ts
 
+def gaussian(x, *p) :
+    gain, mu, sigma = p
+    return gain*exp(-(x-mu)**2/(2.*sigma**2))
+
+def inRange(val,rng1,rng2) :
+	if (val > rng1) & (val < rng2):
+		return True
+	else:
+		return False
+
 def getRegression(y,model) :
 
 	if model.regressMode == 'mean' :
@@ -47,11 +58,31 @@ def getRegression(y,model) :
 
 	if model.regressMode == 'linear' :
 		b = dot(model.Xhat,y)[1:]
-		# subtract mean separately for each group of regressors
-		for ig in range(0,model.nG) :
-			ginds = model.g==ig
-			b[ginds] = b[ginds] - mean(b[ginds])
+		if model.outputMode == 'pca' :
+			for ig in range(0,model.nG) :
+				ginds = model.g==ig
+				b[ginds] = b[ginds] - mean(b[ginds])
 		return b
+
+	if model.regressMode == 'linear-shuffle' :
+		b = dot(model.Xhat,y)
+		predic = dot(model.X,b)
+		sse = sum((predic-y) ** 2)
+		sst = sum((y-mean(y)) ** 2)
+		r2 = 1 - sse/sst
+		r2shuffle = zeros((1,10))
+		for iShuf in range(0,10) :
+			X = model.X
+			for ix in range(0,shape(X)[0]) :
+				shift = int(round(random.rand(1)*shape(X)[1]))
+				X[ix,:] = roll(X[ix,:],shift)
+			Xhat = dot(inv(dot(X,transpose(X))),X)
+			b = dot(Xhat,y)
+			predic = dot(model.X,b)
+			sse = sum((predic-y) ** 2)
+			r2shuffle[iShuf] = 1 - sse/sst
+		p = sum(r2shuffle > r2) / 10
+		return (b[1:],r2,p)
 
 	if model.regressMode == 'bilinear' :
 		b1 = dot(model.X1hat,y)
@@ -68,6 +99,7 @@ def getRegression(y,model) :
 			return (b1 - mean(b1))
 
 def getTuning(y,model) :
+	
 	if model.tuningMode == 'circular' :
 		y = y - min(y)
 		y = y/sum(y)
@@ -81,6 +113,12 @@ def getTuning(y,model) :
 		else :
 			k = 1/(v**3 - 4*(v**2) + 3*v)
 		return (mu,k)
+
+	if model.tuningMode == 'gaussian' :
+		gainInit = max(y)
+		muInit = sum(model.s * (y-min(y)))/sum(y-min(y))
+		coeff,varMat = curve_fit(gaussian, model.s, y, p0=[gainInit, muInit, 1])
+		return (coeff[1],coeff[2]) # return mu and sigma
 
 def getNorm(y,model) : 
 	b = getRegression(y,model)
@@ -115,7 +153,7 @@ if regressMode == 'mean' :
 	X = loadmat(inputFile_X + "_X.mat")['X']
 	X = X.astype(float)
 	model.X = X
-if regressMode == 'linear' :
+if regressMode == 'linear' || regressMode == 'linear-shuffle' :
 	X = loadmat(inputFile_X + "_X.mat")['X']
 	X = X.astype(float)
 	g = loadmat(inputFile_X + "_g.mat")['g']
@@ -165,12 +203,20 @@ if outputMode == 'pca' :
 	traj = Y.map(lambda y : outer(y,inner(getRegression(y,model),comps))).reduce(lambda x,y : x + y) / n
 	savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
 
-# process output with a parametric tuning curve
+# process output with a parametric tuning curves
 if outputMode == 'tuning' :
 	B = Y.map(lambda y : getRegression(y,model))
-	if model.tuningMode == 'circular' :
-		p = B.map(lambda b : float16(getTuning(b,model))).collect()
-		savemat(outputFile+"/"+"p.mat",mdict={'p':p},oned_as='column',do_compression='true')
+	stats = B.map(lambda b : float16(b[1:])).collect()
+	savemat(outputFile+"/"+"stats.mat",mdict={'stats':stats},oned_as='column',do_compression='true')
+	p = B.map(lambda b : float16(getTuning(b[0],model))).collect()
+	savemat(outputFile+"/"+"p.mat",mdict={'p':p},oned_as='column',do_compression='true')
+	# get average tuning for groups of pixels
+	sVals = linspace(min(model.s),max(model.s),len(model.s))
+	tuningCurves = zeros((len(model.s)-1),len(B.first()[0]))
+	for is in range(0,len(model.s)-1) :
+		subset = B.filter(lambda b : inRange(getTuning(b[0],model),sVals[is],sVals[is+1]))
+		tuningCurves[is,:] = subset.map(lambda b : b[0]).reduce(lambda x,y : x + y) / subset.count()
+		savemat(outputFile+"/"+"tuningCurves.mat",mdict={'tuningCurves':tuningCurves},oned_as='column',do_compression='true')
 
 # get norms of coefficients to make a contrast map
 if outputMode == 'norm' :
