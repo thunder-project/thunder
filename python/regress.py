@@ -118,7 +118,7 @@ def getTuning(y,model) :
 	if model.tuningMode == 'gaussian' :
 		gainInit = max(y)
 		muInit = sum(model.s * (y-min(y)))/sum(y-min(y))
-		coeff,varMat = curve_fit(gaussian, model.s, y, p0=[gainInit, muInit, 1])
+		coeff,varMat = curve_fit(gaussian, model.s, y, p0=[gainInit, muInit, 1.])
 		return (coeff[1],coeff[2]) # return mu and sigma
 
 def getNorm(y,model) : 
@@ -173,7 +173,7 @@ if regressMode == 'bilinear' :
 	model.X1hat = X1hat
 if outputMode == 'tuning' :
 	s = loadmat(inputFile_X + "_s.mat")['s']
-	model.s = array(s)
+	model.s = transpose(array(s))
 	model.tuningMode = opts
 if outputMode == 'pca' :
 	model.k = int(opts)
