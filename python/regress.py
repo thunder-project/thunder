@@ -168,6 +168,7 @@ if (regressMode == 'linear') | (regressMode == 'linear-shuffle') :
 	model.Xhat = Xhat
 	model.g = g
 	model.nG = len(unique(model.g))
+	print(shape(model.X))
 if regressMode == 'bilinear' :
 	X1 = loadmat(inputFile_X + "_X1.mat")['X1']
 	X2 = loadmat(inputFile_X + "_X2.mat")['X2']
