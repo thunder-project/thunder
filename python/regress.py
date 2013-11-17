@@ -118,6 +118,8 @@ def getTuning(y,model) :
 	if model.tuningMode == 'gaussian' :
 		gainInit = max(y)
 		muInit = sum(model.s * (y-min(y)))/sum(y-min(y))
+		print(y)
+		print(model.s)
 		coeff,varMat = curve_fit(gaussian, model.s, y, p0=[gainInit, muInit, 1])
 		return (coeff[1],coeff[2]) # return mu and sigma
 
