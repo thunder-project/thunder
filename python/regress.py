@@ -153,7 +153,7 @@ if regressMode == 'mean' :
 	X = loadmat(inputFile_X + "_X.mat")['X']
 	X = X.astype(float)
 	model.X = X
-if regressMode == 'linear' | regressMode == 'linear-shuffle' :
+if (regressMode == 'linear') | (regressMode == 'linear-shuffle') :
 	X = loadmat(inputFile_X + "_X.mat")['X']
 	X = X.astype(float)
 	g = loadmat(inputFile_X + "_g.mat")['g']
