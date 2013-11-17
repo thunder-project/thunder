@@ -42,7 +42,7 @@ def parseVector(line,mode="raw",xyz=0,inds=None):
 
 def gaussian(x, *p) :
     gain, mu, sigma = p
-    return array(gain*exp(-(x-mu)**2/(2.*sigma**2)))
+    return array(gain*exp(-(x-mu)**2/(2.*sigma**2)),dtype=float)
 
 def inRange(val,rng1,rng2) :
 	if (val > rng1) & (val < rng2):
