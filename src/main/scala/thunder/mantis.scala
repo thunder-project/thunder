@@ -88,36 +88,27 @@ object mantis {
     ssc.checkpoint(System.getenv("CHECKPOINTSTREAMING"))
 
     // update state
-    val updateFunc = (values: Seq[Vector], state: Option[Vector]) => {
-      var currentState = Vector(0, 0, 0, 0)
-      if (values.length > 0) {
-        currentState = currentState + values(0)
-      }
-      //val currentState = values(0) // ca0, ca1, n0, n1
-      val previousState = state.getOrElse(Vector(0, 0, 0, 0))
-      Some(currentState + previousState)
-    }
+//    val updateFunc = (values: Seq[Vector], state: Option[Vector]) => {
+//      var currentState = Vector(0, 0, 0, 0)
+//      if (values.length > 0) {
+//        currentState = currentState + values(0)
+//      }
+//      //val currentState = values(0) // ca0, ca1, n0, n1
+//      val previousState = state.getOrElse(Vector(0, 0, 0, 0))
+//      Some(currentState + previousState)
+//    }
 
     // main streaming operations
     val lines = ssc.textFileStream(args(1)) // directory to monitor
     val dataStream = lines.map(parseVector _) // parse data
     val stateStream = dataStream.reduceByKeyAndWindow(_ + _, _ - _, Seconds(windowTime), Seconds(batchTime))
     val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => x._2(1))
-    stateStream.print()
-    sortedStates.print()
-    sortedStates.foreach(rdd => printToImage(rdd, args(5).toInt, args(6).toInt, args(2)))
-    //val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => Vector(x._2(0),x._2(1)))
+
+    // for debugging
+    //stateStream.print()
     //sortedStates.print()
+    sortedStates.foreach(rdd => printToImage(rdd, args(5).toInt, args(6).toInt, args(2)))
 
-    //sortedStates.foreach(rdd => printVector(rdd,args(2)))
-
-    //wordDstream.reduceByKeyAndWindow(_+_,Seconds(10)).print()
-    //lines.window(Seconds(10),Seconds(2)).map(parseVector _).map(x => x.sum).print()
-    //println(partialSum)
-    //val sums = lines.map(parseVector _).map(x => (1,1))
-    //sums.print()
-    //val counts = sums.updateStateByKey(updateFunc).map(_._2)
-    //counts.print()
     ssc.start()
   }
 }
