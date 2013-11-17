@@ -66,7 +66,7 @@ def getRegression(y,model) :
 
 	if model.regressMode == 'linear-shuffle' :
 		b = dot(model.Xhat,y)
-		predic = dot(model.X,b)
+		predic = dot(b,model.X)
 		sse = sum((predic-y) ** 2)
 		sst = sum((y-mean(y)) ** 2)
 		r2 = 1 - sse/sst
@@ -78,7 +78,7 @@ def getRegression(y,model) :
 				X[ix,:] = roll(X[ix,:],shift)
 			Xhat = dot(inv(dot(X,transpose(X))),X)
 			b = dot(Xhat,y)
-			predic = dot(model.X,b)
+			predic = dot(b,model.X)
 			sse = sum((predic-y) ** 2)
 			r2shuffle[iShuf] = 1 - sse/sst
 		p = sum(r2shuffle > r2) / 10
