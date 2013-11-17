@@ -123,6 +123,7 @@ def getTuning(y,model) :
 		y = y/sum(y)
 		mu = dot(model.s,y)
 		sigma = dot(y,(model.s-mu)**2)
+		return (mu,sigma)
 
 def getNorm(y,model) : 
 	b = getRegression(y,model)
