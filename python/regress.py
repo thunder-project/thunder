@@ -214,7 +214,7 @@ if outputMode == 'tuning' :
 	vals = linspace(min(model.s),max(model.s),len(model.s))
 	tuningCurves = zeros((len(model.s)-1,len(model.s)))
 	for iv in range(0,len(model.s)-1) :
-		subset = B.filter(lambda b : inRange(getTuning(b[0],model),vals[iv],vals[iv+1]))
+		subset = B.filter(lambda b : inRange(getTuning(b[0],model)[0],vals[iv],vals[iv+1]))
 		tuningCurves[iv,:] = subset.map(lambda b : b[0]).reduce(lambda x,y : x + y) / subset.count()
 		savemat(outputFile+"/"+"tuningCurves.mat",mdict={'tuningCurves':tuningCurves},oned_as='column',do_compression='true')
 
