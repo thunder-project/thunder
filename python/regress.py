@@ -117,7 +117,7 @@ def getTuning(y,model) :
 
 	if model.tuningMode == 'gaussian' :
 		y[y<0] = 0
-		coeff,varMat = curve_fit(gaussian, model.s, y, p0=[1., mean(model.s), 1.], maxfev=10000,gtol=0.01)
+		coeff,varMat = curve_fit(gaussian, model.s, y, p0=[1., mean(model.s), 1.], maxfev=100000,gtol=0.01)
 		return (coeff[1],coeff[2]) # return mu and sigma
 
 def getNorm(y,model) : 
