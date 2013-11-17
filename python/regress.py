@@ -70,7 +70,7 @@ def getRegression(y,model) :
 		sse = sum((predic-y) ** 2)
 		sst = sum((y-mean(y)) ** 2)
 		r2 = 1 - sse/sst
-		r2shuffle = zeros((1,10))
+		r2shuffle = zeros((10,1))
 		for iShuf in range(0,10) :
 			X = model.X
 			for ix in range(0,shape(X)[0]) :
