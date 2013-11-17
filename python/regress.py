@@ -210,7 +210,7 @@ if outputMode == 'tuning' :
 	stats = B.map(lambda b : float16(b[1:])).collect()
 	savemat(outputFile+"/"+"stats.mat",mdict={'stats':stats},oned_as='column',do_compression='true')
 	print(model.s)
-	print(B.map(lambda b : b[0]).first().collect())
+	print(B.map(lambda b : b[0]).first())
 	print(gaussian(model.s,[1.,0.,1.]))
 	p = B.map(lambda b : float16(getTuning(b[0],model))).collect()
 	savemat(outputFile+"/"+"p.mat",mdict={'p':p},oned_as='column',do_compression='true')
