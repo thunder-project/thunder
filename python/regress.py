@@ -70,19 +70,18 @@ def getRegression(y,model) :
 		sse = sum((predic-y) ** 2)
 		sst = sum((y-mean(y)) ** 2)
 		r2 = 1 - sse/sst
-		r2shuffle = zeros((5,1))
-		for iShuf in range(0,5) :
+		r2shuffle = zeros((25,1))
+		for iShuf in range(0,25) :
 			X = model.X
-			#for ix in range(0,shape(X)[0]) :
-			#	shift = int(round(random.rand(1)*shape(X)[1]))
-			#	X[ix,:] = roll(X[ix,:],shift)
+			for ix in range(0,shape(X)[0]) :
+				shift = int(round(random.rand(1)*shape(X)[1]))
+				X[ix,:] = roll(X[ix,:],shift)
 			Xhat = dot(inv(dot(X,transpose(X))),X)
 			b = dot(Xhat,y)
 			predic = dot(b,model.X)
 			sse = sum((predic-y) ** 2)
 			r2shuffle[iShuf] = 1 - sse/sst
 		p = sum(r2shuffle > r2) / 5
-		p = 0
 		return (b[1:],r2,p)
 
 	if model.regressMode == 'bilinear' :
