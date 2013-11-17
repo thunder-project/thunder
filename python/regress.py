@@ -212,6 +212,7 @@ if outputMode == 'tuning' :
 	B = Y.map(lambda y : getRegression(y,model))
 	stats = B.map(lambda b : float16(b[1:])).collect()
 	savemat(outputFile+"/"+"stats.mat",mdict={'stats':stats},oned_as='column',do_compression='true')
+	print(B.map(lambda b : b[0]).first())
 	p = B.map(lambda b : float16(getTuning(b[0],model))).collect()
 	savemat(outputFile+"/"+"p.mat",mdict={'p':p},oned_as='column',do_compression='true')
 	# get average tuning for groups of pixels
