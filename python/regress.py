@@ -173,7 +173,8 @@ if regressMode == 'bilinear' :
 	model.X1hat = X1hat
 if outputMode == 'tuning' :
 	s = loadmat(inputFile_X + "_s.mat")['s']
-	model.s = transpose(s[0])
+	print(s)
+	model.s = transpose(s)
 	model.tuningMode = opts
 if outputMode == 'pca' :
 	model.k = int(opts)
