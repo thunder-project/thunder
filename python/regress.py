@@ -73,9 +73,9 @@ def getRegression(y,model) :
 		r2shuffle = zeros((1,1))
 		for iShuf in range(0,1) :
 			X = model.X
-			for ix in range(0,shape(X)[0]) :
-				shift = int(round(random.rand(1)*shape(X)[1]))
-				X[ix,:] = roll(X[ix,:],shift)
+			# for ix in range(0,shape(X)[0]) :
+			# 	shift = int(round(random.rand(1)*shape(X)[1]))
+			# 	X[ix,:] = roll(X[ix,:],shift)
 			Xhat = dot(inv(dot(X,transpose(X))),X)
 			btmp = dot(Xhat,y)
 			predic = dot(btmp,model.X)
