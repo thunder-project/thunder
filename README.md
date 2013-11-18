@@ -22,9 +22,9 @@ For scala functions, build and run in sbt:
 
 ## Input formats
 
-All functions rely neural data as input, and some additionally rely on information about external variables / covariates (e.g. stimuli or behavioral attributes).
+All functions use neural data as input, and some additionally use information about external covariates (e.g. stimuli or behavioral attributes).
 
-All functions use the same format for neural data: a text file, where the rows are pixels and the columns are time points. The first three entries in each row are the x,y,z coordinates of that pixel, and the subsequent entries are the neural signals at each time point. For example, a data set with 2x2x2 pixels and 8 time points might look like:
+All functions use the same format for neural data: a text file, where the rows are voxels and the columns are time points. The first three entries in each row are the x,y,z coordinates of that voxel, and the subsequent entries are the neural signals for that voxel at each time point. For example, a data set with 2x2x2 voxels and 8 time points might look like:
 
 	1 1 1 11 41 2 17 43 24 56 87
 	1 2 1 ...
@@ -35,9 +35,9 @@ All functions use the same format for neural data: a text file, where the rows a
 	2 1 2 ...
 	2 2 2 ...
 
-Subsets of pixels (e.g. different planes) can be stored in separate text files within the same directory, or all in one file. Numeric precision 
+Subsets of voxels (e.g. different imaging planes) can be stored in separate text files within the same directory, or all in one file.
 
-Many functions also use a common format for covariates: a text file of 0s and 1s, where the rows are variables, and the columns are time points. For example, if eight orientations were presented in random order for the example above, the file would be:
+Many functions make use of covariates, and there is a common input format: a text file of 0s and 1s, where the rows are variables, and the columns are time points. For example, if eight orientations were presented in random order for the example above, the file would be:
 
 	1 0 0 0 0 0 0 0
 	0 0 1 0 0 0 0 0
@@ -67,7 +67,7 @@ rpca - robust PCA
 
 fourier - fourier analysis on time series data
 
-query - get average time series with desired indices
+query - get average time series from voxels with desired indices
 
 kmeans - k-means clustering
 
