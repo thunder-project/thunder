@@ -72,13 +72,13 @@ def getRegression(y,model) :
 		r2 = 1 - sse/sst
 		r2shuffle = zeros((1,1))
 		for iShuf in range(0,1) :
-			X = model.X
+			foo = model.X
 			for ix in range(0,shape(X)[0]) :
 				shift = int(round(random.rand(1)*shape(X)[1]))
-				X[ix,:] = roll(X[ix,:],shift)
-			Xhat = dot(inv(dot(X,transpose(X))),X)
+				foo[ix,:] = roll(foo[ix,:],shift)
+			Xhat = dot(inv(dot(foo,transpose(foo))),foo)
 			btmp = dot(Xhat,y)
-			predictmp = dot(btmp,model.X)
+			predictmp = dot(btmp,foo)
 			ssetmp = sum((predictmp-y) ** 2)
 			r2shuffle[iShuf] = 1 - ssetmp/sst
 		#p = sum(r2shuffle > r2) / 1
@@ -168,7 +168,6 @@ if (regressMode == 'linear') | (regressMode == 'linear-shuffle') :
 	model.Xhat = Xhat
 	model.g = g
 	model.nG = len(unique(model.g))
-	print(shape(model.X))
 if regressMode == 'bilinear' :
 	X1 = loadmat(inputFile_X + "_X1.mat")['X1']
 	X2 = loadmat(inputFile_X + "_X2.mat")['X2']
