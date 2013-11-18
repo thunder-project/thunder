@@ -76,7 +76,7 @@ def getRegression(y,model) :
 			for ix in range(0,shape(X)[0]) :
 				shift = int(round(random.rand(1)*shape(X)[1]))
 				X[ix,:] = roll(X[ix,:],shift)
-			b = lstsq(transpose(model.X),y)[0]
+			b = lstsq(transpose(X),y)[0]
 			predic = dot(b,X)
 			sse = sum((predic-y) ** 2)
 			r2shuffle[iShuf] = 1 - sse/sst
@@ -210,15 +210,17 @@ if outputMode == 'tuning' :
 	savemat(outputFile+"/"+"stats.mat",mdict={'stats':stats},oned_as='column',do_compression='true')
 	p = B.map(lambda b : float16(getTuning(b[0],model))).collect()
 	savemat(outputFile+"/"+"p.mat",mdict={'p':p},oned_as='column',do_compression='true')
-	# get average tuning for groups of pixels
+	# get population tuning curves
 	vals = linspace(min(model.s),max(model.s),6)
 	means = zeros((len(vals)-1,len(model.s)))
+	sds = zeros((len(vals)-1,len(model.s)))
 	for iv in range(0,len(vals)-1) :
 		subset = B.filter(lambda b : (b[1] > 0.005) & inRange(getTuning(b[0],model)[0],vals[iv],vals[iv+1]))
 		n = subset.count()
 		means[iv,:] = subset.map(lambda b : b[0]).reduce(lambda x,y : x + y) / n
-		sds[iv,:] = subset.map(lambda b : (b[0] - means[iv,:])**2).reduce(lambda x,y : x + y) / n
-		savemat(outputFile+"/"+"tuningCurves.mat",mdict={'tuningCurves':tuningCurves},oned_as='column',do_compression='true')
+		sds[iv,:] = subset.map(lambda b : (b[0] - means[iv,:])**2).reduce(lambda x,y : x + y) / (n - 1)
+		savemat(outputFile+"/"+"means.mat",mdict={'means':means},do_compression='true')
+		savemat(outputFile+"/"+"sds.mat",mdict={'sds':sds},do_compression='true')
 
 # get norms of coefficients to make a contrast map
 if outputMode == 'norm' :
