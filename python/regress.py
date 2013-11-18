@@ -12,6 +12,7 @@
 
 import sys
 import os
+from copy import deepcopy
 from numpy import *
 from scipy.linalg import *
 from scipy.io import * 
