@@ -70,17 +70,17 @@ def getRegression(y,model) :
 		sse = sum((predic-y) ** 2)
 		sst = sum((y-mean(y)) ** 2)
 		r2 = 1 - sse/sst
-		r2shuffle = zeros((100,))
-		for iShuf in range(0,100) :
-			X = copy(model.X)
-			for ix in range(0,shape(X)[0]) :
-				shift = int(round(random.rand(1)*shape(X)[1]))
-				X[ix,:] = roll(X[ix,:],shift)
-			b = lstsq(transpose(model.X),y)[0]
-			predic = dot(b,X)
-			sse = sum((predic-y) ** 2)
-			r2shuffle[iShuf] = 1 - sse/sst
-		p = sum(r2shuffle > r2) / 100.
+		# r2shuffle = zeros((100,))
+		# for iShuf in range(0,100) :
+		# 	X = copy(model.X)
+		# 	for ix in range(0,shape(X)[0]) :
+		# 		shift = int(round(random.rand(1)*shape(X)[1]))
+		# 		X[ix,:] = roll(X[ix,:],shift)
+		# 	b = lstsq(transpose(model.X),y)[0]
+		# 	predic = dot(b,X)
+		# 	sse = sum((predic-y) ** 2)
+		# 	r2shuffle[iShuf] = 1 - sse/sst
+		# p = sum(r2shuffle > r2) / 100.
 		return (b[1:],r2,p)
 
 	if model.regressMode == 'bilinear' :
@@ -212,10 +212,12 @@ if outputMode == 'tuning' :
 	savemat(outputFile+"/"+"p.mat",mdict={'p':p},oned_as='column',do_compression='true')
 	# get average tuning for groups of pixels
 	vals = linspace(min(model.s),max(model.s),6)
-	tuningCurves = zeros((len(vals)-1,len(model.s)))
+	means = zeros((len(vals)-1,len(model.s)))
 	for iv in range(0,len(vals)-1) :
 		subset = B.filter(lambda b : (b[1] > 0.005) & inRange(getTuning(b[0],model)[0],vals[iv],vals[iv+1]))
-		tuningCurves[iv,:] = subset.map(lambda b : b[0]).reduce(lambda x,y : x + y) / subset.count()
+		n = subset.count()
+		means[iv,:] = subset.map(lambda b : b[0]).reduce(lambda x,y : x + y) / n
+		sds[iv,:] = subset.map(lambda b : (b[0] - means[iv,:])**2).reduce(lambda x,y : x + y) / n
 		savemat(outputFile+"/"+"tuningCurves.mat",mdict={'tuningCurves':tuningCurves},oned_as='column',do_compression='true')
 
 # get norms of coefficients to make a contrast map
