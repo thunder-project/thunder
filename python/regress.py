@@ -82,7 +82,6 @@ def getRegression(y,model) :
 			sse = sum((predic-y) ** 2)
 			r2shuffle[iShuf] = 1 - sse/sst
 		p = sum(r2shuffle > r2) / 10
-		p = 0
 		return (b[1:],r2,p)
 
 	if model.regressMode == 'bilinear' :
