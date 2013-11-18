@@ -65,8 +65,8 @@ def getRegression(y,model) :
 		return b
 
 	if model.regressMode == 'linear-shuffle' :
-		#b = dot(model.Xhat,y)
-		b = lstsq(model.X,y)
+		b = dot(model.Xhat,y)
+		#b = lstsq(model.X,y)
 		predic = dot(b,model.X)
 		sse = sum((predic-y) ** 2)
 		sst = sum((y-mean(y)) ** 2)
