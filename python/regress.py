@@ -163,6 +163,9 @@ if (regressMode == 'linear') | (regressMode == 'linear-shuffle') :
 	X = X.astype(float)
 	g = loadmat(inputFile_X + "_g.mat")['g']
 	g = g.astype(float)[0]
+	for ix in range(0,shape(X)[0]) :
+	 	shift = int(round(random.rand(1)*shape(X)[1]))
+	 	X[ix,:] = roll(X[ix,:],shift)
 	Xhat = dot(inv(dot(X,transpose(X))),X)
 	model.X = X
 	model.Xhat = Xhat
