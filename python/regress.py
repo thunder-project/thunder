@@ -78,9 +78,9 @@ def getRegression(y,model) :
 			# 	X[ix,:] = roll(X[ix,:],shift)
 			Xhat = dot(inv(dot(X,transpose(X))),X)
 			btmp = dot(Xhat,y)
-			predic = dot(btmp,model.X)
-			sse = sum((predic-y) ** 2)
-			r2shuffle[iShuf] = 1 - sse/sst
+			predictmp = dot(btmp,model.X)
+			ssetmp = sum((predictmp-y) ** 2)
+			r2shuffle[iShuf] = 1 - ssetmp/sst
 		#p = sum(r2shuffle > r2) / 1
 		p = 0
 		return (b[1:],r2,p)
@@ -163,9 +163,6 @@ if (regressMode == 'linear') | (regressMode == 'linear-shuffle') :
 	X = X.astype(float)
 	g = loadmat(inputFile_X + "_g.mat")['g']
 	g = g.astype(float)[0]
-	for ix in range(0,shape(X)[0]) :
-	 	shift = int(round(random.rand(1)*shape(X)[1]))
-	 	X[ix,:] = roll(X[ix,:],shift)
 	Xhat = dot(inv(dot(X,transpose(X))),X)
 	model.X = X
 	model.Xhat = Xhat
