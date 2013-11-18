@@ -65,14 +65,13 @@ def getRegression(y,model) :
 		return b
 
 	if model.regressMode == 'linear-shuffle' :
-		#b = dot(model.Xhat,y)
-		b = lstsq(transpose(model.X),y)[0]
+		b = dot(model.Xhat,y)
 		predic = dot(b,model.X)
 		sse = sum((predic-y) ** 2)
 		sst = sum((y-mean(y)) ** 2)
 		r2 = 1 - sse/sst
-		r2shuffle = zeros((10,))
-		for iShuf in range(0,10) :
+		r2shuffle = zeros((1,))
+		for iShuf in range(0,1) :
 			#X = copy(model.X)
 			#for ix in range(0,shape(X)[0]) :
 			#	shift = int(round(random.rand(1)*shape(X)[1]))
@@ -82,7 +81,7 @@ def getRegression(y,model) :
 			predic = dot(b,X)
 			sse = sum((predic-y) ** 2)
 			r2shuffle[iShuf] = 1 - sse/sst
-		p = sum(r2shuffle > r2) / 10.
+		p = sum(r2shuffle > r2) / 1.
 		return (b[1:],r2,p)
 
 	if model.regressMode == 'bilinear' :
@@ -116,9 +115,6 @@ def getTuning(y,model) :
 		return (mu,k)
 
 	if model.tuningMode == 'gaussian' :
-		#y[y<0] = 0
-		#coeff,varMat = curve_fit(gaussian, model.s, y, p0=[1., mean(model.s), 1.], maxfev=100000,gtol=0.01)
-		#return (coeff[1],coeff[2]) # return mu and sigma
 		y[y<0] = 0
 		y = y/sum(y)
 		mu = dot(model.s,y)
@@ -216,7 +212,7 @@ if outputMode == 'tuning' :
 	p = B.map(lambda b : float16(getTuning(b[0],model))).collect()
 	savemat(outputFile+"/"+"p.mat",mdict={'p':p},oned_as='column',do_compression='true')
 	# get average tuning for groups of pixels
-	vals = linspace(min(model.s),max(model.s),len(model.s))
+	vals = linspace(min(model.s),max(model.s),5)
 	tuningCurves = zeros((len(model.s)-1,len(model.s)))
 	for iv in range(0,len(model.s)-1) :
 		subset = B.filter(lambda b : b[1] > 0.001 & inRange(getTuning(b[0],model)[0],vals[iv],vals[iv+1]))
