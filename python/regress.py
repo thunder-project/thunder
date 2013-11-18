@@ -66,8 +66,8 @@ def getRegression(y,model) :
 
 	if model.regressMode == 'linear-shuffle' :
 		#b = dot(model.Xhat,y)
-		b = array(lstsq(transpose(model.X),transpose(y)))
-		predic = dot(model.X,b)
+		b = lstsq(transpose(model.X),y)[0]
+		predic = dot(b,model.X)
 		sse = sum((predic-y) ** 2)
 		sst = sum((y-mean(y)) ** 2)
 		r2 = 1 - sse/sst
@@ -212,7 +212,7 @@ if outputMode == 'pca' :
 if outputMode == 'tuning' :
 	print(shape(model.X))
 	print(shape(Y.first()))
-	print(lstsq(transpose(model.X),Y.first()))
+	print(lstsq(transpose(model.X),Y.first())[0])
 	B = Y.map(lambda y : getRegression(y,model)).cache()
 	stats = B.map(lambda b : float16(b[1:])).collect()
 	savemat(outputFile+"/"+"stats.mat",mdict={'stats':stats},oned_as='column',do_compression='true')
