@@ -65,22 +65,22 @@ def getRegression(y,model) :
 		return b
 
 	if model.regressMode == 'linear-shuffle' :
-		b = dot(model.Xhat,y)
+		#b = dot(model.Xhat,y)
+		b = lstsq(model.X,y)
 		predic = dot(b,model.X)
 		sse = sum((predic-y) ** 2)
 		sst = sum((y-mean(y)) ** 2)
 		r2 = 1 - sse/sst
-		r2shuffle = zeros((1,1))
-		for iShuf in range(0,1) :
-			foo = model.X
-			for ix in range(0,shape(X)[0]) :
-				shift = int(round(random.rand(1)*shape(X)[1]))
-				foo[ix,:] = roll(foo[ix,:],shift)
-			Xhat = dot(inv(dot(foo,transpose(foo))),foo)
-			btmp = dot(Xhat,y)
-			predictmp = dot(btmp,foo)
-			ssetmp = sum((predictmp-y) ** 2)
-			r2shuffle[iShuf] = 1 - ssetmp/sst
+		# r2shuffle = zeros((1,1))
+		# for iShuf in range(0,1) :
+		# 	X = copy(model.X)
+		# 	for ix in range(0,shape(X)[0]) :
+		# 		shift = int(round(random.rand(1)*shape(X)[1]))
+		# 		X[ix,:] = roll(X[ix,:],shift)
+		# 	b = lstsq(X,y)
+		# 	predic = dot(b,X)
+		# 	sse = sum((predic-y) ** 2)
+		# 	r2shuffle[iShuf] = 1 - sse/sst
 		#p = sum(r2shuffle > r2) / 1
 		p = 0
 		return (b[1:],r2,p)
