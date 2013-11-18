@@ -210,6 +210,10 @@ if outputMode == 'pca' :
 
 # process output with a parametric tuning curves
 if outputMode == 'tuning' :
+	print(shape(model.X))
+	print(shape(Y.first()))
+	print(lstsq(model.X,Y.first()))
+	print(lstsq(transpose(model.X),transpose(y)))
 	B = Y.map(lambda y : getRegression(y,model)).cache()
 	stats = B.map(lambda b : float16(b[1:])).collect()
 	savemat(outputFile+"/"+"stats.mat",mdict={'stats':stats},oned_as='column',do_compression='true')
