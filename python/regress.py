@@ -70,8 +70,8 @@ def getRegression(y,model) :
 		sse = sum((predic-y) ** 2)
 		sst = sum((y-mean(y)) ** 2)
 		r2 = 1 - sse/sst
-		r2shuffle = zeros((2,1))
-		for iShuf in range(0,2) :
+		r2shuffle = zeros((1,1))
+		for iShuf in range(0,1) :
 			X = model.X
 			for ix in range(0,shape(X)[0]) :
 				shift = int(round(random.rand(1)*shape(X)[1]))
@@ -81,7 +81,7 @@ def getRegression(y,model) :
 			predic = dot(btmp,model.X)
 			sse = sum((predic-y) ** 2)
 			r2shuffle[iShuf] = 1 - sse/sst
-		p = sum(r2shuffle > r2) / 2
+		#p = sum(r2shuffle > r2) / 1
 		p = 0
 		return (b[1:],r2,p)
 
