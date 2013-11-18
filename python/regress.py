@@ -212,10 +212,10 @@ if outputMode == 'tuning' :
 	p = B.map(lambda b : float16(getTuning(b[0],model))).collect()
 	savemat(outputFile+"/"+"p.mat",mdict={'p':p},oned_as='column',do_compression='true')
 	# get average tuning for groups of pixels
-	vals = linspace(min(model.s),max(model.s),5)
+	vals = linspace(min(model.s),max(model.s),6)
 	tuningCurves = zeros((len(vals)-1,len(model.s)))
 	for iv in range(0,len(vals)-1) :
-		subset = B.filter(lambda b : (b[1] > 0.001) & inRange(getTuning(b[0],model)[0],vals[iv],vals[iv+1]))
+		subset = B.filter(lambda b : (b[1] > 0.005) & inRange(getTuning(b[0],model)[0],vals[iv],vals[iv+1]))
 		tuningCurves[iv,:] = subset.map(lambda b : b[0]).reduce(lambda x,y : x + y) / subset.count()
 		savemat(outputFile+"/"+"tuningCurves.mat",mdict={'tuningCurves':tuningCurves},oned_as='column',do_compression='true')
 
