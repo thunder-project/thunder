@@ -77,7 +77,8 @@ def getRegression(y,model) :
 			#for ix in range(0,shape(X)[0]) :
 			#	shift = int(round(random.rand(1)*shape(X)[1]))
 			#	X[ix,:] = roll(X[ix,:],shift)
-			b = lstsq(transpose(model.X),y)[0]
+			#b = lstsq(transpose(model.X),y)[0]
+			b = dot(model.Xhat,y)
 			predic = dot(b,X)
 			sse = sum((predic-y) ** 2)
 			r2shuffle[iShuf] = 1 - sse/sst
