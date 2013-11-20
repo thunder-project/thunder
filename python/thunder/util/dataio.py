@@ -1,7 +1,7 @@
 # utilities for loading and saving data
 
 from scipy.io import savemat
-from numpy import array, mean
+from numpy import array, mean, float16
 import pyspark
 
 def parse(data, filter="raw", inds=None) :
