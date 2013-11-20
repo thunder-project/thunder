@@ -6,7 +6,7 @@
 import sys
 import os
 from numpy import *
-from thunder.util.dataio import *
+from thunder.util.dataio import parseVector
 from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
