@@ -18,7 +18,7 @@ if len(argsIn) < 6:
 sc = SparkContext(argsIn[0], "regress")
 dataFile = str(argsIn[1])
 modelFile = str(argsIn[2])
-outputDir = str(argsIn[3]) + "-regress"
+outputDir = str(argsIn[3]) + "-tuning"
 regressionMode = str(argsIn[4])
 tuningMode = str(argsIn[5])
 if not os.path.exists(outputDir) :

@@ -26,9 +26,8 @@ c = int(sys.argv[5])
 if not os.path.exists(outputDir) : os.makedirs(outputDir)
 
 # load data
-data = sc.textFile(dataFile).map(lambda x : parse(x,"raw")).cache()
-
-# get count
+lines = sc.textFile(dataFile)
+data = parse(lines, "dff").cache()
 n = data.count()
 
 # reduce dimensionality
