@@ -33,8 +33,6 @@ model = regressionModel(modelFile,mode)
 # do regression
 betas = regressionFit(data,model).cache()
 
-print(betas.first())
-
 # get statistics
 stats = betas.map(lambda x : x[1])
 saveout(stats,outputDir,"stats","matlab")
@@ -48,7 +46,7 @@ saveout(latent,outputDir,"latent","matlab")
 saveout(scores,outputDir,"scores","matlab")
 
 # compute trajectories from raw data
-traj = data.map(lambda x : outer(x,inner(regressionGet(x,model)[0] - mean(regressionGet(x,model)[0]),comps))).reduce(lambda x,y : x + y) / data.count()
+traj = regressionFit(data,model,comps)
 saveout(traj,outputDir,"traj","matlab")
 
 # get simple measure of response strength

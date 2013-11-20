@@ -45,7 +45,7 @@ def tuningModel(modelFile,tuningMode) :
 
 	return model
 
-def regressionFit(data,model) :
+def regressionFit(data,model,comps=None) :
 
 	def regressionGet(y,model) :
 
@@ -93,9 +93,14 @@ def regressionFit(data,model) :
 
 			return (b1,b2[1:],r2)
 
-	betas = data.map(lambda x : regressionGet(x,model))
-
-	return betas
+	if comps is not None :
+		betas = data.map(lambda x : regressionGet(x,model))
+		return betas
+	
+	else :
+		traj = data.map(lambda x : outer(x,inner(regressionGet(x,model)[0] - mean(regressionGet(x,model)[0]),comps))).reduce(lambda x,y : x + y) / data.count()
+		return traj
+	
 
 def tuningFit(y,model) :
 	
