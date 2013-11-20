@@ -42,4 +42,4 @@ if mode == 'std':
 if mode == 'perc':
 	ref = data.map(lambda (k,x) : percentile(x,90))
 
-saveout(ref.map(float16).collect(),outputDir,"ref"+mode,"matlab")
+saveout(ref,outputDir,"ref"+mode,"matlab")
