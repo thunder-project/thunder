@@ -5,8 +5,15 @@
 
 import sys
 import os
+from numpy import *
+from numpy.fft import *
 from pyspark import SparkContext
 from thunder.util.dataio import *
+
+if len(sys.argv) < 5:
+  print >> sys.stderr, \
+  "(fourier) usage: fourier <master> <dataFile> <outputFile> <freq>"
+  exit(-1)
 
 def getFourier(vec,freq):
 	vec = vec - mean(vec)
@@ -22,11 +29,6 @@ def getFourier(vec,freq):
 	if ph<0:
 		ph = ph+pi*2
 	return array([co,ph])
-
-if len(sys.argv) < 5:
-  print >> sys.stderr, \
-  "(fourier) usage: fourier <master> <dataFile> <outputFile> <freq>"
-  exit(-1)
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "fourier")
