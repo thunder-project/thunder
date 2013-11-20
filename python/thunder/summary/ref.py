@@ -28,13 +28,9 @@ if not os.path.exists(outputDir) : os.makedirs(outputDir)
 lines = sc.textFile(dataFile)
 data = parse(lines, "dff", "xyz").cache()
 
-print(data.first())
-
 # get z ordering
 zinds = data.filter(lambda (k,x) : (k[0] == 1) & (k[1] == 1)).map(lambda (k,x) : k[2])
-print(zinds.collect())
-
-#saveout(zinds,outputDir,"zinds","matlab")
+saveout(zinds,outputDir,"zinds","matlab")
 
 # compute ref
 if mode == 'med':
@@ -46,4 +42,4 @@ if mode == 'std':
 if mode == 'perc':
 	ref = data.map(lambda (k,x) : percentile(x,90))
 
-#saveout(ref,outputDir,"ref"+mode,"matlab")
+saveout(ref,outputDir,"ref"+mode,"matlab")
