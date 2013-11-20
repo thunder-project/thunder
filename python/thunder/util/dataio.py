@@ -2,8 +2,8 @@
 
 from scipy.io import * 
 from numpy import *
-import pyspark
-from pyspark import rdd
+#import pyspark
+
 
 def parseVector(line, filter="raw", inds=None):
 
