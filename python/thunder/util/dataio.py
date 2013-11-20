@@ -1,17 +1,25 @@
 # utilities for loading and saving data
 
-
-from numpy import *
 from scipy.io import * 
+from numpy import *
 import pyspark
+from pyspark import rdd
 
-def parseVector(line, filter="raw", inds=None) :
+def parseVector(line, filter="raw", inds=None):
 
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
-	return ts
-
-
+	if filter == "dff" : # convert to dff
+		meanVal = mean(ts)
+		ts = (ts - meanVal) / (meanVal + 0.1)
+	if inds is not None :
+		if inds == "xyz" :
+			return ((int(vec[0]),int(vec[1]),int(vec[2])),ts)
+		if inds == "linear" :
+			k = int(vec[0]) + int((vec[1] - 1)*1650)
+			return (k,ts)
+	else :
+		return ts
 	
 def saveout(data, outputDir, outputFile, outputFormat) :
 
