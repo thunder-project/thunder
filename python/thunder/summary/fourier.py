@@ -40,12 +40,12 @@ if not os.path.exists(outputFile) : os.makedirs(outputFile)
 # load data
 lines = sc.textFile(dataFile)
 #data = lines.map(lambda x : parseVector(x,"dff")).cache()
-data = parse(lines, "dff").cache()
+data = parse(lines, "dff")
 
 print(fft(data.first()))
 
 # do fourier on each time series
-out = data.map(lambda x : getFourier(x,freq))
+out = data.map(lambda x : getFourier(x,freq)).cache()
 
 # save results
 co = out.map(lambda x : x[0])
