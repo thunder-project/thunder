@@ -6,8 +6,9 @@ import pyspark
 
 
 def parse(rdd) :
-	return rdd.map(lambda x : parseVector(x))
-
+	data = rdd.map(lambda x : parseVector(x))
+	return data
+	
 def parseVector(line, filter="raw", inds=None):
 
 	vec = [float(x) for x in line.split(' ')]
