@@ -26,7 +26,9 @@ if not os.path.exists(outputDir) :
 
 # parse data
 lines = sc.textFile(dataFile)
-data = parse(lines, "dff")
+data = parse(lines, "dff").cache()
+
+data.count()
 
 # create models
 model1 = regressionModel(modelFile,regressionMode)
