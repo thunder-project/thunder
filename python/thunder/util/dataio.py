@@ -4,32 +4,25 @@ from scipy.io import *
 from numpy import *
 import pyspark
 
+def parse(data, filter="raw", inds=None) :
 
+	def parseVector(line, filter="raw", inds=None) :
 
-def parse(data) :
+		vec = [float(x) for x in line.split(' ')]
+		ts = array(vec[3:]) # get tseries
+		if filter == "dff" : # convert to dff
+			meanVal = mean(ts)
+			ts = (ts - meanVal) / (meanVal + 0.1)
+		if inds is not None :
+			if inds == "xyz" :
+				return ((int(vec[0]),int(vec[1]),int(vec[2])),ts)
+			if inds == "linear" :
+				k = int(vec[0]) + int((vec[1] - 1)*1650)
+				return (k,ts)
+		else :
+			return ts
 
-	def parseVector(line) :
-		return [float(x) for x in line.split(' ')]
-
-	foo = data.map(lambda x : parseVector(x))
-	return foo
-
-
-# def parse(line, filter="raw", inds=None):
-
-# 	vec = [float(x) for x in line.split(' ')]
-# 	ts = array(vec[3:]) # get tseries
-# 	if filter == "dff" : # convert to dff
-# 		meanVal = mean(ts)
-# 		ts = (ts - meanVal) / (meanVal + 0.1)
-# 	if inds is not None :
-# 		if inds == "xyz" :
-# 			return ((int(vec[0]),int(vec[1]),int(vec[2])),ts)
-# 		if inds == "linear" :
-# 			k = int(vec[0]) + int((vec[1] - 1)*1650)
-# 			return (k,ts)
-# 	else :
-# 		return ts
+	return data.map(lambda x : parseVector(x,filter,inds))
 	
 def saveout(data, outputDir, outputFile, outputFormat) :
 
