@@ -39,7 +39,6 @@ if not os.path.exists(outputFile) : os.makedirs(outputFile)
 
 # load data
 lines = sc.textFile(dataFile)
-#data = lines.map(lambda x : parseVector(x,"dff")).cache()
 data = parse(lines, "dff")
 
 # do fourier on each time series
