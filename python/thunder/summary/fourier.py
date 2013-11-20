@@ -15,6 +15,21 @@ if len(sys.argv) < 5:
   "(fourier) usage: fourier <master> <dataFile> <outputFile> <freq>"
   exit(-1)
 
+def parseVector(line, filter="raw", inds=None) :
+		vec = [float(x) for x in line.split(' ')]
+		ts = array(vec[3:]) # get tseries
+		if filter == "dff" : # convert to dff
+			meanVal = mean(ts)
+			ts = (ts - meanVal) / (meanVal + 0.1)
+		if inds is not None :
+			if inds == "xyz" :
+				return ((int(vec[0]),int(vec[1]),int(vec[2])),ts)
+			if inds == "linear" :
+				k = int(vec[0]) + int((vec[1] - 1)*1650)
+				return (k,ts)
+		else :
+			return ts
+
 def getFourier(vec,freq):
 	vec = vec - mean(vec)
 	nframes = len(vec)
@@ -39,7 +54,8 @@ if not os.path.exists(outputFile) : os.makedirs(outputFile)
 
 # load data
 lines = sc.textFile(dataFile)
-data = parse(lines, "dff", "none").cache()
+data = lines.map(lambda x : parseVector(x,"dff")).cache()
+#data = parse(lines, "dff").cache()
 
 print(data.first())
 
