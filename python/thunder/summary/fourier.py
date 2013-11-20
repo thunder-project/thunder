@@ -15,7 +15,6 @@ if len(sys.argv) < 5:
   exit(-1)
 
 def parse(line, filter="raw", inds=None):
-
 	vec = [float(x) for x in line.split(' ')]
 	ts = (vec[3:]) # get tseries
 	if filter == "dff" : # convert to dff
