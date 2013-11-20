@@ -34,7 +34,7 @@ if len(argsIn) < 4:
   exit(-1)
 
 # parse inputs
-sc = SparkContext(argsIn[0], "ref")
+sc = SparkContext(argsIn[0], "ref", pyFiles=['~/github/thunder/python/thunder/util/dataio.py'])
 dataFile = str(argsIn[1])
 outputDir = str(argsIn[2])
 mode = str(argsIn[3])
