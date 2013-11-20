@@ -26,4 +26,4 @@ def saveout(data, outputDir, outputFile, outputFormat) :
 	if outputFormat == "matlab" :
 		dtype = type(data) 
 		#
-			savemat(outputDir+"/"+outputFile+".mat",mdict={outputFile : data},oned_as='column',do_compression='true')
+		savemat(outputDir+"/"+outputFile+".mat",mdict={outputFile : data},oned_as='column',do_compression='true')
