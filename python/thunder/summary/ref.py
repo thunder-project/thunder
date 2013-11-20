@@ -27,13 +27,14 @@ if not os.path.exists(outputDir) : os.makedirs(outputDir)
 # parse data
 lines = sc.textFile(dataFile)
 #data = parse(lines)
-data = lines.map(lambda x : parseVector(x,"raw","xyz"))
+data = lines.map(lambda x : parseVector(x))
 
 print(data.first())
 
 # get z ordering
-zinds = data.filter(lambda (k,x) : (k[0] == 1) & (k[1] == 1)).map(lambda (k,x) : k[2])
-print(zinds.collect())
+#zinds = data.filter(lambda (k,x) : (k[0] == 1) & (k[1] == 1)).map(lambda (k,x) : k[2])
+#print(zinds.collect())
+print(data.reduce(lambda x,y: x +y))
 #saveout(zinds,outputDir,"zinds","matlab")
 
 # compute ref
