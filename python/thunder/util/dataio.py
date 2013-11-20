@@ -5,7 +5,7 @@ from numpy import *
 import pyspark
 
 def parse(data) :
-	foo = data.map(lambda x : [float(x) for x in line.split(' ')])
+	foo = data.map(lambda x : [float(y) for y in x.split(' ')])
 	return foo
 
 
