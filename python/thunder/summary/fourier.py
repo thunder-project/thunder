@@ -5,7 +5,7 @@
 
 import sys
 import os
-from numpy import *
+from numpy import mean, array, angle, abs, sqrt, zeros
 from numpy.fft import fft
 from pyspark import SparkContext
 from thunder.util.dataio import *
