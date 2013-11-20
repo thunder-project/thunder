@@ -66,4 +66,5 @@ result = data.join(means)
 corr = result.map(lambda (k,v) : (k,float16(corrcoef(v[0],v[1])[0,1])))
 
 print(type(corr))
+savemat(outputFile+"/"+outputFile+".mat",mdict={"corr" : corr.collect()},oned_as='column',do_compression='true')
 #saveout(corr,outputFile,"corr","matlab")
