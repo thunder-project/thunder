@@ -4,11 +4,13 @@ from scipy.io import *
 from numpy import *
 import pyspark
 
-def parseVector(line) :
-	return [float(x) for x in line.split(' ')]
 
 
 def parse(data) :
+
+	def parseVector(line) :
+		return [float(x) for x in line.split(' ')]
+
 	foo = data.map(lambda x : parseVector(x))
 	return foo
 
