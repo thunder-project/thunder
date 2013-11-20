@@ -33,7 +33,7 @@ model1 = regressionModel(modelFile,regressionMode)
 model2 = tuningModel(modelFile,tuningMode)
 
 # do regression
-betas = regressionFit(data,model1).cache()
+betas = regressionFit(data,model1)
 
 # get statistics
 stats = betas.map(lambda x : x[2])
