@@ -101,25 +101,29 @@ def regressionFit(data,model,comps=None) :
 		betas = data.map(lambda x : regressionGet(x,model))
 		return betas
 
-def tuningFit(y,model) :
+def tuningFit(data,model) :
 	
-	if model.tuningMode == 'circular' :
-		y = y - min(y)
-		y = y/sum(y)
-		r = inner(y,exp(1j*model.s))
-		mu = angle(r)
-		v = absolute(r)/sum(y)
-		if v < 0.53 :
-			k = 2*v + (v**3) + 5*(v**5)/6
-		elif (v>=0.53) & (v<0.85) :
-			k = -.4 + 1.39*v + 0.43/(1-v)
-		else :
-			k = 1/(v**3 - 4*(v**2) + 3*v)
-		return (mu,k)
+	def tuningGet(y,model) :
 
-	if model.tuningMode == 'gaussian' :
-		y[y<0] = 0
-		y = y/sum(y)
-		mu = dot(model.s,y)
-		sigma = dot(y,(model.s-mu)**2)
-		return (mu,sigma)
+		if model.tuningMode == 'circular' :
+			y = y - min(y)
+			y = y/sum(y)
+			r = inner(y,exp(1j*model.s))
+			mu = angle(r)
+			v = absolute(r)/sum(y)
+			if v < 0.53 :
+				k = 2*v + (v**3) + 5*(v**5)/6
+			elif (v>=0.53) & (v<0.85) :
+				k = -.4 + 1.39*v + 0.43/(1-v)
+			else :
+				k = 1/(v**3 - 4*(v**2) + 3*v)
+			return (mu,k)
+
+		if model.tuningMode == 'gaussian' :
+			y[y<0] = 0
+			y = y/sum(y)
+			mu = dot(model.s,y)
+			sigma = dot(y,(model.s-mu)**2)
+			return (mu,sigma)
+
+	params = data.map(lambda x : tuningGet(y,model))

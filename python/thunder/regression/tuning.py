@@ -33,7 +33,7 @@ model1 = regressionModel(modelFile,regressionMode)
 model2 = tuningModel(modelFile,tuningMode)
 
 # do regression
-betas = data.map(lambda y : regressionFit(y,model1)).cache()
+betas = regressionFit(data,model1).cache()
 
 # get statistics
 stats = betas.map(lambda x : x[2])
@@ -46,7 +46,7 @@ saveout(latent,outputDir,"latent","matlab")
 saveout(scores,outputDir,"scores","matlab")
 
 # calculate tuning curves on second fit component
-params = betas.map(lambda x : tuningFit(x[1],model2))
+params = tuningFit(betas.map(lambda x : x[1]),model2)
 saveout(params,outputDir,"params","matlab")
 
 # process output with a parametric tuning curves
