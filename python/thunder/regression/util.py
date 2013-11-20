@@ -45,7 +45,9 @@ def tuningModel(modelFile,tuningMode) :
 
 	return model
 
-def regressionFit(y,model) :
+def regressionFit(data,model) :
+
+	def regressionGet(y,model) :
 
 	if model.regressionMode == 'mean' :
 		b = dot(model.X,y)
@@ -90,6 +92,8 @@ def regressionFit(y,model) :
 		r2 = 1 - sse/sst
 
 		return (b1,b2[1:],r2)
+
+	betas = data.map(lambda x : regressionGet(x,model))
 
 def tuningFit(y,model) :
 	

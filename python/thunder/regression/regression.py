@@ -24,13 +24,14 @@ mode = str(argsIn[4])
 if not os.path.exists(outputDir) : os.makedirs(outputDir)
 
 # parse data
-data = sc.textFile(dataFile).map(lambda x : parse(x,"dff")).cache()
+lines = sc.textFile(dataFile)
+data = parse(lines, "dff").cache()
 
 # create model
 model = regressionModel(modelFile,mode)
 
 # do regression
-betas = data.map(lambda x : regressionFit(x,model)).cache()
+betas = regressionFit(data,model).cache()
 
 # get statistics
 stats = betas.map(lambda x : x[1])
