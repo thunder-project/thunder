@@ -1,5 +1,5 @@
 $ cat .gitignore
-.pyc
+*.pyc
 .idea
 .idea_modules
 .DS_Store
