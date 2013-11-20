@@ -8,7 +8,6 @@ import os
 from numpy import *
 import thunder
 from thunder.util.dataio import *
-#rom parseVector import parseVector
 from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
@@ -27,7 +26,8 @@ if not os.path.exists(outputDir) : os.makedirs(outputDir)
 
 # parse data
 lines = sc.textFile(dataFile)
-data = parse(lines)
+#data = parse(lines)
+data = lines.map(lambda x : parseVector(x))
 
 print(data.first())
 
