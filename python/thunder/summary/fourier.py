@@ -6,7 +6,7 @@
 import sys
 import os
 from numpy import *
-from numpy.fft import *
+from numpy.fft import fft
 from pyspark import SparkContext
 from thunder.util.dataio import *
 
@@ -14,21 +14,6 @@ if len(sys.argv) < 5:
   print >> sys.stderr, \
   "(fourier) usage: fourier <master> <dataFile> <outputFile> <freq>"
   exit(-1)
-
-def parseVector(line, filter="raw", inds=None) :
-		vec = [float(x) for x in line.split(' ')]
-		ts = array(vec[3:]) # get tseries
-		if filter == "dff" : # convert to dff
-			meanVal = mean(ts)
-			ts = (ts - meanVal) / (meanVal + 0.1)
-		if inds is not None :
-			if inds == "xyz" :
-				return ((int(vec[0]),int(vec[1]),int(vec[2])),ts)
-			if inds == "linear" :
-				k = int(vec[0]) + int((vec[1] - 1)*1650)
-				return (k,ts)
-		else :
-			return ts
 
 def getFourier(vec,freq):
 	vec = vec - mean(vec)
