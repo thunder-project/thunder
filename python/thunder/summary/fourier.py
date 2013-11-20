@@ -41,6 +41,8 @@ if not os.path.exists(outputFile) : os.makedirs(outputFile)
 lines = sc.textFile(dataFile)
 data = parse(lines, "dff").cache()
 
+print(data.first())
+
 # do fourier on each time series
 out = data.map(lambda x : getFourier(x,freq))
 
