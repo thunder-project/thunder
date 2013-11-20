@@ -22,4 +22,4 @@ def svd1(data,k,meanSubtract=1) :
 	return comps, latent, scores
 
 # TODO: svd with alternating least squares when d is large
-def svd2(data,k,meanSubtract=1) :
+#def svd2(data,k,meanSubtract=1) :
