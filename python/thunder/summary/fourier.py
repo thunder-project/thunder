@@ -1,4 +1,4 @@
-# fourier <master> <inputFile> <outputFile> <freq>
+# fourier <master> <dataFile> <outputFile> <freq>
 # 
 # computes the amplitude and phase of time series data
 #
@@ -25,12 +25,12 @@ def getFourier(vec,freq):
 
 if len(sys.argv) < 5:
   print >> sys.stderr, \
-  "(fourier) usage: fourier <master> <inputFile> <outputFile> <freq>"
+  "(fourier) usage: fourier <master> <dataFile> <outputFile> <freq>"
   exit(-1)
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "fourier")
-inputFile = str(sys.argv[2])
+dataFile = str(sys.argv[2])
 freq = int(sys.argv[4])
 outputFile = str(sys.argv[3])+"-fourier"
 if not os.path.exists(outputFile) : os.makedirs(outputFile)
