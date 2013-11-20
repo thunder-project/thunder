@@ -1,7 +1,7 @@
 # utilities for loading and saving data
 
 # from scipy.io import * 
-# from numpy import *
+from numpy import *
 # import pyspark
 
 
