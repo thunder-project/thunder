@@ -26,9 +26,7 @@ if not os.path.exists(outputDir) :
 
 # parse data
 lines = sc.textFile(dataFile)
-data = parse(lines, "dff").cache()
-
-data.count()
+data = parse(lines, "dff")
 
 # create models
 model1 = regressionModel(modelFile,regressionMode)
@@ -50,6 +48,10 @@ saveout(scores,outputDir,"scores","matlab")
 # calculate tuning curves on second fit component
 params = tuningFit(betas.map(lambda x : x[1]),model2)
 saveout(params,outputDir,"params","matlab")
+
+# get simple measure of response strength
+r = data.map(lambda x : norm(x-mean(x)))
+saveout(r,outputDir,"r","matlab")
 
 # process output with a parametric tuning curves
 # if outputMode == 'tuning' :
