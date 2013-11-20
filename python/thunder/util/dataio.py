@@ -11,7 +11,6 @@ def parseVector(line, filter="raw", inds=None) :
 	ts = array(vec[3:]) # get tseries
 	return ts
 
-def parse(rdd) :
 
 	
 def saveout(data, outputDir, outputFile, outputFormat) :
