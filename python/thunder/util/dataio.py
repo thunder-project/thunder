@@ -26,6 +26,7 @@ def parse(data, filter="raw", inds=None) :
 
 	return data.map(lambda x : parseVector(x,filter,inds))
 	
+	
 def saveout(data, outputDir, outputFile, outputFormat) :
 
 	if outputFormat == "matlab" :

@@ -26,8 +26,7 @@ if not os.path.exists(outputDir) : os.makedirs(outputDir)
 
 # parse data
 lines = sc.textFile(dataFile)
-data = parse(lines)
-#data = lines.map(lambda x : parseVector(x))
+data = parse(lines, "dff", "xyz")
 
 print(data.first())
 
