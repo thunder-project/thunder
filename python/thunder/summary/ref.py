@@ -6,10 +6,27 @@
 import sys
 import os
 from numpy import *
-from thunder.util.dataio import *
+#from thunder.util.dataio import *
 from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
+
+
+def parse(line, filter="raw", inds=None):
+
+	vec = [float(x) for x in line.split(' ')]
+	ts = array(vec[3:]) # get tseries
+	if filter == "dff" : # convert to dff
+		meanVal = mean(ts)
+		ts = (ts - meanVal) / (meanVal + 0.1)
+	if inds is not None :
+		if inds == "xyz" :
+			return ((int(vec[0]),int(vec[1]),int(vec[2])),ts)
+		if inds == "linear" :
+			k = int(vec[0]) + int((vec[1] - 1)*1650)
+			return (k,ts)
+	else :
+		return ts
 
 if len(argsIn) < 4:
   print >> sys.stderr, \
@@ -19,9 +36,11 @@ if len(argsIn) < 4:
 # parse inputs
 sc = SparkContext(argsIn[0], "ref")
 dataFile = str(argsIn[1])
-outputDir = str(argsIn[2]) + "-ref"
+outputDir = str(argsIn[2])
 mode = str(argsIn[3])
 if not os.path.exists(outputDir) : os.makedirs(outputDir)
+
+
 
 # parse data
 data = sc.textFile(dataFile).map(lambda x : parse(x,"raw","xyz")).cache()
