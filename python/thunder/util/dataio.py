@@ -5,7 +5,7 @@ from numpy import *
 import pyspark
 from pyspark import rdd
 
-def parse(line, filter="raw", inds=None):
+def parseVector(line, filter="raw", inds=None):
 
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
