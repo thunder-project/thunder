@@ -63,10 +63,6 @@ result = data.join(means)
 
 # get correlations and keys
 # TODO: use sortByKey to avoid returning keys once implemented in pyspark
-corr = result.map(lambda (k,v) : (k,corrcoef(v[0],v[1])[0,1]))
+corr = result.map(lambda (k,v) : (k,float16(corrcoef(v[0],v[1])[0,1])))
 
-print(corr.first())
-
-#savemat(outputFile+"/"+"localcorr.mat",mdict={"corr" : corr.map(float16).collect()},oned_as='column',do_compression='true')
-
-#saveout(corr,outputFile,"corr","matlab")
+saveout(corr,outputFile,"corr","matlab")
