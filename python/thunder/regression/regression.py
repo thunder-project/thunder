@@ -48,7 +48,7 @@ saveout(latent,outputDir,"latent","matlab")
 saveout(scores,outputDir,"scores","matlab")
 
 # compute trajectories from raw data
-traj = data.map(lambda x : outer(x,inner(regressionFit(x,model)[0] - mean(regressionFit(x,model)[0]),comps))).reduce(lambda x,y : x + y) / data.count()
+traj = data.map(lambda x : outer(x,inner(regressionGet(x,model)[0] - mean(regressionGet(x,model)[0]),comps))).reduce(lambda x,y : x + y) / data.count()
 saveout(traj,outputDir,"traj","matlab")
 
 # get simple measure of response strength
