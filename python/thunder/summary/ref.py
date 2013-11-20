@@ -7,11 +7,10 @@ import sys
 import os
 from numpy import *
 import thunder
-from thunder.util.dataio import parseVector
+#from thunder.util.dataio import parseVector
 from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
-
 
 # def parse(line, filter="raw", inds=None):
 
@@ -35,7 +34,7 @@ if len(argsIn) < 4:
   exit(-1)
 
 # parse inputs
-sc = SparkContext(argsIn[0], "ref", pyFiles=['/groups/freeman/home/freemanj11/github/thunder/python/thunder/util/dataio.py'])
+sc = SparkContext(argsIn[0], "ref", pyFiles=['parseVector.py'])
 dataFile = str(argsIn[1])
 outputDir = str(argsIn[2])
 mode = str(argsIn[3])
