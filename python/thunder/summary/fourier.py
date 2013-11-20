@@ -7,27 +7,6 @@ import sys
 import os
 from pyspark import SparkContext
 from thunder.util.dataio import *
-from thunder.util.signal import *
-
-if len(sys.argv) < 5:
-  print >> sys.stderr, \
-  "(fourier) usage: fourier <master> <inputFile> <outputFile> <freq>"
-  exit(-1)
-
-def parse(line, filter="raw", inds=None):
-	vec = [float(x) for x in line.split(' ')]
-	ts = (vec[3:]) # get tseries
-	if filter == "dff" : # convert to dff
-		meanVal = mean(ts)
-		ts = (ts - meanVal) / (meanVal + 0.1)
-	if inds is not None :
-		if inds == "xyz" :
-			return ((int(vec[0]),int(vec[1]),int(vec[2])),ts)
-		if inds == "linear" :
-			k = int(vec[0]) + int((vec[1] - 1)*1650)
-			return (k,ts)
-	else :
-		return ts
 
 def getFourier(vec,freq):
 	vec = vec - mean(vec)
@@ -44,6 +23,11 @@ def getFourier(vec,freq):
 		ph = ph+pi*2
 	return array([co,ph])
 
+if len(sys.argv) < 5:
+  print >> sys.stderr, \
+  "(fourier) usage: fourier <master> <inputFile> <outputFile> <freq>"
+  exit(-1)
+
 # parse inputs
 sc = SparkContext(sys.argv[1], "fourier")
 inputFile = str(sys.argv[2])
@@ -52,7 +36,8 @@ outputFile = str(sys.argv[3])+"-fourier"
 if not os.path.exists(outputFile) : os.makedirs(outputFile)
 
 # load data
-data = sc.textFile(inputFile).map(lambda y : parse(y,"dff")).cache()
+lines = sc.textFile(dataFile)
+data = parse(lines, "dff").cache()
 
 # do fourier on each time series
 out = data.map(lambda x : getFourier(x,freq))
@@ -60,7 +45,6 @@ out = data.map(lambda x : getFourier(x,freq))
 # save results
 co = out.map(lambda x : x[0])
 ph = out.map(lambda x : x[1])
-#print(co.take(10))
 
 saveout(co,outputFile,"co","matlab")
 saveout(ph,outputFile,"ph","matlab")
