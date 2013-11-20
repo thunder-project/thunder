@@ -126,6 +126,6 @@ def tuningFit(data,model) :
 			sigma = dot(y,(model.s-mu)**2)
 			return (mu,sigma)
 
-	params = data.map(lambda x : tuningGet(y,model))
+	params = data.map(lambda x : tuningGet(x,model))
 
 	return params
