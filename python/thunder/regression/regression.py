@@ -33,6 +33,8 @@ model = regressionModel(modelFile,mode)
 # do regression
 betas = regressionFit(data,model).cache()
 
+print(betas.first())
+
 # get statistics
 stats = betas.map(lambda x : x[1])
 saveout(stats,outputDir,"stats","matlab")
