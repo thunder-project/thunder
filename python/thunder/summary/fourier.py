@@ -42,8 +42,6 @@ lines = sc.textFile(dataFile)
 #data = lines.map(lambda x : parseVector(x,"dff")).cache()
 data = parse(lines, "dff")
 
-print(fft(data.first()))
-
 # do fourier on each time series
 out = data.map(lambda x : getFourier(x,freq)).cache()
 
