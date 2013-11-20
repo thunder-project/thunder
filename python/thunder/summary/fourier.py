@@ -30,6 +30,21 @@ def parse(line, filter="raw", inds=None):
 	else :
 		return ts
 
+def getFourier(vec,freq):
+	vec = vec - mean(vec)
+	nframes = len(vec)
+	ft = fft(vec)
+	ft = ft[0:int(fix(nframes/2))]
+	ampFT = 2*abs(ft)/nframes;
+	amp = ampFT[freq]
+	co = zeros(size(amp));
+	sumAmp = sqrt(sum(ampFT**2))
+	co = amp / sumAmp
+	ph = -(pi/2) - angle(ft[freq])
+	if ph<0:
+		ph = ph+pi*2
+	return array([co,ph])
+
 # parse inputs
 sc = SparkContext(sys.argv[1], "fourier")
 inputFile = str(sys.argv[2])
