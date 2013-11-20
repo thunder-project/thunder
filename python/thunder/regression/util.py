@@ -95,6 +95,8 @@ def regressionFit(data,model) :
 
 	betas = data.map(lambda x : regressionGet(x,model))
 
+	return betas
+
 def tuningFit(y,model) :
 	
 	if model.tuningMode == 'circular' :
