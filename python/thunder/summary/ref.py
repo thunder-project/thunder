@@ -44,6 +44,8 @@ if not os.path.exists(outputDir) : os.makedirs(outputDir)
 lines = sc.textFile(dataFile)
 data = lines.map(lambda x : parseVector(x,"raw","xyz")).cache()
 
+print(data.first())
+
 # get z ordering
 zinds = data.filter(lambda (k,x) : (k[0] == 1) & (k[1] == 1)).map(lambda (k,x) : k[2])
 print(zinds.collect())
