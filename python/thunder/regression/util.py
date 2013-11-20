@@ -49,49 +49,49 @@ def regressionFit(data,model) :
 
 	def regressionGet(y,model) :
 
-	if model.regressionMode == 'mean' :
-		b = dot(model.X,y)
-		return b
+		if model.regressionMode == 'mean' :
+			b = dot(model.X,y)
+			return b
 
-	if model.regressionMode == 'linear' :
-		b = dot(model.Xhat,y)
-		predic = dot(b,model.X)
-		sse = sum((predic-y) ** 2)
-		sst = sum((y-mean(y)) ** 2)
-		r2 = 1 - sse/sst
-		return (b[1:],r2)
+		if model.regressionMode == 'linear' :
+			b = dot(model.Xhat,y)
+			predic = dot(b,model.X)
+			sse = sum((predic-y) ** 2)
+			sst = sum((y-mean(y)) ** 2)
+			r2 = 1 - sse/sst
+			return (b[1:],r2)
 
-		# if model.outputMode == 'stats'
-		# 	r2shuffle = zeros((model.nRnd,)) 
-		# 	X = copy(model.X)
-		# 	m = shape(X)[1]
-		# 	for iShuf in range(0,model.nRnd) :
-		# 		for ix in range(0,shape(X)[0]) :
-		# 			shift = int(round(random.rand(1)*m))
-		# 			X[ix,:] = roll(X[ix,:],shift)
-		# 		b = lstsq(transpose(X),y)[0]
-		# 		predic = dot(b,X)
-		# 		sse = sum((predic-y) ** 2)
-		# 		r2shuffle[iShuf] = 1 - sse/sst
-		# 	p = sum(r2shuffle > r2) / model.nRnd
-		# 	return p
+			# if model.outputMode == 'stats'
+			# 	r2shuffle = zeros((model.nRnd,)) 
+			# 	X = copy(model.X)
+			# 	m = shape(X)[1]
+			# 	for iShuf in range(0,model.nRnd) :
+			# 		for ix in range(0,shape(X)[0]) :
+			# 			shift = int(round(random.rand(1)*m))
+			# 			X[ix,:] = roll(X[ix,:],shift)
+			# 		b = lstsq(transpose(X),y)[0]
+			# 		predic = dot(b,X)
+			# 		sse = sum((predic-y) ** 2)
+			# 		r2shuffle[iShuf] = 1 - sse/sst
+			# 	p = sum(r2shuffle > r2) / model.nRnd
+			# 	return p
 
-	if model.regressionMode == 'bilinear' :
-		b1 = dot(model.X1hat,y)
-		b1 = b1 - min(b1)
-		b1hat = dot(transpose(model.X1),b1)
-		if sum(b1hat) == 0 :
-			b1hat = b1hat + 0.001
-		X3 = model.X2 * b1hat
-		X3 = concatenate((ones((1,shape(X3)[1])),X3))
-		X3hat = dot(inv(dot(X3,transpose(X3))),X3)
-		b2 = dot(X3hat,y)
-		predic = dot(b2,X3)
-		sse = sum((predic-y) ** 2)
-		sst = sum((y-mean(y)) ** 2)
-		r2 = 1 - sse/sst
+		if model.regressionMode == 'bilinear' :
+			b1 = dot(model.X1hat,y)
+			b1 = b1 - min(b1)
+			b1hat = dot(transpose(model.X1),b1)
+			if sum(b1hat) == 0 :
+				b1hat = b1hat + 0.001
+			X3 = model.X2 * b1hat
+			X3 = concatenate((ones((1,shape(X3)[1])),X3))
+			X3hat = dot(inv(dot(X3,transpose(X3))),X3)
+			b2 = dot(X3hat,y)
+			predic = dot(b2,X3)
+			sse = sum((predic-y) ** 2)
+			sst = sum((y-mean(y)) ** 2)
+			r2 = 1 - sse/sst
 
-		return (b1,b2[1:],r2)
+			return (b1,b2[1:],r2)
 
 	betas = data.map(lambda x : regressionGet(x,model))
 
