@@ -7,7 +7,6 @@
 import sys
 import os
 from numpy import *
-from scipy.linalg import *
 from thunder.util.dataio import *
 from pyspark import SparkContext
 
@@ -65,6 +64,8 @@ result = data.join(means)
 # get correlations and keys
 # TODO: use sortByKey to avoid returning keys once implemented in pyspark
 corr = result.map(lambda (k,v) : (k,corrcoef(v[0],v[1])[0,1]))
+
+print()
 
 savemat(outputFile+"/"+"localcorr.mat",mdict={"corr" : corr.map(float16).collect()},oned_as='column',do_compression='true')
 
