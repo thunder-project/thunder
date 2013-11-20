@@ -43,7 +43,7 @@ if not os.path.exists(outputDir) : os.makedirs(outputDir)
 
 
 # parse data
-data = sc.textFile(dataFile).map(lambda x : parse(x,"raw","xyz")).cache()
+data = sc.textFile(dataFile).map(lambda x : parseVector(x,"raw","xyz")).cache()
 
 # get z ordering
 zinds = data.filter(lambda (k,x) : (k[0] == 1) & (k[1] == 1)).map(lambda (k,x) : k[2])
