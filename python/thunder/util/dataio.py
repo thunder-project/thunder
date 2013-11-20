@@ -4,8 +4,12 @@ from scipy.io import *
 from numpy import *
 import pyspark
 
+def parseVector(line) :
+	return [float(x) for x in line.split(' ')]
+
+
 def parse(data) :
-	foo = data.map(lambda x : [float(y) for y in x.split(' ')])
+	foo = data.map(lambda x : parseVector(x))
 	return foo
 
 
