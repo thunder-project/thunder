@@ -46,7 +46,7 @@ out = data.map(lambda x : getFourier(x,freq))
 # save results
 co = out.map(lambda x : x[0])
 ph = out.map(lambda x : x[1])
-print(co.first())
+print(co.take(10))
 
 #saveout(co,outputFile,"co","matlab")
 #saveout(ph,outputFile,"ph","matlab")
