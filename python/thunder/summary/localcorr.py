@@ -65,4 +65,5 @@ result = data.join(means)
 # TODO: use sortByKey to avoid returning keys once implemented in pyspark
 corr = result.map(lambda (k,v) : (k,float16(corrcoef(v[0],v[1])[0,1])))
 
-saveout(corr,outputFile,"corr","matlab")
+print(type(corr))
+#saveout(corr,outputFile,"corr","matlab")
