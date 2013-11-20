@@ -19,7 +19,7 @@ if len(argsIn) < 4:
   exit(-1)
 
 # parse inputs
-sc = SparkContext(argsIn[0], "ref", pyFiles=['python/thunder/summary/parseVector.py'])
+sc = SparkContext(argsIn[0], "ref")
 dataFile = str(argsIn[1])
 outputDir = str(argsIn[2])
 mode = str(argsIn[3])
