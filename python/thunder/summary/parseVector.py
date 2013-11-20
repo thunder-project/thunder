@@ -1,3 +1,5 @@
+from numpy import array
+
 def parseVector(line, filter="raw", inds=None):
 
 	vec = [float(x) for x in line.split(' ')]
