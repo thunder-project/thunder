@@ -6,6 +6,7 @@
 import sys
 import os
 from numpy import *
+import thunder
 from thunder.util.dataio import parseVector
 from pyspark import SparkContext
 
