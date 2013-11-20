@@ -36,7 +36,7 @@ comps, latent, scores = svd1(data,k,0)
 # whiten data
 whtMat = real(dot(inv(diag(sqrt(latent))),comps))
 unwhtMat = real(dot(transpose(comps),diag(sqrt(latent))))
-wht = data.map(lambda x : dot(whtMat,x))
+wht = data.map(lambda x : dot(whtMat,x)).cache()
 
 # do multiple independent component extraction
 B = orth(random.randn(k,c))
