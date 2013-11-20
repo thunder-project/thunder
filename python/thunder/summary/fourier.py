@@ -45,7 +45,7 @@ data = parse(lines, "dff").cache()
 print(fft(data.first()))
 
 # do fourier on each time series
-out = data.map(lambda x : getFourier(x,freq))
+out = data.map(lambda x : getFourier(x,freq)).cache()
 
 # save results
 co = out.map(lambda x : x[0])
