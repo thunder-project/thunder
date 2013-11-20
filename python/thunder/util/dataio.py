@@ -1,14 +1,18 @@
 # utilities for loading and saving data
 
-from scipy.io import * 
+
 from numpy import *
+from scipy.io import * 
 import pyspark
 
-def parseVector(line, filter="raw", inds=None):
+def parseVector(line, filter="raw", inds=None) :
 
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
 	return ts
+
+def parse(rdd) :
+
 	
 def saveout(data, outputDir, outputFile, outputFormat) :
 
