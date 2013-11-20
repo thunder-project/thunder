@@ -39,7 +39,7 @@ if not os.path.exists(outputFile) : os.makedirs(outputFile)
 
 # load data
 lines = sc.textFile(dataFile)
-data = parse(lines, "dff").cache()
+data = parse(lines, "dff", "none").cache()
 
 print(data.first())
 
