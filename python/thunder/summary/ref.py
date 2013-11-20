@@ -8,6 +8,7 @@ import os
 from numpy import *
 import thunder
 #from thunder.util.dataio import parseVector
+from parseVector import parseVector
 from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
