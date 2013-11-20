@@ -127,3 +127,5 @@ def tuningFit(data,model) :
 			return (mu,sigma)
 
 	params = data.map(lambda x : tuningGet(y,model))
+
+	return params
