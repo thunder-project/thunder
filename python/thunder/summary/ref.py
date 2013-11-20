@@ -41,8 +41,8 @@ mode = str(argsIn[3])
 if not os.path.exists(outputDir) : os.makedirs(outputDir)
 
 # parse data
-data = parse(sc.textFile(dataFile))
-#data = lines.map(lambda x : parseVector(x,"raw","xyz")).cache()
+lines = sc.textFile(dataFile)
+data = lines.map(lambda x : parseVector(x,"raw","xyz")).cache()
 
 # get z ordering
 zinds = data.filter(lambda (k,x) : (k[0] == 1) & (k[1] == 1)).map(lambda (k,x) : k[2])
@@ -58,4 +58,4 @@ if mode == 'std':
 if mode == 'perc':
 	ref = data.map(lambda (k,x) : percentile(x,90))
 
-saveout(ref,outputDir,"ref"+mode,"matlab")
+#saveout(ref,outputDir,"ref"+mode,"matlab")
