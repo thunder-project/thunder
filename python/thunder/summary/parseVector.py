@@ -1,9 +1,9 @@
-from numpy import array
+#from numpy import array
 
 def parseVector(line, filter="raw", inds=None):
 
 	vec = [float(x) for x in line.split(' ')]
-	ts = array(vec[3:]) # get tseries
+	ts = (vec[3:]) # get tseries
 	if filter == "dff" : # convert to dff
 		meanVal = mean(ts)
 		ts = (ts - meanVal) / (meanVal + 0.1)
