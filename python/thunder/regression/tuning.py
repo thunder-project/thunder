@@ -26,14 +26,14 @@ if not os.path.exists(outputDir) :
 
 # parse data
 lines = sc.textFile(dataFile)
-data = parse(lines, "dff").cache()
+data = parse(lines, "dff")
 
 # create models
 model1 = regressionModel(modelFile,regressionMode)
 model2 = tuningModel(modelFile,tuningMode)
 
 # do regression
-betas = regressionFit(data,model1)
+betas = regressionFit(data,model1).cache()
 
 # get statistics
 stats = betas.map(lambda x : x[2])
