@@ -4,6 +4,11 @@ from scipy.io import *
 from numpy import *
 import pyspark
 
+def parse(data) :
+	foo = data.map(lambda x : [float(x) for x in line.split(' ')])
+	return foo
+
+
 # def parse(line, filter="raw", inds=None):
 
 # 	vec = [float(x) for x in line.split(' ')]
