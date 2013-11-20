@@ -4,7 +4,11 @@ from scipy.io import *
 from numpy import *
 import pyspark
 
-def parseVector(line, filter="raw", inds=None) :
+
+
+def parse(data, filter="raw", inds=None) :
+
+	def parseVector(line, filter="raw", inds=None) :
 
 	vec = [float(x) for x in line.split(' ')]
 	ts = array(vec[3:]) # get tseries
@@ -19,8 +23,6 @@ def parseVector(line, filter="raw", inds=None) :
 			return (k,ts)
 	else :
 		return ts
-
-def parse(data, filter="raw", inds=None) :
 
 	return data.map(lambda x : parseVector(x,filter,inds))
 	
