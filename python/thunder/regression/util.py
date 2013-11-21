@@ -167,7 +167,7 @@ def tuningCurves(data,model) :
 	sds = zeros((len(vals)-1,len(model.s)))
 	for iv in range(0,len(vals)-1) :
 		#subset = data.filter(lambda b : (b[1] > 0.005) & inRange(tuningGet(b[0],model)[0],vals[iv],vals[iv+1]))
-		#n = subset.count()
+		n = data.count()
 		means[iv,:] = data.map(lambda b : b[0]).reduce(lambda x,y : x + y) / n
 		sds[iv,:] = data.map(lambda b : (b[0] - means[iv,:])**2).reduce(lambda x,y : x + y) / (n - 1)
 	
