@@ -11,7 +11,7 @@ def regressionModel(modelFile,regressionMode) :
 		X = X.astype(float)
 		model.X = X
 
-	if regressionMode == 'linear' :
+	if (regressionMode == 'linear') | (regressionMode == 'linear-shuffle') :
 		X = loadmat(modelFile + "_X.mat")['X']
 		X = concatenate((ones((1,shape(X)[1])),X))
 		X = X.astype(float)
@@ -22,6 +22,9 @@ def regressionModel(modelFile,regressionMode) :
 		model.Xhat = Xhat
 		model.g = g
 		model.nG = len(unique(model.g))
+
+	if regressionMode = 'linear-shuffle' :
+		model.nRnd = 4
 
 	if regressionMode == 'bilinear' :
 		X1 = loadmat(modelFile + "_X1.mat")['X1']
@@ -61,20 +64,25 @@ def regressionFit(data,model,comps=None) :
 			r2 = 1 - sse/sst
 			return (b[1:],r2)
 
-			# if model.outputMode == 'stats'
-			# 	r2shuffle = zeros((model.nRnd,)) 
-			# 	X = copy(model.X)
-			# 	m = shape(X)[1]
-			# 	for iShuf in range(0,model.nRnd) :
-			# 		for ix in range(0,shape(X)[0]) :
-			# 			shift = int(round(random.rand(1)*m))
-			# 			X[ix,:] = roll(X[ix,:],shift)
-			# 		b = lstsq(transpose(X),y)[0]
-			# 		predic = dot(b,X)
-			# 		sse = sum((predic-y) ** 2)
-			# 		r2shuffle[iShuf] = 1 - sse/sst
-			# 	p = sum(r2shuffle > r2) / model.nRnd
-			# 	return p
+		if model.outputMode == 'linear-shuffle'
+			b = dot(model.Xhat,y)
+			predic = dot(b,model.X)
+			sse = sum((predic-y) ** 2)
+			sst = sum((y-mean(y)) ** 2)
+			r2 = 1 - sse/sst
+			r2shuffle = zeros((model.nRnd,)) 
+			X = copy(model.X)
+			m = shape(X)[1]
+			for iShuf in range(0,model.nRnd) :
+				for ix in range(0,shape(X)[0]) :
+					shift = int(round(random.rand(1)*m))
+					X[ix,:] = roll(X[ix,:],shift)
+				b = lstsq(transpose(X),y)[0]
+				predic = dot(b,X)
+				sse = sum((predic-y) ** 2)
+				r2shuffle[iShuf] = 1 - sse/sst
+			p = sum(r2shuffle > r2) / model.nRnd
+			return (b[1:],r2,p)
 
 		if model.regressionMode == 'bilinear' :
 			b1 = dot(model.X1hat,y)
