@@ -56,7 +56,7 @@ saveout(r,outputDir,"r","matlab")
 # get population tuning curves
 print(betas.first())
 print(betas.first()[0])
-means, sds = tuningCurves(betas,model2)
+#means, sds = tuningCurves(betas,model2)
 #saveout(means,outputDir,"means","matlab")
 #saveout(sds,outputDir,"sds","matlab")
 
