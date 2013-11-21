@@ -54,12 +54,8 @@ r = data.map(lambda x : norm(x-mean(x)))
 saveout(r,outputDir,"r","matlab")
 
 # get population tuning curves
-print(betas.first())
-foo = betas.first()
-print(foo)
-print(foo[0])
-#means, sds = tuningCurves(betas,model2)
-#saveout(means,outputDir,"means","matlab")
+means, sds = tuningCurves(betas,model2)
+saveout(means,outputDir,"means","matlab")
 #saveout(sds,outputDir,"sds","matlab")
 
 # process output with a parametric tuning curves
