@@ -66,7 +66,7 @@ def regressionFit(data,model,comps=None) :
 			r2 = 1 - sse/sst
 			return (b[1:],r2)
 
-		if model.outputMode == 'linear-shuffle'
+		if model.regressionMode == 'linear-shuffle'
 			b = dot(model.Xhat,y)
 			predic = dot(b,model.X)
 			sse = sum((predic-y) ** 2)
