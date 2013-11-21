@@ -38,7 +38,7 @@ stats = betas.map(lambda x : x[1])
 saveout(stats,outputDir,"stats","matlab")
 
 # do PCA
-comps,latent,scores = svd1(betas.map(lambda x : x[0]),2)
+comps,latent,scores = svd1(betas.map(lambda x : x[0]),10)
 
 # write results
 saveout(comps,outputDir,"comps","matlab")
