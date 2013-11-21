@@ -170,7 +170,7 @@ def tuningCurves(data,model) :
 		else:
 			return False
 
-	vals = linspace(amin(model.s),amax(model.s),3)
+	vals = linspace(amin(model.s),amax(model.s),4)
 	means = zeros((len(vals)-1,max(shape(model.s))))
 	sds = zeros((len(vals)-1,max(shape(model.s))))
 	for iv in range(0,len(vals)-1) :
