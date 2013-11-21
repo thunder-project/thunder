@@ -123,7 +123,7 @@ def tuningFit(data,model) :
 			y[y<0] = 0
 			y = y/sum(y)
 			mu = dot(model.s,y)
-			sigma = dot(y,(model.s-transpose(mu))**2)
+			sigma = dot((model.s-mu)**2,y)
 			return (mu,sigma)
 
 	params = data.map(lambda x : tuningGet(x,model))
@@ -152,7 +152,7 @@ def tuningCurves(data,model) :
 			y[y<0] = 0
 			y = y/sum(y)
 			mu = dot(model.s,y)
-			sigma = dot(y,(model.s-transpose(mu))**2)
+			sigma = dot((model.s-mu)**2,y)
 			return (mu,sigma)
 
 	def inRange(val,rng1,rng2) :
