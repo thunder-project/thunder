@@ -162,8 +162,8 @@ def tuningCurves(data,model) :
 		else:
 			return False
 
-	print(amin(model.s,axis==1))
-	print(amax(model.s,axis==1))
+	print(amin(model.s))
+	print(amax(model.s))
 	vals = linspace(amin(model.s),amax(model.s),6)
 	means = zeros((len(vals)-1,len(model.s)))
 	sds = zeros((len(vals)-1,len(model.s)))
