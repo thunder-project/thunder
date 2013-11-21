@@ -51,7 +51,7 @@ def regressionFit(data,model,comps=None) :
 
 		if model.regressionMode == 'mean' :
 			b = dot(model.X,y)
-			return b
+			return (b,1)
 
 		if model.regressionMode == 'linear' :
 			b = dot(model.Xhat,y)
