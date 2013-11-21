@@ -170,9 +170,9 @@ def tuningCurves(data,model) :
 		print(subset.first())
 		n = subset.count()
 		print(n)
-		print(array(subset.map(lambda b : b[0]).reduce(lambda x,y : x + y) / n))
-		means[iv,:] = array(subset.map(lambda b : b[0]).reduce(lambda x,y : x + y) / n)
-		sds[iv,:] = subset.map(lambda b : (b[0] - means[iv,:])**2).reduce(lambda x,y : x + y) / (n - 1)
+		print(dtype(subset.map(lambda b : b[0]).reduce(lambda x,y : x + y) / n))
+		#means[iv,:] = array(subset.map(lambda b : b[0]).reduce(lambda x,y : x + y) / n)
+		#sds[iv,:] = subset.map(lambda b : (b[0] - means[iv,:])**2).reduce(lambda x,y : x + y) / (n - 1)
 	
 	return means, sds
 
