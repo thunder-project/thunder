@@ -73,7 +73,7 @@ def regressionFit(data,model,comps=None) :
 			r2shuffle = zeros((model.nRnd,)) 
 			X = copy(model.X)
 			m = shape(X)[1]
-			for iShuf in range(0,model.nRnd) :
+			for iShuf in range(0,int(model.nRnd)) :
 				for ix in range(0,shape(X)[0]) :
 					shift = int(round(random.rand(1)*m))
 					X[ix,:] = roll(X[ix,:],shift)
