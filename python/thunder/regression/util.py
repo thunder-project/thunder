@@ -11,6 +11,8 @@ def regressionModel(modelFile,regressionMode) :
 		X = X.astype(float)
 		model.X = X
 
+	print(regressionMode)
+
 	if (regressionMode == 'linear') | (regressionMode == 'linear-shuffle') :
 		X = loadmat(modelFile + "_X.mat")['X']
 		X = concatenate((ones((1,shape(X)[1])),X))
