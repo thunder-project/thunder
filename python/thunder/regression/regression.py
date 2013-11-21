@@ -46,8 +46,8 @@ saveout(latent,outputDir,"latent","matlab")
 #saveout(scores,outputDir,"scores","matlab")
 
 # compute trajectories from raw data
-traj = regressionFit(data,model,comps)
-saveout(traj,outputDir,"traj","matlab")
+#traj = regressionFit(data,model,comps)
+#saveout(traj,outputDir,"traj","matlab")
 
 # get simple measure of response strength
 r = data.map(lambda x : norm(x-mean(x)))
