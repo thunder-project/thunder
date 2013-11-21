@@ -25,7 +25,7 @@ def regressionModel(modelFile,regressionMode) :
 		model.g = g
 		model.nG = len(unique(model.g))
 
-	if regressionMode = 'linear-shuffle' :
+	if regressionMode == 'linear-shuffle' :
 		model.nRnd = 4
 
 	if regressionMode == 'bilinear' :
