@@ -36,22 +36,27 @@ model2 = tuningModel(modelFile,tuningMode)
 betas = regressionFit(data,model1).cache()
 
 # get statistics
-stats = betas.map(lambda x : x[2])
+stats = betas.map(lambda x : x[1])
 saveout(stats,outputDir,"stats","matlab")
 
 # do PCA on first fit component
-comps,latent,scores = svd1(betas.map(lambda x : x[0]),2)
-saveout(comps,outputDir,"comps","matlab")
-saveout(latent,outputDir,"latent","matlab")
-saveout(scores,outputDir,"scores","matlab")
+#comps,latent,scores = svd1(betas.map(lambda x : x[0]),2)
+#saveout(comps,outputDir,"comps","matlab")
+#saveout(latent,outputDir,"latent","matlab")
+#saveout(scores,outputDir,"scores","matlab")
 
 # calculate tuning curves on second fit component
-params = tuningFit(betas.map(lambda x : x[1]),model2)
+params = tuningFit(betas.map(lambda x : x[0]),model2)
 saveout(params,outputDir,"params","matlab")
 
 # get simple measure of response strength
 r = data.map(lambda x : norm(x-mean(x)))
 saveout(r,outputDir,"r","matlab")
+
+# get population tuning curves
+means, sds = tuningCurves(betas,model2)
+saveout(means,outputDir,"means","matlab")
+saveout(sds,outputDir,"sds","matlab")
 
 # process output with a parametric tuning curves
 # if outputMode == 'tuning' :
@@ -70,8 +75,4 @@ saveout(r,outputDir,"r","matlab")
 # 		savemat(outputFile+"/"+"means.mat",mdict={'means':means},do_compression='true')
 # 		savemat(outputFile+"/"+"sds.mat",mdict={'sds':sds},do_compression='true')
 
-# def inRange(val,rng1,rng2) :
-# 	if (val > rng1) & (val < rng2):
-# 		return True
-# 	else:
-# 		return False
+

@@ -129,3 +129,48 @@ def tuningFit(data,model) :
 	params = data.map(lambda x : tuningGet(x,model))
 
 	return params
+
+def tuningCurves(data,model) :
+
+	def tuningGet(y,model) :
+
+		if model.tuningMode == 'circular' :
+			y = y - min(y)
+			y = y/sum(y)
+			r = inner(y,exp(1j*model.s))
+			mu = angle(r)
+			v = absolute(r)/sum(y)
+			if v < 0.53 :
+				k = 2*v + (v**3) + 5*(v**5)/6
+			elif (v>=0.53) & (v<0.85) :
+				k = -.4 + 1.39*v + 0.43/(1-v)
+			else :
+				k = 1/(v**3 - 4*(v**2) + 3*v)
+			return (mu,k)
+
+		if model.tuningMode == 'gaussian' :
+			y[y<0] = 0
+			y = y/sum(y)
+			mu = dot(model.s,y)
+			sigma = dot(y,(model.s-mu)**2)
+			return (mu,sigma)
+
+	def inRange(val,rng1,rng2) :
+
+		if (val > rng1) & (val < rng2):
+			return True
+		else:
+			return False
+
+	vals = linspace(min(model.s),max(model.s),6)
+	means = zeros((len(vals)-1,len(model.s)))
+	sds = zeros((len(vals)-1,len(model.s)))
+	for iv in range(0,len(vals)-1) :
+		subset = data.filter(lambda b : (b[1] > 0.005) & inRange(tuningGet(b[0],model)[0],vals[iv],vals[iv+1]))
+		n = subset.count()
+		means[iv,:] = data.map(lambda b : b[0]).reduce(lambda x,y : x + y) / n
+		sds[iv,:] = data.map(lambda b : (b[0] - means[iv,:])**2).reduce(lambda x,y : x + y) / (n - 1)
+	
+	return means, sds
+
+
