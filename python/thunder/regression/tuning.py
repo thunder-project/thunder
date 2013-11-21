@@ -46,7 +46,7 @@ saveout(stats,outputDir,"stats","matlab")
 #saveout(scores,outputDir,"scores","matlab")
 
 # calculate tuning curves on second fit component
-params = tuningFit(betas.map(lambda x : x[0]),model2)
+params = tuningFit(betas,model2)
 saveout(params,outputDir,"params","matlab")
 
 # get simple measure of response strength
