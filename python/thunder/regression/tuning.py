@@ -46,7 +46,7 @@ saveout(stats,outputDir,"stats","matlab")
 #saveout(scores,outputDir,"scores","matlab")
 
 # calculate tuning curves on second fit component
-params = tuningFit(betas,model2)
+params = tuningFit(betas.map(lambda x : x[0]),model2)
 saveout(params,outputDir,"params","matlab")
 
 # get simple measure of response strength
@@ -54,11 +54,11 @@ r = data.map(lambda x : norm(x-mean(x)))
 saveout(r,outputDir,"r","matlab")
 
 # get population tuning curves
-#print(betas.first())
-#print(betas.first()[0])
+print(betas.first())
+print(betas.first()[0])
 means, sds = tuningCurves(betas,model2)
-saveout(means,outputDir,"means","matlab")
-saveout(sds,outputDir,"sds","matlab")
+#saveout(means,outputDir,"means","matlab")
+#saveout(sds,outputDir,"sds","matlab")
 
 # process output with a parametric tuning curves
 # if outputMode == 'tuning' :
