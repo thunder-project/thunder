@@ -163,16 +163,13 @@ def tuningCurves(data,model) :
 			return False
 
 	vals = linspace(amin(model.s),amax(model.s),6)
-	means = zeros((len(vals)-1,len(model.s)))
-	sds = zeros((len(vals)-1,len(model.s)))
+	means = zeros((len(vals)-1,max(shape(model.s))))
+	sds = zeros((len(vals)-1,max(shape(model.s))))
 	for iv in range(0,len(vals)-1) :
-		#subset = data.filter(lambda b : (b[1] > 0.005) & inRange(tuningGet(b[0],model)[0],vals[iv],vals[iv+1]))
-		n = data.count()
-		foo =  data.map(lambda b : b[0]).reduce(lambda x,y : x + y) / n
-		print(shape(foo))
-		print(shape(means))
-		#means[iv,:] = data.map(lambda b : b[0]).reduce(lambda x,y : x + y) / n
-		#sds[iv,:] = data.map(lambda b : (b[0] - means[iv,:])**2).reduce(lambda x,y : x + y) / (n - 1)
+		subset = data.filter(lambda b : (b[1] > 0.005) & inRange(tuningGet(b[0],model)[0],vals[iv],vals[iv+1]))
+		n = subset.count()
+		means[iv,:] = subset.map(lambda b : b[0]).reduce(lambda x,y : x + y) / n
+		sds[iv,:] = subset.map(lambda b : (b[0] - means[iv,:])**2).reduce(lambda x,y : x + y) / (n - 1)
 	
 	return means, sds
 
