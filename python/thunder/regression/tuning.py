@@ -56,7 +56,7 @@ saveout(r,outputDir,"r","matlab")
 # get population tuning curves
 means, sds = tuningCurves(betas,model2)
 saveout(means,outputDir,"means","matlab")
-#saveout(sds,outputDir,"sds","matlab")
+saveout(sds,outputDir,"sds","matlab")
 
 # process output with a parametric tuning curves
 # if outputMode == 'tuning' :
