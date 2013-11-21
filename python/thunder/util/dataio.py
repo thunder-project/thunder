@@ -13,6 +13,8 @@ def parse(data, filter="raw", inds=None) :
 		if filter == "dff" : # convert to dff
 			meanVal = mean(ts)
 			ts = (ts - meanVal) / (meanVal + 0.1)
+		if filter == "sub" : # convert to dff
+			ts = (ts - mean(ts))
 		if inds is not None :
 			if inds == "xyz" :
 				return ((int(vec[0]),int(vec[1]),int(vec[2])),ts)

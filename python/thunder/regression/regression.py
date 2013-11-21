@@ -25,7 +25,7 @@ if not os.path.exists(outputDir) : os.makedirs(outputDir)
 
 # parse data
 lines = sc.textFile(dataFile)
-data = parse(lines, "dff").cache()
+data = parse(lines, "sub").cache()
 
 # create model
 model = regressionModel(modelFile,mode)
