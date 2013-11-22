@@ -22,24 +22,15 @@ object kmeansOnline {
     return (k, Vector(vals ++ counts))
   }
 
-  def getDffs(vals: (Int, Vector), t: Int): (Int, Vector) = {
+  def getDffs(vals: (Int, Vector), t: Int): (Int, (Vector,Double)) = {
     val resp = vals._2.elements.slice(0,t)
     val counts = vals._2.elements.slice(t,2*t)
     val baseLine = resp.sum / counts.sum
-//    val dff = resp.zip(counts).map{
-//      case (x,y) => if (y == 0) {0} else {x/y}}.map(
-//      x => if (x == 0) {0} else {(x - baseLine) / (baseLine + 0.1)})
     val dff = resp.zip(counts).map{
-      case (x,y) => x/y}.map(
-      x => (x - baseLine) / (baseLine + 0.1))
-    return (vals._1, Vector(dff))
-  }
-
-  def getMeanResp(vals: (Int, Vector), t: Int) : (Int,Double) = {
-    val resp = vals._2.elements.slice(0,t)
-    val counts = vals._2.elements.slice(t,2*t)
-    val baseLine = resp.sum / counts.sum
-    return (vals._1,baseLine)
+      case (x,y) => if (y == 0) {0} else {x/y}}.map(
+      x => if (x == 0) {0} else {(x - baseLine) / (baseLine + 0.1)})
+    val out = Vector(dff)
+    return (vals._1, (Vector(dff),out.squaredDist(out)))
   }
 
   def clip(num: Int): Int = {
@@ -52,19 +43,25 @@ object kmeansOnline {
     return out
   }
 
-  def corrToRGB(ind: Int): Array[Int] = {
+  def corrToRGB(ind: Int, std: Double): Array[Int] = {
     var out = Array(0,0,0)
-    if (ind == 0) {out = Array(255, 0, 0)}
-    else if (ind == 1) {out = Array(0,255,0)}
-    else if (ind == 2) {out = Array(0,0,255)}
+    if (std > 0.5) {
+      if (ind == 0) {out = Array(255, 0, 0)}
+      else if (ind == 1) {out = Array(0,255,0)}
+      else if (ind == 2) {out = Array(0,0,255)}
+    } else {
+      val b = clip((std * 255).toInt)
+      out = Array(b,b,b)
+    }
+
     return out
   }
 
-  def printToImage(rdd: RDD[Int], width: Int, height: Int, fileName: String): Unit = {
+  def printToImage(rdd: RDD[(Int,Double)], width: Int, height: Int, fileName: String): Unit = {
     val nPixels = width * height
-    val inds = rdd.collect()
-    //val corrs = rdd.map(x => x._2).collect().map(_ * 255/2).map(_ + 255/2).map(_ toInt).map(x => clip(x))
-    val RGB = Array.range(0, nPixels).flatMap(x => corrToRGB(inds(x)))
+    val inds = rdd.map(x => x._1).collect()
+    val stds = rdd.map(x => x._2).collect()
+    val RGB = Array.range(0, nPixels).flatMap(x => corrToRGB(inds(x),stds(x)))
     val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
     raster.setPixels(0, 0, width, height, RGB)
@@ -139,17 +136,17 @@ object kmeansOnline {
     val meanStream = dataStream.reduceByKeyAndWindow(_ + _, _ - _, Seconds(windowTime), Seconds(batchTime))
     val dffStream = meanStream.map(x => getDffs(x,t)).transform(rdd => rdd.sortByKey(true))
     dffStream.foreach(rdd =>
-      centers = updateCenters(rdd.map{case (k,v) => v},centers)
+      centers = updateCenters(rdd.map{case (k,v) => v._1},centers)
     )
     //dffStream.print()
 
-    //val meanRespStream = meanStream.map(x => getMeanResp(x,t)).transform(rdd => rdd.sortByKey(true))
+    //val stdRespStream = meanStream.map(x => getStdResp(x,t)).transform(rdd => rdd.sortByKey(true))
     //meanRespStream.foreach(rdd => printToImage(rdd.map{case (k,v) => v},width,height,saveFile))
 
 
     //meanRespStream.print()
     val dists = dffStream.transform(rdd => rdd.map{
-      case (k,v) => closestPoint(v,centers)})
+      case (k,v) => (closestPoint(v._1,centers),v._2)})
 
     //dists.print()
     dists.foreach(rdd => printToImage(rdd, width, height, saveFile))
