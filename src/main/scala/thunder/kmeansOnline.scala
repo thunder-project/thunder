@@ -59,7 +59,7 @@ object kmeansOnline {
 
   def printToImage(rdd: RDD[Double], width: Int, height: Int, fileName: String): Unit = {
     val nPixels = width * height
-    val R, G, B = rdd.collect().map(_ / 100).map(_ + 255 / 2).map(_ toInt).map(x => if (x < 0) {
+    val R, G, B = rdd.collect().map(_ / 1000).map(_ + 255 / 2).map(_ toInt).map(x => if (x < 0) {
       0
     } else if (x > 255) {
       255
