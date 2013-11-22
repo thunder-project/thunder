@@ -72,11 +72,11 @@ object kmeansOnline {
     ImageIO.write(img, "png", new File(fileName+"1.png"))
   }
 
-  def getMeanResp(vals: (Int, Vector), t: Int) : (Int,Double) = {
+  def getMeanResp(vals: (Int, Vector), t: Int) : (Int,(Double,Int)) = {
     val resp = vals._2.elements.slice(0,t)
     val counts = vals._2.elements.slice(t,2*t)
     val baseLine = resp.sum / counts.sum
-    return (vals._1,baseLine)
+    return (vals._1,(baseLine,counts.sum.toInt))
   }
 
     def corrcoef(p1 : Vector, p2: Vector): Double = {
@@ -152,14 +152,15 @@ object kmeansOnline {
     //dffStream.print()
 
     val meanRespStream = meanStream.map(x => getMeanResp(x,t)).transform(rdd => rdd.sortByKey(true))
-    meanRespStream.foreach(rdd => printToImage2(rdd.map{case (k,v) => v},width,height,saveFile))
+    meanRespStream.foreach(rdd => printToImage2(rdd.map{case (k,v) => v._1},width,height,saveFile))
 
-    //meanRespStream.print()
-    val dists = dffStream.transform(rdd => rdd.map{
-      case (k,v) => closestPoint(v,centers)})
+    meanRespStream.print()
+
+    //val dists = dffStream.transform(rdd => rdd.map{
+    //  case (k,v) => closestPoint(v,centers)})
 
     //dists.print()
-    dists.foreach(rdd => printToImage1(rdd, width, height, saveFile))
+    //dists.foreach(rdd => printToImage1(rdd, width, height, saveFile))
 
     ssc.start()
   }
