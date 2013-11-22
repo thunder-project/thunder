@@ -86,7 +86,7 @@ object kmeansOnline {
     System.setProperty("spark.executor.memory", "120g")
     System.setProperty("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     if (args(7).toInt != 0) {
-      System.setProperty("spark.default.parallelism", args(7).toString)
+      System.setProperty("spark.default.parallelism", args(9).toString)
     }
     val saveFile = args(2)
     val batchTime = args(3).toLong
