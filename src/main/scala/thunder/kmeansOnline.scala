@@ -49,34 +49,32 @@ object kmeansOnline {
     return out
   }
 
-  def printToImage(rdd: RDD[(Double,Double)], width: Int, height: Int, fileName: String): Unit = {
+  def corrToRGB(ind: Int, corr: Double): Array[Double] = {
+    var out = Array(0,0,0).map(_ toDouble)
+    if (ind == 0) {out = Array(corr, 0, 0)}
+    else if (ind == 1) {out = Array(0,corr,0)}
+    else if (ind == 2) {out = Array(0,0,corr)}
+    return out
+  }
+
+  def printToImage(rdd: RDD[(Int,Double)], width: Int, height: Int, fileName: String): Unit = {
     val nPixels = width * height
-    val H = rdd.map(x => x._1).collect().map(_ * 255).map(_ toInt).map(x => clip(x))
-    val B = rdd.map(x => x._2).collect().map(_ * 20).map(_ toInt).map(x => clip(x))
-    val RGB = Array.range(0, nPixels).flatMap(x => Array(H(x), B(x), B(x)))
+    val inds = rdd.map(x => x._1).collect()
+    val corrs = rdd.map(x => x._2).collect().map(_ * 255/2).map(_ + 255/2).map(_ toInt).map(x => clip(x))
+    val RGB = Array.range(0, nPixels).flatMap(x => corrToRGB(inds(x),corrs(x)))
     val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
     raster.setPixels(0, 0, width, height, RGB)
     ImageIO.write(img, "png", new File(fileName))
   }
 
-//  def printToImage(rdd: RDD[Double], width: Int, height: Int, fileName: String): Unit = {
-//    val nPixels = width * height
-//    val R, G, B = rdd.collect().map(_ - 1000).map(_ * 255 / 5000).map(_ toInt).map(x => if (x < 0) {
-//      0
-//    } else if (x > 255) {
-//      255
-//    } else {
-//      x
-//    })
-//    val RGB = Array.range(0, nPixels).flatMap(x => Array(R(x), G(x), B(x)))
-//    val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
-//    val raster = img.getRaster()
-//    raster.setPixels(0, 0, width, height, RGB)
-//    ImageIO.write(img, "png", new File(fileName))
-//  }
+  def corrcoef(p1 : Vector, p2: Vector): Double = {
+    val p11 = Vector(p1.elements.map(x => x - p1.sum / p1.length))
+    val p22 = Vector(p2.elements.map(x => x - p2.sum / p2.length))
+    return (p11 / scala.math.sqrt(p11.dot(p11))).dot(p22 / scala.math.sqrt(p22.dot(p22)))
+  }
 
-  def closestPoint(p: Vector, centers: Array[Vector]): (Int,Double) = {
+  def closestPoint(p: Vector, centers: Array[Vector]): Int = {
     var index = 0
     var bestIndex = 0
     var closest = Double.PositiveInfinity
@@ -88,11 +86,11 @@ object kmeansOnline {
         bestIndex = i
       }
     }
-    return (bestIndex,closest)
+    return bestIndex
   }
 
   def updateCenters(rdd: RDD[Vector], centers: Array[Vector]): Array[Vector] = {
-    val closest = rdd.map (p => (closestPoint(p, centers)._1, (p, 1)))
+    val closest = rdd.map (p => (closestPoint(p, centers), (p, 1)))
     val pointStats = closest.reduceByKey{case ((x1, y1), (x2, y2)) => (x1 + x2, y1 + y2)}
     val newPoints = pointStats.map {pair => (pair._1, pair._2._1 / pair._2._2)}.collectAsMap()
     for (newP <- newPoints) {
@@ -147,7 +145,9 @@ object kmeansOnline {
 
 
     //meanRespStream.print()
-    val dists = dffStream.transform(rdd => rdd.map{case (k,v) => closestPoint(v,centers)}.map(x => (x._1.toDouble/k,x._2)))
+    val dists = dffStream.transform(rdd => rdd.map{
+      case (k,v) => (v,closestPoint(v,centers))}.map(
+      x => (x._2,corrcoef(x._1,centers(x._2)))))
 
     dists.print()
     dists.foreach(rdd => printToImage(rdd, width, height, saveFile))
