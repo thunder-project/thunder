@@ -144,6 +144,8 @@ object kmeansOnline {
     val meanRespStream = meanStream.map(x => getMeanResp(x,t))
     meanRespStream.foreach(rdd => printToImage(rdd,width,height,saveFile))
 
+
+    meanRespStream.print()
     val dists = dffStream.transform(rdd => rdd.map{case (k,v) => closestPoint(v,centers)}.map(x => (x._1.toDouble/k,x._2)))
 
     //dists.print()
