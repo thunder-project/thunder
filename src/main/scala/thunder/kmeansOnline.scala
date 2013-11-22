@@ -8,9 +8,11 @@ import org.apache.spark.util.Vector
 import scala.util.Random.nextDouble
 import javax.imageio.ImageIO
 import java.awt.image.BufferedImage
+import java.awt.Color
 import java.io.File
 import spray.json._
 import spray.json.DefaultJsonProtocol._
+
 import scala.Array
 
 object kmeansOnline {
@@ -50,12 +52,11 @@ object kmeansOnline {
     return out
   }
 
-  def corrToRGB(ind: Int, base: Int): Array[Int] = {
+  def corrToRGB(ind: Int, base: Int, k: Int): Array[Int] = {
     var out = Array(0,0,0)
     if (base > 64) {
-      if (ind == 0) {out = Array(255, 0, 0)}
-      else if (ind == 1) {out = Array(0,255,0)}
-      else if (ind == 2) {out = Array(0,0,255)}
+      val clr = Color.getHSBColor((ind).toFloat / k,(0.7).toFloat,1.toFloat)
+      out = Array(clr.getRed(),clr.getBlue(),clr.getGreen())
     }
     else {
       out = Array(0,0,0)
@@ -73,11 +74,11 @@ object kmeansOnline {
     }
   }
 
-  def printToImage(rdd: RDD[(Int,Double)], width: Int, height: Int, fileName: String): Unit = {
+  def printToImage(rdd: RDD[(Int,Double)], k: Int, width: Int, height: Int, fileName: String): Unit = {
     val nPixels = width * height
     val inds = rdd.map(x => x._1).collect()
     val base = rdd.map(x => clip(((x._2-1000)/8000 * 255).toInt)).collect()
-    val RGB = Array.range(0, nPixels).flatMap(x => corrToRGB(inds(x),base(x)))
+    val RGB = Array.range(0, nPixels).flatMap(x => corrToRGB(inds(x),base(x),k))
     val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
     raster.setPixels(0, 0, width, height, RGB)
@@ -181,7 +182,7 @@ object kmeansOnline {
       case (k,v) => (closestPoint(v._1,centers),v._2)})
 
     //dists.print()
-    dists.foreach(rdd => printToImage(rdd, width, height, saveFile))
+    dists.foreach(rdd => printToImage(rdd, k, width, height, saveFile))
 
     ssc.start()
   }
