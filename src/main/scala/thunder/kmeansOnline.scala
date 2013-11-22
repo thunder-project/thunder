@@ -12,9 +12,9 @@ import java.io.File
 object kmeansOnline {
 
   def parseVector(line: String, t: Int): (Int, Vector) = {
-    val nums = line.split(' ') // split line into numbers: (0) key (1) ca (3) id
+    val nums = line.split(' ') // split line into numbers: (0) key (1) ca (2) id
     val k = nums(0).toInt // get index as key
-    val id = nums(3).toInt
+    val id = nums(2).toInt
     val vals, counts = Array.fill[Double](t)(0)
     vals(id) = nums(1).toDouble
     counts(id) += 1
