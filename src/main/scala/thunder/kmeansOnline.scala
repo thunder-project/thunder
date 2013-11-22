@@ -11,6 +11,7 @@ import java.awt.image.BufferedImage
 import java.io.File
 import spray.json._
 import spray.json.DefaultJsonProtocol._
+import scala.Array
 
 object kmeansOnline {
 
@@ -56,6 +57,15 @@ object kmeansOnline {
     else if (ind == 2) {out = Array(0,0,255)}
 
     return out
+  }
+
+  def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
+    val p = new java.io.PrintWriter(f)
+    try {
+      op(p)
+    } finally {
+      p.close()
+    }
   }
 
   def printToImage2(rdd: RDD[Double], width: Int, height: Int, fileName: String): Unit = {
@@ -106,7 +116,7 @@ object kmeansOnline {
     return bestIndex
   }
 
-  def updateCenters(rdd: RDD[Vector], centers: Array[Vector]): Array[Vector] = {
+  def updateCenters(rdd: RDD[Vector], centers: Array[Vector], saveFile: String): Array[Vector] = {
     val closest = rdd.map (p => (closestPoint(p, centers), (p, 1)))
     val pointStats = closest.reduceByKey{case ((x1, y1), (x2, y2)) => (x1 + x2, y1 + y2)}
     val newPoints = pointStats.map {pair => (pair._1, pair._2._1 / pair._2._2)}.collectAsMap()
@@ -114,8 +124,16 @@ object kmeansOnline {
       centers(newP._1) = newP._2
     }
 
-    //print(centers(0))
-    //print(centers(1))
+    var centersForPrinting = List((makeMap(centers(0).elements)))
+    for (ik <- 1 until centers.size) {
+      centersForPrinting = centersForPrinting ++ List((makeMap(centers(ik).elements)))
+    }
+
+    val out = Array(centersForPrinting.toJson.prettyPrint)
+    printToFile(new File(saveFile+".json"))(p => {
+      out.foreach(p.println)
+    })
+
     return centers
   }
 
@@ -148,19 +166,13 @@ object kmeansOnline {
       centers(ik) = Vector(Array.fill(t)((nextDouble-0.5)/100))
     }
 
-    var centersForPrinting = List((makeMap(centers(0).elements)))
-    for (ik <- 1 until k) {
-      centersForPrinting = centersForPrinting ++ List((makeMap(centers(ik).elements)))
-    }
-    print(centersForPrinting.toJson.prettyPrint)
-
     // main streaming operations
     val lines = ssc.textFileStream(args(1)) // directory to monitor
     val dataStream = lines.map(x => parseVector(x,t)) // parse data
     val meanStream = dataStream.reduceByKeyAndWindow(_ + _, _ - _, Seconds(windowTime), Seconds(batchTime))
     val dffStream = meanStream.map(x => getDffs(x,t)).transform(rdd => rdd.sortByKey(true))
     dffStream.foreach(rdd =>
-      centers = updateCenters(rdd.map{case (k,v) => v},centers)
+      centers = updateCenters(rdd.map{case (k,v) => v},centers,saveFile)
     )
     //dffStream.print()
 
