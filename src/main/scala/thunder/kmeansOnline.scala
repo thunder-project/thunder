@@ -48,32 +48,32 @@ object kmeansOnline {
     return out
   }
 
-//  def printToImage(rdd: RDD[(Double,Double)], width: Int, height: Int, fileName: String): Unit = {
-//    val nPixels = width * height
-//    val H = rdd.map(x => x._1).collect().map(_ * 255).map(_ toInt).map(x => clip(x))
-//    val B = rdd.map(x => x._2).collect().map(_ *20).map(_ toInt).map(x => clip(x))
-//    val RGB = Array.range(0, nPixels).flatMap(x => Array(B(x), B(x), B(x)))
-//    val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
-//    val raster = img.getRaster()
-//    raster.setPixels(0, 0, width, height, RGB)
-//    ImageIO.write(img, "png", new File(fileName))
-//  }
-
-  def printToImage(rdd: RDD[Double], width: Int, height: Int, fileName: String): Unit = {
+  def printToImage(rdd: RDD[(Double,Double)], width: Int, height: Int, fileName: String): Unit = {
     val nPixels = width * height
-    val R, G, B = rdd.collect().map(_ - 1000).map(_ * 255 / 5000).map(_ toInt).map(x => if (x < 0) {
-      0
-    } else if (x > 255) {
-      255
-    } else {
-      x
-    })
-    val RGB = Array.range(0, nPixels).flatMap(x => Array(R(x), G(x), B(x)))
+    val H = rdd.map(x => x._1).collect().map(_ * 255).map(_ toInt).map(x => clip(x))
+    val B = rdd.map(x => x._2).collect().map(_ * 20).map(_ toInt).map(x => clip(x))
+    val RGB = Array.range(0, nPixels).flatMap(x => Array(H(x), B(x), B(x)))
     val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
     raster.setPixels(0, 0, width, height, RGB)
     ImageIO.write(img, "png", new File(fileName))
   }
+
+//  def printToImage(rdd: RDD[Double], width: Int, height: Int, fileName: String): Unit = {
+//    val nPixels = width * height
+//    val R, G, B = rdd.collect().map(_ - 1000).map(_ * 255 / 5000).map(_ toInt).map(x => if (x < 0) {
+//      0
+//    } else if (x > 255) {
+//      255
+//    } else {
+//      x
+//    })
+//    val RGB = Array.range(0, nPixels).flatMap(x => Array(R(x), G(x), B(x)))
+//    val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
+//    val raster = img.getRaster()
+//    raster.setPixels(0, 0, width, height, RGB)
+//    ImageIO.write(img, "png", new File(fileName))
+//  }
 
   def closestPoint(p: Vector, centers: Array[Vector]): (Int,Double) = {
     var index = 0
@@ -141,15 +141,15 @@ object kmeansOnline {
     )
     dffStream.print()
 
-    val meanRespStream = meanStream.map(x => getMeanResp(x,t)).transform(rdd => rdd.sortByKey(true))
-    meanRespStream.foreach(rdd => printToImage(rdd.map{case (k,v) => v},width,height,saveFile))
+    //val meanRespStream = meanStream.map(x => getMeanResp(x,t)).transform(rdd => rdd.sortByKey(true))
+    //meanRespStream.foreach(rdd => printToImage(rdd.map{case (k,v) => v},width,height,saveFile))
 
 
-    meanRespStream.print()
+    //meanRespStream.print()
     val dists = dffStream.transform(rdd => rdd.map{case (k,v) => closestPoint(v,centers)}.map(x => (x._1.toDouble/k,x._2)))
 
-    //dists.print()
-    //dists.foreach(rdd => printToImage(rdd, width, height, saveFile))
+    dists.print()
+    dists.foreach(rdd => printToImage(rdd, width, height, saveFile))
 
     ssc.start()
   }
