@@ -74,7 +74,7 @@ object kmeansOnline {
       System.getenv("SPARK_HOME"), List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
     ssc.checkpoint(System.getenv("CHECKPOINTSTREAMING"))
 
-    var centers = Array(Vector(1,1,1),Vector(2,2,2),Vector(3,3,3))
+    var centers = Array(Vector(Array.fill[Double](t)(1)),Vector(Array.fill[Double](t)(2)),Vector(Array.fill[Double](t)(3)))
 
     // main streaming operations
     val lines = ssc.textFileStream(args(1)) // directory to monitor
