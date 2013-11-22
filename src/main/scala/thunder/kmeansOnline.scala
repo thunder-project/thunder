@@ -31,6 +31,11 @@ object kmeansOnline {
     return (vals._1, Vector(dff))
   }
 
+  def getMeanResp(vals: (Int, Vector), t: Int) : (Int, Double) = {
+    val resp = vals._2.elements.slice(0,t).sum
+    return (vals._1, resp)
+  }
+
   def clip(num: Double): Double = {
     var out = num
     if (num < 0) {
@@ -41,11 +46,27 @@ object kmeansOnline {
     return out
   }
 
-  def printToImage(rdd: RDD[(Double,Double)], width: Int, height: Int, fileName: String): Unit = {
+//  def printToImage(rdd: RDD[(Double,Double)], width: Int, height: Int, fileName: String): Unit = {
+//    val nPixels = width * height
+//    val H = rdd.map(x => x._1).collect().map(_ * 255).map(_ toInt).map(x => clip(x))
+//    val B = rdd.map(x => x._2).collect().map(_ *20).map(_ toInt).map(x => clip(x))
+//    val RGB = Array.range(0, nPixels).flatMap(x => Array(B(x), B(x), B(x)))
+//    val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
+//    val raster = img.getRaster()
+//    raster.setPixels(0, 0, width, height, RGB)
+//    ImageIO.write(img, "png", new File(fileName))
+//  }
+
+  def printToImage(rdd: RDD[Double], width: Int, height: Int, fileName: String): Unit = {
     val nPixels = width * height
-    val H = rdd.map(x => x._1).collect().map(_ * 255).map(_ toInt).map(x => clip(x))
-    val B = rdd.map(x => x._2).collect().map(_ *20).map(_ toInt).map(x => clip(x))
-    val RGB = Array.range(0, nPixels).flatMap(x => Array(B(x), B(x), B(x)))
+    val R, G, B = rdd.collect().map(_ / 100).map(_ + 255 / 2).map(_ toInt).map(x => if (x < 0) {
+      0
+    } else if (x > 255) {
+      255
+    } else {
+      x
+    })
+    val RGB = Array.range(0, nPixels).flatMap(x => Array(R(x), G(x), B(x)))
     val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
     raster.setPixels(0, 0, width, height, RGB)
@@ -118,10 +139,13 @@ object kmeansOnline {
     )
     dffStream.print()
 
+    val meanRespStream = meanStream.map(x => getMeanResp(x,t))
+    meanRespStream.foreach(rdd => printToImage(rdd,width,height,saveFile))
+
     val dists = dffStream.transform(rdd => rdd.map{case (k,v) => closestPoint(v,centers)}.map(x => (x._1.toDouble/k,x._2)))
 
-    dists.print()
-    dists.foreach(rdd => printToImage(rdd, width, height, saveFile))
+    //dists.print()
+    //dists.foreach(rdd => printToImage(rdd, width, height, saveFile))
 
     ssc.start()
   }
