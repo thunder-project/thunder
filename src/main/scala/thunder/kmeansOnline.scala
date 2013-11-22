@@ -5,7 +5,7 @@ import org.apache.spark.streaming.StreamingContext._
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.util.Vector
-import util.Random.nextDouble
+import scala.util.Random.nextDouble
 import javax.imageio.ImageIO
 import java.awt.image.BufferedImage
 import java.io.File
