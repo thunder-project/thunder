@@ -9,6 +9,8 @@ import scala.util.Random.nextDouble
 import javax.imageio.ImageIO
 import java.awt.image.BufferedImage
 import java.io.File
+import spray.json._
+import spray.json.DefaultJsonProtocol._
 
 object kmeansOnline {
 
@@ -20,6 +22,10 @@ object kmeansOnline {
     vals(id) = nums(1).toDouble
     counts(id) += 1
     return (k, Vector(vals ++ counts))
+  }
+
+  def makeMap(vec: Array[Double]): List[Map[String,Double]] = {
+    vec.toList.zipWithIndex.map(x => Map("x"->x._2.toDouble,"y"->x._1))
   }
 
   def getDffs(vals: (Int, Vector), t: Int): (Int, Vector) = {
@@ -107,8 +113,9 @@ object kmeansOnline {
     for (newP <- newPoints) {
       centers(newP._1) = newP._2
     }
-    print(centers(0))
-    print(centers(1))
+    print(makeMap(centers(0).elements).toJson.prettyPrint)
+    //print(centers(0))
+    //print(centers(1))
     return centers
   }
 
