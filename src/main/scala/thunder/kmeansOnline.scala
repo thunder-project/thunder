@@ -138,7 +138,7 @@ object kmeansOnline {
     dffStream.foreach(rdd =>
       centers = updateCenters(rdd.map{case (k,v) => v},centers)
     )
-    dffStream.print()
+    //dffStream.print()
 
     //val meanRespStream = meanStream.map(x => getMeanResp(x,t)).transform(rdd => rdd.sortByKey(true))
     //meanRespStream.foreach(rdd => printToImage(rdd.map{case (k,v) => v},width,height,saveFile))
@@ -149,7 +149,7 @@ object kmeansOnline {
       case (k,v) => (v,closestPoint(v,centers))}.map(
       x => (x._2,corrcoef(x._1,centers(x._2)))))
 
-    dists.print()
+    //dists.print()
     dists.foreach(rdd => printToImage(rdd, width, height, saveFile))
 
     ssc.start()
