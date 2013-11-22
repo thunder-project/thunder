@@ -31,9 +31,9 @@ object kmeansOnline {
     return (vals._1, Vector(dff))
   }
 
-  def getMeanResp(vals: (Int, Vector), t: Int) : (Int, Double) = {
+  def getMeanResp(vals: (Int, Vector), t: Int) : Double = {
     val resp = vals._2.elements.slice(0,t).sum
-    return (vals._1, resp)
+    return resp
   }
 
   def clip(num: Double): Double = {
