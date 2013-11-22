@@ -43,26 +43,43 @@ object kmeansOnline {
     return out
   }
 
-  def corrToRGB(ind: Int): Array[Int] = {
-    var out = Array(0,0,0)
-    if (ind == 0) {out = Array(255, 0, 0)}
-    else if (ind == 1) {out = Array(0,255,0)}
-    else if (ind == 2) {out = Array(0,0,255)}
+//  def corrToRGB(ind: Int): Array[Int] = {
+//    var out = Array(0,0,0)
+//    if (ind == 0) {out = Array(255, 0, 0)}
+//    else if (ind == 1) {out = Array(0,255,0)}
+//    else if (ind == 2) {out = Array(0,0,255)}
+//
+//    return out
+//  }
 
-    return out
-  }
-
-  def printToImage(rdd: RDD[Int], width: Int, height: Int, fileName: String): Unit = {
+  def printToImage2(rdd: RDD[Double], width: Int, height: Int, fileName: String): Unit = {
     val nPixels = width * height
-    val inds = rdd.collect()
-    val RGB = Array.range(0, nPixels).flatMap(x => corrToRGB(inds(x)))
+    val nums = rdd.map(x => clip((x*100).toInt)).collect()
+    val RGB = Array.range(0, nPixels).flatMap(x => Array(nums(x), nums(x), nums(x)))
     val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
     raster.setPixels(0, 0, width, height, RGB)
-    ImageIO.write(img, "png", new File(fileName))
+    ImageIO.write(img, "png", new File(fileName+"2.png"))
   }
 
-  def corrcoef(p1 : Vector, p2: Vector): Double = {
+  def printToImage1(rdd: RDD[Int], width: Int, height: Int, fileName: String): Unit = {
+    val nPixels = width * height
+    val inds = rdd.collect()
+    val RGB = Array.range(0, nPixels).flatMap(x => Array(inds(x), inds(x), inds(x)))
+    val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
+    val raster = img.getRaster()
+    raster.setPixels(0, 0, width, height, RGB)
+    ImageIO.write(img, "png", new File(fileName+"1.png"))
+  }
+
+  def getMeanResp(vals: (Int, Vector), t: Int) : (Int,Double) = {
+    val resp = vals._2.elements.slice(0,t)
+    val counts = vals._2.elements.slice(t,2*t)
+    val baseLine = resp.sum / counts.sum
+    return (vals._1,baseLine)
+  }
+
+    def corrcoef(p1 : Vector, p2: Vector): Double = {
     val p11 = Vector(p1.elements.map(x => x - p1.sum / p1.length))
     val p22 = Vector(p2.elements.map(x => x - p2.sum / p2.length))
     return (p11 / scala.math.sqrt(p11.dot(p11))).dot(p22 / scala.math.sqrt(p22.dot(p22)))
@@ -134,16 +151,15 @@ object kmeansOnline {
     )
     //dffStream.print()
 
-    //val stdRespStream = meanStream.map(x => getStdResp(x,t)).transform(rdd => rdd.sortByKey(true))
-    //meanRespStream.foreach(rdd => printToImage(rdd.map{case (k,v) => v},width,height,saveFile))
-
+    val meanRespStream = meanStream.map(x => getMeanResp(x,t)).transform(rdd => rdd.sortByKey(true))
+    meanRespStream.foreach(rdd => printToImage2(rdd.map{case (k,v) => v},width,height,saveFile))
 
     //meanRespStream.print()
     val dists = dffStream.transform(rdd => rdd.map{
       case (k,v) => closestPoint(v,centers)})
 
     //dists.print()
-    dists.foreach(rdd => printToImage(rdd, width, height, saveFile))
+    dists.foreach(rdd => printToImage1(rdd, width, height, saveFile))
 
     ssc.start()
   }
