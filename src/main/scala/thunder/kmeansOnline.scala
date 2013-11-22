@@ -48,10 +48,10 @@ object kmeansOnline {
     val closest = rdd.map (p => (closestPoint(p, centers), (p, 1)))
     val pointStats = closest.reduceByKey{case ((x1, y1), (x2, y2)) => (x1 + x2, y1 + y2)}
     val newPoints = pointStats.map {pair => (pair._1, pair._2._1 / pair._2._2)}.collectAsMap()
-    for (newP <- newPoints) {
-      centers(newP._1) = newP._2
-    }
-    centers(0) = Vector(Array.fill[Double](180)(0))
+    //for (newP <- newPoints) {
+    //  centers(newP._1) = newP._2
+    //}
+    centers(0) = centers(0) + Vector(Array.fill[Double](180)(1))
     print(centers(0))
     return centers
   }
