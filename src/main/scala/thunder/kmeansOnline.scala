@@ -43,14 +43,14 @@ object kmeansOnline {
     return out
   }
 
-//  def corrToRGB(ind: Int): Array[Int] = {
-//    var out = Array(0,0,0)
-//    if (ind == 0) {out = Array(255, 0, 0)}
-//    else if (ind == 1) {out = Array(0,255,0)}
-//    else if (ind == 2) {out = Array(0,0,255)}
-//
-//    return out
-//  }
+  def corrToRGB(ind: Int): Array[Int] = {
+    var out = Array(0,0,0)
+    if (ind == 0) {out = Array(255, 0, 0)}
+    else if (ind == 1) {out = Array(0,255,0)}
+    else if (ind == 2) {out = Array(0,0,255)}
+
+    return out
+  }
 
   def printToImage2(rdd: RDD[Double], width: Int, height: Int, fileName: String): Unit = {
     val nPixels = width * height
@@ -65,7 +65,7 @@ object kmeansOnline {
   def printToImage1(rdd: RDD[Int], width: Int, height: Int, fileName: String): Unit = {
     val nPixels = width * height
     val inds = rdd.collect()
-    val RGB = Array.range(0, nPixels).flatMap(x => Array(inds(x), inds(x), inds(x)))
+    val RGB = Array.range(0, nPixels).flatMap(x => corrToRGB(inds(x)))
     val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
     raster.setPixels(0, 0, width, height, RGB)
