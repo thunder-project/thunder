@@ -114,11 +114,13 @@ object kmeansOnline {
   }
 
   def updateCenters(rdd: RDD[Vector], centers: Array[Vector], saveFile: String): Array[Vector] = {
-    val closest = rdd.map (p => (closestPoint(p, centers), (p, 1)))
-    val pointStats = closest.reduceByKey{case ((x1, y1), (x2, y2)) => (x1 + x2, y1 + y2)}
-    val newPoints = pointStats.map {pair => (pair._1, pair._2._1 / pair._2._2)}.collectAsMap()
-    for (newP <- newPoints) {
-      centers(newP._1) = newP._2
+    for (i <- 0 until 5) {
+      val closest = rdd.map (p => (closestPoint(p, centers), (p, 1)))
+      val pointStats = closest.reduceByKey{case ((x1, y1), (x2, y2)) => (x1 + x2, y1 + y2)}
+      val newPoints = pointStats.map {pair => (pair._1, pair._2._1 / pair._2._2)}.collectAsMap()
+      for (newP <- newPoints) {
+        centers(newP._1) = newP._2
+      }
     }
 
     print(centers(0))
