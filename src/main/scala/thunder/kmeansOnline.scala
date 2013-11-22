@@ -39,7 +39,7 @@ object kmeansOnline {
     return (vals._1,baseLine)
   }
 
-  def clip(num: Double): Double = {
+  def clip(num: Int): Int = {
     var out = num
     if (num < 0) {
       out = 0
@@ -49,8 +49,8 @@ object kmeansOnline {
     return out
   }
 
-  def corrToRGB(ind: Int, corr: Double): Array[Double] = {
-    var out = Array(0,0,0).map(_ toDouble)
+  def corrToRGB(ind: Int, corr: Int): Array[Int] = {
+    var out = Array(0,0,0)
     if (ind == 0) {out = Array(corr, 0, 0)}
     else if (ind == 1) {out = Array(0,corr,0)}
     else if (ind == 2) {out = Array(0,0,corr)}
