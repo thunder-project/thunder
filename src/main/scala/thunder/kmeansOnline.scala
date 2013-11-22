@@ -140,7 +140,7 @@ object kmeansOnline {
     val height = args(8).toInt
 
     val ssc = new StreamingContext(args(0), "SimpleStreaming", Seconds(batchTime),
-      System.getenv("SPARK_HOME"), List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
+      System.getenv("SPARK_HOME"), List("target/scala-2.9.3/thunder_2.9.3-1.0.jar","project/spray-json_2.9.3-1.2.5.jar"))
     ssc.checkpoint(System.getenv("CHECKPOINTSTREAMING"))
 
     var centers = new Array[Vector](k)
