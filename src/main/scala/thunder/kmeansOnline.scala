@@ -51,6 +51,7 @@ object kmeansOnline {
     for (newP <- newPoints) {
       centers(newP._1) = newP._2
     }
+    print(centers(0))
     return centers
   }
 
@@ -81,13 +82,15 @@ object kmeansOnline {
     val dataStream = lines.map(x => parseVector(x,t)) // parse data
     val stateStream = dataStream.reduceByKeyAndWindow(_ + _, _ - _, Seconds(windowTime), Seconds(batchTime))
     val sortedStates = stateStream.map(x => getDffs(x,t))
-    sortedStates.foreach(rdd => centers = updateCenters(rdd.map{case (k,v) => v},centers))
+    sortedStates.foreach(rdd =>
+      centers = updateCenters(rdd.map{case (k,v) => v},centers)
+    )
 
     //stateStream.print()
     sortedStates.print()
-    print(centers(0))
-    print(centers(1))
-    print(centers(2))
+    //print(centers(0))
+    //print(centers(1))
+    //print(centers(2))
 
     //val sortedStates = stateStream.map(x => getDffs(x,t)).transform(rdd => rdd.sortByKey(true)).map(x => x._2(1))
     // for debugging
