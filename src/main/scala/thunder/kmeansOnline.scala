@@ -54,7 +54,7 @@ object kmeansOnline {
 
   def corrToRGB(ind: Int, base: Int, k: Int): Array[Int] = {
     var out = Array(0,0,0)
-    if (base > 64) {
+    if (base > 30) {
       val clr = Color.getHSBColor((ind).toFloat / k,(0.7).toFloat,1.toFloat)
       out = Array(clr.getRed(),clr.getBlue(),clr.getGreen())
     }
