@@ -22,7 +22,7 @@ object kmeansOnline {
     return (k, Vector(vals ++ counts))
   }
 
-  def getDffs(vals: (Int, Vector), t: Int): (Int, (Vector,Double)) = {
+  def getDffs(vals: (Int, Vector), t: Int): (Int, Vector) = {
     val resp = vals._2.elements.slice(0,t)
     val counts = vals._2.elements.slice(t,2*t)
     val baseLine = resp.sum / counts.sum
@@ -30,7 +30,7 @@ object kmeansOnline {
       case (x,y) => if (y == 0) {0} else {x/y}}.map(
       x => if (x == 0) {0} else {(x - baseLine) / (baseLine + 0.1)})
     val out = Vector(dff)
-    return (vals._1, (Vector(dff),out.squaredDist(out)))
+    return (vals._1, out)
   }
 
   def clip(num: Int): Int = {
@@ -43,25 +43,19 @@ object kmeansOnline {
     return out
   }
 
-  def corrToRGB(ind: Int, std: Double): Array[Int] = {
+  def corrToRGB(ind: Int): Array[Int] = {
     var out = Array(0,0,0)
-    if (std > 0.5) {
-      if (ind == 0) {out = Array(255, 0, 0)}
-      else if (ind == 1) {out = Array(0,255,0)}
-      else if (ind == 2) {out = Array(0,0,255)}
-    } else {
-      val b = clip((std * 255).toInt)
-      out = Array(b,b,b)
-    }
+    if (ind == 0) {out = Array(255, 0, 0)}
+    else if (ind == 1) {out = Array(0,255,0)}
+    else if (ind == 2) {out = Array(0,0,255)}
 
     return out
   }
 
-  def printToImage(rdd: RDD[(Int,Double)], width: Int, height: Int, fileName: String): Unit = {
+  def printToImage(rdd: RDD[Int], width: Int, height: Int, fileName: String): Unit = {
     val nPixels = width * height
-    val inds = rdd.map(x => x._1).collect()
-    val stds = rdd.map(x => x._2).collect()
-    val RGB = Array.range(0, nPixels).flatMap(x => corrToRGB(inds(x),stds(x)))
+    val inds = rdd.collect()
+    val RGB = Array.range(0, nPixels).flatMap(x => corrToRGB(inds(x)))
     val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
     raster.setPixels(0, 0, width, height, RGB)
@@ -136,7 +130,7 @@ object kmeansOnline {
     val meanStream = dataStream.reduceByKeyAndWindow(_ + _, _ - _, Seconds(windowTime), Seconds(batchTime))
     val dffStream = meanStream.map(x => getDffs(x,t)).transform(rdd => rdd.sortByKey(true))
     dffStream.foreach(rdd =>
-      centers = updateCenters(rdd.map{case (k,v) => v._1},centers)
+      centers = updateCenters(rdd.map{case (k,v) => v},centers)
     )
     //dffStream.print()
 
@@ -146,7 +140,7 @@ object kmeansOnline {
 
     //meanRespStream.print()
     val dists = dffStream.transform(rdd => rdd.map{
-      case (k,v) => (closestPoint(v._1,centers),v._2)})
+      case (k,v) => closestPoint(v,centers)})
 
     //dists.print()
     dists.foreach(rdd => printToImage(rdd, width, height, saveFile))
