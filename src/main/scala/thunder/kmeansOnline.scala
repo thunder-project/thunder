@@ -88,10 +88,14 @@ object kmeansOnline {
     if (args(7).toInt != 0) {
       System.setProperty("spark.default.parallelism", args(7).toString)
     }
+    val saveFile = args(2)
     val batchTime = args(3).toLong
     val windowTime = args(4).toLong
     val k = args(5).toInt
     val t = args(6).toInt
+    val width = args(7).toInt
+    val height = args(8).toInt
+
     val ssc = new StreamingContext(args(0), "SimpleStreaming", Seconds(batchTime),
       System.getenv("SPARK_HOME"), List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
     ssc.checkpoint(System.getenv("CHECKPOINTSTREAMING"))
@@ -111,7 +115,7 @@ object kmeansOnline {
     )
 
     val dists = dffStream.transform(rdd => rdd.map{case (k,v) => closestPoint(v,centers)}.map(x => (x._1.toDouble/k,x._2)))
-    dists.foreach(rdd => printToImage(rdd, args(5).toInt, args(6).toInt, args(2)))
+    dists.foreach(rdd => printToImage(rdd, width, height, saveFile))
 
     ssc.start()
   }
