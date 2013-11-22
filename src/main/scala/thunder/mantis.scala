@@ -105,9 +105,9 @@ object mantis {
     val sortedStates = stateStream.map(getDiffs _).transform(rdd => rdd.sortByKey(true)).map(x => x._2(1))
 
     // for debugging
-    //stateStream.print()
-    //sortedStates.print()
-    sortedStates.foreach(rdd => printToImage(rdd, args(5).toInt, args(6).toInt, args(2)))
+    stateStream.print()
+    sortedStates.print()
+    //sortedStates.foreach(rdd => printToImage(rdd, args(5).toInt, args(6).toInt, args(2)))
 
     ssc.start()
   }
