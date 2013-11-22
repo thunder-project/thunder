@@ -54,7 +54,7 @@ object kmeansOnline {
 
   def printToImage2(rdd: RDD[Double], width: Int, height: Int, fileName: String): Unit = {
     val nPixels = width * height
-    val nums = rdd.map(x => clip((x*100).toInt)).collect()
+    val nums = rdd.map(x => clip((x/1000*255).toInt)).collect()
     val RGB = Array.range(0, nPixels).flatMap(x => Array(nums(x), nums(x), nums(x)))
     val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
@@ -154,7 +154,7 @@ object kmeansOnline {
     val meanRespStream = meanStream.map(x => getMeanResp(x,t)).transform(rdd => rdd.sortByKey(true))
     meanRespStream.foreach(rdd => printToImage2(rdd.map{case (k,v) => v},width,height,saveFile))
 
-    //meanRespStream.print()
+    meanRespStream.print()
     val dists = dffStream.transform(rdd => rdd.map{
       case (k,v) => closestPoint(v,centers)})
 
