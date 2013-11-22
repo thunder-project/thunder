@@ -115,6 +115,8 @@ object kmeansOnline {
     )
 
     val dists = dffStream.transform(rdd => rdd.map{case (k,v) => closestPoint(v,centers)}.map(x => (x._1.toDouble/k,x._2)))
+
+    dists.print()
     dists.foreach(rdd => printToImage(rdd, width, height, saveFile))
 
     ssc.start()
