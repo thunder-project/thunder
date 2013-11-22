@@ -49,19 +49,19 @@ object kmeansOnline {
     return out
   }
 
-  def corrToRGB(ind: Int, corr: Int): Array[Int] = {
+  def corrToRGB(ind: Int): Array[Int] = {
     var out = Array(0,0,0)
-    if (ind == 0) {out = Array(corr, 0, 0)}
-    else if (ind == 1) {out = Array(0,corr,0)}
-    else if (ind == 2) {out = Array(0,0,corr)}
+    if (ind == 0) {out = Array(255, 0, 0)}
+    else if (ind == 1) {out = Array(0,255,0)}
+    else if (ind == 2) {out = Array(0,0,255)}
     return out
   }
 
-  def printToImage(rdd: RDD[(Int,Double)], width: Int, height: Int, fileName: String): Unit = {
+  def printToImage(rdd: RDD[Int], width: Int, height: Int, fileName: String): Unit = {
     val nPixels = width * height
-    val inds = rdd.map(x => x._1).collect()
-    val corrs = rdd.map(x => x._2).collect().map(_ * 255/2).map(_ + 255/2).map(_ toInt).map(x => clip(x))
-    val RGB = Array.range(0, nPixels).flatMap(x => corrToRGB(inds(x),corrs(x)))
+    val inds = rdd.collect()
+    //val corrs = rdd.map(x => x._2).collect().map(_ * 255/2).map(_ + 255/2).map(_ toInt).map(x => clip(x))
+    val RGB = Array.range(0, nPixels).flatMap(x => corrToRGB(inds(x)))
     val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
     raster.setPixels(0, 0, width, height, RGB)
@@ -146,8 +146,7 @@ object kmeansOnline {
 
     //meanRespStream.print()
     val dists = dffStream.transform(rdd => rdd.map{
-      case (k,v) => (v,closestPoint(v,centers))}.map(
-      x => (x._2,corrcoef(x._1,centers(x._2)))))
+      case (k,v) => closestPoint(v,centers)})
 
     //dists.print()
     dists.foreach(rdd => printToImage(rdd, width, height, saveFile))
