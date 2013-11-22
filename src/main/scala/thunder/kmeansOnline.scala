@@ -148,11 +148,11 @@ object kmeansOnline {
       centers(ik) = Vector(Array.fill(t)((nextDouble-0.5)/100))
     }
 
-    val mappedCenters = List(List(makeMap(centers(0).elements)))
+    var centersForPrinting = List(List(makeMap(centers(0).elements)))
     for (ik <- 1 until k) {
-      mappedCenters ++ List(List(makeMap(centers(ik).elements)))
+      centersForPrinting = centersForPrinting ++ List(List(makeMap(centers(ik).elements)))
     }
-    print(mappedCenters.toJson.prettyPrint)
+    print(centersForPrinting.toJson.prettyPrint)
 
     // main streaming operations
     val lines = ssc.textFileStream(args(1)) // directory to monitor
