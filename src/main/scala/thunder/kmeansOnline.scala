@@ -29,7 +29,28 @@ object kmeansOnline {
     return (vals._1, Vector(dff))
   }
 
-  def closestPoint(p: Vector, centers: Array[Vector]): Int = {
+  def clip(num: Double): Double = {
+    var out = num
+    if (num < 0) {
+      out = 0
+    } else if (num > 255) {
+      out = 255
+    }
+    return out
+  }
+
+  def printToImage(rdd: RDD[(Double,Double)], width: Int, height: Int, fileName: String): Unit = {
+    val nPixels = width * height
+    val H = rdd.map(x => x._1).collect().map(_ * 255).map(_ toInt).map(x => clip(x))
+    val B = rdd.map(x => x._2).collect().map(_ *255).map(_ toInt).map(x => clip(x))
+    val RGB = Array.range(0, nPixels).flatMap(x => Array(H(x), B(x), B(x)))
+    val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
+    val raster = img.getRaster()
+    raster.setPixels(0, 0, width, height, RGB)
+    ImageIO.write(img, "png", new File(fileName))
+  }
+
+  def closestPoint(p: Vector, centers: Array[Vector]): (Int,Double) = {
     var index = 0
     var bestIndex = 0
     var closest = Double.PositiveInfinity
@@ -41,11 +62,11 @@ object kmeansOnline {
         bestIndex = i
       }
     }
-    return bestIndex
+    return (bestIndex,closest)
   }
 
   def updateCenters(rdd: RDD[Vector], centers: Array[Vector]): Array[Vector] = {
-    val closest = rdd.map (p => (closestPoint(p, centers), (p, 1)))
+    val closest = rdd.map (p => (closestPoint(p, centers)._1, (p, 1)))
     val pointStats = closest.reduceByKey{case ((x1, y1), (x2, y2)) => (x1 + x2, y1 + y2)}
     val newPoints = pointStats.map {pair => (pair._1, pair._2._1 / pair._2._2)}.collectAsMap()
     for (newP <- newPoints) {
@@ -89,14 +110,8 @@ object kmeansOnline {
       centers = updateCenters(rdd.map{case (k,v) => v},centers)
     )
 
-    //stateStream.print()
-    //dffStream.print()
-
-    //val sortedStates = stateStream.map(x => getDffs(x,t)).transform(rdd => rdd.sortByKey(true)).map(x => x._2(1))
-    // for debugging
-    //stateStream.print()
-    //sortedStates.print()
-    //sortedStates.foreach(rdd => printToImage(rdd, args(5).toInt, args(6).toInt, args(2)))
+    val dists = dffStream.transform(rdd => rdd.map{case (k,v) => closestPoint(v,centers)}.map(x => (x._1.toDouble/k,x._2)))
+    dists.foreach(rdd => printToImage(rdd, args(5).toInt, args(6).toInt, args(2)))
 
     ssc.start()
   }
