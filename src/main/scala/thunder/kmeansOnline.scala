@@ -48,10 +48,9 @@ object kmeansOnline {
     val closest = rdd.map (p => (closestPoint(p, centers), (p, 1)))
     val pointStats = closest.reduceByKey{case ((x1, y1), (x2, y2)) => (x1 + x2, y1 + y2)}
     val newPoints = pointStats.map {pair => (pair._1, pair._2._1 / pair._2._2)}.collectAsMap()
-    //for (newP <- newPoints) {
-    //  centers(newP._1) = newP._2
-    //}
-    centers(0) = centers(0) + Vector(Array.fill[Double](180)(1))
+    for (newP <- newPoints) {
+      centers(newP._1) = newP._2
+    }
     print(centers(0))
     return centers
   }
@@ -70,28 +69,28 @@ object kmeansOnline {
     }
     val batchTime = args(3).toLong
     val windowTime = args(4).toLong
-    val K = args(5).toInt
+    val k = args(5).toInt
     val t = args(6).toInt
     val ssc = new StreamingContext(args(0), "SimpleStreaming", Seconds(batchTime),
       System.getenv("SPARK_HOME"), List("target/scala-2.9.3/thunder_2.9.3-1.0.jar"))
     ssc.checkpoint(System.getenv("CHECKPOINTSTREAMING"))
 
-    var centers = Array(Vector(Array.fill[Double](t)(1)),Vector(Array.fill[Double](t)(2)),Vector(Array.fill[Double](t)(3)))
+    var centers = new Array[Vector](k)
+    for (ik <- 0 until k) {
+      centers(ik) = Vector(Array.fill[Double](t)(ik))
+    }
 
     // main streaming operations
     val lines = ssc.textFileStream(args(1)) // directory to monitor
     val dataStream = lines.map(x => parseVector(x,t)) // parse data
-    val stateStream = dataStream.reduceByKeyAndWindow(_ + _, _ - _, Seconds(windowTime), Seconds(batchTime))
-    val sortedStates = stateStream.map(x => getDffs(x,t))
-    sortedStates.foreach(rdd =>
+    val meanStream = dataStream.reduceByKeyAndWindow(_ + _, _ - _, Seconds(windowTime), Seconds(batchTime))
+    val dffStream = meanStream.map(x => getDffs(x,t))
+    dffStream.foreach(rdd =>
       centers = updateCenters(rdd.map{case (k,v) => v},centers)
     )
 
     //stateStream.print()
-    sortedStates.print()
-    print(centers(0))
-    //print(centers(1))
-    //print(centers(2))
+    //dffStream.print()
 
     //val sortedStates = stateStream.map(x => getDffs(x,t)).transform(rdd => rdd.sortByKey(true)).map(x => x._2(1))
     // for debugging
