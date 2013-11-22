@@ -25,7 +25,9 @@ object kmeansOnline {
     val resp = vals._2.elements.slice(0,t)
     val counts = vals._2.elements.slice(t,2*t)
     val baseLine = resp.sum / counts.sum
-    val dff = resp.zip(counts).map{case (x,y) => if (y == 0) {0} else {x/y}}.map(x => (x - baseLine) / (baseLine + 0.1))
+    val dff = resp.zip(counts).map{
+      case (x,y) => if (y == 0) {0} else {x/y}}.map(
+      x => if (x == 0) {0} else {(x - baseLine) / (baseLine + 0.1)})
     return (vals._1, Vector(dff))
   }
 
@@ -43,7 +45,7 @@ object kmeansOnline {
     val nPixels = width * height
     val H = rdd.map(x => x._1).collect().map(_ * 255).map(_ toInt).map(x => clip(x))
     val B = rdd.map(x => x._2).collect().map(_ *255).map(_ toInt).map(x => clip(x))
-    val RGB = Array.range(0, nPixels).flatMap(x => Array(H(x), B(x), B(x)))
+    val RGB = Array.range(0, nPixels).flatMap(x => Array(H(x), H(x), H(x)))
     val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
     raster.setPixels(0, 0, width, height, RGB)
