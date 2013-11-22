@@ -54,7 +54,7 @@ object kmeansOnline {
 
   def printToImage2(rdd: RDD[Double], width: Int, height: Int, fileName: String): Unit = {
     val nPixels = width * height
-    val nums = rdd.map(x => clip((x/1000*255).toInt)).collect()
+    val nums = rdd.map(x => clip(((x/1000-1)*255).toInt)).collect()
     val RGB = Array.range(0, nPixels).flatMap(x => Array(nums(x), nums(x), nums(x)))
     val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
