@@ -31,11 +31,11 @@ object kmeansOnline {
     return (vals._1, Vector(dff))
   }
 
-  def getMeanResp(vals: (Int, Vector), t: Int) : Double = {
+  def getMeanResp(vals: (Int, Vector), t: Int) : (Int,Double) = {
     val resp = vals._2.elements.slice(0,t)
     val counts = vals._2.elements.slice(t,2*t)
     val baseLine = resp.sum / counts.sum
-    return baseLine
+    return (vals._1,baseLine)
   }
 
   def clip(num: Double): Double = {
@@ -135,14 +135,14 @@ object kmeansOnline {
     val lines = ssc.textFileStream(args(1)) // directory to monitor
     val dataStream = lines.map(x => parseVector(x,t)) // parse data
     val meanStream = dataStream.reduceByKeyAndWindow(_ + _, _ - _, Seconds(windowTime), Seconds(batchTime))
-    val dffStream = meanStream.map(x => getDffs(x,t))
+    val dffStream = meanStream.map(x => getDffs(x,t)).transform(rdd => rdd.sortByKey(true))
     dffStream.foreach(rdd =>
       centers = updateCenters(rdd.map{case (k,v) => v},centers)
     )
     dffStream.print()
 
-    val meanRespStream = meanStream.map(x => getMeanResp(x,t))
-    meanRespStream.foreach(rdd => printToImage(rdd,width,height,saveFile))
+    val meanRespStream = meanStream.map(x => getMeanResp(x,t)).transform(rdd => rdd.sortByKey(true))
+    meanRespStream.foreach(rdd => printToImage(rdd.map{case (k,v) => v},width,height,saveFile))
 
 
     meanRespStream.print()
