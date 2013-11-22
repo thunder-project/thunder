@@ -5,6 +5,7 @@ import org.apache.spark.streaming.StreamingContext._
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.util.Vector
+import util.Random.nextDouble
 import javax.imageio.ImageIO
 import java.awt.image.BufferedImage
 import java.io.File
@@ -128,7 +129,7 @@ object kmeansOnline {
 
     var centers = new Array[Vector](k)
     for (ik <- 0 until k) {
-      centers(ik) = Vector(Array.fill[Double](t)(ik))
+      centers(ik) = Vector(Array.fill(t)((nextDouble-0.5)/100))
     }
 
     // main streaming operations
