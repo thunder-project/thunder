@@ -52,7 +52,7 @@ object kmeansOnline {
 
   def corrToRGB(ind: Int, base: Int): Array[Int] = {
     var out = Array(0,0,0)
-    if (base > 128) {
+    if (base > 64) {
       if (ind == 0) {out = Array(255, 0, 0)}
       else if (ind == 1) {out = Array(0,255,0)}
       else if (ind == 2) {out = Array(0,0,255)}
@@ -73,17 +73,7 @@ object kmeansOnline {
     }
   }
 
-  def printToImage2(rdd: RDD[Double], width: Int, height: Int, fileName: String): Unit = {
-    val nPixels = width * height
-    val nums = rdd.map(x => clip(((x-1000)/8000 * 255).toInt)).collect()
-    val RGB = Array.range(0, nPixels).flatMap(x => Array(nums(x), nums(x), nums(x)))
-    val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
-    val raster = img.getRaster()
-    raster.setPixels(0, 0, width, height, RGB)
-    ImageIO.write(img, "png", new File(fileName+"2.png"))
-  }
-
-  def printToImage1(rdd: RDD[(Int,Double)], width: Int, height: Int, fileName: String): Unit = {
+  def printToImage(rdd: RDD[(Int,Double)], width: Int, height: Int, fileName: String): Unit = {
     val nPixels = width * height
     val inds = rdd.map(x => x._1).collect()
     val base = rdd.map(x => clip(((x._2-1000)/8000 * 255).toInt)).collect()
@@ -101,7 +91,7 @@ object kmeansOnline {
     return (vals._1,(baseLine,counts.sum.toInt))
   }
 
-    def corrcoef(p1 : Vector, p2: Vector): Double = {
+   def corrcoef(p1 : Vector, p2: Vector): Double = {
     val p11 = Vector(p1.elements.map(x => x - p1.sum / p1.length))
     val p22 = Vector(p2.elements.map(x => x - p2.sum / p2.length))
     return (p11 / scala.math.sqrt(p11.dot(p11))).dot(p22 / scala.math.sqrt(p22.dot(p22)))
@@ -191,7 +181,7 @@ object kmeansOnline {
       case (k,v) => (closestPoint(v._1,centers),v._2)})
 
     //dists.print()
-    dists.foreach(rdd => printToImage1(rdd, width, height, saveFile))
+    dists.foreach(rdd => printToImage(rdd, width, height, saveFile))
 
     ssc.start()
   }
