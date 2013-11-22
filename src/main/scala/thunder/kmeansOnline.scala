@@ -160,7 +160,7 @@ object kmeansOnline {
 
     var centers = new Array[Vector](k)
     for (ik <- 0 until k) {
-      centers(ik) = Vector(Array.fill(t)((nextDouble-0.5)/100))
+      centers(ik) = Vector(Array.fill(t)((nextDouble-0.5)/10))
     }
 
     // main streaming operations
