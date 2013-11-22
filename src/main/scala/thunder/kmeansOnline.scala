@@ -25,7 +25,7 @@ object kmeansOnline {
     val resp = vals._2.elements.slice(0,t)
     val counts = vals._2.elements.slice(t,2*t)
     val baseLine = resp.sum / counts.sum
-    val dff = resp.zip(counts).map{case (x,y) => x/y}.map(x => (x - baseLine) / (baseLine + 0.1))
+    val dff = resp.zip(counts).map{case (x,y) => if (y == 0) {0} else {x/y}}.map(x => (x - baseLine) / (baseLine + 0.1))
     return (vals._1, Vector(dff))
   }
 
@@ -113,6 +113,7 @@ object kmeansOnline {
     dffStream.foreach(rdd =>
       centers = updateCenters(rdd.map{case (k,v) => v},centers)
     )
+    dffStream.print()
 
     val dists = dffStream.transform(rdd => rdd.map{case (k,v) => closestPoint(v,centers)}.map(x => (x._1.toDouble/k,x._2)))
 
