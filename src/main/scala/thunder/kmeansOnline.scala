@@ -44,8 +44,8 @@ object kmeansOnline {
   def printToImage(rdd: RDD[(Double,Double)], width: Int, height: Int, fileName: String): Unit = {
     val nPixels = width * height
     val H = rdd.map(x => x._1).collect().map(_ * 255).map(_ toInt).map(x => clip(x))
-    val B = rdd.map(x => x._2).collect().map(_ *255).map(_ toInt).map(x => clip(x))
-    val RGB = Array.range(0, nPixels).flatMap(x => Array(H(x), H(x), H(x)))
+    val B = rdd.map(x => x._2).collect().map(_ *20).map(_ toInt).map(x => clip(x))
+    val RGB = Array.range(0, nPixels).flatMap(x => Array(B(x), B(x), B(x)))
     val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
     raster.setPixels(0, 0, width, height, RGB)
@@ -75,6 +75,7 @@ object kmeansOnline {
       centers(newP._1) = newP._2
     }
     print(centers(0))
+    print(centers(1))
     return centers
   }
 
