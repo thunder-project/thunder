@@ -156,11 +156,11 @@ object kmeansOnline {
 
     meanRespStream.print()
 
-    //val dists = dffStream.transform(rdd => rdd.map{
-    //  case (k,v) => closestPoint(v,centers)})
+    val dists = dffStream.transform(rdd => rdd.map{
+      case (k,v) => closestPoint(v,centers)})
 
     //dists.print()
-    //dists.foreach(rdd => printToImage1(rdd, width, height, saveFile))
+    dists.foreach(rdd => printToImage1(rdd, width, height, saveFile))
 
     ssc.start()
   }
