@@ -148,9 +148,9 @@ object kmeansOnline {
       centers(ik) = Vector(Array.fill(t)((nextDouble-0.5)/100))
     }
 
-    var mappedCenters = makeMap(centers(0).elements)
+    val mappedCenters = List(List(makeMap(centers(0).elements)))
     for (ik <- 1 until k) {
-      mappedCenters = mappedCenters ++ makeMap(centers(ik).elements)
+      mappedCenters ++ List(List(makeMap(centers(ik).elements)))
     }
     print(mappedCenters.toJson.prettyPrint)
 
