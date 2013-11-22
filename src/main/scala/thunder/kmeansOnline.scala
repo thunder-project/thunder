@@ -51,6 +51,7 @@ object kmeansOnline {
     for (newP <- newPoints) {
       centers(newP._1) = newP._2
     }
+    centers(0) = Vector(Array.fill[Double](180)(0))
     print(centers(0))
     return centers
   }
@@ -88,7 +89,7 @@ object kmeansOnline {
 
     //stateStream.print()
     sortedStates.print()
-    //print(centers(0))
+    print(centers(0))
     //print(centers(1))
     //print(centers(2))
 
