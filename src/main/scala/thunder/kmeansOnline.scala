@@ -113,7 +113,7 @@ object kmeansOnline {
     for (newP <- newPoints) {
       centers(newP._1) = newP._2
     }
-    print(makeMap(centers(0).elements).toJson.prettyPrint)
+
     //print(centers(0))
     //print(centers(1))
     return centers
@@ -147,6 +147,8 @@ object kmeansOnline {
     for (ik <- 0 until k) {
       centers(ik) = Vector(Array.fill(t)((nextDouble-0.5)/100))
     }
+
+    print(makeMap(centers(0).elements).toJson.prettyPrint)
 
     // main streaming operations
     val lines = ssc.textFileStream(args(1)) // directory to monitor
