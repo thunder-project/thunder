@@ -11,7 +11,7 @@ from thunder.factorization.util import *
 argsIn = sys.argv[1:]
 if len(argsIn) < 6:
   print >> sys.stderr, \
-  "(regress) usage: regress <master> <inputFile_Y> <inputFile_X> <outputFile> <regressMode> <outputMode> <opts>"
+  "(regress) usage: regress <master> <inputFile_Y> <inputFile_X> <outputFile> <regressMode> <tuningMode>"
   exit(-1)
 
 # parse inputs
@@ -36,17 +36,17 @@ model2 = tuningModel(modelFile,tuningMode)
 betas = regressionFit(data,model1).cache()
 
 # get statistics
-stats = betas.map(lambda x : x[1])
+stats = betas.map(lambda x : x[2])
 saveout(stats,outputDir,"stats","matlab")
 
 # do PCA on first fit component
-#comps,latent,scores = svd1(betas.map(lambda x : x[0]),2)
-#saveout(comps,outputDir,"comps","matlab")
-#saveout(latent,outputDir,"latent","matlab")
-#saveout(scores,outputDir,"scores","matlab")
+comps,latent,scores = svd1(betas.map(lambda x : x[0]),2)
+saveout(comps,outputDir,"comps","matlab")
+saveout(latent,outputDir,"latent","matlab")
+saveout(scores,outputDir,"scores","matlab")
 
 # calculate tuning curves on second fit component
-params = tuningFit(betas.map(lambda x : x[0]),model2)
+params = tuningFit(betas.map(lambda x : x[1]),model2)
 saveout(params,outputDir,"params","matlab")
 
 # get simple measure of response strength
