@@ -39,7 +39,7 @@ saveout(stats,outputDir,"stats","matlab")
 
 # get difference weights
 diff = betas.map(lambda x : x[1])
-saveout(stats,outputDir,"diff","matlab")
+saveout(diff,outputDir,"diff","matlab")
 
 # do PCA
 comps,latent,scores = svd1(betas.map(lambda x : x[0]),3)
