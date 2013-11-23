@@ -47,7 +47,7 @@ comps,latent,scores = svd1(betas.map(lambda x : x[0]),3)
 # write results
 saveout(comps,outputDir,"comps","matlab")
 saveout(latent,outputDir,"latent","matlab")
-saveout(scores,outputDir,"scores","matlab")
+#saveout(scores,outputDir,"scores","matlab")
 
 # compute trajectories from raw data
 traj = regressionFit(data,model,comps)
