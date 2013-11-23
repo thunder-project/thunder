@@ -25,7 +25,7 @@ if not os.path.exists(outputDir) : os.makedirs(outputDir)
 
 # parse data
 lines = sc.textFile(dataFile)
-data = parse(lines, "sub").cache()
+data = parse(lines, "dff").cache()
 
 # create model
 model = regressionModel(modelFile,mode)
@@ -39,7 +39,7 @@ saveout(stats,outputDir,"stats","matlab")
 
 # get difference weights
 diff = betas.map(lambda x : x[1])
-saveout(stats,outputDir,"stats","matlab")
+saveout(stats,outputDir,"diff","matlab")
 
 # do PCA
 comps,latent,scores = svd1(betas.map(lambda x : x[0]),3)
@@ -47,7 +47,7 @@ comps,latent,scores = svd1(betas.map(lambda x : x[0]),3)
 # write results
 saveout(comps,outputDir,"comps","matlab")
 saveout(latent,outputDir,"latent","matlab")
-saveout(scores,outputDir,"scores","matlab")
+#saveout(scores,outputDir,"scores","matlab")
 
 # compute trajectories from raw data
 traj = regressionFit(data,model,comps)
