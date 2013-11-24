@@ -113,6 +113,7 @@ object kmeansOnline {
     return bestIndex
   }
 
+  // make this an RDD of Vector and std: Double, then threshold on std before updating centers
   def updateCenters(rdd: RDD[Vector], centers: Array[Vector], saveFile: String): Array[Vector] = {
     for (i <- 0 until 5) {
       val closest = rdd.map (p => (closestPoint(p, centers), (p, 1)))
