@@ -72,7 +72,7 @@ object bisecting {
 
   def printToImage(rdd: RDD[(Array[Int],Int)], w: Int, h: Int, d: Array[Int], fileName: String): Unit = {
     //for (id <- d) {
-      val xy = rdd.filter(_._1(2) == id).map{case (k,v) => (k(0),k(1))}.toArray()
+      val xy = rdd.map{case (k,v) => (k(0),k(1))}.toArray()
       val plane = rdd.map{case (k,v) => (k(2),v)}.reduceByKey(_+_)
       val x = xy.map(_._1)
       val y = xy.map(_._2)
