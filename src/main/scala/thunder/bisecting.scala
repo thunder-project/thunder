@@ -75,8 +75,7 @@ object bisecting {
       //val xy = rdd.map{case (k,v) => (k(0),k(1))}.toArray()
       //val plane = rdd.map{case (k,v) => (k(2),v)}.reduceByKey(_+_).map{case (k,v) => v}
 
-      val plane = rdd.map{case (k,v) => (k(2),(k(0),k(1),v))}.reduceByKey{
-        case ((x1,y1,v1),(x2,y2,v2)) => (x1,y1,v1+v2)}.map{case (k,v) => v}.toArray()
+      val plane = rdd.map{case (k,v) => ((k(0),k(1)),v)}.reduceByKey(_+_).map{case (k,v) => (k._1,k._2,v)}.toArray()
       val rescale = d.max.toFloat
       val X = plane.map(_._1)
       val Y = plane.map(_._2)
