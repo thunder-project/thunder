@@ -34,28 +34,28 @@ model = regressionModel(modelFile,mode)
 betas = regressionFit(data,model).cache()
 
 # get statistics
-stats = betas.map(lambda x : x[2])
+stats = betas.map(lambda x : x[1])
 saveout(stats,outputDir,"stats","matlab")
 
 # get difference weights
-diff = betas.map(lambda x : x[1])
-saveout(diff,outputDir,"diff","matlab")
+#diff = betas.map(lambda x : x[0])
+#saveout(diff,outputDir,"diff","matlab")
 
 # do PCA
-comps,latent,scores = svd1(betas.map(lambda x : x[0]),3)
+comps,latent,scores = svd1(betas.map(lambda x : x[0]),2)
 
 # write results
 saveout(comps,outputDir,"comps","matlab")
 saveout(latent,outputDir,"latent","matlab")
-#saveout(scores,outputDir,"scores","matlab")
+saveout(scores,outputDir,"scores","matlab")
 
 # compute trajectories from raw data
 traj = regressionFit(data,model,comps)
 saveout(traj,outputDir,"traj","matlab")
 
 # get simple measure of response strength
-#r = data.map(lambda x : norm(x-mean(x)))
-#saveout(r,outputDir,"r","matlab")
+r = data.map(lambda x : norm(x-mean(x)))
+saveout(r,outputDir,"r","matlab")
 
 
 # # get statistics using randomization
