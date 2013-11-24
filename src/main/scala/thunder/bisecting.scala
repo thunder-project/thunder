@@ -71,16 +71,17 @@ object bisecting {
   }
 
   def printToImage(rdd: RDD[(Array[Int],Int)], w: Int, h: Int, d: Array[Int], fileName: String): Unit = {
-    for (id <- d) {
-      val plane = rdd.filter(_._1(2) == id).map{case (k,v) => (k(0),k(1),v)}.toArray()
-      val X = plane.map(_._1)
-      val Y = plane.map(_._2)
-      val RGB = plane.map(_._3)
+    //for (id <- d) {
+      val xy = rdd.filter(_._1(2) == id).map{case (k,v) => (k(0),k(1))}.toArray()
+      val plane = rdd.map{case (k,v) => (k(2),v))}.reduceByKey(_+_)
+      val x = xy.map(_._1)
+      val y = xy.map(_._2)
+      val RGB = plane.map(x => x/d)
       val img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
       val raster = img.getRaster()
       (X,Y,RGB).zipped.foreach{case(x,y,rgb) => raster.setPixel(x-1, y-1, Array(rgb,rgb,rgb))}
-      ImageIO.write(img, "png", new File(fileName+"-plane"+id.toString+".png"))
-    }
+      ImageIO.write(img, "png", new File(fileName+"-plane-mean.png"))
+    //}
   }
 
   def closestPoint(p: Vector, centers: Array[Vector]): Int = {
