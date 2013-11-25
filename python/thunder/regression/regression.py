@@ -25,7 +25,7 @@ if not os.path.exists(outputDir) : os.makedirs(outputDir)
 
 # parse data
 lines = sc.textFile(dataFile)
-data = parse(lines, "dff").cache()
+data = parse(lines, "sub").cache()
 
 # create model
 model = regressionModel(modelFile,mode)
@@ -42,7 +42,7 @@ saveout(stats,outputDir,"stats","matlab")
 #saveout(diff,outputDir,"diff","matlab")
 
 # do PCA
-comps,latent,scores = svd1(betas.map(lambda x : x[0]),2)
+comps,latent,scores = svd1(betas.map(lambda x : x[0]),3)
 
 # write results
 saveout(comps,outputDir,"comps","matlab")
