@@ -42,7 +42,7 @@ saveout(stats,outputDir,"stats","matlab")
 #saveout(diff,outputDir,"diff","matlab")
 
 # do PCA
-comps,latent,scores = svd1(betas.map(lambda x : x[0]),5)
+comps,latent,scores = svd1(betas.map(lambda x : x[0]),3)
 
 # write results
 saveout(comps,outputDir,"comps","matlab")
