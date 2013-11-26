@@ -122,7 +122,10 @@ object kmeansOnline {
   // make this an RDD of Vector and std: Double, then threshold on std before updating centers
   def updateCenters(rdd: RDD[(Vector,Double)], centers: Array[Vector], saveFile: String, thresh: Double): Array[Vector] = {
     val data = rdd.filter{case (x,y) => y > thresh}.map{case (x,y) => x}
-    for (i <- 0 until 5) {
+    for (ik <- 0 until centers.size) {
+      centers(ik) = centers(ik) + Vector(Array.fill(centers(ik).length)((nextDouble-0.5)/10))
+    }
+    for (i <- 0 until 10) {
       val closest = data.map (p => (closestPoint(p, centers), (p, 1)))
       val pointStats = closest.reduceByKey{case ((x1, y1), (x2, y2)) => (x1 + x2, y1 + y2)}
       val newPoints = pointStats.map {pair => (pair._1, pair._2._1 / pair._2._2)}.collectAsMap()
@@ -149,7 +152,7 @@ object kmeansOnline {
 
   def main(args: Array[String]) {
     if (args.length < 8) {
-      System.err.println("Usage: kmeansOnline <master> <directory> <outputFile> <batchTime> <windowTime> <k> <t> <width> <height> <nSlices>")
+      System.err.println("Usage: kmeansOnline <master> <directory> <outputFile> <batchTime> <windowTime> <k> <t> <width> <height> <thresh> <nSlices>")
       System.exit(1)
     }
 
@@ -176,8 +179,6 @@ object kmeansOnline {
     for (ik <- 0 until k) {
       centers(ik) = Vector(Array.fill(t)((nextDouble-0.5)/10))
     }
-
-    print(centers(0))
 
     // main streaming operations
     val lines = ssc.textFileStream(args(1)) // directory to monitor
