@@ -34,7 +34,7 @@ def saveout(data, outputDir, outputFile, outputFormat, nOut=1) :
 		if (dtype == pyspark.rdd.RDD) | (dtype == pyspark.rdd.PipelinedRDD) :
 			if nOut > 1 :
 				for iOut in range(0,nOut) :
-					savemat(outputDir+"/"+outputFile+"-"+str(iOut)+".mat",mdict={outputFile+"-"+str(iOut): data.map(lambda x : float16(x[iOut])).collect()},oned_as='column',do_compression='true')
+					savemat(outputDir+"/"+outputFile+"-"+str(iOut)+".mat",mdict={outputFile+str(iOut): data.map(lambda x : float16(x[iOut])).collect()},oned_as='column',do_compression='true')
 			else :
 				savemat(outputDir+"/"+outputFile+".mat",mdict={outputFile : data.map(float16).collect()},oned_as='column',do_compression='true')			
 		else :
