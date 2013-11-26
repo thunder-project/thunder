@@ -39,7 +39,7 @@ object kmeansOnline {
       case (x,y) => if (y == 0) {0} else {x/y}}.map(
       x => if (x == 0) {0} else {(x - baseLine) / (baseLine + 0.1)})
     val out = Vector(dff)
-    return (vals._1, (out,baseLine))
+    return (vals._1, (out,std(out)))
   }
 
   def clip(num: Int): Int = {
@@ -52,9 +52,9 @@ object kmeansOnline {
     return out
   }
 
-  def corrToRGB(ind: Int, base: Int, k: Int): Array[Int] = {
+  def corrToRGB(ind: Int, sig: Double, k: Int): Array[Int] = {
     var out = Array(0,0,0)
-    if (base > 30) {
+    if (sig > 0) {
       val clr = Color.getHSBColor((ind).toFloat / k,(0.7).toFloat,1.toFloat)
       out = Array(clr.getRed(),clr.getGreen(),clr.getBlue())
     }
@@ -74,11 +74,12 @@ object kmeansOnline {
     }
   }
 
-  def printToImage(rdd: RDD[(Int,Double)], k: Int, width: Int, height: Int, fileName: String): Unit = {
+  def printToImage(rdd: RDD[(Int,Double)], k: Int, width: Int, height: Int, fileName: String, thresh: Double): Unit = {
     val nPixels = width * height
     val inds = rdd.map(x => x._1).collect()
-    val base = rdd.map(x => clip(((x._2-1000)/8000 * 255).toInt)).collect()
-    val RGB = Array.range(0, nPixels).flatMap(x => corrToRGB(inds(x),base(x),k))
+    //val base = rdd.map(x => clip(((x._2-1000)/8000 * 255).toInt)).collect()
+    val sig = rdd.map(x => if (x._2 > thresh) {1} else {0}).collect()
+    val RGB = Array.range(0, nPixels).flatMap(x => corrToRGB(inds(x),sig(x),k))
     val img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
     val raster = img.getRaster()
     raster.setPixels(0, 0, width, height, RGB)
@@ -119,8 +120,8 @@ object kmeansOnline {
   }
 
   // make this an RDD of Vector and std: Double, then threshold on std before updating centers
-  def updateCenters(rdd: RDD[Vector], centers: Array[Vector], saveFile: String): Array[Vector] = {
-    val data = rdd.filter(x => std(x) > 0.1)
+  def updateCenters(rdd: RDD[(Vector,Double)], centers: Array[Vector], saveFile: String, thresh: Double): Array[Vector] = {
+    val data = rdd.filter{case (x,y) => y > thresh}.map{case (x,y) => x}
     for (i <- 0 until 5) {
       val closest = data.map (p => (closestPoint(p, centers), (p, 1)))
       val pointStats = closest.reduceByKey{case ((x1, y1), (x2, y2)) => (x1 + x2, y1 + y2)}
@@ -156,7 +157,7 @@ object kmeansOnline {
     System.setProperty("spark.executor.memory", "120g")
     System.setProperty("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     if (args(7).toInt != 0) {
-      System.setProperty("spark.default.parallelism", args(9).toString)
+      System.setProperty("spark.default.parallelism", args(10).toString)
     }
     val saveFile = args(2)
     val batchTime = args(3).toLong
@@ -165,6 +166,7 @@ object kmeansOnline {
     val t = args(6).toInt
     val width = args(7).toInt
     val height = args(8).toInt
+    val thresh = args(9).toDouble
 
     val ssc = new StreamingContext(args(0), "SimpleStreaming", Seconds(batchTime),
       System.getenv("SPARK_HOME"), List("target/scala-2.9.3/thunder_2.9.3-1.0.jar","project/spray-json_2.9.3-1.2.5.jar"))
@@ -183,7 +185,7 @@ object kmeansOnline {
     val meanStream = dataStream.reduceByKeyAndWindow(_ + _, _ - _, Seconds(windowTime), Seconds(batchTime))
     val dffStream = meanStream.map(x => getDffs(x,t)).transform(rdd => rdd.sortByKey(true))
     dffStream.foreach(rdd =>
-      centers = updateCenters(rdd.map{case (k,v) => v._1},centers,saveFile)
+      centers = updateCenters(rdd.map{case (k,v) => (v._1,v._2)},centers,saveFile,thresh)
     )
     //dffStream.print()
 
@@ -196,7 +198,7 @@ object kmeansOnline {
       case (k,v) => (closestPoint(v._1,centers),v._2)})
 
     //dists.print()
-    dists.foreach(rdd => printToImage(rdd, k, width, height, saveFile))
+    dists.foreach(rdd => printToImage(rdd, k, width, height, saveFile, thresh))
 
     ssc.start()
   }
