@@ -125,6 +125,7 @@ object kmeansOnline {
     }
 
     print(centers(0))
+    print(centers(1))
 
     var centersForPrinting = List((makeMap(centers(0).elements)))
     for (ik <- 1 until centers.size) {
