@@ -190,10 +190,10 @@ object kmeansOnline {
     )
     //dffStream.print()
 
-    val meanRespStream = meanStream.map(x => getMeanResp(x,t)).transform(rdd => rdd.sortByKey(true))
+    //val meanRespStream = meanStream.map(x => getMeanResp(x,t)).transform(rdd => rdd.sortByKey(true))
     //meanRespStream.foreach(rdd => printToImage2(rdd.map{case (k,v) => v._1},width,height,saveFile))
 
-    meanRespStream.print()
+    //meanRespStream.print()
 
     val dists = dffStream.transform(rdd => rdd.map{
       case (k,v) => (closestPoint(v._1,centers),v._2)})
