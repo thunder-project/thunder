@@ -56,7 +56,7 @@ object kmeansOnline {
     var out = Array(0,0,0)
     if (base > 30) {
       val clr = Color.getHSBColor((ind).toFloat / k,(0.7).toFloat,1.toFloat)
-      out = Array(clr.getRed(),clr.getBlue(),clr.getGreen())
+      out = Array(clr.getRed(),clr.getGreen(),clr.getBlue())
     }
     else {
       out = Array(0,0,0)
@@ -92,6 +92,11 @@ object kmeansOnline {
     return (vals._1,(baseLine,counts.sum.toInt))
   }
 
+  def std(p: Vector): Double = {
+    val p1 = Vector(p.elements.map(x => x - p.sum / p.length))
+    return scala.math.sqrt(p1.dot(p1) / (p.length - 1))
+  }
+
    def corrcoef(p1 : Vector, p2: Vector): Double = {
     val p11 = Vector(p1.elements.map(x => x - p1.sum / p1.length))
     val p22 = Vector(p2.elements.map(x => x - p2.sum / p2.length))
@@ -115,8 +120,9 @@ object kmeansOnline {
 
   // make this an RDD of Vector and std: Double, then threshold on std before updating centers
   def updateCenters(rdd: RDD[Vector], centers: Array[Vector], saveFile: String): Array[Vector] = {
+    val data = rdd.filter(x => std(x) > 0.1)
     for (i <- 0 until 5) {
-      val closest = rdd.map (p => (closestPoint(p, centers), (p, 1)))
+      val closest = data.map (p => (closestPoint(p, centers), (p, 1)))
       val pointStats = closest.reduceByKey{case ((x1, y1), (x2, y2)) => (x1 + x2, y1 + y2)}
       val newPoints = pointStats.map {pair => (pair._1, pair._2._1 / pair._2._2)}.collectAsMap()
       for (newP <- newPoints) {
