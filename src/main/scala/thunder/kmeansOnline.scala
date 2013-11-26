@@ -122,9 +122,9 @@ object kmeansOnline {
   // make this an RDD of Vector and std: Double, then threshold on std before updating centers
   def updateCenters(rdd: RDD[(Vector,Double)], centers: Array[Vector], saveFile: String, thresh: Double): Array[Vector] = {
     val data = rdd.filter{case (x,y) => y > thresh}.map{case (x,y) => x}
-    for (ik <- 0 until centers.size) {
-      centers(ik) = centers(ik) + Vector(Array.fill(centers(ik).length)((nextDouble-0.5)/10))
-    }
+    //for (ik <- 0 until centers.size) {
+    //  centers(ik) = centers(ik) + Vector(Array.fill(centers(ik).length)((nextDouble-0.5)/10))
+    //}
     for (i <- 0 until 10) {
       val closest = data.map (p => (closestPoint(p, centers), (p, 1)))
       val pointStats = closest.reduceByKey{case ((x1, y1), (x2, y2)) => (x1 + x2, y1 + y2)}
