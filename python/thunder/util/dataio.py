@@ -4,9 +4,9 @@ from scipy.io import savemat
 from numpy import array, mean, float16
 import pyspark
 
-def parse(data, filter="raw", inds=None, tRange=None) :
+def parse(data, filter="raw", inds=None, tRange=None, xy=None) :
 
-	def parseVector(line, filter="raw", inds=None, tRange=None) :
+	def parseVector(line, filter="raw", inds=None, tRange=None, xy=None) :
 
 		vec = [float(x) for x in line.split(' ')]
 		ts = array(vec[3:]) # get tseries
@@ -21,7 +21,7 @@ def parse(data, filter="raw", inds=None, tRange=None) :
 			if inds == "xyz" :
 				return ((int(vec[0]),int(vec[1]),int(vec[2])),ts)
 			if inds == "linear" :
-				k = int(vec[0]) + int((vec[1] - 1)*1650)
+				k = int(vec[0]) + int((vec[1] - 1)*xy[0] + int((vec[2]-1)*xy[1]))
 				return (k,ts)
 		else :
 			return ts

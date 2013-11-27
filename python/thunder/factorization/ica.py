@@ -27,11 +27,11 @@ if not os.path.exists(outputDir) : os.makedirs(outputDir)
 
 # load data
 lines = sc.textFile(dataFile)
-data = parse(lines, "raw", None, [100,1000]).cache()
+data = parse(lines, "raw", "linear", [100,1000], [1470,2046]).cache()
 n = data.count()
 
 # reduce dimensionality
-comps, latent, scores = svd1(data,k,0)
+comps, latent, scores = svd2(data,k,0)
 
 # whiten data
 whtMat = real(dot(inv(diag(sqrt(latent))),comps))
