@@ -27,7 +27,7 @@ if not os.path.exists(outputDir) : os.makedirs(outputDir)
 
 # load data
 lines = sc.textFile(dataFile)
-data = parse(lines, "dff").cache()
+data = parse(lines, "raw").cache()
 n = data.count()
 
 # reduce dimensionality
