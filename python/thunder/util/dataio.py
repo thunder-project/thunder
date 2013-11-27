@@ -5,7 +5,7 @@ from numpy import array, mean, float16
 import pyspark
 
 def parse(data, filter="raw", inds=None, tRange=None) :
-
+	print(tRange)
 	def parseVector(line, filter="raw", inds=None, tRange=None) :
 
 		vec = [float(x) for x in line.split(' ')]
