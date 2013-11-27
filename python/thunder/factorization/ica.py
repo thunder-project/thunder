@@ -27,7 +27,7 @@ if not os.path.exists(outputDir) : os.makedirs(outputDir)
 
 # load data
 lines = sc.textFile(dataFile)
-data = parse(lines, "raw").cache()
+data = parse(lines, "raw", None, [100,1000]).cache()
 n = data.count()
 
 # reduce dimensionality
@@ -67,7 +67,7 @@ sigs = data.map(lambda x : dot(W,x))
 
 # save output files
 saveout(W,outputDir,"W","matlab")
-saveout(sigs,outputDir,"sigs","matlab")
+saveout(sigs,outputDir,"sigs","matlab",c)
 
 
 
