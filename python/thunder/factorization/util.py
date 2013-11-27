@@ -32,7 +32,6 @@ def svd2(data,k,meanSubtract=1) :
 		r = random.rand(1,k)
 		return r
 
-	n = data.count()
 	m = len(data.first()[1])
 
   v = data.map(lambda x,y : randomVector(x,seed1,k))

@@ -5,9 +5,7 @@ from numpy import array, mean, float16
 import pyspark
 
 def parse(data, filter="raw", inds=None, tRange=None, xy=None) :
-
 	def parseVector(line, filter="raw", inds=None, tRange=None, xy=None) :
-
 		vec = [float(x) for x in line.split(' ')]
 		ts = array(vec[3:]) # get tseries
 		if filter == "dff" : # convert to dff
@@ -30,7 +28,6 @@ def parse(data, filter="raw", inds=None, tRange=None, xy=None) :
 	
 
 def saveout(data, outputDir, outputFile, outputFormat, nOut=1) :
-
 	if outputFormat == "matlab" :
 		dtype = type(data) 
 		if (dtype == pyspark.rdd.RDD) | (dtype == pyspark.rdd.PipelinedRDD) :
