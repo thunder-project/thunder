@@ -36,43 +36,25 @@ model2 = tuningModel(modelFile,tuningMode)
 betas = regressionFit(data,model1).cache()
 
 # get statistics
-stats = betas.map(lambda x : x[2])
+stats = betas.map(lambda x : x[1:])
 saveout(stats,outputDir,"stats","matlab")
 
 # do PCA on first fit component
-comps,latent,scores = svd1(betas.map(lambda x : x[0]),2)
-saveout(comps,outputDir,"comps","matlab")
-saveout(latent,outputDir,"latent","matlab")
-saveout(scores,outputDir,"scores","matlab")
+#comps,latent,scores = svd1(betas.map(lambda x : x[0]),2)
+#saveout(comps,outputDir,"comps","matlab")
+#saveout(latent,outputDir,"latent","matlab")
+#saveout(scores,outputDir,"scores","matlab")
 
 # calculate tuning curves on second fit component
-params = tuningFit(betas.map(lambda x : x[1]),model2)
+params = tuningFit(betas.map(lambda x : x[0]),model2)
 saveout(params,outputDir,"params","matlab")
 
 # get simple measure of response strength
-r = data.map(lambda x : norm(x-mean(x)))
-saveout(r,outputDir,"r","matlab")
+#r = data.map(lambda x : norm(x-mean(x)))
+#saveout(r,outputDir,"r","matlab")
 
 # get population tuning curves
-means, sds = tuningCurves(betas,model2)
-saveout(means,outputDir,"means","matlab")
-saveout(sds,outputDir,"sds","matlab")
-
-# process output with a parametric tuning curves
-# if outputMode == 'tuning' :
-# 	B = Y.map(lambda y : getRegression(y,model)).cache()
-# 	p = B.map(lambda b : float16(getTuning(b[0],model))).collect()
-# 	savemat(outputFile+"/"+"p.mat",mdict={'p':p},oned_as='column',do_compression='true')
-# 	# get population tuning curves
-# 	vals = linspace(min(model.s),max(model.s),6)
-# 	means = zeros((len(vals)-1,len(model.s)))
-# 	sds = zeros((len(vals)-1,len(model.s)))
-# 	for iv in range(0,len(vals)-1) :
-# 		subset = B.filter(lambda b : (b[1] > 0.005) & inRange(getTuning(b[0],model)[0],vals[iv],vals[iv+1]))
-# 		n = subset.count()
-# 		means[iv,:] = subset.map(lambda b : b[0]).reduce(lambda x,y : x + y) / n
-# 		sds[iv,:] = subset.map(lambda b : (b[0] - means[iv,:])**2).reduce(lambda x,y : x + y) / (n - 1)
-# 		savemat(outputFile+"/"+"means.mat",mdict={'means':means},do_compression='true')
-# 		savemat(outputFile+"/"+"sds.mat",mdict={'sds':sds},do_compression='true')
-
+#means, sds = tuningCurves(betas,model2)
+#saveout(means,outputDir,"means","matlab")
+#saveout(sds,outputDir,"sds","matlab")
 
