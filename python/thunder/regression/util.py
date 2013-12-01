@@ -24,7 +24,7 @@ def regressionModel(modelFile,regressionMode) :
 		model.nG = len(unique(model.g))
 
 	if regressionMode == 'linear-shuffle' :
-		model.nRnd = float(2)
+		model.nRnd = float(100)
 
 	if regressionMode == 'bilinear' :
 		X1 = loadmat(modelFile + "_X1.mat")['X1']
