@@ -14,11 +14,11 @@ def parse(data, filter="raw", inds=None, tRange=None, xy=None) :
         if filter == "dff" : # convert to dff
             meanVal = mean(ts)
             ts = (ts - meanVal) / (meanVal + 0.1)
-        if filter == "sub" : # convert to dff
+        if filter == "sub" : # subtracts the mean
             ts = (ts - mean(ts))
-        if tRange is not None :
+        if tRange is not None : # subselects a range of indices
             ts = ts[tRange[0]:tRange[1]]
-        if inds is not None :
+        if inds is not None : # keep xyz keys
             if inds == "xyz" :
                 return ((int(vec[0]),int(vec[1]),int(vec[2])),ts)
             if inds == "linear" :

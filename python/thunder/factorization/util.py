@@ -1,34 +1,36 @@
 from numpy import *
 from scipy.linalg import *
 
+# Direct method for computing SVD by calculating covariance matrix,
+# only efficient when d is small
 def svd1(data,k,meanSubtract=1) :
 
     n = data.count()
+
     if meanSubtract == 1 :
-        cov = data.map(lambda x : outer(x-mean(x),x-mean(x))).reduce(lambda x,y : (x + y)) / n
-    else :
-        cov = data.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y)) / n
+        data = data.map(lambda x : x - mean(x))
+
+    cov = data.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y)) / n
     w, v = eig(cov)
     w = real(w)
     v = real(v)
     inds = argsort(w)[::-1]
     latent = w[inds[0:k]]
     comps = transpose(v[:,inds[0:k]])
-    if meanSubtract == 1 :
-        scores = data.map(lambda x : inner(x-mean(x),comps))
-    else :
-        scores = data.map(lambda x : inner(x,comps))
+    scores = data.map(lambda x : inner(x,comps))
 
     return comps, latent, scores
 
-# TODO: svd with alternating least squares when d is large
-# def svd2(data,k,meanSubtract=1) :
-
+# ALS for computing SVD, preferable when d is large
 def svd2(data,k,meanSubtract=1) :
+
     def randomVector(ind,seed,k) :
         random.seed(ind*100000*seed)
         r = random.rand(1,k)
         return r
+
+    if meanSubtract == 1 :
+        data = data.map(lambda x : x - mean(x))
 
     m = len(data.first()[1])
 
@@ -56,4 +58,37 @@ def svd2(data,k,meanSubtract=1) :
         v = data.mapValues(lambda x : dot(transpose(uinv),x))
         
         iter += 1
+
+def svd3(data,k,meanSubtract=1) :
+
+    if meanSubtract == 1 :
+        data = data.map(lambda x : x - mean(x))
+
+    C = random.rand(k,d)
+    nIter = 20
+
+    for iter in range(nIter):
+        Cold = C
+        Cinv = dot(transpose(C),inv(dot(C,transpose(C))))
+        XX = data.map(
+            lambda x : outerProd(dot(x,Cinv))).reduce(
+            lambda x,y : x + y)
+        XXinv = inv(XX)
+        C = data.map(lambda x : outer(x,dot(dot(x,Cinv),XXinv))).reduce(
+            lambda x,y: x + y)
+        C = transpose(C)
+        error = sum((C-Cold) ** 2)
+
+    C = transpose(orth(transpose(C)))
+    cov = data.map(lambda x : outerProd(dot(x,transpose(C)))).reduce(
+        lambda x,y : x + y) / n
+    w, v = eig(cov)
+    w = real(w)
+    v = real(v)
+    inds = argsort(w)[::-1]
+    latent = w[inds[0:k]]
+    comps = dot(transpose(v[:,inds[0:k]]),C)
+    scores = data.map(lambda x : inner(x,comps))
+
+    return comps, latent, scores
 

@@ -1,6 +1,9 @@
 # ica <master> <inputFile> <outputFile> <k> <c>
 # 
-# perform ica
+# performs ICA
+#
+# k - number of principal components to use before ica
+# c - number of independent components to find
 #
 
 import sys
@@ -14,7 +17,7 @@ from pyspark import SparkContext
 argsIn = sys.argv[1:]
 if len(sys.argv) < 5:
     print >> sys.stderr, \
-    "(ica) usage: ica <master> <inputFile> <outputFile> <k> <c>"
+        "(ica) usage: ica <master> <inputFile> <outputFile> <k> <c>"
     exit(-1)
 
 # parse inputs
@@ -27,11 +30,11 @@ if not os.path.exists(outputDir) : os.makedirs(outputDir)
 
 # load data
 lines = sc.textFile(dataFile)
-data = parse(lines, "raw", "linear", [100,1000], [1470,2046]).cache()
+data = parse(lines, "raw").cache()
 n = data.count()
 
 # reduce dimensionality
-comps, latent, scores = svd2(data,k,0)
+comps, latent, scores = svd1(data,k,0)
 
 # whiten data
 whtMat = real(dot(inv(diag(sqrt(latent))),comps))

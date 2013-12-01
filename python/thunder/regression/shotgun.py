@@ -1,8 +1,10 @@
-# shotgun <master> <inputFile_A> <inputFile_y> <outputFile> <lambda>
+# shotgun <master> <dataFile> <modelFile> <outputDir> <lambda>
 # 
-# use the "shotgun" approach to fit a L1 regularized regression
+# use the "shotgun" approach for L1 regularized regression
 # parallelizing over features
 # algorithm by Bradley et al., 2011, ICML
+#
+# lambda - learning rate
 #
 
 import sys
@@ -10,19 +12,17 @@ import os
 from numpy import *
 from scipy.linalg import *
 from scipy.sparse import *
+from thunder.util.dataio import *
+from thunder.regression.util import *
+from thunder.factorization.util import *
 from pyspark import SparkContext
-import logging
 
-if len(sys.argv) < 6:
+argsIn = sys.argv[1:]
+
+if len(sys.argv) < 5:
     print >> sys.stderr, \
-    "(shotgun) usage: shotgun <master> <inputFile_A> <inputFile_y> <outputFile> <lambda>"
+    "usage: shotgun <master> <dataFile> <modelFile> <outputDir> <lambda>"
     exit(-1)
-
-def parseVector(line):
-    vec = [float(x) for x in line.split(' ')]
-    ts = array(vec[1:])
-    ts = (ts - mean(ts))/std(ts)
-    return (int(vec[0]),ts)
 
 def updateFeature(x,y,Ab,b,lam):
     AA = dot(x,x)
@@ -37,27 +37,27 @@ def updateFeature(x,y,Ab,b,lam):
     return float(new_value)
 
 # parse inputs
-sc = SparkContext(sys.argv[1], "shotgun")
-inputFile_A = str(sys.argv[2])
-inputFile_y = str(sys.argv[3])
-outputFile = str(sys.argv[4])
-lam = double(sys.argv[5])
-if not os.path.exists(outputFile):
-        os.makedirs(outputFile)
-logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
+sc = SparkContext(sys.argv[0], "shotgun")
+dataFile = str(sys.argv[1])
+modelFile = str(sys.argv[2])
+outputDir = str(sys.argv[3])
+lam = double(sys.argv[4])
+if not os.path.exists(outputDir) : os.makedirs(outputDir)
 
 # parse data
-logging.info("(shotgun) loading data")
-lines_A = sc.textFile(inputFile_A)
-lines_y = sc.textFile(inputFile_y)
-y = array([float(x) for x in lines_y.collect()[0].split(' ')])
-y = (y - mean(y))/std(y)
-A = lines_A.map(parseVector).cache()
+lines = sc.textFile(dataFile)
+A = parse(lines, "dff")
+
+# parse model
+model = regressionModel(modelFile,"shotgun")
+
+# get constants
 d = A.count()
 n = len(A.first()[1])
 
 # initialize sparse weight vector
 b = csc_matrix((d,1))
+
 # initialize product Ab
 Ab = zeros((n,1))
 
@@ -66,16 +66,10 @@ nIter = 50
 deltaCheck = 10^2
 tol = 10 ** -6
 
-logging.info("(shotgun) beginning iterative estimation...")
-
 while (iIter < nIter) & (deltaCheck > tol):
-    logging.info("(shotgun) starting iteration " + str(iIter))
-    logging.info("(shotgun) checking for features to update")
-    update = A.map(lambda (k,x) : (k,updateFeature(x,y,Ab,b[k,0],lam))).filter(lambda (k,x) : x != b[k,0]).collect()
+    update = A.map(lambda (k,x) : (k,updateFeature(x,model.y,Ab,b[k,0],lam))).filter(lambda (k,x) : x != b[k,0]).collect()
     nUpdate = len(update)
-    logging.info("(shotgun) features to update: " + str(nUpdate))
-    logging.info("(shotgun) updating features")
-    
+
     b = b.todok()
     diff = zeros((nUpdate,1))
     for i in range(nUpdate):
@@ -86,14 +80,9 @@ while (iIter < nIter) & (deltaCheck > tol):
     b = b.tocsc()
 
     deltaCheck = amax(diff)
-    logging.info("(shotgun) change in b: " + str(deltaCheck))
 
-    logging.info("(shotgun) updating Ab")
     Ab = A.map(lambda (k,x) : x*b[k,0]).reduce(lambda x,y : x+y)    
     
     iIter = iIter + 1
 
-logging.info("(shotgun) finised after " + str(iIter) + " iterations")
-
-savetxt(outputFile+"/"+"b.txt",b.todense(),fmt='%.8f')
-
+saveout(b.todense(),outputDir,"b","matlab")

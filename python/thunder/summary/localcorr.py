@@ -53,7 +53,9 @@ data = parse(lines, "raw", "xyz").cache()
 
 # flatmap each time series to key value pairs where the key is a neighborhood identifier and the value is the time series
 neighbors = data.flatMap(lambda (k,v) : mapToNeighborhood(k,v,sz,mxX,mxY))
-print(neighbors.first()) # for some reason unless i print here it gets stuck later
+
+# TODO: printing here seems to fix a hang later, probably a bug
+print(neighbors.first()) 
 
 # reduceByKey to get the average time series for each neighborhood
 means = neighbors.reduceByKey(lambda x,y : x + y).map(lambda (k,v) : (k, v / ((2*sz+1)**2)))

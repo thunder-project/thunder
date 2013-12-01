@@ -1,18 +1,24 @@
-# rpca <master> <inputFile> <outputFile> <slices> 
+# usage: rpca <master> <dataFile> <outputDir>"
+# 
+# performs robust PCA using ADMM
+#
+# TODO: Rewrite so data is an RDD, S is a sparse array,
+#       and we only keep the low rank representation of L
+#
 
 import sys
 import os
 from numpy import *
 from scipy.linalg import *
+from thunder.util.dataio import *
 from pyspark import SparkContext
+
+argsIn = sys.argv[1:]
 
 if len(sys.argv) < 5:
     print >> sys.stderr, \
-        "(rpca) usage: rpca <master> <inputFile> <outputFile> <slices>"
+        "usage: rpca <master> <dataFile> <outputDir>"
     exit(-1)
-
-def parseVector(line):
-        return array([float(x) for x in line.split(' ')])
 
 def shrinkVec(x,thresh):
     tmp = abs(x)-thresh
@@ -36,21 +42,15 @@ sc = SparkContext(sys.argv[1], "rpca")
 inputFile = str(sys.argv[2])
 outputFile = str(sys.argv[3])
 slices = int(sys.argv[4])
-if not os.path.exists(outputFile):
-        os.makedirs(outputFile)
+if not os.path.exists(outputFile) : os.makedirs(outputFile)
 
 # load data
-lines = sc.textFile(inputFile,slices)
-data = lines.map(parseVector)
+lines = sc.textFile(dataFile)
+data = parse(lines, "dff").cache()
 n = data.count()
 m = len(data.first())
 
-# mean subtraction
-#meanVec = data.reduce(lambda x,y : x+y) / n
-#sub = data.map(lambda x : x - meanVec)
-
 # create broadcast variables
-print "(rpca) broadcasting variables"
 M = array(data.collect())
 L = zeros((n,m))
 S = zeros((n,m))
@@ -63,7 +63,6 @@ iterNum = 0
 iterMax = 50
 
 while iterNum < iterMax:
-    print "(rpca) starting iteration " + str(iterNum)
     iterNum += 1
     MSY = sc.parallelize(M - S + (1/mu)*Y).cache()
     L = svdThreshold(MSY,1/mu).collect()
@@ -71,6 +70,6 @@ while iterNum < iterMax:
     S = shrinkage(MLY,lam/mu).collect()
     Y = Y + mu*(M - L - S)
 
-savetxt(outputFile+"/"+"out-L-"+outputFile+".txt",L,fmt='%.8f')
-savetxt(outputFile+"/"+"out-S-"+outputFile+".txt",S,fmt='%.8f')
+saveout(L,outputDir,"L","matlab")
+saveout(S,outputDir,"S","matlab")
 

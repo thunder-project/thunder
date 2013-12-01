@@ -1,3 +1,8 @@
+# dataio
+# 
+# utilities for regression and tuning curve estimation
+#
+
 from scipy.io import * 
 from numpy import *
 from scipy.linalg import *
@@ -33,6 +38,11 @@ def regressionModel(modelFile,regressionMode) :
         model.X1 = X1
         model.X2 = X2
         model.X1hat = X1hat
+
+    if regressionMode == 'shotgun' :
+        y = loadmat(modelFile + "_y.mat")['y']
+        y = y.astype(float)
+        y = (y - mean(y))/std(y)
 
     model.regressionMode = regressionMode
 
@@ -82,7 +92,7 @@ def regressionFit(data,model,comps=None) :
                 sse = sum((predic-y) ** 2)
                 r2shuffle[iShuf] = 1 - sse/sst
             p = sum(r2shuffle > r2) / model.nRnd
-            return (b[1:],r2,p)
+            return (b[1:],[r2,p])
 
         if model.regressionMode == 'bilinear' :
             b1 = dot(model.X1hat,y)
@@ -99,7 +109,7 @@ def regressionFit(data,model,comps=None) :
             sst = sum((y-mean(y)) ** 2)
             r2 = 1 - sse/sst
 
-            return (b1,b2[1:],r2)
+            return (b2[1:],r2,b1)
 
     if comps is not None :
         traj = data.map(lambda x : outer(x,inner(regressionGet(x,model)[0] - mean(regressionGet(x,model)[0]),comps))).reduce(lambda x,y : x + y) / data.count()

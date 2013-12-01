@@ -6,7 +6,6 @@
 import sys
 import os
 from numpy import *
-import thunder
 from thunder.util.dataio import *
 from pyspark import SparkContext
 
@@ -32,14 +31,12 @@ data = parse(lines, "raw", "xyz").cache()
 zinds = data.filter(lambda (k,x) : (k[0] == 1) & (k[1] == 1)).map(lambda (k,x) : k[2])
 saveout(zinds,outputDir,"zinds","matlab")
 
-# compute ref
+# compute summary statistics
 if mode == 'med':
     ref = data.map(lambda (k,x) : median(x))
 if mode == 'mean':
     ref = data.map(lambda (k,x) : mean(x))
 if mode == 'std':
-    ref = data.map(lambda (k,x) : std((x - mean(x))/(mean(x)+0.1)))
-if mode == 'perc':
-    ref = data.map(lambda (k,x) : percentile(x,90))
+    ref = data.map(lambda (k,x) : std(x))
 
 saveout(ref,outputDir,"ref"+mode,"matlab")
