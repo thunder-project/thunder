@@ -10,6 +10,12 @@ from numpy import *
 from thunder.util.dataio import *
 from pyspark import SparkContext
 
+argsIn = sys.argv[1:]
+if len(argsIn) < 6:
+    print >> sys.stderr, \
+    "(localcorr) usage: localcorr <master> <dataFile> <outputFile> <sz> <mxX> <mxY>"
+    exit(-1)
+
 def mapToNeighborhood(ind,ts,sz,mxX,mxY):
     # create a list of key value pairs with multiple shifted copies
     # of the time series ts
@@ -31,13 +37,6 @@ def clip(val,mn,mx):
         val = mx
     return val
 
-argsIn = sys.argv[1:]
-
-if len(argsIn) < 6:
-    print >> sys.stderr, \
-    "(localcorr) usage: localcorr <master> <dataFile> <outputFile> <sz> <mxX> <mxY>"
-    exit(-1)
-
 # parse inputs
 sc = SparkContext(argsIn[0], "localcorr")
 dataFile = str(argsIn[1])
@@ -46,6 +45,8 @@ sz = int(argsIn[3])
 mxX = float(argsIn[4])
 mxY = float(argsIn[5])
 if not os.path.exists(outputFile) : os.makedirs(outputFile)
+
+# TODO: use top once implemented in psypark to get mxX and mxY
 
 # parse data
 lines = sc.textFile(dataFile)

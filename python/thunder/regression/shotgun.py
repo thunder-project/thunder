@@ -20,8 +20,7 @@ from pyspark import SparkContext
 argsIn = sys.argv[1:]
 
 if len(sys.argv) < 5:
-    print >> sys.stderr, \
-    "usage: shotgun <master> <dataFile> <modelFile> <outputDir> <lambda>"
+    print >> sys.stderr, "usage: shotgun <master> <dataFile> <modelFile> <outputDir> <lambda>"
     exit(-1)
 
 def updateFeature(x,y,Ab,b,lam):

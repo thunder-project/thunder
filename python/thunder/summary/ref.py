@@ -10,7 +10,6 @@ from thunder.util.dataio import *
 from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
-
 if len(argsIn) < 4:
     print >> sys.stderr, \
     "(ref) usage: ref <master> <dataFile> <outputDir> <mode>"
@@ -19,7 +18,7 @@ if len(argsIn) < 4:
 # parse inputs
 sc = SparkContext(argsIn[0], "ref")
 dataFile = str(argsIn[1])
-outputDir = str(argsIn[2])
+outputDir = str(argsIn[2]) + "-ref"
 mode = str(argsIn[3])
 if not os.path.exists(outputDir) : os.makedirs(outputDir)
 

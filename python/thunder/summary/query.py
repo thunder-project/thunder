@@ -10,18 +10,18 @@ from scipy.linalg import *
 from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
-
-if len(sys.argv) < 4:
+if len(argsIn) < 4:
     print >> sys.stderr, \
     "(query) usage: query <master> <inputFile> <inds> <outputDir>"
     exit(-1)
 
 # parse inputs
-sc = SparkContext(sys.argv[1], "query")
-inputFile = str(sys.argv[2])
-indsFile = str(sys.argv[3])
-outputDir = str(sys.argv[4]) + "-query"
+sc = SparkContext(argsIn[0], "query")
+inputFile = str(argsIn[1])
+indsFile = str(argsIn[2])
+outputDir = str(argsIn[3]) + "-query"
 
+# parse data
 lines = sc.textFile(dataFile)
 data = parse(lines, "raw", "linear").cache()
 
