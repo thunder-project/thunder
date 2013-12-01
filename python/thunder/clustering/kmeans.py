@@ -34,22 +34,21 @@ if len(sys.argv) < 5:
     "(kmeans) usage: kmeans <master> <dataFile> <outputDir> <k> <dist>"
     exit(-1)
 
-sc = SparkContext(sys.argv[0], "kmeans")
-dataFile = str(sys.argv[1])
-k = int(sys.argv[2])
-dist = str(sys.argv[3])
-outputDir = str(sys.argv[4]) + "-kmeans"
-if not os.path.exists(outputFile) : os.makedirs(outputFile)
+sc = SparkContext(argsIn[0], "kmeans")
+dataFile = str(argsIn[1])
+outputDir = str(argsIn[2]) + "-kmeans"
+k = int(argsIn[3])
+dist = str(argsIn[4])
+if not os.path.exists(outputDir) : os.makedirs(outputDir)
 
 # load data
 lines = sc.textFile(dataFile)
-data = parse(lines, "dff").cache()
 
 if dist == 'corr':
-    data = parse(lines, "dff")
+    data = parse(lines, "raw")
     data = data.map(lambda x : (x - mean(x)) / norm(x)).cache()
 elif dist == 'euclidean':
-    data = parse(lines, "dff").cache()
+    data = parse(lines, "raw").cache()
     
 centers = data.take(k)
 if dist == 'corr':
@@ -91,5 +90,5 @@ saveout(dists,outputDir,"dists","matlab")
 saveout(centers,outputDir,"centers","matlab")
 
 if dist == 'euclidean':
-    normDists = X.map( lambda p : closestPoint((p - mean(p))/norm(p), map(lambda x : x / norm(x), centers), 'corr')[1]).collect()
+    normDists = data.map( lambda p : closestPoint((p - mean(p))/norm(p), map(lambda x : x / norm(x), centers), 'corr')[1]).collect()
     saveout(normDists,outputDir,"normDists","matlab")
