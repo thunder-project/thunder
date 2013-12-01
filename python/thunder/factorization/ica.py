@@ -15,17 +15,16 @@ from thunder.factorization.util import *
 from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
-if len(sys.argv) < 5:
-    print >> sys.stderr, \
-        "(ica) usage: ica <master> <inputFile> <outputFile> <k> <c>"
+if len(argsIn) < 5:
+    print >> sys.stderr, "usage: ica <master> <inputFile> <outputFile> <k> <c>"
     exit(-1)
 
 # parse inputs
-sc = SparkContext(sys.argv[1], "ica")
-dataFile = str(sys.argv[2])
-outputDir = str(sys.argv[3]) + "-ica"
-k = int(sys.argv[4])
-c = int(sys.argv[5])
+sc = SparkContext(argsIn[0], "ica")
+dataFile = str(argsIn[1])
+outputDir = str(argsIn[2]) + "-ica"
+k = int(argsIn[3])
+c = int(argsIn[4])
 if not os.path.exists(outputDir) : os.makedirs(outputDir)
 
 # load data

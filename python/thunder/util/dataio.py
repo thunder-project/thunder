@@ -1,7 +1,4 @@
-# dataio
-# 
 # utilities for loading and saving data
-#
 
 from scipy.io import savemat
 from numpy import array, mean, float16

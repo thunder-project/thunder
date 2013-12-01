@@ -1,3 +1,5 @@
+# utilities for factorization
+
 from numpy import *
 from scipy.linalg import *
 

@@ -9,10 +9,10 @@ import sys
 import os
 from numpy import *
 from scipy.linalg import *
-from pyspark import SparkContext
 from thunder.util.dataio import *
 from thunder.regression.util import *
 from thunder.factorization.util import *
+from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
 if len(argsIn) < 5:
@@ -30,7 +30,7 @@ if not os.path.exists(outputDir) : os.makedirs(outputDir)
 
 # parse data
 lines = sc.textFile(dataFile)
-data = parse(lines, "sub").cache()
+data = parse(lines, "dff").cache()
 
 # create model
 model = regressionModel(modelFile,regressMode)

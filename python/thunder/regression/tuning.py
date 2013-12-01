@@ -48,11 +48,11 @@ saveout(stats,outputDir,"stats","matlab")
 params = tuningFit(betas.map(lambda x : x[0]),model2)
 saveout(params,outputDir,"params","matlab")
 
-if regressMode == "bilinear"
+if regressMode == "bilinear" :
     comps,latent,scores = svd1(betas.map(lambda x : x[2]),2)
     saveout(comps,outputDir,"comps","matlab")
     saveout(latent,outputDir,"latent","matlab")
-    saveout(scores,outputDir,"scores","matlab")
+    saveout(scores,outputDir,"scores","matlab",2)
 
 # get simple measure of response strength
 r = data.map(lambda x : norm(x-mean(x)))

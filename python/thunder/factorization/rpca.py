@@ -2,8 +2,8 @@
 # 
 # performs robust PCA using ADMM
 #
-# TODO: Rewrite so data is an RDD, S is a sparse array,
-#       and we only keep the low rank representation of L
+# TODO: Rewrite to avoid broadcast variables, make raw data an RDD, 
+#       S a sparse array, and we only keep the low rank representation of L
 #
 
 import sys
@@ -14,10 +14,8 @@ from thunder.util.dataio import *
 from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
-
-if len(sys.argv) < 5:
-    print >> sys.stderr, \
-        "usage: rpca <master> <dataFile> <outputDir>"
+if len(argsIn) < 3:
+    print >> sys.stderr, "usage: rpca <master> <dataFile> <outputDir>"
     exit(-1)
 
 def shrinkVec(x,thresh):
@@ -38,11 +36,10 @@ def shrinkage(RDD,thresh):
     return RDD.map(lambda x : sign(x) * shrinkVec(x,thresh))
 
 # parse inputs
-sc = SparkContext(sys.argv[1], "rpca")
-inputFile = str(sys.argv[2])
-outputFile = str(sys.argv[3])
-slices = int(sys.argv[4])
-if not os.path.exists(outputFile) : os.makedirs(outputFile)
+sc = SparkContext(argsIn[0], "rpca")
+dataFile = str(argsIn[1])
+outputDir = str(argsIn[2]) + "-rpca"
+if not os.path.exists(outputDir) : os.makedirs(outputDir)
 
 # load data
 lines = sc.textFile(dataFile)

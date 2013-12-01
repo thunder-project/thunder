@@ -1,7 +1,4 @@
-# dataio
-# 
-# utilities for regression and tuning curve estimation
-#
+# utilities for regression and model fitting
 
 from scipy.io import * 
 from numpy import *

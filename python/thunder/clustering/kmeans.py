@@ -15,6 +15,9 @@ from thunder.util.dataio import *
 from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
+if len(sys.argv) < 5:
+    print >> sys.stderr, "usage: kmeans <master> <dataFile> <outputDir> <k> <dist>"
+    exit(-1)
 
 def closestPoint(p, centers, dist):
     bestIndex = 0
@@ -28,11 +31,6 @@ def closestPoint(p, centers, dist):
             closest = tempDist
             bestIndex = i
     return (bestIndex, closest)
-
-if len(sys.argv) < 5:
-    print >> sys.stderr, \
-    "(kmeans) usage: kmeans <master> <dataFile> <outputDir> <k> <dist>"
-    exit(-1)
 
 sc = SparkContext(argsIn[0], "kmeans")
 dataFile = str(argsIn[1])
