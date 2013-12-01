@@ -4,6 +4,9 @@
 #
 # regressMode - form of regression (mean, linear, bilinear)
 #
+# example:
+# regress.py local data/fish.txt data/regression/fish_linear results linear
+# 
 
 import sys
 import os
@@ -16,8 +19,7 @@ from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
 if len(argsIn) < 5:
-    print >> sys.stderr, \
-    "usage: regress <master> <dataFile> <modelFile> <outputDir> <regressMode>"
+    print >> sys.stderr, "usage: regress <master> <dataFile> <modelFile> <outputDir> <regressMode>"
     exit(-1)
 
 # parse inputs

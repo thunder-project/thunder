@@ -4,6 +4,9 @@
 #
 # k - number of principal components to return
 #
+# example:
+# pca.py local data/iris.txt results 2
+#
 
 import sys
 import os

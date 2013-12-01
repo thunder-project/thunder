@@ -2,6 +2,9 @@
 # 
 # computes the amplitude and phase of time series data
 #
+# example:
+# fourier.py local data/fish.txt results 12
+#
 
 import sys
 import os
@@ -10,9 +13,9 @@ from numpy.fft import fft
 from thunder.util.dataio import *
 from pyspark import SparkContext
 
-if len(sys.argv) < 5:
-    print >> sys.stderr, \
-    "(fourier) usage: fourier <master> <dataFile> <outputFile> <freq>"
+argsIn = sys.argv[1:]
+if len(argsIn) < 4:
+    print >> sys.stderr, "(fourier) usage: fourier <master> <dataFile> <outputFile> <freq>"
     exit(-1)
 
 def getFourier(vec,freq):
@@ -31,10 +34,10 @@ def getFourier(vec,freq):
     return array([co,ph])
 
 # parse inputs
-sc = SparkContext(sys.argv[1], "fourier")
-dataFile = str(sys.argv[2])
-freq = int(sys.argv[4])
-outputFile = str(sys.argv[3])+"-fourier"
+sc = SparkContext(argsIn[0], "fourier")
+dataFile = str(argsIn[1])
+outputFile = str(argsIn[2]) + "-fourier"
+freq = int(argsIn[3])
 if not os.path.exists(outputFile) : os.makedirs(outputFile)
 
 # load data

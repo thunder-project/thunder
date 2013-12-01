@@ -5,6 +5,10 @@
 # TODO: Rewrite to avoid broadcast variables, make raw data an RDD, 
 #       S a sparse array, and we only keep the low rank representation of L
 #
+# example:
+# 
+# pyspark rpca.py local data/rpca.txt results
+#
 
 import sys
 import os

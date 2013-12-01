@@ -5,6 +5,10 @@
 # k - number of principal components to use before ica
 # c - number of independent components to find
 #
+# example:
+# 
+# pyspark ica.py local data/sigs.txt results 4 4
+#
 
 import sys
 import os

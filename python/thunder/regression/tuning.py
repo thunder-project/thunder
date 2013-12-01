@@ -4,6 +4,10 @@
 #
 # regressMode - form of regression (mean, linear, bilinear)
 # tuningMode - parametric tuning curve (circular, gaussian)
+#
+# example:
+# regress.py local data/fish.txt data/regression/fish_bilinear results blinear circular
+# 
 
 import sys
 import os
@@ -15,8 +19,7 @@ from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
 if len(argsIn) < 6:
-    print >> sys.stderr, \
-    "usage: tuning <master> <dataFile> <modelFile> <outputDir> <regressMode> <tuningMode>"
+    print >> sys.stderr, "usage: tuning <master> <dataFile> <modelFile> <outputDir> <regressMode> <tuningMode>"
     exit(-1)
 
 # parse inputs

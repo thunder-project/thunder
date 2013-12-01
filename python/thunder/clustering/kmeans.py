@@ -5,6 +5,10 @@
 # k - number of clusters to find
 # dist - distance function (euclidean or correlation)
 #
+# example:
+# 
+# pyspark kmeans.py local data/iris.txt results 2 euclidean
+#
 
 import sys
 import os
