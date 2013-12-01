@@ -13,9 +13,9 @@ from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
 if len(sys.argv) < 4:
-  print >> sys.stderr, \
-    "(pca) usage: pca <master> <dataFile> <outputDir> <k>"
-  exit(-1)
+    print >> sys.stderr, \
+        "(pca) usage: pca <master> <dataFile> <outputDir> <k>"
+    exit(-1)
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "pca")
@@ -40,6 +40,6 @@ saveout(latent,outputDir,"latent","matlab")
 saveout(scores,outputDir,"scores","matlab")
 
 # for ik in range(0,k):
-# 		logging.info("(lowdim) writing scores for pc " + str(ik))
-# 		out = sub.map(lambda y : float16(y,sortedDim2[ik,:])))
-# 		savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')
+#       logging.info("(lowdim) writing scores for pc " + str(ik))
+#       out = sub.map(lambda y : float16(y,sortedDim2[ik,:])))
+#       savemat(outputFile+"/"+"scores-"+str(ik)+".mat",mdict={'scores':out.collect()},oned_as='column',do_compression='true')

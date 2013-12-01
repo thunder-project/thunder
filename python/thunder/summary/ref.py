@@ -13,9 +13,9 @@ from pyspark import SparkContext
 argsIn = sys.argv[1:]
 
 if len(argsIn) < 4:
-  print >> sys.stderr, \
-  "(ref) usage: ref <master> <dataFile> <outputDir> <mode>"
-  exit(-1)
+    print >> sys.stderr, \
+    "(ref) usage: ref <master> <dataFile> <outputDir> <mode>"
+    exit(-1)
 
 # parse inputs
 sc = SparkContext(argsIn[0], "ref")
@@ -34,12 +34,12 @@ saveout(zinds,outputDir,"zinds","matlab")
 
 # compute ref
 if mode == 'med':
-	ref = data.map(lambda (k,x) : median(x))
+    ref = data.map(lambda (k,x) : median(x))
 if mode == 'mean':
-	ref = data.map(lambda (k,x) : mean(x))
+    ref = data.map(lambda (k,x) : mean(x))
 if mode == 'std':
-	ref = data.map(lambda (k,x) : std((x - mean(x))/(mean(x)+0.1)))
+    ref = data.map(lambda (k,x) : std((x - mean(x))/(mean(x)+0.1)))
 if mode == 'perc':
-	ref = data.map(lambda (k,x) : percentile(x,90))
+    ref = data.map(lambda (k,x) : percentile(x,90))
 
 saveout(ref,outputDir,"ref"+mode,"matlab")

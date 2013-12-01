@@ -10,9 +10,9 @@ from thunder.factorization.util import *
 
 argsIn = sys.argv[1:]
 if len(argsIn) < 6:
-  print >> sys.stderr, \
-  "(regress) usage: regress <master> <inputFile_Y> <inputFile_X> <outputFile> <regressMode> <tuningMode>"
-  exit(-1)
+    print >> sys.stderr, \
+    "(regress) usage: regress <master> <inputFile_Y> <inputFile_X> <outputFile> <regressMode> <tuningMode>"
+    exit(-1)
 
 # parse inputs
 sc = SparkContext(argsIn[0], "regress")
@@ -22,7 +22,7 @@ outputDir = str(argsIn[3]) + "-tuning"
 regressionMode = str(argsIn[4])
 tuningMode = str(argsIn[5])
 if not os.path.exists(outputDir) :
-	os.makedirs(outputDir)
+    os.makedirs(outputDir)
 
 # parse data
 lines = sc.textFile(dataFile)

@@ -11,32 +11,32 @@ from thunder.util.dataio import *
 from pyspark import SparkContext
 
 def mapToNeighborhood(ind,ts,sz,mxX,mxY):
-	# create a list of key value pairs with multiple shifted copies
-	# of the time series ts
-	rngX = range(-sz,sz+1,1)
-	rngY = range(-sz,sz+1,1)
-	out = list()
-	for x in rngX :
-		for y in rngY :
-			newX = clip(ind[0] + x,1,mxX)
-			newY = clip(ind[1] + y,1,mxY)
-			newind = (newX, newY, ind[2])
-			out.append((newind,ts))
-	return out
+    # create a list of key value pairs with multiple shifted copies
+    # of the time series ts
+    rngX = range(-sz,sz+1,1)
+    rngY = range(-sz,sz+1,1)
+    out = list()
+    for x in rngX :
+        for y in rngY :
+            newX = clip(ind[0] + x,1,mxX)
+            newY = clip(ind[1] + y,1,mxY)
+            newind = (newX, newY, ind[2])
+            out.append((newind,ts))
+    return out
 
 def clip(val,mn,mx):
-	if (val < mn) : 
-		val = mn
-	if (val > mx) : 
-		val = mx
-	return val
+    if (val < mn) : 
+        val = mn
+    if (val > mx) : 
+        val = mx
+    return val
 
 argsIn = sys.argv[1:]
 
 if len(argsIn) < 6:
-  print >> sys.stderr, \
-  "(localcorr) usage: localcorr <master> <dataFile> <outputFile> <sz> <mxX> <mxY>"
-  exit(-1)
+    print >> sys.stderr, \
+    "(localcorr) usage: localcorr <master> <dataFile> <outputFile> <sz> <mxX> <mxY>"
+    exit(-1)
 
 # parse inputs
 sc = SparkContext(argsIn[0], "localcorr")

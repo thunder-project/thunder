@@ -11,9 +11,9 @@ from pyspark import SparkContext
 import logging
 
 if len(sys.argv) < 4:
-  print >> sys.stderr, \
-  "(query) usage: query <master> <inputFile> <inds> <outputFile>"
-  exit(-1)
+    print >> sys.stderr, \
+    "(query) usage: query <master> <inputFile> <inds> <outputFile>"
+    exit(-1)
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "query")
@@ -31,21 +31,21 @@ inds = loadmat(indsFile)['inds'][0]
 #print(data.filter(lambda (k,kraw,x) : kraw[1]==1).map(lambda (k,kraw,x) : kraw[0]).collect())
 
 #for i in range(0,len(inds)) :
-#	print(data.filter(lambda (k,kraw,x) : k in inds[i]).map(lambda (k,kraw,x) : kraw).collect())
+#   print(data.filter(lambda (k,kraw,x) : k in inds[i]).map(lambda (k,kraw,x) : kraw).collect())
 
 if len(inds) == 1 :
-	indsTmp = inds[0]
-	n = len(indsTmp)
-	ts = data.filter(lambda (k,x) : k in indsTmp).map(lambda (k,x) : x).reduce(lambda x,y :x+y) / n
-	savemat(outputFile+"-ts.mat",mdict={'ts':ts},oned_as='column',do_compression='true')
+    indsTmp = inds[0]
+    n = len(indsTmp)
+    ts = data.filter(lambda (k,x) : k in indsTmp).map(lambda (k,x) : x).reduce(lambda x,y :x+y) / n
+    savemat(outputFile+"-ts.mat",mdict={'ts':ts},oned_as='column',do_compression='true')
 else :
-	nInds = len(inds)
-	ts = zeros((len(data.first()[1]),nInds))
-	for i in range(0,nInds) :
-		indsTmp = inds[i]
-		n = len(indsTmp)
-		ts[:,i] = data.filter(lambda (k,x) : k in indsTmp).map(lambda (k,x) : x).reduce(lambda x,y :x+y) / n
-	savemat(outputFile+"-ts.mat",mdict={'ts':ts},oned_as='column',do_compression='true')
+    nInds = len(inds)
+    ts = zeros((len(data.first()[1]),nInds))
+    for i in range(0,nInds) :
+        indsTmp = inds[i]
+        n = len(indsTmp)
+        ts[:,i] = data.filter(lambda (k,x) : k in indsTmp).map(lambda (k,x) : x).reduce(lambda x,y :x+y) / n
+    savemat(outputFile+"-ts.mat",mdict={'ts':ts},oned_as='column',do_compression='true')
 
 
 

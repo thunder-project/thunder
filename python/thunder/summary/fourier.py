@@ -11,24 +11,24 @@ from pyspark import SparkContext
 from thunder.util.dataio import *
 
 if len(sys.argv) < 5:
-  print >> sys.stderr, \
-  "(fourier) usage: fourier <master> <dataFile> <outputFile> <freq>"
-  exit(-1)
+    print >> sys.stderr, \
+    "(fourier) usage: fourier <master> <dataFile> <outputFile> <freq>"
+    exit(-1)
 
 def getFourier(vec,freq):
-	vec = vec - mean(vec)
-	nframes = len(vec)
-	ft = fft(vec)
-	ft = ft[0:int(fix(nframes/2))]
-	ampFT = 2*abs(ft)/nframes;
-	amp = ampFT[freq]
-	co = zeros(size(amp));
-	sumAmp = sqrt(sum(ampFT**2))
-	co = amp / sumAmp
-	ph = -(pi/2) - angle(ft[freq])
-	if ph<0:
-		ph = ph+pi*2
-	return array([co,ph])
+    vec = vec - mean(vec)
+    nframes = len(vec)
+    ft = fft(vec)
+    ft = ft[0:int(fix(nframes/2))]
+    ampFT = 2*abs(ft)/nframes;
+    amp = ampFT[freq]
+    co = zeros(size(amp));
+    sumAmp = sqrt(sum(ampFT**2))
+    co = amp / sumAmp
+    ph = -(pi/2) - angle(ft[freq])
+    if ph<0:
+        ph = ph+pi*2
+    return array([co,ph])
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "fourier")

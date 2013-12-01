@@ -11,9 +11,9 @@ from thunder.factorization.util import *
 
 argsIn = sys.argv[1:]
 if len(argsIn) < 5:
-  print >> sys.stderr, \
-  "(regression) usage: regression <master> <dataFile> <modelFile> <outputDir> <mode>"
-  exit(-1)
+    print >> sys.stderr, \
+    "(regression) usage: regression <master> <dataFile> <modelFile> <outputDir> <mode>"
+    exit(-1)
 
 # parse inputs
 sc = SparkContext(argsIn[0], "regression")
@@ -60,25 +60,25 @@ saveout(stats,outputDir,"stats","matlab")
 
 # # get statistics using randomization
 # if outputMode == 'stats'
-# 	stats = Y.map(lambda y : getRegression(y,model)).collect()
-# 	savemat(outputFile+"/"+"stats.mat",mdict={'stats':stats},oned_as='column',do_compression='true')
+#   stats = Y.map(lambda y : getRegression(y,model)).collect()
+#   savemat(outputFile+"/"+"stats.mat",mdict={'stats':stats},oned_as='column',do_compression='true')
 
 # # get norms of coefficients to make a contrast map
 # if outputMode == 'norm' :
-# 	B = Y.map(lambda y : (y,getNorm(y,model)))
-# 	n = B.count()
-# 	m = len(Y.first())
-# 	traj = zeros((2,m))
-# 	for ic in range(0,2) :
-# 		traj[ic,:] = B.filter(lambda (y,b) : (b[ic] - b[1-ic])>0.01).map(lambda (y,b) : y * b[ic]).reduce(lambda x,y : x + y) / n
-# 	norms = B.map(lambda (y,b) : float16(b)).collect()
-# 	savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
-# 	savemat(outputFile+"/"+"norms.mat",mdict={'norms':norms},oned_as='column',do_compression='true')
+#   B = Y.map(lambda y : (y,getNorm(y,model)))
+#   n = B.count()
+#   m = len(Y.first())
+#   traj = zeros((2,m))
+#   for ic in range(0,2) :
+#       traj[ic,:] = B.filter(lambda (y,b) : (b[ic] - b[1-ic])>0.01).map(lambda (y,b) : y * b[ic]).reduce(lambda x,y : x + y) / n
+#   norms = B.map(lambda (y,b) : float16(b)).collect()
+#   savemat(outputFile+"/"+"traj.mat",mdict={'traj':traj},oned_as='column',do_compression='true')
+#   savemat(outputFile+"/"+"norms.mat",mdict={'norms':norms},oned_as='column',do_compression='true')
 
 # def getNorm(y,model) : 
-# 	b = getRegression(y,model)
-# 	n = zeros((model.nG,))
-# 	for ig in range(0,model.nG) :
-# 		n[ig] = norm(b[model.g==ig])
-# 	return n
+#   b = getRegression(y,model)
+#   n = zeros((model.nG,))
+#   for ig in range(0,model.nG) :
+#       n[ig] = norm(b[model.g==ig])
+#   return n
 

@@ -13,9 +13,9 @@ from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
 if len(sys.argv) < 5:
-  print >> sys.stderr, \
-  "(ica) usage: ica <master> <inputFile> <outputFile> <k> <c>"
-  exit(-1)
+    print >> sys.stderr, \
+    "(ica) usage: ica <master> <inputFile> <outputFile> <k> <c>"
+    exit(-1)
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "ica")
@@ -48,16 +48,16 @@ iterMax = 1000
 errVec = zeros(iterMax)
 
 while (iterNum < iterMax) & ((1 - minAbsCos) > termTol):
-	iterNum += 1
-	# update rule for pow3 nonlinearity (TODO: add other nonlins)
-	B = wht.map(lambda x : outer(x,dot(x,B) ** 3)).reduce(lambda x,y : x + y) / n - 3 * B
-	# orthognalize
-	B = dot(B,real(sqrtm(inv(dot(transpose(B),B)))))
-	# evaluate error
-	minAbsCos = min(abs(diag(dot(transpose(B),Bold))))
-	# store results
-	Bold = B
-	errVec[iterNum-1] = (1 - minAbsCos)
+    iterNum += 1
+    # update rule for pow3 nonlinearity (TODO: add other nonlins)
+    B = wht.map(lambda x : outer(x,dot(x,B) ** 3)).reduce(lambda x,y : x + y) / n - 3 * B
+    # orthognalize
+    B = dot(B,real(sqrtm(inv(dot(transpose(B),B)))))
+    # evaluate error
+    minAbsCos = min(abs(diag(dot(transpose(B),Bold))))
+    # store results
+    Bold = B
+    errVec[iterNum-1] = (1 - minAbsCos)
 
 # get unmixing matrix
 W = dot(transpose(B),whtMat)

@@ -14,12 +14,12 @@ import logging
 from pyspark import SparkContext
 
 if len(sys.argv) < 7:
-  print >> sys.stderr, \
-  "(cca) usage: cca <master> <inputFile> <outputFile> <label1> <label2> <k> <c>"
-  exit(-1)
+    print >> sys.stderr, \
+    "(cca) usage: cca <master> <inputFile> <outputFile> <label1> <label2> <k> <c>"
+    exit(-1)
 
 def parseVector(line):
-    return array([float(x) for x in line.split(' ')])
+        return array([float(x) for x in line.split(' ')])
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "cca")
@@ -30,7 +30,7 @@ k = int(sys.argv[6])
 c = int(sys.argv[7])
 outputFile = str(sys.argv[3])+"-cca-labels-"+str(label1)[1:-1].replace(" ",",")+"-"+str(label2)[1:-1].replace(" ",",")+"-k-"+str(k)+"-cc-"+str(c)
 if not os.path.exists(outputFile):
-    os.makedirs(outputFile)
+        os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
 
 # load data and split according to label
@@ -98,5 +98,5 @@ time2 = dot(v2[:,0:k],B)
 savemat(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-time.mat",mdict={'time':time1},oned_as='column',do_compression='true')
 savemat(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-time.mat",mdict={'time':time2},oned_as='column',do_compression='true')
 for ic in range(0,c):
-  savemat(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-space-cc-"+str(ic)+".mat",mdict={'space':data1sub.map(lambda x : dot(transpose(x),dot(v1[:,0:k],A[:,ic]))).collect()},oned_as='column',do_compression='true')
-  savemat(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-space-cc-"+str(ic)+".mat",mdict={'space':data2sub.map(lambda x : dot(transpose(x),dot(v2[:,0:k],B[:,ic]))).collect()},oned_as='column',do_compression='true')
+    savemat(outputFile+"/"+"label-"+str(label1)[1:-1].replace(" ",",")+"-space-cc-"+str(ic)+".mat",mdict={'space':data1sub.map(lambda x : dot(transpose(x),dot(v1[:,0:k],A[:,ic]))).collect()},oned_as='column',do_compression='true')
+    savemat(outputFile+"/"+"label-"+str(label2)[1:-1].replace(" ",",")+"-space-cc-"+str(ic)+".mat",mdict={'space':data2sub.map(lambda x : dot(transpose(x),dot(v2[:,0:k],B[:,ic]))).collect()},oned_as='column',do_compression='true')

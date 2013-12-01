@@ -14,27 +14,27 @@ from pyspark import SparkContext
 import logging
 
 if len(sys.argv) < 6:
-  print >> sys.stderr, \
-  "(shotgun) usage: shotgun <master> <inputFile_A> <inputFile_y> <outputFile> <lambda>"
-  exit(-1)
+    print >> sys.stderr, \
+    "(shotgun) usage: shotgun <master> <inputFile_A> <inputFile_y> <outputFile> <lambda>"
+    exit(-1)
 
 def parseVector(line):
-	vec = [float(x) for x in line.split(' ')]
-	ts = array(vec[1:])
-	ts = (ts - mean(ts))/std(ts)
-	return (int(vec[0]),ts)
+    vec = [float(x) for x in line.split(' ')]
+    ts = array(vec[1:])
+    ts = (ts - mean(ts))/std(ts)
+    return (int(vec[0]),ts)
 
 def updateFeature(x,y,Ab,b,lam):
-	AA = dot(x,x)
-	Ay = dot(x,y)
-	d_j = Ay - dot(x,Ab) + AA*b
-	if d_j < -lam :
-		new_value = (d_j + lam)/AA
-	elif d_j > lam:
-		new_value = (d_j - lam)/AA
-	else :
-		new_value = 0
-	return float(new_value)
+    AA = dot(x,x)
+    Ay = dot(x,y)
+    d_j = Ay - dot(x,Ab) + AA*b
+    if d_j < -lam :
+        new_value = (d_j + lam)/AA
+    elif d_j > lam:
+        new_value = (d_j - lam)/AA
+    else :
+        new_value = 0
+    return float(new_value)
 
 # parse inputs
 sc = SparkContext(sys.argv[1], "shotgun")
@@ -43,7 +43,7 @@ inputFile_y = str(sys.argv[3])
 outputFile = str(sys.argv[4])
 lam = double(sys.argv[5])
 if not os.path.exists(outputFile):
-    os.makedirs(outputFile)
+        os.makedirs(outputFile)
 logging.basicConfig(filename=outputFile+'/'+'stdout.log',level=logging.INFO,format='%(asctime)s %(message)s',datefmt='%m/%d/%Y %I:%M:%S %p')
 
 # parse data
@@ -69,29 +69,29 @@ tol = 10 ** -6
 logging.info("(shotgun) beginning iterative estimation...")
 
 while (iIter < nIter) & (deltaCheck > tol):
-	logging.info("(shotgun) starting iteration " + str(iIter))
-	logging.info("(shotgun) checking for features to update")
-	update = A.map(lambda (k,x) : (k,updateFeature(x,y,Ab,b[k,0],lam))).filter(lambda (k,x) : x != b[k,0]).collect()
-	nUpdate = len(update)
-	logging.info("(shotgun) features to update: " + str(nUpdate))
-	logging.info("(shotgun) updating features")
-	
-	b = b.todok()
-	diff = zeros((nUpdate,1))
-	for i in range(nUpdate):
-		key = update[i][0]
-		value = update[i][1]
-		diff[i] = abs(value - b[key,0])
-		b[key,0] = value
-	b = b.tocsc()
+    logging.info("(shotgun) starting iteration " + str(iIter))
+    logging.info("(shotgun) checking for features to update")
+    update = A.map(lambda (k,x) : (k,updateFeature(x,y,Ab,b[k,0],lam))).filter(lambda (k,x) : x != b[k,0]).collect()
+    nUpdate = len(update)
+    logging.info("(shotgun) features to update: " + str(nUpdate))
+    logging.info("(shotgun) updating features")
+    
+    b = b.todok()
+    diff = zeros((nUpdate,1))
+    for i in range(nUpdate):
+        key = update[i][0]
+        value = update[i][1]
+        diff[i] = abs(value - b[key,0])
+        b[key,0] = value
+    b = b.tocsc()
 
-	deltaCheck = amax(diff)
-	logging.info("(shotgun) change in b: " + str(deltaCheck))
+    deltaCheck = amax(diff)
+    logging.info("(shotgun) change in b: " + str(deltaCheck))
 
-	logging.info("(shotgun) updating Ab")
-	Ab = A.map(lambda (k,x) : x*b[k,0]).reduce(lambda x,y : x+y)	
-	
-	iIter = iIter + 1
+    logging.info("(shotgun) updating Ab")
+    Ab = A.map(lambda (k,x) : x*b[k,0]).reduce(lambda x,y : x+y)    
+    
+    iIter = iIter + 1
 
 logging.info("(shotgun) finised after " + str(iIter) + " iterations")
 
