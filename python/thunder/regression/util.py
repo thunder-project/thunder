@@ -40,6 +40,9 @@ def regressionModel(modelFile,regressionMode) :
         y = loadmat(modelFile + "_y.mat")['y']
         y = y.astype(float)
         y = (y - mean(y))/std(y)
+        if shape(y)[0] == 1 :
+            y = transpose(y)
+        model.y = y
 
     model.regressionMode = regressionMode
 
