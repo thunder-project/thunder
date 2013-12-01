@@ -1,4 +1,8 @@
 # utilities for loading and saving data
+#
+# TODO: add option for writing out images
+# TODO: add option for writing JSON (with a variety of formats)
+# TODO: add a loader for small helper matrices, text or matlab format
 
 from scipy.io import savemat
 from numpy import array, mean, float16

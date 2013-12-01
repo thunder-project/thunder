@@ -1,6 +1,6 @@
 # query <master> <inputFile> <inds> <outputDir>
 # 
-# query a data set by averaging together points
+# query a data set by averaging together values with given indices
 #
 
 import sys
