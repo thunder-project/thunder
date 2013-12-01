@@ -6,6 +6,9 @@
 #
 # lambda - learning rate
 #
+# example:
+# shotgun.py local data/shotgun.txt data/regression/shotgun results 10
+#
 
 import sys
 import os
@@ -18,8 +21,7 @@ from thunder.factorization.util import *
 from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
-
-if len(sys.argv) < 5:
+if len(argsIn) < 5:
     print >> sys.stderr, "usage: shotgun <master> <dataFile> <modelFile> <outputDir> <lambda>"
     exit(-1)
 
@@ -36,16 +38,16 @@ def updateFeature(x,y,Ab,b,lam):
     return float(new_value)
 
 # parse inputs
-sc = SparkContext(sys.argv[0], "shotgun")
-dataFile = str(sys.argv[1])
-modelFile = str(sys.argv[2])
-outputDir = str(sys.argv[3])
-lam = double(sys.argv[4])
+sc = SparkContext(argsIn[0], "shotgun")
+dataFile = str(argsIn[1])
+modelFile = str(argsIn[2])
+outputDir = str(argsIn[3]) + "-shotgun"
+lam = double(argsIn[4])
 if not os.path.exists(outputDir) : os.makedirs(outputDir)
 
 # parse data
 lines = sc.textFile(dataFile)
-A = parse(lines, "dff")
+A = parse(lines, "raw", "linear", None, [1,1]).cache()
 
 # parse model
 model = regressionModel(modelFile,"shotgun")
@@ -80,7 +82,7 @@ while (iIter < nIter) & (deltaCheck > tol):
 
     deltaCheck = amax(diff)
 
-    Ab = A.map(lambda (k,x) : x*b[k,0]).reduce(lambda x,y : x+y)    
+    Ab = A.map(lambda (k,x) : x*b[k,0]).reduce(lambda x,y : x + y)    
     
     iIter = iIter + 1
 
