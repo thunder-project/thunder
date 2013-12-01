@@ -190,5 +190,3 @@ def tuningCurves(data,model) :
         sds[iv,:] = subset.map(lambda b : (b[0] - means[iv,:])**2).reduce(lambda x,y : x + y) / (n - 1)
     
     return means, sds
-
-
