@@ -5,15 +5,24 @@ Library for neural data analysis with the Spark cluster computing framework
 
 ## About
 
-Spark is a powerful new framework for cluster computing, particularly well suited to iterative computations; see the [project webpage](http://spark-project.org/documentation.html). Thunder is a family of analyses for finding structure in high-dimensional spatiotemporal neural imaging data (e.g. calcium) implemented in Spark.
+Spark is a powerful new framework for cluster computing, particularly well suited to iterative computations; see the [project webpage](http://spark-project.org/documentation.html). Thunder is a family of analyses for finding structure in high-dimensional spatiotemporal neural imaging data (e.g. calcium) implemented in Spark. 
+
+It includes low-level utilties for data loading, saving, signal processing, and shared algorithms (regression, factorization, etc.), and high-level functions that can be scripted to easily combine analyses. The standard package is written in Python with Pyspark, making extensive use of scipy and numpy. A subset of functions, including  prototypes of real-time analyses, are availaible for Scala., because they use functionality not yet availiable in Pyspark. We plan to port all functionality to Scala in the future.
 
 ## Use
 
 To run these functions, first [install Spark](http://spark-project.org/downloads/) and [scala](http://www.scala-lang.org/downloads).
 
-For python functions, call using pyspark:
+For python functions, call individual functions using pyspark:
 
-	SPARK_HOME/pyspark ica.py local data/ica_test.txt results 4 4
+	pyspark pca.py local data/iris.txt results 4
+
+Or run iteractively in the Pyspark shell
+
+	pyspark
+	>> lines = sc.textFile("data/iris.txt")
+	>> data = parse(lines).cache()
+	>> comps,latent,scores = svd1(data,3)
 
 For scala functions, build and run in sbt:
 
@@ -55,30 +64,42 @@ For parameteric models (e.g. tuning), also provide a text file with the stimulus
 ## Contents
 
 #### python
-pca - principal components analysis
 
-empca - iterative PCA using EM algorithm
-
-ica - independent components analysis
-
-cca - canonical correlation analysis
-
-rpca - robust PCA
-
-fourier - fourier analysis on time series data
-
-query - get average time series from voxels with desired indices
+## clustering
 
 kmeans - k-means clustering
 
+## factorization
+
+pca - principal components analysis
+
+ica - independent components analysis
+
+rpca - robust pca
+
+## regression
+
+regress - simple variants of linear regression
+
+shotgun - parallel L1 regularized regression
+
+tuning - fit parametric models
+
+## summary
+
+ref - compute summary statistics (mean, median, etc.)
+
+localcorr - local spatial time series correlations
+
+fourier - fourier analysis
+
+query - average time series data for entries with the provided indices
+
 #### scala
 
-bisecting - divisive hierarchlal clustering using bisecting k-means
+bisecting - divisive hierarchlal clustering using bisecting k-means (prototype)
 
-hierarchical - agglomerative hierachical clustering
+kmeansOnline - online implementation of kmeans
 
 mantis - streaming analysis of neuroimaging data (prototype)
 
-## To-Do
-
-scala versions of all functions
