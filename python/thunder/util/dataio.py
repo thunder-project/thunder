@@ -9,7 +9,9 @@ from numpy import array, mean, float16
 import pyspark
 
 def parse(data, filter="raw", inds=None, tRange=None, xy=None) :
+
     def parseVector(line, filter="raw", inds=None, tRange=None, xy=None) :
+
         vec = [float(x) for x in line.split(' ')]
         ts = array(vec[3:]) # get tseries
         if filter == "dff" : # convert to dff
@@ -22,13 +24,14 @@ def parse(data, filter="raw", inds=None, tRange=None, xy=None) :
         if inds is not None : # keep xyz keys
             if inds == "xyz" :
                 return ((int(vec[0]),int(vec[1]),int(vec[2])),ts)
+            # TODO: once top is implemented in pyspark, use to get xy bounds
             if inds == "linear" :
-                k = int(vec[0]) + int((vec[1] - 1)*xy[0] + int((vec[2]-1)*xy[1]))
+                k = int(vec[0]) + int((vec[1] - 1)*xy[0] + int((vec[2]-1)*xy[1])) - 1
                 return (k,ts)
         else :
             return ts
 
-    return data.map(lambda x : parseVector(x,filter,inds,tRange))
+    return data.map(lambda x : parseVector(x,filter,inds,tRange,xy))
     
 
 def saveout(data, outputDir, outputFile, outputFormat, nOut=1) :
