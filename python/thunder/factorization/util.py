@@ -5,12 +5,16 @@ from scipy.linalg import *
 # only efficient when d is small
 def svd1(data,k,meanSubtract=1) :
 
+    def outerSum(iterator) : yield sum(outer(x,x) for x in iterator)
+
     n = data.count()
 
     if meanSubtract == 1 :
         data = data.map(lambda x : x - mean(x))
 
-    cov = data.map(lambda x : outer(x,x)).reduce(lambda x,y : (x + y)) / n
+    # TODO: test for speed increase vs straight map-reduce
+    cov = data.mapPartitions(outerSum).reduce(lambda x,y : x + y) / n
+
     w, v = eig(cov)
     w = real(w)
     v = real(v)
@@ -38,7 +42,7 @@ def svd2(data,k,meanSubtract=1) :
     u = random.randn(k,m)
     nIter = 5
     iIter = 1
-    # fixed initialization
+    # fixed initialization for debugging
     #var u = factory2D.make(sc.textFile("data/h0.txt").map(parseLine _).toArray())
     #var w = sc.textFile("data/w0.txt").map(parseVector2 _)
     while (iter < nIter) :
