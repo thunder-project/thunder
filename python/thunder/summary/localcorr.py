@@ -3,6 +3,9 @@
 # correlate the time series of each pixel 
 # in an image with its local neighborhood
 #
+# example:
+# localcorr.py local data/fish.txt results 5 88 76
+#
 
 import sys
 import os

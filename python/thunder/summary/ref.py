@@ -2,6 +2,9 @@
 # 
 # compute summary statistics
 #
+# example:
+# pyspark ref.py local data/fish.txt results mean
+#
 
 import sys
 import os
