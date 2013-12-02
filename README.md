@@ -61,15 +61,13 @@ For parameteric models (e.g. tuning), also provide a text file with the stimulus
 
 	0 45 90 135 180 225 270 315
 
-## Contents
+## Contents (Python)
 
-#### python
-
-## clustering
+### clustering
 
 kmeans - k-means clustering
 
-## factorization
+### factorization
 
 pca - principal components analysis
 
@@ -77,7 +75,7 @@ ica - independent components analysis
 
 rpca - robust pca
 
-## regression
+### regression
 
 regress - simple variants of linear regression
 
@@ -85,7 +83,7 @@ shotgun - parallel L1 regularized regression
 
 tuning - fit parametric models
 
-## summary
+### summary
 
 ref - compute summary statistics (mean, median, etc.)
 
@@ -95,7 +93,7 @@ fourier - fourier analysis
 
 query - average time series data for entries with the provided indices
 
-#### scala
+## Contents (Scala)
 
 bisecting - divisive hierarchlal clustering using bisecting k-means (prototype)
 
