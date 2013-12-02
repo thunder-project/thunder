@@ -14,7 +14,7 @@ def svd1(data,k,meanSubtract=1) :
     if meanSubtract == 1 :
         data = data.map(lambda x : x - mean(x))
 
-    # TODO: test for speed increase vs straight map-reduce
+    # TODO: confirm speed increase for mapPartitions vs map
     cov = data.mapPartitions(outerSum).reduce(lambda x,y : x + y) / n
 
     w, v = eig(cov)
@@ -44,9 +44,7 @@ def svd2(data,k,meanSubtract=1) :
     u = random.randn(k,m)
     nIter = 5
     iIter = 1
-    # fixed initialization for debugging
-    #var u = factory2D.make(sc.textFile("data/h0.txt").map(parseLine _).toArray())
-    #var w = sc.textFile("data/w0.txt").map(parseVector2 _)
+
     while (iter < nIter) :
         # goal is to solve R = VU subject to U,V > 0
         # by iteratively updating U and V with least squares and clipping

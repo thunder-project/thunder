@@ -35,7 +35,7 @@ def parse(data, filter="raw", inds=None, tRange=None, xy=None) :
 
 
 def saveout(data, outputDir, outputFile, outputFormat, nOut=1) :
-    
+
     if outputFormat == "matlab" :
         dtype = type(data)
         if (dtype == pyspark.rdd.RDD) | (dtype == pyspark.rdd.PipelinedRDD) :
