@@ -1,12 +1,12 @@
 # kmeans <master> <inputFile> <outputFile> <k> <dist>
-# 
+#
 # perform kmeans, based on example included with Spark
 #
 # k - number of clusters to find
 # dist - distance function (euclidean or correlation)
 #
 # example:
-# 
+#
 # pyspark kmeans.py local data/iris.txt results 2 euclidean
 #
 
@@ -14,7 +14,7 @@ import sys
 import os
 from numpy import *
 from numpy.linalg import *
-from scipy.io import * 
+from scipy.io import *
 from thunder.util.dataio import *
 from pyspark import SparkContext
 
@@ -51,7 +51,7 @@ if dist == 'corr':
     data = data.map(lambda x : (x - mean(x)) / norm(x)).cache()
 elif dist == 'euclidean':
     data = parse(lines, "raw").cache()
-    
+
 centers = data.take(k)
 if dist == 'corr':
     centers = map(lambda x : x - mean(x), centers);
@@ -62,7 +62,7 @@ iteration = 0
 mxIteration = 100
 
 while (tempDist > convergeDist) & (iteration < mxIteration):
-    
+
     if dist == 'corr':
         kPointsNorm = map(lambda x : x / norm(x), centers)
         closest = data.map(
@@ -78,7 +78,7 @@ while (tempDist > convergeDist) & (iteration < mxIteration):
     tempDist = sum(sum((centers[x] - y) ** 2) for (x, y) in newPoints)
 
     for (x, y) in newPoints:
-            centers[x] = y
+        centers[x] = y
 
     iteration = iteration + 1
 

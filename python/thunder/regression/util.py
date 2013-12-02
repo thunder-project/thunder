@@ -1,11 +1,11 @@
 # utilities for regression and model fitting
 
-from scipy.io import * 
+from scipy.io import *
 from numpy import *
 from scipy.linalg import *
 
 def regressionModel(modelFile,regressionMode) :
-    
+
     class model : pass
 
     if regressionMode == 'mean' :
@@ -80,7 +80,7 @@ def regressionFit(data,model,comps=None) :
             sse = sum((predic-y) ** 2)
             sst = sum((y-mean(y)) ** 2)
             r2 = 1 - sse/sst
-            r2shuffle = zeros((model.nRnd,)) 
+            r2shuffle = zeros((model.nRnd,))
             X = copy(model.X)
             m = shape(X)[1]
             for iShuf in range(0,int(model.nRnd)) :
@@ -114,13 +114,13 @@ def regressionFit(data,model,comps=None) :
     if comps is not None :
         traj = data.map(lambda x : outer(x,inner(regressionGet(x,model)[0] - mean(regressionGet(x,model)[0]),comps))).reduce(lambda x,y : x + y) / data.count()
         return traj
-        
+
     else :
         betas = data.map(lambda x : regressionGet(x,model))
         return betas
 
 def tuningFit(data,model) :
-    
+
     def tuningGet(y,model) :
 
         if model.tuningMode == 'circular' :
@@ -188,5 +188,5 @@ def tuningCurves(data,model) :
         n = subset.count()
         means[iv,:] = subset.map(lambda b : b[0]).reduce(lambda x,y : x + y) / n
         sds[iv,:] = subset.map(lambda b : (b[0] - means[iv,:])**2).reduce(lambda x,y : x + y) / (n - 1)
-    
+
     return means, sds

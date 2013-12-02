@@ -1,6 +1,6 @@
 # localcorr <master> <inputFile_X> <outputFile> <neighborhood> <mxX> <mxY>"
-# 
-# correlate the time series of each pixel 
+#
+# correlate the time series of each pixel
 # in an image with its local neighborhood
 #
 # example:
@@ -34,9 +34,9 @@ def mapToNeighborhood(ind,ts,sz,mxX,mxY):
     return out
 
 def clip(val,mn,mx):
-    if (val < mn) : 
+    if (val < mn) :
         val = mn
-    if (val > mx) : 
+    if (val > mx) :
         val = mx
     return val
 
@@ -59,7 +59,7 @@ data = parse(lines, "raw", "xyz").cache()
 neighbors = data.flatMap(lambda (k,v) : mapToNeighborhood(k,v,sz,mxX,mxY))
 
 # TODO: printing here seems to fix a hang later, probably a bug
-print(neighbors.first()) 
+print(neighbors.first())
 
 # reduceByKey to get the average time series for each neighborhood
 means = neighbors.reduceByKey(lambda x,y : x + y).map(lambda (k,v) : (k, v / ((2*sz+1)**2)))

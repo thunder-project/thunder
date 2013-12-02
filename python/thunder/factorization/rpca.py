@@ -1,12 +1,12 @@
 # usage: rpca <master> <dataFile> <outputDir>"
-# 
+#
 # performs robust PCA using ADMM
 #
-# TODO: Rewrite to avoid broadcast variables, make raw data an RDD, 
+# TODO: Rewrite to avoid broadcast variables, make raw data an RDD,
 #       S a sparse array, and we only keep the low rank representation of L
 #
 # example:
-# 
+#
 # pyspark rpca.py local data/rpca.txt results
 #
 
@@ -73,4 +73,3 @@ while iterNum < iterMax:
 
 saveout(L,outputDir,"L","matlab")
 saveout(S,outputDir,"S","matlab")
-

@@ -1,5 +1,5 @@
 # ref <master> <dataFile> <outputDir> <mode>
-# 
+#
 # compute summary statistics
 #
 # example:

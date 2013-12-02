@@ -1,5 +1,5 @@
 # fourier <master> <dataFile> <outputFile> <freq>
-# 
+#
 # computes the amplitude and phase of time series data
 #
 # example:

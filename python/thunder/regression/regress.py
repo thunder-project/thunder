@@ -6,7 +6,7 @@
 #
 # example:
 # regress.py local data/fish.txt data/regression/fish_linear results linear
-# 
+#
 
 import sys
 import os

@@ -1,5 +1,5 @@
 # pca <master> <dataFile> <outputDir> <k>
-# 
+#
 # performs PCA using the SVD
 #
 # k - number of principal components to return

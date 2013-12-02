@@ -50,7 +50,7 @@ def svd2(data,k,meanSubtract=1) :
     while (iter < nIter) :
         # goal is to solve R = VU subject to U,V > 0
         # by iteratively updating U and V with least squares and clipping
-        
+
         # precompute inv(V' * V)
         vinv = inv(v.map(lambda x : outer(x,x)).reduce(lambda x,y : (x+y)))
 
@@ -62,7 +62,7 @@ def svd2(data,k,meanSubtract=1) :
 
         # update V using least squares row-wise with R * pinv(U)
         v = data.mapValues(lambda x : dot(transpose(uinv),x))
-        
+
         iter += 1
 
 def svd3(data,k,meanSubtract=1) :
@@ -97,4 +97,3 @@ def svd3(data,k,meanSubtract=1) :
     scores = data.map(lambda x : inner(x,comps))
 
     return comps, latent, scores
-

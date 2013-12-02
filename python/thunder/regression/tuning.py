@@ -7,7 +7,7 @@
 #
 # example:
 # regress.py local data/fish.txt data/regression/fish_bilinear results blinear circular
-# 
+#
 
 import sys
 import os
@@ -60,4 +60,3 @@ if regressMode == "bilinear" :
 # get simple measure of response strength
 r = data.map(lambda x : norm(x-mean(x)))
 saveout(r,outputDir,"r","matlab")
-

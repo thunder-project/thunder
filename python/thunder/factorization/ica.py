@@ -1,12 +1,12 @@
 # ica <master> <inputFile> <outputFile> <k> <c>
-# 
+#
 # performs ICA
 #
 # k - number of principal components to use before ica
 # c - number of independent components to find
 #
 # example:
-# 
+#
 # pyspark ica.py local data/sigs.txt results 4 4
 #
 
@@ -74,6 +74,3 @@ sigs = data.map(lambda x : dot(W,x))
 # save output files
 saveout(W,outputDir,"W","matlab")
 saveout(sigs,outputDir,"sigs","matlab",c)
-
-
-

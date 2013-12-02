@@ -1,5 +1,5 @@
 # shotgun <master> <dataFile> <modelFile> <outputDir> <lambda>
-# 
+#
 # use the "shotgun" approach for L1 regularized regression
 # parallelizing over features
 # algorithm by Bradley et al., 2011, ICML
@@ -82,8 +82,8 @@ while (iIter < nIter) & (deltaCheck > tol):
 
     deltaCheck = amax(diff)
 
-    Ab = A.map(lambda (k,x) : x*b[k,0]).reduce(lambda x,y : x + y)    
-    
+    Ab = A.map(lambda (k,x) : x*b[k,0]).reduce(lambda x,y : x + y)
+
     iIter = iIter + 1
 
 saveout(b.todense(),outputDir,"b","matlab")
