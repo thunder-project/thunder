@@ -15,7 +15,7 @@ import spray.json.DefaultJsonProtocol._
 
 import scala.Array
 
-object kmeansOnline {
+object kmeansStreaming {
 
   def parseVector(line: String, t: Int): (Int, Vector) = {
     val nums = line.split(' ') // split line into numbers: (0) key (1) ca (2) id

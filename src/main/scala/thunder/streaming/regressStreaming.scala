@@ -18,7 +18,7 @@ import javax.imageio.ImageIO
 import java.awt.image.BufferedImage
 import java.io.File
 
-object mantis {
+object regressStreaming {
 
   def parseVector(line: String): (Int, Vector) = {
     val nums = line.split(' ') // split line into numbers: (0) key (1) ca (2) ephys (3) id
