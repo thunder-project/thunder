@@ -95,9 +95,9 @@ query - average time series data for entries with the provided indices
 
 ## Contents (Scala)
 
-bisecting - divisive hierarchlal clustering using bisecting k-means (prototype)
+bisecting - divisive hierarchlal clustering using bisecting k-means
 
-kmeansOnline - online implementation of kmeans
+kmeansOnline - online clustering using kmeans
 
-mantis - streaming analysis of neuroimaging data (prototype)
+mantis - online regression
 
