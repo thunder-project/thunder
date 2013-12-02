@@ -8,7 +8,7 @@
 # regress.py local data/fish.txt data/regression/fish_linear results linear
 # 
 
-import sys
+import argparse
 import os
 from numpy import *
 from scipy.linalg import *
@@ -17,43 +17,52 @@ from thunder.regression.util import *
 from thunder.factorization.util import *
 from pyspark import SparkContext
 
-argsIn = sys.argv[1:]
-if len(argsIn) < 5:
-    print >> sys.stderr, "usage: regress <master> <dataFile> <modelFile> <outputDir> <regressMode>"
-    exit(-1)
 
-# parse inputs
-sc = SparkContext(argsIn[0], "regress")
-dataFile = str(argsIn[1])
-modelFile = str(argsIn[2])
-outputDir = str(argsIn[3]) + "-regress"
-regressMode = str(argsIn[4])
-if not os.path.exists(outputDir) : os.makedirs(outputDir)
+def regress(sc, dataFile, modelFile, outputDir, regressMode):
+    if not os.path.exists(outputDir):
+        os.makedirs(outputDir)
 
-# parse data
-lines = sc.textFile(dataFile)
-data = parse(lines, "dff").cache()
+    # parse data
+    lines = sc.textFile(dataFile)
+    data = parse(lines, "dff")
+    data.cache()
 
-# create model
-model = regressionModel(modelFile,regressMode)
+    # create model
+    model = RegressionModel.load(modelFile, regressMode)
 
-# do regression
-betas = regressionFit(data,model).cache()
+    # do regression
+    betas = model.fit(data).cache()
 
-# get statistics
-stats = betas.map(lambda x : x[1])
-saveout(stats,outputDir,"stats","matlab")
+    # get statistics
+    stats = betas.map(lambda x: x[1])
+    saveout(stats, outputDir, "stats", "matlab")
 
-# do PCA
-comps,latent,scores = svd1(betas.map(lambda x : x[0]),2)
-saveout(comps,outputDir,"comps","matlab")
-saveout(latent,outputDir,"latent","matlab")
-saveout(scores,outputDir,"scores","matlab",2)
+    # do PCA
+    comps, latent, scores = svd1(betas.map(lambda x: x[0]), 2)
+    saveout(comps, outputDir, "comps", "matlab")
+    saveout(latent, outputDir, "latent", "matlab")
+    saveout(scores, outputDir, "scores", "matlab", 2)
 
-# compute trajectories from raw data
-traj = regressionFit(data,model,comps)
-saveout(traj,outputDir,"traj","matlab")
+    # compute trajectories from raw data
+    traj = model.fit(data, comps)
+    saveout(traj, outputDir, "traj", "matlab")
 
-# get simple measure of response strength
-r = data.map(lambda x : norm(x-mean(x)))
-saveout(r,outputDir,"r","matlab")
+    # get simple measure of response strength
+    r = data.map(lambda x: norm(x - mean(x)))
+    saveout(r, outputDir, "r", "matlab")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="fit a regression model")
+    parser.add_argument("master", type=str)
+    parser.add_argument("dataFile", type=str)
+    parser.add_argument("modelFile", type=str)
+    parser.add_argument("outputDir", type=str)
+    parser.add_argument("regressMode", choices=("mean", "linear", "bilinear"),
+                        help="the form of regression")
+
+    args = parser.parse_args()
+    sc = SparkContext(args.master, "regress")
+    outputDir = args.outputDir + "-regress"
+
+    regress(sc, args.dataFile, args.modelFile, outputDir, args.regressMode)

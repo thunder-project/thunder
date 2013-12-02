@@ -6,10 +6,10 @@
 # tuningMode - parametric tuning curve (circular, gaussian)
 #
 # example:
-# regress.py local data/fish.txt data/regression/fish_bilinear results blinear circular
+# tuning.py local data/fish.txt data/regression/fish_bilinear results bilinear circular
 # 
 
-import sys
+import argparse
 import os
 from numpy import *
 from thunder.util.dataio import *
@@ -17,47 +17,54 @@ from thunder.regression.util import *
 from thunder.factorization.util import *
 from pyspark import SparkContext
 
-argsIn = sys.argv[1:]
-if len(argsIn) < 6:
-    print >> sys.stderr, "usage: tuning <master> <dataFile> <modelFile> <outputDir> <regressMode> <tuningMode>"
-    exit(-1)
 
-# parse inputs
-sc = SparkContext(argsIn[0], "regress")
-dataFile = str(argsIn[1])
-modelFile = str(argsIn[2])
-outputDir = str(argsIn[3]) + "-tuning"
-regressMode = str(argsIn[4])
-tuningMode = str(argsIn[5])
-if not os.path.exists(outputDir) :
-    os.makedirs(outputDir)
+def tuning(sc, dataFile, modelFile, outputDir, regressMode, tuningMode):
+    if not os.path.exists(outputDir):
+        os.makedirs(outputDir)
 
-# parse data
-lines = sc.textFile(dataFile)
-data = parse(lines, "dff")
+    # parse data
+    lines = sc.textFile(dataFile)
+    data = parse(lines, "dff")
 
-# create models
-model1 = regressionModel(modelFile,regressMode)
-model2 = tuningModel(modelFile,tuningMode)
+    # create models
+    regressionModel = RegressionModel.load(modelFile, regressMode)
+    tuningModel = TuningModel.load(modelFile, tuningMode)
 
-# do regression
-betas = regressionFit(data,model1).cache()
+    # do regression
+    betas = regressionModel.fit(data).cache()
 
-# get statistics
-stats = betas.map(lambda x : x[1])
-saveout(stats,outputDir,"stats","matlab")
+    # get statistics
+    stats = betas.map(lambda x: x[1])
+    saveout(stats, outputDir, "stats", "matlab")
 
-# get tuning curves
-params = tuningFit(betas.map(lambda x : x[0]),model2)
-saveout(params,outputDir,"params","matlab")
+    # get tuning curves
+    params = tuningModel.fit(betas.map(lambda x: x[0]))
+    saveout(params, outputDir, "params", "matlab")
 
-if regressMode == "bilinear" :
-    comps,latent,scores = svd1(betas.map(lambda x : x[2]),2)
-    saveout(comps,outputDir,"comps","matlab")
-    saveout(latent,outputDir,"latent","matlab")
-    saveout(scores,outputDir,"scores","matlab",2)
+    if regressMode == "bilinear":
+        comps, latent, scores = svd1(betas.map(lambda x: x[2]), 2)
+        saveout(comps, outputDir, "comps", "matlab")
+        saveout(latent, outputDir, "latent", "matlab")
+        saveout(scores, outputDir, "scores", "matlab", 2)
 
-# get simple measure of response strength
-r = data.map(lambda x : norm(x-mean(x)))
-saveout(r,outputDir,"r","matlab")
+    # get simple measure of response strength
+    r = data.map(lambda x: norm(x - mean(x)))
+    saveout(r, outputDir, "r", "matlab")
 
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="fit a parametric tuning curve to regression results")
+    parser.add_argument("master", type=str)
+    parser.add_argument("dataFile", type=str)
+    parser.add_argument("modelFile", type=str)
+    parser.add_argument("outputDir", type=str)
+    parser.add_argument("regressMode", choices=("mean", "linear", "bilinear"),
+                        help="the form of regression")
+    parser.add_argument("tuningMode", choices=("circular", "gaussian"),
+                        help="parametric tuning curve")
+
+    args = parser.parse_args()
+    sc = SparkContext(args.master, "tuning")
+    outputDir = args.outputDir + "-tuning"
+
+    tuning(sc, args.dataFile, args.modelFile, outputDir, args.regressMode, args.tuningMode)
