@@ -43,9 +43,12 @@ def saveout(data, outputDir, outputFile, outputFormat, nOut=1):
             if nOut > 1:
                 for iOut in range(0, nOut):
                     result = data.map(lambda x: float16(x[iOut])).collect()
-                    savemat(outputDir+"/"+outputFile+"-"+str(iOut)+".mat", mdict={outputFile+str(iOut): result}, oned_as='column', do_compression='true')
+                    savemat(outputDir+"/"+outputFile+"-"+str(iOut)+".mat",
+                            mdict={outputFile+str(iOut): result}, oned_as='column', do_compression='true')
             else:
                 result = data.map(float16).collect()
-                savemat(outputDir+"/"+outputFile+".mat", mdict={outputFile: result}, oned_as='column', do_compression='true')
+                savemat(outputDir+"/"+outputFile+".mat",
+                        mdict={outputFile: result}, oned_as='column', do_compression='true')
         else:
-            savemat(outputDir+"/"+outputFile+".mat", mdict={outputFile: data}, oned_as='column', do_compression='true')
+            savemat(outputDir+"/"+outputFile+".mat",
+                    mdict={outputFile: data}, oned_as='column', do_compression='true')
