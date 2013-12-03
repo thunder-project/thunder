@@ -10,10 +10,8 @@
 
 import sys
 import os
-from numpy import *
-from scipy.linalg import *
-from thunder.util.dataio import *
-from thunder.factorization.util import *
+from thunder.util.dataio import parse, saveout
+from thunder.factorization.util import svd1
 from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
@@ -27,14 +25,15 @@ dataFile = str(argsIn[1])
 outputDir = str(argsIn[2]) + "-pca"
 k = int(argsIn[3])
 
-if not os.path.exists(outputDir) : os.makedirs(outputDir)
+if not os.path.exists(outputDir):
+    os.makedirs(outputDir)
 
 # load data
 lines = sc.textFile(dataFile)
 data = parse(lines, "raw").cache()
 
 # do pca
-comps,latent,scores = svd1(data,k)
-saveout(comps,outputDir,"comps","matlab")
-saveout(latent,outputDir,"latent","matlab")
-saveout(scores,outputDir,"scores","matlab",k)
+comps, latent, scores = svd1(data, k)
+saveout(comps, outputDir, "comps", "matlab")
+saveout(latent, outputDir, "latent", "matlab")
+saveout(scores, outputDir, "scores", "matlab", k)
