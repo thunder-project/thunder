@@ -88,6 +88,6 @@ saveout(dists, outputDir, "dists", "matlab")
 saveout(centers, outputDir, "centers", "matlab")
 
 if dist == 'euclidean':
-    centers = centers.map(lambda x: x / norm(x), centers)
+    centers = map(lambda x: x / norm(x), centers)
     normDists = data.map(lambda p: closestPoint((p - mean(p))/norm(p), centers, 'corr')[1]).collect()
     saveout(normDists, outputDir, "normDists", "matlab")
