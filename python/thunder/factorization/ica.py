@@ -12,8 +12,8 @@
 
 import sys
 import os
-from numpy import random, sqrt, zeros, real, dot, outer, transpose
-from scipy.linalg import diag, sqrtm, inv, orth
+from numpy import random, sqrt, zeros, real, dot, outer, diag, transpose
+from scipy.linalg import sqrtm, inv, orth
 from thunder.util.dataio import parse, saveout
 from thunder.factorization.util import svd1
 from pyspark import SparkContext
