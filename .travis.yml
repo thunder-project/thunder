@@ -16,6 +16,5 @@ install:
   - "sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm"
 script:
     - export SPARK_HOME=`pwd`/spark-0.8.0-incubating-bin-hadoop1
-    - export PYTHONPATH=$PYTHONPATH:$SPARK_HOME/python:`pwd`/python
     - cd python/test
-    - nosetests
+    - ./run_tests.sh
