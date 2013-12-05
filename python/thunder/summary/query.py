@@ -1,5 +1,5 @@
 # query <master> <inputFile> <inds> <outputDir>
-# 
+#
 # query a data set by averaging together values with given indices
 #
 
@@ -41,7 +41,3 @@ else :
         n = len(indsTmp)
         ts[:,i] = data.filter(lambda (k,x) : k in indsTmp).map(lambda (k,x) : x).reduce(lambda x,y :x+y) / n
     saveout(ts,outputDir,"ts","matlab")
-
-
-
-
