@@ -24,7 +24,7 @@ if len(argsIn) < 5:
     exit(-1)
 
 # parse inputs
-sc = SparkContext(argsIn[0], "ica", pyFiles=['github/thunder/python/'])
+sc = SparkContext(argsIn[0], "ica", pyFiles=['/groups/freeman/home/freemanj11/github/thunder/python/'])
 dataFile = str(argsIn[1])
 outputDir = str(argsIn[2]) + "-ica"
 k = int(argsIn[3])
