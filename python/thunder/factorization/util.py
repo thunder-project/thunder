@@ -73,7 +73,7 @@ def svd3(data, k, meanSubtract=1):
         data = data.map(lambda x: x - mean(x))
 
     def outerProd(x):
-        return outer(x,x)
+        return outer(x, x)
 
     def outerSum(iterator):
         yield sum(outer(x, x) for x in iterator)
@@ -83,7 +83,7 @@ def svd3(data, k, meanSubtract=1):
 
     C = random.rand(k, d)
     iterNum = 0
-    iterMax = 3
+    iterMax = 20
     error = 100
     tol = 0.000001
 
