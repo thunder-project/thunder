@@ -1,6 +1,6 @@
 # utilities for factorization
 
-from numpy import random, mean, real, argsort, transpose, dot, inner, outer
+from numpy import random, mean, real, argsort, transpose, dot, inner, outer, zeros
 from scipy.linalg import eig, inv, orth
 
 
@@ -12,12 +12,15 @@ def svd1(data, k, meanSubtract=1):
         yield sum(outer(x, x) for x in iterator)
 
     n = data.count()
+    m = len(data.first())
 
     if meanSubtract == 1:
         data = data.map(lambda x: x - mean(x))
 
     # TODO: confirm speed increase for mapPartitions vs map
-    cov = data.mapPartitions(outerSum).reduce(lambda x, y: x + y) / n
+    #cov = data.mapPartitions(outerSum).reduce(lambda x, y: x + y) / n
+
+    cov = data.fold(zeros((m, m)), lambda x, y: outer(x, x) + y)
 
     w, v = eig(cov)
     w = real(w)
