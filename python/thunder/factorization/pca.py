@@ -24,13 +24,12 @@ sc = SparkContext(argsIn[0], "pca")
 dataFile = str(argsIn[1])
 outputDir = str(argsIn[2]) + "-pca"
 k = int(argsIn[3])
-nPartitions = int(argsIn[4])
 
 if not os.path.exists(outputDir):
     os.makedirs(outputDir)
 
 # load data
-lines = sc.textFile(dataFile, nPartitions)
+lines = sc.textFile(dataFile)
 data = parse(lines, "raw").cache()
 
 # do pca
