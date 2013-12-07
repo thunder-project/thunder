@@ -24,7 +24,7 @@ if len(argsIn) < 5:
     exit(-1)
 
 # parse inputs
-sc = SparkContext(argsIn[0], "ica")
+sc = SparkContext(argsIn[0], "ica", pyFiles=['github/thunder/python/'])
 dataFile = str(argsIn[1])
 outputDir = str(argsIn[2]) + "-ica"
 k = int(argsIn[3])
@@ -45,6 +45,10 @@ whtMat = real(dot(inv(diag(sqrt(latent))), comps))
 unwhtMat = real(dot(transpose(comps), diag(sqrt(latent))))
 wht = data.map(lambda x: dot(whtMat, x)).cache()
 print(wht.first())
+
+# save whitening matrices
+saveout(whtMat, outputDir, "whtMat", "matlab")
+saveout(unwhtMat, outputDir, "unwhtMat", "matlab")
 
 # do multiple independent component extraction
 B = orth(random.randn(k, c))
