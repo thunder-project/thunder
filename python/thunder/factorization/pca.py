@@ -11,7 +11,7 @@
 import sys
 import os
 from thunder.util.dataio import parse, saveout
-from thunder.factorization.util import svd1
+from thunder.factorization.util import svd1, svd3
 from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
@@ -33,7 +33,7 @@ lines = sc.textFile(dataFile)
 data = parse(lines, "raw").cache()
 
 # do pca
-comps, latent, scores = svd1(data, k)
+comps, latent, scores = svd3(data, k, 0)
 saveout(comps, outputDir, "comps", "matlab")
 saveout(latent, outputDir, "latent", "matlab")
 saveout(scores, outputDir, "scores", "matlab", k)
