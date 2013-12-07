@@ -1,6 +1,6 @@
 # utilities for factorization
 
-from numpy import random, mean, real, argsort, transpose, dot, inner, outer, zeros
+from numpy import random, mean, real, argsort, transpose, dot, inner, outer
 from scipy.linalg import eig, inv, orth
 
 
@@ -12,7 +12,6 @@ def svd1(data, k, meanSubtract=1):
         yield sum(outer(x, x) for x in iterator)
 
     n = data.count()
-    m = len(data.first())
 
     if meanSubtract == 1:
         data = data.map(lambda x: x - mean(x))
@@ -76,13 +75,16 @@ def svd3(data, k, meanSubtract=1):
     def outerProd(x):
         return outer(x, x)
 
+    def outerSum(iterator):
+        yield sum(outer(x, x) for x in iterator)
+
     C = random.rand(k, d)
     nIter = 20
 
     for iteration in range(nIter):
         Cold = C
         Cinv = dot(transpose(C), inv(dot(C, transpose(C))))
-        XX = data.map(lambda x: outerProd(dot(x, Cinv))).reduce(lambda x, y: x + y)
+        XX = data.map(lambda x: dot(x, Cinv)).mapPartitions(outerSum).reduce(lambda x, y: x + y)
         XXinv = inv(XX)
         C = data.map(lambda x: outer(x, dot(dot(x, Cinv), XXinv))).reduce(
             lambda x, y: x + y)
@@ -90,7 +92,7 @@ def svd3(data, k, meanSubtract=1):
         error = sum((C-Cold) ** 2)
 
     C = transpose(orth(transpose(C)))
-    cov = data.map(lambda x: outerProd(dot(x, transpose(C)))).reduce(
+    cov = data.map(lambda x: dot(x, transpose(C))).mapPartitions(outerSum).reduce(
         lambda x, y: x + y) / n
     w, v = eig(cov)
     w = real(w)
