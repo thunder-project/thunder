@@ -38,7 +38,7 @@ data = parse(lines, "raw", None, [200, 1000]).cache()
 n = data.count()
 
 # reduce dimensionality
-comps, latent, scores = svd3(data, k, 0)
+comps, latent, scores = svd1(data, k, 0)
 
 # whiten data
 whtMat = real(dot(inv(diag(sqrt(latent))), comps))
