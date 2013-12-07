@@ -34,7 +34,7 @@ if not os.path.exists(outputDir):
 
 # load data
 lines = sc.textFile(dataFile)
-data = parse(lines, "raw").cache()
+data = parse(lines, "raw", None, [200, 1000]).cache()
 n = data.count()
 
 # reduce dimensionality
