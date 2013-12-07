@@ -50,11 +50,11 @@ B = orth(random.randn(k, c))
 Bold = zeros((k, c))
 iterNum = 0
 minAbsCos = 0
-termTol = 0.000001
+tol = 0.000001
 iterMax = 1000
 errVec = zeros(iterMax)
 
-while (iterNum < iterMax) & ((1 - minAbsCos) > termTol):
+while (iterNum < iterMax) & ((1 - minAbsCos) > tol):
     iterNum += 1
     # update rule for pow3 nonlinearity (TODO: add other nonlins)
     B = wht.map(lambda x: outer(x, dot(x, B) ** 3)).reduce(lambda x, y: x + y) / n - 3 * B
