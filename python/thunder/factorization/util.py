@@ -67,13 +67,10 @@ def svd2(data, k, meanSubtract=1):
 def svd3(data, k, meanSubtract=1):
 
     n = data.count()
-    d = len(data.first()[1])
+    d = len(data.first())
 
     if meanSubtract == 1:
         data = data.map(lambda x: x - mean(x))
-
-    def outerProd(x):
-        return outer(x, x)
 
     def outerSum(iterator):
         yield sum(outer(x, x) for x in iterator)
