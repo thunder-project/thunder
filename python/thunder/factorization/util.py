@@ -75,6 +75,9 @@ def svd3(data, k, meanSubtract=1):
     def outerSum(iterator):
         yield sum(outer(x, x) for x in iterator)
 
+    def outerSum2(iterator, other1, other2):
+        yield sum(outer(x, dot(dot(x, other1), other2)) for x in iterator)
+
     C = random.rand(k, d)
     nIter = 20
 
@@ -83,8 +86,7 @@ def svd3(data, k, meanSubtract=1):
         Cinv = dot(transpose(C), inv(dot(C, transpose(C))))
         XX = data.map(lambda x: dot(x, Cinv)).mapPartitions(outerSum).reduce(lambda x, y: x + y)
         XXinv = inv(XX)
-        C = data.map(lambda x: outer(x, dot(dot(x, Cinv), XXinv))).reduce(
-            lambda x, y: x + y)
+        C = data.mapPartitions(lambda x: outerSum2(x, Cinv, XXinv)).reduce(lambda x, y: x + y)
         C = transpose(C)
         error = sum((C-Cold) ** 2)
 
