@@ -72,6 +72,9 @@ def svd3(data, k, meanSubtract=1):
     if meanSubtract == 1:
         data = data.map(lambda x: x - mean(x))
 
+    def outerProd(x):
+        return outer(x,x)
+
     def outerSum(iterator):
         yield sum(outer(x, x) for x in iterator)
 
@@ -87,9 +90,9 @@ def svd3(data, k, meanSubtract=1):
     while (iterNum < iterMax) & (error > tol):
         Cold = C
         Cinv = dot(transpose(C), inv(dot(C, transpose(C))))
-        XX = data.map(lambda x: dot(x, Cinv)).mapPartitions(outerSum).reduce(lambda x, y: x + y)
+        XX = data.map(lambda x: outerProd(dot(x, Cinv))).reduce(lambda x, y: x + y)
         XXinv = inv(XX)
-        C = data.mapPartitions(lambda x: outerSum2(x, Cinv, XXinv)).reduce(lambda x, y: x + y)
+        C = data.map(lambda x: outer(x, dot(dot(x, Cinv), XXinv))).reduce(lambda x, y: x + y)
         C = transpose(C)
         error = sum(sum((C-Cold) ** 2))
         iterNum += 1
