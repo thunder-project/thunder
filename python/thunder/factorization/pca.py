@@ -16,7 +16,7 @@ from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
 if len(argsIn) < 4:
-    print >> sys.stderr, "usage: pca <master> <dataFile> <outputDir> <k>"
+    print >> sys.stderr, "usage: pca <master> <dataFile> <outputDir> <k> <nPartitions>"
     exit(-1)
 
 # parse inputs
@@ -24,12 +24,13 @@ sc = SparkContext(argsIn[0], "pca")
 dataFile = str(argsIn[1])
 outputDir = str(argsIn[2]) + "-pca"
 k = int(argsIn[3])
+nPartitions = int(argsIn[4])
 
 if not os.path.exists(outputDir):
     os.makedirs(outputDir)
 
 # load data
-lines = sc.textFile(dataFile)
+lines = sc.textFile(dataFile, nPartitions)
 data = parse(lines, "raw").cache()
 
 # do pca
