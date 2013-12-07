@@ -34,6 +34,6 @@ data = parse(lines, "raw").cache()
 
 # do pca
 comps, latent, scores = svd3(data, k, 0)
-#saveout(comps, outputDir, "comps", "matlab")
-#saveout(latent, outputDir, "latent", "matlab")
-#saveout(scores, outputDir, "scores", "matlab", k)
+saveout(comps, outputDir, "comps", "matlab")
+saveout(latent, outputDir, "latent", "matlab")
+saveout(scores, outputDir, "scores", "matlab", k)
