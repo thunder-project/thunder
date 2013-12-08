@@ -12,12 +12,39 @@
 
 import sys
 import os
-from numpy import random, sqrt, zeros, real, dot, outer, diag, transpose
+from numpy import random, sqrt, zeros, real, dot, outer, diag, transpose, array, mean
 from scipy.io import loadmat
 from scipy.linalg import sqrtm, inv, orth
 #from thunder.util.dataio import parse, saveout
 #from thunder.factorization.util import svd1, svd2, svd3
 from pyspark import SparkContext
+
+
+def parse(data, filter="raw", inds=None, tRange=None, xy=None):
+
+    def parseVector(line, filter="raw", inds=None, tRange=None, xy=None):
+
+        vec = [float(x) for x in line.split(' ')]
+        ts = array(vec[3:])  # get tseries
+        if filter == "dff":  # convert to dff
+            meanVal = mean(ts)
+            ts = (ts - meanVal) / (meanVal + 0.1)
+        if filter == "sub":  # subtracts the mean
+            ts = (ts - mean(ts))
+        if tRange is not None:  # subselects a range of indices
+            ts = ts[tRange[0]:tRange[1]]
+        if inds is not None:  # keep xyz keys
+            if inds == "xyz":
+                return (int(vec[0]), int(vec[1]), int(vec[2])), ts
+            # TODO: once top is implemented in pyspark, use to get xy bounds
+            if inds == "linear":
+                k = int(vec[0]) + int((vec[1] - 1)*xy[0] + int((vec[2]-1)*xy[1])) - 1
+                return k, ts
+        else:
+            return ts
+
+    return data.map(lambda x: parseVector(x, filter, inds, tRange, xy))
+
 
 argsIn = sys.argv[1:]
 if len(argsIn) < 5:
@@ -32,6 +59,7 @@ k = int(argsIn[3])
 c = int(argsIn[4])
 if not os.path.exists(outputDir):
     os.makedirs(outputDir)
+
 
 # load data
 lines = sc.textFile(dataFile)
