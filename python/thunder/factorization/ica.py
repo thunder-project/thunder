@@ -78,6 +78,7 @@ while (iterNum < iterMax) & ((1 - minAbsCos) > tol):
     minAbsCos = min(abs(diag(dot(transpose(B), Bold))))
     # store results
     Bold = B
+    saveout(B, outputDir, "B", "matlab")
     errVec[iterNum-1] = (1 - minAbsCos)
 
 # get unmixing matrix
