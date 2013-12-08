@@ -64,7 +64,7 @@ def svd2(data, k, meanSubtract=1):
         iteration += 1
 
 
-def svd3(data, k, meanSubtract=1):
+def svd3(sc, data, k, meanSubtract=1):
 
     n = data.count()
     d = len(data.first())
@@ -90,9 +90,11 @@ def svd3(data, k, meanSubtract=1):
     while (iterNum < iterMax) & (error > tol):
         Cold = C
         Cinv = dot(transpose(C), inv(dot(C, transpose(C))))
-        XX = data.map(lambda x: outerProd(dot(x, Cinv))).reduce(lambda x, y: x + y)
+        preMult1 = sc.broadcast(Cinv)
+        XX = data.map(lambda x: outerProd(dot(x, preMult1.value))).reduce(lambda x, y: x + y)
         XXinv = inv(XX)
-        C = data.map(lambda x: outer(x, dot(dot(x, Cinv), XXinv))).reduce(lambda x, y: x + y)
+        preMult2 = sc.broadcast(dot(Cinv, XXinv))
+        C = data.map(lambda x: outer(x, dot(x, preMult2.value))).reduce(lambda x, y: x + y)
         C = transpose(C)
         error = sum(sum((C-Cold) ** 2))
         iterNum += 1

@@ -33,7 +33,7 @@ lines = sc.textFile(dataFile)
 data = parse(lines, "raw").cache()
 
 # do pca
-comps, latent, scores = svd3(data, k, 0)
+comps, latent, scores = svd3(sc, data, k, 0)
 saveout(comps, outputDir, "comps", "matlab")
 saveout(latent, outputDir, "latent", "matlab")
 saveout(scores, outputDir, "scores", "matlab", k)
