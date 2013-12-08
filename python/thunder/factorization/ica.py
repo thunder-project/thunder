@@ -14,6 +14,7 @@ import sys
 import os
 from numpy import random, sqrt, zeros, real, dot, outer, diag, transpose
 from scipy.linalg import sqrtm, inv, orth
+from scipy.io import loadmat
 from thunder.util.dataio import parse, saveout
 from thunder.factorization.util import svd1, svd2, svd3, svd4
 from pyspark import SparkContext
@@ -42,24 +43,24 @@ data = parse(lines, "raw", None, [150, 1000]).cache()
 n = data.count()
 
 # reduce dimensionality
-comps, latent, scores = svd4(sc, data, k, 0)
+#comps, latent, scores = svd4(sc, data, k, 0)
 
 # whiten data
-whtMat = real(dot(inv(diag(sqrt(latent))), comps))
-unwhtMat = real(dot(transpose(comps), diag(sqrt(latent))))
+#whtMat = real(dot(inv(diag(sqrt(latent))), comps))
+#unwhtMat = real(dot(transpose(comps), diag(sqrt(latent))))
 
-#whtMat = loadmat(outputDir + "/whtMat.mat")['whtMat']
-#unwhtMat = loadmat(outputDir + "/unwhtMat.mat")['unwhtMat']
+whtMat = loadmat(outputDir + "/whtMat.mat")['whtMat']
+unwhtMat = loadmat(outputDir + "/unwhtMat.mat")['unwhtMat']
 wht = data.map(lambda x: dot(whtMat, x))
 #print(wht.first())
 
 # save whitening matrices
-saveout(whtMat, outputDir, "whtMat", "matlab")
-saveout(unwhtMat, outputDir, "unwhtMat", "matlab")
+#saveout(whtMat, outputDir, "whtMat", "matlab")
+#saveout(unwhtMat, outputDir, "unwhtMat", "matlab")
 
 # do multiple independent component extraction
-B = orth(random.randn(k, c))
-#B = loadmat(outputDir + "/B.mat")['B']
+#B = orth(random.randn(k, c))
+B = loadmat(outputDir + "/B.mat")['B']
 Bold = zeros((k, c))
 iterNum = 0
 minAbsCos = 0
