@@ -59,7 +59,8 @@ wht = data.map(lambda x: dot(whtMat, x))
 #saveout(unwhtMat, outputDir, "unwhtMat", "matlab")
 
 # do multiple independent component extraction
-B = orth(random.randn(k, c))
+#B = orth(random.randn(k, c))
+B = loadmat(outputDir + "/B.mat")['B']
 Bold = zeros((k, c))
 iterNum = 0
 minAbsCos = 0
