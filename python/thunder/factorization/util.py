@@ -1,8 +1,9 @@
 # utilities for factorization
 
-from numpy import random, mean, real, argsort, transpose, dot, inner, outer
+from numpy import random, mean, real, argsort, transpose, dot, inner, outer, zeros, shape
 from scipy.linalg import eig, inv, orth
 from thunder.util.dataio import *
+from pyspark.accumulators import AccumulatorParam
 
 
 # Direct method for computing SVD by calculating covariance matrix,
@@ -114,6 +115,43 @@ def svd3(sc, data, k, meanSubtract=1):
     inds = argsort(w)[::-1]
     latent = w[inds[0:k]]
     comps = dot(transpose(v[:, inds[0:k]]), C)
+    scores = data.map(lambda x: inner(x, comps))
+
+    return comps, latent, scores
+
+
+def svd4(sc, data, k, meanSubtract=1):
+
+    class MatrixAccumulatorParam(AccumulatorParam):
+        def zero(self, value):
+            return zeros(shape(value))
+
+        def addInPlace(self, val1, val2):
+            val1 += val2
+            return val1
+
+    n = data.count()
+    m = len(data.first())
+
+    global cov
+
+    cov = sc.accumulator(zeros((m, m)), MatrixAccumulatorParam())
+
+    def outerSum(x):
+        global cov
+        cov += outer(x, x)
+
+    if meanSubtract == 1:
+        data = data.map(lambda x: x - mean(x))
+
+    data.foreach(outerSum)
+
+    w, v = eig(cov.value)
+    w = real(w)
+    v = real(v)
+    inds = argsort(w)[::-1]
+    latent = w[inds[0:k]]
+    comps = transpose(v[:, inds[0:k]])
     scores = data.map(lambda x: inner(x, comps))
 
     return comps, latent, scores

@@ -15,7 +15,7 @@ import os
 from numpy import random, sqrt, zeros, real, dot, outer, diag, transpose
 from scipy.linalg import sqrtm, inv, orth
 from thunder.util.dataio import parse, saveout
-from thunder.factorization.util import svd1, svd2, svd3
+from thunder.factorization.util import svd1, svd2, svd3, svd4
 from pyspark import SparkContext
 
 
@@ -42,7 +42,7 @@ data = parse(lines, "raw", None, [150, 1000]).cache()
 n = data.count()
 
 # reduce dimensionality
-comps, latent, scores = svd1(data, k, 0)
+comps, latent, scores = svd4(sc, data, k, 0)
 
 # whiten data
 whtMat = real(dot(inv(diag(sqrt(latent))), comps))
@@ -70,8 +70,8 @@ errVec = zeros(iterMax)
 while (iterNum < iterMax) & ((1 - minAbsCos) > tol):
     iterNum += 1
     # update rule for pow3 nonlinearity (TODO: add other nonlins)
-    B = wht.map(lambda x: (x, dot(x, B) ** 3)).mapPartitions(outerSum).reduce(lambda x, y: x + y) / n - 3 * B
-    #B = wht.map(lambda x: outer(x, dot(x, B) ** 3)).reduce(lambda x, y: x + y) / n - 3 * B
+    #B = wht.map(lambda x: (x, dot(x, B) ** 3)).mapPartitions(outerSum).reduce(lambda x, y: x + y) / n - 3 * B
+    B = wht.map(lambda x: outer(x, dot(x, B) ** 3)).reduce(lambda x, y: x + y) / n - 3 * B
     # orthognalize
     B = dot(B, real(sqrtm(inv(dot(transpose(B), B)))))
     # evaluate error
