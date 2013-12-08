@@ -77,19 +77,28 @@ errVec = zeros(iterMax)
 
 global Bnew
 
-def outerSum(iterator):
-    yield sum(outer(x, x) for x in iterator)
+def outerSum(iterator, B):
+    yield sum(outer(x, dot(x, B) ** 3) for x in iterator)
+
+def matrixAccum(x):
+    global Bnew
+    Bnew += x
 
 def outerSumAccum(x):
     global Bnew
     Bnew += outer(x, x)
 
+def outerSumAccumOther(x, B):
+    global Bnew
+    Bnew += outer(x, dot(x, B) ** 3)
+
 while (iterNum < iterMax) & ((1 - minAbsCos) > tol):
     iterNum += 1
     # update rule for pow3 nonlinearity (TODO: add other nonlins)
     Bnew = sc.accumulator(zeros((k, c)), MatrixAccumulatorParam())
-    wht.map(lambda x: (x, dot(x, B) ** 3)).mapPartitions(outerSum).foreach(outerSumAccum)
-    #wht.foreach(lambda x: outerSumOther(x, B))
+    #wht.foreach(lambda x: outerSumAccumOther(x, B))
+    #wht.mapPartitions(lambda x: outerSum(x, B)).foreach(matrixAccum)
+    wht.foreach(lambda x: outerSumAccumOther(x, B))
     B = Bnew.value / n - 3 * B
     #B = wht.map(lambda x: outer(x, dot(x, B) ** 3)).reduce(lambda x, y: x + y) / n - 3 * B
     # orthognalize
