@@ -146,7 +146,7 @@ def svd4(sc, data, k, meanSubtract=1):
 
     data.foreach(outerSum)
 
-    w, v = eig(cov.value)
+    w, v = eig(cov.value / n)
     w = real(w)
     v = real(v)
     inds = argsort(w)[::-1]
