@@ -49,7 +49,7 @@ data = parse(lines, "raw", None, [150, 1000]).cache()
 n = data.count()
 
 # reduce dimensionality
-comps, latent, scores = svd4(sc, data, k, 0)
+#comps, latent, scores = svd4(sc, data, k, 0)
 
 # whiten data
 #whtMat = real(dot(inv(diag(sqrt(latent))), comps))
@@ -87,11 +87,11 @@ def outerSumAccum(x):
 while (iterNum < iterMax) & ((1 - minAbsCos) > tol):
     iterNum += 1
     # update rule for pow3 nonlinearity (TODO: add other nonlins)
-    #Bnew = sc.accumulator(zeros((k, c)), MatrixAccumulatorParam())
-    #wht.map(lambda x: (x, dot(x, B) ** 3)).mapPartitions(outerSum).foreach(outerSumAccum)
+    Bnew = sc.accumulator(zeros((k, c)), MatrixAccumulatorParam())
+    wht.map(lambda x: (x, dot(x, B) ** 3)).mapPartitions(outerSum).foreach(outerSumAccum)
     #wht.foreach(lambda x: outerSumOther(x, B))
-    #B = Bnew.value / n - 3 * B
-    B = wht.map(lambda x: outer(x, dot(x, B) ** 3)).sum() / n - 3 * B
+    B = Bnew.value / n - 3 * B
+    #B = wht.map(lambda x: outer(x, dot(x, B) ** 3)).reduce(lambda x, y: x + y) / n - 3 * B
     # orthognalize
     B = dot(B, real(sqrtm(inv(dot(transpose(B), B)))))
     # evaluate error
