@@ -21,8 +21,8 @@ def svd1(data, k, meanSubtract=1):
         return outer(x, x)
 
     # TODO: confirm speed increase for mapPartitions vs map
-    #cov = data.mapPartitions(outerSum).reduce(lambda x, y: x + y) / n
-    cov = data.map(lambda x: outerProd(x)).reduce(lambda x, y: x + y) / n
+    cov = data.mapPartitions(outerSum).reduce(lambda x, y: x + y) / n
+    #cov = data.map(lambda x: outerProd(x)).reduce(lambda x, y: x + y) / n
 
     w, v = eig(cov)
     w = real(w)
