@@ -15,8 +15,8 @@ import os
 from numpy import random, sqrt, zeros, real, dot, outer, diag, transpose
 from scipy.io import loadmat
 from scipy.linalg import sqrtm, inv, orth
-from thunder.util.dataio import parse, saveout
-from thunder.factorization.util import svd1, svd2, svd3
+#from thunder.util.dataio import parse, saveout
+#from thunder.factorization.util import svd1, svd2, svd3
 from pyspark import SparkContext
 
 argsIn = sys.argv[1:]
@@ -82,5 +82,5 @@ W = dot(transpose(B), whtMat)
 sigs = data.map(lambda x: dot(W, x))
 
 # save output files
-saveout(W, outputDir, "W", "matlab")
-saveout(sigs, outputDir, "sigs", "matlab", c)
+#saveout(W, outputDir, "W", "matlab")
+#saveout(sigs, outputDir, "sigs", "matlab", c)
