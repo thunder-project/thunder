@@ -88,7 +88,7 @@ def svd3(sc, data, k, meanSubtract=1):
 
     C = random.rand(k, d)
     iterNum = 0
-    iterMax = 20
+    iterMax = 10
     error = 100
     tol = 0.000001
 
