@@ -5,39 +5,43 @@
 
 import sys
 import os
+import argparse
 from numpy import *
 from scipy.linalg import *
+from scipy.io import loadmat
+from thunder.util.dataio import *
 from pyspark import SparkContext
 
-argsIn = sys.argv[1:]
-if len(argsIn) < 4:
-    print >> sys.stderr, \
-    "(query) usage: query <master> <inputFile> <inds> <outputDir>"
-    exit(-1)
 
-# parse inputs
-sc = SparkContext(argsIn[0], "query")
-inputFile = str(argsIn[1])
-indsFile = str(argsIn[2])
-outputDir = str(argsIn[3]) + "-query"
+def query(sc, dataFile, outputDir, indsFile):
 
-# parse data
-lines = sc.textFile(dataFile)
-data = parse(lines, "raw", "linear").cache()
+    if not os.path.exists(outputDir):
+        os.makedirs(outputDir)
 
-inds = loadmat(indsFile)['inds'][0]
+    # parse data
+    lines = sc.textFile(dataFile)
+    data = parse(lines, "raw", "linear").cache()
 
-if len(inds) == 1 :
-    indsTmp = inds[0]
-    n = len(indsTmp)
-    ts = data.filter(lambda (k,x) : k in indsTmp).map(lambda (k,x) : x).reduce(lambda x,y :x+y) / n
-    saveout(ts,outputDir,"ts","matlab")
-
-else :
+    # loop over indices, averaging time series
+    inds = loadmat(indsFile)['inds'][0]
     nInds = len(inds)
-    ts = zeros((len(data.first()[1]),nInds))
-    for i in range(0,nInds) :
+    ts = zeros((len(data.first()[1]), nInds))
+    for i in range(0, nInds):
         indsTmp = inds[i]
         n = len(indsTmp)
-        ts[:,i] = data.filter(lambda (k,x) : k in indsTmp).map(lambda (k,x) : x).reduce(lambda x,y :x+y) / n
-    saveout(ts,outputDir,"ts","matlab")
+        ts[:, i] = data.filter(lambda k, x: k in indsTmp).map(lambda k, x: x).reduce(lambda x, y: x + y) / n
+    saveout(ts, outputDir, "ts", "matlab")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="query time series data by averaging values for given indices")
+    parser.add_argument("master", type=str)
+    parser.add_argument("dataFile", type=str)
+    parser.add_argument("outputDir", type=str)
+    parser.add_argument("indsFile", type=str)
+
+    args = parser.parse_args()
+    sc = SparkContext(args.master, "query")
+    outputDir = args.outputDir + "-query"
+
+    query(sc, args.dataFile, args.outputDir, args.indsFile)
