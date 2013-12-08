@@ -47,7 +47,7 @@ n = data.count()
 
 whtMat = loadmat(outputDir + "/whtMat.mat")['whtMat']
 unwhtMat = loadmat(outputDir + "/unwhtMat.mat")['unwhtMat']
-wht = data.map(lambda x: dot(whtMat, x))
+wht = data.map(lambda x: dot(whtMat, x)).cache()
 #print(wht.first())
 
 # save whitening matrices
