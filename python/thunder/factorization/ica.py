@@ -18,16 +18,7 @@ from scipy.io import loadmat
 from thunder.util.dataio import parse, saveout
 from thunder.factorization.util import svd1, svd2, svd3, svd4
 from pyspark import SparkContext
-from pyspark.accumulators import AccumulatorParam
 
-
-class MatrixAccumulatorParam(AccumulatorParam):
-    def zero(self, value):
-        return zeros(shape(value))
-
-    def addInPlace(self, val1, val2):
-        val1 += val2
-        return val1
 
 argsIn = sys.argv[1:]
 if len(argsIn) < 5:
@@ -65,8 +56,8 @@ wht = data.map(lambda x: dot(whtMat, x))
 #saveout(unwhtMat, outputDir, "unwhtMat", "matlab")
 
 # do multiple independent component extraction
-B = orth(random.randn(k, c))
-#B = loadmat(outputDir + "/B.mat")['B']
+#B = orth(random.randn(k, c))
+B = loadmat(outputDir + "/B.mat")['B']
 Bold = zeros((k, c))
 iterNum = 0
 minAbsCos = 0
@@ -75,31 +66,9 @@ iterMax = 1000
 errVec = zeros(iterMax)
 
 
-global Bnew
-
-def outerSum(iterator, B):
-    yield sum(outer(x, dot(x, B) ** 3) for x in iterator)
-
-def matrixAccum(x):
-    global Bnew
-    Bnew += x
-
-def outerSumAccum(x):
-    global Bnew
-    Bnew += outer(x, x)
-
-def outerSumAccumOther(x, B):
-    global Bnew
-    Bnew += outer(x, dot(x, B) ** 3)
-
 while (iterNum < iterMax) & ((1 - minAbsCos) > tol):
     iterNum += 1
     # update rule for pow3 nonlinearity (TODO: add other nonlins)
-    #Bnew = sc.accumulator(zeros((k, c)), MatrixAccumulatorParam())
-    #wht.foreach(lambda x: outerSumAccumOther(x, B))
-    #wht.mapPartitions(lambda x: outerSum(x, B)).foreach(matrixAccum)
-    #wht.foreach(lambda x: outerSumAccumOther(x, B))
-    #B = Bnew.value / n - 3 * B
     B = wht.map(lambda x: outer(x, dot(x, B) ** 3)).sum() / n - 3 * B
     # orthognalize
     B = dot(B, real(sqrtm(inv(dot(transpose(B), B)))))
