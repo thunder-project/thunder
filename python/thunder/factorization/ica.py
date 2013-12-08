@@ -95,7 +95,7 @@ def outerSumAccumOther(x, B):
 while (iterNum < iterMax) & ((1 - minAbsCos) > tol):
     iterNum += 1
     # update rule for pow3 nonlinearity (TODO: add other nonlins)
-    Bnew = sc.accumulator(zeros((k, c)), MatrixAccumulatorParam())
+    #Bnew = sc.accumulator(zeros((k, c)), MatrixAccumulatorParam())
     #wht.foreach(lambda x: outerSumAccumOther(x, B))
     #wht.mapPartitions(lambda x: outerSum(x, B)).foreach(matrixAccum)
     #wht.foreach(lambda x: outerSumAccumOther(x, B))
