@@ -2,6 +2,7 @@
 
 from numpy import random, mean, real, argsort, transpose, dot, inner, outer
 from scipy.linalg import eig, inv, orth
+from thunder.util.dataio import *
 
 
 # Direct method for computing SVD by calculating covariance matrix,
@@ -87,7 +88,7 @@ def svd3(sc, data, k, meanSubtract=1):
 
     C = random.rand(k, d)
     iterNum = 0
-    iterMax = 10
+    iterMax = 4
     error = 100
     tol = 0.000001
 
@@ -100,6 +101,7 @@ def svd3(sc, data, k, meanSubtract=1):
         preMult2 = sc.broadcast(dot(Cinv, XXinv))
         C = data.map(lambda x: outer(x, dot(x, preMult2.value))).reduce(lambda x, y: x + y)
         C = transpose(C)
+
         error = sum(sum((C-Cold) ** 2))
         iterNum += 1
 
