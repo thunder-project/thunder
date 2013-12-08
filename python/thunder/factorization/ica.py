@@ -19,6 +19,10 @@ from thunder.util.dataio import parse, saveout
 from thunder.factorization.util import svd1, svd2, svd3
 from pyspark import SparkContext
 
+
+def outerSum(iterator):
+    yield sum(outer(x, y) for x, y in iterator)
+
 argsIn = sys.argv[1:]
 if len(argsIn) < 5:
     print >> sys.stderr, "usage: ica <master> <inputFile> <outputFile> <k> <c>"
@@ -66,7 +70,8 @@ errVec = zeros(iterMax)
 while (iterNum < iterMax) & ((1 - minAbsCos) > tol):
     iterNum += 1
     # update rule for pow3 nonlinearity (TODO: add other nonlins)
-    B = wht.map(lambda x: outer(x, dot(x, B) ** 3)).reduce(lambda x, y: x + y) / n - 3 * B
+    B = wht.map(lambda x: (x, dot(x, B) ** 3)).mapPartitions(outerSum).reduce(lambda x, y: x + y) / n - 3 * B
+    #B = wht.map(lambda x: outer(x, dot(x, B) ** 3)).reduce(lambda x, y: x + y) / n - 3 * B
     # orthognalize
     B = dot(B, real(sqrtm(inv(dot(transpose(B), B)))))
     # evaluate error
