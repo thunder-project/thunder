@@ -24,16 +24,16 @@ def ref(sc, dataFile, outputDir, mode):
     data = parse(lines, "raw", "xyz").cache()
 
     # get z ordering
-    zinds = data.filter(lambda k, x: (k[0] == 1) & (k[1] == 1)).map(lambda k, x: k[2])
+    zinds = data.filter(lambda (k, x): (k[0] == 1) & (k[1] == 1)).map(lambda (k, x): k[2])
     saveout(zinds, outputDir, "zinds", "matlab")
 
     # compute summary statistics
-    if mode == 'med':
-        refout = data.map(lambda k, x: median(x))
+    if mode == 'median':
+        refout = data.map(lambda (k, x): median(x))
     if mode == 'mean':
-        refout = data.map(lambda k, x: mean(x))
+        refout = data.map(lambda (k, x): mean(x))
     if mode == 'std':
-        refout = data.map(lambda k, x: std(x))
+        refout = data.map(lambda (k, x): std(x))
 
     saveout(refout, outputDir, "ref" + mode, "matlab")
 
