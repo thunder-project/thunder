@@ -6,7 +6,6 @@
 # pyspark ref.py local data/fish.txt results mean
 #
 
-import sys
 import os
 import argparse
 from numpy import median, std
