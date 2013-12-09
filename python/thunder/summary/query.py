@@ -12,14 +12,15 @@ from thunder.util.dataio import *
 from pyspark import SparkContext
 
 
-def query(sc, dataFile, outputDir, indsFile):
+def query(sc, dataFile, outputDir, indsFile, mxX, mxY):
 
     if not os.path.exists(outputDir):
         os.makedirs(outputDir)
 
     # parse data
+    # TODO: once top is implemented in pyspark, use instead of mxX and mxY
     lines = sc.textFile(dataFile)
-    data = parse(lines, "raw", "linear").cache()
+    data = parse(lines, "dff", "linear", None, [mxX, mxY]).cache()
 
     # loop over indices, averaging time series
     inds = loadmat(indsFile)['inds'][0]
@@ -38,8 +39,10 @@ if __name__ == "__main__":
     parser.add_argument("dataFile", type=str)
     parser.add_argument("outputDir", type=str)
     parser.add_argument("indsFile", type=str)
+    parser.add_argument("mxX", type=int)
+    parser.add_argument("mxY", type=int)
 
     args = parser.parse_args()
     sc = SparkContext(args.master, "query")
 
-    query(sc, args.dataFile, args.outputDir + "-query", args.indsFile)
+    query(sc, args.dataFile, args.outputDir + "-query", args.indsFile, args.mxX, args.mxY)
