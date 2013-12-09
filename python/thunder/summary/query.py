@@ -3,7 +3,6 @@
 # query a data set by averaging together values with given indices
 #
 
-import sys
 import os
 import argparse
 from numpy import *
@@ -29,7 +28,7 @@ def query(sc, dataFile, outputDir, indsFile):
     for i in range(0, nInds):
         indsTmp = inds[i]
         n = len(indsTmp)
-        ts[:, i] = data.filter(lambda k, x: k in indsTmp).map(lambda k, x: x).reduce(lambda x, y: x + y) / n
+        ts[:, i] = data.filter(lambda (k, x): k in indsTmp).map(lambda (k, x): x).reduce(lambda x, y: x + y) / n
     saveout(ts, outputDir, "ts", "matlab")
 
 
