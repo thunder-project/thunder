@@ -7,9 +7,8 @@
 #
 
 import argparse
-import sys
 import os
-from numpy import mean, array, angle, abs, sqrt, zeros, fix, size, pi
+from numpy import angle, abs, sqrt, zeros, fix, size, pi
 from numpy.fft import fft
 from thunder.util.dataio import *
 from pyspark import SparkContext
