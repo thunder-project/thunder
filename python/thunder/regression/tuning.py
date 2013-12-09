@@ -65,6 +65,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     sc = SparkContext(args.master, "tuning")
-    outputDir = args.outputDir + "-tuning"
 
-    tuning(sc, args.dataFile, args.modelFile, outputDir, args.regressMode, args.tuningMode)
+    tuning(sc, args.dataFile, args.modelFile, args.outputDir + "-tuning", args.regressMode, args.tuningMode)

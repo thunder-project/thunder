@@ -42,6 +42,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     sc = SparkContext(args.master, "query")
-    outputDir = args.outputDir + "-query"
 
-    query(sc, args.dataFile, args.outputDir, args.indsFile)
+    query(sc, args.dataFile, args.outputDir + "-query", args.indsFile)

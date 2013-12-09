@@ -47,6 +47,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     sc = SparkContext(args.master, "ref")
-    outputDir = args.outputDir + "-ref"
 
-    ref(sc, args.dataFile, args.outputDir, args.mode)
+    ref(sc, args.dataFile, args.outputDir + "-ref", args.mode)

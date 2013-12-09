@@ -92,6 +92,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     sc = SparkContext(args.master, "shotgun")
-    outputDir = args.outputDir + "-shotgun"
 
-    shotgun(sc, args.dataFile, args.modelFile, outputDir, args.lam)
+    shotgun(sc, args.dataFile, args.modelFile, args.outputDir + "-shotgun", args.lam)

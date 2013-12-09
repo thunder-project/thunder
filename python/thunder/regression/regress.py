@@ -63,6 +63,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     sc = SparkContext(args.master, "regress")
-    outputDir = args.outputDir + "-regress"
 
-    regress(sc, args.dataFile, args.modelFile, outputDir, args.regressMode)
+    regress(sc, args.dataFile, args.modelFile, args.outputDir + "-regress", args.regressMode)

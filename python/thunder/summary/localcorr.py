@@ -80,6 +80,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     sc = SparkContext(args.master, "localcorr")
-    outputDir = args.outputDir + "-localcorr"
 
-    localcorr(sc, args.dataFile, args.outputDir, args.sz, args.mxX, args.mxY)
+    localcorr(sc, args.dataFile, args.outputDir + "-localcorr", args.sz, args.mxX, args.mxY)

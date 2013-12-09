@@ -60,6 +60,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     sc = SparkContext(args.master, "fourier")
-    outputDir = args.outputDir + "-fourier"
 
-    fourier(sc, args.dataFile, args.outputDir, args.freq)
+    fourier(sc, args.dataFile, args.outputDir + "-fourier", args.freq)
