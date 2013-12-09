@@ -6,7 +6,6 @@ from thunder.regression.shotgun import shotgun
 from thunder.regression.tuning import tuning
 from test_utils import PySparkTestCase
 
-
 # Hack to find the data files:
 DATA_DIR = os.path.join(os.path.dirname(__file__), "../../data")
 FISH_DATA = os.path.join(DATA_DIR, "fish.txt")
@@ -17,8 +16,6 @@ FISH_BILINEAR_MODEL = os.path.join(DATA_DIR, "regression/fish_bilinear")
 
 
 # For now, this only tests that the jobs run without crashing:
-
-
 class RegressionTestCase(PySparkTestCase):
     def setUp(self):
         super(RegressionTestCase, self).setUp()
