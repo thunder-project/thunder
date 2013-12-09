@@ -8,11 +8,19 @@
 #
 
 import argparse
-import sys
 import os
-from numpy import *
+from numpy import corrcoef
 from thunder.util.dataio import *
 from pyspark import SparkContext
+
+
+def clip(val, mn, mx):
+    if val < mn:
+        return mn
+    if val > mx:
+        return mx
+    else:
+        return val
 
 
 def mapToNeighborhood(ind, ts, sz, mxX, mxY):
@@ -30,13 +38,6 @@ def mapToNeighborhood(ind, ts, sz, mxX, mxY):
     return out
 
 
-def clip(val, mn, mx):
-    if val < mn:
-        return mn
-    if val > mx:
-        return mx
-
-
 def localcorr(sc, dataFile, outputDir, sz, mxX, mxY):
 
     if not os.path.exists(outputDir):
@@ -49,24 +50,24 @@ def localcorr(sc, dataFile, outputDir, sz, mxX, mxY):
     data = parse(lines, "raw", "xyz").cache()
 
     # flatmap to key value pairs where the key is neighborhood identifier and value is time series
-    neighbors = data.flatMap(lambda k, v: mapToNeighborhood(k, v, sz, mxX, mxY))
+    neighbors = data.flatMap(lambda (k, v): mapToNeighborhood(k, v, sz, mxX, mxY))
 
     # TODO: printing here seems to fix a hang later, possibly a bug
     print(neighbors.first())
 
     # reduceByKey to get the average time series for each neighborhood
-    means = neighbors.reduceByKey(lambda x, y: x + y).map(lambda k, v: (k, v / ((2*sz+1)**2)))
+    means = neighbors.reduceByKey(lambda x, y: x + y).map(lambda (k, v): (k, v / ((2*sz+1)**2)))
 
     # join with the original time series data to compute correlations
     result = data.join(means)
 
     # get correlations and keys
     # TODO: use sortByKey once implemented in pyspark so we don't need to save keys
-    corr = result.map(lambda k, v: (k, corrcoef(v[0], v[1])[0, 1])).cache()
+    corr = result.map(lambda (k, v): (k, corrcoef(v[0], v[1])[0, 1])).cache()
 
-    saveout(corr.map(lambda k, v: k[0]), outputDir, "x", "matlab")
-    saveout(corr.map(lambda k, v: k[1]), outputDir, "y", "matlab")
-    saveout(corr.map(lambda k, v: v), outputDir, "corr", "matlab")
+    saveout(corr.map(lambda (k, v): k[0]), outputDir, "x", "matlab")
+    saveout(corr.map(lambda (k, v): k[1]), outputDir, "y", "matlab")
+    saveout(corr.map(lambda (k, v): v), outputDir, "corr", "matlab")
 
 
 if __name__ == "__main__":
