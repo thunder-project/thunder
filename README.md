@@ -3,13 +3,13 @@ Thunder
 
 Library for neural data analysis with the Spark cluster computing framework
 
+[![Build Status](https://travis-ci.org/freeman-lab/thunder.png)](https://travis-ci.org/freeman-lab/thunder)
+
 ## About
 
 Spark is a powerful new framework for cluster computing, particularly well suited to iterative computations; see the [project webpage](http://spark-project.org/documentation.html). Thunder is a family of analyses for finding structure in high-dimensional spatiotemporal neural imaging data (e.g. calcium) implemented in Spark. 
 
 It includes low-level utilties for data loading, saving, signal processing, and shared algorithms (regression, factorization, etc.), and high-level functions that can be scripted to easily combine analyses. The standard package is written in Python with Pyspark, making extensive use of scipy and numpy. A subset of functions, including  prototypes of real-time analyses, are availaible for Scala., because they use functionality not yet availiable in Pyspark. We plan to port all functionality to Scala in the future.
-
-[![Build Status](https://travis-ci.org/freeman-lab/thunder.png)](https://travis-ci.org/freeman-lab/thunder)
 
 ## Use
 
