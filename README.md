@@ -1,9 +1,9 @@
+[![Build Status](https://travis-ci.org/freeman-lab/thunder.png)](https://travis-ci.org/freeman-lab/thunder)
+
 Thunder
 =======
 
 Library for neural data analysis with the Spark cluster computing framework
-
-[![Build Status](https://travis-ci.org/freeman-lab/thunder.png)](https://travis-ci.org/freeman-lab/thunder)
 
 ## About
 
