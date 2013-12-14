@@ -1,13 +1,11 @@
-# fourier <master> <dataFile> <outputFile> <freq>
-#
 # computes the amplitude and phase of time series data
 #
 # example:
-# fourier.py local data/fish.txt results 12
-#
+# fourier.py local data/fish.txt raw results 12
 
-import argparse
+
 import os
+import argparse
 from numpy import angle, abs, sqrt, zeros, fix, size, pi
 from numpy.fft import fft
 from thunder.util.dataio import *
@@ -30,34 +28,34 @@ def getFourierTransform(vec, freq):
     return array([co, ph])
 
 
-def fourier(sc, dataFile, outputDir, freq):
-
-    if not os.path.exists(outputDir):
-        os.makedirs(outputDir)
-
-    # load data
-    lines = sc.textFile(dataFile)
-    data = parse(lines, "dff")
+def fourier(data, freq):
 
     # do fourier analysis on each time series
     out = data.map(lambda x: getFourierTransform(x, freq)).cache()
 
-    # save results
     co = out.map(lambda x: x[0])
     ph = out.map(lambda x: x[1])
 
-    saveout(co, outputDir, "co", "matlab")
-    saveout(ph, outputDir, "ph", "matlab")
-
+    return co, ph
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="compute a fourier transform on each time series")
     parser.add_argument("master", type=str)
     parser.add_argument("dataFile", type=str)
+    parser.add_argument("dataMode", choices=("raw", "dff", "sub"), help="form of data preprocessing")
     parser.add_argument("outputDir", type=str)
     parser.add_argument("freq", type=int)
 
     args = parser.parse_args()
     sc = SparkContext(args.master, "fourier")
 
-    fourier(sc, args.dataFile, args.outputDir + "-fourier", args.freq)
+    lines = sc.textFile(args.dataFile)
+    data = parse(lines, "dff")
+
+    co, ph = fourier(data, args.freq)
+
+    outputDir = args.outputDir + "-fourier"
+    if not os.path.exists(outputDir):
+        os.makedirs(outputDir)
+    saveout(co, outputDir, "co", "matlab")
+    saveout(ph, outputDir, "ph", "matlab")

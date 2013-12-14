@@ -1,9 +1,7 @@
-# ref <master> <dataFile> <outputDir> <mode>
-#
 # compute summary statistics
 #
 # example:
-# pyspark ref.py local data/fish.txt results mean
+# pyspark ref.py local data/fish.txt raw results mean
 #
 
 import os
@@ -13,18 +11,10 @@ from thunder.util.dataio import *
 from pyspark import SparkContext
 
 
-def ref(sc, dataFile, outputDir, mode):
-
-    if not os.path.exists(outputDir):
-        os.makedirs(outputDir)
-
-    # parse data
-    lines = sc.textFile(dataFile)
-    data = parse(lines, "raw", "xyz").cache()
+def ref(data, mode):
 
     # get z ordering
     zinds = data.filter(lambda (k, x): (k[0] == 1) & (k[1] == 1)).map(lambda (k, x): k[2])
-    saveout(zinds, outputDir, "zinds", "matlab")
 
     # compute summary statistics
     if mode == 'median':
@@ -34,12 +24,14 @@ def ref(sc, dataFile, outputDir, mode):
     if mode == 'std':
         refout = data.map(lambda (k, x): std(x))
 
-    saveout(refout, outputDir, "ref" + mode, "matlab")
+    return refout, zinds
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="compute summary statistics on time series data")
     parser.add_argument("master", type=str)
     parser.add_argument("dataFile", type=str)
+    parser.add_argument("dataMode", choices=("raw", "dff", "sub"), help="form of data preprocessing")
     parser.add_argument("outputDir", type=str)
     parser.add_argument("mode", choices=("mean", "median", "std"),
                         help="desired summary statistic")
@@ -47,4 +39,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
     sc = SparkContext(args.master, "ref")
 
-    ref(sc, args.dataFile, args.outputDir + "-ref", args.mode)
+    lines = sc.textFile(args.dataFile)
+    data = parse(lines, "raw", "xyz").cache()
+
+    refout, zinds = ref(data, args.mode)
+
+    outputDir = args.outputDir + "-ref",
+
+    outputDir = args.outputDir + "-ref"
+    if not os.path.exists(outputDir):
+        os.makedirs(outputDir)
+
+    saveout(refout, outputDir, "ref" + args.mode, "matlab")
+    saveout(zinds, outputDir, "zinds", "matlab")

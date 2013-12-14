@@ -70,7 +70,7 @@ def svd2(data, k, meanSubtract=1):
         iteration += 1
 
 
-def svd3(sc, data, k, meanSubtract=1):
+def svd3(data, k, meanSubtract=1):
 
     n = data.count()
     d = len(data.first())
@@ -96,10 +96,14 @@ def svd3(sc, data, k, meanSubtract=1):
     while (iterNum < iterMax) & (error > tol):
         Cold = C
         Cinv = dot(transpose(C), inv(dot(C, transpose(C))))
-        preMult1 = sc.broadcast(Cinv)
+        preMult1 = data.context.broadcast(Cinv)
+        # X = data.times(preMult1.value)
+        # XX' = X.cov()
         XX = data.map(lambda x: outerProd(dot(x, preMult1.value))).reduce(lambda x, y: x + y)
         XXinv = inv(XX)
-        preMult2 = sc.broadcast(dot(Cinv, XXinv))
+        preMult2 = data.context.broadcast(dot(Cinv, XXinv))
+        # data1 = data.times(dot(Cinv, inv(XX'))
+        # C = data.times(data1)
         C = data.map(lambda x: outer(x, dot(x, preMult2.value))).reduce(lambda x, y: x + y)
         C = transpose(C)
 
@@ -107,6 +111,7 @@ def svd3(sc, data, k, meanSubtract=1):
         iterNum += 1
 
     C = transpose(orth(transpose(C)))
+    # cov = data.times(transpose(C)).cov()
     cov = data.map(lambda x: dot(x, transpose(C))).mapPartitions(outerSum).reduce(
         lambda x, y: x + y) / n
     w, v = eig(cov)
@@ -120,7 +125,7 @@ def svd3(sc, data, k, meanSubtract=1):
     return comps, latent, scores
 
 
-def svd4(sc, data, k, meanSubtract=1):
+def svd4(data, k, meanSubtract=1):
 
     class MatrixAccumulatorParam(AccumulatorParam):
         def zero(self, value):
@@ -135,7 +140,7 @@ def svd4(sc, data, k, meanSubtract=1):
 
     global cov
 
-    cov = sc.accumulator(zeros((m, m)), MatrixAccumulatorParam())
+    cov = data.context.accumulator(zeros((m, m)), MatrixAccumulatorParam())
 
     def outerSum(x):
         global cov

@@ -1,11 +1,8 @@
-# localcorr <master> <inputFile_X> <outputFile> <neighborhood> <mxX> <mxY>"
-#
 # correlate the time series of each pixel
 # in an image with its local neighborhood
 #
 # example:
-# localcorr.py local data/fish.txt results 5 88 76
-#
+# localcorr.py local data/fish.txt raw results 5 88 76
 
 import argparse
 import os
@@ -38,16 +35,7 @@ def mapToNeighborhood(ind, ts, sz, mxX, mxY):
     return out
 
 
-def localcorr(sc, dataFile, outputDir, sz, mxX, mxY):
-
-    if not os.path.exists(outputDir):
-        os.makedirs(outputDir)
-
-    # TODO: use top once implemented in psypark to get mxX and mxY
-
-    # parse data
-    lines = sc.textFile(dataFile)
-    data = parse(lines, "raw", "xyz").cache()
+def localcorr(data, sz, mxX, mxY):
 
     # flatmap to key value pairs where the key is neighborhood identifier and value is time series
     neighbors = data.flatMap(lambda (k, v): mapToNeighborhood(k, v, sz, mxX, mxY))
@@ -65,15 +53,18 @@ def localcorr(sc, dataFile, outputDir, sz, mxX, mxY):
     # TODO: use sortByKey once implemented in pyspark so we don't need to save keys
     corr = result.map(lambda (k, v): (k, corrcoef(v[0], v[1])[0, 1])).cache()
 
-    saveout(corr.map(lambda (k, v): k[0]), outputDir, "x", "matlab")
-    saveout(corr.map(lambda (k, v): k[1]), outputDir, "y", "matlab")
-    saveout(corr.map(lambda (k, v): v), outputDir, "corr", "matlab")
+    x = corr.map(lambda (k, v): k[0])
+    y = corr.map(lambda (k, v): k[1])
+    corrs = corr.map(lambda (k, v): v)
+
+    return corrs, x, y
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="correlate time series with neighbors")
     parser.add_argument("master", type=str)
     parser.add_argument("dataFile", type=str)
+    parser.add_argument("dataMode", choices=("raw", "dff", "sub"), help="form of data preprocessing")
     parser.add_argument("outputDir", type=str)
     parser.add_argument("sz", type=int)
     parser.add_argument("mxX", type=int)
@@ -82,4 +73,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
     sc = SparkContext(args.master, "localcorr")
 
-    localcorr(sc, args.dataFile, args.outputDir + "-localcorr", args.sz, args.mxX, args.mxY)
+    lines = sc.textFile(args.dataFile)
+    data = parse(lines, "raw", "xyz").cache()
+
+    # TODO: use top once implemented in psypark to get mxX and mxY
+    corrs, x, y = localcorr(data, args.sz, args.mxX, args.mxY)
+
+    outputDir = args.outputDir + "-localcorr"
+    if not os.path.exists(outputDir):
+        os.makedirs(outputDir)
+
+    saveout(x, outputDir, "x", "matlab")
+    saveout(y, outputDir, "y", "matlab")
+    saveout(corrs, outputDir, "corr", "matlab")

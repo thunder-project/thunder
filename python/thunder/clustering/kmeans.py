@@ -1,26 +1,14 @@
-# kmeans <master> <inputFile> <outputFile> <k> <dist>
-#
-# perform kmeans, based on example included with Spark
-#
-# k - number of clusters to find
-# dist - distance function (euclidean or correlation)
+# perform kmeans clustering
 #
 # example:
-#
 # pyspark kmeans.py local data/iris.txt results 2 euclidean
-#
 
-import sys
 import os
+import argparse
 from numpy import dot, mean
 from numpy.linalg import norm
 from thunder.util.dataio import saveout, parse
 from pyspark import SparkContext
-
-argsIn = sys.argv[1:]
-if len(sys.argv) < 5:
-    print >> sys.stderr, "usage: kmeans <master> <dataFile> <outputDir> <k> <dist>"
-    exit(-1)
 
 
 def closestPoint(p, centers, dist):
@@ -36,58 +24,63 @@ def closestPoint(p, centers, dist):
             bestIndex = i
     return bestIndex, closest
 
-sc = SparkContext(argsIn[0], "kmeans")
-dataFile = str(argsIn[1])
-outputDir = str(argsIn[2]) + "-kmeans"
-k = int(argsIn[3])
-dist = str(argsIn[4])
-if not os.path.exists(outputDir):
-    os.makedirs(outputDir)
 
-# load data
-lines = sc.textFile(dataFile)
-data = parse(lines, "raw").cache()
-
-if dist == 'corr':
-    data = data.map(lambda x: (x - mean(x)) / norm(x)).cache()
-
-centers = data.take(k)
-
-if dist == 'corr':
-    centers = map(lambda x: x - mean(x), centers)
-
-convergeDist = 0.001
-tempDist = 1.0
-iteration = 0
-mxIteration = 100
-
-while (tempDist > convergeDist) & (iteration < mxIteration):
+def kmeans(data, k, dist):
 
     if dist == 'corr':
-        kPointsNorm = map(lambda x: x / norm(x), centers)
-        closest = data.map(lambda p: (closestPoint(p, kPointsNorm, dist)[0], (p, 1)))
-    if dist == 'euclidean':
+        data = data.map(lambda x: (x - mean(x)) / norm(x)).cache()
+
+    centers = data.take(k)
+
+    convergeDist = 0.001
+    tempDist = 1.0
+    iteration = 0
+    mxIteration = 100
+
+    while (tempDist > convergeDist) & (iteration < mxIteration):
+        if dist == 'corr':
+            centers = map(lambda x: x / norm(x), centers)
         closest = data.map(lambda p: (closestPoint(p, centers, dist)[0], (p, 1)))
+        pointStats = closest.reduceByKey(lambda (x1, y1), (x2, y2): (x1 + x2, y1 + y2))
+        newPoints = pointStats.map(lambda (x, (y, z)): (x, y / z)).collect()
+        tempDist = sum(sum((centers[x] - y) ** 2) for (x, y) in newPoints)
 
-    pointStats = closest.reduceByKey(lambda (x1, y1), (x2, y2): (x1 + x2, y1 + y2))
-    newPoints = pointStats.map(lambda (x, (y, z)): (x, y / z)).collect()
-    tempDist = sum(sum((centers[x] - y) ** 2) for (x, y) in newPoints)
+        for (i, j) in newPoints:
+            centers[i] = j
 
-    for (i, j) in newPoints:
-        centers[i] = j
+        iteration += 1
 
-    iteration += 1
+    if dist == 'corr':
+        centers = map(lambda x: x / norm(x), centers)
 
-if dist == 'corr':
-    centers = map(lambda x: x / norm(x), centers)
+    labels = data.map(lambda p: closestPoint(p, centers, dist)[0])
+    dists = data.map(lambda p: closestPoint(p, centers, dist)[1])
+    normDists = data.map(lambda p: closestPoint((p - mean(p))/norm(p), centers, 'corr')[1])
 
-labels = data.map(lambda p: closestPoint(p, centers, dist)[0]).collect()
-dists = data.map(lambda p: closestPoint(p, centers, dist)[1]).collect()
-saveout(labels, outputDir, "labels", "matlab")
-saveout(dists, outputDir, "dists", "matlab")
-saveout(centers, outputDir, "centers", "matlab")
+    return labels, centers, dists, normDists
 
-if dist == 'euclidean':
-    centers = map(lambda x: x / norm(x), centers)
-    normDists = data.map(lambda p: closestPoint((p - mean(p))/norm(p), centers, 'corr')[1]).collect()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="do kmeans clustering")
+    parser.add_argument("master", type=str)
+    parser.add_argument("dataFile", type=str)
+    parser.add_argument("dataMode", choices=("raw", "dff", "sub"), help="form of data preprocessing")
+    parser.add_argument("outputDir", type=str)
+    parser.add_argument("k", type=int)
+    parser.add_argument("dist", choices=("euclidean", "correlation"),
+                        help="distance metric for kmeans")
+
+    args = parser.parse_args()
+    sc = SparkContext(args.master, "kmeans")
+
+    lines = sc.textFile(args.dataFile)
+    data = parse(lines, args.dataMode).cache()
+
+    labels, centers, dists, normDists = kmeans(data, args.k, args.dist)
+
+    outputDir = args.outputDir + "-kmeans"
+    if not os.path.exists(outputDir):
+        os.makedirs(outputDir)
+    saveout(labels, outputDir, "labels", "matlab")
+    saveout(dists, outputDir, "dists", "matlab")
+    saveout(centers, outputDir, "centers", "matlab")
     saveout(normDists, outputDir, "normDists", "matlab")

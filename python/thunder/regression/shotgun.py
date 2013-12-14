@@ -1,14 +1,10 @@
-# shotgun <master> <dataFile> <modelFile> <outputDir> <lambda>
-# 
 # use the "shotgun" approach for L1 regularized regression
 # parallelizing over features
 # algorithm by Bradley et al., 2011, ICML
 #
-# lambda - learning rate
-#
 # example:
-# shotgun.py local data/shotgun.txt data/regression/shotgun results 10
-#
+# shotgun.py local data/shotgun.txt raw data/regression/shotgun results 10
+
 
 import argparse
 import os
@@ -20,33 +16,27 @@ from thunder.regression.util import *
 from pyspark import SparkContext
 
 
-def updateFeature(x,y,Ab,b,lam):
-    AA = dot(x,x)
-    Ay = dot(x,y)
-    d_j = Ay - dot(x,Ab) + AA*b
-    if d_j < -lam :
+def updateFeature(x, y, Ab, b, lam):
+    AA = dot(x, x)
+    Ay = dot(x, y)
+    d_j = Ay - dot(x, Ab) + AA*b
+    if d_j < -lam:
         new_value = (d_j + lam)/AA
     elif d_j > lam:
         new_value = (d_j - lam)/AA
-    else :
+    else:
         new_value = 0
     return float(new_value)
 
 
-def shotgun(sc, dataFile, modelFile, outputDir, lam):
-    if not os.path.exists(outputDir):
-        os.makedirs(outputDir)
-
-    # parse data
-    lines = sc.textFile(dataFile)
-    A = parse(lines, "raw", "linear", None, [1, 1]).cache()
+def shotgun(data, modelFile, lam):
 
     # parse model
     model = RegressionModel.load(modelFile, "shotgun")
 
     # get constants
-    d = A.count()
-    n = len(A.first()[1])
+    d = data.count()
+    n = len(data.first()[1])
 
     # initialize sparse weight vector
     b = csc_matrix((d, 1))
@@ -60,7 +50,7 @@ def shotgun(sc, dataFile, modelFile, outputDir, lam):
     tol = 10 ** -6
 
     while (iIter < nIter) & (deltaCheck > tol):
-        update = A.map(lambda (k, x): (k, updateFeature(x, model.y, Ab, b[k, 0], lam))).filter(
+        update = data.map(lambda (k, x): (k, updateFeature(x, model.y, Ab, b[k, 0], lam))).filter(
             lambda (k, x): x != b[k, 0]).collect()
         nUpdate = len(update)
 
@@ -75,22 +65,31 @@ def shotgun(sc, dataFile, modelFile, outputDir, lam):
 
         deltaCheck = amax(diff)
 
-        Ab = A.map(lambda (k, x): x * b[k, 0]).reduce(lambda x, y: x + y)
+        Ab = data.map(lambda (k, x): x * b[k, 0]).reduce(lambda x, y: x + y)
 
-        iIter = iIter + 1
+        iIter += 1
 
-    saveout(b.todense(), outputDir, "b", "matlab")
+    return b.todense()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("master", type=str)
     parser.add_argument("dataFile", type=str)
+    parser.add_argument("dataMode", choices=("raw", "dff", "sub"), help="form of data preprocessing")
     parser.add_argument("modelFile", type=str)
     parser.add_argument("outputDir", type=str)
     parser.add_argument("lam", type=double, help="lambda")
 
     args = parser.parse_args()
     sc = SparkContext(args.master, "shotgun")
+    lines = sc.textFile(args.dataFile)
+    data = parse(lines, args.dataMode, "linear", None, [1, 1]).cache()
 
-    shotgun(sc, args.dataFile, args.modelFile, args.outputDir + "-shotgun", args.lam)
+    b = shotgun(data, args.modelFile, args.lam)
+
+    outputDir = args.outputDir + "-shotgun"
+    if not os.path.exists(outputDir):
+        os.makedirs(outputDir)
+
+    saveout(b, outputDir, "b", "matlab")

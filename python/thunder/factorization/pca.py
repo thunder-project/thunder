@@ -1,39 +1,39 @@
-# pca <master> <dataFile> <outputDir> <k>
-#
-# performs PCA using the SVD
-#
-# k - number of principal components to return
+# performs principal components analysis
 #
 # example:
-# pca.py local data/iris.txt results 2
-#
+# pca.py local data/iris.txt raw results 2
 
-import sys
+
 import os
+import argparse
 from thunder.util.dataio import parse, saveout
 from thunder.factorization.util import svd1, svd3, svd4
 from pyspark import SparkContext
 
-argsIn = sys.argv[1:]
-if len(argsIn) < 4:
-    print >> sys.stderr, "usage: pca <master> <dataFile> <outputDir> <k> <nPartitions>"
-    exit(-1)
 
-# parse inputs
-sc = SparkContext(argsIn[0], "pca")
-dataFile = str(argsIn[1])
-outputDir = str(argsIn[2]) + "-pca"
-k = int(argsIn[3])
+def pca(data, k):
+    comps, latent, scores = svd4(data, k, 0)
+    return comps, latent, scores
 
-if not os.path.exists(outputDir):
-    os.makedirs(outputDir)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="do principal components analysis")
+    parser.add_argument("master", type=str)
+    parser.add_argument("dataFile", type=str)
+    parser.add_argument("dataMode", choices=("raw", "dff", "sub"), help="form of data preprocessing")
+    parser.add_argument("outputDir", type=str)
+    parser.add_argument("k", type=int)
 
-# load data
-lines = sc.textFile(dataFile)
-data = parse(lines, "raw").cache()
+    args = parser.parse_args()
+    sc = SparkContext(args.master, "pca")
+    lines = sc.textFile(args.dataFile)
+    data = parse(lines, args.dataMode).cache()
 
-# do pca
-comps, latent, scores = svd4(sc, data, k, 0)
-saveout(comps, outputDir, "comps", "matlab")
-saveout(latent, outputDir, "latent", "matlab")
-saveout(scores, outputDir, "scores", "matlab", k)
+    comps, latent, scores = pca(data, args.k)
+
+    outputDir = args.outputDir + "-pca"
+    if not os.path.exists(outputDir):
+        os.makedirs(outputDir)
+
+    saveout(comps, outputDir, "comps", "matlab")
+    saveout(latent, outputDir, "latent", "matlab")
+    saveout(scores, outputDir, "scores", "matlab", args.k)
