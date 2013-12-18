@@ -9,8 +9,8 @@ from scipy.linalg import *
 
 class RegressionModel(object):
     @staticmethod
-    def load(modelFile, regressMode):
-        return REGRESSION_MODELS[regressMode](modelFile)
+    def load(modelFile, regressMode, *opts):
+        return REGRESSION_MODELS[regressMode](modelFile, *opts)
 
     def get(self, y):
         pass
@@ -26,13 +26,37 @@ class RegressionModel(object):
             return betas
 
 
+class CrossCorrModel(RegressionModel):
+    def __init__(self, modelFile, mxLag):
+        X = loadmat(modelFile + "_X.mat")['X']
+        X = X - mean(X)
+        X = X / norm(X)
+        if mxLag is not 0:
+            shifts = range(-mxLag, mxLag+1)
+            d = shape(X)[1]
+            m = len(shifts)
+            shiftedX = zeros((m, d))
+            for ix in range(0, len(shifts)):
+                shiftedX[ix, :] = roll(X, ix)
+            self.X = shiftedX
+        else:
+            self.X = X
+        print(self.X)
+
+    def get(self, y):
+        y = y - mean(y)
+        y /= norm(y) + 0.0001
+        b = dot(self.X, y)
+        return b
+
+
 class MeanRegressionModel(RegressionModel):
     def __init__(self, modelFile):
         self.X = loadmat(modelFile + "_X.mat")['X'].astype(float)
 
     def get(self, y):
         b = dot(self.X, y)
-        return (b, 1)
+        return b, 1
 
 
 class LinearRegressionModel(RegressionModel):
@@ -114,7 +138,7 @@ class ShotgunRegressionModel(RegressionModel):
     def __init__(self, modelFile):
         y = loadmat(modelFile + "_y.mat")['y']
         y = y.astype(float)
-        y = (y - mean(y)) / std(y)
+        #y = (y - mean(y)) / std(y)
         if shape(y)[0] == 1:
             y = transpose(y)
         self.y = y
@@ -189,6 +213,7 @@ REGRESSION_MODELS = {
     'mean': MeanRegressionModel,
     'linear': LinearRegressionModel,
     'linear-shuffle': LinearShuffleRegressionModel,
+    'crosscorr': CrossCorrModel,
     'bilinear': BilinearRegressionModel,
     'shotgun': ShotgunRegressionModel,
 }

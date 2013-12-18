@@ -4,6 +4,7 @@ import tempfile
 from thunder.regression.regress import regress
 from thunder.regression.shotgun import shotgun
 from thunder.regression.tuning import tuning
+from thunder.regression.crosscorr import crosscorr
 from thunder.util.dataio import parse
 from test_utils import PySparkTestCase
 
@@ -13,6 +14,7 @@ FISH_DATA = os.path.join(DATA_DIR, "fish.txt")
 SHOTGUN_DATA = os.path.join(DATA_DIR, "shotgun.txt")
 SHOTGUN_MODEL = os.path.join(DATA_DIR, "regression/shotgun")
 FISH_LINEAR_MODEL = os.path.join(DATA_DIR, "regression/fish_linear")
+FISH_CROSSCORR_MODEL = os.path.join(DATA_DIR, "regression/fish_crosscorr")
 FISH_BILINEAR_MODEL = os.path.join(DATA_DIR, "regression/fish_bilinear")
 
 
@@ -75,6 +77,16 @@ class TestShotgun(RegressionTestCase):
     def test_shotgun(self):
         data = get_data_shotgun(self)
         b = shotgun(data, SHOTGUN_MODEL, 10)
+
+
+class TestCrossCorr(RegressionTestCase):
+
+    def test_cross_corr(self):
+        data = get_data_regression(self)
+        betas, r, comps, latent, scores = crosscorr(data, FISH_CROSSCORR_MODEL, 3)
+        betas.collect()
+        scores.collect()
+        r.collect()
 
 
 class TestTuning(RegressionTestCase):
