@@ -18,6 +18,7 @@ def parse(data, filter="raw", inds=None, tRange=None, xy=None):
         if filter == "dff":  # convert to dff
             meanVal = mean(ts)
             ts = (ts - meanVal) / (meanVal + 0.1)
+        # TODO: add soft normalization: compute the max, divide the max plus a constant
         if filter == "sub":  # subtracts the mean
             ts = (ts - mean(ts))
         if tRange is not None:  # subselects a range of indices
