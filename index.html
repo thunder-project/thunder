@@ -4,10 +4,14 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <title>Thunder by freeman-lab</title>
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <link rel="stylesheet" href="stylesheets/bootstrap.min.css">
+    <link rel="stylesheet" href="http://yandex.st/highlightjs/7.5/styles/tomorrow-night.min.css">
+    <link rel="stylesheet" href="stylesheets/style.css">
+    <script src="http://yandex.st/highlightjs/7.5/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     <script src="javascripts/respond.js"></script>
+    <script src="javascripts/bootstrap.min.js"></script>
     <!--[if lt IE 9]>
       <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
@@ -18,40 +22,84 @@
 
   </head>
   <body>
-      <div id="header">
-        <nav>
-          <li class="fork"><a href="https://github.com/freeman-lab/thunder">View On GitHub</a></li>
-          <li class="downloads"><a href="https://github.com/freeman-lab/thunder/zipball/master">ZIP</a></li>
-          <li class="downloads"><a href="https://github.com/freeman-lab/thunder/tarball/master">TAR</a></li>
-          <li class="title">DOWNLOADS</li>
-        </nav>
-      </div><!-- end header -->
 
-    <div class="wrapper">
-
-      <section>
-        <div id="title">
-          <h1>Thunder</h1>
-          <p>Neural data analysis with the Spark cluster computing framework</p>
-          <hr>
-          <span class="credits left">Project maintained by <a href="https://github.com/freeman-lab">freeman-lab</a></span>
-          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
+      
+      <div class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="container">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+          </div>
+          <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+              <li><a id="menu" href="#">Overview</a></li>
+              <li><a id="menu" href="#about">How to use</a></li>
+              <li><a id="menu" href="#contact">Download</a></li>
+              <li><a id="menu" href="#contact">View on github</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
         </div>
+      </div>
 
-        <h1>
-<a name="thunder" class="anchor" href="#thunder"><span class="octicon octicon-link"></span></a>Thunder</h1>
 
-<p>Library for neural data analysis with the Spark cluster computing framework</p>
+      <div class="jumbotron">
+        <div class="container">
+          <div id="header">Thunder</div>
+        </div>
+      </div>
 
-<h2>
-<a name="about" class="anchor" href="#about"><span class="octicon octicon-link"></span></a>About</h2>
+      <div class="container" id="subheader">
+        <div id="subheader">Large-scale analysis <br>of neural data.</div>
+      </div>
 
-<p>Spark is a powerful new framework for cluster computing, particularly well suited to iterative computations; see the <a href="http://spark-project.org/documentation.html">project webpage</a>. Thunder is a family of analyses for finding structure in high-dimensional spatiotemporal neural imaging data (e.g. calcium) implemented in Spark. </p>
+      <div class="container">
+        <div class="row">
+           <div class="col-md-4">
+            <h2 id="subtitle1">Fast</h2>
+            <h3 id="subcontent">Lightning-fast analysis through the Spark cluster computing framework.</h3>
+          </div>
+           <div class="col-md-4">
+            <h2 id="subtitle2">Easy</h2>
+            <h3 id="subcontent">Easy to implement an analysis. Or invent your own. </h3>
+          </div>
+           <div class="col-md-4">
+            <h2 id="subtitle3">Interactive</h2>
+            <h3 id="subcontent">Can’t wait? Run interactively in the shell, immediately inspect results.</h3>
+          </div>
+        </div>
+      </div>
 
-<p>It includes low-level utilities for data loading, saving, signal processing, and shared algorithms (regression, factorization, etc.), and high-level functions that can be scripted to easily combine analyses. The standard package is written in Python with Pyspark, making extensive use of scipy and numpy. A subset of functions, including  prototypes of real-time analyses, are available for Scala., because they use functionality not yet available in Pyspark. We plan to port all functionality to Scala in the future.</p>
-      </section>
 
-    </div>
+      <div class="container">
+        <article id = "docs">
+          <h1 id="doctitle">Quick start</h1>
+<p>Here's a quick guide to getting up and running. See <a href="how to use">how to use</a> for more details. Get Spark from the <a href="http://spark.incubator.apache.org/downloads.html">project page</a>, get Scala 2.9.3 from <a href="http://www.scala-lang.org/download/2.9.3.html">scala-lang.org</a>, and get <a href="https://github.com/freeman-lab/thunder/archive/master.zip">Thunder</a>. Make sure you have Python with Numpy and Scipy (check out <a href="http://www.lowindata.com/2013/installing-scientific-python-on-mac-os-x/">this guide</a>). Now set some paths.</p><br>
+  <pre><code class="python">export SCALA_HOME=your_path_to_scala
+export SPARK_HOME=your_path_to_spark
+export PYTHONPATH=your_path_to_thunder:$PYTHONPATH
+</pre></code><br>
+  <p>Go into the top-level Spark directory and build Spark by running</p><br>
+<pre><code class="python">sbt/sbt assembly</pre></code>
+<br><p>Now go into the top-level Thunder directory and run an analysis on test data.</p>
+          <br>
+          <pre><code class="python">SPARK_HOME/pyspark python/thunder/factorization/pca.py local data/iris.txt ~/results 4</pre></code>
+          <br>
+          <p>This will run principal components on the “iris” data set with 4 components, and write results to a folder in your home directory. The same analysis can be run interactively in a shell.</p><br>
+          <pre><code class="python">SPARK_HOME/pyspark
+>> from thunder.util.datatio import parse
+>> from thunder.factorization.pca import pca
+>> lines = sc.textFile(”data/iris.txt”)
+>> data = parse(lines).cache()
+>> comps, latent, scores = pca(data, 4)
+>> saveout(comps, "~/results", "comps", "json")
+>> saveout(scores, "~/results", "scores", "images")</pre></code>
+        </article>
+      </div>
+
     <!--[if !IE]><script>fixScale(document);</script><![endif]-->
               <script type="text/javascript">
             var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
