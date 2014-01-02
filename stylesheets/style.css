@@ -93,6 +93,16 @@ pre code {
      line-height: 1.2;
 }
 
+@media (max-width: 480px) {
+     #header {
+          font-size: 50px;
+     }
+     #subheader {
+          font-size: 45px;
+     }
+}
+
+
 #subtitle1 {
      color: rgb(248,92,123);
 }
