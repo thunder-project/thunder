@@ -96,7 +96,7 @@ pre code {
 
 @media (max-width: 480px) {
      .jumbotron {
-          height: 75px;
+          height: 100px;
      }
 
      #header {
@@ -104,7 +104,7 @@ pre code {
           text-align: center;
      }
      #subheader {
-          font-size: 45px;
+          font-size: 35px;
           text-align: center;
      }
 }
