@@ -50,6 +50,7 @@ pre code {
      
  }
 
+
 .jumbotron:after {
      content:"";
      background: url("../images/banner.png");
@@ -94,11 +95,17 @@ pre code {
 }
 
 @media (max-width: 480px) {
+     .jumbotron {
+          height: 75px;
+     }
+
      #header {
           font-size: 50px;
+          text-align: center;
      }
      #subheader {
           font-size: 45px;
+          text-align: center;
      }
 }
 
