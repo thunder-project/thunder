@@ -1,0 +1,297 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Thunder by freeman-lab</title>
+    <link rel="stylesheet" href="stylesheets/bootstrap.min.css">
+    <link rel="stylesheet" href="http://yandex.st/highlightjs/7.5/styles/tomorrow-night.min.css">
+    <link rel="stylesheet" href="stylesheets/style.css">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet" type="text/css">
+    <script src="http://yandex.st/highlightjs/7.5/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <script src="javascripts/bootstrap.min.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+
+      
+      <div class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="container">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+          </div>
+          <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+              <li><a id="menu" href="index.html">Overview</a></li>
+              <li class="active"><a id="menu" href="howtouse.html">How to use</a></li>
+              <li><a id="menu" href="https://github.com/freeman-lab/thunder/archive/master.zip">Download</a></li>
+              <li><a id="menu" href="https://github.com/freeman-lab/thunder">View on github</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+
+
+      <div class="container">
+        <div class="row">
+          <div class="col-md-10">
+            <article id = "docs">
+              <div class="tab-content">
+                <div class="tab-pane fade in active" id="InstallationBasic">
+<h1 id="doctitle">Installation (basic)</h1>
+<p>This is a guide to installing Thunder. It assumes you’ve spent some time in a terminal. It's been tested on Mac OS X, but should also work on Linux. It will get Spark and Thunder running on your local machine, which is useful for understanding how it works. See Installation (cluster) for cluster usage.</p>
+<p>First, you need to set up Spark. First, download Spark from the <a href="http://spark.incubator.apache.org/downloads.html">project page</a>, and download Scala from <a href="http://www.scala-lang.org/download/2.9.3.html">scala-lang.org</a>. Put them anywhere on your file system. Set these paths (by typing these lines into the terminal, or by adding them to your .bash_profile).</p>
+<br>
+<pre><code class="bash">export SCALA_HOME=your_path_to_scala
+export SPARK_HOME=your_path_to_spark
+</pre></code>
+<br>
+<p>Go into the top-level Spark directory and build Spark by running</p>
+<br>
+<pre><code class="bash">cd $SPARK_HOME
+sbt/sbt assembly
+</pre></code>
+<br>
+<p>This might take a few minutes. When done, check if Spark / Pyspark is working</p>
+<br>
+<pre><code class="python">$SPARK_HOME/pyspark
+>> test = sc.parallelize([1,2,3])
+>> test.count()
+>> # should return 3
+>> exit()
+</pre></code>
+<br>
+<p>If that didn’t work, consult the Spark documentation.</p>
+<p>Thunder relies on Python and its libraries for scientific computing, so you also need a working installation of Numpy and Scipy. Check out <a href="http://www.lowindata.com/2013/installing-scientific-python-on-mac-os-x/">this post</a> for a walkthrough. To make sure everything’s working, run</p>
+<br>
+<pre><code class="python">python
+>> import numpy
+>> import scipy
+</pre></code>
+<br>
+<p>That should start Python and import Numpy and Scipy. Type <samp id="inline">exit()</samp> to quit.</p>
+<p>Now we’re ready to install Thunder. Just download the latest <a href="https://github.com/freeman-lab/thunder/archive/master.zip">build</a>, and add it to your path (again, it’s useful to add these lines to your .bash_profile).</p>
+<br>
+<pre><code class="bash">export PYTHONPATH=your_path_to_thunder:$PYTHONPATH
+</pre></code>
+<br>
+<p>Now go into the top-level Thunder directory and run an analysis on test data.</p>
+<br>
+<pre><code class="bash">$SPARK_HOME/pyspark python/thunder/factorization/pca.py local data/iris.txt ~/results 4
+</pre></code>
+<br>
+<p>This will run principal components analysis and save the results to your home directory. The <samp id="inline">local</samp> tells Spark to run in local mode (i.e. not on a cluster). This is useful for debugging purposes. If you are on a multi-core machine, use <samp id="inline">local[n]</samp> to use n cores.</p>
+<p>The same analysis can be run interactively in the Pyspark shell.</p>
+<br>
+<pre><code class="python">$SPARK_HOME/pyspark
+>> from thunder.util.datatio import parse
+>> from thunder.factorization.pca import pca
+>> lines = sc.textFile("data/iris.txt")
+>> data = parse(lines).cache()
+>> comps, latent, scores = pca(data, 4)
+>> saveout(comps, "~/results", "comps", "json")
+>> saveout(scores, "~/results", "scores", "images")
+</pre></code>
+<br>
+<p>Running analyses interactively is an especially useful way to learn how the analyses work, debug them, and develop new ones.</p>
+                </div>
+                <div class="tab-pane fade" id="InstallationCluster">
+<h1 id="doctitle">Installation (cluster)</h1>
+<h2 id="docsubtitle">Instructions for Amazon's EC2</h2>
+<p>Spark’s deploy scripts make it easy to get up and running on Amazon’s EC2 cloud computing services. First, install Spark, then follow <a href="http://spark.incubator.apache.org/docs/latest/ec2-scripts.html">these instructions</a> up through the point where you log in to the cluster’s master node.</p>
+<p>Once logged in to the master, install Thunder and set some paths</p>
+<br>
+<pre><code class="bash">git clone https://github.com/freeman-lab/thunder.git
+export PYTHONPATH=your_path_to_thunder:$PYTHONPATH</pre></code>
+<br>
+<p>From inside the top-level Thunder directory, build an egg</p>
+<br>
+<pre><code class="bash">./setup.py bdist_egg</pre></code>
+<br>
+<p>This will make it easy for Pyspark to send dependencies to the worker nodes. Also execute a helper script that installs Numpy and Scipy on the workers.</p>
+<br>
+<pre><code class="bash">chmod +x thunder/helper/copy-numpy-scipy-ec2.sh
+thunder/helper/copy-numpy-scipy-ec2.sh</pre></code>
+<br>
+<p>Now Thunder is ready to run, but you’ll probably want some data to analyze. If your data is stored in Amazon’s S3, copy it into HDFS by running</p>
+<br>
+<pre><code class="bash">/root/ephemeral-hdfs/bin/start-all.sh
+/root/ephemeral-hdfs/bin/hadoop distcp s3n://your_aws_access_key:your_aws_secret_access_key@your_s3_bucket_name/your_file_name hdfs:///data
+</pre></code>
+<br>
+<p>This step may take a while, especially for larger data sets. Once it’s done, set a couple more paths:</p>
+<br>
+<pre><code class="bash">export MASTER=spark://$SPARK_URL:7077
+export DATA=hdfs://$SPARK_URL:9000/data
+</pre></code>
+<br>
+<p>Then go into the top-level Thunder directory and run an analysis</p>
+<br>
+<pre><code class="bash">SPARK_HOME/pyspark python/thunder/factorization/pca.py $MASTER $DATA ~/results 4
+</pre></code>
+<br>
+<p>At this point, you should be able to run any of the analyses in Thunder!</p>
+<h2 id="docsubtitle">Instructions for a private cluster</h2>
+<p>To run Thunder on a private cluster, you’ll first need to set up Spark. The simplest option is to set up in Standalone mode, following <a href="http://spark.incubator.apache.org/docs/latest/spark-standalone.html">these instructions</a>. I recommend giving this information to a systems administrator (or whoever manages the cluster), they should be able to help.</p>
+<p>Once Spark is up and running, you can run Thunder by downloading it on the master node (as discussed above). Remember to provide the IP address of the master when starting an analysis in Thunder, either by setting the environmental variable <samp id="inline">MASTER</samp> (for running in interactive mode) or by providing it as an argument to an analysis script. Make sure that Numpy and Scipy are installed on all the worker nodes, and that the data is available to all the worker nodes (via HDFS or another networked-file-system).</p>
+                </div>
+
+
+                <div class="tab-pane fade" id="InputFormat">
+<h1 id="doctitle">Input format</h1>
+<p>Description of input format</p>
+                </div>
+
+
+                <div class="tab-pane fade" id="OutputFormat">
+<h1 id="doctitle">Output format</h1>
+<p>Description of availiable output formats</p>
+                </div>
+                
+
+                <div class="tab-pane fade" id="Analyses">
+<h1 id="doctitle">Analyses</h1>
+<p>Thunder currently includes four analysis packages: clustering, factorization, regression, and signal processing, as well as a utils for shared methods like loading and saving (see Input format and Output format). Individual packages include both high-level analyses and underlying methods and algorithms. There are several stand-alone analysis scripts for common analyses, but the functions (or sub-functions) can be called, either from within the Pyspark shell (for interactive use), or when developing your own analyses. Here, we describe the main functionality, with example calls. The assumed input is an RDD data where each element is a time series, and possibly a key identifier (see input format).</p>
+<h2 id="docsubtitle">Clustering</h2>
+<p>Analyses: kMeans, Hierarchical Clustering</p>
+<p>Utilities: Closest point</p>
+<p>Clustering is an analysis that tries to associate data points with particular categories based on a distance metric. Thunder includes two clustering algorithms: kMeans, and a divisive hierarchical clustering. kMeans assigns each data point to one of k clusters. Hierarchical clustering iteratively subdivides the entire data into a tree by repeatedly performing kMeans on smaller subsets.</p>
+<p>To run kMeans, call</p>
+<br>
+<pre><code class="python">labels, centers, dists, normDists = kmeans(data, k, maxIters)
+</pre></code>
+<br>
+<p>Where k is the number of clusters, and maxIters is the maximum number of iterations (default = 3).</p>
+<p>To run hierarchical clustering</p>
+<br>
+<pre><code class="python">results = hierarchical(data)
+</pre></code>
+<br>
+<h2 id="docsubtitle">Factorization</h2>
+<p>Analyses: Principal Component Analysis, Independent Component Analysis</p>
+<p>Utilities: Singular Value Decomposition (direct and iterative methods)</p>
+<p>Factorization methods separate or decompose a data matrix into smaller, lower-rank matrices by optimizing an objective function. PCA finds a decomposition that minimizes the squared error between the true data matrix and the matrix reconstructed from the low-rank matrices. To run PCA, call</p>
+<br>
+<pre><code class="python">comp, latent, scores = pca(data, k)
+</pre></code>
+<br>
+<p>Where k is the number of principal components to return.</p>
+<p>The source model for PCA is that the data is Gaussian-distributed with a low-rank covariance determined by the components. ICA, in contrast, assumes that the components and non-Gaussian and statistically independent from one another, and estimates them by iteratively maximizing an objective function that computes the non-Gaussanity of the components. As is common, Thunder's ICA first reduces the dimensionality of the data using PCA. To run ICA, call</p>
+<br>
+<pre><code class="python">W, sigs, whtMat, unwhtMat = ica(data, k, c)
+</pre></code>
+<br>
+<p>Where k is the reduced dimensionality to use, and c is the number of independent components to find.</p>
+<p>Both methods rely on a singular value decomposition utility. Two methods for computing the singular value decomposition are included. One is direct: it maps the outer product of all time series data, and then adds the results through an accumulator. This is highly efficient for many data points with few time points (e.g. less than a few hundred), but for longer time series data it will become inefficient. So Thunder also includes an iterative method for computing the SVD that uses expectation maximization.</p>
+<h1 id="doctitle">Regression</h1>
+<p>Analyses: Regress (linear, bilinear), Tuning (gaussian, circular), Cross Correlation</p>
+<p>Utilities: Loading models, Computing parameter estimates and fit statistics</p>
+<p>Regression models describe each time series as a function of some underlying variables. Thunder includes both linear and bilinear regression, called by:</p>
+<br>
+<pre><code class="python">model = RegressionModel.load(“modelFile”, “regressMode”)
+betas = model.fit(data)
+</pre></code>
+<br>
+<p>“modelFile” is the base name of file(s) that contain the parameters to regress each time series against (often called a design matrix). “regressMode” is the form of regression: current options are “linear”, “bilinear”. “linear” fits each time series as a linear combination of some variables, plus a constant. “bilinear” uses two design matrix; it uses the first to estimate a basis function that is common to each of several conditions, and uses the second to describe each condition as a scaled version of that basis function.</p>
+<p>betas contains the model parameters and a goodness-of-fit statistic (r2). It is easy to pass betas to other algorithms, for example, to do PCA and kMeans on the regression coefficients:</p>
+<br>
+<pre><code class="python">coeffs = betas.map(lambda b : b[0])
+  comps, latent, scores = pca(coeffs, 2)
+labels, centers = kmeans(coeffs, 2)
+</pre></code>
+<br>
+<p>Tuning models estimate the parameters of a tuning curve that relate an input value to an output value. Tuning curves are estimated by:</p>
+<br>
+<pre><code class="python">tuningModel = TuningModel.load(“modelFile”, “tuningMode”)
+params = tuningModel.fit(data)
+</pre></code>
+<br>
+<p>Where “modelFile” is the base name of a file containing the input value. Typically, the data will be the result of a previous regression step, for example, because you first estimate the response in each of several conditions (using linear regression), and then fit a tuning curve to the resulting estimates.</p>
+<h1 id="doctitle">Summary</h1>
+<p>Analyses: Reference, Fourier, Local Correlation, Query</p>
+<p>Summary analyses compute statistics on time series data, either simple summary statistics, or the results of more complex signal processing. Reference is for computing summary statistics on each time series, called by:</p>
+<br>
+<pre><code class="python">refout = ref(data, “mode”)
+</pre></code>
+<br>
+<p>where “mode” is the desired statistic (options include “mean”, “median”, “std”)</p>
+<p>Fourier estimates the statistics of the Fourier transform, specifically, the amplitude and phase of the time series at the specified frequency. Call it by:</p>
+<br>
+<pre><code class="python">co, ph = fourier(data, freq)
+</pre></code>
+<br>
+<p>Where freq is the frequency (total number of cycles). Coherence is amplitude normalized by the amplitude of all frequencies, yielding a number between 0 and 1 that is more interpretable than raw Fourier amplitude.</p>
+<p>For spatio-temporal data, Local Correlation estimates the correlation between each time series and the average time series of its neighbors, useful for detecting structures with locally correlated activity.</p>
+<br>
+<pre><code class="python">corrs, x, y = localcorr(data, sz)
+</pre></code>
+<br>
+<p>Where sz is the neighborhood size used in computing the local averages. This method assumes that data is an RDD of (Tuple, Array) pairs where Tuple contains the x,y,z coordinates of each data point, and Array is its time series.</p>
+<p>Query is a method for quickly extracting local averages from spatio-temporal data, by specifying a set of indices to include in the average, called by:</p>
+<br>
+<pre><code class="python">ts = query(data, indsFile)
+</pre></code>
+<br>
+<p>Where indsFile is the name of a file containing the indices. This method assumes that data is an RDD of (Int, Array) pairs where the Int is a linear index for each data point (based on its x,y,z coordinates), and Array is its time series.</p>
+
+
+                </div>
+
+
+                <div class="tab-pane fade" id="FAQ">
+<h1 id="doctitle">FAQ</h1>
+<p>Currently empty. Contact the.freeman.lab@gmail.com with questions! Or post an issue to the <a href="https://github.com/freeman-lab/thunder">project page</a> on github.</p>
+                </div>
+
+
+              </div>
+            </article>
+          </div>
+          <div class="col-md-2">
+            <ul class="nav nav-pills nav-stacked">
+              <li><a href="#InstallationBasic" data-toggle="tab">Installation (basic)</a></li>
+              <li><a href="#InstallationCluster" data-toggle="tab">Installation (cluster)</a></li>
+              <li><a href="#InputFormat" data-toggle="tab">Input format</a></li>
+              <li><a href="#OutputFormat" data-toggle="tab">Output format</a></li>
+              <li><a href="#Analyses" data-toggle="tab">Analyses</a></li>
+              <li><a href="#FAQ" data-toggle="tab">FAQ</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+<footer>
+      <div class="container">
+        <p id="builtby">Built by <a href="https://github.com/freeman-lab/">The Freeman Lab</a> and <a href="https://github.com/freeman-lab/thunder/graphs/contributors">contributers</a></p>
+      </div>
+    </footer>
+
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-46696594-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
+</html>

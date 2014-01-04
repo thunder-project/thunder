@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="stylesheets/bootstrap.min.css">
     <link rel="stylesheet" href="http://yandex.st/highlightjs/7.5/styles/tomorrow-night.min.css">
     <link rel="stylesheet" href="stylesheets/style.css">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet" type="text/css">
     <script src="http://yandex.st/highlightjs/7.5/highlight.min.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
@@ -36,10 +37,10 @@
           </div>
           <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
-              <li><a id="menu" href="#">Overview</a></li>
-              <li><a id="menu" href="#about">How to use</a></li>
-              <li><a id="menu" href="#contact">Download</a></li>
-              <li><a id="menu" href="#contact">View on github</a></li>
+              <li><a id="menu" href="index.html">Overview</a></li>
+              <li><a id="menu" href="howtouse.html">How to use</a></li>
+              <li><a id="menu" href="https://github.com/freeman-lab/thunder/archive/master.zip">Download</a></li>
+              <li><a id="menu" href="https://github.com/freeman-lab/thunder">View on github</a></li>
             </ul>
           </div><!--/.nav-collapse -->
         </div>
@@ -77,13 +78,9 @@
       <div class="container">
         <article id = "docs">
           <h1 id="doctitle">Quick start</h1>
-<p>Here's a quick guide to getting up and running. See <a href="how to use">how to use</a> for more details. Get Spark from the <a href="http://spark.incubator.apache.org/downloads.html">project page</a>, get Scala 2.9.3 from <a href="http://www.scala-lang.org/download/2.9.3.html">scala-lang.org</a>, and get <a href="https://github.com/freeman-lab/thunder/archive/master.zip">Thunder</a>. Make sure you have Python with Numpy and Scipy (check out <a href="http://www.lowindata.com/2013/installing-scientific-python-on-mac-os-x/">this guide</a>). Now set some paths.</p><br>
-  <pre><code class="python">export SCALA_HOME=your_path_to_scala
-export SPARK_HOME=your_path_to_spark
-export PYTHONPATH=your_path_to_thunder:$PYTHONPATH
-</pre></code><br>
-  <p>Go into the top-level Spark directory and build Spark by running</p><br>
-<pre><code class="python">sbt/sbt assembly</pre></code>
+<p>Here's a quick guide to getting up and running. It assumes <a href="http://spark.incubator.apache.org/downloads.html">Spark</a>, Numpy, and Scipy are already installed. See <a href="howtouse.html">How to Use</a> for more detailed instructions.</p><p>First, download the latest <a href="https://github.com/freeman-lab/thunder/archive/master.zip">build</a> of Thunder and add it to your path.</p><br>
+  <pre><code class="shell">export PYTHONPATH=your_path_to_thunder:$PYTHONPATH
+</pre></code>
 <br><p>Now go into the top-level Thunder directory and run an analysis on test data.</p>
           <br>
           <pre><code class="python">SPARK_HOME/pyspark python/thunder/factorization/pca.py local data/iris.txt ~/results 4</pre></code>
@@ -99,6 +96,12 @@ export PYTHONPATH=your_path_to_thunder:$PYTHONPATH
 >> saveout(scores, "~/results", "scores", "images")</pre></code>
         </article>
       </div>
+
+    <footer>
+      <div class="container">
+        <p id="builtby">Built by <a href="https://github.com/freeman-lab/">The Freeman Lab</a> and <a href="https://github.com/freeman-lab/thunder/graphs/contributors">contributers</a></p>
+      </div>
+    </footer>
 
     <!--[if !IE]><script>fixScale(document);</script><![endif]-->
               <script type="text/javascript">
