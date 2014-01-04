@@ -124,15 +124,16 @@ sbt/sbt assembly
 unzip master.zip
 export PYTHONPATH=/root/thunder-master/python/:$PYTHONPATH</pre></code>
 <br>
-<p>Build an egg</p>
+<p>Go into the top-level directory and build an egg</p>
 <br>
-<pre><code class="bash">/root/thunder/python/setup.py bdist_egg
+<pre><code class="bash">cd /root/thunder/python
+./setup.py bdist_egg
 export THUNDER_EGG=/root/thunder/python/dist/</pre></code>
 <br>
-<p>This will allow Pyspark to send Thunder's libraries to the worker nodes without explicitly installing Thunder on each one. Also execute a helper script that installs Numpy and Scipy on the workers.</p>
+<p>This will allow Pyspark to send Thunder's libraries to the worker nodes without explicitly installing Thunder on each one. You also need to execute a helper script that installs Numpy and Scipy on the workers.</p>
 <br>
-<pre><code class="bash">chmod +x thunder/helper/copy-numpy-scipy-ec2.sh
-thunder/helper/copy-numpy-scipy-ec2.sh</pre></code>
+<pre><code class="bash">chmod +x /root/thunder/helper/copy-numpy-scipy-ec2.sh
+/root/thunder/helper/copy-numpy-scipy-ec2.sh</pre></code>
 <br>
 <p>Now Thunder is ready to run, but you’ll probably want some data to analyze. If your data is stored in Amazon’s S3, copy it into HDFS by running</p>
 <br>
@@ -148,13 +149,32 @@ export DATA=hdfs://$SPARK_URL:9000/data
 <br>
 <p>Then go into the top-level Thunder directory and run an analysis</p>
 <br>
-<pre><code class="bash">SPARK_HOME/pyspark python/thunder/factorization/pca.py $MASTER $DATA ~/results 4
+<pre><code class="bash">$SPARK_HOME/pyspark python/thunder/factorization/pca.py $MASTER $DATA ~/results 4
 </pre></code>
 <br>
 <p>At this point, you should be able to run any of the analyses in Thunder!</p>
+<p>If you want to run in interactive mode, just start the shell</p>
+<br>
+<pre><code class="bash">$SPARK_HOME/pyspark
+</pre></code>
+<br>
+<p>Make sure that <samp id="inline">MASTER</samp> is set correctly (see above), otherwise Pyspark might be running in local mode even though you are on a cluster. At the start of an analysis, you'll want to import any packages from thunder that you'll need, for example</p>
+<br>
+<pre><code class="python">>> from thunder.factorization.pca import pca
+>> from thunder.factorization.ica import ica
+</pre></code>
+<br>
+<p>You will also want to add Thunder's egg to the SparkContext</p>
+<br>
+<pre><code class="python">>> import glob, os
+>> egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
+>> sc.addPyFile(egg)
+</pre></code>
+<br>
+
 <h2 id="docsubtitle">Instructions for a private cluster</h2>
 <p>To run Thunder on a private cluster, you’ll first need to set up Spark. The simplest option is to set up in Standalone mode, following <a href="http://spark.incubator.apache.org/docs/latest/spark-standalone.html">these instructions</a>. I recommend giving this information to a systems administrator (or whoever manages the cluster), they should be able to help.</p>
-<p>Once Spark is up and running, you can run Thunder by downloading it on the master node (as discussed above). Remember to provide the IP address of the master when starting an analysis in Thunder, either by setting the environmental variable <samp id="inline">MASTER</samp> (for running in interactive mode) or by providing it as an argument to an analysis script. Make sure that Numpy and Scipy are installed on all the worker nodes, and that the data is available to all the worker nodes (via HDFS or another networked-file-system).</p>
+<p>Once Spark is up and running, you can run Thunder by downloading and installing it on the master node (as discussed above). Remember to provide the IP address of the master when starting an analysis in Thunder, either by setting the environmental variable <samp id="inline">MASTER</samp> (for running in interactive mode) or by providing it as an argument to an analysis script. Make sure that Numpy and Scipy are installed on all the worker nodes, and that the data is available to all the worker nodes (via HDFS or another networked-file-system).</p>
                 </div>
 
 
