@@ -48,8 +48,8 @@ if __name__ == "__main__":
                         help="the form of regression")
 
     args = parser.parse_args()
-    egg = os.path.join(os.path.dirname(__file__), "../../dist/Thunder-1.0-py2.7.egg")
-    sc = SparkContext(args.master, "regress", pyFiles=[egg])
+    egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
+    sc = SparkContext(args.master, "regress", pyFiles=egg)
     lines = sc.textFile(args.dataFile)
     data = parse(lines, args.dataMode).cache()
 

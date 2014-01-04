@@ -49,7 +49,8 @@ if __name__ == "__main__":
                         help="parametric tuning curve")
 
     args = parser.parse_args()
-    sc = SparkContext(args.master, "tuning")
+    egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
+    sc = SparkContext(args.master, "tuning", pyFiles=egg)
     lines = sc.textFile(args.dataFile)
     data = parse(lines, "dff").cache()
 

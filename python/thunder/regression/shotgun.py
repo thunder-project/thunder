@@ -82,7 +82,8 @@ if __name__ == "__main__":
     parser.add_argument("lam", type=double, help="lambda")
 
     args = parser.parse_args()
-    sc = SparkContext(args.master, "shotgun")
+    egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
+    sc = SparkContext(args.master, "shotgun", pyFiles=egg)
     lines = sc.textFile(args.dataFile)
     data = parse(lines, args.dataMode, "linear", None, [1, 1]).cache()
 

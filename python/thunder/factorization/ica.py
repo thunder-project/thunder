@@ -64,7 +64,8 @@ if __name__ == "__main__":
     parser.add_argument("c", type=int)
 
     args = parser.parse_args()
-    sc = SparkContext(args.master, "ica")
+    egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
+    sc = SparkContext(args.master, "ica", pyFiles=egg)
     lines = sc.textFile(args.dataFile)
     data = parse(lines, args.dataMode).cache()
 

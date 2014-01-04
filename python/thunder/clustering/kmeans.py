@@ -70,7 +70,8 @@ if __name__ == "__main__":
                         help="distance metric for kmeans")
 
     args = parser.parse_args()
-    sc = SparkContext(args.master, "kmeans")
+    egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
+    sc = SparkContext(args.master, "kmeans", pyFiles=egg)
 
     lines = sc.textFile(args.dataFile)
     data = parse(lines, args.dataMode).cache()

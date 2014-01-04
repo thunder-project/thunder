@@ -47,7 +47,8 @@ if __name__ == "__main__":
     parser.add_argument("freq", type=int)
 
     args = parser.parse_args()
-    sc = SparkContext(args.master, "fourier")
+    egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
+    sc = SparkContext(args.master, "fourier", pyFiles=egg)
 
     lines = sc.textFile(args.dataFile)
     data = parse(lines, "dff")

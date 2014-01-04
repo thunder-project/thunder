@@ -37,7 +37,8 @@ if __name__ == "__main__":
     parser.add_argument("mxY", type=int)
 
     args = parser.parse_args()
-    sc = SparkContext(args.master, "query")
+    egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
+    sc = SparkContext(args.master, "query", pyFiles=egg)
 
     # TODO: once top is implemented in pyspark, use instead of specifying mxX and mxY
     lines = sc.textFile(args.dataFile)

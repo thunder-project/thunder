@@ -46,8 +46,8 @@ if __name__ == "__main__":
     parser.add_argument("lag", type=int)
 
     args = parser.parse_args()
-    egg = os.path.join(os.path.dirname(__file__), "../../dist/Thunder-1.0-py2.7.egg")
-    sc = SparkContext(args.master, "crosscorr", pyFiles=[egg])
+    egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
+    sc = SparkContext(args.master, "crosscorr", pyFiles=egg)
     lines = sc.textFile(args.dataFile)
     data = parse(lines, args.dataMode).cache()
 

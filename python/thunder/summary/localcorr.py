@@ -71,7 +71,8 @@ if __name__ == "__main__":
     parser.add_argument("mxY", type=int)
 
     args = parser.parse_args()
-    sc = SparkContext(args.master, "localcorr")
+    egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
+    sc = SparkContext(args.master, "localcorr", pyFiles=egg)
 
     lines = sc.textFile(args.dataFile)
     data = parse(lines, "raw", "xyz").cache()

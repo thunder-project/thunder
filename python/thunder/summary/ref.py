@@ -37,7 +37,8 @@ if __name__ == "__main__":
                         help="desired summary statistic")
 
     args = parser.parse_args()
-    sc = SparkContext(args.master, "ref")
+    egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
+    sc = SparkContext(args.master, "ref", pyFiles=egg)
 
     lines = sc.textFile(args.dataFile)
     data = parse(lines, "raw", "xyz").cache()
