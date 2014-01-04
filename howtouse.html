@@ -67,10 +67,14 @@ export SPARK_HOME=your_path_to_spark
 sbt/sbt assembly
 </pre></code>
 <br>
-<p>This might take a few minutes. When done, check if Spark / Pyspark is working</p>
+<p>This might take a few minutes. When done, to check if Spark / Pyspark is working, start the Pyspark shell</p>
 <br>
-<pre><code class="python">$SPARK_HOME/pyspark
->> test = sc.parallelize([1,2,3])
+<pre><code class="bash">$SPARK_HOME/pyspark
+</pre></code>
+<br>
+<p>And do a simple operation</p>
+<br>
+<pre><code class="python">>> test = sc.parallelize([1,2,3])
 >> test.count()
 >> # should return 3
 >> exit()
@@ -87,7 +91,7 @@ sbt/sbt assembly
 <p>That should start Python and import Numpy and Scipy. Type <samp id="inline">exit()</samp> to quit.</p>
 <p>Now we’re ready to install Thunder. Just download the latest <a href="https://github.com/freeman-lab/thunder/archive/master.zip">build</a>, and add it to your path (again, it’s useful to add these lines to your .bash_profile).</p>
 <br>
-<pre><code class="bash">export PYTHONPATH=your_path_to_thunder:$PYTHONPATH
+<pre><code class="bash">export PYTHONPATH=your_path_to_thunder/python/:$PYTHONPATH
 </pre></code>
 <br>
 <p>Now go into the top-level Thunder directory and run an analysis on test data.</p>
@@ -114,16 +118,18 @@ sbt/sbt assembly
 <h1 id="doctitle">Installation (cluster)</h1>
 <h2 id="docsubtitle">Instructions for Amazon's EC2</h2>
 <p>Spark’s deploy scripts make it easy to get up and running on Amazon’s EC2 cloud computing services. First, install Spark, then follow <a href="http://spark.incubator.apache.org/docs/latest/ec2-scripts.html">these instructions</a> up through the point where you log in to the cluster’s master node.</p>
-<p>Once logged in to the master, install Thunder and set some paths</p>
+<p>Once logged in to the master, download Thunder to the root directory (if you put it elsewhere, change the paths below accordingly)</p>
 <br>
-<pre><code class="bash">git clone https://github.com/freeman-lab/thunder.git
-export PYTHONPATH=your_path_to_thunder:$PYTHONPATH</pre></code>
+<pre><code class="bash">wget https://github.com/freeman-lab/thunder/archive/master.zip
+unzip master.zip
+export PYTHONPATH=/root/thunder-master/python/:$PYTHONPATH</pre></code>
 <br>
-<p>From inside the top-level Thunder directory, build an egg</p>
+<p>Build an egg</p>
 <br>
-<pre><code class="bash">./setup.py bdist_egg</pre></code>
+<pre><code class="bash">/root/thunder/python/setup.py bdist_egg
+export THUNDER_EGG=/root/thunder/python/dist/</pre></code>
 <br>
-<p>This will make it easy for Pyspark to send dependencies to the worker nodes. Also execute a helper script that installs Numpy and Scipy on the workers.</p>
+<p>This will allow Pyspark to send Thunder's libraries to the worker nodes without explicitly installing Thunder on each one. Also execute a helper script that installs Numpy and Scipy on the workers.</p>
 <br>
 <pre><code class="bash">chmod +x thunder/helper/copy-numpy-scipy-ec2.sh
 thunder/helper/copy-numpy-scipy-ec2.sh</pre></code>

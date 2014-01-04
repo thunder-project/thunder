@@ -79,21 +79,24 @@
         <article id = "docs">
           <h1 id="doctitle">Quick start</h1>
 <p>Here's a quick guide to getting up and running. It assumes <a href="http://spark.incubator.apache.org/downloads.html">Spark</a>, Numpy, and Scipy are already installed. See <a href="howtouse.html">How to Use</a> for more detailed instructions.</p><p>First, download the latest <a href="https://github.com/freeman-lab/thunder/archive/master.zip">build</a> of Thunder and add it to your path.</p><br>
-  <pre><code class="shell">export PYTHONPATH=your_path_to_thunder/python/:$PYTHONPATH
+  <pre><code class="bash">export PYTHONPATH=your_path_to_thunder/python/:$PYTHONPATH
 </pre></code>
 <br><p>Now go into the top-level Thunder directory and run an analysis on test data.</p>
           <br>
-          <pre><code class="python">$SPARK_HOME/pyspark python/thunder/factorization/pca.py local data/iris.txt ~/results 4</pre></code>
+          <pre><code class="bash">$SPARK_HOME/pyspark python/thunder/factorization/pca.py local data/iris.txt ~/results 4</pre></code>
           <br>
-          <p>This will run principal components on the “iris” data set with 4 components, and write results to a folder in your home directory. The same analysis can be run interactively in a shell.</p><br>
-          <pre><code class="python">SPARK_HOME/pyspark
->> from thunder.util.datatio import parse
+          <p>This will run principal components on the “iris” data set with 4 components, and write results to a folder in your home directory. The same analysis can be run interactively in a shell. Start PySpark</p><br>
+          <pre><code class="bash">$SPARK_HOME/pyspark</code></pre><br>
+<p>Then run the analysis</p>
+        <br>
+        <pre><code class="python">>> from thunder.util.datatio import parse
 >> from thunder.factorization.pca import pca
 >> lines = sc.textFile(”data/iris.txt”)
 >> data = parse(lines).cache()
 >> comps, latent, scores = pca(data, 4)
 >> saveout(comps, "~/results", "comps", "json")
->> saveout(scores, "~/results", "scores", "images")</pre></code>
+>> saveout(scores, "~/results", "scores", "images")</code></pre>
+      <br>
         </article>
       </div>
 
