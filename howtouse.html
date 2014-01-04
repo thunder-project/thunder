@@ -198,7 +198,7 @@ export DATA=hdfs://$SPARK_URL:9000/data
 <br>
 <p>Where k is the reduced dimensionality to use, and c is the number of independent components to find.</p>
 <p>Both methods rely on a singular value decomposition utility. Two methods for computing the singular value decomposition are included. One is direct: it maps the outer product of all time series data, and then adds the results through an accumulator. This is highly efficient for many data points with few time points (e.g. less than a few hundred), but for longer time series data it will become inefficient. So Thunder also includes an iterative method for computing the SVD that uses expectation maximization.</p>
-<h2 id="doctitle">Regression</h1>
+<h2 id="docsubtitle">Regression</h1>
 <p>Analyses: Regress (linear, bilinear), Tuning (gaussian, circular), Cross Correlation</p>
 <p>Utilities: Loading models, Computing parameter estimates and fit statistics</p>
 <p>Regression models describe each time series as a function of some underlying variables. Thunder includes both linear and bilinear regression, called by:</p>
@@ -222,7 +222,7 @@ params = tuningModel.fit(data)
 </pre></code>
 <br>
 <p>Where “modelFile” is the base name of a file containing the input value. Typically, the data will be the result of a previous regression step, for example, because you first estimate the response in each of several conditions (using linear regression), and then fit a tuning curve to the resulting estimates.</p>
-<h2 id="doctitle">Summary</h1>
+<h2 id="docsubtitle">Summary</h1>
 <p>Analyses: Reference, Fourier, Local Correlation, Query</p>
 <p>Summary analyses compute statistics on time series data, either simple summary statistics, or the results of more complex signal processing. Reference is for computing summary statistics on each time series, called by:</p>
 <br>
