@@ -1,5 +1,10 @@
 """
-Class for doing matrix operations on RDDs of (int, ndarray) pairs
+class for doing matrix operations on RDDs of (int, ndarray) pairs
+(experimental!)
+
+TODO: right divide and left divide
+TODO: common operation is multiplying an RDD by its transpose times a matrix, how do this cleanly?
+TODO: test using these in the various analyses packages (especially thunder.factorization)
 """
 
 import sys
@@ -7,11 +12,11 @@ from numpy import dot, isclose, outer, shape, ndarray, mean, add, subtract, mult
 from pyspark.accumulators import AccumulatorParam
 
 
-def MatrixSumIteratorSelf(iterator):
+def matrixsum_iterator_self(iterator):
     yield sum(outer(x, x) for x in iterator)
 
 
-def MatrixSumIteratorOther(iterator):
+def matrixsum_iterator_other(iterator):
     yield sum(outer(x, y) for x, y in iterator)
 
 
@@ -42,20 +47,22 @@ class MatrixRDD(object):
 
     def collect(self):
         """
-        Collect the rows of the matrix
+        collect the rows of the matrix
         """
         return self.rdd.map(lambda (k, v): v).collect()
 
     def first(self):
         """
-        Get the first row of the matrix
+        get the first row of the matrix
         """
         return self.rdd.first()[1]
 
     def cov(self, axis=None):
         """
-        Compute a covariance matrix
-        Optional argument: "axis" for mean subtraction, 0 (rows) or 1 (columns)
+        compute a covariance matrix
+
+        arguments:
+        axis - axis for mean subtraction, 0 (rows) or 1 (columns)
         """
         if axis is None:
             return self.outer() / self.n
@@ -64,11 +71,13 @@ class MatrixRDD(object):
 
     def outer(self, method="reduce"):
         """
-        Compute outer product of the MatrixRDD with itself
-        Method: "reduce" (use a reducer) or "accum" (use an accumulator)
+        compute outer product of the MatrixRDD with itself
+
+        arguments:
+        method - "reduce" (use a reducer) or "accum" (use an accumulator)
         """
         if method is "reduce":
-            return self.rdd.map(lambda (k, v): v).mapPartitions(MatrixSumIteratorSelf).sum()
+            return self.rdd.map(lambda (k, v): v).mapPartitions(matrixsum_iterator_self).sum()
         if method is "accum":
             global mat
             mat = self.rdd.context.accumulator(zeros((self.d, self.d)), MatrixAccumulatorParam())
@@ -84,8 +93,10 @@ class MatrixRDD(object):
     def times(self, other, method="reduce"):
         """
         Multiply a MatrixRDD by another matrix
-        other: MatrixRDD, scalar, or numpy array
-        method: "reduce" (use a reducer) or "accum" (use an accumulator)
+
+        arguments:
+        other - MatrixRDD, scalar, or numpy array
+        method - "reduce" (use a reducer) or "accum" (use an accumulator)
         """
         dtype = type(other)
         if dtype == MatrixRDD:
@@ -94,7 +105,7 @@ class MatrixRDD(object):
                     "cannot multiply shapes ("+str(self.n)+","+str(self.d)+") and ("+str(other.n)+","+str(other.d)+")")
             else:
                 if method is "reduce":
-                    return self.rdd.join(other.rdd).map(lambda (k, v): v).mapPartitions(MatrixSumIteratorOther).sum()
+                    return self.rdd.join(other.rdd).map(lambda (k, v): v).mapPartitions(matrixsum_iterator_other).sum()
                 if method is "accum":
                     global mat
                     mat = self.rdd.context.accumulator(zeros((self.d, other.d)), MatrixAccumulatorParam())
@@ -121,9 +132,11 @@ class MatrixRDD(object):
 
     def elementwise(self, other, op):
         """
-        Apply elementwise operation to a MatrixRDD
-        other: MatrixRDD, scalar, or numpy array
-        op: binary operator, e.g. add, subtract
+        apply elementwise operation to a MatrixRDD
+
+        arguments:
+        other - MatrixRDD, scalar, or numpy array
+        op - binary operator, e.g. add, subtract
         """
         dtype = type(other)
         if dtype is MatrixRDD:
@@ -142,32 +155,34 @@ class MatrixRDD(object):
 
     def plus(self, other):
         """
-        Elementwise addition (see elementwise)
+        elementwise addition (see elementwise)
         """
         return MatrixRDD.elementwise(self, other, add)
 
     def minus(self, other):
         """
-        Elementwise subtraction (see elementwise)
+        elementwise subtraction (see elementwise)
         """
         return MatrixRDD.elementwise(self, other, subtract)
 
     def dottimes(self, other):
         """
-        Elementwise multiplcation (see elementwise)
+        elementwise multiplcation (see elementwise)
         """
         return MatrixRDD.elementwise(self, other, multiply)
 
     def dotdivide(self, other):
         """
-        Elementwise division (see elementwise)
+        elementwise division (see elementwise)
         """
         return MatrixRDD.elementwise(self, other, divide)
 
     def center(self, axis=0):
         """
-        Center a MatrixRDD by mean subtraction
-        axis: center rows (0) or columns (1)
+        center a MatrixRDD by mean subtraction
+
+        arguments:
+        axis - center rows (0) or columns (1)
         """
         if axis is 0:
             return MatrixRDD(self.rdd.mapValues(lambda x: x - mean(x)), self.n, self.d)
@@ -180,18 +195,16 @@ class MatrixRDD(object):
     def zscore(self, axis=0):
         """
         zscore a MatrixRDD by mean subtraction and division by standard deviation
-        axis: center rows (0) or columns (1)
+
+        arguments:
+        axis - center rows (0) or columns (1)
         """
         if axis is 0:
             return MatrixRDD(self.rdd.mapValues(lambda x: (x - mean(x))/std(x)), self.n, self.d)
         if axis is 1:
-            meanVec = self.rdd.map(lambda (k, v): v).mean()
-            stdVec = self.rdd.map(lambda (k, v): v).std()
-            return self.minus(meanVec).dotdivide(stdVec)
+            meanvec = self.rdd.map(lambda (k, v): v).mean()
+            stdvec = self.rdd.map(lambda (k, v): v).std()
+            return self.minus(meanvec).dotdivide(stdvec)
         else:
             raise Exception("axis must be 0 or 1")
 
-
-    # TODO: right divide and left divide
-
-    # TODO: common operation is multiplying an RDD by its transpose times a matrix, how do this cleanly?
