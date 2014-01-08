@@ -19,9 +19,9 @@ Here's a quick guide to getting up and running. It assumes [Spark](http://spark.
 
 Now go into the top-level Thunder directory and run an analysis on test data.
 
-	$SPARK_HOME/pyspark python/thunder/factorization/pca.py local data/iris.txt ~/results 4<
+	$SPARK_HOME/pyspark python/thunder/factorization/pca.py local data/iris.txt ~/results 4
 
-This will run principal components on the “iris” data set with 4 components, and write results to a folder in your home directory. The same analysis can be run interactively in a shall. Start Pyspark:
+This will run principal components on the “iris” data set with 4 components, and write results to a folder in your home directory. The same analysis can be run interactively in a shell. Start Pyspark:
 
 	$SPARK_HOME/pyspark
 
