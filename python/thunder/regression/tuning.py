@@ -1,74 +1,61 @@
-# fit a parametric tuning curve to regression results
-#
-# example:
-# tuning.py local data/fish.txt raw data/regression/fish_bilinear results bilinear circular
-
-import argparse
 import os
-from numpy import *
-from thunder.util.dataio import *
-from thunder.regression.util import *
-from thunder.factorization.util import *
+import argparse
+import glob
+from thunder.regression.util import RegressionModel, TuningModel
+from thunder.util.dataio import parse, saveout
 from pyspark import SparkContext
 
 
-def tuning(data, modelFile, regressMode, tuningMode):
+def tuning(data, tuningmodelfile, tuningmode, regressmodelfile=None, regressmode=None):
+    """estimate parameters of a tuning curve model,
+    optionally preceeded by regression
 
-    # create models
-    regressionModel = RegressionModel.load(modelFile, regressMode)
-    tuningModel = TuningModel.load(modelFile, tuningMode)
+    arguments:
+    data - RDD of data points
+    tuningmodelfile - model parameters (string with file location, array, or tuple)
+    tuningmode - form of tuning ("gaussian" or "circular")
+    regressmodelfile - model parameters (default=None)
+    regressmode - form of regression ("linear" or "bilinear") (default=None)
 
-    # do regression
-    betas = regressionModel.fit(data).cache()
-
-    # get statistics
-    stats = betas.map(lambda x: x[1])
+    returns:
+    params - tuning curve parameters
+    """
+    # create tuning model
+    tuningmodel = TuningModel.load(tuningmodelfile, tuningmode)
 
     # get tuning curves
-    params = tuningModel.fit(betas.map(lambda x: x[0]))
-
-    # get simple measure of response strength
-    r = data.map(lambda x: norm(x - mean(x)))
-
-    if regressMode == "bilinear":
-        comps, latent, scores = svd1(betas.map(lambda x: x[2]), 2)
-        return params, stats, r, comps, latent, scores
+    if regressmodelfile is not None:
+        # use regression results
+        regressmodel = RegressionModel.load(regressmodelfile, regressmode)
+        betas, stats, resid = regressmodel.fit(data)
+        params = tuningmodel.fit(betas)
     else:
-        return params, stats, r
+        # use data
+        params = tuningmodel.fit(data)
+
+    return params
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="fit a parametric tuning curve to regression results")
     parser.add_argument("master", type=str)
-    parser.add_argument("dataFile", type=str)
-    parser.add_argument("dataMode", choices=("raw", "dff", "sub"), help="form of data preprocessing")
-    parser.add_argument("modelFile", type=str)
-    parser.add_argument("outputDir", type=str)
-    parser.add_argument("regressMode", choices=("mean", "linear", "bilinear"),
-                        help="the form of regression")
-    parser.add_argument("tuningMode", choices=("circular", "gaussian"),
-                        help="parametric tuning curve")
+    parser.add_argument("datafile", type=str)
+    parser.add_argument("tuningmodelfile", type=str)
+    parser.add_argument("outputdir", type=str)
+    parser.add_argument("tuningmode", choices=("circular", "gaussian"), help="form of tuning curve")
+    parser.add_argument("--preprocess", choices=("raw", "dff", "sub"), default="raw", required=False)
+    parser.add_argument("--regressmodelfile", type=str)
+    parser.add_argument("--regressmode", choices=("linear", "bilinear"), help="form of regression")
 
     args = parser.parse_args()
     egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
     sc = SparkContext(args.master, "tuning", pyFiles=egg)
-    lines = sc.textFile(args.dataFile)
-    data = parse(lines, "dff").cache()
+    lines = sc.textFile(args.datafile)
+    data = parse(lines, args.preprocess).cache()
 
-    outputDir = args.outputDir + "-tuning"
-    if not os.path.exists(outputDir):
-        os.makedirs(outputDir)
+    params = tuning(data, args.tuningmodelfile, args.tuningmode, args.regressmodelfile, args.regressmode)
 
-    if args.regressMode == "bilinear":
-        params, stats, r, comps, latent, scores = tuning(data, args.modelFile, args.regressMode, args.tuningMode)
-        saveout(params, outputDir, "params", "matlab")
-        saveout(stats, outputDir, "stats", "matlab")
-        saveout(r, outputDir, "r", "matlab")
-        saveout(comps, outputDir, "comps", "matlab")
-        saveout(scores, outputDir, "scores", "matlab", 2)
-        saveout(latent, outputDir, "latent", "matlab")
+    outputdir = args.outputdir + "-tuning"
+    if not os.path.exists(outputdir):
+        os.makedirs(outputdir)
 
-    if args.regressMode == "linear":
-        params, stats, r = tuning(data, args.modelFile, args.regressMode, args.tuningMode)
-        saveout(params, outputDir, "params", "matlab")
-        saveout(stats, outputDir, "stats", "matlab")
-        saveout(r, outputDir, "r", "matlab")
+    saveout(params, outputdir, "params", "matlab")

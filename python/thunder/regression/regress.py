@@ -1,67 +1,64 @@
-# fit a regression model
-#
-# example:
-# regress.py local data/fish.txt raw data/regression/fish_linear results linear
-
-
-import argparse
 import os
-from numpy import *
-from scipy.linalg import *
-from thunder.util.dataio import *
-from thunder.regression.util import *
-from thunder.factorization.util import *
+import argparse
+import glob
+from thunder.regression.util import RegressionModel
+from thunder.factorization.util import svd
+from thunder.util.dataio import parse, saveout
 from pyspark import SparkContext
 
 
-def regress(data, modelFile, regressMode):
+def regress(data, modelfile, regressmode):
+    """perform mass univariate regression,
+    followed by principal components analysis
+    to reduce dimensionality
 
+    arguments:
+    data - RDD of data points
+    modelfile - model parameters (string with file location, array, or tuple)
+    regressmode - form of regression ("linear" or "bilinear")
+
+    returns:
+    stats - statistics of the fit
+    comps, latent, scores, traj - results of principal components analysis
+    """
     # create model
-    model = RegressionModel.load(modelFile, regressMode)
+    model = RegressionModel.load(modelfile, regressmode)
 
     # do regression
-    betas = model.fit(data).cache()
+    betas, stats, resid = model.fit(data)
 
-    # get statistics
-    stats = betas.map(lambda x: x[1])
-
-    # do PCA
-    comps, latent, scores = svd1(betas.map(lambda x: x[0]), 2)
+    # do principal components analysis
+    scores, latent, comps = svd(betas, 2)
 
     # compute trajectories from raw data
     traj = model.fit(data, comps)
 
-    # get simple measure of response strength
-    r = data.map(lambda x: norm(x - mean(x)))
-
-    return betas, stats, comps, latent, scores, traj, r
+    return stats, comps, latent, scores, traj
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="fit a regression model")
     parser.add_argument("master", type=str)
-    parser.add_argument("dataFile", type=str)
-    parser.add_argument("dataMode", choices=("raw", "dff", "sub"), help="form of data preprocessing")
-    parser.add_argument("modelFile", type=str)
-    parser.add_argument("outputDir", type=str)
-    parser.add_argument("regressMode", choices=("mean", "linear", "bilinear"),
-                        help="the form of regression")
+    parser.add_argument("datafile", type=str)
+    parser.add_argument("modelfile", type=str)
+    parser.add_argument("outputdir", type=str)
+    parser.add_argument("regressmode", choices=("linear", "bilinear"), help="form of regression")
+    parser.add_argument("--preprocess", choices=("raw", "dff", "sub"), default="raw", required=False)
 
     args = parser.parse_args()
     egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
     sc = SparkContext(args.master, "regress", pyFiles=egg)
-    lines = sc.textFile(args.dataFile)
-    data = parse(lines, args.dataMode).cache()
+    lines = sc.textFile(args.datafile)
+    data = parse(lines, args.preprocess).cache()
 
-    betas, stats, comps, latent, scores, traj, r = regress(data, args.modelFile, args.regressMode)
+    stats, comps, latent, scores, traj = regress(data, args.modelfile, args.regressmode)
 
-    outputDir = args.outputDir + "-regress"
-    if not os.path.exists(outputDir):
-        os.makedirs(outputDir)
+    outputdir = args.outputdir + "-regress"
+    if not os.path.exists(outputdir):
+        os.makedirs(outputdir)
 
-    saveout(stats, outputDir, "stats", "matlab")
-    saveout(comps, outputDir, "comps", "matlab")
-    saveout(latent, outputDir, "latent", "matlab")
-    saveout(scores, outputDir, "scores", "matlab", 2)
-    saveout(traj, outputDir, "traj", "matlab")
-    saveout(r, outputDir, "r", "matlab")
+    saveout(stats, outputdir, "stats", "matlab")
+    saveout(comps, outputdir, "comps", "matlab")
+    saveout(latent, outputdir, "latent", "matlab")
+    saveout(scores, outputdir, "scores", "matlab", 2)
+    saveout(traj, outputdir, "traj", "matlab")

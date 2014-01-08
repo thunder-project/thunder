@@ -1,16 +1,18 @@
 """
-Utilities for regression and model fitting
+utilities for regression and model fitting
 """
 
-from scipy.io import *
-from numpy import *
-from scipy.linalg import *
+from scipy.io import loadmat
+from numpy import array, sum, outer, inner, mean, shape, dot, transpose, concatenate, ones, angle, abs, exp
+from scipy.linalg import inv
 
 
 class RegressionModel(object):
+    """class for loading and fitting a regression"""
+
     @staticmethod
-    def load(modelFile, regressMode, *opts):
-        return REGRESSION_MODELS[regressMode](modelFile, *opts)
+    def load(modelfile, regressmode, *opts):
+        return REGRESSION_MODELS[regressmode](modelfile, *opts)
 
     def get(self, y):
         pass
@@ -19,138 +21,107 @@ class RegressionModel(object):
         if comps is not None:
             traj = data.map(
                 lambda x: outer(x, inner(self.get(x)[0] - mean(self.get(x)[0]), comps))).reduce(
-                lambda x, y: x + y) / data.count()
+                    lambda x, y: x + y) / data.count()
             return traj
         else:
-            betas = data.map(lambda x: self.get(x))
-            return betas
-
-
-class CrossCorrModel(RegressionModel):
-    def __init__(self, modelFile, mxLag):
-        X = loadmat(modelFile + "_X.mat")['X']
-        X = X - mean(X)
-        X = X / norm(X)
-        if mxLag is not 0:
-            shifts = range(-mxLag, mxLag+1)
-            d = shape(X)[1]
-            m = len(shifts)
-            shiftedX = zeros((m, d))
-            for ix in range(0, len(shifts)):
-                shiftedX[ix, :] = roll(X, ix)
-            self.X = shiftedX
-        else:
-            self.X = X
-        print(self.X)
-
-    def get(self, y):
-        y = y - mean(y)
-        y /= norm(y) + 0.0001
-        b = dot(self.X, y)
-        return b
-
-
-class MeanRegressionModel(RegressionModel):
-    def __init__(self, modelFile):
-        self.X = loadmat(modelFile + "_X.mat")['X'].astype(float)
-
-    def get(self, y):
-        b = dot(self.X, y)
-        return b, 1
+            result = data.map(lambda x: self.get(x))
+            betas = result.map(lambda x: x[0])
+            stats = result.map(lambda x: x[1])
+            resid = result.map(lambda x: x[2])
+            return betas, stats, resid
 
 
 class LinearRegressionModel(RegressionModel):
-    def __init__(self, modelFile):
-        X = loadmat(modelFile + "_X.mat")['X']
-        X = concatenate((ones((1, shape(X)[1])), X))
-        X = X.astype(float)
-        g = loadmat(modelFile + "_g.mat")['g']
-        g = g.astype(float)[0]
-        Xhat = dot(inv(dot(X, transpose(X))), X)
-        self.X = X
-        self.Xhat = Xhat
-        self.g = g
-        self.nG = len(unique(self.g))
+    """class for linear regression"""
+
+    def __init__(self, modelfile):
+        """load model. modelfile can be an array, or a string
+        if its a string, assumes design matrix is a MAT file
+        with name modelfile_X
+        """
+        if type(modelfile) is str:
+            x = loadmat(modelfile + "_X.mat")['X']
+        else:
+            x = modelfile
+        x = concatenate((ones((1, shape(x)[1])), x))
+        x_hat = dot(inv(dot(x, transpose(x))), x)
+        self.x = x
+        self.x_hat = x_hat
 
     def get(self, y):
-        b = dot(self.Xhat, y)
-        predic = dot(b, self.X)
+        """compute regression coefficients, r2 statistic, and residuals"""
+
+        b = dot(self.x_hat, y)
+        predic = dot(b, self.x)
+        resid = y - predic
         sse = sum((predic - y) ** 2)
         sst = sum((y - mean(y)) ** 2)
-        r2 = 1 - sse / sst
-        return (b[1:], r2)
-
-
-class LinearShuffleRegressionModel(LinearRegressionModel):
-    def __init__(self, modelFile):
-        super(LinearShuffleRegressionModel, self).__init__(modelFile)
-        self.nRnd = float(2)
-
-    def get(self, y):
-        b = dot(self.Xhat, y)
-        predic = dot(b, self.X)
-        sse = sum((predic - y) ** 2)
-        sst = sum((y - mean(y)) ** 2)
-        r2 = 1 - sse / sst
-        r2shuffle = zeros((self.nRnd,))
-        X = copy(self.X)
-        m = shape(X)[1]
-        for iShuf in range(0, int(self.nRnd)):
-            for ix in range(0, shape(X)[0]):
-                shift = int(round(random.rand(1) * m))
-                X[ix, :] = roll(X[ix, :], shift)
-            b = lstsq(transpose(X), y)[0]
-            predic = dot(b, X)
-            sse = sum((predic - y) ** 2)
-            r2shuffle[iShuf] = 1 - sse / sst
-        p = sum(r2shuffle > r2) / self.nRnd
-        return (b[1:], [r2, p])
+        if sst == 0:
+            r2 = 0
+        else:
+            r2 = 1 - sse / sst
+        return b[1:], r2, resid
 
 
 class BilinearRegressionModel(RegressionModel):
-    def __init__(self, modelFile):
-        X1 = loadmat(modelFile + "_X1.mat")['X1']
-        X2 = loadmat(modelFile + "_X2.mat")['X2']
-        X1hat = dot(inv(dot(X1, transpose(X1))), X1)
-        self.X1 = X1
-        self.X2 = X2
-        self.X1hat = X1hat
+    """class for bilinear regression"""
+
+    def __init__(self, modelfile):
+        """load model. modelfile can be a tuple of arrays, or a string
+        if its a string, assumes two design matrices are MAT files
+        with names modelfile_X1 and modefile_X2
+        """
+        if type(modelfile) is str:
+            x1 = loadmat(modelfile + "_X1.mat")['X1']
+            x2 = loadmat(modelfile + "_X2.mat")['X2']
+        else:
+            x1 = modelfile[0]
+            x2 = modelfile[1]
+        x1_hat = dot(inv(dot(x1, transpose(x1))), x1)
+        self.x1 = x1
+        self.x2 = x2
+        self.x1_hat = x1_hat
 
     def get(self, y):
-        b1 = dot(self.X1hat, y)
+        """compute two sets of regression coefficients, r2 statistic, and residuals"""
+
+        b1 = dot(self.x1_hat, y)
         b1 = b1 - min(b1)
-        b1hat = dot(transpose(self.X1), b1)
-        if sum(b1hat) == 0:
-            b1hat = b1hat + 0.001
-        X3 = self.X2 * b1hat
-        X3 = concatenate((ones((1, shape(X3)[1])), X3))
-        X3hat = dot(inv(dot(X3, transpose(X3))), X3)
-        b2 = dot(X3hat, y)
-        predic = dot(b2, X3)
+        b1_hat = dot(transpose(self.x1), b1)
+        if sum(b1_hat) == 0:
+            b1_hat += 1E-06
+        x3 = self.x2 * b1_hat
+        x3 = concatenate((ones((1, shape(x3)[1])), x3))
+        x3_hat = dot(inv(dot(x3, transpose(x3))), x3)
+        b2 = dot(x3_hat, y)
+        predic = dot(b2, x3)
+        resid = y - predic
         sse = sum((predic - y) ** 2)
         sst = sum((y - mean(y)) ** 2)
-        r2 = 1 - sse / sst
+        if sst == 0:
+            r2 = 0
+        else:
+            r2 = 1 - sse / sst
 
-        return (b2[1:], r2, b1)
-
-
-class ShotgunRegressionModel(RegressionModel):
-    def __init__(self, modelFile):
-        y = loadmat(modelFile + "_y.mat")['y']
-        y = y.astype(float)
-        #y = (y - mean(y)) / std(y)
-        if shape(y)[0] == 1:
-            y = transpose(y)
-        self.y = y
+        return b2[1:], r2, resid
 
 
 class TuningModel(object):
-    def __init__(self, modelFile):
-        self.s = loadmat(modelFile + "_s.mat")['s']
+    """class for loading and fitting a tuning model"""
+
+    def __init__(self, modelfile):
+        """load model. modelfile can be an array, or a string
+        if it's a string, assumes stim is a MAT file
+        at with name modelfile_s
+        """
+        if type(modelfile) is str:
+            self.s = loadmat(modelfile + "_s.mat")['s']
+        else:
+            self.s = modelfile
 
     @staticmethod
-    def load(modelFile, tuningMode):
-        return TUNING_MODELS[tuningMode](modelFile)
+    def load(modelfile, tuningmode):
+        return TUNING_MODELS[tuningmode](modelfile)
 
     def get(self, y):
         pass
@@ -158,50 +129,51 @@ class TuningModel(object):
     def fit(self, data):
         return data.map(lambda x: self.get(x))
 
-    def curves(self, data):
-        def inRange(val, rng1, rng2):
-            if (val > rng1) & (val < rng2):
-                return True
-            else:
-                return False
-
-        vals = linspace(amin(self.s), amax(self.s), 4)
-        means = zeros((len(vals) - 1, max(shape(self.s))))
-        sds = zeros((len(vals) - 1, max(shape(self.s))))
-        for iv in range(0, len(vals) - 1):
-            subset = data.filter(
-                lambda b: (b[1] > 0.005) & inRange(self.get(b[0])[0], vals[iv], vals[iv + 1]))
-            n = subset.count()
-            means[iv, :] = subset.map(lambda b: b[0]).reduce(lambda x, y: x + y) / n
-            sds[iv, :] = subset.map(lambda b: (b[0] - means[iv, :]) ** 2).reduce(
-                lambda x, y: x + y) / (n - 1)
-
-        return means, sds
-
 
 class CircularTuningModel(TuningModel):
+    """class for circular tuning"""
+
     def get(self, y):
+        """estimates the circular mean and variance ("kappa")
+        identical to the max likelihood estimates of the
+        parameters of the best fitting von-mises function
+        """
         y = y - min(y)
+        if sum(y) == 0:
+            y += 1E-06
         y = y / sum(y)
         r = inner(y, exp(1j * self.s))
         mu = angle(r)
-        v = absolute(r) / sum(y)
+        v = abs(r) / sum(y)
         if v < 0.53:
             k = 2 * v + (v ** 3) + 5 * (v ** 5) / 6
         elif (v >= 0.53) & (v < 0.85):
             k = -.4 + 1.39 * v + 0.43 / (1 - v)
+        elif (v ** 3 - 4 * (v ** 2) + 3 * v) == 0:
+            k = array([0.0])
         else:
             k = 1 / (v ** 3 - 4 * (v ** 2) + 3 * v)
-        return (mu, k)
+        if k > 1E8:
+            k = array([0.0])
+        return mu, k
 
 
 class GaussianTuningModel(TuningModel):
+    """class for gaussian tuning"""
+
     def get(self, y):
+        """estimates the mean and variance
+        similar to the max likelihood estimates of the
+        parameters of the best fitting gaussian
+        but non-infinite supports may bias estimates
+        """
         y[y < 0] = 0
+        if sum(y) == 0:
+            y += 1E-06
         y = y / sum(y)
         mu = dot(self.s, y)
         sigma = dot((self.s - mu) ** 2, y)
-        return (mu, sigma)
+        return mu, sigma
 
 
 TUNING_MODELS = {
@@ -210,10 +182,6 @@ TUNING_MODELS = {
 }
 
 REGRESSION_MODELS = {
-    'mean': MeanRegressionModel,
     'linear': LinearRegressionModel,
-    'linear-shuffle': LinearShuffleRegressionModel,
-    'crosscorr': CrossCorrModel,
-    'bilinear': BilinearRegressionModel,
-    'shotgun': ShotgunRegressionModel,
+    'bilinear': BilinearRegressionModel
 }
