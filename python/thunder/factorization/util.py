@@ -1,162 +1,117 @@
-# utilities for factorization
-
-from numpy import random, mean, real, argsort, transpose, dot, inner, outer, zeros, shape
+from numpy import random, sum, real, argsort, transpose, dot, inner, outer, zeros, shape, sqrt
 from scipy.linalg import eig, inv, orth
 from thunder.util.dataio import *
 from pyspark.accumulators import AccumulatorParam
 
 
-# Direct method for computing SVD by calculating covariance matrix,
-# only efficient when d is small
-def svd1(data, k, meanSubtract=1):
+def svd(data, k, meansubtract=1, method="direct", maxiter=20, tol=0.00001):
+    """large-scale singular value decomposition
 
-    def outerSum(iterator):
-        yield sum(outer(x, x) for x in iterator)
+    direct method uses an accumulator to distribute and sum outer products
+    only efficient when n >> m (tall and skinny)
+    requires that n ** 2 fits in memory
 
-    n = data.count()
+    em method uses an iterative algorithm based on expectation maximization
 
-    if meanSubtract == 1:
-        data = data.map(lambda x: x - mean(x))
+    TODO: select method automatically based on data size
+    TODO: return fractional variance explained by k eigenvectors
 
-    def outerProd(x):
-        return outer(x, x)
+    arguments:
+    data - RDD of data points
+    k - number of components to recover
+    method - choice of algorithm, "direct" or "em" (default = "direct")
+    meansubtract - whether or not to subtract the mean
 
-    # TODO: confirm speed increase for mapPartitions vs map
-    cov = data.mapPartitions(outerSum).reduce(lambda x, y: x + y) / n
-    #cov = data.map(lambda x: outerProd(x)).reduce(lambda x, y: x + y) / n
+    returns:
+    comps - the left k eigenvectors (as array)
+    latent - the singular values
+    scores - the right k eigenvectors (as RDD)
+    """
+    if method == "direct":
 
-    w, v = eig(cov)
-    w = real(w)
-    v = real(v)
-    inds = argsort(w)[::-1]
-    latent = w[inds[0:k]]
-    comps = transpose(v[:, inds[0:k]])
-    scores = data.map(lambda x: inner(x, comps))
+        # set up a matrix accumulator
+        class MatrixAccumulatorParam(AccumulatorParam):
+            def zero(self, value):
+                return zeros(shape(value))
 
-    return comps, latent, scores
+            def addInPlace(self, val1, val2):
+                val1 += val2
+                return val1
 
+        n = data.count()
+        m = len(data.first())
+        if meansubtract == 1:
+            data = data.map(lambda x: x - mean(x))
 
-# ALS for computing SVD, preferable when d is large
-def svd2(data, k, meanSubtract=1):
-
-    def randomVector(ind, seed, k):
-        random.seed(ind*100000*seed)
-        r = random.rand(1, k)
-        return r
-
-    if meanSubtract == 1:
-        data = data.map(lambda x: x - mean(x))
-
-    v = data.map(lambda x, y: randomVector(x, 1, k))
-    nIter = 5
-    iteration = 1
-
-    while iteration < nIter:
-        # goal is to solve R = VU subject to U,V > 0
-        # by iteratively updating U and V with least squares and clipping
-
-        # precompute inv(V' * V)
-        vinv = inv(v.map(lambda x: outer(x, x)).reduce(lambda x, y: (x+y)))
-
-        # update U using least squares row-wise with inv(V' * V) * V * R (same as pinv(V) * R)
-        u = data.join(v.map(lambda x: dot(vinv, x))).mapValues(lambda x, y: outer(x, y)).reduce(lambda x, y: x + y)
-
-        # precompute pinv(U)
-        uinv = transpose(inv(transpose(u)))
-
-        # update V using least squares row-wise with R * pinv(U)
-        v = data.mapValues(lambda x: dot(transpose(uinv), x))
-
-        iteration += 1
-
-
-def svd3(data, k, meanSubtract=1):
-
-    n = data.count()
-    d = len(data.first())
-
-    if meanSubtract == 1:
-        data = data.map(lambda x: x - mean(x))
-
-    def outerProd(x):
-        return outer(x, x)
-
-    def outerSum(iterator):
-        yield sum(outer(x, x) for x in iterator)
-
-    def outerSum2(iterator, other1, other2):
-        yield sum(outer(x, dot(dot(x, other1), other2)) for x in iterator)
-
-    C = random.rand(k, d)
-    iterNum = 0
-    iterMax = 10
-    error = 100
-    tol = 0.000001
-
-    while (iterNum < iterMax) & (error > tol):
-        Cold = C
-        Cinv = dot(transpose(C), inv(dot(C, transpose(C))))
-        preMult1 = data.context.broadcast(Cinv)
-        # X = data.times(preMult1.value)
-        # XX' = X.cov()
-        XX = data.map(lambda x: outerProd(dot(x, preMult1.value))).reduce(lambda x, y: x + y)
-        XXinv = inv(XX)
-        preMult2 = data.context.broadcast(dot(Cinv, XXinv))
-        # data1 = data.times(dot(Cinv, inv(XX'))
-        # C = data.times(data1)
-        C = data.map(lambda x: outer(x, dot(x, preMult2.value))).reduce(lambda x, y: x + y)
-        C = transpose(C)
-
-        error = sum(sum((C-Cold) ** 2))
-        iterNum += 1
-
-    C = transpose(orth(transpose(C)))
-    # cov = data.times(transpose(C)).cov()
-    cov = data.map(lambda x: dot(x, transpose(C))).mapPartitions(outerSum).reduce(
-        lambda x, y: x + y) / n
-    w, v = eig(cov)
-    w = real(w)
-    v = real(v)
-    inds = argsort(w)[::-1]
-    latent = w[inds[0:k]]
-    comps = dot(transpose(v[:, inds[0:k]]), C)
-    scores = data.map(lambda x: inner(x, comps))
-
-    return comps, latent, scores
-
-
-def svd4(data, k, meanSubtract=1):
-
-    class MatrixAccumulatorParam(AccumulatorParam):
-        def zero(self, value):
-            return zeros(shape(value))
-
-        def addInPlace(self, val1, val2):
-            val1 += val2
-            return val1
-
-    n = data.count()
-    m = len(data.first())
-
-    global cov
-
-    cov = data.context.accumulator(zeros((m, m)), MatrixAccumulatorParam())
-
-    def outerSum(x):
+        # create a variable and method to compute sums of outer products
         global cov
-        cov += outer(x, x)
+        cov = data.context.accumulator(zeros((m, m)), MatrixAccumulatorParam())
 
-    if meanSubtract == 1:
-        data = data.map(lambda x: x - mean(x))
+        def outersum(x):
+            global cov
+            cov += outer(x, x)
 
-    data.foreach(outerSum)
+        # compute the covariance matrix
+        data.foreach(outersum)
 
-    w, v = eig(cov.value / n)
-    w = real(w)
-    v = real(v)
-    inds = argsort(w)[::-1]
-    latent = w[inds[0:k]]
-    comps = transpose(v[:, inds[0:k]])
-    scores = data.map(lambda x: inner(x, comps))
+        # do local eigendecomposition
+        w, v = eig(cov.value / n)
+        w = real(w)
+        v = real(v)
+        inds = argsort(w)[::-1]
+        latent = sqrt(w[inds[0:k]]) * sqrt(n)
+        comps = transpose(v[:, inds[0:k]])
 
-    return comps, latent, scores
+        # project back into data, normalize by singular values
+        scores = data.map(lambda x: inner(x, comps) / latent)
+
+        return scores, latent, comps
+
+    if method == "em":
+
+        n = data.count()
+        m = len(data.first())
+        if meansubtract == 1:
+            data = data.map(lambda x: x - mean(x))
+
+        def outerprod(x):
+            return outer(x, x)
+
+        c = random.rand(k, m)
+        iter = 0
+        error = 100
+
+        # iterative update subspace using expectation maximization
+        # e-step: x = (c'c)^-1 c' y
+        # m-step: c = y x' (xx')^-1
+        while (iter < maxiter) & (error > tol):
+            c_old = c
+            # pre compute (c'c)^-1 c'
+            c_inv = dot(transpose(c), inv(dot(c, transpose(c))))
+            premult1 = data.context.broadcast(c_inv)
+            # compute (xx')^-1 through a map reduce
+            xx = data.map(lambda x: outerprod(dot(x, premult1.value))).sum()
+            xx_inv = inv(xx)
+            # pre compute (c'c)^-1 c' (xx')^-1
+            premult2 = data.context.broadcast(dot(c_inv, xx_inv))
+            # compute the new c through a map reduce
+            c = data.map(lambda x: outer(x, dot(x, premult2.value))).sum()
+            c = transpose(c)
+
+            error = sum(sum((c-c_old) ** 2))
+            iter += 1
+
+        # project data into subspace spanned by columns of c
+        # use standard eigendecomposition to recover an orthonormal basis
+        c = transpose(orth(transpose(c)))
+        cov = data.map(lambda x: dot(x, transpose(c))).map(lambda x: outerprod(x)).mean()
+        w, v = eig(cov)
+        w = real(w)
+        v = real(v)
+        inds = argsort(w)[::-1]
+        latent = sqrt(w[inds[0:k]]) * sqrt(n)
+        comps = dot(transpose(v[:, inds[0:k]]), c)
+        scores = data.map(lambda x: inner(x, comps) / latent)
+
+        return scores, latent, comps
+
