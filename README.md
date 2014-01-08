@@ -27,7 +27,7 @@ This will run principal components on the “iris” data set with 4 components,
 
 Then run the same analysis
 
-	>> from thunder.util.dataio import parse, saveout
+	>> from thunder.util.dataio import parse
 	>> from thunder.factorization.pca import pca
 	>> lines = sc.textFile(”data/iris.txt”)
 	>> data = parse(lines).cache()
