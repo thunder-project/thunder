@@ -9,7 +9,7 @@ Large-scale neural data analysis with Spark
 
 Spark is a powerful new framework for cluster computing, particularly well suited to iterative computations. Thunder is a family of analyses for finding structure in neural data using machine learning algorithms. It's fast to run, easy to develop for, and can be run interactively.
 
-It includes low-level utilties for data loading, saving, signal processing, and shared algorithms (regression, factorization, etc.), and high-level functions that can be scripted to easily combine analyses. The entire package is written in Spark's Python API (Pyspark), making extensive use of scipy and numpy. We plan to port some or all functionality to Scala in the future (e.g. for streaming), but for now all scala functions should be considered prototypes.
+Thunder includes low-level utilties for data loading, saving, signal processing, and shared algorithms (regression, factorization, etc.), and high-level functions that can be scripted to easily combine analyses. The entire package is written in Spark's Python API (Pyspark), making use of scipy and numpy. We plan to port some or all functionality to Scala in the future (e.g. for streaming), but for now all scala functions should be considered prototypes.
 
 ## Quick start
 
