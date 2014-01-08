@@ -39,38 +39,38 @@ Thunder currently includes four packages: clustering, factorization, regression,
 
 ### clustering
 
-analyses:
+analyses:  
 kmeans - k-means clustering
 
 ### factorization
 
-analyses:
-pca - principal components analysis
+analyses:  
+pca - principal components analysis  
 ica - independent components analysis
 
-utilities:
+utilities:  
 singular value decomposition
 
 ### regression
 
-analyses:
-regress - regression (linear and bilinear)
+analyses:  
+regress - regression (linear and bilinear)  
 tuning - parameteric tuning curves (circular and gaussian)
 
-utilities:
-creating and fitting regression models
+utilities:  
+creating and fitting regression models  
 creating and fitting tuning models
 
 ### signal processing
 
-analyses:
-crosscorr - signal cross-correlation
-fourier - fourier analysis
-localcorr - local spatial time series correlations
-stats - summary statistics (mean, std, etc.)
-query - average over indices
+analyses:  
+_crosscorr_ - signal cross-correlation  
+_fourier_ - fourier analysis  
+localcorr - local spatial time series correlations  
+stats - summary statistics (mean, std, etc.)  
+query - average over indices  
 
-utilies:
+utilities:  
 creating and calculating signal processing methods
 
 
