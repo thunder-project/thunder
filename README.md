@@ -35,28 +35,24 @@ Then run the same analysis
 
 ## Analyses
 
-Thunder currently includes four packages: clustering, factorization, regression, and signal processing, as well as a utils for shared methods like loading and saving (see Input format and Output format). Individual packages include both high-level analyses and underlying methods and algorithms. There are several stand-alone analysis scripts for common analyses, but the same functions (or sub-functions) can be used from within the Pyspark shell for easy interactive analysis.
+Thunder currently includes four packages: clustering, factorization, regression, and signal processing, as well as a utils for shared methods like loading and saving (see Input format and Output format). Individual packages include both high-level analyses and underlying methods and algorithms. There are several stand-alone analysis scripts for common analyses, but the same functions (or sub-functions) can be used from within the Pyspark shell for easy interactive analysis. Here is a list of the primary analyses:
 
 ### clustering
 
-analyses:  
 _kmeans_ - k-means clustering
 
 ### factorization
 
-analyses:  
 _pca_ - principal components analysis  
 _ica_ - independent components analysis
 
 ### regression
 
-analyses:  
 _regress_ - regression (linear and bilinear)  
 _tuning_ - parameteric tuning curves (circular and gaussian)
 
 ### signal processing
 
-analyses:  
 _crosscorr_ - signal cross-correlation  
 _fourier_ - fourier analysis  
 _localcorr_ - local spatial time series correlations  
