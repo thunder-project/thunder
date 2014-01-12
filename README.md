@@ -13,7 +13,7 @@ Thunder includes low-level utilties for data loading, saving, signal processing,
 
 ## Quick start
 
-Here's a quick guide to getting up and running. It assumes [Spark](http://spark.incubator.apache.org/downloads.html), Numpy, and Scipy are already installed. First, download the latest [build](https://github.com/freeman-lab/thunder/archive/master.zip) and add it to your path.
+Here's a quick guide to getting up and running. It assumes [Scala v2.9.3](http://www.scala-lang.org/download/2.9.3.html), [Spark v.0.8.1](http://spark.incubator.apache.org/downloads.html), [NumPy](http://www.numpy.org/), and [SciPy](http://scipy.org/scipylib/index.html) are already installed. First, download the latest [build](https://github.com/freeman-lab/thunder/archive/master.zip) and add it to your path.
 
 	PYTHONPATH=your_path_to_thunder/python/:$PYTHONPATH
 
@@ -48,18 +48,11 @@ analyses:
 _pca_ - principal components analysis  
 _ica_ - independent components analysis
 
-utilities:  
-singular value decomposition
-
 ### regression
 
 analyses:  
 _regress_ - regression (linear and bilinear)  
 _tuning_ - parameteric tuning curves (circular and gaussian)
-
-utilities:  
-creating and fitting regression models  
-creating and fitting tuning models
 
 ### signal processing
 
@@ -69,9 +62,6 @@ _fourier_ - fourier analysis
 _localcorr_ - local spatial time series correlations  
 _stats_ - summary statistics (mean, std, etc.)  
 _query_ - average over indices  
-
-utilities:  
-creating and calculating signal processing methods
 
 
 ## Input formats
