@@ -145,14 +145,13 @@ pre code {
 }
 
 #header {
-	font-size: 100px;
-	font-weight: 700;
-	margin-right: 20px;
-	text-align: right;
+	width: 400px;
+     margin-top: 10px;
+     float: right;
 }
 
 #subheader {
-	font-size: 90px;
+	font-size: 85px;
 	font-weight: 100;
      line-height: 1.2;
 }
@@ -163,8 +162,10 @@ pre code {
      }
 
      #header {
-          font-size: 50px;
-          text-align: center;
+          width: 100px;
+          display: block;
+          margin-left: auto;
+          margin-right: auto;
      }
      #subheader {
           font-size: 35px;
