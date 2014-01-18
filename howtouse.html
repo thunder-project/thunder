@@ -137,8 +137,8 @@ export THUNDER_EGG=/root/thunder/python/dist/</pre></code>
 <br>
 <p>This will allow PySpark to send Thunder's libraries to the worker nodes without explicitly installing Thunder on each one. You also need to execute a helper script that installs NumPy and SciPy on the workers.</p>
 <br>
-<pre><code class="bash">chmod +x /root/thunder/helper/copy-numpy-scipy-ec2.sh
-/root/thunder/helper/copy-numpy-scipy-ec2.sh</pre></code>
+<pre><code class="bash">chmod +x /root/thunder/helper/install-numpy-scipy-ec2.sh
+/root/thunder/helper/install-numpy-scipy-ec2.sh</pre></code>
 <br>
 <p>Now Thunder is ready to run, but you’ll probably want some data to analyze. If your data is stored in Amazon’s S3, copy it into HDFS by running</p>
 <br>
@@ -185,7 +185,18 @@ export DATA=hdfs://$SPARK_URL:9000/data
 
                 <div class="tab-pane fade" id="InputFormat">
 <h1 id="doctitle">Input format</h1>
-<p>Description of input format</p>
+<p>All analyses in Thunder operate on an RDD of data points, where each data point is either a NumPy array, or a (key, array) tuple, where key is either an integer (for indexing each data point) or an (x,y,z) tuple (for volumetric data). Only a subset of analyses require keys (see Analyses).</p>
+<p>Thunder provides a utility function for loading raw data from disk into an RDD, and applying any desired preprocessing. Typically, at the beginning of a script (or from within the shell), you'll load data like this:</p>
+<br>
+<pre><code class="python">>> lines = sc.textFile("path_to_data")
+>> data = parse(lines).cache()
+</pre></code>
+<br>
+<p>This assumes the data is stored in a text file (or a folder of text files). The first step loads the lines of the text file as strings into an RDD, and the second step converts the strings of text to NumPy arrays by splitting on spaces, converting to floats, and applying any desired preprocessing. The <samp id="inline">cache()</samp> ensures that once the data is loaded from disk for the first analysis, it will not need to be reloaded during subsequent analyses. This is useful when performing multiple calculations on the same data, especially during interactive use. The <samp id="inline">parse</samp> function assumes that each row of the text file is a data point (typically, the time series for one neural signal, e.g. a voxel from imaging data). The first three values of each row give the x,y,z coordinates, and the subsequent values give the neural response at different moments in time. All rows must have the same number of time points. The data can be stored in a single text file, or multiple text files in the same folder, and each text file can contain a variable number of rows, so long as they all have the same number of columns.</p>
+
+
+
+</p>
                 </div>
 
 
@@ -289,7 +300,7 @@ betas = method.calc(data)
 
                 <div class="tab-pane fade" id="FAQ">
 <h1 id="doctitle">FAQ</h1>
-<p>Currently empty. Contact the.freeman.lab@gmail.com with questions! Or post an issue to the <a href="https://github.com/freeman-lab/thunder/issues">project page</a> on github.</p>
+<p>Currently empty. Contact the.freeman.lab@gmail.com with questions! Or post an issue to the <a href="https://github.com/freeman-lab/thunder/issues">project page</a> on github. Also check out the <a href="http://apache-spark-user-list.1001560.n3.nabble.com/">Spark forums</a> for useful info.</p>
                 </div>
 
 
