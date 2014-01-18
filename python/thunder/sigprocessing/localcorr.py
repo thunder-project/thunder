@@ -47,10 +47,12 @@ def localcorr(data, sz):
     """
 
     # get boundaries
-    mx_x = data.map(lambda (k, v): (k[0], 1)).sortByKey(False).first()[0]
-    mn_x = data.map(lambda (k, v): (k[0], 1)).sortByKey(True).first()[0]
-    mx_y = data.map(lambda (k, v): (k[1], 1)).sortByKey(False).first()[0]
-    mn_y = data.map(lambda (k, v): (k[1], 1)).sortByKey(True).first()[0]
+    xs = data.map(lambda (k, _): k[0])
+    ys = data.map(lambda (k, _): k[1])
+    mx_x = xs.reduce(max)
+    mn_x = xs.reduce(min)
+    mx_y = ys.reduce(max)
+    mn_y = ys.reduce(min)
 
     # flat map to key value pairs where the key is neighborhood identifier and value is time series
     neighbors = data.flatMap(lambda (k, v): maptoneighborhood(k, v, sz, mn_x, mx_x, mn_y, mx_y))
