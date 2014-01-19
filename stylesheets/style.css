@@ -156,28 +156,17 @@ pre code {
      line-height: 1.2;
 }
 
-@media (max-width: 480px) {
-     .jumbotron {
-          height: 100px;
-     }
-
-     #header {
-          width: 200px;
-          display: block;
-          margin-left: auto;
-          margin-right: auto;
-     }
-     #subheader {
-          font-size: 35px;
-          text-align: center;
-     }
-
-     p {
-          font-size: 14px;
-          color: white;
-}
+#docs {
+     background-color: gray;
+     border-radius: 10px;
+     box-shadow: 0 3px 10px rgba(0,0,0,.1);
+     padding: 40px;
 }
 
+#doctitle {
+     font-size: 52px;
+     color: white;
+}
 
 #subtitle1 {
      color: rgb(248,92,123);
@@ -202,19 +191,55 @@ pre code {
      margin-bottom: 50px;
 }
 
-#doctitle {
-     font-size: 52px;
-     color: white;
-}
-
 #docsubtitle {
      font-size: 30px;
      color: white;
 }
 
-#docs {
-     background-color: gray;
-     border-radius: 10px;
-     box-shadow: 0 3px 10px rgba(0,0,0,.1);
-     padding: 40px;
+@media (max-width: 480px) {
+     .jumbotron {
+          height: 100px;
+     }
+
+     #header {
+          width: 270px;
+          display: block;
+          margin-left: auto;
+          margin-right: auto;
+          float: none;
+     }
+     #subheader {
+          font-size: 35px;
+          text-align: center;
+     }
+
+     p {
+          font-size: 14px;
+          color: white;
+     }
+
+     pre code {
+          background: transparent;
+          font-size: 12px;
+     }
+
+     #subtitle1, #subtitle2, #subtitle3, #subcontent {
+          text-align: center;
+          font-size: 24px;
+     }
+
+     #docs {
+          padding: 20px;
+     }
+
+     #doctitle {
+          font-size: 30px;
+     }
+
+     #inline {
+          font-size: 12px;
+
+
 }
+
+
