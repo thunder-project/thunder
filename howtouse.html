@@ -192,7 +192,7 @@ export DATA=hdfs://$MASTER_URL:9000/data
 <p>All analyses in Thunder operate on an RDD of data points, where each data point is either a NumPy array, or a (key, array) tuple, where key is either an integer (for indexing each data point) or an (x,y,z) tuple (for volumetric data). Only a subset of analyses require keys (see Analyses).</p>
 <p>Thunder provides a utility function for loading raw data from disk into an RDD, and applying any desired preprocessing. Typically, at the beginning of a script (or from within the shell), you'll load data like this:</p>
 <br>
-<pre><code class="python">>> lines = sc.textFile("path_to_data")
+<pre><code class="python">>> lines = sc.textFile(path_to_data)
 >> data = parse(lines).cache()
 </pre></code>
 <br>
