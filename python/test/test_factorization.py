@@ -26,8 +26,11 @@ class FactorizationTestCase(PySparkTestCase):
 class TestSVD(FactorizationTestCase):
     """test accuracy of direct and em methods
     for SVD against scipy.linalg method,
-    only use k=1 otherwise results of em can
+
+    only uses k=1 otherwise results of iterative approaches can
     vary up to an orthogonal transform
+
+    checks if answers match up to a sign flip
     """
     def test_svd_direct(self):
         data_local = array([
@@ -59,7 +62,7 @@ class TestSVD(FactorizationTestCase):
         u_true, s_true, v_true = LinAlg.svd(data_local)
         u_test = transpose(array(u.collect()))[0]
         v_test = v[0]
-        tol = 10e-04  # allow for small error for iterative method
+        tol = 10e-04  # allow small error for iterative method
         assert(allclose(s[0], s_true[0], atol=tol))
         assert(allclose(v_test, v_true[0, :], atol=tol) | allclose(-v_test, v_true[0, :], atol=tol))
         assert(allclose(u_test, u_true[:, 0], atol=tol) | allclose(-u_test, u_true[:, 0], atol=tol))

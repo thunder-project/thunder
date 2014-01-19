@@ -5,7 +5,7 @@ from pyspark.accumulators import AccumulatorParam
 
 
 def svd(data, k, meansubtract=1, method="direct", maxiter=20, tol=0.00001):
-    """large-scale singular value decomposition
+    """large-scale singular value decomposition for dense matrices
 
     direct method uses an accumulator to distribute and sum outer products
     only efficient when n >> m (tall and skinny)
@@ -13,13 +13,13 @@ def svd(data, k, meansubtract=1, method="direct", maxiter=20, tol=0.00001):
 
     em method uses an iterative algorithm based on expectation maximization
 
-    TODO: select method automatically based on data size
+    TODO: select method automatically based on data dimensions
     TODO: return fractional variance explained by k eigenvectors
 
     arguments:
     data - RDD of data points
     k - number of components to recover
-    method - choice of algorithm, "direct" or "em" (default = "direct")
+    method - choice of algorithm, "direct", "em" (default = "direct")
     meansubtract - whether or not to subtract the mean
 
     returns:
@@ -98,7 +98,7 @@ def svd(data, k, meansubtract=1, method="direct", maxiter=20, tol=0.00001):
             c = data.map(lambda x: outer(x, dot(x, premult2.value))).sum()
             c = transpose(c)
 
-            error = sum(sum((c-c_old) ** 2))
+            error = sum(sum((c - c_old) ** 2))
             iter += 1
 
         # project data into subspace spanned by columns of c
@@ -114,4 +114,3 @@ def svd(data, k, meansubtract=1, method="direct", maxiter=20, tol=0.00001):
         scores = data.map(lambda x: inner(x, comps) / latent)
 
         return scores, latent, comps
-
