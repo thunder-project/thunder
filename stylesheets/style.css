@@ -162,7 +162,7 @@ pre code {
      }
 
      #header {
-          width: 100px;
+          width: 200px;
           display: block;
           margin-left: auto;
           margin-right: auto;
@@ -171,6 +171,11 @@ pre code {
           font-size: 35px;
           text-align: center;
      }
+
+     p {
+          font-size: 14px;
+          color: white;
+}
 }
 
 
