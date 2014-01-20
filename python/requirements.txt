@@ -1,3 +1,4 @@
 argparse
 numpy
 scipy
+PIL

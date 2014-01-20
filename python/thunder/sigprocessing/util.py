@@ -93,7 +93,7 @@ class CrossCorrMethod(SigProcessingMethod):
             x = sigfile
         x = x - mean(x)
         x = x / norm(x)
-        print(shape(x))
+
         if lag is not 0:
             shifts = range(-lag, lag+1)
             d = len(x)
