@@ -2,7 +2,8 @@ import os
 import argparse
 import glob
 from numpy import corrcoef
-from thunder.util.dataio import parse, saveout
+from thunder.util.parse import parse
+from thunder.util.saveout import saveout
 from pyspark import SparkContext
 
 
@@ -86,7 +87,7 @@ if __name__ == "__main__":
     sc = SparkContext(args.master, "localcorr", pyFiles=egg)
 
     lines = sc.textFile(args.datafile)
-    data = parse(lines, args.preprocess, "xyz").cache()
+    data = parse(lines, args.preprocess, nkeys=3, keepkeys="true").cache()
 
     corrs = localcorr(data, args.sz)
 

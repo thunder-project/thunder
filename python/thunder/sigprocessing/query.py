@@ -3,7 +3,8 @@ import argparse
 import glob
 from numpy import zeros
 from thunder.sigprocessing.util import SigProcessingMethod
-from thunder.util.dataio import parse, saveout
+from thunder.util.parse import parse
+from thunder.util.saveout import saveout
 from pyspark import SparkContext
 
 
@@ -38,17 +39,14 @@ if __name__ == "__main__":
     parser.add_argument("datafile", type=str)
     parser.add_argument("indsfile", type=str)
     parser.add_argument("outputdir", type=str)
-    parser.add_argument("mx_x", type=int)
-    parser.add_argument("mx_y", type=int)
     parser.add_argument("--preprocess", choices=("raw", "dff", "sub"), default="raw", required=False)
 
     args = parser.parse_args()
     egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
     sc = SparkContext(args.master, "query", pyFiles=egg)
 
-    # TODO: use sortByKey instead of specifying mxX and mxY
     lines = sc.textFile(args.datafile)
-    data = parse(lines, "dff", "linear", None, [args.mx_x, args.mx_y]).cache()
+    data = parse(lines, args.preprocess, nkeys=3, keepkeys="linear").cache()
 
     ts = query(data, args.indsfile)
 

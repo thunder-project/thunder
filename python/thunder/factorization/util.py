@@ -1,6 +1,5 @@
-from numpy import random, sum, real, argsort, transpose, dot, inner, outer, zeros, shape, sqrt
+from numpy import random, sum, real, argsort, mean, transpose, dot, inner, outer, zeros, shape, sqrt
 from scipy.linalg import eig, inv, orth
-from thunder.util.dataio import *
 from pyspark.accumulators import AccumulatorParam
 
 

@@ -3,7 +3,8 @@ import argparse
 import glob
 from numpy import random, sqrt, zeros, real, dot, outer, diag, transpose
 from scipy.linalg import sqrtm, inv, orth
-from thunder.util.dataio import parse, saveout
+from thunder.util.parse import parse
+from thunder.util.saveout import saveout
 from thunder.factorization.util import svd
 from pyspark import SparkContext
 
@@ -88,4 +89,4 @@ if __name__ == "__main__":
         os.makedirs(outputdir)
 
     saveout(w, outputdir, "w", "matlab")
-    saveout(sigs, outputdir, "sigs", "matlab", args.c)
+    saveout(sigs, outputdir, "sigs", "matlab", nout=args.c)

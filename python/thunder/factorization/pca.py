@@ -1,7 +1,8 @@
 import os
 import argparse
 import glob
-from thunder.util.dataio import parse, saveout
+from thunder.util.parse import parse
+from thunder.util.saveout import saveout
 from thunder.factorization.util import svd
 from pyspark import SparkContext
 
@@ -46,4 +47,4 @@ if __name__ == "__main__":
 
     saveout(comps, outputdir, "comps", "matlab")
     saveout(latent, outputdir, "latent", "matlab")
-    saveout(scores, outputdir, "scores", "matlab", args.k)
+    saveout(scores, outputdir, "scores", "matlab", nout=args.k)

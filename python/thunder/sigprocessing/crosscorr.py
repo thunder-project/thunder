@@ -3,7 +3,8 @@ import argparse
 import glob
 from thunder.sigprocessing.util import SigProcessingMethod
 from thunder.factorization.util import svd
-from thunder.util.dataio import parse, saveout
+from thunder.util.parse import parse
+from thunder.util.saveout import saveout
 from pyspark import SparkContext
 
 
@@ -58,7 +59,7 @@ if __name__ == "__main__":
         betas, scores, latent, comps = crosscorr(data, args.sigfile, args.lag)
         saveout(comps, outputdir, "comps", "matlab")
         saveout(latent, outputdir, "latent", "matlab")
-        saveout(scores, outputdir, "scores", "matlab", 2)
+        saveout(scores, outputdir, "scores", "matlab", nout=2)
     else:
         betas = crosscorr(data, args.sigfile, args.lag)
         saveout(betas, outputdir, "stats", "matlab")

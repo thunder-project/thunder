@@ -3,7 +3,8 @@ import argparse
 import glob
 from thunder.regression.util import RegressionModel
 from thunder.factorization.util import svd
-from thunder.util.dataio import parse, saveout
+from thunder.util.parse import parse
+from thunder.util.saveout import saveout
 from pyspark import SparkContext
 
 
@@ -60,5 +61,5 @@ if __name__ == "__main__":
     saveout(stats, outputdir, "stats", "matlab")
     saveout(comps, outputdir, "comps", "matlab")
     saveout(latent, outputdir, "latent", "matlab")
-    saveout(scores, outputdir, "scores", "matlab", 2)
+    saveout(scores, outputdir, "scores", "matlab", nout=2)
     saveout(traj, outputdir, "traj", "matlab")
