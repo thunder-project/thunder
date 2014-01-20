@@ -78,7 +78,7 @@
       <div class="container">
         <article id = "docs">
           <h1 id="doctitle">Quick start</h1>
-<p>Here's a quick guide to getting up and running. It assumes <a href="http://www.scala-lang.org/download/2.9.3.html">Scala v2.9.3</a>, <a href="http://spark.incubator.apache.org/downloads.html">Spark v0.8.1</a>, <a href="http://www.numpy.org/">NumPy</a>, and <a href="http://scipy.org/scipylib/index.html">SciPy</a> are already installed. See <a href="howtouse.html">How to Use</a> for more detailed instructions.</p><p>First, download the latest <a href="https://github.com/freeman-lab/thunder/archive/master.zip">build</a> of Thunder and add it to your path.</p><br>
+<p>Here's a quick guide to getting up and running. It assumes <a href="http://www.scala-lang.org/download/2.9.3.html">Scala (2.9.3)</a>, <a href="http://spark.incubator.apache.org/downloads.html">Spark (0.8.1)</a>, and <a href="http://www.python.org/download/releases/2.7.6/">Python (2.7.6)</a> (with <a href="http://www.numpy.org/">NumPy</a>, <a href="http://scipy.org/scipylib/index.html">SciPy</a>, and <a href=http://www.pythonware.com/products/pil/>Python Imaging Library</a>) are already installed. See <a href="howtouse.html">How to Use</a> for more detailed instructions.</p><p>First, download the latest <a href="https://github.com/freeman-lab/thunder/archive/master.zip">build</a> of Thunder and add it to your path.</p><br>
   <pre><code class="bash">export PYTHONPATH=your_path_to_thunder/python/:$PYTHONPATH
 </pre></code>
 <br><p>Now go into the top-level Thunder directory and run an analysis on test data.</p>
@@ -89,7 +89,7 @@
           <pre><code class="bash">$SPARK_HOME/pyspark</code></pre><br>
 <p>Then run the analysis</p>
         <br>
-        <pre><code class="python">>> from thunder.util.dataio import parse
+        <pre><code class="python">>> from thunder.util.parse import parse
 >> from thunder.factorization.pca import pca
 >> lines = sc.textFile('your_path_to_thunder/data/iris.txt')
 >> data = parse(lines).cache()
