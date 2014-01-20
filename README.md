@@ -13,7 +13,7 @@ Thunder includes low-level utilties for data loading, saving, signal processing,
 
 ## Quick start
 
-Here's a quick guide to getting up and running. It assumes [Scala v2.9.3](http://www.scala-lang.org/download/2.9.3.html), [Spark v.0.8.1](http://spark.incubator.apache.org/downloads.html), [NumPy](http://www.numpy.org/), and [SciPy](http://scipy.org/scipylib/index.html) are already installed. First, download the latest [build](https://github.com/freeman-lab/thunder/archive/master.zip) and add it to your path.
+Here's a quick guide to getting up and running. It assumes [Scala 2.9.3](http://www.scala-lang.org/download/2.9.3.html), [Spark 0.8.1](http://spark.incubator.apache.org/downloads.html), and [Python 2.7.6](http://www.python.org/download/releases/2.7.6/) (with [NumPy](http://www.numpy.org/), [SciPy](http://scipy.org/scipylib/index.html), and [Python Imaging Library](http://www.pythonware.com/products/pil/)) are already installed. First, download the latest [build](https://github.com/freeman-lab/thunder/archive/master.zip) and add it to your path.
 
 	PYTHONPATH=your_path_to_thunder/python/:$PYTHONPATH
 
@@ -27,7 +27,7 @@ This will run principal components on the “iris” data set with 4 components,
 
 Then run the same analysis
 
-	>> from thunder.util.dataio import parse
+	>> from thunder.util.parse import parse
 	>> from thunder.factorization.pca import pca
 	>> lines = sc.textFile(”data/iris.txt”)
 	>> data = parse(lines).cache()
@@ -60,9 +60,9 @@ _stats_ - summary statistics (mean, std, etc.)
 _query_ - average over indices  
 
 
-## Input formats
+## Input and output
 
-All functions use the same input format data format: a text file, where the rows are voxels or neurons and the columns are time points. The first three entries in each row are the x,y,z coordinates of that voxel (or some other identifier), and the subsequent entries are the signals for that voxel at each time point. For example, a data set with 2x2x2 voxels and 8 time points might look like:
+All functions use the same format for primary input data: a text file, where the rows are neural signals (e.g. voxels, neurons) and the columns are time points. The first entries in each row are optional key identifiers (e.g. the x,y,z coordinates of each voxel), and subsequent entries are the response values for that signal at each time point (e.g. calcium flouresence, spike counts). For example, an imaging data set with 2x2x2 voxels and 8 time points might look like:
 
 	1 1 1 11 41 2 17 43 24 56 87
 	1 2 1 ...
@@ -73,8 +73,8 @@ All functions use the same input format data format: a text file, where the rows
 	2 1 2 ...
 	2 2 2 ...
 
-Subsets of voxels (e.g. different imaging planes) can be stored in separate text files within the same directory, or all in one file.
+Subsets of neural signals (e.g. from different imaging planes) can be stored in separate text files within the same directory, or all in one file. Covariates (e.g. related to the stimulus or task, for regression analyses) can be loaded from MAT files or provided directly as numpy arrays, see appropriate functions for more details.
 
-When parsing data, preprocessing can be applied in the form of mean subtraction, or conversion to df/f (subtract and divide by the mean)
+When parsing data, preprocessing can be applied to each neural signal (e.g. conversion to dF/F for imaging data).
 
-Covariates (e.g. related to the stimulus or task, for regression analyses) can be loaded from MAT files or provided directly as numpy arrays, see appropriate functions for more details.
+Results can be saved as MAT files, text files, or images (including automatic rescaling).
