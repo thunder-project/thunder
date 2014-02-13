@@ -3,25 +3,25 @@ import argparse
 import glob
 from numpy import random, sqrt, zeros, real, dot, outer, diag, transpose
 from scipy.linalg import sqrtm, inv, orth
-from thunder.util.parse import parse
-from thunder.util.saveout import saveout
+from thunder.util.load import load
+from thunder.util.save import save
 from thunder.factorization.util import svd
 from pyspark import SparkContext
 
 
 def ica(data, k, c, svdmethod="direct", maxiter=100, tol=0.000001, seed=0):
-    """perform independent components analysis
+    """Perform independent components analysis
 
-    arguments:
-    data - RDD of data points
-    k - number of principal components to use
-    c - number of independent components to find
-    maxiter - maximum number of iterations (default = 100)
-    tol - tolerance for change in estimate (default = 0.000001)
+    :param: data: RDD of data points
+    :param k: number of principal components to use
+    :param c: number of independent components to find
+    :param maxiter: maximum number of iterations (default = 100)
+    :param: tol: tolerance for change in estimate (default = 0.000001)
 
-    returns:
-    w - the mixing matrix
-    sigs - the independent components
+    :return w: the mixing matrix
+    :return: sigs: the independent components
+
+    TODO: also return unmixing matrix
     """
     # get count
     n = data.count()
@@ -32,7 +32,7 @@ def ica(data, k, c, svdmethod="direct", maxiter=100, tol=0.000001, seed=0):
     # whiten data
     whtmat = real(dot(inv(diag(latent/sqrt(n))), comps))
     unwhtmat = real(dot(transpose(comps), diag(latent/sqrt(n))))
-    wht = data.map(lambda x: dot(whtmat, x))
+    wht = data.mapValues(lambda x: dot(whtmat, x))
 
     # do multiple independent component extraction
     if seed != 0:
@@ -46,7 +46,7 @@ def ica(data, k, c, svdmethod="direct", maxiter=100, tol=0.000001, seed=0):
     while (iter < maxiter) & ((1 - minabscos) > tol):
         iter += 1
         # update rule for pow3 non-linearity (TODO: add others)
-        b = wht.map(lambda x: outer(x, dot(x, b) ** 3)).sum() / n - 3 * b
+        b = wht.map(lambda (_, v): v).map(lambda x: outer(x, dot(x, b) ** 3)).sum() / n - 3 * b
         # make orthogonal
         b = dot(b, real(sqrtm(inv(dot(transpose(b), b)))))
         # evaluate error
@@ -59,7 +59,7 @@ def ica(data, k, c, svdmethod="direct", maxiter=100, tol=0.000001, seed=0):
     w = dot(transpose(b), whtmat)
 
     # get components
-    sigs = data.map(lambda x: dot(w, x))
+    sigs = data.mapValues(lambda x: dot(w, x))
 
     return w, sigs
 
@@ -79,8 +79,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
     sc = SparkContext(args.master, "ica", pyFiles=egg)
-    lines = sc.textFile(args.datafile)
-    data = parse(lines, args.preprocess).cache()
+    data = load(sc, args.datafile, args.preprocess).cache()
 
     w, sigs = ica(data, args.k, args.c, svdmethod=args.svdmethod, maxiter=args.maxiter, tol=args.tol, seed=args.seed)
 
@@ -88,5 +87,5 @@ if __name__ == "__main__":
     if not os.path.exists(outputdir):
         os.makedirs(outputdir)
 
-    saveout(w, outputdir, "w", "matlab")
-    saveout(sigs, outputdir, "sigs", "matlab", nout=args.c)
+    save(w, outputdir, "w", "matlab")
+    save(sigs, outputdir, "sigs", "matlab")

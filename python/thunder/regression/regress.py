@@ -3,24 +3,24 @@ import argparse
 import glob
 from thunder.regression.util import RegressionModel
 from thunder.factorization.util import svd
-from thunder.util.parse import parse
-from thunder.util.saveout import saveout
+from thunder.util.load import load
+from thunder.util.save import save
 from pyspark import SparkContext
 
 
 def regress(data, modelfile, regressmode):
-    """perform mass univariate regression,
+    """Perform univariate regression,
     followed by principal components analysis
     to reduce dimensionality
 
-    arguments:
-    data - RDD of data points
-    modelfile - model parameters (string with file location, array, or tuple)
-    regressmode - form of regression ("linear" or "bilinear")
+    :param data: RDD of data points as key value pairs
+    :param modelfile: model parameters (string with file location, array, or tuple)
+    :param regressmode: form of regression ("linear" or "bilinear")
 
-    returns:
-    stats - statistics of the fit
-    comps, latent, scores, traj - results of principal components analysis
+    :return stats: statistics of the fit
+    :return comps: compoents from PCA
+    :return scores: scores from PCA
+    :return latent: latent variances from PCA
     """
     # create model
     model = RegressionModel.load(modelfile, regressmode)
@@ -49,8 +49,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
     sc = SparkContext(args.master, "regress", pyFiles=egg)
-    lines = sc.textFile(args.datafile)
-    data = parse(lines, args.preprocess).cache()
+    data = load(sc, args.datafile, args.preprocess).cache()
 
     stats, comps, latent, scores, traj = regress(data, args.modelfile, args.regressmode)
 
@@ -58,8 +57,8 @@ if __name__ == "__main__":
     if not os.path.exists(outputdir):
         os.makedirs(outputdir)
 
-    saveout(stats, outputdir, "stats", "matlab")
-    saveout(comps, outputdir, "comps", "matlab")
-    saveout(latent, outputdir, "latent", "matlab")
-    saveout(scores, outputdir, "scores", "matlab", nout=2)
-    saveout(traj, outputdir, "traj", "matlab")
+    save(stats, outputdir, "stats", "matlab")
+    save(comps, outputdir, "comps", "matlab")
+    save(latent, outputdir, "latent", "matlab")
+    save(scores, outputdir, "scores", "matlab")
+    save(traj, outputdir, "traj", "matlab")

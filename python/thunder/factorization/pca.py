@@ -1,25 +1,23 @@
 import os
 import argparse
 import glob
-from thunder.util.parse import parse
-from thunder.util.saveout import saveout
+from thunder.util.load import load
+from thunder.util.save import save
 from thunder.factorization.util import svd
 from pyspark import SparkContext
 
 
 def pca(data, k, svdmethod="direct"):
-    """perform principal components analysis
-    using the svd
+    """Perform principal components analysis
+    using the singular value decomposition
 
-    arguments:
-    data - RDD of data points
-    k - number of principal components to recover
-    method - which svd algorithm to use (default = "direct")
+    :param data: RDD of data points as key value pairs
+    :param k: number of principal components to recover
+    :param svdmethod: which svd algorithm to use (default = "direct")
 
-    returns:
-    comps - the k principal components (as array)
-    latent - the latent values
-    scores - the k scores (as RDD)
+    :return comps: the k principal components (as array)
+    :return latent: the latent values
+    :return scores: the k scores (as RDD)
     """
     scores, latent, comps = svd(data, k, meansubtract=0, method=svdmethod)
     return scores, latent, comps
@@ -36,8 +34,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
     sc = SparkContext(args.master, "pca", pyFiles=egg)
-    lines = sc.textFile(args.datafile)
-    data = parse(lines, args.preprocess).cache()
+    data = load(sc, args.datafile, args.preprocess).cache()
 
     scores, latent, comps = pca(data, args.k, args.svdmethod)
 
@@ -45,6 +42,6 @@ if __name__ == "__main__":
     if not os.path.exists(outputdir):
         os.makedirs(outputdir)
 
-    saveout(comps, outputdir, "comps", "matlab")
-    saveout(latent, outputdir, "latent", "matlab")
-    saveout(scores, outputdir, "scores", "matlab", nout=args.k)
+    save(comps, outputdir, "comps", "matlab")
+    save(latent, outputdir, "latent", "matlab")
+    save(scores, outputdir, "scores", "matlab")

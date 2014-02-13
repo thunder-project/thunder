@@ -2,8 +2,8 @@ import os
 import argparse
 import glob
 from numpy import corrcoef
-from thunder.util.parse import parse
-from thunder.util.saveout import saveout
+from thunder.util.load import load
+from thunder.util.save import save
 from pyspark import SparkContext
 
 
@@ -19,7 +19,7 @@ def clip(val, mn, mx):
 
 
 def maptoneighborhood(ind, ts, sz, mn_x, mx_x, mn_y, mx_y):
-    """create a list of key value pairs with multiple shifted copies
+    """Create a list of key value pairs with multiple shifted copies
     of the time series ts over a region specified by sz
     """
     rng_x = range(-sz, sz+1, 1)
@@ -35,16 +35,14 @@ def maptoneighborhood(ind, ts, sz, mn_x, mx_x, mn_y, mx_y):
 
 
 def localcorr(data, sz):
-    """compute correlation between every data point
+    """Compute correlation between every data point
     and the average of a local neighborhood in x and y
     (typically time series data)
 
-    arguments:
-    data - RDD of data points (pairs of ((int,int), array) or ((int,int,int), array))
-    sz - neighborhood size (total neighborhood is a 2*sz+1 square)
+    :param data: RDD of data points as key value pairs
+    :param sz: neighborhood size (total neighborhood is a 2*sz+1 square)
 
-    returns:
-    corr - RDD of correlations
+    :return corr: RDD of correlations
     """
 
     # get boundaries
@@ -62,14 +60,13 @@ def localcorr(data, sz):
     print(neighbors.first())
 
     # reduce by key to get the average time series for each neighborhood
-    means = neighbors.reduceByKey(lambda x, y: x + y).map(lambda (k, v): (k, v / ((2*sz+1)**2)))
+    means = neighbors.reduceByKey(lambda x, y: x + y).mapValues(lambda x: x / ((2*sz+1)**2))
 
     # join with the original time series data to compute correlations
     result = data.join(means)
 
-    # get correlations and sort by key so result is in the right order
-    corr = result.map(lambda (k, v): (k, corrcoef(v[0], v[1])[0, 1])).sortByKey().map(
-        lambda (k, v): v)
+    # get correlations
+    corr = result.mapValues(lambda x: corrcoef(x[0], x[1])[0, 1])
 
     return corr
 
@@ -86,8 +83,7 @@ if __name__ == "__main__":
     egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
     sc = SparkContext(args.master, "localcorr", pyFiles=egg)
 
-    lines = sc.textFile(args.datafile)
-    data = parse(lines, args.preprocess, nkeys=3, keepkeys="true").cache()
+    data = load(sc, args.datafile, args.preprocess).cache()
 
     corrs = localcorr(data, args.sz)
 
@@ -95,4 +91,4 @@ if __name__ == "__main__":
     if not os.path.exists(outputdir):
         os.makedirs(outputdir)
 
-    saveout(corrs, outputdir, "corr", "matlab")
+    save(corrs, outputdir, "corr", "matlab")
