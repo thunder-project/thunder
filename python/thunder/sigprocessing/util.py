@@ -19,7 +19,7 @@ class SigProcessingMethod(object):
         pass
 
     def calc(self, data):
-        result = data.map(lambda x: self.get(x))
+        result = data.mapValues(lambda x: self.get(x))
         return result
 
 

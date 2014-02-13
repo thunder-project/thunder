@@ -2,8 +2,8 @@ import os
 import argparse
 import glob
 from thunder.sigprocessing.util import SigProcessingMethod
-from thunder.util.parse import parse
-from thunder.util.saveout import saveout
+from thunder.util.load import load
+from thunder.util.save import save
 from pyspark import SparkContext
 
 
@@ -36,8 +36,7 @@ if __name__ == "__main__":
     egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
     sc = SparkContext(args.master, "ref", pyFiles=egg)
 
-    lines = sc.textFile(args.datafile)
-    data = parse(lines, args.preprocess).cache()
+    data = load(sc, args.datafile, args.preprocess).cache()
 
     vals = stats(data, args.mode)
 
@@ -47,4 +46,4 @@ if __name__ == "__main__":
     if not os.path.exists(outputdir):
         os.makedirs(outputdir)
 
-    saveout(vals, outputdir, "stats_" + args.mode, "matlab")
+    save(vals, outputdir, "stats_" + args.mode, "matlab")

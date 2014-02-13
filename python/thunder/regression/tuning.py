@@ -2,24 +2,22 @@ import os
 import argparse
 import glob
 from thunder.regression.util import RegressionModel, TuningModel
-from thunder.util.parse import parse
-from thunder.util.saveout import saveout
+from thunder.util.load import load
+from thunder.util.save import save
 from pyspark import SparkContext
 
 
 def tuning(data, tuningmodelfile, tuningmode, regressmodelfile=None, regressmode=None):
-    """estimate parameters of a tuning curve model,
+    """Estimate parameters of a tuning curve model,
     optionally preceeded by regression
 
-    arguments:
-    data - RDD of data points
-    tuningmodelfile - model parameters (string with file location, array, or tuple)
-    tuningmode - form of tuning ("gaussian" or "circular")
-    regressmodelfile - model parameters (default=None)
-    regressmode - form of regression ("linear" or "bilinear") (default=None)
+    :param data: RDD of data points as key value pairs
+    :param tuningmodelfile: model parameters for tuning (string with file location, array, or tuple)
+    :param: tuningmode: form of tuning ("gaussian" or "circular")
+    :param regressmodelfile: model parameters for regression (default=None)
+    :param regressmode: form of regression ("linear" or "bilinear") (default=None)
 
-    returns:
-    params - tuning curve parameters
+    :return params: tuning curve parameters
     """
     # create tuning model
     tuningmodel = TuningModel.load(tuningmodelfile, tuningmode)
@@ -50,8 +48,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
     sc = SparkContext(args.master, "tuning", pyFiles=egg)
-    lines = sc.textFile(args.datafile)
-    data = parse(lines, args.preprocess).cache()
+    data = load(sc, args.datafile, args.preprocess).cache()
 
     params = tuning(data, args.tuningmodelfile, args.tuningmode, args.regressmodelfile, args.regressmode)
 
@@ -59,4 +56,4 @@ if __name__ == "__main__":
     if not os.path.exists(outputdir):
         os.makedirs(outputdir)
 
-    saveout(params, outputdir, "params", "matlab")
+    save(params, outputdir, "params", "matlab")

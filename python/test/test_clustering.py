@@ -17,16 +17,18 @@ class ClusteringTestCase(PySparkTestCase):
 
 class TestKMeans(ClusteringTestCase):
     def test_kmeans(self):
-        """ with k=1 always get one cluster centered on the mean"""
+        """ With k=1 always get one cluster centered on the mean"""
 
-        data = self.sc.parallelize(array([
+        data_local = [
             array([1.0, 2.0, 6.0]),
             array([1.0, 3.0, 0.0]),
             array([1.0, 4.0, 6.0])]
-        ))
+
+        data = self.sc.parallelize(zip(range(1, 4), data_local))
+
         labels, centers = kmeans(data, k=1, maxiter=20, tol=0.001)
         assert array_equal(centers[0], array([1.0, 3.0, 4.0]))
-        assert array_equal(labels.collect(), array([0, 0, 0]))
+        assert array_equal(labels.map(lambda (_, v): v).collect(), array([0, 0, 0]))
 
 
 
