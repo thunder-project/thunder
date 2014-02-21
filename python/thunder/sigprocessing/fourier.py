@@ -35,7 +35,7 @@ if __name__ == "__main__":
     parser.add_argument("--preprocess", choices=("raw", "dff", "sub"), default="raw", required=False)
 
     args = parser.parse_args()
-    egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
+    egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
     sc = SparkContext(args.master, "fourier", pyFiles=egg)
 
     data = load(sc, args.datafile, args.preprocess).cache()

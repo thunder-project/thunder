@@ -46,7 +46,7 @@ if __name__ == "__main__":
     parser.add_argument("--regressmode", choices=("linear", "bilinear"), help="form of regression")
 
     args = parser.parse_args()
-    egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
+    egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
     sc = SparkContext(args.master, "tuning", pyFiles=egg)
     data = load(sc, args.datafile, args.preprocess).cache()
 
