@@ -1,7 +1,1 @@
-//resolvers += Resolver.url("artifactory", url("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases"))(Resolver.ivyStylePatterns)
-
-//addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.9.2")
-
-resolvers += Classpaths.typesafeResolver
-
-addSbtPlugin("com.typesafe.startscript" % "xsbt-start-script-plugin" % "0.5.2")
+addSbtPlugin("com.typesafe.sbt" % "sbt-start-script" % "0.9.0")
