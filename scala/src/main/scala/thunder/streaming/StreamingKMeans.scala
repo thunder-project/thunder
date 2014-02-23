@@ -14,7 +14,29 @@ import thunder.util.Load
 
 /**
  * K-means clustering on streaming data with support for
- * mini batch and forgetful algorithms
+ * mini batch and forgetful algorithms.
+ *
+ * The underlying assumption is that all streaming data points
+ * belong to one of several clusters, and we want to
+ * learn the identity of those clusters (the "KMeans Model")
+ * as new data arrive. Given this assumption, all data
+ * MUST have the same dimensionality.
+ *
+ * For mini batch algorithms, we update the underlying
+ * cluster identities for each batch of data, and keep
+ * a running count of the number of data points per cluster,
+ * so that all data points are treated equally. The
+ * number of data points per batch can be arbitrary.
+ *
+ * For forgetful algorithms, each new batch of data
+ * is weighted in its contribution, so that
+ * more recent data is weighted more heavily.
+ * The weighting is per batch (i.e. per time window),
+ * rather than per data point, so for meaningful
+ * interpretation, the number of data points per batch
+ * should be approximately constant.
+ *
+ * See also: StatefulKMeans
  */
 class StreamingKMeans (
   var k: Int,
@@ -27,10 +49,11 @@ class StreamingKMeans (
 
   private type ClusterCentersAndCounts = Array[(Array[Double], Int)]
 
+  /** Construct a StreamingKMeans object with default parameters */
   def this() = this(2, 5, 1.0, 1, "gauss")
 
   /** Set the number of clusters to create (k). Default: 2. */
-  private[streaming] def setK(k: Int): StreamingKMeans = {
+  def setK(k: Int): StreamingKMeans = {
     this.k = k
     this
   }
@@ -38,7 +61,7 @@ class StreamingKMeans (
   /** Set the dimensionality of the data (d). Default: 5
     * TODO: if possible, set this automatically based on first data point
     */
-  private[streaming] def setD(d: Int): StreamingKMeans = {
+  def setD(d: Int): StreamingKMeans = {
     this.d = d
     this
   }
@@ -54,15 +77,13 @@ class StreamingKMeans (
    * assumes an approximately constant number of data points per batch
    * Default: 1 (mini batch)
    */
-  private[streaming] def setAlpha(a: Double): StreamingKMeans = {
+  def setAlpha(a: Double): StreamingKMeans = {
     this.a = a
     this
   }
 
-  /**
-   * Set the number of iterations per batch of data
-   */
-  private[streaming] def setMaxIterations(maxIterations: Int): StreamingKMeans = {
+  /** Set the number of iterations per batch of data */
+  def setMaxIterations(maxIterations: Int): StreamingKMeans = {
     this.maxIterations = maxIterations
     this
   }
@@ -73,8 +94,8 @@ class StreamingKMeans (
    * for random Gaussian centers, and "pos" for random positive uniform centers.
    * Default: gauss
    */
-  private[streaming] def setInitializationMode(initializationMode: String): StreamingKMeans = {
-    if (initializationMode != "gauss" && initializationMode != "double") {
+  def setInitializationMode(initializationMode: String): StreamingKMeans = {
+    if (initializationMode != "gauss" && initializationMode != "pos") {
       throw new IllegalArgumentException("Invalid initialization mode: " + initializationMode)
     }
     this.initializationMode = initializationMode
@@ -82,10 +103,8 @@ class StreamingKMeans (
   }
 
 
-  /**
-   * Initialize random points for KMeans clustering
-   */
-  private[streaming] def initRandom(): StreamingKMeansModel = {
+  /** Initialize random points for KMeans clustering */
+  def initRandom(): StreamingKMeansModel = {
 
     val clusters = new Array[(Array[Double], Int)](k)
     for (ik <- 0 until k) {
@@ -97,10 +116,10 @@ class StreamingKMeans (
     new StreamingKMeansModel(clusters.map(_._1), clusters.map(_._2))
   }
 
-  /**
-   * Update KMeans clusters by doing training passes over data batch
-   */
-  private[streaming] def update(data: RDD[Array[Double]], model: StreamingKMeansModel): StreamingKMeansModel = {
+  /** Update KMeans clusters by doing training passes over an RDD
+    * TODO: stop iterating if clusters have converged
+    */
+  def update(data: RDD[Array[Double]], model: StreamingKMeansModel): StreamingKMeansModel = {
 
     val centers = model.clusterCenters
     val counts = model.clusterCounts
@@ -133,15 +152,22 @@ class StreamingKMeans (
             case (x, y) => x + a * (y - x)}
         }
       }
+
+      val model.clusterCenters = centers
     }
 
-    centers.foreach(x => print(Vector(x)))
+    // log the cluster centers
+    centers.zip(Range(0, centers.length)).foreach{
+      case (x, ix) => logInfo("Cluster center " + ix.toString + ": " + x.mkString(", "))}
 
     new StreamingKMeansModel(centers, counts)
 
   }
 
-  private[streaming] def run(data: DStream[Array[Double]]): DStream[Int] = {
+  /** Main streaming operation: initialize the KMeans model
+    * and then update it based on new data from the stream.
+    */
+  def runStreaming(data: DStream[Array[Double]]): DStream[Int] = {
     var model = initRandom()
     data.foreachRDD(RDD => model = update(RDD, model))
     data.map(point => model.predict(point))
@@ -149,42 +175,44 @@ class StreamingKMeans (
 
 }
 
-/**
- * Top-level methods for calling Streaming KMeans clustering.
- */
+/** Top-level methods for calling Streaming KMeans clustering. */
 object StreamingKMeans {
 
-  private type ClusterCentersAndCounts = Array[(Array[Double], Int)]
-
-
   /**
-   * Train a Streaming KMeans model
+   * Train a Streaming KMeans model. We initialize a set of
+   * cluster centers randomly and then update them
+   * after receiving each batch of data from the stream.
+   * If a = 1 this is equivalent to mini-batch KMeans,
+   * where each batch of data from the stream is a different
+   * mini-batch. If a < 1, perform forgetful KMeans, which
+   * weights more recent data points more heavily.
    *
-   * @param k number of clusters to estimate
-   * @param d data dimensionality
-   * @param a update rule (1 mini batch, < 1 forgetful)
-   * @param maxIterations maximum number of iterations per batch
-   * @param initializationMode random initialization of points
-   * @return a DStream of assignments of data points to clusters
+   * @param input Input DStream of (Array[Double]) data points
+   * @param k Number of clusters to estimate.
+   * @param d Number of dimensions per data point.
+   * @param a Update rule (1 mini batch, < 1 forgetful).
+   * @param maxIterations Maximum number of iterations per batch.
+   * @param initializationMode Random initialization of cluster centers.
+   * @return Output DStream of (Int) assignments of data points to clusters.
    */
-  def train(data: DStream[Array[Double]],
-            k: Int,
-            d: Int,
-            a: Double,
-            maxIterations: Int,
-            initializationMode: String)
-          : DStream[Int] =
+  def trainStreaming(input: DStream[Array[Double]],
+      k: Int,
+      d: Int,
+      a: Double,
+      maxIterations: Int,
+      initializationMode: String)
+    : DStream[Int] =
   {
     new StreamingKMeans().setK(k)
                          .setD(d)
                          .setAlpha(a)
                          .setMaxIterations(maxIterations)
                          .setInitializationMode(initializationMode)
-                         .run(data)
+                         .runStreaming(input)
   }
 
   def main(args: Array[String]) {
-    if (args.length < 4) {
+    if (args.length != 8) {
       System.err.println("Usage: StreamingKMeans <master> <directory> <batchTime> <k> <d> <a> <maxIterations> <initializationMode>")
       System.exit(1)
     }
@@ -192,14 +220,13 @@ object StreamingKMeans {
     val (master, directory, batchTime, k, d, a, maxIterations, initializationMode) = (
       args(0), args(1), args(2).toLong, args(3).toInt, args(4).toInt, args(5).toDouble, args(6).toInt, args(7))
 
-    val ssc = new StreamingContext(master, "SimpleStreaming", Seconds(batchTime))
-
+    /** Create Spark context */
+    val ssc = new StreamingContext(master, "StreamingKMeans", Seconds(batchTime))
     ssc.checkpoint(System.getenv("CHECKPOINT"))
 
+    /** Train KMeans model */
     val data = Load.loadStreamingData(ssc, directory)
-
-    val assignments = StreamingKMeans.train(data, k, d, a, maxIterations, initializationMode)
-
+    val assignments = StreamingKMeans.trainStreaming(data, k, d, a, maxIterations, initializationMode)
     assignments.print()
 
     ssc.start()
