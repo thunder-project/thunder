@@ -9,7 +9,7 @@ import org.apache.spark.util.Vector
 
 import thunder.util.Load
 import thunder.util.Load.DataPreProcessor
-import thunder.regression.LinearRegressionModel
+import thunder.regression.{SharedLinearRegressionModel, LinearRegressionModel}
 import org.apache.spark.Logging
 
 
@@ -31,22 +31,22 @@ import org.apache.spark.Logging
  * See also: StreamingLinearRegression
  */
 class StatefulLinearRegression (
-  var inds: Array[Int],
+  var featureKeys: Array[Int],
   var preProcessMethod: String)
   extends Serializable with Logging
 {
 
   def this() = this(Array(0), "raw")
 
-  /** Set the preprocessing method. Default: raw (no preprocessing) */
+  /** Set the pre processing method. Default: raw (no preprocessing) */
   def setPreProcessMethod(preProcessMethod: String): StatefulLinearRegression = {
     this.preProcessMethod = preProcessMethod
     this
   }
 
-  /** Set which indices that correspond to labels. Default: Array(0). */
-  def setInds(inds: Array[Int]): StatefulLinearRegression = {
-    this.inds = inds
+  /** Set which indices that correspond to features. Default: Array(0). */
+  def setFeatureKeys(featureKeys: Array[Int]): StatefulLinearRegression = {
+    this.featureKeys = featureKeys
     this
   }
 
@@ -56,29 +56,26 @@ class StatefulLinearRegression (
     Some(Array.concat(previousState, values.flatten.toArray))
   }
 
-  /** Compute regression on each data point by first selecting
+  /** Compute a Linear Regression Model for each data point by first selecting
     * the features, and then regressing all data points against them.
+    * Features are the subset of data points with the specified keys.
     *
-    * @param rdd RDD of data points as Int, Array[Double] pairs
-    * @return RDD of regression statistics as Int, Array[Double] pairs
+    * @param rdd RDD of data points as (Int, Array[Double]) pairs
+    * @return RDD of fitted models as (Int, LinearRegressionModel) pairs
     * */
-  def regress(rdd: RDD[(Int, Array[Double])]): RDD[(Int, Array[Double])] = {
-    if (rdd.count() > 0) {
-      val features = rdd.filter(x => inds.contains(x._1)).values.collect()
-      val model = new LinearRegressionModel(features)
-      val data = rdd.filter{case (k, v) => (k != 0) & (v.length == model.n)}
-      data.mapValues(model.fit)
-    } else {
-      rdd
-    }
+  def update(rdd: RDD[(Int, Array[Double])]): RDD[(Int, LinearRegressionModel)] = {
+    val features = rdd.filter(x => featureKeys.contains(x._1)).values.collect()
+    val model = new SharedLinearRegressionModel(features)
+    val data = rdd.filter{case (k, v) => (k != 0) & (v.length == model.n)}
+    data.mapValues(model.fit)
   }
 
-  def runStreaming(data: DStream[(Int, Array[Double])]): DStream[(Int, Array[Double])] = {
+  def runStreaming(data: DStream[(Int, Array[Double])]): DStream[(Int, LinearRegressionModel)] = {
     if (preProcessMethod != "raw") {
-      data.updateStateByKey(concatenate).transform(regress _)
+      data.updateStateByKey(concatenate).transform(update _)
     } else {
       val PreProcessor = new DataPreProcessor(preProcessMethod)
-      data.updateStateByKey(concatenate).mapValues(PreProcessor.get).transform(regress _)
+      data.updateStateByKey(concatenate).mapValues(PreProcessor.get).transform(update _)
     }
   }
 
@@ -97,35 +94,37 @@ object StatefulLinearRegression {
    * each key.
    * @param input DStream of (Int, Array[Double]) keyed data point
    * @param preProcessMethod How to pre process data
-   * @param inds List of keys associated with features (all others are labels)
-   * @return DStream of (Int, Array[Double]) with fitted regression models
+   * @param featureKeys Array of keys associated with features
+   * @return DStream of (Int, LinearRegressionModel) with fitted regression models
    */
   def trainStreaming(input: DStream[(Int, Array[Double])],
             preProcessMethod: String,
-            inds: Array[Int]): DStream[(Int, Array[Double])] =
+            featureKeys: Array[Int]): DStream[(Int, LinearRegressionModel)] =
   {
-    new StatefulLinearRegression().setInds(inds).runStreaming(input)
+    new StatefulLinearRegression().setFeatureKeys(featureKeys).runStreaming(input)
   }
 
   def main(args: Array[String]) {
-    if (args.length != 4) {
-      System.err.println("Usage: StatefulLinearRegression <master> <directory> <preProcessMethod> <batchTime>")
+    if (args.length != 5) {
+      System.err.println("Usage: StatefulLinearRegression <master> <directory> <preProcessMethod> <batchTime> <featureKeys>")
       System.exit(1)
     }
 
-    val (master, directory, preProcessMethod, batchTime) = (
-      args(0), args(1), args(2), args(3).toLong)
+    val (master, directory, preProcessMethod, batchTime, featureKeys) = (
+      args(0), args(1), args(2), args(3).toLong, args(4).drop(1).dropRight(1).split(",").map(_.trim.toInt))
 
     // create streaming context
-    val ssc = new StreamingContext(master, "StreamingKMeans", Seconds(batchTime))
+    val ssc = new StreamingContext(master, "StatefulLinearRegression", Seconds(batchTime))
     ssc.checkpoint(System.getenv("CHECKPOINT"))
 
     // main streaming operations
-    val data = Load.loadStreamingDataWithKeys(ssc, directory, 1)
+    val data = Load.loadStreamingDataWithKeys(ssc, directory)
 
     // train linear regression models
-    val state = StatefulLinearRegression.trainStreaming(data, preProcessMethod, Array(0))
-    state.mapValues(x => Vector(x)).print()
+    val state = StatefulLinearRegression.trainStreaming(data, preProcessMethod, featureKeys)
+    state.mapValues(x => "weights: " + x.weights.mkString(",")).print()
+    state.mapValues(x => "intercept: " + x.intercept.toString).print()
+    state.mapValues(x => "r2: " + x.r2.toString).print()
 
     ssc.start()
   }
