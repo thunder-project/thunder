@@ -3,6 +3,7 @@ import tempfile
 from numpy import array, allclose, pi
 from thunder.regression.util import RegressionModel, TuningModel
 from thunder.regression.regress import regress
+from thunder.regression.regresswithpca import regresswithpca
 from thunder.regression.tuning import tuning
 from test_utils import PySparkTestCase
 
@@ -37,7 +38,11 @@ class TestRegress(RegressionTestCase):
         assert(allclose(stats.map(lambda (_, v): v).collect()[0], array([0.42785299])))
         assert(allclose(resid.map(lambda (_, v): v).collect()[0], array([0, 0, 2, 0.9, -0.8, -2.1])))
 
-        stats, comps, latent, scores, traj = regress(data, x, "linear")
+        stats, betas = regress(data, x, "linear")
+        stats.collect()
+        betas.collect()
+
+        stats, comps, latent, scores, traj = regresswithpca(data, x, "linear")
         stats.collect()
         scores.collect()
 
@@ -59,7 +64,11 @@ class TestRegress(RegressionTestCase):
         assert(allclose(stats.map(lambda (_, v): v).collect()[0], array([0.6735]), tol))
         assert(allclose(resid.map(lambda (_, v): v).collect()[0], array([0, -0.8666, 0, 1.9333, 0, -1.0666]), atol=tol))
 
-        stats, comps, latent, scores, traj = regress(data, (x1, x2), "bilinear")
+        stats, betas = regress(data, (x1, x2), "bilinear")
+        stats.collect()
+        betas.collect()
+
+        stats, comps, latent, scores, traj = regresswithpca(data, (x1, x2), "bilinear")
         stats.collect()
         scores.collect()
 
