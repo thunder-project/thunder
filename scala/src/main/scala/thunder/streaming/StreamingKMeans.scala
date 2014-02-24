@@ -5,7 +5,6 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.dstream.DStream
-import org.apache.spark.util.Vector
 
 import scala.util.Random.nextDouble
 import scala.util.Random.nextGaussian
@@ -36,7 +35,6 @@ import thunder.util.Load
  * interpretation, the number of data points per batch
  * should be approximately constant.
  *
- * See also: StatefulKMeans
  */
 class StreamingKMeans (
   var k: Int,

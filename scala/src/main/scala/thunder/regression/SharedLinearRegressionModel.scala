@@ -30,8 +30,8 @@ class SharedLinearRegressionModel(var features: Array[Array[Double]]) extends Se
     1.0 - (sse / sst)
   }
 
-  /** Compute features weighted by response. */
-  def weights(point: Array[Double]): Array[Double] = {
+  /** Compute response-weighted features. */
+  def tuning(point: Array[Double]): Array[Double] = {
     val pointPos = point.map(x => max(x, 0))
     features.map(x => x.zip(pointPos).map{case (ix, iy) => ix * iy}.sum / pointPos.sum )
   }

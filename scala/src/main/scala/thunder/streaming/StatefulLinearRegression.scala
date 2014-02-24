@@ -5,7 +5,6 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.StreamingContext._
 import org.apache.spark.streaming.dstream.DStream
-import org.apache.spark.util.Vector
 
 import thunder.util.Load
 import thunder.util.Load.DataPreProcessor
@@ -16,17 +15,16 @@ import org.apache.spark.Logging
 /**
  * Stateful linear regression on streaming data
  *
- * The underlying model is that every batch of data
- * contains one or more features, and keyed data points
- * ("labels") each of which are predicted by those features through
- * a potentially different linear model. We collect the features and
- * labels over time through concatenation, and continually
- * estimate a regression fit for each key.
- * Returns a state stream with the
- * parameters of the regression for every key.
+ * The underlying model is that every batch of streaming
+ * data contains some records as features and others as labels
+ * (each with unique keys), and each set of labels can be predicted
+ * as a linear function of the common features. We collected
+ * the features and labels over time through concatenation,
+ * and estimate a Linear Regression Model for each key.
+ * Returns a state stream with the Linear Regression Models.
  *
  * Features and labels from different batches
- * can have variable length
+ * can have different lengths.
  *
  * See also: StreamingLinearRegression
  */
@@ -38,7 +36,7 @@ class StatefulLinearRegression (
 
   def this() = this(Array(0), "raw")
 
-  /** Set the pre processing method. Default: raw (no preprocessing) */
+  /** Set the pre processing method. Default: raw (no pre processing) */
   def setPreProcessMethod(preProcessMethod: String): StatefulLinearRegression = {
     this.preProcessMethod = preProcessMethod
     this
@@ -89,10 +87,11 @@ object StatefulLinearRegression {
   /**
    * Train a Stateful Linear Regression model.
    * We assume that in each batch of streaming data we receive
-   * a single vector of features and several vectors of labels.
-   * We are fitting a separate model to the labels associated with
-   * each key.
-   * 
+   * one or more features and several vectors of labels, each
+   * with a unique key, and a subset of keys indicate the features.
+   * We fit separate linear models that relate the common features
+   * to the labels associated with each key.
+   *
    * @param input DStream of (Int, Array[Double]) keyed data point
    * @param preProcessMethod How to pre process data
    * @param featureKeys Array of keys associated with features

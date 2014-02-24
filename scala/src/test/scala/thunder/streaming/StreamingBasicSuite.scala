@@ -2,13 +2,12 @@ package thunder.streaming
 
 import thunder.regression.LinearRegressionModel
 
-import org.scalatest.FunSuite
-
 import org.apache.spark.streaming.{Milliseconds, Seconds, StreamingContext}
 import org.apache.spark.SparkContext._
 import org.apache.spark.SparkConf
 import org.apache.spark.mllib.util.LinearDataGenerator
 
+import org.scalatest.FunSuite
 import com.google.common.io.Files
 import thunder.util.Load
 import scala.util.Random
@@ -16,9 +15,10 @@ import java.io.File
 import org.apache.commons.io.FileUtils
 
 
-/** NOTE: Currently performing all streaming related tests
-  * in one suite. Moving these exact tests into separate
-  * test suites causes a number of File IO related bugs,
+/**
+  * NOTE: Currently performing all streaming related tests
+  * in one suite. I tried moving these exact same tests into separate
+  * test suites but it caused several File IO related bugs,
   * still need to track them down.
   */
 class StreamingBasicSuite extends FunSuite {
