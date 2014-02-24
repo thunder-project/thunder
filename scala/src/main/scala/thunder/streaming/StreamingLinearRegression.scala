@@ -5,7 +5,6 @@ import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.mllib.regression.{LinearRegressionModel, GeneralizedLinearAlgorithm}
 import org.apache.spark.mllib.optimization._
-import org.apache.spark.util.Vector
 
 import thunder.util.Load
 import scala.util.Random._
