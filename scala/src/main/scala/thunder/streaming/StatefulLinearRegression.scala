@@ -113,18 +113,20 @@ object StatefulLinearRegression {
     val (master, directory, preProcessMethod, batchTime, featureKeys) = (
       args(0), args(1), args(2), args(3).toLong, args(4).drop(1).dropRight(1).split(",").map(_.trim.toInt))
 
-    // create streaming context
+    /** Create Streaming Context */
     val ssc = new StreamingContext(master, "StatefulLinearRegression", Seconds(batchTime))
     ssc.checkpoint(System.getenv("CHECKPOINT"))
 
-    // main streaming operations
+    /** Load streaming data */
     val data = Load.loadStreamingDataWithKeys(ssc, directory)
 
-    // train linear regression models
+    /** Train Linear Regression models */
     val state = StatefulLinearRegression.trainStreaming(data, preProcessMethod, featureKeys)
-    state.mapValues(x => "weights: " + x.weights.mkString(",")).print()
-    state.mapValues(x => "intercept: " + x.intercept.toString).print()
-    state.mapValues(x => "r2: " + x.r2.toString).print()
+
+    /** Print results (for testing) */
+    state.mapValues(x => "\n" + "weights: " + x.weights.mkString(",") + "\n" +
+                         "intercept: " + x.intercept.toString + "\n" +
+                         "r2: " + x.r2.toString + "\n").print()
 
     ssc.start()
   }

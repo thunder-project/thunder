@@ -225,6 +225,8 @@ object StreamingKMeans {
     /** Train KMeans model */
     val data = Load.loadStreamingData(ssc, directory)
     val assignments = StreamingKMeans.trainStreaming(data, k, d, a, maxIterations, initializationMode)
+
+    /** Print assignments (for testing) */
     assignments.print()
 
     ssc.start()

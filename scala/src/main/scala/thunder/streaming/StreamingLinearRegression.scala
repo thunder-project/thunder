@@ -149,6 +149,8 @@ object StreamingLinearRegression {
     /** Train Streaming Linear Regression model */
     val data = Load.loadStreamingLabeledData(ssc, directory)
     val predictions = StreamingLinearRegression.trainStreaming(data, d, stepSize, numIterations, initializationMode)
+
+    /** Print predictions (for testing) */
     predictions.print()
 
     ssc.start()
