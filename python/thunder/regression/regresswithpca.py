@@ -51,7 +51,7 @@ if __name__ == "__main__":
     sc = SparkContext(args.master, "regress", pyFiles=egg)
     data = load(sc, args.datafile, args.preprocess).cache()
 
-    stats, comps, latent, scores, traj = regress(data, args.modelfile, args.regressmode)
+    stats, comps, latent, scores, traj = regresswithpca(data, args.modelfile, args.regressmode)
 
     outputdir = args.outputdir + "-regress"
     if not os.path.exists(outputdir):

@@ -38,7 +38,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
     sc = SparkContext(args.master, "regress", pyFiles=egg)
-    data = load(sc, args.datafile, args.preprocess).cache()
+    data = load(sc, args.datafile, args.preprocess)
 
     stats, betas = regress(data, args.modelfile, args.regressmode)
 
@@ -46,5 +46,5 @@ if __name__ == "__main__":
     if not os.path.exists(outputdir):
         os.makedirs(outputdir)
 
-    save(stats, outputdir, "stats", "matlab")
-    save(betas, outputdir, "comps", "matlab")
+    save(stats.cache(), outputdir, "stats", "matlab")
+    save(betas.cache(), outputdir, "comps", "matlab")
