@@ -20,6 +20,12 @@ object TestUtils {
   }
 
   // Assert that two vectors are equal within tolerance EPSILON
+  def assertEqual(v1: Double, v2: Double, epsilon: Double) {
+    def errorMessage = v1.toString + " did not equal " + v2.toString
+    assert(math.abs(v1-v2) <= epsilon, errorMessage)
+  }
+
+  // Assert that two vectors are equal within tolerance EPSILON
   def assertEqual(v1: Array[Double], v2: Array[Double], epsilon: Double) {
     def errorMessage = prettyPrint(v1) + " did not equal " + prettyPrint(v2)
     assert(v1.length == v2.length, errorMessage)
