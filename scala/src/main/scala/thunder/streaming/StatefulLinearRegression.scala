@@ -92,6 +92,7 @@ object StatefulLinearRegression {
    * a single vector of features and several vectors of labels.
    * We are fitting a separate model to the labels associated with
    * each key.
+   * 
    * @param input DStream of (Int, Array[Double]) keyed data point
    * @param preProcessMethod How to pre process data
    * @param featureKeys Array of keys associated with features
