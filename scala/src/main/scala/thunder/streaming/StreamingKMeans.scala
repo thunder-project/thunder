@@ -1,6 +1,6 @@
 package thunder.streaming
 
-import org.apache.spark.Logging
+import org.apache.spark.{SparkConf, Logging}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
 import org.apache.spark.streaming._
@@ -218,9 +218,14 @@ object StreamingKMeans {
     val (master, directory, batchTime, k, d, a, maxIterations, initializationMode) = (
       args(0), args(1), args(2).toLong, args(3).toInt, args(4).toInt, args(5).toDouble, args(6).toInt, args(7))
 
-    /** Create Spark context */
-    val ssc = new StreamingContext(master, "StreamingKMeans", Seconds(batchTime))
-    ssc.checkpoint(System.getenv("CHECKPOINT"))
+    val conf = new SparkConf().setMaster(master).setAppName("StreamingKMeans")
+
+    if (!master.contains("local")) {
+      conf.setSparkHome(System.getenv("SPARK_HOME")).setJars(List("target/scala-2.10/thunder_2.10-0.1.0.jar"))
+    }
+
+    /** Create Streaming Context */
+    val ssc = new StreamingContext(conf, Seconds(batchTime))
 
     /** Train KMeans model */
     val data = Load.loadStreamingData(ssc, directory)

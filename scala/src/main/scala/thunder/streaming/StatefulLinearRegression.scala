@@ -1,5 +1,6 @@
 package thunder.streaming
 
+import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming._
@@ -113,8 +114,14 @@ object StatefulLinearRegression {
     val (master, directory, preProcessMethod, batchTime, featureKeys) = (
       args(0), args(1), args(2), args(3).toLong, args(4).drop(1).dropRight(1).split(",").map(_.trim.toInt))
 
+    val conf = new SparkConf().setMaster(master).setAppName("StatefulLinearRegression")
+
+    if (!master.contains("local")) {
+      conf.setSparkHome(System.getenv("SPARK_HOME")).setJars(List("target/scala-2.10/thunder_2.10-0.1.0.jar"))
+    }
+
     /** Create Streaming Context */
-    val ssc = new StreamingContext(master, "StatefulLinearRegression", Seconds(batchTime))
+    val ssc = new StreamingContext(conf, Seconds(batchTime))
     ssc.checkpoint(System.getenv("CHECKPOINT"))
 
     /** Load streaming data */

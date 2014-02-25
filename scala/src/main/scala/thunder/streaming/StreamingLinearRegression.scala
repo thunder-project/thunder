@@ -9,6 +9,7 @@ import org.apache.spark.mllib.optimization._
 import thunder.util.Load
 import scala.util.Random._
 import org.apache.spark.mllib.regression.LabeledPoint
+import org.apache.spark.SparkConf
 
 /**
  * Linear Regression on streaming data.
@@ -142,9 +143,14 @@ object StreamingLinearRegression {
     val (master, directory, batchTime, d, stepSize, numIterations, initializationMode) = (
       args(0), args(1), args(2).toLong, args(3).toInt, args(4).toDouble, args(5).toInt, args(6).toString)
 
+    val conf = new SparkConf().setMaster(master).setAppName("StreamingLinearRegression")
+
+    if (!master.contains("local")) {
+      conf.setSparkHome(System.getenv("SPARK_HOME")).setJars(List("target/scala-2.10/thunder_2.10-0.1.0.jar"))
+    }
+
     /** Create Streaming Context */
-    val ssc = new StreamingContext(master, "StreamingLinearRegression", Seconds(batchTime))
-    ssc.checkpoint(System.getenv("CHECKPOINT"))
+    val ssc = new StreamingContext(conf, Seconds(batchTime))
 
     /** Train Streaming Linear Regression model */
     val data = Load.loadStreamingLabeledData(ssc, directory)
