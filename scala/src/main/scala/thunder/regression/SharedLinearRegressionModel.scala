@@ -5,6 +5,20 @@ import cern.colt.matrix.DoubleFactory1D
 import cern.colt.matrix.linalg.Algebra.DEFAULT.{inverse, mult}
 import scala.math.{pow, max}
 
+/** Class providing shared components of a linear regression model
+  * for use when fitting many models in parallel using the same
+  * set of underlying features. We use the provided features to create
+  * both a feature matrix (x) and its pseudo inverse (xhat) which can then
+  * be used to efficiently perform several parallel regressions.
+  *
+  * NOTE: I know the rest of MLlib uses jBlas, but I used Colt
+  * because the pseudo inverse (or the least square solver)
+  * in jBlas repeatedly caused segmentation faults (and I saw at
+  * a recent reference to this on a jBlas user's forum).
+  * May be platform specific, but seemed like a reason to stick
+  * with Colt here for now.
+  */
+
 class SharedLinearRegressionModel(var features: Array[Array[Double]]) extends Serializable {
 
   /** Number of features and data points. */
