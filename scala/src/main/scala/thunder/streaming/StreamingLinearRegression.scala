@@ -146,7 +146,9 @@ object StreamingLinearRegression {
     val conf = new SparkConf().setMaster(master).setAppName("StreamingLinearRegression")
 
     if (!master.contains("local")) {
-      conf.setSparkHome(System.getenv("SPARK_HOME")).setJars(List("target/scala-2.10/thunder_2.10-0.1.0.jar"))
+      conf.setSparkHome(System.getenv("SPARK_HOME"))
+        .setJars(List("target/scala-2.10/thunder_2.10-0.1.0.jar"))
+        .set("spark.executor.memory", "100G")
     }
 
     /** Create Streaming Context */
