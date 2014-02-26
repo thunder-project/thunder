@@ -83,9 +83,9 @@ object Load {
     RDD[(Int, Array[Double])] = dims.length match {
       case 1 => data.map{case (k, v) => (k(0), v)}
       case _ =>
-        val dimprod = dims.map(x => Range(1, x + 1).reduce(_*_)).dropRight(1)
+        val dimprod = dims.scanLeft(1)(_*_).drop(1).dropRight(1)
         data.map{case (k, v) =>
-          (dimprod.zip(k.drop(1)).map{case (x, y) => (x - 1) * y}.sum + k(0), v)
+          (k.drop(1).zip(dimprod).map{case (x, y) => (x - 1) * y}.sum + k(0), v)
       }
   }
 
@@ -117,9 +117,9 @@ object Load {
   DStream[(Int, Array[Double])] = dims.length match {
     case 1 => data.map{case (k, v) => (k(0), v)}
     case _ =>
-      val dimprod = dims.map(x => Range(1, x + 1).reduce(_*_)).dropRight(1)
+      val dimprod = dims.scanLeft(1)(_*_).drop(1).dropRight(1)
       data.map{case (k, v) =>
-        (dimprod.zip(k.drop(1)).map{case (x, y) => (x - 1) * y}.sum + k(0), v)
+        (k.drop(1).zip(dimprod).map{case (x, y) => (x - 1) * y}.sum + k(0), v)
       }
   }
 
@@ -232,8 +232,8 @@ object Load {
   /**
    * Load labeled streaming data from text files with format
    * <label>, <t1> <t2> ...
-   * where <label> is the label and <t1> <t2> ... are the data values (Double),
-   * note the comma after the label
+   * where <label> is the label and <t1> <t2> ... are the data values (Double)
+   *
    *
    * @param ssc StreamingContext
    * @param dir Directory to the input data files
