@@ -65,7 +65,7 @@ class StatefulLinearRegression (
   def update(rdd: RDD[(Int, Array[Double])]): RDD[(Int, LinearRegressionModel)] = {
     val features = rdd.filter(x => featureKeys.contains(x._1)).values.collect()
     val model = new SharedLinearRegressionModel(features)
-    val data = rdd.filter{case (k, v) => (k != 0) & (v.length == model.n)}
+    val data = rdd.filter{case (k, v) => (!featureKeys.contains(k)) & (v.length == model.n)}
     data.mapValues(model.fit)
   }
 
@@ -117,7 +117,9 @@ object StatefulLinearRegression {
     val conf = new SparkConf().setMaster(master).setAppName("StatefulLinearRegression")
 
     if (!master.contains("local")) {
-      conf.setSparkHome(System.getenv("SPARK_HOME")).setJars(List("target/scala-2.10/thunder_2.10-0.1.0.jar"))
+      conf.setSparkHome(System.getenv("SPARK_HOME"))
+          .setJars(List("target/scala-2.10/thunder_2.10-0.1.0.jar"))
+          .set("spark.executor.memory", "100G")
     }
 
     /** Create Streaming Context */
