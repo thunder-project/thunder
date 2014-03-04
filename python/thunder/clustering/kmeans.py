@@ -59,7 +59,7 @@ if __name__ == "__main__":
     parser.add_argument("k", type=int)
     parser.add_argument("--maxiter", type=float, default=20, required=False)
     parser.add_argument("--tol", type=float, default=0.001, required=False)
-    parser.add_argument("--preprocess", choices=("raw", "dff", "sub"), default="raw", required=False)
+    parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub"), default="raw", required=False)
 
     args = parser.parse_args()
     egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))

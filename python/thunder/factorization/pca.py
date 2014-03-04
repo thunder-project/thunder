@@ -29,7 +29,7 @@ if __name__ == "__main__":
     parser.add_argument("outputdir", type=str)
     parser.add_argument("k", type=int)
     parser.add_argument("--svdmethod", choices=("direct", "em"), default="direct", required=False)
-    parser.add_argument("--preprocess", choices=("raw", "dff", "sub"), default="raw", required=False)
+    parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub"), default="raw", required=False)
 
     args = parser.parse_args()
     egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))

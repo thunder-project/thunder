@@ -3,6 +3,7 @@ Utilities for loading and preprocessing data
 """
 
 from numpy import array, mean, cumprod, append, mod, ceil, size
+from scipy.signal import butter, lfilter
 
 
 class DataLoader(object):
@@ -35,6 +36,17 @@ class DataPreProcessor(object):
 
         if preprocessmethod == "raw":
             func = lambda x: x
+
+        if preprocessmethod == "dff-highpass":
+            fs = 1
+            nyq = 0.5 * fs
+            cutoff = (1.0/360) / nyq
+            b, a = butter(6, cutoff, "highpass")
+
+            def func(y):
+                mnval = mean(y)
+                y = (y - mnval) / (mnval + 0.1)
+                return lfilter(b, a, y)
 
         self.func = func
 

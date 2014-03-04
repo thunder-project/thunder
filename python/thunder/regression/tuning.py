@@ -41,7 +41,7 @@ if __name__ == "__main__":
     parser.add_argument("tuningmodelfile", type=str)
     parser.add_argument("outputdir", type=str)
     parser.add_argument("tuningmode", choices=("circular", "gaussian"), help="form of tuning curve")
-    parser.add_argument("--preprocess", choices=("raw", "dff", "sub"), default="raw", required=False)
+    parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub"), default="raw", required=False)
     parser.add_argument("--regressmodelfile", type=str)
     parser.add_argument("--regressmode", choices=("linear", "bilinear"), help="form of regression")
 

@@ -73,7 +73,7 @@ if __name__ == "__main__":
     parser.add_argument("--svdmethod", choices=("direct", "em"), default="direct", required=False)
     parser.add_argument("--maxiter", type=float, default=100, required=False)
     parser.add_argument("--tol", type=float, default=0.000001, required=False)
-    parser.add_argument("--preprocess", choices=("raw", "dff", "sub"), default="raw", required=False)
+    parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub"), default="raw", required=False)
     parser.add_argument("--seed", type=int, default=0, required=False)
 
     args = parser.parse_args()
