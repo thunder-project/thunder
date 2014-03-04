@@ -46,5 +46,5 @@ if __name__ == "__main__":
     if not os.path.exists(outputdir):
         os.makedirs(outputdir)
 
-    save(stats.cache(), outputdir, "stats", "matlab")
-    save(betas.cache(), outputdir, "comps", "matlab")
+    save(stats, outputdir, "stats", "matlab")
+    save(betas, outputdir, "comps", "matlab")
