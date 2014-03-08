@@ -2,6 +2,8 @@
 Utilities for loading and preprocessing data
 """
 
+import pyspark
+
 from numpy import array, mean, cumprod, append, mod, ceil, size
 from scipy.signal import butter, lfilter
 
@@ -69,14 +71,24 @@ def getdims(data):
     :param data: RDD of data points as key value pairs
     :return dims: Dimensions of the data (max, min, and num)
     """
-    entry = data.first()[0]
-    rng = range(0, size(entry))
-    if size(entry) == 1:
-        distinctvals = array([data.map(lambda (k, _): k).distinct().collect()])
-    else:
-        distinctvals = map(lambda i: data.map(lambda (k, _): k[i]).distinct().collect(), rng)
+    dtype = type(data)
+    if (dtype == pyspark.rdd.RDD) | (dtype == pyspark.rdd.PipelinedRDD):
+        entry = data.first()[0]
+        rng = range(0, size(entry))
+        if size(entry) == 1:
+            distinctvals = array([data.map(lambda (k, _): k).distinct().collect()])
+        else:
+            distinctvals = map(lambda i: data.map(lambda (k, _): k[i]).distinct().collect(), rng)
 
-    return Dimensions(distinctvals, rng)
+        return Dimensions(distinctvals, rng)
+    else:
+        entry = data[0][0]
+        rng = range(0, size(entry))
+        if size(entry) == 1:
+            distinctvals = list(set(map(lambda x: x[0][0], data)))
+        else:
+            distinctvals = map(lambda i: list(set(map(lambda x: x[0][i], data))), rng)
+        return Dimensions(distinctvals, rng)
 
 
 def subtoind(data, dims):
