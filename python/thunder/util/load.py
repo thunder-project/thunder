@@ -64,22 +64,32 @@ class DataPreProcessor(object):
         return self.func(y)
 
 
+def isrdd(data):
+    """ Check whether data is an RDD or not
+    :param data: data object (potentially an RDD)
+    :return: true (is rdd) or false (is not rdd)
+    """
+    dtype = type(data)
+    if (dtype == pyspark.rdd.RDD) | (dtype == pyspark.rdd.PipelinedRDD):
+        return True
+    else:
+        return False
+
+
 def getdims(data):
     """Get min, max, and number of unique keys along
     each dimension
 
-    :param data: RDD of data points as key value pairs
+    :param data: RDD of data points as key value pairs, or
     :return dims: Dimensions of the data (max, min, and num)
     """
-    dtype = type(data)
-    if (dtype == pyspark.rdd.RDD) | (dtype == pyspark.rdd.PipelinedRDD):
+    if isrdd(data):
         entry = data.first()[0]
         rng = range(0, size(entry))
         if size(entry) == 1:
             distinctvals = array([data.map(lambda (k, _): k).distinct().collect()])
         else:
             distinctvals = map(lambda i: data.map(lambda (k, _): k[i]).distinct().collect(), rng)
-
         return Dimensions(distinctvals, rng)
     else:
         entry = data[0][0]
@@ -98,10 +108,14 @@ def subtoind(data, dims):
     :param dims: Array with maximum along each dimension
     :return RDD with linear indices as keys
     """
+    def subtoind_inline(k, dimprod):
+        return sum(map(lambda (x, y): (x - 1) * y, zip(k[1:], dimprod))) + k[0]
     if size(dims) > 1:
         dimprod = cumprod(dims)[0:-1]
-        return data.map(lambda (k, v):
-                        (sum(map(lambda (x, y): (x - 1) * y, zip(k[1:], dimprod))) + k[0], v))
+        if isrdd(data):
+            return data.map(lambda (k, v): (subtoind_inline(k, dimprod), v))
+        else:
+            return map(lambda (k, v): (subtoind_inline(k, dimprod), v), data)
     else:
         return data
 
@@ -113,10 +127,16 @@ def indtosub(data, dims):
     :param dims: Array with maximum along each dimension
     :return RDD with sub indices as keys
     """
+    def indtosub_inline(k, dimprod):
+        return tuple(map(lambda (x, y): int(mod(ceil(float(k)/y) - 1, x) + 1), dimprod))
+
     if size(dims) > 1:
         dimprod = zip(dims, append(1, cumprod(dims)[0:-1]))
-        return data.map(lambda (k, v):
-                        (tuple(map(lambda (x, y): int(mod(ceil(float(k)/y) - 1, x) + 1), dimprod)), v))
+        if isrdd(data):
+            return data.map(lambda (k, v): (indtosub_inline(k, dimprod), v))
+        else:
+            return map(lambda (k, v): (indtosub_inline(k, dimprod), v), data)
+
     else:
         return data
 

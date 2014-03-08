@@ -7,9 +7,8 @@ from scipy.io import savemat
 from math import isnan
 from numpy import array, squeeze, sum, shape, reshape, transpose, maximum, minimum, float16, uint8, savetxt, size
 from PIL import Image
-import pyspark
 
-from thunder.util.load import getdims, subtoind
+from thunder.util.load import getdims, subtoind, isrdd
 
 
 def arraytoim(mat, filename):
@@ -70,9 +69,7 @@ def save(data, outputdir, outputfile, outputformat):
     filename = os.path.join(outputdir, outputfile)
 
     if (outputformat == "matlab") | (outputformat == "text"):
-        dtype = type(data)
-
-        if (dtype == pyspark.rdd.RDD) | (dtype == pyspark.rdd.PipelinedRDD):
+        if isrdd(data):
             dims = getdims(data)
             data = subtoind(data, dims.max).sortByKey()
             nout = size(data.first()[1])
@@ -101,10 +98,8 @@ def save(data, outputdir, outputfile, outputformat):
 
     if outputformat == "image":
 
-        data = rescale(data)
-        dtype = type(data)
-
-        if (dtype == pyspark.rdd.RDD) | (dtype == pyspark.rdd.PipelinedRDD):
+        if isrdd(data):
+            data = rescale(data)
             dims = getdims(data)
             data = subtoind(data, dims.max).sortByKey()
             nout = size(data.first()[1])
