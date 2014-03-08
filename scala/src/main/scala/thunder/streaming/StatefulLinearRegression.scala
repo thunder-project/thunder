@@ -8,8 +8,9 @@ import org.apache.spark.streaming.StreamingContext._
 import org.apache.spark.streaming.dstream.DStream
 
 import thunder.util.Load
-import thunder.util.Load.DataPreProcessor
-import thunder.regression.{SharedLinearRegressionModel, LinearRegressionModel}
+import thunder.util.Save
+import thunder.util.Load.{DataPreProcessor, subToInd}
+import thunder.regression.{LinearRegressionModelWithStats, SharedLinearRegressionModel}
 import org.apache.spark.Logging
 
 
@@ -60,16 +61,16 @@ class StatefulLinearRegression (
     * Features are the subset of data points with the specified keys.
     *
     * @param rdd RDD of data points as (Int, Array[Double]) pairs
-    * @return RDD of fitted models as (Int, LinearRegressionModel) pairs
-    * */
-  def update(rdd: RDD[(Int, Array[Double])]): RDD[(Int, LinearRegressionModel)] = {
+    * @return RDD of fitted models as (Int, LinearRegressionModelWithStats) pairs
+    */
+  def update(rdd: RDD[(Int, Array[Double])]): RDD[(Int, LinearRegressionModelWithStats)] = {
     val features = rdd.filter(x => featureKeys.contains(x._1)).values.collect()
     val model = new SharedLinearRegressionModel(features)
     val data = rdd.filter{case (k, v) => (!featureKeys.contains(k)) & (v.length == model.n)}
     data.mapValues(model.fit)
   }
 
-  def runStreaming(data: DStream[(Int, Array[Double])]): DStream[(Int, LinearRegressionModel)] = {
+  def runStreaming(data: DStream[(Int, Array[Double])]): DStream[(Int, LinearRegressionModelWithStats)] = {
     if (preProcessMethod != "raw") {
       data.updateStateByKey(concatenate).transform(update _)
     } else {
@@ -100,19 +101,22 @@ object StatefulLinearRegression {
    */
   def trainStreaming(input: DStream[(Int, Array[Double])],
             preProcessMethod: String,
-            featureKeys: Array[Int]): DStream[(Int, LinearRegressionModel)] =
+            featureKeys: Array[Int]): DStream[(Int, LinearRegressionModelWithStats)] =
   {
     new StatefulLinearRegression().setFeatureKeys(featureKeys).runStreaming(input)
   }
 
   def main(args: Array[String]) {
-    if (args.length != 5) {
-      System.err.println("Usage: StatefulLinearRegression <master> <directory> <preProcessMethod> <batchTime> <featureKeys>")
+    if (args.length != 6) {
+      System.err.println(
+        "Usage: StatefulLinearRegression <master> <directory> <preProcessMethod> <batchTime> <dim> <featureKeys>")
       System.exit(1)
     }
 
-    val (master, directory, preProcessMethod, batchTime, featureKeys) = (
-      args(0), args(1), args(2), args(3).toLong, args(4).drop(1).dropRight(1).split(",").map(_.trim.toInt))
+    val (master, directory, preProcessMethod, batchTime, dims, features) = (
+      args(0), args(1), args(2), args(3).toLong,
+      args(4).drop(1).dropRight(1).split(",").map(_.trim.toInt),
+      Array(args(5).drop(1).dropRight(1).split(",").map(_.trim.toInt)))
 
     val conf = new SparkConf().setMaster(master).setAppName("StatefulLinearRegression")
 
@@ -122,20 +126,31 @@ object StatefulLinearRegression {
           .set("spark.executor.memory", "100G")
     }
 
+    /** Get feature keys with linear indexing */
+    val featureKeys = subToInd(features, dims)
+
+    println(dims.mkString)
+    println(featureKeys.mkString)
     /** Create Streaming Context */
     val ssc = new StreamingContext(conf, Seconds(batchTime))
     ssc.checkpoint(System.getenv("CHECKPOINT"))
 
     /** Load streaming data */
-    val data = Load.loadStreamingDataWithKeys(ssc, directory)
+    val data = Load.loadStreamingDataWithKeys(ssc, directory, dims.size, dims)
+    data.print()
 
     /** Train Linear Regression models */
     val state = StatefulLinearRegression.trainStreaming(data, preProcessMethod, featureKeys)
 
-    /** Print results (for testing) */
-    state.mapValues(x => "\n" + "weights: " + x.weights.mkString(",") + "\n" +
-                         "intercept: " + x.intercept.toString + "\n" +
-                         "r2: " + x.r2.toString + "\n").print()
+    /** Collect output */
+    val out = state.mapValues(x => Array(x.r2) ++ x.tuning)
+
+//    /** Print results (for testing) */
+//    state.mapValues(x => "\n" + "weights: " + x.weights.mkString(",") + "\n" +
+//                         "intercept: " + x.intercept.toString + "\n" +
+//                         "r2: " + x.r2.toString + "\n").print()
+
+    Save.saveStreamingDataAsText(out, "test", Seq("r2", "tuning"))
 
     ssc.start()
   }

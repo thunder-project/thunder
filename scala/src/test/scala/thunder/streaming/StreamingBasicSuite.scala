@@ -1,6 +1,6 @@
 package thunder.streaming
 
-import thunder.regression.LinearRegressionModel
+import thunder.regression.LinearRegressionModelWithStats
 
 import org.apache.spark.streaming.{Milliseconds, Seconds, StreamingContext}
 import org.apache.spark.SparkContext._
@@ -46,7 +46,7 @@ class StreamingBasicSuite extends FunSuite {
 
     // create and train KMeans model
     val state = StatefulLinearRegression.trainStreaming(data, "raw", Array(0))
-    var model = new LinearRegressionModel(Array.fill(1)(0.0), 0.0, 0.0)
+    var model = new LinearRegressionModelWithStats(Array.fill(1)(0.0), 0.0, 0.0, Array(0.0))
     state.foreachRDD{rdd => model = rdd.values.first()}
     ssc.checkpoint(checkpointDir.toString)
 

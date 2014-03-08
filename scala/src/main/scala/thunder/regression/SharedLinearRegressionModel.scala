@@ -11,9 +11,9 @@ import scala.math.{pow, max}
   * both a feature matrix (x) and its pseudo inverse (xhat) which can then
   * be used to efficiently perform several parallel regressions.
   *
-  * NOTE: I know the rest of MLlib uses jBlas, but I used Colt
+  * NOTE: The rest of MLlib uses jBlas, but we used Colt here
   * because the pseudo inverse (or the least square solver)
-  * in jBlas repeatedly caused segmentation faults (and I saw at
+  * in jBlas repeatedly caused segmentation faults (there was
   * a recent reference to this on a jBlas user's forum).
   * May be platform specific, but seemed like a reason to stick
   * with Colt here for now.
@@ -45,13 +45,13 @@ class SharedLinearRegressionModel(var features: Array[Array[Double]]) extends Se
   }
 
   /** Compute response-weighted features. */
-  def tuning(point: Array[Double]): Array[Double] = {
+  def getTuning(point: Array[Double]): Array[Double] = {
     val pointPos = point.map(x => max(x, 0))
     features.map(x => x.zip(pointPos).map{case (ix, iy) => ix * iy}.sum / pointPos.sum )
   }
 
   /** Fit a model for each data point using the shared features. */
-  def fit(point: Array[Double]): LinearRegressionModel = {
+  def fit(point: Array[Double]): LinearRegressionModelWithStats = {
     val y = DoubleFactory1D.dense.make(point.length)
     for (i <- 0 until point.length) {
       y.set(i, point(i))
@@ -59,9 +59,10 @@ class SharedLinearRegressionModel(var features: Array[Array[Double]]) extends Se
     val b = mult(xhat, y)
     val predict = mult(x, b).toArray
     val r2 = getR2(point, predict)
+    val tuning = getTuning(point)
     val intercept = b.toArray()(0)
     val weights = b.toArray.drop(1)
-    new LinearRegressionModel(weights, intercept, r2)
+    new LinearRegressionModelWithStats(weights, intercept, r2, tuning)
   }
 
 }
