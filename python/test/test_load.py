@@ -18,7 +18,7 @@ class LoadTestCase(PySparkTestCase):
 class TestSubToInd(LoadTestCase):
     """Test conversion between linear and subscript indexing"""
 
-    def test_sub_to_ind(self):
+    def test_sub_to_ind_rdd(self):
         subs = [(1, 1, 1), (2, 1, 1), (1, 2, 1), (2, 2, 1), (1, 3, 1), (2, 3, 1),
                 (1, 1, 2), (2, 1, 2), (1, 2, 2), (2, 2, 2), (1, 3, 2), (2, 3, 2)]
         data_local = map(lambda x: (x, array([1.0])), subs)
@@ -28,7 +28,7 @@ class TestSubToInd(LoadTestCase):
         inds = subtoind(data, dims).map(lambda (k, _): k).collect()
         assert(allclose(inds, array(range(1, 13))))
 
-    def test_ind_to_sub(self):
+    def test_ind_to_sub_rdd(self):
         data_local = map(lambda x: (x, array([1.0])), range(1, 13))
 
         data = self.sc.parallelize(data_local)
@@ -37,6 +37,22 @@ class TestSubToInd(LoadTestCase):
         subs = indtosub(data, dims).map(lambda (k, _): k).collect()
         assert(allclose(subs, array([(1, 1, 1), (2, 1, 1), (1, 2, 1), (2, 2, 1), (1, 3, 1), (2, 3, 1),
                                      (1, 1, 2), (2, 1, 2), (1, 2, 2), (2, 2, 2), (1, 3, 2), (2, 3, 2)])))
+
+    def test_sub_to_ind_array(self):
+        subs = [(1, 1, 1), (2, 1, 1), (1, 2, 1), (2, 2, 1), (1, 3, 1), (2, 3, 1),
+                (1, 1, 2), (2, 1, 2), (1, 2, 2), (2, 2, 2), (1, 3, 2), (2, 3, 2)]
+        data_local = map(lambda x: (x, array([1.0])), subs)
+        dims = [2, 3, 2]
+        inds = map(lambda x: x[0], subtoind(data_local, dims))
+        assert(allclose(inds, array(range(1, 13))))
+
+    def test_ind_to_sub_array(self):
+        data_local = map(lambda x: (x, array([1.0])), range(1, 13))
+        dims = [2, 3, 2]
+        subs = map(lambda x: x[0], indtosub(data_local, dims))
+        assert(allclose(subs, array([(1, 1, 1), (2, 1, 1), (1, 2, 1), (2, 2, 1), (1, 3, 1), (2, 3, 1),
+                                     (1, 1, 2), (2, 1, 2), (1, 2, 2), (2, 2, 2), (1, 3, 2), (2, 3, 2)])))
+
 
 
 class TestGetDims(LoadTestCase):
