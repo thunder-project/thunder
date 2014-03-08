@@ -42,10 +42,21 @@ class TestSubToInd(LoadTestCase):
 class TestGetDims(LoadTestCase):
     """Test getting dimensions"""
 
-    def test_get_dims(self):
+    def test_get_dims_rdd(self):
         subs = [(1, 1, 1), (2, 1, 1), (1, 2, 1), (2, 2, 1), (1, 3, 1), (2, 3, 1),
                 (1, 1, 2), (2, 1, 2), (1, 2, 2), (2, 2, 2), (1, 3, 2), (2, 3, 2)]
         data_local = map(lambda x: (x, array([1.0])), subs)
         data = self.sc.parallelize(data_local)
         dims = getdims(data)
-        assert(dims, array([2, 3, 2]))
+        assert(allclose(dims.max, array([2, 3, 2])))
+        assert(allclose(dims.num, array([2, 3, 2])))
+        assert(allclose(dims.min, array([1, 1, 1])))
+
+    def test_get_dims_array(self):
+        subs = [(1, 1, 1), (2, 1, 1), (1, 2, 1), (2, 2, 1), (1, 3, 1), (2, 3, 1),
+                (1, 1, 2), (2, 1, 2), (1, 2, 2), (2, 2, 2), (1, 3, 2), (2, 3, 2)]
+        data_local = map(lambda x: (x, array([1.0])), subs)
+        dims = getdims(data_local)
+        assert(allclose(dims.max, array([2, 3, 2])))
+        assert(allclose(dims.num, array([2, 3, 2])))
+        assert(allclose(dims.min, array([1, 1, 1])))
