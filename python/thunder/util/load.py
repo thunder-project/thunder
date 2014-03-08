@@ -6,6 +6,14 @@ from numpy import array, mean, cumprod, append, mod, ceil, size
 from scipy.signal import butter, lfilter
 
 
+class Dimensions(object):
+
+    def __init__(self, distinctvals, rng):
+        self.min = map(lambda i: min(distinctvals[i]), rng)
+        self.max = map(lambda i: max(distinctvals[i]), rng)
+        self.num = map(lambda i: size(distinctvals[i]), rng)
+
+
 class DataLoader(object):
     """Class for loading lines of a data file"""
 
@@ -55,24 +63,27 @@ class DataPreProcessor(object):
 
 
 def getdims(data):
-    """Get maximum dimensions of data based on keys
+    """Get min, max, and number of unique keys along
+    each dimension
 
     :param data: RDD of data points as key value pairs
-    :return dims: Dimensions of the data
+    :return dims: Dimensions of the data (max, min, and num)
     """
     entry = data.first()[0]
+    rng = range(0, size(entry))
     if size(entry) == 1:
-        dims = array([data.map(lambda (k, _): k).reduce(max)])
+        distinctvals = array([data.map(lambda (k, _): k).distinct().collect()])
     else:
-        dims = map(lambda i: data.map(lambda (k, _): k[i]).reduce(max), range(0, size(entry)))
-    return dims
+        distinctvals = map(lambda i: data.map(lambda (k, _): k[i]).distinct().collect(), rng)
+
+    return Dimensions(distinctvals, rng)
 
 
 def subtoind(data, dims):
     """Convert subscript indexing to linear indexing
 
     :param data: RDD with subscript indices as keys
-    :param dims: dimensions
+    :param dims: Array with maximum along each dimension
     :return RDD with linear indices as keys
     """
     if size(dims) > 1:
@@ -87,7 +98,7 @@ def indtosub(data, dims):
     """Convert linear indexing to subscript indexing
 
     :param data: RDD with linear indices as keys
-    :param dims: dimensions
+    :param dims: Array with maximum along each dimension
     :return RDD with sub indices as keys
     """
     if size(dims) > 1:

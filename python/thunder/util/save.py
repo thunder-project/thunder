@@ -74,21 +74,21 @@ def save(data, outputdir, outputfile, outputformat):
 
         if (dtype == pyspark.rdd.RDD) | (dtype == pyspark.rdd.PipelinedRDD):
             dims = getdims(data)
-            data = subtoind(data, dims).sortByKey()
+            data = subtoind(data, dims.max).sortByKey()
             nout = size(data.first()[1])
             if nout > 1:
                 for iout in range(0, nout):
                     result = array(data.map(lambda (_, v): float16(v[iout])).collect())
                     if outputformat == "matlab":
                         savemat(filename+"-"+str(iout)+".mat",
-                                mdict={outputfile+str(iout): squeeze(transpose(reshape(result, dims[::-1])))},
+                                mdict={outputfile+str(iout): squeeze(transpose(reshape(result, dims.num[::-1])))},
                                 oned_as='column', do_compression='true')
                     if outputformat == "text":
                         savetxt(filename+"-"+str(iout)+".txt", result, fmt="%.6f")
             else:
                 result = data.map(lambda (_, v): float16(v)).collect()
                 if outputformat == "matlab":
-                    savemat(filename+".mat", mdict={outputfile: squeeze(transpose(reshape(result, dims[::-1])))},
+                    savemat(filename+".mat", mdict={outputfile: squeeze(transpose(reshape(result, dims.num[::-1])))},
                             oned_as='column', do_compression='true')
                 if outputformat == "text":
                     savetxt(filename+".txt", result, fmt="%.6f")
@@ -106,17 +106,17 @@ def save(data, outputdir, outputfile, outputformat):
 
         if (dtype == pyspark.rdd.RDD) | (dtype == pyspark.rdd.PipelinedRDD):
             dims = getdims(data)
-            data = subtoind(data, dims).sortByKey()
+            data = subtoind(data, dims.max).sortByKey()
             nout = size(data.first()[1])
             if nout > 1:
                 for iout in range(0, nout):
                     result = data.map(lambda (_, v): v[iout]).collect()
-                    arraytoim(squeeze(transpose(reshape(result, dims[::-1]))), filename+"-"+str(iout))
+                    arraytoim(squeeze(transpose(reshape(result, dims.count[::-1]))), filename+"-"+str(iout))
             else:
                 result = data.map(lambda (_, v): v).collect()
-                arraytoim(squeeze(transpose(reshape(result, dims[::-1]))), filename)
+                arraytoim(squeeze(transpose(reshape(result, dims.count[::-1]))), filename)
         else:
-            arraytoim(data, filename, dims)
+            arraytoim(data, filename)
 
 
 

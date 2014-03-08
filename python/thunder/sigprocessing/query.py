@@ -22,7 +22,7 @@ def query(data, indsfile):
 
     # convert to linear indexing
     dims = getdims(data)
-    data = subtoind(data, dims)
+    data = subtoind(data, dims.max)
 
     # loop over indices, averaging time series
     ts = zeros((method.n, len(data.first()[1])))
