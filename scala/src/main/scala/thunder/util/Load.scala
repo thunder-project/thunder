@@ -72,6 +72,31 @@ object Load {
     Range(0, data.first()._1.length).map(x => data.map(_._1(x)).reduce(max)).toArray
   }
 
+  /** Inline function for converting subscript to linear indices */
+  def subToIndLine(k: Array[Int], dimprod: Array[Int]): Int = {
+    k.drop(1).zip(dimprod).map{case (x, y) => (x - 1) * y}.sum + k(0)
+  }
+
+  /** Inline function for converting linear to subscript indices */
+  def indToSubLine(k: Int, dimprod: Array[(Int, Int)]): Array[Int] = {
+    dimprod.map{case (x, y) => ((ceil(k.toDouble / y) - 1) % x + 1).toInt}
+  }
+
+
+  /** Convert subscript indices to linear indexing in an array
+    *
+    * @param data Array of Int Arrays with subscript indices
+    * @param dims Dimensions for subscript indices
+    * @return Array of Int with linear indices
+    */
+  def subToInd(data: Array[Array[Int]], dims: Array[Int]): Array[Int] = dims.length match {
+    case 1 => data.map(x => x(0))
+    case _ =>
+      val dimprod = dims.scanLeft(1)(_*_).drop(1).dropRight(1)
+      data.map(k => subToIndLine(k, dimprod))
+  }
+
+
   /**
    * Convert subscript indexing to linear indexing in an RDD
    *
@@ -84,26 +109,7 @@ object Load {
       case 1 => data.map{case (k, v) => (k(0), v)}
       case _ =>
         val dimprod = dims.scanLeft(1)(_*_).drop(1).dropRight(1)
-        data.map{case (k, v) =>
-          (k.drop(1).zip(dimprod).map{case (x, y) => (x - 1) * y}.sum + k(0), v)
-      }
-  }
-
-  /**
-   * Convert linear indexing to subscript indexing in an RDD
-   *
-   * @param data RDD of data points as key value pairs
-   * @param dims Dimensions for subscript indices
-   * @return RDD of data points with subscript indices as keys
-   */
-  def indToSub(data: RDD[(Int, Array[Double])], dims: Array[Int]):
-    RDD[(Array[Int], Array[Double])] = dims.length match {
-    case 1 => data.map{case (k, v) => (Array(k), v)}
-    case _ =>
-      val dimprod = dims.zip(Array.concat(Array(1), dims.map(x => Range(1, x + 1).reduce(_*_)).dropRight(1)))
-      data.map{case (k, v) =>
-        (dimprod.map{case (x, y) => ((ceil(k.toDouble / y) - 1) % x + 1).toInt}, v)
-      }
+        data.map{case (k, v) => (subToIndLine(k, dimprod), v)}
   }
 
   /**
@@ -118,9 +124,38 @@ object Load {
     case 1 => data.map{case (k, v) => (k(0), v)}
     case _ =>
       val dimprod = dims.scanLeft(1)(_*_).drop(1).dropRight(1)
-      data.map{case (k, v) =>
-        (k.drop(1).zip(dimprod).map{case (x, y) => (x - 1) * y}.sum + k(0), v)
-      }
+      data.map{case (k, v) => (subToIndLine(k, dimprod), v)}
+  }
+
+
+  /**
+   * Convert linear indexing to subscript indexing in an array
+   *
+   * @param data Array of Int with linear indices
+   * @param dims Dimensions for subscript indices
+   * @return Array of Int Array with subscript indices
+   */
+  def indToSub(data: Array[Int], dims: Array[Int]):
+  Array[Array[Int]] = dims.length match {
+    case 1 => data.map(x => Array(x))
+    case _ =>
+      val dimprod = dims.zip(Array.concat(Array(1), dims.map(x => Range(1, x + 1).reduce(_*_)).dropRight(1)))
+      data.map(x => indToSubLine(x, dimprod))
+  }
+
+  /**
+   * Convert linear indexing to subscript indexing in an RDD
+   *
+   * @param data RDD of data points as key value pairs
+   * @param dims Dimensions for subscript indices
+   * @return RDD of data points with subscript indices as keys
+   */
+  def indToSub(data: RDD[(Int, Array[Double])], dims: Array[Int]):
+    RDD[(Array[Int], Array[Double])] = dims.length match {
+    case 1 => data.map{case (k, v) => (Array(k), v)}
+    case _ =>
+      val dimprod = dims.zip(Array.concat(Array(1), dims.map(x => Range(1, x + 1).reduce(_*_)).dropRight(1)))
+      data.map{case (k, v) => (indToSubLine(k, dimprod), v)}
   }
 
   /**
@@ -135,9 +170,7 @@ object Load {
     case 1 => data.map{case (k, v) => (Array(k), v)}
     case _ =>
       val dimprod = dims.zip(Array.concat(Array(1), dims.map(x => Range(1, x + 1).reduce(_*_)).dropRight(1)))
-      data.map{case (k, v) =>
-        (dimprod.map{case (x, y) => ((ceil(k.toDouble / y) - 1) % x + 1).toInt}, v)
-      }
+      data.map{case (k, v) => (indToSubLine(k, dimprod), v)}
   }
 
   /**
