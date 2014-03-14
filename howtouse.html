@@ -55,7 +55,7 @@
                 <div class="tab-pane fade in active" id="InstallationBasic">
 <h1 id="doctitle">Installation (basic)</h1>
 <p>This is a guide to installing Thunder, and its dependencies: Scala, Spark, and Python (with NumPy, SciPy, and PIL). It assumes you’ve spent time in a terminal. It's been tested on Mac OS X, but should also work on Linux. It will let you run Spark and Thunder on your local machine, which is useful for understanding how it works. See Installation (cluster) for cluster usage.</p>
-<p>First, you need to set up Spark. We'll go through the basics here; consult the <a href="http://spark.incubator.apache.org/docs/latest/">documentation</a> for more details. Download the latest release of Spark from the <a href="http://spark.incubator.apache.org/downloads.html">project page</a>, and download Scala (2.9.3) from <a href="http://www.scala-lang.org/download/2.9.3.html">scala-lang.org</a>. Put them anywhere on your file system. Set paths (by typing these lines into the terminal, or by adding them to your .bash_profile).</p>
+<p>First, you need to set up Spark. We'll go through the basics here; consult the <a href="http://spark.incubator.apache.org/docs/latest/">documentation</a> for more details. Download the latest release of Spark from the <a href="http://spark.incubator.apache.org/downloads.html">project page</a>, and download Scala (2.10.3) from <a href="http://www.scala-lang.org/download/">scala-lang.org</a>. Put them anywhere on your file system. Set paths (by typing these lines into the terminal, or by adding them to your .bash_profile).</p>
 <br>
 <pre><code class="bash">export SCALA_HOME=your_path_to_scala
 export SPARK_HOME=your_path_to_spark
@@ -69,7 +69,7 @@ sbt/sbt assembly
 <br>
 <p>This might take a few minutes. When done, to check if Spark / PySpark is working, start the PySpark shell</p>
 <br>
-<pre><code class="bash">$SPARK_HOME/pyspark
+<pre><code class="bash">$SPARK_HOME/bin/pyspark
 </pre></code>
 <br>
 <p>And do a simple operation</p>
@@ -97,13 +97,13 @@ sbt/sbt assembly
 <br>
 <p>Go into the top-level Thunder directory and run an analysis on test data.</p>
 <br>
-<pre><code class="bash">$SPARK_HOME/pyspark python/thunder/factorization/pca.py local data/iris.txt ~/results 4
+<pre><code class="bash">$SPARK_HOME/bin/pyspark python/thunder/factorization/pca.py local data/iris.txt ~/results 4
 </pre></code>
 <br>
 <p>This will run principal component analysis and save the results to your home directory in the folder results-pca. The <samp id="inline">local</samp> tells Spark to run in local mode (i.e. not on a cluster). This is useful for debugging purposes. If you are on a multi-core machine, use <samp id="inline">local[n]</samp> to use n cores.</p>
 <p>The same analysis can be run interactively. Start the PySpark shell</p>
 <br>
-<pre><code class="bash">$SPARK_HOME/pyspark
+<pre><code class="bash">$SPARK_HOME/bin/pyspark
 </pre></code>
 <br>
 <p>Then run the analysis and inspect the results.</p>
@@ -220,7 +220,7 @@ export DATA=hdfs://$MASTER_URL:9000/data
 
                 <div class="tab-pane fade" id="Analyses">
 <h1 id="doctitle">Analyses</h1>
-<p>Thunder includes four analysis packages: clustering, factorization, regression, and signal processing, as well as utils for shared methods. Each package has stand-alone scripts that perform common analysis routines, alongside loading data and saving results. But the main functions in each script, as well as any shared algorithms and classes, can be called directly from within the PySpark shell (for interactive use), or from other scripts (when developing your own analyses). Here, we explain the main functionality through example calls to these functions. We assume <samp id="inline">data</samp> is an RDD where each element is a numpy array, and possibly a key identifier (see Input format for more details). For each example, the neccessary functions must be imported before use.</p>
+<p>Thunder includes four analysis packages: clustering, factorization, regression, and signal processing, as well as utils for shared methods. Each package has stand-alone scripts that perform common analysis routines, alongside loading data and saving results. But the main functions in each script, as well as any shared algorithms and classes, can be called directly from within the PySpark shell (for interactive use), or from other scripts (when developing your own analyses). Here, we explain the main functionality through example calls to these functions. We assume <samp id="inline">data</samp> is an RDD where each element is a numpy array, and possibly a key identifier (see Input format for more details). For each example, the necessary functions must be imported before use.</p>
 <h2 id="docsubtitle">Clustering</h2>
 <p>Analyses: kMeans</p>
 <p>Clustering analyses try to associate data points with particular categories based on a distance metric. kMeans assigns each data point to one of k clusters using an iterative algorithm. To run, call</p>
