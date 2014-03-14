@@ -83,7 +83,7 @@ def save(data, outputdir, outputfile, outputformat):
                     if outputformat == "text":
                         savetxt(filename+"-"+str(iout)+".txt", result, fmt="%.6f")
             else:
-                result = data.map(lambda (_, v): float16(v)).collect()
+                result = array(data.map(lambda (_, v): float16(v)).collect())
                 if outputformat == "matlab":
                     savemat(filename+".mat", mdict={outputfile: squeeze(transpose(reshape(result, dims.num[::-1])))},
                             oned_as='column', do_compression='true')
