@@ -11,7 +11,7 @@ from PIL import Image
 from thunder.util.load import getdims, subtoind, isrdd
 
 
-def arraytoim(mat, filename):
+def arraytoim(mat, filename, format="tif"):
     """Write a numpy array to a png image
 
     If mat is 3D will separately write each image
@@ -19,14 +19,15 @@ def arraytoim(mat, filename):
 
     :param mat: Numpy array, 2d or 3d, dtype must be uint8
     :param filename: Base filename for writing
+    :param format: Image format to write, default="tif" (see PIL for options)
     """
     dims = shape(mat)
     if len(dims) > 2:
         for z in range(0, dims[2]):
             cdata = mat[:, :, z]
-            Image.fromarray(cdata).save(filename+"-"+str(z)+".png")
+            Image.fromarray(cdata).save(filename+"-"+str(z)+"."+format)
     elif len(dims) == 2:
-        Image.fromarray(mat).save(filename+".png")
+        Image.fromarray(mat).save(filename+"."+format)
     else:
         raise NotImplementedError('array must be 2 or 3 dimensions for image writing')
 
@@ -42,7 +43,10 @@ def rescale(data):
 
     :param data: RDD of (Int, Array(Double)) pairs
     """
-    data = data.mapValues(lambda x: map(lambda y: 0 if isnan(y) else y, x))
+    if size(data.first()[1]) > 1:
+        data = data.mapValues(lambda x: map(lambda y: 0 if isnan(y) else y, x))
+    else:
+        data = data.mapValues(lambda x: 0 if isnan(x) else x)
     mnvals = data.map(lambda (_, v): v).reduce(minimum)
     mxvals = data.map(lambda (_, v): v).reduce(maximum)
     if sum(mnvals < 0) == 0:
