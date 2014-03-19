@@ -108,10 +108,9 @@ sbt/sbt assembly
 <br>
 <p>Then run the analysis and inspect the results.</p>
 <br>
-<pre><code class="python">>> from thunder.util.parse import parse
+<pre><code class="python">>> from thunder.util.load import load
 >> from thunder.factorization.pca import pca
->> lines = sc.textFile('your_path_to_thunder/data/iris.txt')
->> data = parse(lines).cache()
+>> data = load(sc, 'your_path_to_thunder/data/iris.txt')
 >> scores, latent, comps = pca(data, 4)
 >> latent
 >> comps
@@ -190,15 +189,14 @@ export DATA=hdfs://$MASTER_URL:9000/data
 
                 <div class="tab-pane fade" id="InputFormat">
 <h1 id="doctitle">Input format</h1>
-<p>All analyses in Thunder operate on an RDD of data points, where each data point is either a NumPy array, or a (key, array) tuple, where key is either an integer or a tuple of integers. Only a subset of analyses support (and require) keys (see Analyses).</p>
+<p>All analyses in Thunder operate on an RDD of data points; each data point is a (key, array) tuple, where key is either an integer or a tuple of integers, and value is a numpy array. Only a subset of analyses use keys explicitly (see Analyses), but all analyses assume an RDD of key, value pairs.</p>
 <p>Thunder provides a utility function for loading raw data from disk into an RDD, and applying any desired preprocessing. At the beginning of a script (or from within the shell), you might load data like this:</p>
 <br>
-<pre><code class="python">>> lines = sc.textFile(path_to_data)
->> data = parse(lines, "dff", nkeys=3, keepkeys="true").cache()
+<pre><code class="python">>> data = load(sc, path_to_data, preprocessmethod="dff", nkey=3)
+  >> data.cache()
 </pre></code>
 <br>
-<p>This assumes the data is stored in a text file (or a folder of text files). The first step loads the lines of the text file as strings into an RDD, and the second step converts the strings of text into (possibly labeled) data points. The <samp id="inline">cache()</samp> ensures that once the data is loaded from disk for the first analysis, it will not need to be reloaded during subsequent analyses. This is useful when performing multiple calculations on the same data, especially during interactive use. 
-<p>The <samp id="inline">parse</samp> function assumes that each row of the input text file(s) is a neural signal. nkeys determines how many entries at the beginning of each row should be considered keys. For simple indexing of data points you might only have 1 key; for keeping track of x,y,z coordinates (e.g. for imaging data) you'll want three. keepkeys determines whether to keep the key(s) as an integer (or tuple of integers), or discard them. preprocessmethod determines how to preprocess the data. Current options include mean subtraction, and conversion to dF/F (for imaging data). Raw data can be stored in a single text file, or multiple text files in the same folder, and each text file can contain a variable number of rows, so long as they all have the same number of columns.</p>
+<p>This assumes the data is stored in a text file (or a folder of text files); each row is a different neural signal (e.g. a voxel or electrode recording), the numbers in each row are separated by spaces, the first number(s) are the keys (e.g. the voxel coordinates), and the subsequent numbers are the values (e.g. the response time series). The <samp id="inline">load</samp> function loads the lines of the text file as strings into an RDD splits keys and values, and creates the data points. nkeys determines how many entries at the beginning of each row should be considered keys. For simple indexing of data points (e.g. for electrodes) you might only have 1 key; for keeping track of x,y,z coordinates (e.g. for imaging data) you'll have three. preprocessmethod determines how to preprocess the data. Current options include mean subtraction, and conversion to dF/F (for imaging data). Raw data can be stored in a single text file, or multiple text files in the same folder, and each text file can contain a variable number of rows, so long as they all have the same number of columns. The <samp id="inline">cache()</samp> on the second line ensures that once the data is loaded from disk for the first analysis, it will not need to be reloaded during subsequent analyses. This is useful when performing multiple calculations on the same data, especially during interactive use. </p>
 
 </p>
                 </div>
@@ -211,10 +209,10 @@ export DATA=hdfs://$MASTER_URL:9000/data
 <br>
 <pre><code class="python">>> saveout(data1, outputdir, "data1", "matlab")
 >> saveout(data2, outputdir, "data2", "text")
->> saveout(data3, outputdir, "data3", "image", dims=[100, 200])
+>> saveout(data3, outputdir, "data3", "image")
 </pre></code>
 <br>
-<p>The first line will save data1 to a MAT file called data1 in the specified output directory. The second line will save data2 to a text file. The third line will save the contents of data3 as an image of width 100 and height 200. Image brightness will be automatically rescaled based on the data. The input to <samp id="inline">saveout</samp> can be a numpy array, but frequently in Thunder you'll have results in the form of RDDs. If passed as an input, RDDs will automatically be detected and appropriately formatted for saving. If the input is an RDD with multiple entries per data point, include the additional argument nout, which will cause each entry to be saved separately. This is important when saving large result files (e.g. entire imaging volumes).
+<p>The first line will save data1 to a MAT file called data1 in the specified output directory. The second line will save data2 to a text file. The third line will save the contents of data3 as an image of width 100 and height 200. Image brightness will be automatically rescaled based on the data. The input to <samp id="inline">saveout</samp> can be a numpy array, but frequently in Thunder you'll have results in the form of RDDs. If passed as an input, RDDs will automatically be detected and appropriately formatted for saving; this includes reshaping based on the keys. If the input is an RDD with multiple entries per data point, a result file for each entry will be saved separately. This is neccessary when saving large result files (e.g. entire imaging volumes).
                 </div>
                 
 

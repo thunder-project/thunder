@@ -89,10 +89,9 @@
           <pre><code class="bash">$SPARK_HOME/bin/pyspark</code></pre><br>
 <p>Then run the analysis</p>
         <br>
-        <pre><code class="python">>> from thunder.util.parse import parse
+        <pre><code class="python">>> from thunder.util.load import load
 >> from thunder.factorization.pca import pca
->> lines = sc.textFile('your_path_to_thunder/data/iris.txt')
->> data = parse(lines).cache()
+>> data = load(sc, 'your_path_to_thunder/data/iris.txt')
 >> scores, latent, comps = pca(data, 4)</code></pre>
       <br>
         </article>
