@@ -7,6 +7,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
 import org.apache.spark.streaming.dstream.DStream
 import java.io.File
+import java.util.Calendar
 
 object Save {
 
@@ -30,7 +31,8 @@ object Save {
 
     def write(rdd: RDD[Double], fileName: String) = {
       val out = rdd.collect()
-      printToFile(new File(directory ++ File.separator ++ fileName ++ ".txt"))(p => {
+      val dateString = Calendar.getInstance().getTime().toString().replace(" ", "-").replace(":", "-")
+      printToFile(new File(directory ++ File.separator ++ fileName ++ "-" ++ dateString ++ ".txt"))(p => {
         out.foreach(x => p.println(x))
       })
     }
