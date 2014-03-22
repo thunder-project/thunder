@@ -107,16 +107,16 @@ object StatefulLinearRegression {
   }
 
   def main(args: Array[String]) {
-    if (args.length != 6) {
+    if (args.length != 7) {
       System.err.println(
-        "Usage: StatefulLinearRegression <master> <directory> <preProcessMethod> <batchTime> <dim> <featureKeys>")
+        "Usage: StatefulLinearRegression <master> <directory> <preProcessMethod> <batchTime> <outputDirectory> <dims> <featureKeys>")
       System.exit(1)
     }
 
-    val (master, directory, preProcessMethod, batchTime, dims, features) = (
-      args(0), args(1), args(2), args(3).toLong,
-      args(4).drop(1).dropRight(1).split(",").map(_.trim.toInt),
-      Array(args(5).drop(1).dropRight(1).split(",").map(_.trim.toInt)))
+    val (master, directory, preProcessMethod, batchTime, outputDirectory, dims, features) = (
+      args(0), args(1), args(2), args(3).toLong, args(4),
+      args(5).drop(1).dropRight(1).split(",").map(_.trim.toInt),
+      Array(args(6).drop(1).dropRight(1).split(",").map(_.trim.toInt)))
 
     val conf = new SparkConf().setMaster(master).setAppName("StatefulLinearRegression")
 
@@ -129,8 +129,6 @@ object StatefulLinearRegression {
     /** Get feature keys with linear indexing */
     val featureKeys = subToInd(features, dims)
 
-    println(dims.mkString)
-    println(featureKeys.mkString)
     /** Create Streaming Context */
     val ssc = new StreamingContext(conf, Seconds(batchTime))
     ssc.checkpoint(System.getenv("CHECKPOINT"))
@@ -150,7 +148,7 @@ object StatefulLinearRegression {
 //                         "intercept: " + x.intercept.toString + "\n" +
 //                         "r2: " + x.r2.toString + "\n").print()
 
-    Save.saveStreamingDataAsText(out, "test", Seq("r2", "tuning"))
+    Save.saveStreamingDataAsText(out, outputDirectory, Seq("r2", "tuning"))
 
     ssc.start()
   }
