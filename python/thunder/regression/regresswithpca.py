@@ -8,7 +8,7 @@ from thunder.util.save import save
 from pyspark import SparkContext
 
 
-def regresswithpca(data, modelfile, regressmode):
+def regresswithpca(data, modelfile, regressmode, k=2):
     """Perform univariate regression,
     followed by principal components analysis
     to reduce dimensionality
@@ -16,6 +16,7 @@ def regresswithpca(data, modelfile, regressmode):
     :param data: RDD of data points as key value pairs
     :param modelfile: model parameters (string with file location, array, or tuple)
     :param regressmode: form of regression ("linear" or "bilinear")
+    :param k: number of principal components to compute
 
     :return stats: statistics of the fit
     :return comps: compoents from PCA
@@ -29,7 +30,7 @@ def regresswithpca(data, modelfile, regressmode):
     betas, stats, resid = model.fit(data)
 
     # do principal components analysis
-    scores, latent, comps = svd(betas, 2)
+    scores, latent, comps = svd(betas, k)
 
     # compute trajectories from raw data
     traj = model.fit(data, comps)
@@ -44,14 +45,15 @@ if __name__ == "__main__":
     parser.add_argument("modelfile", type=str)
     parser.add_argument("outputdir", type=str)
     parser.add_argument("regressmode", choices=("linear", "bilinear"), help="form of regression")
+    parser.add_argument("--k", type=int, default=2)
     parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub"), default="raw", required=False)
 
     args = parser.parse_args()
     egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
     sc = SparkContext(args.master, "regress", pyFiles=egg)
-    data = load(sc, args.datafile, args.preprocess).cache()
+    data = load(sc, args.datafile, args.preprocess)
 
-    stats, comps, latent, scores, traj = regresswithpca(data, args.modelfile, args.regressmode)
+    stats, comps, latent, scores, traj = regresswithpca(data, args.modelfile, args.regressmode, args.k)
 
     outputdir = args.outputdir + "-regress"
     if not os.path.exists(outputdir):
