@@ -87,9 +87,9 @@ def getdims(data):
         entry = data.first()[0]
         rng = range(0, size(entry))
         if size(entry) == 1:
-            distinctvals = array([data.map(lambda (k, _): k).distinct().collect()])
+            distinctvals = array([list(set(data.map(lambda (k, _): k).collect()))])
         else:
-            distinctvals = map(lambda i: data.map(lambda (k, _): k[i]).distinct().collect(), rng)
+            distinctvals = map(lambda i: list(set(data.map(lambda (k, _): k[i]).collect())), rng)
         return Dimensions(distinctvals, rng)
     else:
         entry = data[0][0]
