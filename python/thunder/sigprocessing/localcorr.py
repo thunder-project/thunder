@@ -66,7 +66,7 @@ def localcorr(data, sz):
     result = data.join(means)
 
     # get correlations
-    corr = result.mapValues(lambda x: corrcoef(x[0], x[1])[0, 1])
+    corr = result.mapValues(lambda x: corrcoef(x[0], x[1])[0, 1]).sortByKey()
 
     return corr
 
