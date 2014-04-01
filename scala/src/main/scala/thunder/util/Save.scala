@@ -33,7 +33,7 @@ object Save {
       val out = rdd.collect()
       val dateString = Calendar.getInstance().getTime().toString().replace(" ", "-").replace(":", "-")
       printToFile(new File(directory ++ File.separator ++ fileName ++ "-" ++ dateString ++ ".txt"))(p => {
-        out.foreach(x => p.println(x))
+        out.foreach(x => p.println("%.6f".format(x)))
       })
     }
 
