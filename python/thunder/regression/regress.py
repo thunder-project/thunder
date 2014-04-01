@@ -47,4 +47,4 @@ if __name__ == "__main__":
         os.makedirs(outputdir)
 
     save(stats, outputdir, "stats", "matlab")
-    save(betas, outputdir, "comps", "matlab")
+    save(betas, outputdir, "betas", "matlab")
