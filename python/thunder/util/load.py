@@ -4,7 +4,7 @@ Utilities for loading and preprocessing data
 
 import pyspark
 
-from numpy import array, mean, cumprod, append, mod, ceil, size
+from numpy import array, mean, cumprod, append, mod, ceil, size, polyfit, polyval, arange
 from scipy.signal import butter, lfilter
 
 
@@ -46,6 +46,26 @@ class DataPreProcessor(object):
 
         if preprocessmethod == "raw":
             func = lambda x: x
+
+        if preprocessmethod == "dff-detrend":
+
+            def func(y):
+                mnval = mean(y)
+                y = (y - mnval) / (mnval + 0.1)   
+                x = arange(1, len(y)+1) 
+                p = polyfit(x, y, 1)
+                yy = polyval(p, x)
+                return y - yy
+
+        if preprocessmethod == "dff-detrendnonlin":
+
+            def func(y):
+                mnval = mean(y)
+                y = (y - mnval) / (mnval + 0.1)   
+                x = arange(1, len(y)+1) 
+                p = polyfit(x, y, 5)
+                yy = polyval(p, x)
+                return y - yy
 
         if preprocessmethod == "dff-highpass":
             fs = 1
