@@ -74,6 +74,6 @@ Thunder is built around a commmon input format for raw data: a set of neural sig
 
 These key-value records can, in principle, be stored in a variety of formats on a cluster-accessible file system; the core functionality (besides loading) does not depend on the file format, only that the data are key-value pairs. Currently, the loading function assumes a text file input, where the rows are neural signals, and the columns are the keys and values, each number separated by space. But we are investigating alternative file formats that are more space-efficient, as well as developing scripts that faciliate converting raw data (e.g. tif images) into the commmon data format.
 
-All metadata (e.g. parameters of the stimulus or behavior for regression analyses) can be provoded as numpy arrays or loaded from MAT files, see relavant functions for more details.
+All metadata (e.g. parameters of the stimulus or behavior for regression analyses) can be provided as numpy arrays or loaded from MAT files, see relavant functions for more details.
 
 Results can be visualized directly from the python shell using matplotlib, or saved as MAT files (including automatic reshaping and sorting), text files, or images (including automatic rescaling).
