@@ -7,35 +7,38 @@ Large-scale neural data analysis with Spark
 
 ## About
 
-Spark is a powerful new framework for cluster computing, particularly well suited to iterative computations. Thunder is a family of analyses for finding structure in neural data using machine learning algorithms. It's fast to run, easy to develop for, and can be run interactively.
+Thunder is a library for analyzing large-scale neural data using machine learning algorithms. It's fast to run, easy to develop for, and can be run interactively. It is built on Spark, a powerful new framework for distributed computing.
 
-Thunder includes low-level utilties for data loading, saving, signal processing, and shared algorithms (regression, factorization, etc.), and high-level functions that can be scripted to easily combine analyses. The entire package is written in Spark's Python API (Pyspark), making use of scipy and numpy. We plan to port some or all functionality to Scala in the future (e.g. for streaming), but for now all scala functions should be considered prototypes.
+Thunder includes low-level utilties for data loading, saving, signal processing, and shared algorithms (regression, factorization, etc.), and high-level functions that can be scripted to easily combine analyses. It is written in Spark's Python API (Pyspark), making use of scipy and numpy. We plan to port some or all functionality to Scala in the future, but for now all scala functions should be considered prototypes.
 
 ## Quick start
 
-Here's a quick guide to getting up and running. It assumes [Scala 2.9.3](http://www.scala-lang.org/download/2.9.3.html), [Spark 0.8.1](http://spark.incubator.apache.org/downloads.html), and [Python 2.7.6](http://www.python.org/download/releases/2.7.6/) (with [NumPy](http://www.numpy.org/), [SciPy](http://scipy.org/scipylib/index.html), and [Python Imaging Library](http://www.pythonware.com/products/pil/)) are already installed. First, download the latest [build](https://github.com/freeman-lab/thunder/archive/master.zip) and add it to your path.
+Here's a quick guide to getting up and running. It assumes [Scala 2.10.3](http://www.scala-lang.org/download/2.10.3.html), [Spark 0.9.0](http://spark.incubator.apache.org/downloads.html), and [Python 2.7.6](http://www.python.org/download/releases/2.7.6/) (with [NumPy](http://www.numpy.org/), [SciPy](http://scipy.org/scipylib/index.html), and [Python Imaging Library](http://www.pythonware.com/products/pil/)) are already installed. First, download the latest [build](https://github.com/freeman-lab/thunder/archive/master.zip) and add it to your path.
 
 	PYTHONPATH=your_path_to_thunder/python/:$PYTHONPATH
 
 Now go into the top-level Thunder directory and run an analysis on test data.
 
-	$SPARK_HOME/pyspark python/thunder/factorization/pca.py local data/iris.txt ~/results 4
+	$SPARK_HOME/bin/pyspark python/thunder/factorization/pca.py local data/iris.txt ~/results 4
 
 This will run principal components on the “iris” data set with 4 components, and write results to a folder in your home directory. The same analysis can be run interactively in a shell. Start Pyspark:
 
-	$SPARK_HOME/pyspark
+	$SPARK_HOME/bin/pyspark
 
 Then run the same analysis
 
-	>> from thunder.util.parse import parse
+	>> from thunder.util.load import load
 	>> from thunder.factorization.pca import pca
-	>> lines = sc.textFile(”data/iris.txt”)
-	>> data = parse(lines).cache()
+	>> data = load(sc, 'data/iris.txt')
 	>> scores, latent, comps = pca(data, 4)
+
+For running in the shell, we include a helpful script for automatically importing most functions
+
+	>> execfile('helper/thunder-startup.py')
 
 ## Analyses
 
-Thunder currently includes four packages: clustering, factorization, regression, and signal processing, as well as a utils for shared methods like loading and saving (see Input format and Output format). Individual packages include both high-level analyses and underlying methods and algorithms. There are several stand-alone analysis scripts for common analyses, but the same functions (or sub-functions) can be used from within the Pyspark shell for easy interactive analysis. Here is a list of the primary analyses:
+Thunder currently includes four packages: clustering, factorization, regression, and signal processing, as well as a utils for shared methods like loading and saving (see Input format and Output format). Individual packages include both high-level analyses and underlying methods and algorithms. There are several stand-alone analysis scripts for common analysis routines, but the same functions (or sub-functions) can be used from within the PySpark shell for easy interactive analysis. Here is a list of the primary analyses:
 
 ### clustering
 
@@ -48,8 +51,9 @@ _ica_ - independent components analysis
 
 ### regression
 
-_regress_ - regression (linear and bilinear)  
-_tuning_ - parameteric tuning curves (circular and gaussian)
+_regress_ - mass univariate regression (linear and bilinear)  
+_regresswithpca_ - regression combined with dimensionality reduction 
+_tuning_ - mass univariate parameteric tuning curves (circular and gaussian)
 
 ### signal processing
 
@@ -62,19 +66,10 @@ _query_ - average over indices
 
 ## Input and output
 
-All functions use the same format for primary input data: a text file, where the rows are neural signals (e.g. voxels, neurons) and the columns are time points. The first entries in each row are optional key identifiers (e.g. the x,y,z coordinates of each voxel), and subsequent entries are the response values for that signal at each time point (e.g. calcium flouresence, spike counts). For example, an imaging data set with 2x2x2 voxels and 8 time points might look like:
+Thunder is built around a commmon input format for raw data: a set of neural signals as key-value pairs, where the key is an identifier, and the value is a response time series. In imaging data, for example, each record would be a voxel, the key an xyz coordinate, and the value a calcium flouresence time series. This is a useful and efficient representation of raw data because almost all of our analyses parallelize across neural signals (i.e. across records). 
 
-	1 1 1 11 41 2 17 43 24 56 87
-	1 2 1 ...
-	2 1 1 ...
-	2 2 1 ...
-	1 1 2 ...
-	1 2 2 ...
-	2 1 2 ...
-	2 2 2 ...
+These key-value records can, in principle, be stored in a cluster-accessible file system using a variety of formats; the core functionality (besides loading) does not depend on the file format, only that the data are key-value pairs. Currently, the loading function assumes a text file input, where the rows are neural signals, and the columns are the keys and values, each number separated by space. But we are investigating alternative file formats that are more space-efficient, as well as developing scripts that faciliate converting raw data (e.g. tif images) into the commmon data format.
 
-Subsets of neural signals (e.g. from different imaging planes) can be stored in separate text files within the same directory, or all in one file. Covariates (e.g. related to the stimulus or task, for regression analyses) can be loaded from MAT files or provided directly as numpy arrays, see appropriate functions for more details.
+All metadata (e.g. parameters of the stimulus or behavior for regression analyses) can be provoded as numpy arrays or loaded from MAT files, see relavant functions for more details.
 
-When parsing data, preprocessing can be applied to each neural signal (e.g. conversion to dF/F for imaging data).
-
-Results can be saved as MAT files, text files, or images (including automatic rescaling).
+Results can be saved as MAT files (including automatic reshaping and sorting), text files, or images (including automatic rescaling).
