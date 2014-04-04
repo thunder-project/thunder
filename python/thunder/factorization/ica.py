@@ -77,15 +77,18 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=0, required=False)
 
     args = parser.parse_args()
-    egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
-    sc = SparkContext(args.master, "ica", pyFiles=egg)
+    
+    sc = SparkContext(args.master, "ica")
+
+    if args.master != "local":
+        egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
+        sc.addPyFile(egg[0])
+    
     data = load(sc, args.datafile, args.preprocess).cache()
 
     w, sigs = ica(data, args.k, args.c, svdmethod=args.svdmethod, maxiter=args.maxiter, tol=args.tol, seed=args.seed)
 
     outputdir = args.outputdir + "-ica"
-    if not os.path.exists(outputdir):
-        os.makedirs(outputdir)
 
     save(w, outputdir, "w", "matlab")
     save(sigs, outputdir, "sigs", "matlab")

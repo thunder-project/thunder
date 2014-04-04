@@ -101,7 +101,8 @@ def svd(data, k, meansubtract=1, method="direct", maxiter=20, tol=0.00001):
         # project data into subspace spanned by columns of c
         # use standard eigendecomposition to recover an orthonormal basis
         c = transpose(orth(transpose(c)))
-        cov = data.map(lambda (_, v): v).map(lambda x: dot(x, transpose(c))).map(lambda x: outerprod(x)).mean()
+        premult3 = data.context.broadcast(c)
+        cov = data.map(lambda (_, v): v).map(lambda x: dot(x, transpose(premult3.value))).map(lambda x: outerprod(x)).mean()
         w, v = eig(cov)
         w = real(w)
         v = real(v)

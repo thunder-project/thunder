@@ -33,17 +33,17 @@ if __name__ == "__main__":
     parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub"), default="raw", required=False)
 
     args = parser.parse_args()
-    egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
-    sc = SparkContext(args.master, "ref", pyFiles=egg)
+
+    sc = SparkContext(args.master, "stats")
+
+    if args.master != "local":
+        egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
+        sc.addPyFile(egg[0])
 
     data = load(sc, args.datafile, args.preprocess).cache()
 
     vals = stats(data, args.mode)
 
     outputdir = args.outputdir + "-stats",
-
-    outputdir = args.outputdir + "-stats"
-    if not os.path.exists(outputdir):
-        os.makedirs(outputdir)
 
     save(vals, outputdir, "stats_" + args.mode, "matlab")

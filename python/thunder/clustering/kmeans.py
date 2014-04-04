@@ -62,15 +62,18 @@ if __name__ == "__main__":
     parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub"), default="raw", required=False)
 
     args = parser.parse_args()
-    egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
-    sc = SparkContext(args.master, "kmeans", pyFiles=egg)
+
+    sc = SparkContext(args.master, "kmeans")
+
+    if args.master != "local":
+        egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
+        sc.addPyFile(egg[0])
 
     data = load(sc, args.datafile, args.preprocess).cache()
 
     labels, centers = kmeans(data, k=args.k, maxiter=args.maxiter, tol=args.tol)
 
     outputdir = args.outputdir + "-kmeans"
-    if not os.path.exists(outputdir):
-        os.makedirs(outputdir)
+
     save(labels, outputdir, "labels", "matlab")
     save(centers, outputdir, "centers", "matlab")

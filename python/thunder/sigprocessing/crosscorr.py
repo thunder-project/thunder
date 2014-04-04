@@ -45,13 +45,16 @@ if __name__ == "__main__":
     parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub"), default="raw", required=False)
 
     args = parser.parse_args()
-    egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
-    sc = SparkContext(args.master, "crosscorr", pyFiles=egg)
+
+    sc = SparkContext(args.master, "crosscorr")
+
+    if args.master != "local":
+        egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
+        sc.addPyFile(egg[0])
+    
     data = load(sc, args.datafile, args.preprocess).cache()
 
     outputdir = args.outputdir + "-crosscorr"
-    if not os.path.exists(outputdir):
-        os.makedirs(outputdir)
 
     # post-process data with pca if lag greater than 0
     if args.lag is not 0:

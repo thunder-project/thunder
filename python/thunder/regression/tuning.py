@@ -46,14 +46,17 @@ if __name__ == "__main__":
     parser.add_argument("--regressmode", choices=("linear", "bilinear"), help="form of regression")
 
     args = parser.parse_args()
-    egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
-    sc = SparkContext(args.master, "tuning", pyFiles=egg)
+    
+    sc = SparkContext(args.master, "tuning")
+
+    if args.master != "local":
+        egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
+        sc.addPyFile(egg[0])
+
     data = load(sc, args.datafile, args.preprocess).cache()
 
     params = tuning(data, args.tuningmodelfile, args.tuningmode, args.regressmodelfile, args.regressmode)
 
     outputdir = args.outputdir + "-tuning"
-    if not os.path.exists(outputdir):
-        os.makedirs(outputdir)
 
     save(params, outputdir, "params", "matlab")

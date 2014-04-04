@@ -49,15 +49,18 @@ if __name__ == "__main__":
     parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub"), default="raw", required=False)
 
     args = parser.parse_args()
-    egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
-    sc = SparkContext(args.master, "regress", pyFiles=egg)
-    data = load(sc, args.datafile, args.preprocess)
+    
+    sc = SparkContext(args.master, "regresswithpca")
+
+    if args.master != "local":
+        egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
+        sc.addPyFile(egg[0])
+
+    data = load(sc, args.datafile, args.preprocess).cache()
 
     stats, comps, latent, scores, traj = regresswithpca(data, args.modelfile, args.regressmode, args.k)
 
     outputdir = args.outputdir + "-regress"
-    if not os.path.exists(outputdir):
-        os.makedirs(outputdir)
 
     save(stats, outputdir, "stats", "matlab")
     save(comps, outputdir, "comps", "matlab")

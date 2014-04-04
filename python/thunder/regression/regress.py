@@ -36,15 +36,18 @@ if __name__ == "__main__":
     parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub"), default="raw", required=False)
 
     args = parser.parse_args()
-    egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
-    sc = SparkContext(args.master, "regress", pyFiles=egg)
+
+    sc = SparkContext(args.master, "regress")
+
+    if args.master != "local":
+        egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
+        sc.addPyFile(egg[0])
+    
     data = load(sc, args.datafile, args.preprocess)
 
     stats, betas = regress(data, args.modelfile, args.regressmode)
 
     outputdir = args.outputdir + "-regress"
-    if not os.path.exists(outputdir):
-        os.makedirs(outputdir)
 
     save(stats, outputdir, "stats", "matlab")
     save(betas, outputdir, "betas", "matlab")
