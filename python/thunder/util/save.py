@@ -70,6 +70,9 @@ def save(data, outputdir, outputfile, outputformat):
     :param outputformat: format for data ("matlab", "text", or "image")
     """
 
+    if not os.path.exists(outputdir):
+        os.makedirs(outputdir)
+
     filename = os.path.join(outputdir, outputfile)
 
     if (outputformat == "matlab") | (outputformat == "text"):
