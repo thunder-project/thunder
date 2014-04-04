@@ -27,7 +27,8 @@ def query(data, indsfile):
     # loop over indices, averaging time series
     ts = zeros((method.n, len(data.first()[1])))
     for i in range(0, method.n):
-        ts[i, :] = data.filter(lambda (k, _): k in method.inds[i]).map(
+        indsb = data.context.broadcast(method.inds[i])
+        ts[i, :] = data.filter(lambda (k, _): k in indsb.value).map(
             lambda (k, x): x).mean()
 
     return ts
@@ -42,15 +43,17 @@ if __name__ == "__main__":
     parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub"), default="raw", required=False)
 
     args = parser.parse_args()
-    egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
-    sc = SparkContext(args.master, "query", pyFiles=egg)
+
+    sc = SparkContext(args.master, "query")
+
+    if args.master != "local":
+        egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
+        sc.addPyFile(egg[0])
 
     data = load(sc, args.datafile, args.preprocess).cache()
 
     ts = query(data, args.indsfile)
 
     outputdir = args.outputdir + "-query"
-    if not os.path.exists(outputdir):
-        os.makedirs(outputdir)
 
     save(ts, outputdir, "ts", "matlab")
