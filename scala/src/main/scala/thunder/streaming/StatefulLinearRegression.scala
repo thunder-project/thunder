@@ -36,40 +36,44 @@ class FittedModel(
 
   def R2 = 1 - sumOfSquaresError / sumOfSquaresTotal
 
+  def intercept = beta.toArray()(0)
+
+  def weights = beta.toArray.drop(1)
+
 }
 
 /** Class for representing and updating sufficient statistics of a shared linear regression model */
 class SharedModel(var X: Option[DoubleMatrix2D], var XX: Option[DoubleMatrix2D], var d: Option[Int]) extends Serializable {
 
   def create(features: Array[Array[Double]]): SharedModel = {
-    val d = features.size // features
-    val n = features(0).size // data points
+    val d = features.size // number of features
+    val n = features(0).size // number of data points
 
-    val X = DoubleFactory2D.dense.make(n, d + 1)
+    // make feature matrix
+    val X_tmp = DoubleFactory2D.dense.make(n, d + 1)
     for (i <- 0 until n) {
-      X.set(i, 0, 1)
+      X_tmp.set(i, 0, 1)
     }
+
+    // append column of 1s
     for (i <- 0 until n ; j <- 1 until d + 1) {
-      X.set(i, j, features(j - 1)(i))
+      X_tmp.set(i, j, features(j - 1)(i))
     }
 
-    val XX = mult(transpose(X), X)
-
-    this.X = Some(X)
-    this.XX = Some(XX)
+    this.X = Some(X_tmp)
     this.d = Some(d)
     this
   }
 
   def update(features: Array[Array[Double]]) {
-    if (XX.isEmpty) {
+    if (X.isEmpty) {
       val newModel = create(features)
-      X = newModel.X
-      XX = newModel.XX
+      XX = Some(mult(transpose(newModel.X.get), newModel.X.get)) // compute sufficient statistic X*X'
     } else {
       val newModel = create(features)
-      X = newModel.X
-      XX = Some(XX.get.assign(newModel.XX.get, plus))
+      val oldXX = XX.get.copy
+      val newXX = mult(transpose(newModel.X.get), newModel.X.get)
+      XX = Some(oldXX.assign(newXX, plus)) // update sufficient statistic X*X'
     }
   }
 
@@ -79,12 +83,13 @@ class SharedModel(var X: Option[DoubleMatrix2D], var XX: Option[DoubleMatrix2D],
  * Stateful linear regression on streaming data
  *
  * The underlying model is that every batch of streaming
- * data contains some records as features and others as labels
- * (each with unique keys), and each set of labels can be predicted
- * as a linear function of the common features. We collected
- * the features and labels over time through concatenation,
- * and estimate a Linear Regression Model for each key.
- * Returns a state stream with the Linear Regression Models.
+ * data contains a set of records with unique keys,
+ * a subset are features, and the rest can be predicted
+ * as different linear functions of the common features.
+ * We estimate the sufficient statistics of the features,
+ * and each of the data points, to computing a running
+ * estimate of the linear regression model for each key.
+ * Returns a state stream of fitted models.
  *
  * Features and labels from different batches
  * can have different lengths.
@@ -92,18 +97,11 @@ class SharedModel(var X: Option[DoubleMatrix2D], var XX: Option[DoubleMatrix2D],
  * See also: StreamingLinearRegression
  */
 class StatefulLinearRegression (
-  var featureKeys: Array[Int],
-  var preProcessMethod: String)
+  var featureKeys: Array[Int])
   extends Serializable with Logging
 {
 
-  def this() = this(Array(0), "raw")
-
-  /** Set the pre processing method. Default: raw (no pre processing) */
-  def setPreProcessMethod(preProcessMethod: String): StatefulLinearRegression = {
-    this.preProcessMethod = preProcessMethod
-    this
-  }
+  def this() = this(Array(0))
 
   /** Set which indices that correspond to features. Default: Array(0). */
   def setFeatureKeys(featureKeys: Array[Int]): StatefulLinearRegression = {
@@ -132,12 +130,12 @@ class StatefulLinearRegression (
       val oldXX = model.XX.get.copy.assign(mult(transpose(model.X.get), model.X.get), minus)
       val oldBeta = updatedState.beta
 
-      // compute current estimates for sufficient statistics
+      // compute current estimates of all statistics
       val currentMean = y.foldLeft(0.0)(_+_) / currentCount
       val currentSumOfSquaresTotal = y.map(x => pow(x - currentMean, 2)).foldLeft(0.0)(_+_)
       val currentXy = mult(transpose(model.X.get), ymat)
 
-      // compute new values for statistics (needed for update equations)
+      // compute new values for X*y (the sufficient statistic) and new beta (needed for update equations)
       val newXy = updatedState.Xy.copy.assign(currentXy, plus)
       val newBeta = mult(inverse(model.XX.get), newXy)
 
@@ -148,14 +146,13 @@ class StatefulLinearRegression (
       val term3 = mult(mult(oldXX, oldBeta), oldBeta)
       val term4 = 2 * mult(oldBeta.copy.assign(newBeta, minus), oldXy)
 
-      // update the components of the fitted model
+      // update the all statistics of the fitted model
       updatedState.count += currentCount
       updatedState.mean += (delta * currentCount / (oldCount + currentCount))
       updatedState.Xy = newXy
       updatedState.beta = newBeta
       updatedState.sumOfSquaresTotal += currentSumOfSquaresTotal + delta * delta * (oldCount * currentCount) / (oldCount + currentCount)
       updatedState.sumOfSquaresError += term1 + term2 - term3 + term4
-
     }
 
     Some(updatedState)
@@ -190,28 +187,26 @@ object StatefulLinearRegression {
    * to the labels associated with each key.
    *
    * @param input DStream of (Int, Array[Double]) keyed data point
-   * @param preProcessMethod How to pre process data
    * @param featureKeys Array of keys associated with features
    * @return DStream of (Int, LinearRegressionModel) with fitted regression models
    */
   def trainStreaming(input: DStream[(Int, Array[Double])],
-            preProcessMethod: String,
             featureKeys: Array[Int]): DStream[(Int, FittedModel)] =
   {
     new StatefulLinearRegression().setFeatureKeys(featureKeys).runStreaming(input)
   }
 
   def main(args: Array[String]) {
-    if (args.length != 7) {
+    if (args.length != 6) {
       System.err.println(
-        "Usage: StatefulLinearRegression <master> <directory> <preProcessMethod> <batchTime> <outputDirectory> <dims> <featureKeys>")
+        "Usage: StatefulLinearRegression <master> <directory> <batchTime> <outputDirectory> <dims> <featureKeys>")
       System.exit(1)
     }
 
-    val (master, directory, preProcessMethod, batchTime, outputDirectory, dims, features) = (
-      args(0), args(1), args(2), args(3).toLong, args(4),
-      args(5).drop(1).dropRight(1).split(",").map(_.trim.toInt),
-      Array(args(6).drop(1).dropRight(1).split(",").map(_.trim.toInt)))
+    val (master, directory, batchTime, outputDirectory, dims, features) = (
+      args(0), args(1), args(2).toLong, args(3),
+      args(4).drop(1).dropRight(1).split(",").map(_.trim.toInt),
+      Array(args(5).drop(1).dropRight(1).split(",").map(_.trim.toInt)))
 
     val conf = new SparkConf().setMaster(master).setAppName("StatefulLinearRegression")
 
@@ -233,18 +228,20 @@ object StatefulLinearRegression {
     val data = Load.loadStreamingDataWithKeys(ssc, directory, dims.size, dims)
 
     /** Train Linear Regression models */
-    val state = StatefulLinearRegression.trainStreaming(data, preProcessMethod, featureKeys)
+    val state = StatefulLinearRegression.trainStreaming(data, featureKeys)
 
-    /** Print results (for testing) */
+    /** Print output (for testing) */
     state.mapValues(x => "\n" + "mean: " + "%.5f".format(x.mean) +
                          "\n" + "variance: " + "%.5f".format(x.variance) +
                          "\n" + "beta: " + x.beta.toArray.mkString(",") +
                          "\n" + "R2: " + "%.5f".format(x.R2) +
+                         "\n" + "SSE: " + "%.5f".format(x.sumOfSquaresError) +
+                         "\n" + "SST: " + "%.5f".format(x.sumOfSquaresTotal) +
                          "\n" + "Xy: " + x.Xy.toArray.mkString(",") + "\n").print()
 
-    ///** Collect output */
-    //val out = state.mapValues(x => Array(x.r2) ++ x.tuning)
-    //Save.saveStreamingDataAsText(out, outputDirectory, Seq("r2", "tuning"))
+    ///** Save output (for production) */
+    //val out = state.mapValues(x => Array(x.R2) ++ Array(x.weights))
+    //Save.saveStreamingDataAsText(out, outputDirectory, Seq("r2", "weights"))
 
     ssc.start()
   }
