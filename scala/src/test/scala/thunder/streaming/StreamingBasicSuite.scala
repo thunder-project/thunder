@@ -1,11 +1,10 @@
 package thunder.streaming
 
-import thunder.regression.LinearRegressionModelWithStats
-
 import org.apache.spark.streaming.{Milliseconds, Seconds, StreamingContext}
 import org.apache.spark.SparkContext._
 import org.apache.spark.SparkConf
 import org.apache.spark.mllib.util.LinearDataGenerator
+import cern.colt.matrix.DoubleFactory1D
 
 import org.scalatest.FunSuite
 import com.google.common.io.Files
@@ -45,15 +44,15 @@ class StreamingBasicSuite extends FunSuite {
     val data = Load.loadStreamingDataWithKeys(ssc, testDir.toString)
 
     // create and train KMeans model
-    val state = StatefulLinearRegression.trainStreaming(data, "raw", Array(0))
-    var model = new LinearRegressionModelWithStats(Array.fill(1)(0.0), 0.0, 0.0, Array(0.0))
+    val state = StatefulLinearRegression.trainStreaming(data, Array(0))
+    var model = new FittedModel(0.0, 0.0, 0.0, 0.0, DoubleFactory1D.dense.make(0), DoubleFactory1D.dense.make(0))
     state.foreachRDD{rdd => model = rdd.values.first()}
     ssc.checkpoint(checkpointDir.toString)
 
     ssc.start()
 
     // generate streaming data
-    val rand = new Random(42)
+    val rand = new Random(41)
     val feature = Array.fill(n)(rand.nextGaussian())
 
     Thread.sleep(5000)
@@ -72,7 +71,7 @@ class StreamingBasicSuite extends FunSuite {
     FileUtils.deleteDirectory(checkpointDir)
 
     // compare estimated parameters to actual
-    assertEqual(model.r2, 0.99, 0.1)
+    assertEqual(model.R2, 0.99, 0.1)
     assertEqual(model.intercept, intercept, 0.1)
     assertEqual(model.weights, Array(weights), 0.1)
 
