@@ -1,4 +1,5 @@
 argparse
 numpy
 scipy
+sklearn
 PIL

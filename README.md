@@ -13,7 +13,7 @@ Thunder includes low-level utilties for data loading, saving, signal processing,
 
 ## Quick start
 
-Here's a quick guide to getting up and running. It assumes [Scala 2.10.3](http://www.scala-lang.org/download/2.10.3.html), [Spark 0.9.0](http://spark.incubator.apache.org/downloads.html), and [Python 2.7.6](http://www.python.org/download/releases/2.7.6/) (with [NumPy](http://www.numpy.org/), [SciPy](http://scipy.org/scipylib/index.html), and [Python Imaging Library](http://www.pythonware.com/products/pil/)) are already installed. First, download the latest [build](https://github.com/freeman-lab/thunder/archive/master.zip) and add it to your path.
+Here's a quick guide to getting up and running. It assumes [Scala 2.10.3](http://www.scala-lang.org/download/2.10.3.html), [Spark 0.9.0](http://spark.incubator.apache.org/downloads.html), and [Python 2.7.6](http://www.python.org/download/releases/2.7.6/) (with [NumPy](http://www.numpy.org/), [SciPy](http://scipy.org/scipylib/index.html), [Scikit learn](http://scikit-learn.org/stable/) and [Python Imaging Library](http://www.pythonware.com/products/pil/)) are already installed. First, download the latest [build](https://github.com/freeman-lab/thunder/archive/master.zip) and add it to your path.
 
 	PYTHONPATH=your_path_to_thunder/python/:$PYTHONPATH
 
@@ -43,6 +43,9 @@ To run in iPython, just set
 ## Analyses
 
 Thunder currently includes four packages: clustering, factorization, regression, and signal processing, as well as utils for shared methods like loading and saving (see Input format and Output format). Individual packages include both high-level analyses and underlying methods and algorithms. There are several stand-alone analysis scripts for common analysis routines, but the same functions (or sub-functions) can be used from within the PySpark shell for easy interactive analysis. Here is a list of the primary analyses:
+
+### classification
+_classify_ - mass univariate classifiaction
 
 ### clustering
 
