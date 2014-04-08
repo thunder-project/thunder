@@ -45,11 +45,11 @@ class TestMassUnivariateClassification(ClassificationTestCase):
         perfectly predict labels in one dimension,
         using cross-validation
         """
-        X = array([-1, -1, -1,  1, 1, 1])
-        labels = array([1, 1, 1, 2, 2, 2])
+        X = array([-1, -1, -1, -1, -1, 1, 1, 1, 1, 1])
+        labels = array([1, 1, 1, 1, 1, 2, 2, 2, 2, 2])
         params = dict([('labels', labels)])
 
-        clf = MassUnivariateClassifier.load(params, "gaussnaivebayes", cv=5)
+        clf = MassUnivariateClassifier.load(params, "gaussnaivebayes", cv=3)
 
         data = self.sc.parallelize([X])
         result = clf.classify(data).collect()
