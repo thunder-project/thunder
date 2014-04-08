@@ -25,8 +25,8 @@ class TestMassUnivariateClassification(ClassificationTestCase):
         """Simple classification problem, features
         perfectly predict labels in one dimension
         """
-        X1 = array([-1, -1, -1, 1, 1, 1])
-        X2 = array([-1, -1, 1, 1, 1, 1])
+        X1 = array([-1, -1, -1.2, 1, 1, 1.2])
+        X2 = array([-1, -1, 1.2, 1, 1, 1.2])
         labels = array([1, 1, 1, 2, 2, 2])
         params = dict([('labels', labels)])
 
@@ -39,21 +39,6 @@ class TestMassUnivariateClassification(ClassificationTestCase):
         data = self.sc.parallelize([X2])
         result = clf.classify(data).collect()
         assert_array_almost_equal(result[0], [5.0/6.0])
-
-    def test_mass_univariate_classification_gnb_1d_cv(self):
-        """Simple classification problem, features
-        perfectly predict labels in one dimension,
-        using cross-validation
-        """
-        X = array([-1, -1, -1, -1, -1, 1, 1, 1, 1, 1])
-        labels = array([1, 1, 1, 1, 1, 2, 2, 2, 2, 2])
-        params = dict([('labels', labels)])
-
-        clf = MassUnivariateClassifier.load(params, "gaussnaivebayes", cv=3)
-
-        data = self.sc.parallelize([X])
-        result = clf.classify(data).collect()
-        assert_array_almost_equal(result[0], [1.0])
 
     def test_mass_univariate_classification_gnb_2d(self):
         """Classification problem in the plane with two features,
