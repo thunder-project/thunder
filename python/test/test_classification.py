@@ -22,9 +22,7 @@ class TestMassUnivariateClassification(ClassificationTestCase):
     """
 
     def test_mass_univariate_classification_gnb_1d(self):
-        """Simple classification problem, features
-        perfectly predict labels in one dimension
-        """
+        """Simple classification problem, 1d features"""
         X1 = array([-1, -1, -1.2, 1, 1, 1.2])
         X2 = array([-1, -1, 1.2, 1, 1, 1.2])
         labels = array([1, 1, 1, 2, 2, 2])
@@ -32,19 +30,18 @@ class TestMassUnivariateClassification(ClassificationTestCase):
 
         clf = MassUnivariateClassifier.load(params, "gaussnaivebayes", cv=0)
 
+        # should predict perfectly
         data = self.sc.parallelize([X1])
         result = clf.classify(data).collect()
         assert_array_almost_equal(result[0], [1.0])
 
+        # should predict all but one correctly
         data = self.sc.parallelize([X2])
         result = clf.classify(data).collect()
         assert_array_almost_equal(result[0], [5.0/6.0])
 
     def test_mass_univariate_classification_gnb_2d(self):
-        """Classification problem in the plane with two features,
-        first feature perfectly predicts labels but second doesn't,
-        both features combined predict perfectly
-        """
+        """Simple classification problem, 2d features"""
 
         X = array([-1, 1, -2, -1, -3, -2, 1, 1, 2, 1, 3, 2])
         features = array([1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2])

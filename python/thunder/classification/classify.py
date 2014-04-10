@@ -13,8 +13,8 @@ def classify(data, params, classifymode, set=None, cv=0):
     :param data: RDD of data points as key value pairs
     :param params: string with file location, or dictionary of parameters for classification
     :param classifymode: form of classifier ("naivebayes")
-    :param set: set of features to use for classification
-    :param cv: number of cross validation folds (0 for none)
+    :param set: set of features to use for classification (default=None)
+    :param cv: number of cross validation folds (default=0, for no cv)
 
     :return perf: performance
     """
