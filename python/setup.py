@@ -8,5 +8,5 @@ setup(name='thunder',
     author='The Freeman Lab',
     author_email='the.freeman.lab@gmail.com',
     url='https://github.com/freeman-lab/thunder',
-    packages=['thunder','thunder.regression','thunder.factorization','thunder.clustering','thunder.sigprocessing','thunder.util'],
+    packages=['thunder','thunder.regression','thunder.factorization','thunder.classification','thunder.clustering','thunder.sigprocessing','thunder.util'],
     )
