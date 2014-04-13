@@ -20,6 +20,7 @@ def pca(data, k, svdmethod="direct"):
     :return scores: the k scores (as RDD)
     """
     scores, latent, comps = svd(data, k, meansubtract=0, method=svdmethod)
+
     return scores, latent, comps
 
 if __name__ == "__main__":
