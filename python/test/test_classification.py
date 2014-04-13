@@ -31,13 +31,13 @@ class TestMassUnivariateClassification(ClassificationTestCase):
         clf = MassUnivariateClassifier.load(params, "gaussnaivebayes", cv=0)
 
         # should predict perfectly
-        data = self.sc.parallelize([X1])
-        result = clf.classify(data).collect()
+        data = self.sc.parallelize(zip([1], [X1]))
+        result = clf.classify(data).map(lambda (_, v): v).collect()
         assert_array_almost_equal(result[0], [1.0])
 
         # should predict all but one correctly
-        data = self.sc.parallelize([X2])
-        result = clf.classify(data).collect()
+        data = self.sc.parallelize(zip([1], [X2]))
+        result = clf.classify(data).map(lambda (_, v): v).collect()
         assert_array_almost_equal(result[0], [5.0/6.0])
 
     def test_mass_univariate_classification_gnb_2d(self):
@@ -50,22 +50,22 @@ class TestMassUnivariateClassification(ClassificationTestCase):
         params = dict([('labels', labels), ('features', features), ('samples', samples)])
         clf = MassUnivariateClassifier.load(params, "gaussnaivebayes", cv=0)
 
-        data = self.sc.parallelize([X])
+        data = self.sc.parallelize(zip([1], [X]))
 
         # first feature predicts perfectly
-        result = clf.classify(data, 1).collect()
+        result = clf.classify(data, 1).map(lambda (_, v): v).collect()
         assert_array_almost_equal(result[0], [1.0])
 
         # second feature gets one wrong
-        result = clf.classify(data, 2).collect()
+        result = clf.classify(data, 2).map(lambda (_, v): v).collect()
         assert_array_almost_equal(result[0], [5.0/6.0])
 
         # two features together predict perfectly
-        result = clf.classify(data, [[1, 2]]).collect()
+        result = clf.classify(data, [[1, 2]]).map(lambda (_, v): v).collect()
         assert_array_almost_equal(result[0], [1.0])
 
         # test iteration over multiple feature sets
-        result = clf.classify(data, [[1, 2], [2]]).collect()
+        result = clf.classify(data, [[1, 2], [2]]).map(lambda (_, v): v).collect()
         assert_array_almost_equal(result[0], [1.0, 5.0/6.0])
 
 

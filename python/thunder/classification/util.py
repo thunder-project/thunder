@@ -45,7 +45,7 @@ class MassUnivariateClassifier(object):
     def classify(self, data, set=None):
 
         if self.nfeatures == 1:
-            perf = data.map(lambda x: [self.get(x)])
+            perf = data.mapValues(lambda x: [self.get(x)])
         else:
             if set is None:
                 set = [[self.features[0]]]
@@ -53,7 +53,7 @@ class MassUnivariateClassifier(object):
                 set = [set]
             for i in set:
                 assert array(in1d(self.features, i)).sum() != 0, "Feature set invalid"
-            perf = data.map(lambda x: map(lambda i: self.get(x, i), set))
+            perf = data.mapValues(lambda x: map(lambda i: self.get(x, i), set))
 
         return perf
 
