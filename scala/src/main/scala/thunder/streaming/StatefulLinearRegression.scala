@@ -48,12 +48,11 @@ class FittedModel(
  *
  * The underlying model is that every batch of streaming
  * data contains a set of records with unique keys,
- * a subset are features, and the rest can be predicted
- * as different linear functions of the common features.
- * We estimate the sufficient statistics of the features,
- * and each of the data points, to computing a running
- * estimate of the linear regression model for each key.
- * Returns a state stream of fitted models.
+ * one is the feature, and the rest can be predicted
+ * by the feature. We estimate the sufficient statistics
+ * of the features, and each of the data points,
+ * to computing a running estimate of the linear regression
+ * model for each key. Returns a state stream of fitted models.
  *
  * Features and labels from different batches
  * can have different lengths.
@@ -75,32 +74,23 @@ class StatefulLinearRegression (
 
   val runningLinearRegression = (input: Seq[Array[Double]], state: Option[FittedModel], features: Array[Double]) => {
 
-    //val tmp = input.foldLeft((Array[Double](), Array[Double]())) { (acc, i) => (acc._1 ++ i._1, acc._2 ++ i._2)}
-    val tmp = input.foldLeft(Array[Double]()) { (acc, i) => acc ++ i}
-    val values = tmp
-    //val features = tmp._2
-    val d = 1 // number of features
+    val y = input.foldLeft(Array[Double]()) { (acc, i) => acc ++ i}
+    val currentCount = y.size
+    val n = features.size
 
-    val updatedState = state.getOrElse(new FittedModel(0.0, 0.0, 0.0, 0.0, DoubleFactory2D.dense.make(d + 1, d + 1),
-      DoubleFactory1D.dense.make(d + 1), DoubleFactory1D.dense.make(d + 1)))
+    val updatedState = state.getOrElse(new FittedModel(0.0, 0.0, 0.0, 0.0, DoubleFactory2D.dense.make(2, 2),
+      DoubleFactory1D.dense.make(2), DoubleFactory1D.dense.make(2)))
 
-    if ((values.size != 0) & (features.size != 0)) {
-
-      val n = features.size // number of data points
+    if ((currentCount != 0) & (n != 0)) {
 
       // append column of 1s
-      val X = DoubleFactory2D.dense.make(n, d + 1)
+      val X = DoubleFactory2D.dense.make(n, 2)
       for (i <- 0 until n) {
         X.set(i, 0, 1)
       }
-
-      // append features
-      for (i <- 0 until n ; j <- 1 until d + 1) {
+      for (i <- 0 until n ; j <- 1 until 2) {
         X.set(i, j, features(i))
       }
-
-      val y = values
-      val currentCount = y.size
 
       // create matrix version of y
       val ymat = DoubleFactory1D.dense.make(currentCount)
@@ -151,17 +141,16 @@ class StatefulLinearRegression (
 
     var features = Array[Double]()
 
-    data.filter{case (k, v) => featureKeys.contains(k)}.foreachRDD{rdd =>
-        val tmp = rdd.values.collect().flatten
-        if (tmp.size != 0) {
-          features = tmp
-        } else {
-          features = Array[Double]()
+    data.filter{case (k, _) => featureKeys.contains(k)}.foreachRDD{rdd =>
+        val batchFeatures = rdd.values.collect().flatten
+        features = batchFeatures.size match {
+          case 0 => Array[Double]()
+          case _ => batchFeatures
         }
     }
 
-    data.filter{case (k, v) => !featureKeys.contains(k)}.updateStateByKey{
-      case (x, y) => runningLinearRegression(x, y, features)}
+    data.filter{case (k, _) => !featureKeys.contains(k)}.updateStateByKey{
+      (x, y) => runningLinearRegression(x, y, features)}
   }
 
 }
@@ -234,8 +223,8 @@ object StatefulLinearRegression {
                          "\n" + "Xy: " + x.Xy.toArray.mkString(",")).print()
 
     ///** Save output (for production) */
-    //val out = state.mapValues(x => Array(x.R2) ++ Array(x.weights))
-    //Save.saveStreamingDataAsText(out, outputDirectory, Seq("r2", "weights"))
+    //val out = state.mapValues(x => Array(x.R2))
+    //Save.saveStreamingDataAsText(out, outputDirectory, Seq("r2"))
 
     ssc.start()
   }
