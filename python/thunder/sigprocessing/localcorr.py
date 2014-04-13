@@ -95,4 +95,3 @@ if __name__ == "__main__":
     outputdir = args.outputdir + "-localcorr"
 
     save(corrs, outputdir, "corr", "matlab")
-    

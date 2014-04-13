@@ -21,12 +21,13 @@ import cern.jet.math.Functions.{plus, minus, bindArg2, pow}
 import cern.colt.matrix.linalg.Algebra.DEFAULT.{inverse, mult, transpose}
 
 
-/** Class for representing parameters and sufficient statistics for a fitted linear regression model */
+/** Class for representing parameters and sufficient statistics for a running linear regression model */
 class FittedModel(
    var count: Double,
    var mean: Double,
    var sumOfSquaresTotal: Double,
    var sumOfSquaresError: Double,
+   var XX: DoubleMatrix2D,
    var Xy: DoubleMatrix1D,
    var beta: DoubleMatrix1D) extends Serializable {
 
@@ -42,54 +43,16 @@ class FittedModel(
 
 }
 
-/** Class for representing and updating sufficient statistics of a shared linear regression model */
-class SharedModel(var X: Option[DoubleMatrix2D], var XX: Option[DoubleMatrix2D], var d: Option[Int]) extends Serializable {
-
-  def create(features: Array[Array[Double]]): SharedModel = {
-    val d = features.size // number of features
-    val n = features(0).size // number of data points
-
-    // make feature matrix
-    val X_tmp = DoubleFactory2D.dense.make(n, d + 1)
-    for (i <- 0 until n) {
-      X_tmp.set(i, 0, 1)
-    }
-
-    // append column of 1s
-    for (i <- 0 until n ; j <- 1 until d + 1) {
-      X_tmp.set(i, j, features(j - 1)(i))
-    }
-
-    this.X = Some(X_tmp)
-    this.d = Some(d)
-    this
-  }
-
-  def update(features: Array[Array[Double]]) {
-    if (X.isEmpty) {
-      val newModel = create(features)
-      XX = Some(mult(transpose(newModel.X.get), newModel.X.get)) // compute sufficient statistic X*X'
-    } else {
-      val newModel = create(features)
-      val oldXX = XX.get.copy
-      val newXX = mult(transpose(newModel.X.get), newModel.X.get)
-      XX = Some(oldXX.assign(newXX, plus)) // update sufficient statistic X*X'
-    }
-  }
-
-}
-
 /**
  * Stateful linear regression on streaming data
  *
  * The underlying model is that every batch of streaming
  * data contains a set of records with unique keys,
- * a subset are features, and the rest can be predicted
- * as different linear functions of the common features.
- * We estimate the sufficient statistics of the features,
- * and each of the data points, to computing a running
- * estimate of the linear regression model for each key.
- * Returns a state stream of fitted models.
+ * one is the feature, and the rest can be predicted
+ * by the feature. We estimate the sufficient statistics
+ * of the features, and each of the data points,
+ * to computing a running estimate of the linear regression
+ * model for each key. Returns a state stream of fitted models.
  *
  * Features and labels from different batches
  * can have different lengths.
@@ -109,13 +72,25 @@ class StatefulLinearRegression (
     this
   }
 
-  val runningLinearRegression = (values: Seq[Array[Double]], state: Option[FittedModel], model: SharedModel) => {
-    val updatedState = state.getOrElse(new FittedModel(0.0, 0.0, 0.0, 0.0,
-      DoubleFactory1D.dense.make(model.d.get + 1), DoubleFactory1D.dense.make(model.d.get + 1)))
-    val y = values.flatten
-    val currentCount = y.size
+  val runningLinearRegression = (input: Seq[Array[Double]], state: Option[FittedModel], features: Array[Double]) => {
 
-    if (currentCount != 0) {
+    val y = input.foldLeft(Array[Double]()) { (acc, i) => acc ++ i}
+    val currentCount = y.size
+    val n = features.size
+
+    val updatedState = state.getOrElse(new FittedModel(0.0, 0.0, 0.0, 0.0, DoubleFactory2D.dense.make(2, 2),
+      DoubleFactory1D.dense.make(2), DoubleFactory1D.dense.make(2)))
+
+    if ((currentCount != 0) & (n != 0)) {
+
+      // append column of 1s
+      val X = DoubleFactory2D.dense.make(n, 2)
+      for (i <- 0 until n) {
+        X.set(i, 0, 1)
+      }
+      for (i <- 0 until n ; j <- 1 until 2) {
+        X.set(i, j, features(i))
+      }
 
       // create matrix version of y
       val ymat = DoubleFactory1D.dense.make(currentCount)
@@ -127,21 +102,23 @@ class StatefulLinearRegression (
       val oldCount = updatedState.count
       val oldMean = updatedState.mean
       val oldXy = updatedState.Xy.copy
-      val oldXX = model.XX.get.copy.assign(mult(transpose(model.X.get), model.X.get), minus)
+      val oldXX = updatedState.XX.copy
       val oldBeta = updatedState.beta
 
       // compute current estimates of all statistics
       val currentMean = y.foldLeft(0.0)(_+_) / currentCount
       val currentSumOfSquaresTotal = y.map(x => pow(x - currentMean, 2)).foldLeft(0.0)(_+_)
-      val currentXy = mult(transpose(model.X.get), ymat)
+      val currentXy = mult(transpose(X), ymat)
+      val currentXX = mult(transpose(X), X)
 
       // compute new values for X*y (the sufficient statistic) and new beta (needed for update equations)
+      val newXX = oldXX.copy.assign(currentXX, plus)
       val newXy = updatedState.Xy.copy.assign(currentXy, plus)
-      val newBeta = mult(inverse(model.XX.get), newXy)
+      val newBeta = mult(inverse(newXX), newXy)
 
       // compute terms for update equations
       val delta = currentMean - oldMean
-      val term1 = ymat.copy.assign(mult(model.X.get, newBeta), minus).assign(bindArg2(pow, 2)).zSum
+      val term1 = ymat.copy.assign(mult(X, newBeta), minus).assign(bindArg2(pow, 2)).zSum
       val term2 = mult(mult(oldXX, newBeta), newBeta)
       val term3 = mult(mult(oldXX, oldBeta), oldBeta)
       val term4 = 2 * mult(oldBeta.copy.assign(newBeta, minus), oldXy)
@@ -150,6 +127,7 @@ class StatefulLinearRegression (
       updatedState.count += currentCount
       updatedState.mean += (delta * currentCount / (oldCount + currentCount))
       updatedState.Xy = newXy
+      updatedState.XX = newXX
       updatedState.beta = newBeta
       updatedState.sumOfSquaresTotal += currentSumOfSquaresTotal + delta * delta * (oldCount * currentCount) / (oldCount + currentCount)
       updatedState.sumOfSquaresError += term1 + term2 - term3 + term4
@@ -160,15 +138,19 @@ class StatefulLinearRegression (
 
 
   def runStreaming(data: DStream[(Int, Array[Double])]): DStream[(Int, FittedModel)] = {
-    val model = new SharedModel(None, None, None)
-    data.foreachRDD{rdd => val features = rdd.filter(x => featureKeys.contains(x._1))
-                                             .groupByKey().values.map(x => x.toArray.flatten)
-                                             .collect()
-                            if (features.size != 0) {
-                              model.update(features)
-                            }}
-    data.filter{case (k, v) => !featureKeys.contains(k)}
-        .updateStateByKey{ case (x,y) => runningLinearRegression(x,y, model)}
+
+    var features = Array[Double]()
+
+    data.filter{case (k, _) => featureKeys.contains(k)}.foreachRDD{rdd =>
+        val batchFeatures = rdd.values.collect().flatten
+        features = batchFeatures.size match {
+          case 0 => Array[Double]()
+          case _ => batchFeatures
+        }
+    }
+
+    data.filter{case (k, _) => !featureKeys.contains(k)}.updateStateByKey{
+      (x, y) => runningLinearRegression(x, y, features)}
   }
 
 }
@@ -232,16 +214,17 @@ object StatefulLinearRegression {
 
     /** Print output (for testing) */
     state.mapValues(x => "\n" + "mean: " + "%.5f".format(x.mean) +
+                         "\n" + "count: " + "%.5f".format(x.count) +
                          "\n" + "variance: " + "%.5f".format(x.variance) +
                          "\n" + "beta: " + x.beta.toArray.mkString(",") +
                          "\n" + "R2: " + "%.5f".format(x.R2) +
                          "\n" + "SSE: " + "%.5f".format(x.sumOfSquaresError) +
                          "\n" + "SST: " + "%.5f".format(x.sumOfSquaresTotal) +
-                         "\n" + "Xy: " + x.Xy.toArray.mkString(",") + "\n").print()
+                         "\n" + "Xy: " + x.Xy.toArray.mkString(",")).print()
 
     ///** Save output (for production) */
-    //val out = state.mapValues(x => Array(x.R2) ++ Array(x.weights))
-    //Save.saveStreamingDataAsText(out, outputDirectory, Seq("r2", "weights"))
+    //val out = state.mapValues(x => Array(x.R2))
+    //Save.saveStreamingDataAsText(out, outputDirectory, Seq("r2"))
 
     ssc.start()
   }

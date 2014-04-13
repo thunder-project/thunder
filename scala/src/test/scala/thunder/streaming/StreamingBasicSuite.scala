@@ -4,7 +4,7 @@ import org.apache.spark.streaming.{Milliseconds, Seconds, StreamingContext}
 import org.apache.spark.SparkContext._
 import org.apache.spark.SparkConf
 import org.apache.spark.mllib.util.LinearDataGenerator
-import cern.colt.matrix.DoubleFactory1D
+import cern.colt.matrix.{DoubleFactory1D, DoubleFactory2D}
 
 import org.scalatest.FunSuite
 import com.google.common.io.Files
@@ -43,9 +43,9 @@ class StreamingBasicSuite extends FunSuite {
     val ssc = new StreamingContext(conf, Seconds(1))
     val data = Load.loadStreamingDataWithKeys(ssc, testDir.toString)
 
-    // create and train KMeans model
+    // create and train stateful linear regression model
     val state = StatefulLinearRegression.trainStreaming(data, Array(0))
-    var model = new FittedModel(0.0, 0.0, 0.0, 0.0, DoubleFactory1D.dense.make(0), DoubleFactory1D.dense.make(0))
+    var model = new FittedModel(0.0, 0.0, 0.0, 0.0, DoubleFactory2D.dense.make(0, 0), DoubleFactory1D.dense.make(0), DoubleFactory1D.dense.make(0))
     state.foreachRDD{rdd => model = rdd.values.first()}
     ssc.checkpoint(checkpointDir.toString)
 
@@ -53,10 +53,10 @@ class StreamingBasicSuite extends FunSuite {
 
     // generate streaming data
     val rand = new Random(41)
-    val feature = Array.fill(n)(rand.nextGaussian())
 
     Thread.sleep(5000)
     for (i <- 0 until m) {
+      val feature = Array.fill(n)(rand.nextGaussian())
       val record = feature.map(x => x * weights + intercept + rand.nextGaussian() * r)
       val file = new File(testDir, i.toString)
       FileUtils.writeStringToFile(file, "0 " + feature.mkString(" ") + "\n" + "1 " + record.mkString(" ") + "\n")
@@ -74,6 +74,7 @@ class StreamingBasicSuite extends FunSuite {
     assertEqual(model.R2, 0.99, 0.1)
     assertEqual(model.intercept, intercept, 0.1)
     assertEqual(model.weights, Array(weights), 0.1)
+    assertEqual(model.count, 100, 0.001)
 
   }
 
