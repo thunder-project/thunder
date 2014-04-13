@@ -1,5 +1,6 @@
-from numpy import in1d, zeros, array, size
+from numpy import in1d, zeros, array, size, float64
 from scipy.io import loadmat
+from scipy.stats import ttest_ind
 from sklearn.naive_bayes import GaussianNB
 from sklearn import cross_validation
 
@@ -66,7 +67,6 @@ class GaussNaiveBayesClassifier(MassUnivariateClassifier):
 
         :param paramfile: string of filename or dictionary with parameters (see MassUnivariateClassifier)
         :param cv: number of cross validation folds (none if 0)
-        :
         """
         MassUnivariateClassifier.__init__(self, paramfile)
 
@@ -92,6 +92,40 @@ class GaussNaiveBayesClassifier(MassUnivariateClassifier):
             ypred = self.func.fit(X, y).predict(X)
             return array(y == ypred).mean()
 
+
+class TTestClassifier(MassUnivariateClassifier):
+    """Class for t test classification"""
+
+    def __init__(self, paramfile, cv):
+        """Create classifier
+
+        :param paramfile: string of filename or dictionary with parameters (see MassUnivariateClassifer)
+        """
+        MassUnivariateClassifier.__init__(self, paramfile)
+
+        self.func = ttest_ind
+        unique = list(set(list(self.labels)))
+        if len(unique) != 2:
+            raise TypeError("Only two types of labels allowed for t-test classificaiton")
+        if unique != set((0, 1)):
+            self.labels = map(lambda i: 0 if i == unique[0] else 1, self.labels)
+
+    def get(self, x, set=None):
+        """Compute t-statistic"""
+
+        y = array(self.labels)
+        if self.nfeatures == 1:
+            X = x
+        else:
+            X = zeros(self.nsamples)
+            for i in range(0, self.nsamples):
+                inds = (self.samples == self.sampleids[i]) & (self.features == set)
+                X[i] = x[inds]
+
+        return float64(self.func(X[y == 0], X[y == 1])[0])
+
+
 CLASSIFIERS = {
-    'gaussnaivebayes': GaussNaiveBayesClassifier
+    'gaussnaivebayes': GaussNaiveBayesClassifier,
+    'ttest': TTestClassifier
 }

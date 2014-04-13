@@ -1,7 +1,8 @@
 import shutil
 import tempfile
-from numpy import array
+from numpy import array, concatenate
 from numpy.testing import assert_array_almost_equal
+from scipy.stats import ttest_ind
 from thunder.classification.util import MassUnivariateClassifier
 from test_utils import PySparkTestCase
 
@@ -20,6 +21,43 @@ class TestMassUnivariateClassification(ClassificationTestCase):
     """Test accuracy of mass univariate classification on small
     test data sets with either 1 or 2 features
     """
+
+    def test_mass_univariate_classification_ttest_1d(self):
+        """Simple classification problem, 1d features"""
+        X = array([-1, -0.1, -0.1, 1, 1, 1.1])
+        labels = array([1, 1, 1, 2, 2, 2])
+        params = dict([('labels', labels)])
+
+        clf = MassUnivariateClassifier.load(params, "ttest")
+
+        # should match direct calculation using scipy
+        data = self.sc.parallelize(zip([1], [X]))
+        result = clf.classify(data).map(lambda (_, v): v).collect()
+        ground_truth = ttest_ind(X[labels == 1], X[labels == 2])
+        assert_array_almost_equal(result[0], ground_truth[0])
+
+    def test_mass_univariate_classification_ttest_2d(self):
+        """Simple classification problem, 2d features"""
+        X = array([-1, -2, -0.1, -2, -0.1, -2.1, 1, 1.1, 1, 1, 1.1, 2])
+        features = array([1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2])
+        samples = array([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6])
+        labels = array([1, 1, 1, 2, 2, 2])
+        params = dict([('labels', labels), ('features', features), ('samples', samples)])
+
+        clf = MassUnivariateClassifier.load(params, "ttest")
+
+        # should match direct calculation using scipy
+
+        # test first feature
+        data = self.sc.parallelize(zip([1], [X]))
+        result = clf.classify(data, 1).map(lambda (_, v): v).collect()
+        ground_truth = ttest_ind(X[features == 1][:3], X[features == 1][3:])
+        assert_array_almost_equal(result[0], ground_truth[0])
+
+        # test second feature
+        result = clf.classify(data, 2).map(lambda (_, v): v).collect()
+        ground_truth = ttest_ind(X[features == 2][:3], X[features == 2][3:])
+        assert_array_almost_equal(result[0], ground_truth[0])
 
     def test_mass_univariate_classification_gnb_1d(self):
         """Simple classification problem, 1d features"""
