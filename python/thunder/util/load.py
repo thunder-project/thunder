@@ -4,7 +4,7 @@ Utilities for loading and preprocessing data
 
 import pyspark
 
-from numpy import array, mean, cumprod, append, mod, ceil, size, polyfit, polyval, arange
+from numpy import array, mean, cumprod, append, mod, ceil, size, polyfit, polyval, arange, percentile
 from scipy.signal import butter, lfilter
 
 
@@ -46,6 +46,13 @@ class DataPreProcessor(object):
 
         if preprocessmethod == "raw":
             func = lambda x: x
+
+        if preprocessmethod == "dff-percentile":
+
+            def func(y):
+                mnval = percentile(y, 20)
+                y = (y - mnval) / (mnval + 0.1)   
+                return y
 
         if preprocessmethod == "dff-detrend":
 
