@@ -108,7 +108,7 @@ class TTestClassifier(MassUnivariateClassifier):
         if len(unique) != 2:
             raise TypeError("Only two types of labels allowed for t-test classificaiton")
         if unique != set((0, 1)):
-            self.labels = map(lambda i: 0 if i == unique[0] else 1, self.labels)
+            self.labels = array(map(lambda i: 0 if i == unique[0] else 1, self.labels))
 
     def get(self, x, featureset=None):
         """Compute t-statistic
@@ -116,13 +116,10 @@ class TTestClassifier(MassUnivariateClassifier):
         :param x: vector of signals to use in classification
         :param featurest: which feature to use (must be scalar or 1 x 1 for ttest classifier)"""
 
-        y = array(self.labels)
-        if self.nfeatures == 1:
-            X = x
-        else:
-            X = x[self.features == featureset]
+        if self.nfeatures > 1:
+            x = x[self.features == featureset]
 
-        return float64(self.func(X[y == 0], X[y == 1])[0])
+        return float64(self.func(x[self.labels == 0], x[self.labels == 1])[0])
 
 
 CLASSIFIERS = {
