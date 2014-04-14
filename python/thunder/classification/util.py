@@ -111,16 +111,16 @@ class TTestClassifier(MassUnivariateClassifier):
             self.labels = map(lambda i: 0 if i == unique[0] else 1, self.labels)
 
     def get(self, x, featureset=None):
-        """Compute t-statistic"""
+        """Compute t-statistic
+
+        :param x: vector of signals to use in classification
+        :param featurest: which feature to use (must be scalar or 1 x 1 for ttest classifier)"""
 
         y = array(self.labels)
         if self.nfeatures == 1:
             X = x
         else:
-            X = zeros(self.nsamples)
-            for i in range(0, self.nsamples):
-                inds = (self.samples == self.sampleids[i]) & (self.features == featureset)
-                X[i] = x[inds]
+            X = x[self.features == featureset]
 
         return float64(self.func(X[y == 0], X[y == 1])[0])
 
