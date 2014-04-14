@@ -7,13 +7,13 @@ from thunder.util.save import save
 from pyspark import SparkContext
 
 
-def classify(data, params, classifymode, set=None, cv=0):
+def classify(data, params, classifymode, featureset=None, cv=0):
     """Perform mass univariate classification
 
     :param data: RDD of data points as key value pairs
     :param params: string with file location, or dictionary of parameters for classification
     :param classifymode: form of classifier ("naivebayes")
-    :param set: set of features to use for classification (default=None)
+    :param featureset: set of features to use for classification (default=None)
     :param cv: number of cross validation folds (default=0, for no cv)
 
     :return perf: performance
@@ -22,7 +22,7 @@ def classify(data, params, classifymode, set=None, cv=0):
     clf = MassUnivariateClassifier.load(params, classifymode, cv)
 
     # do classification
-    perf = clf.classify(data, set)
+    perf = clf.classify(data, featureset)
 
     return perf
 

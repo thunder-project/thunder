@@ -43,18 +43,18 @@ class MassUnivariateClassifier(object):
     def get(self, x, set=None):
         pass
 
-    def classify(self, data, set=None):
+    def classify(self, data, featureset=None):
 
         if self.nfeatures == 1:
             perf = data.mapValues(lambda x: [self.get(x)])
         else:
-            if set is None:
-                set = [[self.features[0]]]
-            if type(set) is int:
-                set = [set]
-            for i in set:
+            if featureset is None:
+                featureset = [[self.features[0]]]
+            if type(featureset) is int:
+                featureset = [featureset]
+            for i in featureset:
                 assert array(in1d(self.features, i)).sum() != 0, "Feature set invalid"
-            perf = data.mapValues(lambda x: map(lambda i: self.get(x, i), set))
+            perf = data.mapValues(lambda x: map(lambda i: self.get(x, i), featureset))
 
         return perf
 
@@ -73,7 +73,7 @@ class GaussNaiveBayesClassifier(MassUnivariateClassifier):
         self.cv = cv
         self.func = GaussianNB()
 
-    def get(self, x, set=None):
+    def get(self, x, featureset=None):
         """Compute classification performance"""
 
         y = self.labels
@@ -81,9 +81,9 @@ class GaussNaiveBayesClassifier(MassUnivariateClassifier):
             X = zeros((self.nsamples, 1))
             X[:, 0] = x
         else:
-            X = zeros((self.nsamples, size(set)))
+            X = zeros((self.nsamples, size(featureset)))
             for i in range(0, self.nsamples):
-                inds = (self.samples == self.sampleids[i]) & (in1d(self.features, set))
+                inds = (self.samples == self.sampleids[i]) & (in1d(self.features, featureset))
                 X[i, :] = x[inds]
 
         if self.cv > 0:
@@ -110,7 +110,7 @@ class TTestClassifier(MassUnivariateClassifier):
         if unique != set((0, 1)):
             self.labels = map(lambda i: 0 if i == unique[0] else 1, self.labels)
 
-    def get(self, x, set=None):
+    def get(self, x, featureset=None):
         """Compute t-statistic"""
 
         y = array(self.labels)
@@ -119,7 +119,7 @@ class TTestClassifier(MassUnivariateClassifier):
         else:
             X = zeros(self.nsamples)
             for i in range(0, self.nsamples):
-                inds = (self.samples == self.sampleids[i]) & (self.features == set)
+                inds = (self.samples == self.sampleids[i]) & (self.features == featureset)
                 X[i] = x[inds]
 
         return float64(self.func(X[y == 0], X[y == 1])[0])
