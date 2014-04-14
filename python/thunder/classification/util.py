@@ -114,12 +114,18 @@ class TTestClassifier(MassUnivariateClassifier):
         """Compute t-statistic
 
         :param x: vector of signals to use in classification
-        :param featurest: which feature to use (must be scalar or 1 x 1 for ttest classifier)"""
+        :param featureset: which features to test"""
 
-        if self.nfeatures > 1:
-            x = x[self.features == featureset]
+        if (self.nfeatures > 1) & (size(featureset) > 1):
+            X = zeros((self.nsamples, size(featureset)))
+            for i in range(0, size(featureset)):
+                X[:, i] = x[self.features == featureset[i]]
+            return float64(self.func(X[self.labels == 0, :], X[self.labels == 1, :])[0])
 
-        return float64(self.func(x[self.labels == 0], x[self.labels == 1])[0])
+        else:
+            if self.nfeatures > 1:
+                x = x[self.features == featureset]
+            return float64(self.func(x[self.labels == 0], x[self.labels == 1])[0])
 
 
 CLASSIFIERS = {
