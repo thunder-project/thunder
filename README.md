@@ -21,7 +21,7 @@ Now go into the top-level Thunder directory and run an analysis on test data.
 
 	$SPARK_HOME/bin/pyspark python/thunder/factorization/pca.py local data/iris.txt ~/results 4
 
-This will run principal components on the “iris” data set with 4 components, and write results to a folder in your home directory. The same analysis can be run interactively in a shell. Start Pyspark:
+This will run principal components on the “iris” data set with 4 components, and write results to a folder in your home directory. The same analysis can be run interactively. Start PySpark:
 
 	$SPARK_HOME/bin/pyspark
 
@@ -32,13 +32,13 @@ Then run the analysis
 	>> data = load(sc, 'data/iris.txt')
 	>> scores, latent, comps = pca(data, 4)
 
-For running in the shell, we include a script for automatically importing commonly used functions
+We include a script for automatically importing commonly used functions
 
 	>> execfile('helper/thunder-startup.py')
 
-To run in iPython, just set
+To run in iPython, just set this environmental variable before staring PySpark:
 
-	>> export IPYTHON=1
+	export IPYTHON=1
 
 ## Analyses
 
