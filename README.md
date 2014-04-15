@@ -58,9 +58,9 @@ _ica_ - independent components analysis
 
 ### regression
 
-_regress_ - mass univariate regression (linear and bilinear)
-_regresswithpca_ - regression combined with dimensionality reduction
-_tuning_ - mass univariate parameteric tuning curves (circular and gaussian)
+_regress_ - mass univariate regression (linear and bilinear)  
+_regresswithpca_ - regression combined with dimensionality reduction  
+_tuning_ - mass univariate parameteric tuning curves (circular and gaussian)  
 
 ### signal processing
 
