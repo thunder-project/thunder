@@ -44,6 +44,6 @@ if __name__ == "__main__":
 
     vals = stats(data, args.mode)
 
-    outputdir = args.outputdir + "-stats",
+    outputdir = args.outputdir + "-stats"
 
     save(vals, outputdir, "stats_" + args.mode, "matlab")
