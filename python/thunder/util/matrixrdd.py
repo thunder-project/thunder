@@ -8,7 +8,7 @@ TODO: test using these in the various analyses packages (especially thunder.fact
 """
 
 import sys
-from numpy import dot, isclose, outer, shape, ndarray, mean, add, subtract, multiply, zeros, std, divide
+from numpy import dot, allclose, outer, shape, ndarray, mean, add, subtract, multiply, zeros, std, divide
 from pyspark.accumulators import AccumulatorParam
 
 
@@ -121,7 +121,7 @@ class MatrixRDD(object):
             # TODO: check size of array, broadcast if too big
             if dtype == ndarray:
                 dims = shape(other)
-                if (len(dims) == 1 and sum(isclose(dims, self.d) == 0)) or (len(dims) == 2 and dims[0] != self.d):
+                if (len(dims) == 1 and sum(allclose(dims, self.d) == 0)) or (len(dims) == 2 and dims[0] != self.d):
                     raise Exception(
                         "cannot multiply shapes ("+str(self.n)+","+str(self.d)+") and " + str(dims))
                 if len(dims) == 0:
