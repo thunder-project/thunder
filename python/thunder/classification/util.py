@@ -44,16 +44,21 @@ class MassUnivariateClassifier(object):
         pass
 
     def classify(self, data, featureset=None):
+        """Do the classification on an RDD using a map
+
+        :param data: RDD of data points as key value pairs
+        :param featureset: list of lists containing the features to use
+        :return: perf: RDD of key value pairs with classification performance
+        """
 
         if self.nfeatures == 1:
             perf = data.mapValues(lambda x: [self.get(x)])
         else:
+            print(type(featureset))
             if featureset is None:
                 featureset = [[self.features[0]]]
-            if type(featureset) is int:
-                featureset = [featureset]
             for i in featureset:
-                assert array(in1d(self.features, i)).sum() != 0, "Feature set invalid"
+                assert array([item in i for item in self.features]).sum() != 0, "Feature set invalid"
             perf = data.mapValues(lambda x: map(lambda i: self.get(x, i), featureset))
 
         return perf

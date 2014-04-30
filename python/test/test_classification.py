@@ -50,7 +50,7 @@ class TestMassUnivariateClassification(ClassificationTestCase):
 
         # test first feature only
         data = self.sc.parallelize(zip([1], [X]))
-        result = clf.classify(data, [1]).map(lambda (_, v): v).collect()
+        result = clf.classify(data, [[1]]).map(lambda (_, v): v).collect()
         ground_truth = ttest_ind(X[features == 1][:3], X[features == 1][3:])
         assert_array_almost_equal(result[0], ground_truth[0])
 
@@ -92,11 +92,11 @@ class TestMassUnivariateClassification(ClassificationTestCase):
         data = self.sc.parallelize(zip([1], [X]))
 
         # first feature predicts perfectly
-        result = clf.classify(data, [1]).map(lambda (_, v): v).collect()
+        result = clf.classify(data, [[1]]).map(lambda (_, v): v).collect()
         assert_array_almost_equal(result[0], [1.0])
 
         # second feature gets one wrong
-        result = clf.classify(data, [2]).map(lambda (_, v): v).collect()
+        result = clf.classify(data, [[2]]).map(lambda (_, v): v).collect()
         assert_array_almost_equal(result[0], [5.0/6.0])
 
         # two features together predict perfectly
