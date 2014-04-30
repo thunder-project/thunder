@@ -54,7 +54,6 @@ class MassUnivariateClassifier(object):
         if self.nfeatures == 1:
             perf = data.mapValues(lambda x: [self.get(x)])
         else:
-            print(type(featureset))
             if featureset is None:
                 featureset = [[self.features[0]]]
             for i in featureset:
