@@ -1,7 +1,8 @@
 import abc
 import os
 from datetime import datetime
-from numpy import arange, add, float16
+from numpy import arange, add, float16, random, outer, dot, zeros, real, transpose, diag, argsort, sqrt, inner
+from scipy.linalg import sqrtm, inv, orth, eig
 from scipy.io import savemat
 from thunder.util.load import load
 from thunder.sigprocessing.util import SigProcessingMethod
