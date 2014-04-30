@@ -43,7 +43,7 @@ class ThunderDataTest(object):
             func()
             end = datetime.now()
             dt = end - start
-            time = dt.total_seconds()
+            time = (dt.microseconds + (dt.seconds + dt.days * 24.0 * 3600.0) * 10.0**6.0) / 10.0**6.0
             return time
 
         results = map(lambda i: timedtest(self.runtest), range(0, numtrials))
@@ -135,6 +135,73 @@ class Save(ThunderDataTest):
         savemat(self.savefile + "tmp.mat", mdict={"tmp": result}, oned_as='column')
 
 
+class KMeans(ThunderDataTest):
+
+    def __init__(self, sc):
+        ThunderDataTest.__init__(self, sc)
+
+    def runtest(self):
+        labels, centers = kmeans(self.rdd, 3, maxiter=5, tol=0)
+
+
+class ICA(ThunderDataTest):
+
+    def __init__(self, sc):
+        ThunderDataTest.__init__(self, sc)
+
+    def runtest(self):
+        k = len(self.rdd.first()[1])
+        c = 3
+        n = 1000
+        B = orth(random.randn(k, c))
+        Bold = zeros((k, c))
+        iterNum = 0
+        errVec = zeros(20)
+        while (iterNum < 5):
+            iterNum += 1
+            # update rule for pow3 nonlinearity (TODO: add other nonlins)
+            B = self.rdd.map(lambda (_, v): v).map(lambda x: outer(x, dot(x, B) ** 3)).reduce(lambda x, y: x + y) / n - 3 * B
+            # orthognalize
+            B = dot(B, real(sqrtm(inv(dot(transpose(B), B)))))
+            # evaluate error
+            minAbsCos = min(abs(diag(dot(transpose(B), Bold))))
+            # store results
+            Bold = B
+            errVec[iterNum-1] = (1 - minAbsCos)
+
+        sigs = self.rdd.mapValues(lambda x: dot(B, x))
+
+
+class PCA(ThunderDataTest):
+
+    def __init__(self, sc):
+        ThunderDataTest.__init__(self, sc)
+
+    def runtest(self):
+        m = len(self.rdd.first()[1])
+        k = 3
+        n = 1000
+
+        def outerprod(x):
+            return outer(x, x)
+
+        c = random.rand(k, m)
+        iter = 0
+        error = 100
+
+        while (iter < 5):
+            c_old = c
+            c_inv = dot(transpose(c), inv(dot(c, transpose(c))))
+            premult1 = self.rdd.context.broadcast(c_inv)
+            xx = self.rdd.map(lambda (_, v): v).map(lambda x: outerprod(dot(x, premult1.value))).sum()
+            xx_inv = inv(xx)
+            premult2 = self.rdd.context.broadcast(dot(c_inv, xx_inv))
+            c = self.rdd.map(lambda (_, v): v).map(lambda x: outer(x, dot(x, premult2.value))).sum()
+            c = transpose(c)
+            error = sum(sum((c - c_old) ** 2))
+            iter += 1
+
+
 TESTS = {
     'stats': Stats,
     'average': Average,
@@ -143,5 +210,8 @@ TESTS = {
     'crosscorr': CrossCorr,
     'fourier': Fourier,
     'load': Load,
-    'save': Save
+    'save': Save,
+    'ica': ICA,
+    'pca': PCA,
+    'kmeans': KMeans
 }

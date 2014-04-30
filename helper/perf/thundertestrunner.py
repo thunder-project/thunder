@@ -30,6 +30,10 @@ if __name__ == "__main__":
 
     sc = SparkContext(args.master, "ThunderTestRunner: " + args.testname)
 
+    if args.master != "local":
+        egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
+        sc.addPyFile(egg[0])
+
     test = ThunderDataTest.initialize(args.testname, sc)
 
     if args.datatype == "datafile":
