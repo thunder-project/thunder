@@ -4,16 +4,31 @@ Utilities for loading and preprocessing data
 
 import pyspark
 
-from numpy import array, mean, cumprod, append, mod, ceil, size, polyfit, polyval, arange, percentile
+from numpy import array, mean, cumprod, append, mod, ceil, size, polyfit, polyval, arange, percentile, inf, subtract
 from scipy.signal import butter, lfilter
 
 
 class Dimensions(object):
 
-    def __init__(self, distinctvals, rng):
-        self.min = map(lambda i: min(distinctvals[i]), rng)
-        self.max = map(lambda i: max(distinctvals[i]), rng)
-        self.num = map(lambda i: size(distinctvals[i]), rng)
+    def __init__(self, values=[], n=3):
+        self.min = tuple(map(lambda i: inf, range(0, n)))
+        self.max = tuple(map(lambda i: -inf, range(0, n)))
+
+        for v in values:
+            self.merge(v)
+
+    def merge(self, value):
+        self.min = tuple(map(min, self.min, value))
+        self.max = tuple(map(max, self.max, value))
+        return self
+
+    def count(self):
+        return tuple(map(lambda x: x + 1, map(subtract, self.max, self.min)))
+
+    def mergedims(self, other):
+        self.min = tuple(map(min, self.min, other.min))
+        self.max = tuple(map(max, self.max, other.max))
+        return self
 
 
 class DataLoader(object):
@@ -104,28 +119,32 @@ def isrdd(data):
 
 
 def getdims(data):
-    """Get min, max, and number of unique keys along
-    each dimension
+    """Get dimensions of keys; ranges can have arbtirary minima
+    and maximum, but they must be contiguous (e.g. the indices of a dense matrix).
 
-    :param data: RDD of data points as key value pairs, or
-    :return dims: Dimensions of the data (max, min, and num)
+    :param data: RDD of data points as key value pairs, or numpy list of key-value tuples
+    :return dims: Instantiation of Dimensions class containing the dimensions of the data
     """
+
+    def redfunc(left, right):
+        return left.mergedims(right)
+
     if isrdd(data):
         entry = data.first()[0]
-        rng = range(0, size(entry))
-        if size(entry) == 1:
-            distinctvals = array([list(set(data.map(lambda (k, _): k).collect()))])
-        else:
-            distinctvals = map(lambda i: list(set(data.map(lambda (k, _): k[i]).collect())), rng)
-        return Dimensions(distinctvals, rng)
+        n = size(entry)
+        d = data.map(lambda (k, _): k).mapPartitions(lambda i: [Dimensions(i, n)]).reduce(redfunc)
     else:
         entry = data[0][0]
         rng = range(0, size(entry))
+        d = Dimensions()
         if size(entry) == 1:
             distinctvals = list(set(map(lambda x: x[0][0], data)))
         else:
             distinctvals = map(lambda i: list(set(map(lambda x: x[0][i], data))), rng)
-        return Dimensions(distinctvals, rng)
+        d.max = tuple(map(max, distinctvals))
+        d.min = tuple(map(min, distinctvals))
+
+    return d
 
 
 def subtoind(data, dims):

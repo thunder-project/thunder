@@ -153,9 +153,9 @@ class TestQuery(SigProcessingTestCase):
 
     def test_query_linear(self):
         data_local = [
-            (1, array([1.0, 2.0, 3.0])),
-            (2, array([2.0, 2.0, 4.0])),
-            (3, array([4.0, 2.0, 1.0]))
+            ((1,), array([1.0, 2.0, 3.0])),
+            ((2,), array([2.0, 2.0, 4.0])),
+            ((3,), array([4.0, 2.0, 1.0]))
         ]
 
         data = self.sc.parallelize(data_local)

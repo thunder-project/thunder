@@ -33,7 +33,6 @@ class TestSubToInd(LoadTestCase):
 
         data = self.sc.parallelize(data_local)
         dims = [2, 3, 2]
-        #subs = data.map(lambda (k, _): indtosub(k, dims)).collect()
         subs = indtosub(data, dims).map(lambda (k, _): k).collect()
         assert(allclose(subs, array([(1, 1, 1), (2, 1, 1), (1, 2, 1), (2, 2, 1), (1, 3, 1), (2, 3, 1),
                                      (1, 1, 2), (2, 1, 2), (1, 2, 2), (2, 2, 2), (1, 3, 2), (2, 3, 2)])))
@@ -54,7 +53,6 @@ class TestSubToInd(LoadTestCase):
                                      (1, 1, 2), (2, 1, 2), (1, 2, 2), (2, 2, 2), (1, 3, 2), (2, 3, 2)])))
 
 
-
 class TestGetDims(LoadTestCase):
     """Test getting dimensions"""
 
@@ -64,15 +62,15 @@ class TestGetDims(LoadTestCase):
         data_local = map(lambda x: (x, array([1.0])), subs)
         data = self.sc.parallelize(data_local)
         dims = getdims(data)
-        assert(allclose(dims.max, array([2, 3, 2])))
-        assert(allclose(dims.num, array([2, 3, 2])))
-        assert(allclose(dims.min, array([1, 1, 1])))
+        assert(allclose(dims.max, (2, 3, 2)))
+        assert(allclose(dims.count(), (2, 3, 2)))
+        assert(allclose(dims.min, (1, 1, 1)))
 
     def test_get_dims_array(self):
         subs = [(1, 1, 1), (2, 1, 1), (1, 2, 1), (2, 2, 1), (1, 3, 1), (2, 3, 1),
                 (1, 1, 2), (2, 1, 2), (1, 2, 2), (2, 2, 2), (1, 3, 2), (2, 3, 2)]
         data_local = map(lambda x: (x, array([1.0])), subs)
         dims = getdims(data_local)
-        assert(allclose(dims.max, array([2, 3, 2])))
-        assert(allclose(dims.num, array([2, 3, 2])))
-        assert(allclose(dims.min, array([1, 1, 1])))
+        assert(allclose(dims.max, (2, 3, 2)))
+        assert(allclose(dims.count(), (2, 3, 2)))
+        assert(allclose(dims.min, (1, 1, 1)))
