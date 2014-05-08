@@ -41,6 +41,7 @@ def install_thunder(master, opts):
 def load_data(master, opts):
     """ Load an example data set into a Spark EC2 cluster"""
     print "Transferring example data to the cluster..."
+    ssh(master, opts, "/root/ephemeral-hdfs/bin/stop-all.sh")
     ssh(master, opts, "/root/ephemeral-hdfs/bin/start-all.sh")
     time.sleep(10)
     (s3_access_key, s3_secret_key) = get_s3_keys()
@@ -131,8 +132,10 @@ if __name__ == "__main__":
         opts.wait = 160
         opts.hadoop_major_version = "1"
         opts.ganglia = True
-        opts.spark_version = "0.9.0"
+        opts.spark_version = "0.9.1"
         opts.swap = 1024
+        opts.worker_instances = 1
+        opts.master_opts = ""
 
         if opts.resume:
             (master_nodes, slave_nodes) = get_existing_cluster(conn, opts, cluster_name)
