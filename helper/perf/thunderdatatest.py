@@ -173,7 +173,17 @@ class ICA(ThunderDataTest):
         sigs = self.rdd.mapValues(lambda x: dot(B, x))
 
 
-class PCA(ThunderDataTest):
+class PCADirect(ThunderDataTest):
+ 
+    def __init__(self, sc):
+        ThunderDataTest.__init__(self, sc)
+ 
+    def runtest(self):
+ 
+    scores, latent, comps = svd(data, 3, meansubtract=0, method="direct")
+ 
+
+class PCAIterative(ThunderDataTest):
 
     def __init__(self, sc):
         ThunderDataTest.__init__(self, sc)
@@ -213,6 +223,7 @@ TESTS = {
     'load': Load,
     'save': Save,
     'ica': ICA,
-    'pca': PCA,
+    'pca-direct': PCADirect,
+    'pca-iterative', PCAIterative,
     'kmeans': KMeans
 }
