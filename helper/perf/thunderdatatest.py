@@ -7,6 +7,9 @@ from scipy.io import savemat
 from thunder.util.load import load
 from thunder.sigprocessing.util import SigProcessingMethod
 from thunder.regression.util import RegressionModel
+from thunder.factorization.util import svd
+from thunder.clustering.kmeans import kmeans
+
 
 class ThunderDataTest(object):
 
@@ -160,13 +163,9 @@ class ICA(ThunderDataTest):
         errVec = zeros(20)
         while (iterNum < 5):
             iterNum += 1
-            # update rule for pow3 nonlinearity (TODO: add other nonlins)
             B = self.rdd.map(lambda (_, v): v).map(lambda x: outer(x, dot(x, B) ** 3)).reduce(lambda x, y: x + y) / n - 3 * B
-            # orthognalize
             B = dot(B, real(sqrtm(inv(dot(transpose(B), B)))))
-            # evaluate error
             minAbsCos = min(abs(diag(dot(transpose(B), Bold))))
-            # store results
             Bold = B
             errVec[iterNum-1] = (1 - minAbsCos)
 
@@ -179,8 +178,7 @@ class PCADirect(ThunderDataTest):
         ThunderDataTest.__init__(self, sc)
  
     def runtest(self):
- 
-    scores, latent, comps = svd(data, 3, meansubtract=0, method="direct")
+        scores, latent, comps = svd(self.rdd, 3, meansubtract=0, method="direct")
  
 
 class PCAIterative(ThunderDataTest):
@@ -224,6 +222,6 @@ TESTS = {
     'save': Save,
     'ica': ICA,
     'pca-direct': PCADirect,
-    'pca-iterative', PCAIterative,
+    'pca-iterative': PCAIterative,
     'kmeans': KMeans
 }
