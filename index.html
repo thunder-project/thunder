@@ -65,37 +65,92 @@
           </div>
            <div class="col-md-4">
             <h2 id="subtitle2">Easy</h2>
-            <h3 id="subcontent">Easy to implement an analysis. Or invent your own. </h3>
+            <h3 id="subcontent">Run the existing analyses. Or come up with a new one. All in Python.</h3>
           </div>
            <div class="col-md-4">
             <h2 id="subtitle3">Interactive</h2>
-            <h3 id="subcontent">Can’t wait? Run interactively in the shell, immediately inspect results.</h3>
+            <h3 id="subcontent">Run interactively in the shell, immediately inspect and visualize results.</h3>
           </div>
         </div>
       </div>
 
+      <div class="container">
+        <div class="col-md-6 col-md-offset-3">
+           <div class="btn-group btn-group-justified">
+            <div class="btn-group btn-group-lg">
+              <button type="button" href="#GetStartedLocally" class="btn btn-default" data-toggle="tab">Get started locally</a></button>
+            </div>
+            <div class="btn-group btn-group-lg">
+              <button href="#GetStartedEC2" type="button" class="btn btn-default" data-toggle="tab">Get started on EC2</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <br><br>
 
       <div class="container">
         <article id = "docs">
-          <h1 id="doctitle">Quick start</h1>
-<p>Here's a quick guide to getting up and running. It assumes <a href="http://www.scala-lang.org/download/">Scala (2.10.3)</a>, <a href="http://spark.incubator.apache.org/downloads.html">Spark (0.9.0)</a>, and <a href="http://www.python.org/download/releases/2.7.6/">Python (2.7.6)</a> (with <a href="http://www.numpy.org/">NumPy</a>, <a href="http://scipy.org/scipylib/index.html">SciPy</a>, and <a href=http://www.pythonware.com/products/pil/>Python Imaging Library</a>) are already installed. See <a href="howtouse.html">How to Use</a> for more detailed instructions.</p><p>First, download the latest <a href="https://github.com/freeman-lab/thunder/archive/master.zip">build</a> of Thunder and add it to your path.</p><br>
-  <pre><code class="bash">export PYTHONPATH=your_path_to_thunder/python/:$PYTHONPATH
-</pre></code>
-<br><p>Now go into the top-level Thunder directory and run an analysis on test data.</p>
-          <br>
-          <pre><code class="bash">$SPARK_HOME/bin/pyspark python/thunder/factorization/pca.py local data/iris.txt ~/results 4</pre></code>
-          <br>
-          <p>This will run principal components on the “iris” data set with 4 components, and write results to a folder in your home directory. The same analysis can be run interactively in a shell. Start PySpark</p><br>
-          <pre><code class="bash">$SPARK_HOME/bin/pyspark</code></pre><br>
-<p>Then run the analysis</p>
-        <br>
-        <pre><code class="python">>> from thunder.util.load import load
+          <div class="tab-content">
+            <div class="tab-pane fade in active" id="GetStartedLocally">
+        
+  <h1 id="doctitle">Get started locally</h1>
+  <p>Using Thunder locally is a great way to learn how it works and prototype analyses. You just need to have <a href="http://www.scala-lang.org/download/">Scala (2.10.3)</a> and <a href="http://www.python.org/download/releases/2.7.6/">Python (2.7.6)</a> (with <a href="http://www.numpy.org/">NumPy</a>, <a href="http://scipy.org/scipylib/index.html">SciPy</a>, and <a href=http://www.pythonware.com/products/pil/>Python Imaging Library</a>; you can get all these Python tools at once for free with <a href="https://store.continuum.io/cshop/anaconda/">Anaconda</a>).</p>
+  <p>Here's how to get started in four steps.</p> 
+  <p>1) <b>Download</b> the latest versions of <a id="spark-download" href="http://d3kbcqa49mib13.cloudfront.net/spark-0.9.1.tgz">Spark</a> and <a href="https://github.com/freeman-lab/thunder/archive/master.zip">Thunder</a> and set some paths.</p>
+  <pre><code class="bash">export PYTHONPATH=your/path/to/thunder/python/:$PYTHONPATH
+export SPARK_HOME=your/path/to/spark</pre></code>
+  <br>
+  <p>2) <b>Build</b> Spark (this will take a few minutes) </p>
+  <pre><code class="bash">cd $SPARK_HOME
+sbt/sbt assembly</pre></code>
+<br>
+  <p>3) <b>Start</b> the PySpark shell (if you have iPython, also set IPYTHON=1)</p>
+  <pre><code class="bash">$SPARK_HOME/bin/pyspark</pre></code>
+  <br>
+  <p>4) <b>Try</b> an analysis
+   <pre><code class="python">>> from thunder.util.load import load
 >> from thunder.factorization.pca import pca
->> data = load(sc, 'your_path_to_thunder/data/iris.txt')
+>> data = load(sc, 'you/path/to/thunder/data/iris.txt')
 >> scores, latent, comps = pca(data, 4)</code></pre>
-      <br>
-        </article>
-      </div>
+   <br>
+  
+            </div>
+
+            <div class="tab-pane fade" id="GetStartedEC2">
+
+<h1 id="doctitle">Get started on EC2</h1>
+
+<p>In just a few minutes you can be using Thunder on Amazon's EC2.</p>
+
+<p>1) <b>Sign up</b> for an <a id="aws" href="http://aws.amazon.com/">AWS</a> account, generate a <a id="key-pair" href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair">key pair</a>, and use your Amazon EC2 access key ID and secret access key (<a id="secret" href="http://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSGettingStartedGuide/AWSCredentials.html">where to find these</a>) to set environmental variables.</p>
+<pre><code class="bash">export AWS_ACCESS_KEY_ID=your_access_key_id
+export AWS_SECRET_ACCESS_KEY=your_secret_access_key</pre></code>
+<br>
+<p>2) <b>Download</b> the latests versions of <a id="spark-download" href="http://d3kbcqa49mib13.cloudfront.net/spark-0.9.1.tgz">Spark</a> and <a id="thunder-download" href="https://github.com/freeman-lab/thunder/archive/master.zip">Thunder</a> and set a path.</p>
+<pre><code class="bash">export SPARK_HOME=your/path/to/spark
+</pre></code>
+<br>
+<p>3) <b>Run</b> the EC2 launch script from inside the Thunder folder (will take a few minutes).</p>
+<pre><code class="bash">helper/ec2/thunder-ec2 -k keyname -i keyname.pem -s N_NODES launch CLUSTERNAME
+</pre></code>
+<p>where keyname and keyname.pem are from the key pair you generated, N_NODES is the number of nodes you want, and CLUSTERNAME is a name to call your cluster</p>
+<br>
+<p>4) <b>Log</b> into your newly configured cluster</p>
+<pre><code class="bash">helper/ec2/thunder-ec2 -k keyname -i keyname.pem login CLUSTERNAME</pre></code>
+<br>
+<p>5) <b>Try</b> an analysis
+<pre><code class="python">pyspark
+>> from thunder.util.load import load
+>> from thunder.factorization.pca import pca
+>> data = load(sc, 'you/path/to/thunder/data/iris.txt')
+>> scores, latent, comps = pca(data, 4)</code></pre>
+<br>
+
+
+            </div>
+        </div>
+      </article>
+    </div>
 
     <footer>
       <div class="container">

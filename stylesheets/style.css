@@ -16,12 +16,15 @@ a {
      transition: all .25s; 
      -moz-transition: all .25s; 
      -webkit-transition: all .25s;
+     border: 0;
 }
 
 a:hover {
      color: rgb(115,201,152);
      text-decoration: none;
-
+     transition: all .25s; 
+     -moz-transition: all .25s; 
+     -webkit-transition: all .25s;
 }
 
 footer {
@@ -196,6 +199,49 @@ pre code {
      color: white;
 }
 
+.btn-default, .btn-default > a {
+     font-weight: bold;
+     font-family: helvetica neue;
+     background: #252525;
+     color: rgb(157,204,122);
+     box-shadow: inset 0 1px 3px rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.1);
+     text-shadow: 0 1px 3px rgba(0,0,0,.5);
+     border-color: black;
+     font-size: 20px;
+     border: none;
+     transition: all .25s; 
+     -moz-transition: all .25s; 
+     -webkit-transition: all .25s;
+}
+
+.btn-default:hover, .btn-default:hover > a {
+     color: white;
+     background: #252525;
+     box-shadow: inset 0 1px 3px rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.1);
+     text-shadow: 0 1px 3px rgba(0,0,0,.5);
+     border-color: black;
+     border: none;
+     transition: all .25s; 
+     -moz-transition: all .25s; 
+     -webkit-transition: all .25s;
+}
+
+.btn-default.active, .btn-default.active > a, .btn-default:active, .btn-default:active > a, .btn-default:focus, .btn-default:focus > a {
+     background-color: rgb(157,204,122);
+     box-shadow: none;
+     text-shadow: none;
+     border-color: black;
+     color: white;
+     border: none;
+     transition: all .25s; 
+     -moz-transition: all .25s; 
+     -webkit-transition: all .25s;
+
+}
+
+
+
+
 @media (max-width: 480px) {
      .jumbotron {
           height: 100px;
@@ -241,5 +287,11 @@ pre code {
 
 
 }
+
+
+
+
+
+
 
 
