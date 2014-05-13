@@ -3,6 +3,7 @@ package thunder.streaming
 import org.apache.spark.streaming.{Milliseconds, Seconds, StreamingContext}
 import org.apache.spark.SparkContext._
 import org.apache.spark.SparkConf
+import org.apache.spark.util.StatCounter
 import org.apache.spark.mllib.util.LinearDataGenerator
 import cern.colt.matrix.{DoubleFactory1D, DoubleFactory2D}
 
@@ -28,7 +29,53 @@ class StreamingBasicSuite extends FunSuite {
     .setMaster("local[2]")
     .setAppName("test")
 
-  test("stateful linear regression") {
+  test("streaming stats") {
+
+    // set parameters
+    val n = 1000 // number of data points per batch
+    val m = 10 // number of batches
+    val r = 0.05 // noise
+    val mean = 3.0 // intercept for linear model
+    val variance = 2.0 // coefficients for linear model
+
+    // create test directory and set up streaming data
+    val testDir = Files.createTempDir()
+    val checkpointDir = Files.createTempDir()
+    val ssc = new StreamingContext(conf, Seconds(1))
+    val data = Load.loadStreamingDataWithKeys(ssc, testDir.toString)
+
+    // create and train linear model
+    val state = StatefulStats.trainStreaming(data)
+    var counter = new StatCounter()
+    state.foreachRDD{rdd => counter = rdd.values.first()}
+    ssc.checkpoint(checkpointDir.toString)
+    ssc.start()
+
+    val rand = new Random(41)
+
+    Thread.sleep(5000)
+    for (i <- 0 until m) {
+      val samples = Array.fill(n)(rand.nextGaussian()).map(x => x * math.sqrt(variance) + mean)
+      val file = new File(testDir, i.toString)
+      FileUtils.writeStringToFile(file, "0 " + samples.mkString(" ") + "\n")
+      Thread.sleep(Milliseconds(500).milliseconds)
+    }
+    Thread.sleep(Milliseconds(5000).milliseconds)
+
+    ssc.stop()
+    System.clearProperty("spark.driver.port")
+
+    FileUtils.deleteDirectory(testDir)
+
+    // compare estimated parameters to actual
+    assertEqual(counter.mean, mean, 0.1)
+    assertEqual(counter.variance, variance, 0.1)
+    assertEqual(counter.count, n * m, 0.0001)
+
+  }
+
+
+  ignore("stateful linear regression") {
 
     // set parameters
     val n = 10 // number of data points per record
@@ -120,7 +167,7 @@ class StreamingBasicSuite extends FunSuite {
     assertSetsEqual(model.clusterCenters, centers, 0.1)
   }
 
-  test("streaming linear regression") {
+  ignore("streaming linear regression") {
 
     // set parameters
     val n = 100 // number of data points per batch
