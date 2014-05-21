@@ -87,7 +87,7 @@ def save(data, outputdir, outputfile, outputformat):
                     result = array([v for (k, v) in sorted(zip(keys, result), key=lambda (k, v): k)])
                     if outputformat == "matlab":
                         savemat(filename+"-"+str(iout)+".mat",
-                                mdict={outputfile+str(iout): squeeze(transpose(reshape(result, dims.num[::-1])))},
+                                mdict={outputfile+str(iout): squeeze(transpose(reshape(result, dims.count()[::-1])))},
                                 oned_as='column', do_compression='true')
                     if outputformat == "text":
                         savetxt(filename+"-"+str(iout)+".txt", result, fmt="%.6f")
@@ -95,7 +95,7 @@ def save(data, outputdir, outputfile, outputformat):
                 result = data.map(lambda (_, v): float16(v)).collect()
                 result = array([v for (k, v) in sorted(zip(keys, result), key=lambda (k, v): k)])
                 if outputformat == "matlab":
-                    savemat(filename+".mat", mdict={outputfile: squeeze(transpose(reshape(result, dims.num[::-1])))},
+                    savemat(filename+".mat", mdict={outputfile: squeeze(transpose(reshape(result, dims.count()[::-1])))},
                             oned_as='column', do_compression='true')
                 if outputformat == "text":
                     savetxt(filename+".txt", result, fmt="%.6f")
@@ -118,11 +118,11 @@ def save(data, outputdir, outputfile, outputformat):
                 for iout in range(0, nout):
                     result = data.map(lambda (_, v): v[iout]).collect()
                     result = array([v for (k, v) in sorted(zip(keys, result), key=lambda (k, v): k)])
-                    arraytoim(squeeze(transpose(reshape(result, dims.num[::-1]))), filename+"-"+str(iout))
+                    arraytoim(squeeze(transpose(reshape(result, dims.count()[::-1]))), filename+"-"+str(iout))
             else:
                 result = data.map(lambda (_, v): v).collect()
                 result = array([v for (k, v) in sorted(zip(keys, result), key=lambda (k, v): k)])
-                arraytoim(squeeze(transpose(reshape(result, dims.num[::-1]))), filename)
+                arraytoim(squeeze(transpose(reshape(result, dims.count()[::-1]))), filename)
         else:
             arraytoim(data, filename)
 
