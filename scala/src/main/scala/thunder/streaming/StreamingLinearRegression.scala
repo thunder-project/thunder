@@ -6,7 +6,7 @@ import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.mllib.regression.{LinearRegressionModel, GeneralizedLinearAlgorithm}
 import org.apache.spark.mllib.optimization._
 
-import thunder.util.Load
+import thunder.util.LoadStreaming
 import scala.util.Random._
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.SparkConf
@@ -155,7 +155,7 @@ object StreamingLinearRegression {
     val ssc = new StreamingContext(conf, Seconds(batchTime))
 
     /** Train Streaming Linear Regression model */
-    val data = Load.loadStreamingLabeledData(ssc, directory)
+    val data = LoadStreaming.fromTextWithLabels(ssc, directory)
     val predictions = StreamingLinearRegression.trainStreaming(data, d, stepSize, numIterations, initializationMode)
 
     /** Print predictions (for testing) */

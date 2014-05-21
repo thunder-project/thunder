@@ -7,9 +7,9 @@ import org.apache.spark.streaming._
 import org.apache.spark.streaming.StreamingContext._
 import org.apache.spark.streaming.dstream.DStream
 
-import thunder.util.Load
+import thunder.util.LoadStreaming
 import thunder.util.Save
-import thunder.util.Load.subToInd
+import thunder.util.io.Keys
 import org.apache.spark.Logging
 import scala.math.sqrt
 import scala.Some
@@ -200,14 +200,14 @@ object StatefulLinearRegression {
     }
 
     /** Get feature keys with linear indexing */
-    val featureKeys = subToInd(features, dims)
+    val featureKeys = Keys.subToInd(features, dims)
 
     /** Create Streaming Context */
     val ssc = new StreamingContext(conf, Seconds(batchTime))
     ssc.checkpoint(System.getenv("CHECKPOINT"))
 
     /** Load streaming data */
-    val data = Load.loadStreamingDataWithKeys(ssc, directory, dims.size, dims)
+    val data = LoadStreaming.fromTextWithKeys(ssc, directory, dims.size, dims)
 
     /** Train Linear Regression models */
     val state = StatefulLinearRegression.trainStreaming(data, featureKeys)

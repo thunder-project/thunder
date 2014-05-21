@@ -9,7 +9,7 @@ import cern.colt.matrix.{DoubleFactory1D, DoubleFactory2D}
 
 import org.scalatest.FunSuite
 import com.google.common.io.Files
-import thunder.util.Load
+import thunder.util.LoadStreaming
 import scala.util.Random
 import java.io.File
 import org.apache.commons.io.FileUtils
@@ -42,7 +42,7 @@ class StreamingBasicSuite extends FunSuite {
     val testDir = Files.createTempDir()
     val checkpointDir = Files.createTempDir()
     val ssc = new StreamingContext(conf, Seconds(1))
-    val data = Load.loadStreamingDataWithKeys(ssc, testDir.toString)
+    val data = LoadStreaming.fromTextWithKeys(ssc, testDir.toString)
 
     // create and train linear model
     val state = StatefulStats.trainStreaming(data)
@@ -75,7 +75,7 @@ class StreamingBasicSuite extends FunSuite {
   }
 
 
-  ignore("stateful linear regression") {
+  test("stateful linear regression") {
 
     // set parameters
     val n = 10 // number of data points per record
@@ -88,7 +88,7 @@ class StreamingBasicSuite extends FunSuite {
     val testDir = Files.createTempDir()
     val checkpointDir = Files.createTempDir()
     val ssc = new StreamingContext(conf, Seconds(1))
-    val data = Load.loadStreamingDataWithKeys(ssc, testDir.toString)
+    val data = LoadStreaming.fromTextWithKeys(ssc, testDir.toString)
 
     // create and train stateful linear regression model
     val state = StatefulLinearRegression.trainStreaming(data, Array(0))
@@ -137,7 +137,7 @@ class StreamingBasicSuite extends FunSuite {
     // create test directory and set up streaming data
     val testDir = Files.createTempDir()
     val ssc = new StreamingContext(conf, Seconds(1))
-    val data = Load.loadStreamingData(ssc, testDir.toString)
+    val data = LoadStreaming.fromText(ssc, testDir.toString)
 
     // create and train KMeans model
     val KMeans = new StreamingKMeans().setK(k).setD(d).setAlpha(1).setInitializationMode("gauss").setMaxIterations(1)
@@ -167,7 +167,7 @@ class StreamingBasicSuite extends FunSuite {
     assertSetsEqual(model.clusterCenters, centers, 0.1)
   }
 
-  ignore("streaming linear regression") {
+  test("streaming linear regression") {
 
     // set parameters
     val n = 100 // number of data points per batch
@@ -179,7 +179,7 @@ class StreamingBasicSuite extends FunSuite {
     // create test directory and set up streaming data
     val testDir = Files.createTempDir()
     val ssc = new StreamingContext(conf, Seconds(1))
-    val data = Load.loadStreamingLabeledData(ssc, testDir.toString)
+    val data = LoadStreaming.fromTextWithLabels(ssc, testDir.toString)
 
     // create and train linear model
     val LinearModel = new StreamingLinearRegression(2, 1, 10, "fixed")

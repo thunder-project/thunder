@@ -9,7 +9,7 @@ import org.apache.spark.streaming.dstream.DStream
 import scala.util.Random.nextDouble
 import scala.util.Random.nextGaussian
 
-import thunder.util.Load
+import thunder.util.LoadStreaming
 
 /**
  * K-means clustering on streaming data with support for
@@ -230,7 +230,7 @@ object StreamingKMeans {
     val ssc = new StreamingContext(conf, Seconds(batchTime))
 
     /** Train KMeans model */
-    val data = Load.loadStreamingData(ssc, directory)
+    val data = LoadStreaming.fromText(ssc, directory)
     val assignments = StreamingKMeans.trainStreaming(data, k, d, a, maxIterations, initializationMode)
 
     /** Print assignments (for testing) */

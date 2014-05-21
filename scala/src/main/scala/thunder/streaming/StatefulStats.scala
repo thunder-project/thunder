@@ -1,16 +1,15 @@
 package thunder.streaming
 
-import org.apache.spark.SparkConf
+import org.apache.spark.{SparkContext, SparkConf, Logging}
 import org.apache.spark.SparkContext._
 import org.apache.spark.util.StatCounter
 import org.apache.spark.streaming._
+import org.apache.spark.streaming.kafka.KafkaUtils
 import org.apache.spark.streaming.StreamingContext._
 import org.apache.spark.streaming.dstream.DStream
 
-import thunder.util.Load
+import thunder.util.LoadStreaming
 import thunder.util.Save
-import org.apache.spark.Logging
-
 
 /**
  * Stateful statistics
@@ -70,12 +69,14 @@ object StatefulStats {
           .set("spark.executor.memory", "100G")
     }
 
+    val sc = new SparkContext(conf)
+
     /** Create Streaming Context */
     val ssc = new StreamingContext(conf, Seconds(batchTime))
     ssc.checkpoint(System.getenv("CHECKPOINT"))
 
     /** Load streaming data */
-    val data = Load.loadStreamingDataWithKeys(ssc, directory, dims.size, dims)
+    val data = LoadStreaming.fromTextWithKeys(ssc, directory, dims.size, dims)
     data.print()
 
     /** Train stateful statistics models */

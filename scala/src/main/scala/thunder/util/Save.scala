@@ -2,7 +2,7 @@
 
 package thunder.util
 
-import thunder.util.Load.{getDims, subToInd}
+import thunder.util.io.Keys
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
 import org.apache.spark.streaming.dstream.DStream
@@ -61,8 +61,8 @@ object Save {
   def saveDataWithKeysAsText(data: RDD[(Array[Int], Array[Double])], directory: String, fileName: Seq[String]) {
 
     val saver = new TextSaver(directory)
-    val dims = getDims(data)
-    val sorted = subToInd(data, dims).sortByKey().values
+    val dims = Keys.getDims(data)
+    val sorted = Keys.subToInd(data, dims).sortByKey().values
     val nout = sorted.first().size
     for (i <- 0 until nout) {
       saver.write(sorted.map(x => x(i)), fileName(i))
