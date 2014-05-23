@@ -19,7 +19,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit
  * Each call to nextKeyValue() updates the LongWritable KEY and BytesWritable VALUE.
  *
  * KEY = byte position in the file the record started at (Long)
- * VALUE = the record itself (Bytes)
+ * VALUE = the record itself (BytesWritable)
  *
  */
 class FixedLengthBinaryRecordReader extends RecordReader[LongWritable, BytesWritable] {
@@ -69,11 +69,7 @@ class FixedLengthBinaryRecordReader extends RecordReader[LongWritable, BytesWrit
     }
 
     // get the record length
-    recordLength = FixedLengthBinaryInputFormat.getRecordLength
-
-    if (recordLength == 0) {
-      throw new IOException("recordLength must not be 0")
-    }
+    recordLength = FixedLengthBinaryInputFormat.getRecordLength(context)
 
     // get the filesystem
     val fs = file.getFileSystem(job)
@@ -85,7 +81,7 @@ class FixedLengthBinaryRecordReader extends RecordReader[LongWritable, BytesWrit
     fileInputStream.seek(splitStart)
 
     // set our current position
-    this.currentPosition = splitStart
+    currentPosition = splitStart
 
   }
 

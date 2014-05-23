@@ -9,7 +9,6 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
 import org.apache.hadoop.io.{BytesWritable, LongWritable}
-import java.nio.{ByteOrder, ByteBuffer}
 
 object Load {
 

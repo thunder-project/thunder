@@ -3,9 +3,11 @@ package thunder.util.io
 import org.apache.spark.mllib.regression.LabeledPoint
 import java.nio.{ByteOrder, ByteBuffer}
 
+// TODO add numerical format option to handle byte -> int vs byte -> float
 /**
  * Class for loading lines of a data file
  * supporting a variety of formats
+ *
  *
  * @param nKeys Number of integer keys per data point
  */
