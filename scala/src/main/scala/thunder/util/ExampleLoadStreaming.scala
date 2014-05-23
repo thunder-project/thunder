@@ -16,6 +16,12 @@ object ExampleLoadStreaming {
 
     val conf = new SparkConf().setMaster(master).setAppName("ExampleLoadStreaming")
 
+    if (!master.contains("local")) {
+      conf.setSparkHome(System.getenv("SPARK_HOME"))
+        .setJars(List("target/scala-2.10/thunder_2.10-0.1.0.jar"))
+        .set("spark.executor.memory", "100G")
+    }
+
     val ssc = new StreamingContext(conf, Seconds(batchTime))
 
     val data = LoadStreaming.fromBinary(ssc, file)
