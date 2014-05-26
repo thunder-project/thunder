@@ -1,84 +1,32 @@
-/** Utilities for saving results */
-
 package thunder.util
 
 import thunder.util.io.Keys
+import thunder.util.io.{TextWriter, ImageWriter}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
-import org.apache.spark.streaming.dstream.DStream
-import java.io.File
-import java.util.Calendar
+
+/** Utilities for saving results from RDDs */
 
 object Save {
 
-  case class ImageSaver(directory: String) {
+  def asText(data: RDD[Array[Double]], directory: String, fileName: Seq[String]) {
 
-    var colorMode = new String
-
-    def setColorMode(colorMode: String): ImageSaver = {
-      this.colorMode = colorMode
-      this
-    }
-
-    def write(rdd: RDD[(Array[Int], Double)]) = {
-      rdd.collect()
-
-    }
-
-  }
-
-  case class TextSaver(directory: String) {
-
-    def write(rdd: RDD[Double], fileName: String) = {
-      val out = rdd.collect()
-      val dateString = Calendar.getInstance().getTime().toString().replace(" ", "-").replace(":", "-")
-      printToFile(new File(directory ++ File.separator ++ fileName ++ "-" ++ dateString ++ ".txt"))(p => {
-        out.foreach(x => p.println("%.6f".format(x)))
-      })
-    }
-
-  }
-
-  def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
-    val p = new java.io.PrintWriter(f)
-    try {
-      op(p)
-    } finally {
-      p.close()
-    }
-  }
-
-  def saveDataAsText(data: RDD[Array[Double]], directory: String, fileName: Seq[String]) {
-
-    val saver = new TextSaver(directory)
-    val nout = data.first().size
-    for (i <- 0 until nout) {
+    val saver = new TextWriter(directory)
+    val n = data.first().size
+    for (i <- 0 until n) {
       saver.write(data.map(x => x(i)), fileName(i))
     }
 
   }
 
-  def saveDataWithKeysAsText(data: RDD[(Array[Int], Array[Double])], directory: String, fileName: Seq[String]) {
+  def asTextWithKeys(data: RDD[(Array[Int], Array[Double])], directory: String, fileName: Seq[String]) {
 
-    val saver = new TextSaver(directory)
+    val saver = new TextWriter(directory)
     val dims = Keys.getDims(data)
     val sorted = Keys.subToInd(data, dims).sortByKey().values
-    val nout = sorted.first().size
-    for (i <- 0 until nout) {
+    val n = sorted.first().size
+    for (i <- 0 until n) {
       saver.write(sorted.map(x => x(i)), fileName(i))
-    }
-
-  }
-
-  def saveStreamingDataAsText(data: DStream[(Int, Array[Double])], directory: String, fileName: Seq[String]) {
-
-    val saver = new TextSaver(directory)
-    data.foreachRDD{rdd =>
-      val sorted = rdd.sortByKey().values
-      val nout = sorted.first().size
-      for (i <- 0 until nout) {
-        saver.write(sorted.map(x => x(i)), fileName(i))
-      }
     }
 
   }
