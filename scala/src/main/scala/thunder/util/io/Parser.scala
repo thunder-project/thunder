@@ -13,6 +13,7 @@ import java.nio.{ByteOrder, ByteBuffer}
  */
 case class Parser(nKeys: Int = 0) {
 
+  // TODO try to use 2 byte Int (unsigned Int)
   /**
    * Convert an Array[Byte] to Array[Int]
    * using a Java ByteBuffer

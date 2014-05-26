@@ -68,15 +68,12 @@ object StatefulStats {
           .set("spark.executor.memory", "100G")
     }
 
-    val sc = new SparkContext(conf)
-
     /** Create Streaming Context */
     val ssc = new StreamingContext(conf, Seconds(batchTime))
     ssc.checkpoint(System.getenv("CHECKPOINT"))
 
     /** Load streaming data */
     val data = LoadStreaming.fromTextWithKeys(ssc, directory, dims.size, dims)
-    data.print()
 
     /** Train stateful statistics models */
     val state = StatefulStats.trainStreaming(data)
