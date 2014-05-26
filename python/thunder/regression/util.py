@@ -31,6 +31,38 @@ class RegressionModel(object):
             return betas, stats, resid
 
 
+class MeanRegressionModel(RegressionModel):
+    """Class for regression via simple multiplication by a design matrix"""
+
+    def __init__(self, modelfile):
+        """Load model
+
+        :param modelfile: An array, or a string (assumes a MAT file
+        with name modelfile_X containing variable X)
+        """
+        if type(modelfile) is str:
+            x = loadmat(modelfile + "_X.mat")['X']
+        else:
+            x = modelfile
+        x = x.astype(float)
+        x_hat = (x.T / sum(x,axis=1)).T
+        self.x = x
+        self.x_hat = x_hat
+
+    def get(self, y):
+        """Compute regression coefficients, r2 statistic, and residuals"""
+
+        b = dot(self.x_hat, y)
+        predic = dot(b, self.x)
+        resid = y - predic
+        sse = sum((predic - y) ** 2)
+        sst = sum((y - mean(y)) ** 2)
+        if sst == 0:
+            r2 = 0
+        else:
+            r2 = 1 - sse / sst
+        return b, r2, resid
+
 class LinearRegressionModel(RegressionModel):
     """Class for linear regression"""
 
@@ -186,5 +218,6 @@ TUNING_MODELS = {
 
 REGRESSION_MODELS = {
     'linear': LinearRegressionModel,
-    'bilinear': BilinearRegressionModel
+    'bilinear': BilinearRegressionModel,
+    'mean': MeanRegressionModel
 }

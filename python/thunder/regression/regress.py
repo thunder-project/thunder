@@ -32,7 +32,7 @@ if __name__ == "__main__":
     parser.add_argument("datafile", type=str)
     parser.add_argument("modelfile", type=str)
     parser.add_argument("outputdir", type=str)
-    parser.add_argument("regressmode", choices=("linear", "bilinear"), help="form of regression")
+    parser.add_argument("regressmode", choices=("mean", "linear", "bilinear"), help="form of regression")
     parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub"), default="raw", required=False)
 
     args = parser.parse_args()

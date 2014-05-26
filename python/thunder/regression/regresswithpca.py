@@ -44,7 +44,7 @@ if __name__ == "__main__":
     parser.add_argument("datafile", type=str)
     parser.add_argument("modelfile", type=str)
     parser.add_argument("outputdir", type=str)
-    parser.add_argument("regressmode", choices=("linear", "bilinear"), help="form of regression")
+    parser.add_argument("regressmode", choices=("mean", "linear", "bilinear"), help="form of regression")
     parser.add_argument("--k", type=int, default=2)
     parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub"), default="raw", required=False)
 
@@ -56,7 +56,7 @@ if __name__ == "__main__":
         egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
         sc.addPyFile(egg[0])
 
-    data = load(sc, args.datafile, args.preprocess).cache()
+    data = load(sc, args.datafile, args.preprocess)
 
     stats, comps, latent, scores, traj = regresswithpca(data, args.modelfile, args.regressmode, args.k)
 
