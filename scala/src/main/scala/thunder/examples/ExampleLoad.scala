@@ -1,7 +1,7 @@
-package thunder.util
+package thunder.examples
 
-import org.apache.spark.SparkContext._
 import org.apache.spark.{SparkContext, SparkConf}
+import thunder.util.Load
 
 object ExampleLoad {
 

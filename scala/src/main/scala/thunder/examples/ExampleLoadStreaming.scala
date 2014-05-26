@@ -1,8 +1,8 @@
-package thunder.util
+package thunder.examples
 
-import org.apache.spark.SparkContext._
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.{Seconds, StreamingContext}
+import thunder.util.LoadStreaming
 
 object ExampleLoadStreaming {
 
