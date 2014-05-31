@@ -13,26 +13,29 @@ import thunder.util.LoadStreaming
 
 /**
  * K-means clustering on streaming data with support for
- * mini batch and forgetful algorithms.
+ * sequential and forgetful algorithms.
  *
  * The underlying assumption is that all streaming data points
  * belong to one of several clusters, and we want to
  * learn the identity of those clusters (the "KMeans Model")
- * as new data arrive. Given this assumption, all data
- * MUST have the same dimensionality.
+ * as new data arrive. All records MUST have the same dimensionality.
  *
- * For mini batch algorithms, we update the underlying
- * cluster identities for each batch of data, and keep
- * a running count of the number of data points per cluster,
- * so that all data points are treated equally. The
- * number of data points per batch can be arbitrary.
+ * For sequential algorithms, we update the underlying
+ * cluster identities once for each batch of data, and keep
+ * a count of the number of data points per cluster.
+ * The number of data points per batch can be arbitrary.
+ * This implementation is based on the sequential k-means algorithm
+ * (see https://www.cs.princeton.edu/courses/archive/fall08/cos436/Duda/C/sk_means.htm)
+ * except that each update is based on a batch of data rather than
+ * a single data point. It is also similar to the offline mini-batch
+ * algorithm (see http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf)
+ * except that batches arrive over time, rather than through sampling.
  *
- * For forgetful algorithms, each new batch of data
- * is weighted in its contribution, so that
- * more recent data is weighted more heavily.
- * The weighting is per batch (i.e. per time window),
- * rather than per data point, so for meaningful
- * interpretation, the number of data points per batch
+ * For forgetful algorithms, each new batch of data is weighted in
+ * its contribution so that more recent data is weighted more strongly
+ * (see https://www.cs.princeton.edu/courses/archive/fall08/cos436/Duda/C/sk_means.htm).
+ * The weighting is per batch (i.e. per time window), rather than per data point,
+ * so for meaningful interpretation, the number of data points per batch
  * should be approximately constant.
  *
  */
@@ -66,21 +69,22 @@ class StreamingKMeans (
 
   /**
    * Set the parameter alpha to determine the update rule.
-   * If alpha = 1, perform "mini batch" KMeans, which treats all data
-   * points equivalently. If alpha < 1, perform forgetful KMeans,
+   * If alpha = 1, perform seqeutnail or "mini batch" KMeans, treating all
+   * data equivalently. If alpha < 1, perform forgetful KMeans,
    * which uses a constant to weight old data
    * less strongly (with exponential weighting), e.g. 0.9 will
    * favor only recent data, whereas 0.1 will update slowly.
    * Weighting over time is per batch, so this algorithm implicitly
    * assumes an approximately constant number of data points per batch
-   * Default: 1 (mini batch)
+   * Default: 1 (sequential)
    */
   def setAlpha(a: Double): StreamingKMeans = {
     this.a = a
     this
   }
 
-  /** Set the number of iterations per batch of data */
+  // TODO: characterize the effect of max iterations in forgetful version
+  /** Set the maximum number of iterations per batch of data. */
   def setMaxIterations(maxIterations: Int): StreamingKMeans = {
     this.maxIterations = maxIterations
     this
@@ -114,9 +118,8 @@ class StreamingKMeans (
     new StreamingKMeansModel(clusters.map(_._1), clusters.map(_._2))
   }
 
-  /** Update KMeans clusters by doing training passes over an RDD
-    * TODO: stop iterating if clusters have converged
-    */
+  // TODO: stop iterating if clusters have converged
+  /** Update KMeans clusters by doing training passes over an RDD */
   def update(data: RDD[Array[Double]], model: StreamingKMeansModel): StreamingKMeansModel = {
 
     val centers = model.clusterCenters
@@ -162,9 +165,10 @@ class StreamingKMeans (
 
   }
 
-  /** Main streaming operation: initialize the KMeans model
-    * and then update it based on new data from the stream.
-    */
+  /**
+   * Main streaming operation: initialize the KMeans model
+   * and then update it based on new data from the stream.
+   */
   def runStreaming(data: DStream[Array[Double]]): DStream[Int] = {
     var model = initRandom()
     data.foreachRDD(RDD => model = update(RDD, model))
@@ -180,10 +184,10 @@ object StreamingKMeans {
    * Train a Streaming KMeans model. We initialize a set of
    * cluster centers randomly and then update them
    * after receiving each batch of data from the stream.
-   * If a = 1 this is equivalent to mini-batch KMeans,
-   * where each batch of data from the stream is a different
+   * If a = 1 this is equivalent to sequential or mini-batch KMeans,
+   * where each batch of data from the stream is treated as a different
    * mini-batch. If a < 1, perform forgetful KMeans, which
-   * weights more recent data points more heavily.
+   * weights more recent data points more strongly.
    *
    * @param input Input DStream of (Array[Double]) data points
    * @param k Number of clusters to estimate.
