@@ -169,7 +169,7 @@ object StatefulBinnedStats {
     val ssc = new StreamingContext(conf, Seconds(batchTime))
     ssc.checkpoint(System.getenv("CHECKPOINT"))
 
-    /** Create analysis configuration */
+    /** Load analysis parameters */
     val params = LoadParam.fromText(paramFile)
 
     /** Get feature keys with linear indexing */
