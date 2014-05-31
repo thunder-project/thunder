@@ -61,20 +61,22 @@ object Load {
     }
   }
 
-  // TODO Make number of bytes per record an argument
   /**
-   * Load data from a flat binary file, assuming each record is a set of integers
-   * with a total of 8 bytes per record
+   * Load data from a flat binary file, assuming each record is a set of numbers
+   * with the specified numerical format (see ByteBuffer), and the number of
+   * bytes per record is constant (see FixedLengthBinaryInputFormat)
    *
    * @param sc SparkContext
    * @param dir Directory to the input data files
    * @param preProcessMethod Method for pre processing data (default = "raw")
+   * @param format Numerical format for conversion from binary
    * @return An RDD of data with values, RDD[(Array[Double])]
    */
   def fromBinary(sc: SparkContext,
                dir: String,
-               preProcessMethod: String = "raw"): RDD[Array[Double]] = {
-    val parser = new Parser(0)
+               preProcessMethod: String = "raw",
+               format: String = "int"): RDD[Array[Double]] = {
+    val parser = new Parser(0, format)
     val lines = sc.newAPIHadoopFile[LongWritable, BytesWritable, FixedLengthBinaryInputFormat](dir)
     val data = lines.map{ case (k, v) => v.getBytes}
 
@@ -86,24 +88,26 @@ object Load {
     }
   }
 
-  // TODO Make number of bytes per record an argument
   /**
-   * Load data from a flat binary file, assuming each record is a set of Integers
-   * with a total of 8 bytes per record, and the first integers in each record are the keys
-   * and the remaining integers are the values
-   *
+   * Load data from a flat binary file, assuming each record is a set of numbers
+   * with the specified numerical format (see ByteBuffer) and the number of
+   * bytes per record is constant (see FixedLengthBinaryInputFormat). The first
+   * nKeys numbers in each record are the keys and the remaining numbers are the values.
    *
    * @param sc SparkContext
    * @param dir Directory to the input data files
    * @param preProcessMethod Method for pre processing data (default = "raw")
+   * @param nKeys Method for pre processing data (default = "raw")
+   * @param format Numerical format for conversion from binary
    * @return An RDD of data with values, RDD[(Array[Double])]
    */
   def fromBinaryWithKeys(sc: SparkContext,
                  dir: String,
                  preProcessMethod: String = "raw",
-                 nKeys: Int = 3): RDD[(Array[Int], Array[Double])] = {
+                 nKeys: Int = 3,
+                 format: String = "int"): RDD[(Array[Int], Array[Double])] = {
 
-    val parser = new Parser(nKeys)
+    val parser = new Parser(nKeys, format)
     val lines = sc.newAPIHadoopFile[LongWritable, BytesWritable, FixedLengthBinaryInputFormat](dir)
     val data = lines.map{ case (k, v) => v.getBytes}
 
