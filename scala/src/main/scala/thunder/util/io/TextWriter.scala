@@ -1,15 +1,16 @@
 package thunder.util.io
 
 import org.apache.spark.rdd.RDD
-import java.util.Calendar
 import java.io.File
+import thunder.util.Save
 
-case class TextWriter(directory: String) {
+/*** Class for writing an RDD to a text file */
 
-  def write(rdd: RDD[Double], fileName: String) = {
+class TextWriter extends Writer {
+
+  def write(rdd: RDD[Double], fullFile: String) {
     val out = rdd.collect()
-    val dateString = Calendar.getInstance().getTime.toString.replace(" ", "-").replace(":", "-")
-    printToFile(new File(directory ++ File.separator ++ fileName ++ "-" ++ dateString ++ ".txt"))(p => {
+    printToFile(new File(fullFile ++ ".txt"))(p => {
       out.foreach(x => p.println("%.6f".format(x)))
     })
   }
@@ -23,4 +24,6 @@ case class TextWriter(directory: String) {
     }
   }
 
+
 }
+

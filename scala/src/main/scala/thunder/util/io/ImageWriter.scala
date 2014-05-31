@@ -2,19 +2,12 @@ package thunder.util.io
 
 import org.apache.spark.rdd.RDD
 
+/*** Class for writing an RDD to an image */
 
-case class ImageWriter(directory: String) {
+class ImageWriter extends Writer {
 
-  var colorMode = new String
-
-  def setColorMode(colorMode: String): ImageWriter = {
-    this.colorMode = colorMode
-    this
-  }
-
-  def write(rdd: RDD[(Array[Int], Double)]) = {
-    rdd.collect()
-
+  def write(rdd: RDD[Double], fullFile: String) = {
+    throw new NotImplementedError("image writing not yet implemented")
   }
 
 }

@@ -1,34 +1,22 @@
 package thunder.util
 
-import thunder.util.io.Keys
-import thunder.util.io.{TextWriter, ImageWriter}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.SparkContext._
+import thunder.util.io.{BinaryWriter, TextWriter}
 
-/** Utilities for saving results from RDDs */
+/** Object with methods for saving results from an RDD */
 
 object Save {
 
-  def asText(data: RDD[Array[Double]], directory: String, fileName: Seq[String]) {
+  def asText(data: RDD[Array[Double]], directory: String, fileName: Seq[String]) =
+    new TextWriter().withoutKeys(data, directory, fileName)
 
-    val saver = new TextWriter(directory)
-    val n = data.first().size
-    for (i <- 0 until n) {
-      saver.write(data.map(x => x(i)), fileName(i))
-    }
+  def asTextWithKeys(data: RDD[(Array[Int], Array[Double])], directory: String, fileName: Seq[String]) =
+    new TextWriter().withKeys(data, directory, fileName)
 
-  }
+  def asBinary(data: RDD[Array[Double]], directory: String, fileName: Seq[String]) =
+    new BinaryWriter().withoutKeys(data, directory, fileName)
 
-  def asTextWithKeys(data: RDD[(Array[Int], Array[Double])], directory: String, fileName: Seq[String]) {
-
-    val saver = new TextWriter(directory)
-    val dims = Keys.getDims(data)
-    val sorted = Keys.subToInd(data, dims).sortByKey().values
-    val n = sorted.first().size
-    for (i <- 0 until n) {
-      saver.write(sorted.map(x => x(i)), fileName(i))
-    }
-
-  }
+  def asBinaryWithKeys(data: RDD[(Array[Int], Array[Double])], directory: String, fileName: Seq[String]) =
+    new BinaryWriter().withKeys(data, directory, fileName)
 
 }
