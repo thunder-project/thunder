@@ -31,7 +31,7 @@ class Dimensions(object):
         return self
 
 
-class DataLoader(object):
+class Parser(object):
     """Class for loading lines of a data file"""
 
     def __init__(self, nkeys):
@@ -47,7 +47,7 @@ class DataLoader(object):
         return self.func(y)
 
 
-class DataPreProcessor(object):
+class PreProcessor(object):
     """Class for preprocessing data"""
 
     def __init__(self, preprocessmethod):
@@ -188,7 +188,7 @@ def indtosub(data, dims):
 
 
 def load(sc, datafile, preprocessmethod="raw", nkeys=3):
-    """Load data from a text file with format
+    """Load data from a text file (or a directory of files) with format
     <k1> <k2> ... <t1> <t2> ...
     where <k1> <k2> ... are keys (Int) and <t1> <t2> ... are the data values (Double)
     If multiple keys are provided (e.g. x, y, z), they are converted to linear indexing
@@ -201,12 +201,12 @@ def load(sc, datafile, preprocessmethod="raw", nkeys=3):
     """
 
     lines = sc.textFile(datafile)
-    loader = DataLoader(nkeys)
+    parser = Parser(nkeys)
 
-    data = lines.map(loader.get)
+    data = lines.map(parser.get)
 
     if preprocessmethod != "raw":
-        preprocessor = DataPreProcessor(preprocessmethod)
+        preprocessor = PreProcessor(preprocessmethod)
         data = data.mapValues(preprocessor.get)
 
     return data
