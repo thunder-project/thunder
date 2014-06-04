@@ -1,24 +1,16 @@
 package thunder.util
 
-import thunder.util.io.TextWriter
 import org.apache.spark.streaming.dstream.DStream
-import org.apache.spark.SparkContext._
+import thunder.util.io.{TextWriter, BinaryWriter}
 
-/** Utilities for saving streaming results from DStreams */
+/** Object with methods for saving results from a DStream */
 
 object SaveStreaming {
 
-  def asTextWithKeys(data: DStream[(Int, Array[Double])], directory: String, fileName: Seq[String]) {
+  def asTextWithKeys(data: DStream[(Int, Array[Double])], directory: String, fileName: Seq[String]) =
+    new TextWriter().withKeys(data, directory, fileName)
 
-    val saver = new TextWriter(directory)
-    data.foreachRDD{rdd =>
-      val sorted = rdd.sortByKey().values
-      val nout = sorted.first().size
-      for (i <- 0 until nout) {
-        saver.write(sorted.map(x => x(i)), fileName(i))
-      }
-    }
-
-  }
+  def asBinaryWithKeys(data: DStream[(Int, Array[Double])], directory: String, fileName: Seq[String]) =
+    new BinaryWriter().withKeys(data, directory, fileName)
 
 }

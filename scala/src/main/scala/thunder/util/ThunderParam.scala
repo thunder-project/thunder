@@ -2,6 +2,7 @@ package thunder.util
 
 import scala.collection.mutable.HashMap
 
+/*** Class for storing parameters related to an analysis in Thunder */
 
 class ThunderParam {
 
@@ -24,7 +25,7 @@ class ThunderParam {
     this
   }
 
-  /** Get a parameter; throws a NoSuchElementException if it's not set */
+  /** Get any parameter, throw a NoSuchElementException if it's not set */
   def get(key: String): String = {
     settings.getOrElse(key, throw new NoSuchElementException(key))
   }

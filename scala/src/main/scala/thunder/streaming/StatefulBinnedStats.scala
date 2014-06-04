@@ -163,13 +163,14 @@ object StatefulBinnedStats {
       conf.setSparkHome(System.getenv("SPARK_HOME"))
         .setJars(List("target/scala-2.10/thunder_2.10-0.1.0.jar"))
         .set("spark.executor.memory", "100G")
+        .set("spark.default.parallelism", "100")
     }
 
     /** Create Streaming Context */
     val ssc = new StreamingContext(conf, Seconds(batchTime))
     ssc.checkpoint(System.getenv("CHECKPOINT"))
 
-    /** Create analysis configuration */
+    /** Load analysis parameters */
     val params = LoadParam.fromText(paramFile)
 
     /** Get feature keys with linear indexing */

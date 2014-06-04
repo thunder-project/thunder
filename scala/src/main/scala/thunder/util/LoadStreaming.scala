@@ -62,35 +62,42 @@ object LoadStreaming {
   }
 
   /**
-   * Load streaming data from flat binary files, assuming each record is
-   * a set of integers with a fixed number of bytes per record
+   * Load streaming data from flat binary files, assuming each record is a set of numbers
+   * with the specified numerical format (see ByteBuffer) and the number of
+   * bytes per record is constant (see FixedLengthBinaryInputFormat)
    *
    * @param ssc StreamingContext
    * @param dir Directory to the input data files
+   * @param format Numerical format for conversion from binary
    * @return A DStream of data, each a collection of Array[Double]
    */
   def fromBinary (ssc: StreamingContext,
-                dir: String): DStream[Array[Double]] = {
-    val parser = new Parser(0)
+                dir: String,
+                format: String = "int"): DStream[Array[Double]] = {
+    val parser = new Parser(0, format)
     val lines = ssc.fileStream[LongWritable, BytesWritable, FixedLengthBinaryInputFormat](dir)
     lines.map{ case (k, v) => v.getBytes}.map(parser.get)
   }
 
   /**
-   * Load streaming data from flat binary files, assuming each record is
-   * a set of integers with fixed number of bytes per record, and further assuming
-   * that the first nKeys values are keys, and the rest are values
+   * Load streaming data from flat binary files, assuming each record is a set of numbers
+   * with the specified numerical format (see ByteBuffer) and the number of
+   * bytes per record is constant (see FixedLengthBinaryInputFormat). The first
+   * nKeys numbers in each record are keys, and the rest are values.
    *
    * @param ssc StreamingContext
    * @param dir Directory to the input data files
+   * @param nKeys Number of keys per record
+   * @param format Numerical format for conversion from binary
    * @return A DStream of data, each a tuple with two elements: the key (an Int)
    *         and the the data values (an array of Double)
    */
   def fromBinaryWithKeys (ssc: StreamingContext,
                   dir: String,
                   nKeys: Int = 3,
-                  dims: Array[Int] = Array(1)): DStream[(Int, Array[Double])] = {
-    val parser = new Parser(nKeys)
+                  dims: Array[Int] = Array(1),
+                  format: String = "int"): DStream[(Int, Array[Double])] = {
+    val parser = new Parser(nKeys, format)
     val lines = ssc.fileStream[LongWritable, BytesWritable, FixedLengthBinaryInputFormat](dir)
     Keys.subToIndStreaming(lines.map{ case (k, v) => v.getBytes}.map(parser.getWithKeys), dims)
   }
