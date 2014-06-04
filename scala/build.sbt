@@ -4,7 +4,7 @@ version := "0.1.0"
 
 scalaVersion := "2.10.3"
 
-ivyXML := <dependency org="org.eclipse.jetty.orbit" name="javax.servlet" rev="2.5.0.v201103041518">
+ivyXML := <dependency org="org.eclipse.jetty.orbit" name="javax.servlet" rev="3.0.0.v201112011016">
 <artifact name="javax.servlet" type="orbit" ext="jar"/>
 </dependency>
 
