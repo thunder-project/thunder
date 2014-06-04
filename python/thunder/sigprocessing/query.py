@@ -29,7 +29,7 @@ def query(data, indsfile):
     for i in range(0, method.n):
         indsb = data.context.broadcast(method.inds[i])
         ts[i, :] = data.filter(lambda (k, _): k in indsb.value).map(
-            lambda (k, x): x).mean()
+            lambda (k, x): x).sum() / len(method.inds[i])
 
     return ts
 
