@@ -29,21 +29,21 @@ class MatrixAccumulatorParam(AccumulatorParam):
         return val1
 
 
-class MatrixRDD(object):
-    def __init__(self, rdd, n=None, d=None):
+class RowMatrix(object):
+    def __init__(self, rdd, nrows=None, ncols=None):
         self.rdd = rdd
-        if n is None:
-            self.n = rdd.count()
+        if nrows is None:
+            self.nrows = rdd.count()
         else:
-            self.n = n
-        if d is None:
+            self.nrows = nrows
+        if ncols is None:
             vec = rdd.first()[1]
             if type(vec) is ndarray:
-                self.d = len(vec)
+                self.ncols = len(vec)
             else:
-                self.d = 1
+                self.ncols = 1
         else:
-            self.d = d
+            self.ncols = ncols
 
     def collect(self):
         """
@@ -65,9 +65,9 @@ class MatrixRDD(object):
         axis - axis for mean subtraction, 0 (rows) or 1 (columns)
         """
         if axis is None:
-            return self.outer() / self.n
+            return self.outer() / self.nrows
         else:
-            return self.center(axis).outer() / self.n
+            return self.center(axis).outer() / self.nrows
 
     def outer(self, method="reduce"):
         """
@@ -78,15 +78,29 @@ class MatrixRDD(object):
         """
         if method is "reduce":
             return self.rdd.map(lambda (k, v): v).mapPartitions(matrixsum_iterator_self).sum()
+
         if method is "accum":
             global mat
-            mat = self.rdd.context.accumulator(zeros((self.d, self.d)), MatrixAccumulatorParam())
+            mat = self.rdd.context.accumulator(zeros((self.ncols, self.ncols)), MatrixAccumulatorParam())
 
             def outerSum(x):
                 global mat
                 mat += outer(x, x)
             self.rdd.map(lambda (k, v): v).foreach(outerSum)
+            print(mat.value)
             return mat.value
+
+        if method is "aggregate":
+
+            def seqop(x, v):
+                return x + outer(v, v)
+
+            def combop(x, y):
+                x += y
+                return x
+
+            return self.rdd.map(lambda (_, v): v).aggregate(zeros((self.ncols, self.ncols)), seqop, combop)
+
         else:
             raise Exception("method must be reduce or accum")
 
@@ -99,21 +113,21 @@ class MatrixRDD(object):
         method - "reduce" (use a reducer) or "accum" (use an accumulator)
         """
         dtype = type(other)
-        if dtype == MatrixRDD:
-            if self.n != other.n:
+        if dtype == RowMatrix:
+            if self.nrows != other.nrows:
                 raise Exception(
-                    "cannot multiply shapes ("+str(self.n)+","+str(self.d)+") and ("+str(other.n)+","+str(other.d)+")")
+                    "cannot multiply shapes ("+str(self.nrows)+","+str(self.ncols)+") and ("+str(other.nrows)+","+str(other.ncols)+")")
             else:
                 if method is "reduce":
                     return self.rdd.join(other.rdd).map(lambda (k, v): v).mapPartitions(matrixsum_iterator_other).sum()
                 if method is "accum":
                     global mat
-                    mat = self.rdd.context.accumulator(zeros((self.d, other.d)), MatrixAccumulatorParam())
+                    mat = self.rdd.context.accumulator(zeros((self.ncols, other.ncols)), MatrixAccumulatorParam())
 
-                    def outerSum(x):
+                    def outersum(x):
                         global mat
                         mat += outer(x[0], x[1])
-                    self.rdd.join(other.rdd).map(lambda (k, v): v).foreach(outerSum)
+                    self.rdd.join(other.rdd).map(lambda (k, v): v).foreach(outersum)
                     return mat.value
                 else:
                     raise Exception("method must be reduce or accum")
@@ -121,14 +135,14 @@ class MatrixRDD(object):
             # TODO: check size of array, broadcast if too big
             if dtype == ndarray:
                 dims = shape(other)
-                if (len(dims) == 1 and sum(allclose(dims, self.d) == 0)) or (len(dims) == 2 and dims[0] != self.d):
+                if (len(dims) == 1 and sum(allclose(dims, self.ncols) == 0)) or (len(dims) == 2 and dims[0] != self.ncols):
                     raise Exception(
-                        "cannot multiply shapes ("+str(self.n)+","+str(self.d)+") and " + str(dims))
+                        "cannot multiply shapes ("+str(self.nrows)+","+str(self.ncols)+") and " + str(dims))
                 if len(dims) == 0:
                     new_d = 1
                 else:
                     new_d = dims[0]
-            return MatrixRDD(self.rdd.mapValues(lambda x: dot(x, other)), self.n, new_d)
+            return RowMatrix(self.rdd.mapValues(lambda x: dot(x, other)), self.nrows, new_d)
 
     def elementwise(self, other, op):
         """
@@ -139,43 +153,43 @@ class MatrixRDD(object):
         op - binary operator, e.g. add, subtract
         """
         dtype = type(other)
-        if dtype is MatrixRDD:
-            if (self.n is not other.n) | (self.d is not other.d):
+        if dtype is RowMatrix:
+            if (self.nrows is not other.nrows) | (self.ncols is not other.ncols):
                 print >> sys.stderr, \
-                    "cannot do elementwise operation for shapes ("+self.n+","+self.d+") and ("+other.n+","+other.d+")"
+                    "cannot do elementwise op for shapes ("+self.nrows+","+self.ncols+") and ("+other.nrows+","+other.ncols+")"
             else:
-                return MatrixRDD(self.rdd.join(other.rdd).mapValues(lambda (x, y): op(x, y)), self.n, self.d)
+                return RowMatrix(self.rdd.join(other.rdd).mapValues(lambda (x, y): op(x, y)), self.nrows, self.ncols)
         else:
             if dtype is ndarray:
                 dims = shape(other)
-                if len(dims) > 1 or dims[0] is not self.d:
+                if len(dims) > 1 or dims[0] is not self.ncols:
                     raise Exception(
-                        "cannot do elementwise operation for shapes ("+str(self.n)+","+str(self.d)+") and " + str(dims))
-            return MatrixRDD(self.rdd.mapValues(lambda x: op(x, other)), self.n, self.d)
+                        "cannot do elementwise operation for shapes ("+str(self.nrows)+","+str(self.ncols)+") and " + str(dims))
+            return RowMatrix(self.rdd.mapValues(lambda x: op(x, other)), self.nrows, self.ncols)
 
     def plus(self, other):
         """
         elementwise addition (see elementwise)
         """
-        return MatrixRDD.elementwise(self, other, add)
+        return RowMatrix.elementwise(self, other, add)
 
     def minus(self, other):
         """
         elementwise subtraction (see elementwise)
         """
-        return MatrixRDD.elementwise(self, other, subtract)
+        return RowMatrix.elementwise(self, other, subtract)
 
     def dottimes(self, other):
         """
         elementwise multiplcation (see elementwise)
         """
-        return MatrixRDD.elementwise(self, other, multiply)
+        return RowMatrix.elementwise(self, other, multiply)
 
     def dotdivide(self, other):
         """
         elementwise division (see elementwise)
         """
-        return MatrixRDD.elementwise(self, other, divide)
+        return RowMatrix.elementwise(self, other, divide)
 
     def center(self, axis=0):
         """
@@ -185,7 +199,7 @@ class MatrixRDD(object):
         axis - center rows (0) or columns (1)
         """
         if axis is 0:
-            return MatrixRDD(self.rdd.mapValues(lambda x: x - mean(x)), self.n, self.d)
+            return RowMatrix(self.rdd.mapValues(lambda x: x - mean(x)), self.nrows, self.ncols)
         if axis is 1:
             meanVec = self.rdd.map(lambda (k, v): v).mean()
             return self.minus(meanVec)
@@ -200,7 +214,7 @@ class MatrixRDD(object):
         axis - center rows (0) or columns (1)
         """
         if axis is 0:
-            return MatrixRDD(self.rdd.mapValues(lambda x: (x - mean(x))/std(x)), self.n, self.d)
+            return RowMatrix(self.rdd.mapValues(lambda x: (x - mean(x))/std(x)), self.nrows, self.ncols)
         if axis is 1:
             meanvec = self.rdd.map(lambda (k, v): v).mean()
             stdvec = self.rdd.map(lambda (k, v): v).std()
