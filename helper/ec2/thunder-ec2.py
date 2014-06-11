@@ -35,7 +35,11 @@ def install_thunder(master, opts):
     ssh(master, opts, "git clone https://github.com/freeman-lab/thunder.git")
     ssh(master, opts, "chmod u+x thunder/helper/ec2/setup.sh")
     ssh(master, opts, "thunder/helper/ec2/setup.sh")
-    print "Done!"
+    print "\n\n"
+    print "-------------------------------"
+    print "Thunder successfully installed!"
+    print "-------------------------------"
+    print "\n"
 
 
 def load_data(master, opts):
@@ -48,7 +52,11 @@ def load_data(master, opts):
     ssh(master, opts, "/root/ephemeral-hdfs/bin/hadoop distcp "
                               "s3n://" + s3_access_key + ":" + s3_secret_key +
                               "@thunder.datasets/test/iris.txt hdfs:///data")
-    print "Done!"
+    print "\n\n"
+    print "-------------------------------"
+    print "Example data successfully loaded!"
+    print "-------------------------------"
+    print "\n"
 
 
 def setup_cluster(conn, master_nodes, slave_nodes, opts, deploy_ssh_key):
@@ -78,7 +86,7 @@ def setup_cluster(conn, master_nodes, slave_nodes, opts, deploy_ssh_key):
     if opts.ganglia:
         modules.append('ganglia')
 
-    ssh(master, opts, "rm -rf spark-ec2 && git clone https://github.com/mesos/spark-ec2.git -b v2")
+    ssh(master, opts, "rm -rf spark-ec2 && git clone https://github.com/mesos/spark-ec2.git -b v3")
 
     print "Deploying files to master..."
     deploy_folder = os.path.join(os.environ['SPARK_HOME'], "ec2", "deploy.generic")
@@ -132,7 +140,7 @@ if __name__ == "__main__":
         opts.wait = 160
         opts.hadoop_major_version = "1"
         opts.ganglia = True
-        opts.spark_version = "0.9.1"
+        opts.spark_version = "1.0.0"
         opts.swap = 1024
         opts.worker_instances = 1
         opts.master_opts = ""
@@ -146,6 +154,12 @@ if __name__ == "__main__":
         setup_cluster(conn, master_nodes, slave_nodes, opts, True)
         master = master_nodes[0].public_dns_name
         install_thunder(master, opts)
+        print "\n\n"
+        print "-------------------------------"
+        print "Cluster successfully launched!"
+        print "Go to http://%s:8080 to see the web UI for your cluster" % master
+        print "-------------------------------"
+        print "\n"
 
     if action != "launch":
         conn = ec2.connect_to_region(opts.region)
