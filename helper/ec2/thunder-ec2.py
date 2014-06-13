@@ -43,13 +43,15 @@ def install_thunder(master, opts):
 
 
 def load_data(master, opts):
-    """ Load an example data set into a Spark EC2 cluster"""
+    """ 
+    Load an example data set into a Spark EC2 cluster
+    TODO: replace with URL once we've hosted public data
+    """
     print "Transferring example data to the cluster..."
     ssh(master, opts, "/root/ephemeral-hdfs/bin/stop-all.sh")
     ssh(master, opts, "/root/ephemeral-hdfs/bin/start-all.sh")
     time.sleep(10)
-    ssh(master, opts, "/root/ephemeral-hdfs/bin/hadoop distcp "
-                              "s3n://thunder.datasets/test/iris.txt hdfs:///data")
+    ssh(master, opts, "/root/ephemeral-hdfs/bin/hadoop distcp s3n://thunder.datasets/test/iris.txt hdfs:///data")
     print "\n\n"
     print "-------------------------------"
     print "Example data successfully loaded!"
