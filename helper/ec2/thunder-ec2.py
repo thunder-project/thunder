@@ -48,10 +48,8 @@ def load_data(master, opts):
     ssh(master, opts, "/root/ephemeral-hdfs/bin/stop-all.sh")
     ssh(master, opts, "/root/ephemeral-hdfs/bin/start-all.sh")
     time.sleep(10)
-    (s3_access_key, s3_secret_key) = get_s3_keys()
     ssh(master, opts, "/root/ephemeral-hdfs/bin/hadoop distcp "
-                              "s3n://" + s3_access_key + ":" + s3_secret_key +
-                              "@thunder.datasets/test/iris.txt hdfs:///data")
+                              "s3n://thunder.datasets/test/iris.txt hdfs:///data")
     print "\n\n"
     print "-------------------------------"
     print "Example data successfully loaded!"
