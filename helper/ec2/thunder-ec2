@@ -1,6 +1,9 @@
 #!/bin/sh
 
-${SPARK_HOME?"Need to set SPARK_HOME to the location of your Spark installation"}
+if [ -z "$SPARK_HOME" ]; then
+    echo "Need to set SPARK_HOME to the location of your Spark installation"
+    exit 1
+fi
 
 export PYTHONPATH="$SPARK_HOME/ec2/:$PYTHONPATH"
 export PYTHONPATH="$SPARK_HOME/ec2/third_party/boto-2.4.1.zip/boto-2.4.1:$PYTHONPATH"
