@@ -44,7 +44,7 @@ class ICA(object):
     def __init__(self, k, c, svdmethod="direct", maxiter=10, tol=0.000001, seed=0):
         if c > k:
             raise Exception("number of independent comps " + str(c) +
-                            "must be less than the number of principal comps" + str(k))
+                            " must be less than the number of principal comps " + str(k))
         self.k = k
         self.c = c
         self.svdmethod = svdmethod
@@ -70,8 +70,7 @@ class ICA(object):
             data = RowMatrix(data)
 
         # reduce dimensionality
-        svd = SVD(k=self.k, method=self.svdmethod)
-        svd.calc(data)
+        svd = SVD(k=self.k, method=self.svdmethod).calc(data)
 
         # whiten data
         whtmat = real(dot(inv(diag(svd.s/sqrt(data.nrows))), svd.v))
