@@ -28,9 +28,8 @@ def crosscorr(data, sigfile, lag):
     betas = method.calc(data)
 
     if lag is not 0:
-        pca = PCA(k=2)
-        pca.fit(betas)
-        return betas, pca.scores, pca.latent, pca.comps
+        out = PCA(2).fit(betas)
+        return betas, out.scores, out.latent, out.comps
     else:
         return betas
 

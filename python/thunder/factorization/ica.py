@@ -108,6 +108,8 @@ class ICA(object):
         self.w = w
         self.sigs = sigs
 
+        return self
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="do independent components analysis")
@@ -132,10 +134,9 @@ if __name__ == "__main__":
     
     data = load(sc, args.datafile, args.preprocess).cache()
 
-    ica = ICA(k=args.k, c=args.c, svdmethod=args.svdmethod, maxiter=args.maxiter, tol=args.tol, seed=args.seed)
-    ica.fit(data)
+    result = ICA(args.k, args.c, args.svdmethod, args.maxiter, args.tol, args.seed).fit(data)
 
     outputdir = args.outputdir + "-ica"
 
-    save(ica.w, outputdir, "w", "matlab")
-    save(ica.sigs, outputdir, "sigs", "matlab")
+    save(result.w, outputdir, "w", "matlab")
+    save(result.sigs, outputdir, "sigs", "matlab")

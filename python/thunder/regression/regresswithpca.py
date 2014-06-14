@@ -30,13 +30,12 @@ def regresswithpca(data, modelfile, regressmode, k=2):
     betas, stats, resid = model.fit(data)
 
     # do principal components analysis
-    pca = PCA(k=k)
-    pca.fit(betas)
+    out = PCA(k).fit(betas)
 
     # compute trajectories from raw data
-    traj = model.fit(data, pca.comps)
+    traj = model.fit(data, out.comps)
 
-    return stats, pca.comps, pca.latent, pca.scores, traj
+    return stats, out.comps, out.latent, out.scores, traj
 
 
 if __name__ == "__main__":

@@ -118,6 +118,8 @@ class SVD(object):
             self.s = s
             self.v = v
 
+        return self
+
 
 
 

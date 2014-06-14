@@ -38,6 +38,8 @@ class PCA(object):
         self.latent = svd.s
         self.comps = svd.v
 
+        return self
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="do principal components analysis")
@@ -58,11 +60,10 @@ if __name__ == "__main__":
 
     data = load(sc, args.datafile, args.preprocess).cache()
 
-    pca = PCA(k=args.k, svdmethod=args.svdmethod)
-    pca.fit(data)
+    result = PCA(args.k, args.svdmethod).fit(data)
 
     outputdir = args.outputdir + "-pca"
 
-    save(pca.comps, outputdir, "comps", "matlab")
-    save(pca.latent, outputdir, "latent", "matlab")
-    save(pca.scores, outputdir, "scores", "matlab")
+    save(result.comps, outputdir, "comps", "matlab")
+    save(result.latent, outputdir, "latent", "matlab")
+    save(result.scores, outputdir, "scores", "matlab")
