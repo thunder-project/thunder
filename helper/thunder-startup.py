@@ -13,9 +13,9 @@ from thunder.clustering.kmeans import kmeans, closestpoint
 from thunder.regression.regress import regress
 from thunder.regression.util import RegressionModel, TuningModel
 
-from thunder.factorization.pca import pca
-from thunder.factorization.ica import ica
-from thunder.factorization.util import svd
+from thunder.factorization import PCA
+from thunder.factorization import ICA
+from thunder.factorization import SVD
 
 from thunder.sigprocessing.stats import stats
 from thunder.sigprocessing.localcorr import localcorr

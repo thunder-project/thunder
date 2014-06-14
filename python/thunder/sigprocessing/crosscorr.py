@@ -2,7 +2,7 @@ import os
 import argparse
 import glob
 from thunder.sigprocessing.util import SigProcessingMethod
-from thunder.factorization.util import svd
+from thunder.factorization import PCA
 from thunder.util.load import load
 from thunder.util.save import save
 from pyspark import SparkContext
@@ -28,9 +28,8 @@ def crosscorr(data, sigfile, lag):
     betas = method.calc(data)
 
     if lag is not 0:
-        # do PCA
-        scores, latent, comps = svd(betas, 2)
-        return betas, scores, latent, comps
+        out = PCA(2).fit(betas)
+        return betas, out.scores, out.latent, out.comps
     else:
         return betas
 

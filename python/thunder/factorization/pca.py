@@ -3,11 +3,12 @@ import argparse
 import glob
 from thunder.util.load import load
 from thunder.util.save import save
-from thunder.factorization.util import svd
+from thunder.factorization import SVD
+from thunder.util.matrices import RowMatrix
 from pyspark import SparkContext
 
 
-def pca(data, k, svdmethod="direct"):
+class PCA(object):
     """Perform principal components analysis
     using the singular value decomposition
 
@@ -19,9 +20,26 @@ def pca(data, k, svdmethod="direct"):
     :return latent: the latent values
     :return scores: the k scores (as RDD)
     """
-    scores, latent, comps = svd(data, k, meansubtract=0, method=svdmethod)
 
-    return scores, latent, comps
+    def __init__(self, k=3, svdmethod='direct'):
+        self.k = k
+        self.svdmethod = svdmethod
+
+    def fit(self, data):
+
+        if type(data) is not RowMatrix:
+            data = RowMatrix(data)
+
+        data.center(0)
+        svd = SVD(k=self.k, method=self.svdmethod)
+        svd.calc(data)
+
+        self.scores = svd.u
+        self.latent = svd.s
+        self.comps = svd.v
+
+        return self
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="do principal components analysis")
@@ -42,10 +60,10 @@ if __name__ == "__main__":
 
     data = load(sc, args.datafile, args.preprocess).cache()
 
-    scores, latent, comps = pca(data, args.k, args.svdmethod)
+    result = PCA(args.k, args.svdmethod).fit(data)
 
     outputdir = args.outputdir + "-pca"
 
-    save(comps, outputdir, "comps", "matlab")
-    save(latent, outputdir, "latent", "matlab")
-    save(scores, outputdir, "scores", "matlab")
+    save(result.comps, outputdir, "comps", "matlab")
+    save(result.latent, outputdir, "latent", "matlab")
+    save(result.scores, outputdir, "scores", "matlab")

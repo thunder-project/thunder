@@ -2,7 +2,7 @@ import os
 import argparse
 import glob
 from thunder.regression.util import RegressionModel
-from thunder.factorization.util import svd
+from thunder.factorization import PCA
 from thunder.util.load import load
 from thunder.util.save import save
 from pyspark import SparkContext
@@ -30,12 +30,12 @@ def regresswithpca(data, modelfile, regressmode, k=2):
     betas, stats, resid = model.fit(data)
 
     # do principal components analysis
-    scores, latent, comps = svd(betas, k)
+    out = PCA(k).fit(betas)
 
     # compute trajectories from raw data
-    traj = model.fit(data, comps)
+    traj = model.fit(data, out.comps)
 
-    return stats, comps, latent, scores, traj
+    return stats, out.comps, out.latent, out.scores, traj
 
 
 if __name__ == "__main__":
