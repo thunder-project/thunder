@@ -109,7 +109,7 @@ class RowMatrix(object):
                 global mat
                 mat += outer(x, x)
             self.rdd.map(lambda (k, v): v).foreach(outerSum)
-            print(mat.value)
+
             return mat.value
 
         if method is "aggregate":
