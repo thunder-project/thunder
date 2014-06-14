@@ -1,7 +1,7 @@
 import shutil
 import tempfile
 from numpy import array, array_equal, add
-from thunder.util.matrixrdd import RowMatrix
+from thunder.util.matrices import RowMatrix
 from test_utils import PySparkTestCase
 
 
@@ -52,11 +52,12 @@ class TestOuter(MatrixRDDTestCase):
 
     def test_outer(self):
         mat1 = RowMatrix(self.sc.parallelize([(1, array([1, 2, 3])), (2, array([4, 5, 6]))]))
-        resultA = mat1.outer()
-        resultB = mat1.outer("accum")
-        resultB = mat1.outer("aggregate")
+        resultA = mat1.gramian()
+        resultB1 = mat1.gramian("accum")
+        resultB2 = mat1.gramian("aggregate")
         truth = array([[17, 22, 27], [22, 29, 36], [27, 36, 45]])
         assert array_equal(resultA, truth)
-        assert array_equal(resultB, truth)
+        assert array_equal(resultB1, truth)
+        assert array_equal(resultB2, truth)
 
 # TODO: TestCenter, TestZScore

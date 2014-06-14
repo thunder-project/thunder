@@ -4,8 +4,8 @@ import tempfile
 from numpy import array, allclose, transpose
 import scipy.linalg as LinAlg
 from scipy.io import loadmat
-from thunder.factorization.ica import ica
-from thunder.factorization.util import svd
+from thunder.factorization import ICA
+from thunder.factorization import SVD
 from thunder.util.load import load
 from test_utils import PySparkTestCase
 
@@ -41,11 +41,12 @@ class TestSVD(FactorizationTestCase):
         ]
         data = self.sc.parallelize(zip(range(1, 5), data_local))
 
-        u, s, v = svd(data, 1, meansubtract=0, method="direct")
+        svd = SVD(k=1, method="direct")
+        svd.calc(data)
         u_true, s_true, v_true = LinAlg.svd(array(data_local))
-        u_test = transpose(array(u.map(lambda (_, v): v).collect()))[0]
-        v_test = v[0]
-        assert(allclose(s[0], s_true[0]))
+        u_test = transpose(array(svd.u.map(lambda (_, v): v).collect()))[0]
+        v_test = svd.v[0]
+        assert(allclose(svd.s[0], s_true[0]))
         assert(allclose(v_test, v_true[0, :]) | allclose(-v_test, v_true[0, :]))
         assert(allclose(u_test, u_true[:, 0]) | allclose(-u_test, u_true[:, 0]))
 
@@ -58,12 +59,13 @@ class TestSVD(FactorizationTestCase):
         ]
         data = self.sc.parallelize(zip(range(1, 5), data_local))
 
-        u, s, v = svd(data, 1, meansubtract=0, method="em")
+        svd = SVD(k=1, method="em")
+        svd.calc(data)
         u_true, s_true, v_true = LinAlg.svd(array(data_local))
-        u_test = transpose(array(u.map(lambda (_, v): v).collect()))[0]
-        v_test = v[0]
+        u_test = transpose(array(svd.u.map(lambda (_, v): v).collect()))[0]
+        v_test = svd.v[0]
         tol = 10e-04  # allow small error for iterative method
-        assert(allclose(s[0], s_true[0], atol=tol))
+        assert(allclose(svd.s[0], s_true[0], atol=tol))
         assert(allclose(v_test, v_true[0, :], atol=tol) | allclose(-v_test, v_true[0, :], atol=tol))
         assert(allclose(u_test, u_true[:, 0], atol=tol) | allclose(-u_test, u_true[:, 0], atol=tol))
 
@@ -78,10 +80,11 @@ class TestICA(FactorizationTestCase):
         ica_data = os.path.join(DATA_DIR, "ica.txt")
         ica_results = os.path.join(DATA_DIR, "results/ica")
         data = load(self.sc, ica_data, "raw")
-        w, sigs = ica(data, 4, 4, svdmethod="direct", seed=1)
+        ica = ICA(k=4, c=4, svdmethod="direct", seed=1)
+        ica.fit(data)
         w_true = loadmat(os.path.join(ica_results, "w.mat"))["w"]
         sigs_true = loadmat(os.path.join(ica_results, "sigs.mat"))["sigs"]
         tol = 10e-02
-        assert(allclose(w, w_true, atol=tol))
-        assert(allclose(transpose(sigs.map(lambda (_, v): v).collect()), sigs_true, atol=tol))
+        assert(allclose(ica.w, w_true, atol=tol))
+        assert(allclose(transpose(ica.sigs.map(lambda (_, v): v).collect()), sigs_true, atol=tol))
 

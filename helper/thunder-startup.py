@@ -15,7 +15,7 @@ from thunder.regression.util import RegressionModel, TuningModel
 
 from thunder.factorization.pca import pca
 from thunder.factorization.ica import ica
-from thunder.factorization.util import svd
+from thunder.factorization.util import SVD
 
 from thunder.sigprocessing.stats import stats
 from thunder.sigprocessing.localcorr import localcorr
