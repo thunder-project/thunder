@@ -1,14 +1,14 @@
 import abc
 import os
 from datetime import datetime
-from numpy import arange, add, float16, random, outer, dot, zeros, real, transpose, diag, argsort, sqrt, inner
+from numpy import arange, array, add, float16, random, outer, dot, zeros, real, transpose, diag, argsort, sqrt, inner
 from scipy.linalg import sqrtm, inv, orth, eig
 from scipy.io import savemat
-from thunder.util.load import load
-from thunder.sigprocessing.util import SigProcessingMethod
-from thunder.regression.util import RegressionModel
-from thunder.factorization.util import svd
-from thunder.clustering.kmeans import kmeans
+from thunder.io import load
+from thunder.timeseries import Stats, Fourier, CrossCorr
+from thunder.regression import RegressionModel
+from thunder.factorization import SVD
+from thunder.clustering import KMeans
 
 
 class ThunderDataTest(object):
@@ -25,7 +25,7 @@ class ThunderDataTest(object):
         return TESTS[testname](sc)
 
     def createinputdata(self, numrecords, numdims, numpartitions):
-        rdd = self.sc.parallelize(arange(0, numrecords), numpartitions)
+        rdd = self.sc.parallelize(map(lambda x: (1, array([x])), arange(0, numrecords)), numpartitions)
         self.rdd = rdd
 
     def loadinputdata(self, datafile, savefile=None):
@@ -55,18 +55,18 @@ class ThunderDataTest(object):
         return results
 
 
-class Stats(ThunderDataTest):
+class StatsTest(ThunderDataTest):
 
     def __init__(self, sc):
         ThunderDataTest.__init__(self, sc)
-        self.method = SigProcessingMethod.load("stats", statistic="std")
+        self.method = Stats("std")
 
     def runtest(self):
         vals = self.method.calc(self.rdd)
         vals.count()
 
 
-class Average(ThunderDataTest):
+class AverageTest(ThunderDataTest):
 
     def __init__(self, sc):
         ThunderDataTest.__init__(self, sc)
@@ -75,7 +75,7 @@ class Average(ThunderDataTest):
         vec = self.rdd.map(lambda (_, v): v).mean()
 
 
-class Regress(ThunderDataTest):
+class RegressTest(ThunderDataTest):
 
     def __init__(self, sc):
         ThunderDataTest.__init__(self, sc)
@@ -86,7 +86,7 @@ class Regress(ThunderDataTest):
         stats.count()
 
 
-class RegressWithSave(ThunderDataTest):
+class RegressWithSaveTest(ThunderDataTest):
 
     def __init__(self, sc):
         ThunderDataTest.__init__(self, sc)
@@ -98,29 +98,29 @@ class RegressWithSave(ThunderDataTest):
         savemat(self.savefile + "tmp.mat", mdict={"tmp": result}, oned_as='column')
 
 
-class CrossCorr(ThunderDataTest):
+class CrossCorrTest(ThunderDataTest):
 
     def __init__(self, sc):
         ThunderDataTest.__init__(self, sc)
 
     def runtest(self):
-        method = SigProcessingMethod.load("crosscorr", sigfile=os.path.join(self.modelfile, "crosscorr"), lag=0)
+        method = CrossCorr(sigfile=os.path.join(self.modelfile, "crosscorr"), lag=0)
         betas = method.calc(self.rdd)
         betas.count()
 
 
-class Fourier(ThunderDataTest):
+class FourierTest(ThunderDataTest):
 
     def __init__(self, sc):
         ThunderDataTest.__init__(self, sc)
-        self.method = SigProcessingMethod.load("fourier", freq=5)
+        self.method = Fourier(freq=5)
 
     def runtest(self):
         vals = self.method.calc(self.rdd)
         vals.count()
 
 
-class Load(ThunderDataTest):
+class LoadTest(ThunderDataTest):
 
     def __init__(self, sc):
         ThunderDataTest.__init__(self, sc)
@@ -129,7 +129,7 @@ class Load(ThunderDataTest):
         self.rdd.count()
 
 
-class Save(ThunderDataTest):
+class SaveTest(ThunderDataTest):
 
     def __init__(self, sc):
         ThunderDataTest.__init__(self, sc)
@@ -139,16 +139,16 @@ class Save(ThunderDataTest):
         savemat(self.savefile + "tmp.mat", mdict={"tmp": result}, oned_as='column')
 
 
-class KMeans(ThunderDataTest):
+class KMeansTest(ThunderDataTest):
 
     def __init__(self, sc):
         ThunderDataTest.__init__(self, sc)
 
     def runtest(self):
-        labels, centers = kmeans(self.rdd, 3, maxiter=5, tol=0)
+        centers = KMeans(3, maxiter=5, tol=0).train(self.rdd)
 
 
-class ICA(ThunderDataTest):
+class ICATest(ThunderDataTest):
 
     def __init__(self, sc):
         ThunderDataTest.__init__(self, sc)
@@ -172,16 +172,16 @@ class ICA(ThunderDataTest):
         sigs = self.rdd.mapValues(lambda x: dot(B, x))
 
 
-class PCADirect(ThunderDataTest):
+class PCADirectTest(ThunderDataTest):
  
     def __init__(self, sc):
         ThunderDataTest.__init__(self, sc)
  
     def runtest(self):
-        scores, latent, comps = svd(self.rdd, 3, meansubtract=0, method="direct")
- 
+        svd = SVD(3, method="direct").calc(self.rdd)
 
-class PCAIterative(ThunderDataTest):
+
+class PCAIterativeTest(ThunderDataTest):
 
     def __init__(self, sc):
         ThunderDataTest.__init__(self, sc)
@@ -212,16 +212,16 @@ class PCAIterative(ThunderDataTest):
 
 
 TESTS = {
-    'stats': Stats,
-    'average': Average,
-    'regress': Regress,
-    'regresswithsave': RegressWithSave,
+    'stats': StatsTest,
+    'average': AverageTest,
+    'regress': RegressTest,
+    'regresswithsave': RegressWithSaveTest,
     'crosscorr': CrossCorr,
     'fourier': Fourier,
-    'load': Load,
-    'save': Save,
-    'ica': ICA,
-    'pca-direct': PCADirect,
-    'pca-iterative': PCAIterative,
-    'kmeans': KMeans
+    'load': LoadTest,
+    'save': SaveTest,
+    'ica': ICATest,
+    'pca-direct': PCADirectTest,
+    'pca-iterative': PCAIterativeTest,
+    'kmeans': KMeansTest
 }

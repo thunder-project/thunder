@@ -13,9 +13,9 @@ if __name__ == "__main__":
     parser.add_argument("datatype", type=str, choices=("create", "datafile"))
     parser.add_argument("persistencetype", type=str, choices=("memory", "disk", "none"))
     parser.add_argument("testname", type=str)
-    parser.add_argument("--numrecords", type=int, required=False)
+    parser.add_argument("--numrecords", type=int, default=1000, required=False)
     parser.add_argument("--numdims", type=int, required=False)
-    parser.add_argument("--numpartitions", type=int, required=False)
+    parser.add_argument("--numpartitions", type=int, default=2, required=False)
     parser.add_argument("--numiterations", type=int, required=False)
     parser.add_argument("--savefile", type=str, default=None, required=False)
     parser.add_argument("--datafile", type=str, default=None, required=False)
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     if args.datatype == "datafile":
         test.loadinputdata(args.datafile, args.savefile)
     elif args.datatype == "create":
-        test.createinputdata(args.testname, args.numrecords, args.numdims, args.numpartitions)
+        test.createinputdata(args.numrecords, args.numdims, args.numpartitions)
 
     results = test.run(args.numtrials, args.persistencetype)
 
