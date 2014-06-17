@@ -1,38 +1,46 @@
 """
-utilities for signal processing
+Base and derived classes for calculating time series statistics
 """
 
-from numpy import sqrt, fix, pi, median, std, sum, mean, shape, zeros, roll, dot, angle, abs
+from numpy import array, sqrt, fix, pi, median, std, sum, mean, shape, zeros, roll, dot, angle, abs
 from scipy.linalg import norm
 from scipy.io import loadmat
 from numpy.fft import fft
 
 
-class SigProcessingMethod(object):
-    """class for doing signal processing"""
-
-    @staticmethod
-    def load(method, **opts):
-        return SIGPROCESSING_METHODS[method](**opts)
+class TimeSeriesBase(object):
+    """Base class for doing calculations on time series"""
 
     def get(self, y):
         pass
 
     def calc(self, data):
-        result = data.mapValues(lambda x: self.get(x))
-        return result
+        """Calculate a quantity (e.g. a statistic) on each record
+        using the get function defined through a subclass
+
+        Parameters
+        ----------
+        data : RDD of (tuple, array) pairs
+            The data
+
+        Returns
+        -------
+        params : RDD of (tuple, float) pairs
+            The calculated quantity
+        """
+
+        params = data.mapValues(lambda x: self.get(x))
+        return params
 
 
-class FourierMethod(SigProcessingMethod):
-    """class for computing fourier transform"""
+class Fourier(TimeSeriesBase):
+    """Class for computing fourier transform"""
 
     def __init__(self, freq):
-        """get frequency"""
-
         self.freq = freq
 
     def get(self, y):
-        """compute fourier amplitude (coherence) and phase"""
+        """Compute fourier amplitude (coherence) and phase"""
 
         y = y - mean(y)
         nframes = len(y)
@@ -45,14 +53,13 @@ class FourierMethod(SigProcessingMethod):
         ph = -(pi/2) - angle(ft[self.freq])
         if ph < 0:
             ph += pi * 2
-        return co, ph
+        return array([co, ph])
 
 
-class StatsMethod(SigProcessingMethod):
-    """class for computing simple summary statistics"""
+class Stats(TimeSeriesBase):
+    """Class for computing simple summary statistics"""
 
     def __init__(self, statistic):
-        """get mode"""
         self.func = {
             'median': lambda x: median(x),
             'mean': lambda x: mean(x),
@@ -61,32 +68,28 @@ class StatsMethod(SigProcessingMethod):
         }[statistic]
 
     def get(self, y):
-        """compute fourier amplitude (coherence) and phase"""
+        """Compute the statistic"""
 
         return self.func(y)
 
 
-class QueryMethod(SigProcessingMethod):
-    """class for computing averages over indices"""
+class CrossCorr(TimeSeriesBase):
+    """Class for computing lagged cross correlations
 
-    def __init__(self, indsfile):
-        """get indices"""
-        if type(indsfile) is str:
-            inds = loadmat(indsfile)['inds'][0]
-        else:
-            inds = indsfile
-        self.inds = inds
-        self.n = len(inds)
+    Parameters
+    ----------
+    x : str, or array
+        Signal to cross-correlate with, can be an array
+        or location of MAT file with name sigfile_X.mat
+        containing variable X with signal
 
-
-class CrossCorrMethod(SigProcessingMethod):
-    """class for computing lagged cross correlations"""
+    Attributes
+    ----------
+    x : array
+        Signal to cross-correlate with
+    """
 
     def __init__(self, sigfile, lag):
-        """load parameters. paramfile can be an array, or a string
-        if its a string, assumes signal is a MAT file
-        with name modelfile_X
-        """
         if type(sigfile) is str:
             x = loadmat(sigfile + "_X.mat")['X'][0]
         else:
@@ -111,7 +114,7 @@ class CrossCorrMethod(SigProcessingMethod):
             self.x = x
 
     def get(self, y):
-        """compute cross correlation between y and x"""
+        """Compute cross correlation between y and x"""
 
         y = y - mean(y)
         n = norm(y)
@@ -121,11 +124,3 @@ class CrossCorrMethod(SigProcessingMethod):
             y /= norm(y)
             b = dot(self.x, y)
         return b
-
-
-SIGPROCESSING_METHODS = {
-    'stats': StatsMethod,
-    'fourier': FourierMethod,
-    'crosscorr': CrossCorrMethod,
-    'query': QueryMethod
-}

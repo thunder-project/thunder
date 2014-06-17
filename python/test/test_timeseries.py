@@ -3,26 +3,25 @@ import shutil
 import tempfile
 from numpy import array, allclose, mean, median, std, corrcoef
 from scipy.linalg import norm
-from thunder.sigprocessing.util import SigProcessingMethod
-from thunder.sigprocessing.stats import stats
-from thunder.sigprocessing.fourier import fourier
-from thunder.sigprocessing.crosscorr import crosscorr
-from thunder.sigprocessing.localcorr import localcorr
-from thunder.sigprocessing.query import query
+from thunder.timeseries import Stats
+from thunder.timeseries import Fourier
+from thunder.timeseries import CrossCorr
+from thunder.timeseries import LocalCorr
+from thunder.timeseries import Query
 from test_utils import PySparkTestCase
 
 
-class SigProcessingTestCase(PySparkTestCase):
+class TimeSeriesTestCase(PySparkTestCase):
     def setUp(self):
-        super(SigProcessingTestCase, self).setUp()
+        super(TimeSeriesTestCase, self).setUp()
         self.outputdir = tempfile.mkdtemp()
 
     def tearDown(self):
-        super(SigProcessingTestCase, self).tearDown()
+        super(TimeSeriesTestCase, self).tearDown()
         shutil.rmtree(self.outputdir)
 
 
-class TestStats(SigProcessingTestCase):
+class TestStats(TimeSeriesTestCase):
     """Test accuracy for signal statistics
     by comparison to direct evaluation using numpy/scipy
     """
@@ -37,22 +36,22 @@ class TestStats(SigProcessingTestCase):
         data = self.sc.parallelize(zip(range(1, 5), data_local))
         data_local = array(data_local)
 
-        vals = stats(data, "mean").map(lambda (_, v): v)
+        vals = Stats("mean").calc(data).map(lambda (_, v): v)
 
         assert(allclose(vals.collect(), mean(data_local, axis=1)))
 
-        vals = stats(data, "median").map(lambda (_, v): v)
+        vals = Stats("median").calc(data).map(lambda (_, v): v)
         assert(allclose(vals.collect(), median(data_local, axis=1)))
 
-        vals = stats(data, "std").map(lambda (_, v): v)
+        vals = Stats("std").calc(data).map(lambda (_, v): v)
         assert(allclose(vals.collect(), std(data_local, axis=1)))
 
-        vals = stats(data, "norm").map(lambda (_, v): v)
+        vals = Stats("norm").calc(data).map(lambda (_, v): v)
         for i in range(0, 4):
             assert(allclose(vals.collect()[i], norm(data_local[i, :] - mean(data_local[i, :]))))
 
 
-class TestFourier(SigProcessingTestCase):
+class TestFourier(TimeSeriesTestCase):
     """Test accuracy for fourier analysis
     by comparison to known result
     (verified in MATLAB)
@@ -65,12 +64,12 @@ class TestFourier(SigProcessingTestCase):
 
         data = self.sc.parallelize(zip(range(1, 3), data_local))
 
-        co, ph = fourier(data, 2)
-        assert(allclose(co.map(lambda (_, v): v).collect()[0], 0.578664))
-        assert(allclose(ph.map(lambda (_, v): v).collect()[0], 4.102501))
+        vals = Fourier(2).calc(data)
+        assert(allclose(vals.map(lambda (_, v): v[0]).collect()[0], 0.578664))
+        assert(allclose(vals.map(lambda (_, v): v[1]).collect()[0], 4.102501))
 
 
-class TestLocalCorr(SigProcessingTestCase):
+class TestLocalCorr(TimeSeriesTestCase):
     """Test accuracy for local correlation
     by comparison to known result
     (verified by directly computing
@@ -99,7 +98,7 @@ class TestLocalCorr(SigProcessingTestCase):
 
         data = self.sc.parallelize(data_local)
 
-        corr = localcorr(data, 1).sortByKey()
+        corr = LocalCorr(1).calc(data)
 
         assert(allclose(corr.collect()[4][1], truth))
 
@@ -124,12 +123,12 @@ class TestLocalCorr(SigProcessingTestCase):
 
         data = self.sc.parallelize(data_local)
 
-        corr = localcorr(data, 1).sortByKey()
+        corr = LocalCorr(1).calc(data)
 
         assert(allclose(corr.collect()[4][1], truth))
 
 
-class TestQuery(SigProcessingTestCase):
+class TestQuery(TimeSeriesTestCase):
     """Test accuracy for query
     by comparison to known result
     (calculated by hand)
@@ -147,7 +146,7 @@ class TestQuery(SigProcessingTestCase):
         data = self.sc.parallelize(data_local)
 
         inds = array([array([1, 2]), array([3])])
-        ts = query(data, inds)
+        ts = Query(inds).calc(data)
         assert(allclose(ts[0, :], array([1.5, 2., 3.5])))
         assert(allclose(ts[1, :], array([4.0, 2.0, 1.0])))
 
@@ -161,12 +160,12 @@ class TestQuery(SigProcessingTestCase):
         data = self.sc.parallelize(data_local)
 
         inds = array([array([1, 2]), array([3])])
-        ts = query(data, inds)
+        ts = Query(inds).calc(data)
         assert(allclose(ts[0, :], array([1.5, 2., 3.5])))
         assert(allclose(ts[1, :], array([4.0, 2.0, 1.0])))
 
 
-class TestCrossCorr(SigProcessingTestCase):
+class TestCrossCorr(TimeSeriesTestCase):
     """Test accuracy for cross correlation
     by comparison to known result
     (lag=0 case tested with numpy corrcoef function,
@@ -184,20 +183,16 @@ class TestCrossCorr(SigProcessingTestCase):
 
         data = self.sc.parallelize(zip(range(1, 3), data_local))
 
-        method = SigProcessingMethod.load("crosscorr", sigfile=sig, lag=0)
+        method = CrossCorr(sigfile=sig, lag=0)
         betas = method.calc(data).map(lambda (_, v): v)
         assert(allclose(betas.collect()[0], corrcoef(data_local[0, :], sig)[0, 1]))
         assert(allclose(betas.collect()[1], corrcoef(data_local[1, :], sig)[0, 1]))
 
-        method = SigProcessingMethod.load("crosscorr", sigfile=sig, lag=2)
+        method = CrossCorr(sigfile=sig, lag=2)
         betas = method.calc(data).map(lambda (_, v): v)
         tol = 1E-5  # to handle rounding errors
         assert(allclose(betas.collect()[0], array([-0.18511, 0.03817, 0.99221, 0.06567, -0.25750]), atol=tol))
         assert(allclose(betas.collect()[1], array([-0.35119, -0.14190, 0.44777, -0.00408, 0.45435]), atol=tol))
-
-        betas = crosscorr(data, sig, 0).map(lambda (_, v): v)
-        assert(allclose(betas.collect()[0], corrcoef(data_local[0, :], sig)[0, 1]))
-        assert(allclose(betas.collect()[1], corrcoef(data_local[1, :], sig)[0, 1]))
 
 
 

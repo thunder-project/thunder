@@ -1,23 +1,9 @@
+"""
+Utilities for representing and working with matrices as RDDs
+"""
+
 from numpy import dot, outer, shape, ndarray, mean, add, subtract, multiply, zeros, std, divide, sqrt
 from pyspark.accumulators import AccumulatorParam
-
-
-def matrixsum_iterator_self(iterator):
-    yield sum(outer(x, x) for x in iterator)
-
-
-def matrixsum_iterator_other(iterator):
-    yield sum(outer(x, y) for x, y in iterator)
-
-
-class MatrixAccumulatorParam(AccumulatorParam):
-    def zero(self, value):
-        return zeros(shape(value))
-
-    def addInPlace(self, val1, val2):
-        val1 += val2
-        return val1
-
 
 # TODO: right divide and left divide
 # TODO: common operation is multiplying an RDD by its transpose times a matrix, how to do this cleanly?
@@ -28,7 +14,7 @@ class RowMatrix(object):
     """
     A large matrix backed by an RDD of (tuple, array) pairs
     The tuple can contain a row index, or any other useful
-    identifier for each row
+    identifier for each row.
 
     Parameters
     ----------
@@ -89,9 +75,9 @@ class RowMatrix(object):
         else:
             return self.center(axis).gramian() / self.nrows
 
-    def gramian(self, method="reduce"):
+    def gramian(self, method="accum"):
         """
-        Compute gramian matrix (the outer product of the matrix with itself)
+        Compute gramian matrix (the product of the matrix with its transpose, i.e. A^T * A)
 
         Parameters
         ----------
@@ -167,7 +153,7 @@ class RowMatrix(object):
                 if len(dims) == 0:
                     new_d = 1
                 else:
-                    new_d = dims[0]
+                    new_d = dims[1]
             other_b = self.rdd.context.broadcast(other)
             return RowMatrix(self.rdd.mapValues(lambda x: dot(x, other_b.value)), self.nrows, new_d)
 
@@ -282,4 +268,21 @@ class RowMatrix(object):
             self.rdd = self.minus(meanvec).dotdivide(stdvec).rdd
         else:
             raise Exception("axis must be 0 or 1")
+
+
+def matrixsum_iterator_self(iterator):
+    yield sum(outer(x, x) for x in iterator)
+
+
+def matrixsum_iterator_other(iterator):
+    yield sum(outer(x, y) for x, y in iterator)
+
+
+class MatrixAccumulatorParam(AccumulatorParam):
+    def zero(self, value):
+        return zeros(shape(value))
+
+    def addInPlace(self, val1, val2):
+        val1 += val2
+        return val1
 

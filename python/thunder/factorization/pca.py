@@ -1,8 +1,12 @@
+"""
+Class and standalone app for Principal Component Analysis
+"""
+
 import os
 import argparse
 import glob
-from thunder.util.load import load
-from thunder.util.save import save
+from thunder.io import load
+from thunder.io import save
 from thunder.factorization import SVD
 from thunder.util.matrices import RowMatrix
 from pyspark import SparkContext
@@ -12,13 +16,24 @@ class PCA(object):
     """Perform principal components analysis
     using the singular value decomposition
 
-    :param data: RDD of data points as key value pairs
-    :param k: number of principal components to recover
-    :param svdmethod: which svd algorithm to use (default = "direct")
+    Parameters
+    ----------
+    k : int
+        Number of principal components to estimate
 
-    :return comps: the k principal components (as array)
-    :return latent: the latent values
-    :return scores: the k scores (as RDD)
+    svdmethod : str, optional, default = "direct"
+        Which method to use for performing the SVD
+
+    Attributes
+    ----------
+    `comps` : array, shape (k, ncols)
+        The k principal components
+
+    `latent` : array, shape (k,)
+        The latent values
+
+    `scores` : RDD of nrows (tuple, array) pairs, each of shape (k,)
+        The scores (i.e. the representation of the data in PC space)
     """
 
     def __init__(self, k=3, svdmethod='direct'):
@@ -26,6 +41,12 @@ class PCA(object):
         self.svdmethod = svdmethod
 
     def fit(self, data):
+        """Estimate principal components
+
+        Parameters
+        ----------
+        data : RDD of (tuple, array) pairs, or RowMatrix
+        """
 
         if type(data) is not RowMatrix:
             data = RowMatrix(data)
@@ -59,11 +80,9 @@ if __name__ == "__main__":
         sc.addPyFile(egg[0])
 
     data = load(sc, args.datafile, args.preprocess).cache()
-
     result = PCA(args.k, args.svdmethod).fit(data)
 
     outputdir = args.outputdir + "-pca"
-
     save(result.comps, outputdir, "comps", "matlab")
     save(result.latent, outputdir, "latent", "matlab")
     save(result.scores, outputdir, "scores", "matlab")

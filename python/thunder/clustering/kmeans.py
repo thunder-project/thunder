@@ -1,55 +1,101 @@
+"""
+Classes and standalone app for KMeans clustering
+"""
+
 import os
 import argparse
 import glob
-from numpy import sum
-from thunder.util.load import load
-from thunder.util.save import save
+from numpy import sum, array, argmin
+from scipy.spatial.distance import cdist
+from thunder.io import load
+from thunder.io import save
 from pyspark import SparkContext
 
 
-def closestpoint(p, centers):
-    """Return the index of the closest point in centers to p"""
+class KMeansModel(object):
+    """Class for an estimated KMeans model
 
-    bestindex = 0
-    closest = float("+inf")
-    for i in range(len(centers)):
-        tempdist = sum((p - centers[i]) ** 2)
-        if tempdist < closest:
-            closest = tempdist
-            bestindex = i
-    return bestindex
-
-
-def kmeans(data, k, maxiter=20, tol=0.001):
-    """Perform kmeans clustering
-
-    :param data: RDD of data points as key value pairs
-    :param k: number of clusters
-    :param maxiter: maximum number of iterations (default = 20)
-    :param tol: change tolerance for stopping algorithm (default = 0.001)
-
-    :return labels: RDD with labels for each data point
-    :return centers: array of cluster centroids
+    Parameters
+    ----------
+    centers : array
+        The cluster centers
     """
-    centers = map(lambda (_, v): v, data.take(k))
+    def __init__(self, centers):
+        self.centers = centers
 
-    tempdist = 1.0
-    iter = 0
+    def predict(self, data):
+        """Predict the cluster that all data points belong to
 
-    while (tempdist > tol) & (iter < maxiter):
-        closest = data.map(lambda (_, v): v).map(lambda p: (closestpoint(p, centers), (p, 1)))
-        pointstats = closest.reduceByKey(lambda (x1, y1), (x2, y2): (x1 + x2, y1 + y2))
-        newpoints = pointstats.map(lambda (x, (y, z)): (x, y / z)).collect()
-        tempdist = sum(sum((centers[x] - y) ** 2) for (x, y) in newpoints)
+        Parameters
+        ----------
+        data : RDD of (tuple, array) pairs
+            The data
 
-        for (i, j) in newpoints:
-            centers[i] = j
+        Returns
+        -------
+        closest : RDD of (tuple, int) pairs
+            The closest center for each data point
+        """
+        closest = data.mapValues(lambda x: KMeans.closestpoint(x, self.centers))
+        return closest
 
-        iter += 1
 
-    labels = data.mapValues(lambda p: closestpoint(p, centers))
+class KMeans(object):
+    """Class for KMeans clustering
 
-    return labels, centers
+    Parameters
+    ----------
+    k : int
+        Number of clusters to find
+
+    maxiter : int, optional, default = 20
+        Maximum number of iterations to use
+
+    tol : float, optional, default = 0.001
+        Change tolerance for stopping algorithm
+    """
+    def __init__(self, k, maxiter=20, tol=0.001):
+        self.k = k
+        self.maxiter = maxiter
+        self.tol = tol
+
+    @staticmethod
+    def closestpoint(p, centers):
+        """Return the index of the closest point in centers to p"""
+        return argmin(cdist(centers, array([p])))
+
+    def train(self, data):
+        """Train the clustering model using the standard
+        k-means algorithm
+
+        Parameters
+        ----------
+        data :  RDD of (tuple, array) pairs
+            The data to cluster
+
+        Returns
+        -------
+        centers : KMeansModel
+            The estimated cluster centers
+        """
+
+        centers = array(map(lambda (_, v): v, data.take(self.k)))
+        tempdist = 1.0
+        iter = 0
+
+        while (tempdist > self.tol) & (iter < self.maxiter):
+            closest = data.map(lambda (_, v): v).map(lambda p: (KMeans.closestpoint(p, centers), (p, 1)))
+            pointstats = closest.reduceByKey(lambda (x1, y1), (x2, y2): (x1 + x2, y1 + y2))
+            newpoints = pointstats.map(lambda (x, (y, z)): (x, y / z)).collect()
+            tempdist = sum(sum((centers[x] - y) ** 2) for (x, y) in newpoints)
+
+            for (i, j) in newpoints:
+                centers[i] = j
+
+            iter += 1
+
+        return KMeansModel(centers)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="do kmeans clustering")
@@ -70,10 +116,9 @@ if __name__ == "__main__":
         sc.addPyFile(egg[0])
 
     data = load(sc, args.datafile, args.preprocess).cache()
-
-    labels, centers = kmeans(data, k=args.k, maxiter=args.maxiter, tol=args.tol)
+    model = KMeans(k=args.k, maxiter=args.maxiter, tol=args.tol).train(data)
+    labels = model.predict(data)
 
     outputdir = args.outputdir + "-kmeans"
-
+    save(model.centers, outputdir, "centers", "matlab")
     save(labels, outputdir, "labels", "matlab")
-    save(centers, outputdir, "centers", "matlab")
