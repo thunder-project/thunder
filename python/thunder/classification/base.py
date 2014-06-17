@@ -1,3 +1,7 @@
+"""
+Base and derived classes for mass-univariate classification analyses
+"""
+
 from numpy import in1d, zeros, array, size, float64
 from scipy.io import loadmat
 from scipy.stats import ttest_ind
@@ -6,17 +10,43 @@ from sklearn import cross_validation
 
 
 class MassUnivariateClassifier(object):
-    """Class for loading and classifying with classifiers"""
+    """Base class for mass univariate classification.
+    Assumes that for each signal, each time point belongs to one
+    of several categories. Uses independent classifiers to train and predict.
+    Example usage: determining how well each individual neural signal
+    predicts a behavior.
+
+    Parameters
+    ----------
+    paramfile : str or dict
+        A MAT file or Python dictionary containing parameters for training classifiers.
+        At minimum must contain a "labels" field, with the label the classify at each
+        time point. Can additionally include fields for "features" (which feature
+        was present at each time point) and "samples" (which sample was present
+        at each time point)
+
+    Attributes
+    ----------
+    `labels` : array
+        Array containing the label for each time point
+
+    `features` : array
+        Which feature was present at each time point
+
+    `nfeatures` : int, optional
+        Number of features
+
+    `samples` : array
+        Which sample does each time point belong to
+
+    `sampleids` : list
+        Unique samples
+
+    `nsamples` : int
+        Number of samples
+    """
 
     def __init__(self, paramfile):
-        """Initialize classifier using parameters derived from a Matlab file,
-        or a python dictionary. At a minimum, must contain a "labels" field, with the
-        label to classify at each time point. Can additionally include fields for
-        "features" (which feature was present at each time point)
-        and "samples" (which sample was present at each time point)
-
-        :param paramfile: string of filename, or dictionary, containing parameters
-        """
         if type(paramfile) is str:
             params = loadmat(paramfile, squeeze_me=True)
         elif type(paramfile) is dict:
@@ -37,18 +67,27 @@ class MassUnivariateClassifier(object):
             self.nsamples = len(self.labels)
 
     @staticmethod
-    def load(paramfile, classifymode, cv=0):
-        return CLASSIFIERS[classifymode](paramfile, cv)
+    def load(paramfile, classifymode, **opts):
+        return CLASSIFIERS[classifymode](paramfile, **opts)
 
     def get(self, x, set=None):
         pass
 
     def classify(self, data, featureset=None):
-        """Do the classification on an RDD using a map
+        """Run classification on an RDD
 
-        :param data: RDD of data points as key value pairs
-        :param featureset: list of lists containing the features to use
-        :return: perf: RDD of key value pairs with classification performance
+        Parameters
+        ----------
+        data: RDD of (tuple, array) pairs
+            The data
+
+        featureset : array, optional, default = None
+            Which features to use
+
+        Returns
+        -------
+        perf : RDD of scalars
+            The performance of the classifer for each record
         """
 
         if self.nfeatures == 1:
@@ -64,21 +103,39 @@ class MassUnivariateClassifier(object):
 
 
 class GaussNaiveBayesClassifier(MassUnivariateClassifier):
-    """Class for gaussian naive bayes classification"""
+    """Classifier for Gaussian Naive Bayes classification
 
-    def __init__(self, paramfile, cv):
-        """Create classifier
+    Parameters
+    ----------
+    paramfile : str or dict
+        Parameters for classification, see MassUnivariateClassifier
 
-        :param paramfile: string of filename or dictionary with parameters (see MassUnivariateClassifier)
-        :param cv: number of cross validation folds (none if 0)
-        """
+    cv : int
+        Folds of cross-validation, none if 0
+    """
+
+    def __init__(self, paramfile, cv=0):
         MassUnivariateClassifier.__init__(self, paramfile)
 
         self.cv = cv
         self.func = GaussianNB()
 
     def get(self, x, featureset=None):
-        """Compute classification performance"""
+        """Compute classification performance
+
+        Parameters
+        ----------
+        x : array
+            Data for a single record
+
+        featureset : array, optional, default = None
+            Which features to use
+
+        Returns
+        -------
+        perf : scalar
+            Performance of the classifier on this record
+        """
 
         y = self.labels
         if self.nfeatures == 1:
@@ -94,17 +151,20 @@ class GaussNaiveBayesClassifier(MassUnivariateClassifier):
             return cross_validation.cross_val_score(self.func, X, y, cv=self.cv).mean()
         else:
             ypred = self.func.fit(X, y).predict(X)
-            return array(y == ypred).mean()
+            perf = array(y == ypred).mean()
+            return perf
 
 
 class TTestClassifier(MassUnivariateClassifier):
-    """Class for t test classification"""
+    """Classifier for TTest classification
 
-    def __init__(self, paramfile, cv):
-        """Create classifier
+    Parameters
+    ----------
+    paramfile : str or dict
+     Parameters for classification, see MassUnivariateClassifier
+    """
 
-        :param paramfile: string of filename or dictionary with parameters (see MassUnivariateClassifer)
-        """
+    def __init__(self, paramfile):
         MassUnivariateClassifier.__init__(self, paramfile)
 
         self.func = ttest_ind
@@ -115,21 +175,34 @@ class TTestClassifier(MassUnivariateClassifier):
             self.labels = array(map(lambda i: 0 if i == unique[0] else 1, self.labels))
 
     def get(self, x, featureset=None):
-        """Compute t-statistic
+        """Compute classification performance as a t-statistic
 
-        :param x: vector of signals to use in classification
-        :param featureset: which features to test"""
+        Parameters
+        ----------
+        x : array
+            Data for a single record
+
+        featureset : array, optional, default = None
+            Which features to use
+
+        Returns
+        -------
+        t : scalar
+            t-statistic for this record
+        """
 
         if (self.nfeatures > 1) & (size(featureset) > 1):
             X = zeros((self.nsamples, size(featureset)))
             for i in range(0, size(featureset)):
                 X[:, i] = x[self.features == featureset[i]]
-            return float64(self.func(X[self.labels == 0, :], X[self.labels == 1, :])[0])
+            t = float64(self.func(X[self.labels == 0, :], X[self.labels == 1, :])[0])
 
         else:
             if self.nfeatures > 1:
                 x = x[self.features == featureset]
-            return float64(self.func(x[self.labels == 0], x[self.labels == 1])[0])
+            t = float64(self.func(x[self.labels == 0], x[self.labels == 1])[0])
+
+        return t
 
 
 CLASSIFIERS = {

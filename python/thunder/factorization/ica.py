@@ -1,10 +1,14 @@
+"""
+Class and standalone app for Independent Component Analysis
+"""
+
 import os
 import argparse
 import glob
 from numpy import random, sqrt, zeros, real, dot, outer, diag, transpose
 from scipy.linalg import sqrtm, inv, orth
-from thunder.util.load import load
-from thunder.util.save import save
+from thunder.io import load
+from thunder.io import save
 from thunder.factorization import SVD
 from thunder.util.matrices import RowMatrix
 from pyspark import SparkContext
@@ -132,10 +136,8 @@ if __name__ == "__main__":
         sc.addPyFile(egg[0])
     
     data = load(sc, args.datafile, args.preprocess).cache()
-
     result = ICA(args.k, args.c, args.svdmethod, args.maxiter, args.tol, args.seed).fit(data)
 
     outputdir = args.outputdir + "-ica"
-
     save(result.w, outputdir, "w", "matlab")
     save(result.sigs, outputdir, "sigs", "matlab")

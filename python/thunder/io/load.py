@@ -3,12 +3,13 @@ Utilities for loading and preprocessing data
 """
 
 import pyspark
-
 from numpy import array, mean, cumprod, append, mod, ceil, size, polyfit, polyval, arange, percentile, inf, subtract
 from scipy.signal import butter, lfilter
 
 
 class Dimensions(object):
+    """Helper class for estimating and storing dimensions of data
+    based on the keys"""
 
     def __init__(self, values=[], n=3):
         self.min = tuple(map(lambda i: inf, range(0, n)))
@@ -32,7 +33,7 @@ class Dimensions(object):
 
 
 class Parser(object):
-    """Class for loading lines of a data file"""
+    """Class for parsing lines of a data file"""
 
     def __init__(self, nkeys):
         def func(line):
@@ -107,10 +108,8 @@ class PreProcessor(object):
 
 
 def isrdd(data):
-    """ Check whether data is an RDD or not
-    :param data: data object (potentially an RDD)
-    :return: true (is rdd) or false (is not rdd)
-    """
+    """ Check whether data is an RDD or not"""
+
     dtype = type(data)
     if (dtype == pyspark.rdd.RDD) | (dtype == pyspark.rdd.PipelinedRDD):
         return True
@@ -119,12 +118,8 @@ def isrdd(data):
 
 
 def getdims(data):
-    """Get dimensions of keys; ranges can have arbtirary minima
-    and maximum, but they must be contiguous (e.g. the indices of a dense matrix).
-
-    :param data: RDD of data points as key value pairs, or numpy list of key-value tuples
-    :return dims: Instantiation of Dimensions class containing the dimensions of the data
-    """
+    """Get dimensions of data via the keys. Ranges can have arbtirary minima
+    and maximum, but they must be contiguous (e.g. the indices of a dense matrix)."""
 
     def redfunc(left, right):
         return left.mergedims(right)
@@ -148,12 +143,8 @@ def getdims(data):
 
 
 def subtoind(data, dims):
-    """Convert subscript indexing to linear indexing
+    """Convert subscript indexing to linear indexing"""
 
-    :param data: RDD with subscript indices as keys
-    :param dims: Array with maximum along each dimension
-    :return RDD with linear indices as keys
-    """
     def subtoind_inline(k, dimprod):
         return sum(map(lambda (x, y): (x - 1) * y, zip(k[1:], dimprod))) + k[0]
     if size(dims) > 1:
@@ -167,12 +158,8 @@ def subtoind(data, dims):
 
 
 def indtosub(data, dims):
-    """Convert linear indexing to subscript indexing
+    """Convert linear indexing to subscript indexing"""
 
-    :param data: RDD with linear indices as keys
-    :param dims: Array with maximum along each dimension
-    :return RDD with sub indices as keys
-    """
     def indtosub_inline(k, dimprod):
         return tuple(map(lambda (x, y): int(mod(ceil(float(k)/y) - 1, x) + 1), dimprod))
 
@@ -193,11 +180,24 @@ def load(sc, datafile, preprocessmethod="raw", nkeys=3):
     where <k1> <k2> ... are keys (Int) and <t1> <t2> ... are the data values (Double)
     If multiple keys are provided (e.g. x, y, z), they are converted to linear indexing
 
-    :param sc: SparkContext
-    :param datafile: Location of raw data
-    :param preprocessmethod: Type of preprocessing to perform ("raw", "dff", "sub")
-    :param nkeys: Number of keys per data point
-    :return data: RDD of data points as key value pairs
+    Parameters
+    ----------
+    sc : SparkContext
+        The Spark Context
+
+    datafile : str
+        Location of raw data
+
+    preprocessmethod : str
+        Which preprocessing to perform
+
+    nkeys : int
+        Number of keys per data point
+
+    Returns
+    -------
+    data : RDD of (tuple, array) pairs
+        The parsed and preprocessed data as an RDD
     """
 
     lines = sc.textFile(datafile)

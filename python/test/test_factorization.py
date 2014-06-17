@@ -6,7 +6,7 @@ import scipy.linalg as LinAlg
 from scipy.io import loadmat
 from thunder.factorization import ICA
 from thunder.factorization import SVD
-from thunder.util.load import load
+from thunder.io import load
 from test_utils import PySparkTestCase
 
 # Hack to find the data files:

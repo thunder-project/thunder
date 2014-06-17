@@ -2,22 +2,18 @@
 
 import glob
 import os
+
 egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
-sc.addPyFile(egg[0])
+if len(egg) > 0:
+	sc.addPyFile(egg[0])
+	print('Successfully added Thunder egg')
+else:
+	print('Warning: Thunder egg not found. If you are running on a cluster this file needs to be created. Make sure you have built an egg and that the env variable THUNDER_EGG is set')
 
-from thunder.util.load import load, getdims
-from thunder.util.save import save
-
-from thunder.clustering.kmeans import kmeans, closestpoint
-
-from thunder.regression.regress import regress
-from thunder.regression.util import RegressionModel, TuningModel
-
+from thunder.io import load, save, getdims
+from thunder.clustering import KMeans
+from thunder.regression import RegressionModel, TuningModel
 from thunder.factorization import PCA
 from thunder.factorization import ICA
 from thunder.factorization import SVD
-
-from thunder.sigprocessing.stats import stats
-from thunder.sigprocessing.localcorr import localcorr
-from thunder.sigprocessing.query import query
-from thunder.sigprocessing.util import FourierMethod, StatsMethod, QueryMethod, CrossCorrMethod
+from thunder.timeseries import LocalCorr, Query, Fourier, Stats, CrossCorr

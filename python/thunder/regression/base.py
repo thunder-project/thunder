@@ -1,5 +1,5 @@
 """
-Utilities for regression and tuning curve fitting
+Base and derived classes for performing mass-univariate regression and tuning analyses
 """
 
 from scipy.io import loadmat
@@ -8,16 +8,35 @@ from scipy.linalg import inv
 
 
 class RegressionModel(object):
-    """Class for loading and fitting a regression"""
+    """Base class for loading and fitting regression models"""
 
     @staticmethod
-    def load(modelfile, regressmode, *opts):
-        return REGRESSION_MODELS[regressmode](modelfile, *opts)
+    def load(modelfile, regressmode, **opts):
+        return REGRESSION_MODELS[regressmode](modelfile, **opts)
 
     def get(self, y):
         pass
 
     def fit(self, data, comps=None):
+        """Fit mass univariate regression models
+
+        Parameters
+        ----------
+        data : RDD of (tuple, array) pairs
+            The data to fit
+
+        Returns
+        -------
+        betas : RDD of (tuple, array) pairs
+            Fitted model parameters for each record
+
+        stats : RDD of (tuple, float) pairs
+            Model fit statistic for each record
+
+        resid : RDD of (tuple, array) pairs
+            Residuals for each record
+        """
+
         if comps is not None:
             traj = data.map(lambda (_, v): v).map(
                 lambda x: outer(x, inner(self.get(x)[0] - mean(self.get(x)[0]), comps))).reduce(
@@ -32,14 +51,25 @@ class RegressionModel(object):
 
 
 class MeanRegressionModel(RegressionModel):
-    """Class for regression via simple multiplication by a design matrix"""
+    """Class for regression in the form of simple averaging
+    via multiplication by a design matrix
+
+    Parameters
+    ----------
+    modelfile : array, or string
+        Array contaiing design matrix, or location of a MAT file
+        with name modelfile_X.mat containing a variable X
+
+    Attributes
+    ----------
+    x : array
+        The design matrix
+
+    xhat : array
+        Pseudoinverse of the design matrix
+    """
 
     def __init__(self, modelfile):
-        """Load model
-
-        :param modelfile: An array, or a string (assumes a MAT file
-        with name modelfile_X containing variable X)
-        """
         if type(modelfile) is str:
             x = loadmat(modelfile + "_X.mat")['X']
         else:
@@ -63,15 +93,26 @@ class MeanRegressionModel(RegressionModel):
             r2 = 1 - sse / sst
         return b, r2, resid
 
+
 class LinearRegressionModel(RegressionModel):
-    """Class for linear regression"""
+    """Class for ordinary least squares linear regression
+
+    Parameters
+    ----------
+    modelfile : array, or string
+        Array contaiing design matrix, or location of a MAT file
+        with name modelfile_X.mat containing a variable X
+
+    Attributes
+    ----------
+    x : array
+        The design matrix
+
+    xhat : array
+        Pseudoinverse of the design matrix
+    """
 
     def __init__(self, modelfile):
-        """Load model
-
-        :param modelfile: An array, or a string (assumes a MAT file
-        with name modelfile_X containing variable X)
-        """
         if type(modelfile) is str:
             x = loadmat(modelfile + "_X.mat")['X']
         else:
@@ -97,14 +138,28 @@ class LinearRegressionModel(RegressionModel):
 
 
 class BilinearRegressionModel(RegressionModel):
-    """Class for bilinear regression"""
+    """Class for bilinear regression with two design matrices
+
+    Parameters
+    ----------
+    modelfile : tuple(array), or string
+        Tuple of arrays each contaiing a design matrix,
+        or location of MAT files with names modelfile_X1.mat and
+        modelfile_X2.mat containing variables X1 and X2
+
+    Attributes
+    ----------
+    x1 : array
+        The first design matrix
+
+    x2 : array
+        The second design matrix
+
+    x1hat : array
+        Pseudoinverse of the first design matrix
+    """
 
     def __init__(self, modelfile):
-        """Load model
-
-        :param modelfile: A tuple of arrays, or a string (assumes two MAT files
-        with names modelfile_X1 and modefile_X2 containing variables X1 nd X2)
-        """
         if type(modelfile) is str:
             x1 = loadmat(modelfile + "_X1.mat")['X1']
             x2 = loadmat(modelfile + "_X2.mat")['X2']
@@ -117,7 +172,8 @@ class BilinearRegressionModel(RegressionModel):
         self.x1_hat = x1_hat
 
     def get(self, y):
-        """Compute two sets of regression coefficients, r2 statistic, and residuals"""
+        """Compute regression coefficients from the second design matrix,
+        a single r2 statistic, and residuals for the full model"""
 
         b1 = dot(self.x1_hat, y)
         b1 = b1 - min(b1)
@@ -141,14 +197,22 @@ class BilinearRegressionModel(RegressionModel):
 
 
 class TuningModel(object):
-    """Class for loading and fitting a tuning model"""
+    """Base class for loading and fitting tuning models
+
+    Parameters
+    ----------
+    modelfile : str, or array
+        Array of input values or location of a MAT file with name
+        modelfile_s.mat containing a variable s with input values
+
+    Attributes
+    ----------
+    s : array
+        Input values along which tuning will be estimated,
+        i.e. s if we are fitting a function y = f(s)
+    """
 
     def __init__(self, modelfile):
-        """Load model
-
-        :param modelfile: An array, or a string (assumes a MAT file
-        with name modelfile_s containing variable s)
-        """
         if type(modelfile) is str:
             self.s = loadmat(modelfile + "_s.mat")['s']
         else:
@@ -162,6 +226,18 @@ class TuningModel(object):
         pass
 
     def fit(self, data):
+        """Fit a mass univariate tuning model
+
+        Parameters
+        ----------
+        data : RDD of (tuple, array) pairs
+            The data to fit
+
+        Returns
+        -------
+        params : RDD of (tuple, array) pairs
+            Fitted tuning parameters for each record
+        """
         return data.mapValues(lambda x: self.get(x))
 
 
@@ -169,7 +245,7 @@ class CircularTuningModel(TuningModel):
     """Class for circular tuning"""
 
     def get(self, y):
-        """Estimates the circular mean and variance ("kappa")
+        """Estimate the circular mean and variance ("kappa"),
         identical to the max likelihood estimates of the
         parameters of the best fitting von-mises function
         """
@@ -197,7 +273,7 @@ class GaussianTuningModel(TuningModel):
     """Class for gaussian tuning"""
 
     def get(self, y):
-        """Estimates the mean and variance
+        """Estimate the mean and variance,
         similar to the max likelihood estimates of the
         parameters of the best fitting gaussian
         but non-infinite supports may bias estimates

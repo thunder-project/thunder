@@ -1,29 +1,14 @@
+"""
+Standalone app for mass-unvariate regression
+"""
+
 import os
 import argparse
 import glob
-from thunder.regression.util import RegressionModel
-from thunder.util.load import load
-from thunder.util.save import save
+from thunder.regression import RegressionModel
+from thunder.io import load
+from thunder.io import save
 from pyspark import SparkContext
-
-
-def regress(data, modelfile, regressmode):
-    """Perform mass univariate regression
-
-    :param data: RDD of data points as key value pairs
-    :param modelfile: model parameters (string with file location, array, or tuple)
-    :param regressmode: form of regression ("linear" or "bilinear")
-
-    :return stats: statistics of the fit
-    :return betas: regression coefficients
-    """
-    # create model
-    model = RegressionModel.load(modelfile, regressmode)
-
-    # do regression
-    betas, stats, resid = model.fit(data)
-
-    return stats, betas
 
 
 if __name__ == "__main__":
@@ -44,10 +29,8 @@ if __name__ == "__main__":
         sc.addPyFile(egg[0])
     
     data = load(sc, args.datafile, args.preprocess)
-
-    stats, betas = regress(data, args.modelfile, args.regressmode)
+    stats, betas, resid = RegressionModel.load(args.modelfile, args.regressmode).fit(data)
 
     outputdir = args.outputdir + "-regress"
-
     save(stats, outputdir, "stats", "matlab")
     save(betas, outputdir, "betas", "matlab")

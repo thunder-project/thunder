@@ -7,19 +7,23 @@ from scipy.io import savemat
 from math import isnan
 from numpy import array, squeeze, sum, shape, reshape, transpose, maximum, minimum, float16, uint8, savetxt, size
 from PIL import Image
-
-from thunder.util.load import getdims, subtoind, isrdd
+from thunder.io.load import getdims, subtoind, isrdd
 
 
 def arraytoim(mat, filename, format="tif"):
-    """Write a numpy array to a png image
+    """Write a numpy array to a png image. If mat is 3D,
+    will separately write each image along the 3rd dimension
 
-    If mat is 3D will separately write each image
-    along the 3rd dimension
+    Parameters
+    ----------
+    mat : array (2D or 3D), dtype must be uint8
+        Pixel values for image or set of images to write
 
-    :param mat: Numpy array, 2d or 3d, dtype must be uint8
-    :param filename: Base filename for writing
-    :param format: Image format to write, default="tif" (see PIL for options)
+    filename : str
+        Base filename for writing
+
+    format : str, optional, default = "tif"
+        Image format to write (see PIL for options)
     """
     dims = shape(mat)
     if len(dims) > 2:
@@ -40,8 +44,6 @@ def rescale(data):
 
     If each element of data has multiple entries,
     they will be rescaled separately
-
-    :param data: RDD of (Int, Array(Double)) pairs
     """
     if size(data.first()[1]) > 1:
         data = data.mapValues(lambda x: map(lambda y: 0 if isnan(y) else y, x))
@@ -61,13 +63,22 @@ def save(data, outputdir, outputfile, outputformat):
     """
     Save data to a variety of formats
     Automatically determines whether data is an array
-    or an RDD and handles appropriately
+    or an RDD and handle appropriately
     For RDDs, data are sorted and reshaped based on the keys
 
-    :param data: RDD of key value pairs or array
-    :param outputdir: Location to save data to
-    :param outputfile: file name to save data to
-    :param outputformat: format for data ("matlab", "text", or "image")
+    Parameters
+    ----------
+    data : RDD of (key, array) pairs, or array
+        The data to save
+
+    outputdir : str
+        Output directory
+
+    outputfile : str
+        Output filename
+
+    outputformat : str
+        Output format ("matlab", "text", or "image")
     """
 
     if not os.path.exists(outputdir):

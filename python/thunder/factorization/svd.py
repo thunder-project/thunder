@@ -1,3 +1,7 @@
+"""
+Class for performing Singular Value Decomposition
+"""
+
 from numpy import random, sum, real, argsort, mean, transpose, dot, inner, outer, zeros, shape, sqrt
 from scipy.linalg import eig, inv, orth
 from thunder.util.matrices import RowMatrix
@@ -52,7 +56,6 @@ class SVD(object):
         ----------
         self : returns an instance of self.
         """
-
         if type(mat) is not RowMatrix:
             mat = RowMatrix(mat)
 
