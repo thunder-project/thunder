@@ -37,9 +37,10 @@ To run in iPython, just set this environmental variable before staring PySpark:
 
 	export IPYTHON=1
 
-If you are running Thunder on a cluster, create an egg before starting by calling:
+If you are running Thunder on a cluster, create an egg first:
 
-	<your/path/to/thunder>/python/setup.py bdist_egg
+	cd <your/path/to/thunder>/python/
+	./setup.py bdist_egg
 
 We include a script for automatically importing commonly used functions in the shell
 
@@ -51,7 +52,7 @@ Finally, we include a script for easily launching an Amazon EC2 cluster with Thu
 
 ## Analyses
 
-Thunder currently includes five packages: classification, clustering, factorization, regression, and timeseries, as well as an io package for loading and saving (see Input format and Output format), and a util package for utilities (like common matrix operations). All packages include scripts for running standalone analyses, but all classes and functions can be used from within the PySpark shell for easy interactive analysis. Here is a list of the primary analyses:
+Thunder currently includes five packages: classification, clustering, factorization, regression, and timeseries, as well as an io package for loading and saving (see Input format and Output format), and a util package for utilities (like common matrix operations). Packages include scripts for running standalone analyses, but the underlying classes and functions can be used from within the PySpark shell for easy interactive analysis. Here is a list of the primary analyses:
 
 ### classification
 
