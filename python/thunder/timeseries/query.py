@@ -49,8 +49,9 @@ class Query(object):
             Data with subset of rows
         """
 
-        indsb = data.context.broadcast(self.inds[i])
-        subset = data.filter(lambda (k, _): k in indsb.value)
+        inds_set = set(self.inds[i].flat)
+        inds_bc = data.context.broadcast(inds_set)
+        subset = data.filter(lambda (k, _): k in inds_bc.value)
         return subset
 
     def calc(self, data):
