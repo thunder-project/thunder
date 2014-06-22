@@ -29,7 +29,7 @@ class TestKMeans(ClusteringTestCase):
         model = KMeans(k=1, maxiter=20, tol=0.001).train(data)
         labels = model.predict(data)
         assert array_equal(model.centers[0], array([1.0, 3.0, 4.0]))
-        assert array_equal(labels.map(lambda (_, v): v).collect(), array([0, 0, 0]))
+        assert array_equal(labels.map(lambda (_, v): v[0]).collect(), array([0, 0, 0]))
 
 
 

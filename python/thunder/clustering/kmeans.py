@@ -5,7 +5,7 @@ Classes and standalone app for KMeans clustering
 import os
 import argparse
 import glob
-from numpy import sum, array, argmin
+from numpy import sum, array, argmin, corrcoef
 from scipy.spatial.distance import cdist
 from thunder.io import load
 from thunder.io import save
@@ -24,7 +24,7 @@ class KMeansModel(object):
         self.centers = centers
 
     def predict(self, data):
-        """Predict the cluster that all data points belong to
+        """Predict the cluster that all data points belong to, and the similarity
 
         Parameters
         ----------
@@ -33,10 +33,11 @@ class KMeansModel(object):
 
         Returns
         -------
-        closest : RDD of (tuple, int) pairs
-            The closest center for each data point
+        closest : RDD of (tuple, array) pairs
+            For each data point, gives an array with the closest center for each data point,
+            and the correlation with that center
         """
-        closest = data.mapValues(lambda x: KMeans.closestpoint(x, self.centers))
+        closest = data.mapValues(lambda x: KMeans.similarity(x, self.centers))
         return closest
 
 
@@ -64,6 +65,12 @@ class KMeans(object):
         """Return the index of the closest point in centers to p"""
         return argmin(cdist(centers, array([p])))
 
+    @staticmethod
+    def similarity(p, centers):
+        ind = argmin(cdist(centers, array([p])))
+        corr = corrcoef(centers[ind], p)[0,1]
+        return array([ind, corr])
+
     def train(self, data):
         """Train the clustering model using the standard
         k-means algorithm
@@ -79,7 +86,7 @@ class KMeans(object):
             The estimated cluster centers
         """
 
-        centers = array(map(lambda (_, v): v, data.take(self.k)))
+        centers = array(map(lambda (_, v): v, data.takeSample(False, self.k)))
         tempdist = 1.0
         iter = 0
 
