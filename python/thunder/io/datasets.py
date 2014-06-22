@@ -14,9 +14,6 @@ class DataSets(object):
     def create(sc, name, **opts):
         return DATASET_MAKERS[name](sc).make(**opts)
 
-    def load(self):
-        pass
-
 
 class KMeansData(DataSets):
 
