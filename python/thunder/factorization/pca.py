@@ -5,8 +5,8 @@ Class and standalone app for Principal Component Analysis
 import os
 import argparse
 import glob
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 import mpld3
 from mpld3 import plugins
 from thunder.io import load

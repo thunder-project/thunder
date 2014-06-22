@@ -3,3 +3,5 @@ numpy
 scipy
 scikit-learn
 PIL
+matplotlib
+mpld3
