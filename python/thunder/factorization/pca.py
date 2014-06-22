@@ -5,10 +5,15 @@ Class and standalone app for Principal Component Analysis
 import os
 import argparse
 import glob
+import matplotlib.pyplot as plt
+import numpy as np
+import mpld3
+from mpld3 import plugins
 from thunder.io import load
 from thunder.io import save
 from thunder.factorization import SVD
 from thunder.util.matrices import RowMatrix
+from thunder.viz.plugins import LinkedView
 from pyspark import SparkContext
 
 
@@ -60,6 +65,26 @@ class PCA(object):
         self.comps = svd.v
 
         return self
+
+    def plot(self):
+
+        fig, ax = plt.subplots(2)
+
+        # scatter periods and amplitudes
+        pts = self.scores.map(lambda (k, v): v).collect()
+        points = ax[1].scatter(map(lambda x: x[0], pts), map(lambda x: x[1], pts), s=100, alpha=0.5)
+
+        # create the line object
+        x = np.linspace(0, np.shape(self.comps)[1], 10)
+        lines = ax[0].plot(x, 0 * x, '-w', lw=4, alpha=0.5)
+        ax[0].set_ylim(-0.25, 0.25)
+        ax[0].set_title("Hover over points to see principal components")
+
+        result = self.scores.collect()
+        linedata = map(lambda x: map(lambda x: list(x), zip(range(0, 10), (x[1][0] * self.comps[0, :] + x[1][1] * self.comps[1, :]).tolist())), result)
+        plugins.connect(fig, LinkedView(points, lines[0], linedata))
+
+        return mpld3.fig_to_html(fig)
 
 
 if __name__ == "__main__":
