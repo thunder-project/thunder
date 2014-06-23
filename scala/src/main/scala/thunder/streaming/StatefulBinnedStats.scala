@@ -195,6 +195,7 @@ object StatefulBinnedStats {
     SaveStreaming.asTextWithKeys(result, outputDirectory, Seq("r2-" + binName(0)))
 
     ssc.start()
+    ssc.awaitTermination()
   }
 
 }

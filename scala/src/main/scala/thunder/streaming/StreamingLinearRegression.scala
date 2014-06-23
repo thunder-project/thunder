@@ -154,6 +154,7 @@ object StreamingLinearRegression {
     predictions.print()
 
     ssc.start()
+    ssc.awaitTermination()
   }
 
 }

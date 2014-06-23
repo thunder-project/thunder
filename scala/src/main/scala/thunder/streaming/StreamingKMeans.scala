@@ -243,6 +243,7 @@ object StreamingKMeans {
     assignments.print()
 
     ssc.start()
+    ssc.awaitTermination()
   }
 
 }
