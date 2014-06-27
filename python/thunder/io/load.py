@@ -174,7 +174,7 @@ def indtosub(data, dims):
         return data
 
 
-def load(sc, datafile, preprocessmethod="raw", nkeys=3):
+def load(sc, datafile, preprocessmethod="raw", nkeys=3, npartitions=None):
     """Load data from a text file (or a directory of files) with format
     <k1> <k2> ... <t1> <t2> ...
     where <k1> <k2> ... are keys (Int) and <t1> <t2> ... are the data values (Double)
@@ -188,11 +188,14 @@ def load(sc, datafile, preprocessmethod="raw", nkeys=3):
     datafile : str
         Location of raw data
 
-    preprocessmethod : str
+    preprocessmethod : str, optional, default = "raw" (no preprocessing)
         Which preprocessing to perform
 
-    nkeys : int
+    nkeys : int, optional, default = 3
         Number of keys per data point
+
+    npartitions : int, optional, default = None
+        Number of partitions
 
     Returns
     -------
@@ -200,7 +203,7 @@ def load(sc, datafile, preprocessmethod="raw", nkeys=3):
         The parsed and preprocessed data as an RDD
     """
 
-    lines = sc.textFile(datafile)
+    lines = sc.textFile(datafile, npartitions)
     parser = Parser(nkeys)
 
     data = lines.map(parser.get)
