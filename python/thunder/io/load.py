@@ -2,6 +2,8 @@
 Utilities for loading and preprocessing data
 """
 
+import os
+import glob
 import pyspark
 from numpy import array, mean, cumprod, append, mod, ceil, size, polyfit, polyval, arange, percentile, inf, subtract
 from scipy.signal import butter, lfilter
@@ -178,7 +180,7 @@ def load(sc, datafile, preprocessmethod="raw", nkeys=3, npartitions=None):
     """Load data from a text file (or a directory of files) with format
     <k1> <k2> ... <t1> <t2> ...
     where <k1> <k2> ... are keys (Int) and <t1> <t2> ... are the data values (Double)
-    If multiple keys are provided (e.g. x, y, z), they are converted to linear indexing
+    If passed a directory, will automatically sort files by name
 
     Parameters
     ----------
@@ -202,6 +204,11 @@ def load(sc, datafile, preprocessmethod="raw", nkeys=3, npartitions=None):
     data : RDD of (tuple, array) pairs
         The parsed and preprocessed data as an RDD
     """
+    # TODO: Add support for binary files using the new hadoop input format support
+
+    if os.path.isdir(datafile):
+        files = sorted(glob.glob(os.path.join(datafile, '*')))
+        datafile = ''.join([files[x] + ',' for x in range(0, len(files))])[0:-1]
 
     lines = sc.textFile(datafile, npartitions)
     parser = Parser(nkeys)

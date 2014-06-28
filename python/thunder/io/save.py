@@ -5,9 +5,9 @@ Utilities for saving data
 import os
 from scipy.io import savemat
 from math import isnan
-from numpy import array, squeeze, sum, shape, reshape, transpose, maximum, minimum, float16, uint8, savetxt, size
+from numpy import array, squeeze, sum, shape, reshape, transpose, maximum, minimum, float16, uint8, savetxt, size, arange
 from PIL import Image
-from thunder.io.load import getdims, subtoind, isrdd
+from thunder.io.load import getdims, subtoind, isrdd, Dimensions
 
 
 def arraytoim(mat, filename, format="tif"):
@@ -59,16 +59,69 @@ def rescale(data):
     return data
 
 
-def save(data, outputdir, outputfile, outputformat):
+def pack(data, ind=None, dims=None, sorting=False, axis=None):
+    """Pack an RDD into a local array, with options for
+    sorting, reshaping, and projecting based on keys
+
+    Parameters
+    ----------
+    data : RDD of (tuple, array) pairs
+        The data to pack into a local array
+
+    ind : int, optional, default = None
+        An index, if each record has multiple entries
+
+    dims : Dimensions, optional, default = None
+        Dimensions of the keys, for use with sorting and reshaping
+
+    sorting : Boolean, optional, default = False
+        Whether to sort the RDD before packing
+
+    axes : int, optional, default = None
+        Which axis to do maximum projection along
+
+    Returns
+    -------
+    result : array
+        A local numpy array with the RDD contents
+
+    """
+
+    if dims is None:
+        dims = getdims(data)
+
+    if axis is not None:
+        nkeys = len(data.first()[0])
+        data = data.map(lambda (k, v): (tuple(array(k)[arange(0, nkeys) != axis]), v)).reduceByKey(maximum)
+        dims.min = list(array(dims.min)[arange(0, nkeys) != axis])
+        dims.max = list(array(dims.max)[arange(0, nkeys) != axis])
+        sorting = True  # will always need to sort because reduceByKey changes order
+
+    if ind is None:
+        result = data.map(lambda (_, v): float16(v)).collect()
+        print(shape(result))
+        nout = size(result[0])
+    else:
+        result = data.map(lambda (_, v): float16(v[ind])).collect()
+        nout = size(ind)
+
+    if sorting is True:
+        data = subtoind(data, dims.max)
+        keys = data.map(lambda (k, _): int(k)).collect()
+        result = array([v for (k, v) in sorted(zip(keys, result), key=lambda (k, v): k)])
+
+    return squeeze(transpose(reshape(result, ((nout,) + dims.count())[::-1])))
+
+
+def save(data, outputdir, outputfile, outputformat, sorting=False, dimsmax=None, dimsmin=None):
     """
     Save data to a variety of formats
     Automatically determines whether data is an array
     or an RDD and handle appropriately
-    For RDDs, data are sorted and reshaped based on the keys
 
     Parameters
     ----------
-    data : RDD of (key, array) pairs, or array
+    data : RDD of (tuple, array) pairs, or numpy array
         The data to save
 
     outputdir : str
@@ -86,31 +139,38 @@ def save(data, outputdir, outputfile, outputformat):
 
     filename = os.path.join(outputdir, outputfile)
 
+    if dimsmax is not None:
+        dims = Dimensions()
+        dims.max = dimsmax
+        if dimsmin is not None:
+            dims.min = dimsmin
+        else:
+            dims.min = (1, 1, 1)
+    elif dimsmin is not None:
+        raise Exception('cannot provide dimsmin without dimsmax')
+    else:
+        dims = getdims(data)
+
+    if isrdd(data):
+        nout = size(data.first()[1])
+
     if (outputformat == "matlab") | (outputformat == "text"):
         if isrdd(data):
-            dims = getdims(data)
-            data = subtoind(data, dims.max)
-            keys = data.map(lambda (k, _): int(k)).collect()
-            nout = size(data.first()[1])
             if nout > 1:
                 for iout in range(0, nout):
-                    result = data.map(lambda (_, v): float16(v[iout])).collect()
-                    result = array([v for (k, v) in sorted(zip(keys, result), key=lambda (k, v): k)])
+                    result = pack(data, ind=iout, dims=dims, sorting=sorting)
                     if outputformat == "matlab":
-                        savemat(filename+"-"+str(iout)+".mat",
-                                mdict={outputfile+str(iout): squeeze(transpose(reshape(result, dims.count()[::-1])))},
+                        savemat(filename+"-"+str(iout)+".mat", mdict={outputfile+str(iout): result},
                                 oned_as='column', do_compression='true')
                     if outputformat == "text":
                         savetxt(filename+"-"+str(iout)+".txt", result, fmt="%.6f")
             else:
-                result = data.map(lambda (_, v): float16(v)).collect()
-                result = array([v for (k, v) in sorted(zip(keys, result), key=lambda (k, v): k)])
+                result = pack(data, dims=dims, sorting=sorting)
                 if outputformat == "matlab":
-                    savemat(filename+".mat", mdict={outputfile: squeeze(transpose(reshape(result, dims.count()[::-1])))},
+                    savemat(filename+".mat", mdict={outputfile: result},
                             oned_as='column', do_compression='true')
                 if outputformat == "text":
                     savetxt(filename+".txt", result, fmt="%.6f")
-
         else:
             if outputformat == "matlab":
                 savemat(filename+".mat", mdict={outputfile: data}, oned_as='column', do_compression='true')
@@ -118,22 +178,15 @@ def save(data, outputdir, outputfile, outputformat):
                 savetxt(filename+".txt", data, fmt="%.6f")
 
     if outputformat == "image":
-
         if isrdd(data):
             data = rescale(data)
-            dims = getdims(data)
-            data = subtoind(data, dims.max)
-            keys = data.map(lambda (k, _): int(k)).collect()
-            nout = size(data.first()[1])
             if nout > 1:
                 for iout in range(0, nout):
-                    result = data.map(lambda (_, v): v[iout]).collect()
-                    result = array([v for (k, v) in sorted(zip(keys, result), key=lambda (k, v): k)])
-                    arraytoim(squeeze(transpose(reshape(result, dims.count()[::-1]))), filename+"-"+str(iout))
+                    result = pack(data, ind=iout, dims=dims, sorting=sorting)
+                    arraytoim(result, filename+"-"+str(iout))
             else:
-                result = data.map(lambda (_, v): v).collect()
-                result = array([v for (k, v) in sorted(zip(keys, result), key=lambda (k, v): k)])
-                arraytoim(squeeze(transpose(reshape(result, dims.count()[::-1]))), filename)
+                result = pack(data, dims=dims, sorting=sorting)
+                arraytoim(result, filename)
         else:
             arraytoim(data, filename)
 
