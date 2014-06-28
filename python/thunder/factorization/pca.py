@@ -5,10 +5,16 @@ Class and standalone app for Principal Component Analysis
 import os
 import argparse
 import glob
+from numpy import array, std
+from matplotlib import pyplot
+import mpld3
+from mpld3 import plugins
 from thunder.io import load
 from thunder.io import save
 from thunder.factorization import SVD
 from thunder.util.matrices import RowMatrix
+from thunder.viz.plugins import LinkedView
+from thunder.viz.plots import spatialmap, scatter, tsrecon
 from pyspark import SparkContext
 
 
@@ -60,6 +66,30 @@ class PCA(object):
         self.comps = svd.v
 
         return self
+
+    def plot(self, notebook=False, colormap="rgb", scale=1, maptype='points'):
+
+        # make a spatial map based on the scores
+        fig = pyplot.figure(figsize=(12, 5))
+        ax1 = pyplot.subplot2grid((2, 3), (0, 1), colspan=2, rowspan=2)
+        ax1, h1 = spatialmap(ax1, self.scores, colormap=colormap, scale=scale, maptype=maptype)
+        fig.add_axes(ax1)
+
+        # make a scatter plot of sampled scores
+        samples = array(self.scores.values().filter(lambda x: std(x) > 0.01).map(lambda x: x[0:3]).takeSample(False, 1000))
+        if len(samples) == 0:
+            raise Exception('no samples found')
+        ax2 = pyplot.subplot2grid((2, 3), (1, 0))
+        ax2, h2 = scatter(ax2, samples, colormap=colormap, scale=scale)
+        fig.add_axes(ax2)
+
+        # make the line plot of reconstructions from principal components
+        ax3 = pyplot.subplot2grid((2, 3), (0, 0))
+        ax3, h3, linedata = tsrecon(ax3, self.comps, samples)
+
+        plugins.connect(fig, LinkedView(h2, h3[0], linedata))
+        if notebook is False:
+            mpld3.display(fig)
 
 
 if __name__ == "__main__":
