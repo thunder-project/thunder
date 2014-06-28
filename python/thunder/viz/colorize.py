@@ -23,7 +23,7 @@ class Colorize(object):
             return clip(abs(line) * self.scale, 0, 1)
 
         elif self.totype == 'polar':
-            theta = (arctan2(line[1], line[0]) + pi) / (2 * pi)
+            theta = ((arctan2(line[1], line[0]) + pi + pi) % (2*pi)) / (2 * pi)
             rho = sqrt(line[0]**2 + line[1]**2)
             return clip(colors.hsv_to_rgb(array([[[theta, 1, rho * self.scale]]]))[0][0], 0, 1)
 
