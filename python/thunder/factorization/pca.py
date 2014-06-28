@@ -5,8 +5,8 @@ Class and standalone app for Principal Component Analysis
 import os
 import argparse
 import glob
-import numpy as np
-import matplotlib.pyplot as plt
+from numpy import array, std
+from matplotlib import pyplot
 import mpld3
 from mpld3 import plugins
 from thunder.io import load
@@ -14,6 +14,7 @@ from thunder.io import save
 from thunder.factorization import SVD
 from thunder.util.matrices import RowMatrix
 from thunder.viz.plugins import LinkedView
+from thunder.viz.plots import spatialmap, scatter, tsrecon
 from pyspark import SparkContext
 
 
@@ -66,25 +67,29 @@ class PCA(object):
 
         return self
 
-    def plot(self):
+    def plot(self, notebook=False, colormap="rgb", scale=1, maptype='points'):
 
-        fig, ax = plt.subplots(2)
+        # make a spatial map based on the scores
+        fig = pyplot.figure(figsize=(12, 5))
+        ax1 = pyplot.subplot2grid((2, 3), (0, 1), colspan=2, rowspan=2)
+        ax1, h1 = spatialmap(ax1, self.scores, colormap=colormap, scale=scale, maptype=maptype)
+        fig.add_axes(ax1)
 
-        # scatter periods and amplitudes
-        pts = self.scores.map(lambda (k, v): v).collect()
-        points = ax[1].scatter(map(lambda x: x[0], pts), map(lambda x: x[1], pts), s=100, alpha=0.5)
+        # make a scatter plot of sampled scores
+        samples = array(self.scores.values().filter(lambda x: std(x) > 0.01).map(lambda x: x[0:3]).takeSample(False, 1000))
+        if len(samples) == 0:
+            raise Exception('no samples found')
+        ax2 = pyplot.subplot2grid((2, 3), (1, 0))
+        ax2, h2 = scatter(ax2, samples, colormap=colormap, scale=scale)
+        fig.add_axes(ax2)
 
-        # create the line object
-        x = np.linspace(0, np.shape(self.comps)[1], 10)
-        lines = ax[0].plot(x, 0 * x, '-w', lw=4, alpha=0.5)
-        ax[0].set_ylim(-0.25, 0.25)
-        ax[0].set_title("Hover over points to see principal components")
+        # make the line plot of reconstructions from principal components
+        ax3 = pyplot.subplot2grid((2, 3), (0, 0))
+        ax3, h3, linedata = tsrecon(ax3, self.comps, samples)
 
-        result = self.scores.collect()
-        linedata = map(lambda x: map(lambda x: list(x), zip(range(0, 10), (x[1][0] * self.comps[0, :] + x[1][1] * self.comps[1, :]).tolist())), result)
-        plugins.connect(fig, LinkedView(points, lines[0], linedata))
-
-        return mpld3.fig_to_html(fig)
+        plugins.connect(fig, LinkedView(h2, h3[0], linedata))
+        if notebook is False:
+            mpld3.display(fig)
 
 
 if __name__ == "__main__":

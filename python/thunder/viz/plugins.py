@@ -3,7 +3,7 @@ from mpld3 import plugins, utils
 
 
 class LinkedView(plugins.PluginBase):
-    """A simple plugin showing how multiple axes can be linked"""
+    """A plugin """
 
     JAVASCRIPT = """
     mpld3.register_plugin("linkedview", LinkedViewPlugin);
@@ -41,3 +41,14 @@ class LinkedView(plugins.PluginBase):
                       "idpts": utils.get_id(points, suffix),
                       "idline": utils.get_id(line),
                       "data": linedata}
+
+        self.css_ = """
+                    g.mpld3-xaxis, g.mpld3-yaxis {
+                        display: none;
+                    }
+
+                    rect.mpld3-axesbg {
+                        display: none;
+                    }
+
+                    """
