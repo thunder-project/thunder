@@ -17,10 +17,10 @@ def spatialmap(axes, rdd, colormap='rgb', scale=1, maptype='points'):
         return axes, h
 
     if maptype == 'image':
-        ndim = len(rdd.first()[1])
+        ndim = len(rdd.first()[0])
         pts = Colorize(colormap, scale).calc(rdd)
         if ndim == 3:
-            proj = pts.map(lambda (k, v): ((k[0], k[1]), v)).reduceByKey(maximum)
+            proj = pts.map(lambda (k, v): ((k[0], k[1]), v)).reduceByKey(maximum).cache()
         elif ndim == 2:
             proj = pts
         else:
