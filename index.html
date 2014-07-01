@@ -131,12 +131,12 @@ export AWS_SECRET_ACCESS_KEY=your_secret_access_key</pre></code>
 </pre></code>
 <br>
 <p>3) <b>Run</b> the EC2 launch script from inside the Thunder folder (will take a few minutes).</p>
-<pre><code class="bash">helper/ec2/thunder-ec2 -k keyname -i keyname.pem -s N_NODES launch CLUSTERNAME
+<pre><code class="bash">helper/ec2/thunder-ec2 -k keyname -i keyname.pem -s &lt;n-nodes&gt; launch &lt;cluster-name&gt;
 </pre></code>
-<p>where keyname and keyname.pem are from the key pair you generated, N_NODES is the number of nodes you want, and CLUSTERNAME is a name to call your cluster</p>
+<p>where keyname and keyname.pem are from the key pair you generated, &lt;n-nodes&gt; is the number of nodes you want, and &lt;cluster-name&gt; is a name to call your cluster</p>
 <br>
 <p>4) <b>Log</b> into your newly configured cluster</p>
-<pre><code class="bash">helper/ec2/thunder-ec2 -k keyname -i keyname.pem login CLUSTERNAME</pre></code>
+<pre><code class="bash">helper/ec2/thunder-ec2 -k keyname -i keyname.pem login &lt;cluster-name&gt;</pre></code>
 <br>
 <p>5) <b>Try</b> an analysis
 <pre><code class="python">pyspark
