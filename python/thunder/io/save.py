@@ -59,8 +59,8 @@ def rescale(data):
     return data
 
 
-def pack(data, ind=None, dims=None, sorting=False, axis=None):
-    """Pack an RDD into a local array, with options for
+def pack(data, ind=None, dims=None, sorting=False, axes=None):
+    """Pack an RDD into a dense local array, with options for
     sorting, reshaping, and projecting based on keys
 
     Parameters
@@ -90,16 +90,15 @@ def pack(data, ind=None, dims=None, sorting=False, axis=None):
     if dims is None:
         dims = getdims(data)
 
-    if axis is not None:
+    if axes is not None:
         nkeys = len(data.first()[0])
-        data = data.map(lambda (k, v): (tuple(array(k)[arange(0, nkeys) != axis]), v)).reduceByKey(maximum)
-        dims.min = list(array(dims.min)[arange(0, nkeys) != axis])
-        dims.max = list(array(dims.max)[arange(0, nkeys) != axis])
+        data = data.map(lambda (k, v): (tuple(array(k)[arange(0, nkeys) != axes]), v)).reduceByKey(maximum)
+        dims.min = list(array(dims.min)[arange(0, nkeys) != axes])
+        dims.max = list(array(dims.max)[arange(0, nkeys) != axes])
         sorting = True  # will always need to sort because reduceByKey changes order
 
     if ind is None:
         result = data.map(lambda (_, v): float16(v)).collect()
-        print(shape(result))
         nout = size(result[0])
     else:
         result = data.map(lambda (_, v): float16(v[ind])).collect()

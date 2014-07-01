@@ -1,4 +1,4 @@
-from numpy import arctan2, sqrt, pi, array
+from numpy import arctan2, sqrt, pi, array, size, ndarray
 from matplotlib import colors, cm
 from thunder.io.load import isrdd
 
@@ -13,9 +13,10 @@ class Colorize(object):
     def calc(self, data):
 
         if isrdd(data):
-            self.checkargs(len(data.first()[1]))
+            self.checkargs(size(data.first()[1]))
             return data.mapValues(lambda x: self.get(x))
         else:
+            self.checkargs(size(data[0]))
             return map(lambda line: self.get(line), data)
 
     def get(self, line):
@@ -28,14 +29,15 @@ class Colorize(object):
             return clip(colors.hsv_to_rgb(array([[[theta, 1, rho * self.scale]]]))[0][0], 0, 1)
 
         else:
-            return array(cm.get_cmap(self.totype, 256)(line[0] * self.scale)[0:3])
+            if size(line) > 1:
+                line = line[0]
+            return array(cm.get_cmap(self.totype, 256)(line * self.scale)[0:3])
 
     def checkargs(self, n):
 
         if (self.totype == 'rgb' or self.totype == 'hsv') and n < 3:
             raise Exception("must have 3 values per record for rgb or hsv")
-
-        if self.totype == 'polar' and n < 1:
+        elif self.totype == 'polar' and n < 1:
             raise Exception("must have at least 2 values per record for polar")
 
 

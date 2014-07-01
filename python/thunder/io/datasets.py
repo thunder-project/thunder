@@ -35,8 +35,8 @@ class DataSets(object):
 
 class KMeansData(DataSets):
 
-    def make(self, k, npartitions=10, ndims=5, nrecords=100, noise=0.1):
-        random.seed(42)
+    def make(self, k=5, npartitions=10, ndims=5, nrecords=100, noise=0.1, seed=None):
+        random.seed(seed)
         centers = random.randn(k, ndims)
         gen_func = lambda i: centers[int(floor(random.rand(1, 1) * k))] + noise*random.rand(ndims)
         data_local = map(gen_func, range(0, nrecords))
@@ -47,8 +47,8 @@ class KMeansData(DataSets):
 
 class PCAData(DataSets):
 
-    def make(self, k, npartitions=10, nrows=100, ncols=10):
-        random.seed(42)
+    def make(self, k=3, npartitions=10, nrows=100, ncols=10, seed=None):
+        random.seed(seed)
         u = random.randn(nrows, k)
         v = random.randn(k, ncols)
         a = dot(u, v)
