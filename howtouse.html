@@ -153,7 +153,7 @@ sbt/sbt assembly
 
                 <div class="tab-pane fade" id="Analyses">
 <h1 id="doctitle">Analyses</h1>
-<p>Thunder includes four analysis packages: clustering, factorization, regression, and time series, as well as a utility package include a class for working with matrices. Each package has stand-alone scripts that perform common analysis routines, alongside loading data and saving results. But the core functionality is in the form of classes that can be used directly from within the PySpark shell (for interactive use), or from other scripts (when developing your own analyses). Here, we explain the main functionality through example calls to these analyses. We assume <samp id="inline">data</samp> is an RDD where each element is a numpy array, and possibly a key identifier (see Input format for more details). For each example, the necessary functions must be imported before use.</p>
+<p>Thunder includes four analysis packages: clustering, factorization, regression, and time series, as well as a utility package with a class for working with matrices. Each package has stand-alone scripts that perform common analysis routines, alongside loading data and saving results. But the core functionality is in the form of classes that can be used directly from within the PySpark shell (for interactive use), or from other scripts (when developing your own analyses). Here, we explain the main functionality through example calls to these analyses. We assume <samp id="inline">data</samp> is an RDD where each element is a numpy array, and possibly a key identifier (see Input format for more details). For each example, the necessary functions must be imported before use.</p>
 <h2 id="docsubtitle">Clustering</h2>
 <p>Analyses: kMeans</p>
 <p>Clustering analyses try to associate data points with particular categories based on a distance metric. kMeans assigns each data point to one of k clusters using an iterative algorithm. To run, call</p>
@@ -253,7 +253,6 @@ params = model.fit(data)
           <div class="col-md-2">
             <ul class="nav nav-pills nav-stacked">
               <li><a href="#InstallationBasic" data-toggle="tab">Installation (basic)</a></li>
-              <li><a href="#InstallationCluster" data-toggle="tab">Installation (cluster)</a></li>
               <li><a href="#InputFormat" data-toggle="tab">Input format</a></li>
               <li><a href="#OutputFormat" data-toggle="tab">Output format</a></li>
               <li><a href="#Analyses" data-toggle="tab">Analyses</a></li>
