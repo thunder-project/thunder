@@ -94,7 +94,7 @@
             <div class="tab-pane fade in active" id="GetStartedLocally">
         
   <h1 id="doctitle">Get started locally</h1>
-  <p>Using Thunder locally is a great way to learn how it works and prototype analyses. You just need to have <a href="http://www.scala-lang.org/download/">Scala (2.10.3)</a> and <a href="http://www.python.org/download/releases/2.7.6/">Python (2.7.6)</a> (with <a href="http://www.numpy.org/">NumPy</a>, <a href="http://scipy.org/scipylib/index.html">SciPy</a>, and <a href=http://www.pythonware.com/products/pil/>Python Imaging Library</a>; you can get all these Python tools at once for free with <a href="https://store.continuum.io/cshop/anaconda/">Anaconda</a>).</p>
+  <p>Using Thunder locally is a great way to learn how it works and prototype analyses. You just need to have <a href="http://www.scala-lang.org/download/">Scala (2.10.3)</a> and <a href="http://www.python.org/download/releases/2.7.6/">Python (2.7.6)</a> (with <a href="http://www.numpy.org/">NumPy</a> and <a href="http://scipy.org/scipylib/index.html">SciPy</a>; you can get all these Python tools at once for free with <a href="https://store.continuum.io/cshop/anaconda/">Anaconda</a>).</p>
   <p>Here's how to get started in four steps.</p> 
   <p>1) <b>Download</b> the latest versions of <a id="spark-download" href="http://d3kbcqa49mib13.cloudfront.net/spark-0.9.1.tgz">Spark</a> and <a href="https://github.com/freeman-lab/thunder/archive/master.zip">Thunder</a> and set some paths.</p>
   <pre><code class="bash">export PYTHONPATH=your/path/to/thunder/python/:$PYTHONPATH
@@ -108,10 +108,10 @@ sbt/sbt assembly</pre></code>
   <pre><code class="bash">$SPARK_HOME/bin/pyspark</pre></code>
   <br>
   <p>4) <b>Try</b> an analysis
-   <pre><code class="python">>> from thunder.util.load import load
->> from thunder.factorization.pca import pca
->> data = load(sc, 'you/path/to/thunder/data/iris.txt')
->> scores, latent, comps = pca(data, 4)</code></pre>
+   <pre><code class="python">>> from thunder.io import DataSets
+>> from thunder.factorization import PCA
+>> data = DataSets.load(sc, "iris")
+>> model = PCA(k=4).fit(data.rdd)</code></pre>
    <br>
   
             </div>
@@ -140,10 +140,10 @@ export AWS_SECRET_ACCESS_KEY=your_secret_access_key</pre></code>
 <br>
 <p>5) <b>Try</b> an analysis
 <pre><code class="python">pyspark
->> from thunder.util.load import load
->> from thunder.factorization.pca import pca
->> data = load(sc, 'you/path/to/thunder/data/iris.txt')
->> scores, latent, comps = pca(data, 4)</code></pre>
+>> from thunder.io import DataSets
+>> from thunder.factorization import PCA
+>> data = DataSets.load(sc, "iris")
+>> model = PCA(k=4).fit(data.rdd)</code></pre>
 <br>
 
 

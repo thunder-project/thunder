@@ -54,7 +54,7 @@
               <div class="tab-content">
                 <div class="tab-pane fade in active" id="InstallationBasic">
 <h1 id="doctitle">Installation (basic)</h1>
-<p>This is a guide to installing Thunder, and its dependencies: Scala, Spark, and Python (with NumPy, SciPy, and PIL). It assumes you’ve spent time in a terminal. It's been tested on Mac OS X, but should also work on Linux. It will let you run Spark and Thunder on your local machine, which is useful for understanding how it works. See Installation (cluster) for cluster usage.</p>
+<p>This is a guide to installing Thunder, and its dependencies: Scala, Spark, and Python (with NumPy, SciPy, and PIL). It assumes you’ve spent time in a terminal. It's been tested on Mac OS X, but should also work on Linux. It will let you run Spark and Thunder on your local machine, which is useful for understanding how it works./p>
 <p>First, you need to set up Spark. We'll go through the basics here; consult the <a href="http://spark.incubator.apache.org/docs/latest/">documentation</a> for more details. Download the latest release of Spark from the <a href="http://spark.incubator.apache.org/downloads.html">project page</a>, and download Scala (2.10.3) from <a href="http://www.scala-lang.org/download/">scala-lang.org</a>. Put them anywhere on your file system. Set paths (by typing these lines into the terminal, or by adding them to your .bash_profile).</p>
 <br>
 <pre><code class="bash">export SCALA_HOME=your_path_to_scala
@@ -81,15 +81,14 @@ sbt/sbt assembly
 </pre></code>
 <br>
 <p>If that didn’t work, consult the Spark <a href="http://spark.incubator.apache.org/docs/latest/">documentation</a>.</p>
-<p>Thunder also relies on Python (2.7.6) and its libraries for scientific computing and image processing: NumPy, SciPy, and PIL. Read <a href="http://www.lowindata.com/2013/installing-scientific-python-on-mac-os-x/">this post</a> and <a href="https://developers.google.com/appengine/docs/python/images/installingPIL">these instructions</a> for help setting up these libraries, or install a free prepackaged version like <a href="https://store.continuum.io/cshop/anaconda/">anaconda</a>. To make sure everything’s working, run</p>
+<p>Thunder also relies on Python (2.7.6) and its libraries for scientific computing, NumPy and SciPy. Read <a href="http://www.lowindata.com/2013/installing-scientific-python-on-mac-os-x/">this post</a>  for help setting up these libraries, or install a free prepackaged version like <a href="https://store.continuum.io/cshop/anaconda/">anaconda</a>. To make sure everything’s working, run</p>
 <br>
 <pre><code class="python">python
 >> import numpy
 >> import scipy
->> import PIL
 </pre></code>
 <br>
-<p>That should start Python and import NumPy, SciPy, and PIL. Type <samp id="inline">exit()</samp> to quit.</p>
+<p>That should start Python and import NumPy and SciPy. Type <samp id="inline">exit()</samp> to quit.</p>
 <p>Now we’re ready to install Thunder. Download the latest <a href="https://github.com/freeman-lab/thunder/archive/master.zip">build</a>, and add it to your path (again, it’s useful to add these lines to your .bash_profile).</p>
 <br>
 <pre><code class="bash">export PYTHONPATH=your_path_to_thunder/python/:$PYTHONPATH
@@ -97,7 +96,7 @@ sbt/sbt assembly
 <br>
 <p>Go into the top-level Thunder directory and run an analysis on test data.</p>
 <br>
-<pre><code class="bash">$SPARK_HOME/bin/pyspark python/thunder/factorization/pca.py local data/iris.txt ~/results 4
+<pre><code class="bash">$SPARK_HOME/bin/spark-submit python/thunder/factorization/pca.py local data/iris.txt ~/results 4
 </pre></code>
 <br>
 <p>This will run principal component analysis and save the results to your home directory in the folder results-pca. The <samp id="inline">local</samp> tells Spark to run in local mode (i.e. not on a cluster). This is useful for debugging purposes. If you are on a multi-core machine, use <samp id="inline">local[n]</samp> to use n cores.</p>
@@ -108,91 +107,25 @@ sbt/sbt assembly
 <br>
 <p>Then run the analysis and inspect the results.</p>
 <br>
-<pre><code class="python">>> from thunder.util.load import load
->> from thunder.factorization.pca import pca
->> data = load(sc, 'your_path_to_thunder/data/iris.txt')
->> scores, latent, comps = pca(data, 4)
->> latent
->> comps
->> scores.collect()
+<pre><code class="python">>> from thunder.io import DataSets
+>> from thunder.factorization import PCA
+>> data = DataSets.load(sc, "iris")
+>> pca = PCA(k=4).fit(data)
+>> pca.latent
+>> pca.comps
+>> pca.scores.collect()
 </pre></code>
 <br>
 <p>Running analyses interactively this way is an especially useful way to learn how they work, debug them, and develop new ones.</p>
                 </div>
-                <div class="tab-pane fade" id="InstallationCluster">
-<h1 id="doctitle">Installation (cluster)</h1>
-<h2 id="docsubtitle">Instructions for Amazon's EC2</h2>
-<p>Spark’s deploy scripts make it easy to get up and running on Amazon’s EC2 cloud computing services. First install Spark by reading Installation (basic) or the <a href="http://spark.incubator.apache.org/docs/latest/">Spark documentation</a>, then follow <a href="http://spark.incubator.apache.org/docs/latest/ec2-scripts.html">these instructions</a> up through the point where you log in to the cluster’s master node.</p>
-<p>Once logged in to the master, clone Thunder to the root directory (if you put it elsewhere, change the paths below accordingly)</p>
-<br>
-<pre><code class="bash">git clone https://github.com/freeman-lab/thunder.git
-export PYTHONPATH=/root/thunder/python/:$PYTHONPATH</pre></code>
-<br>
-<p>Go into the top-level directory and build an egg</p>
-<br>
-<pre><code class="bash">cd /root/thunder/python
-./setup.py bdist_egg
-export THUNDER_EGG=/root/thunder/python/dist/</pre></code>
-<br>
-<p>This will allow PySpark to send Thunder's modules to the worker nodes without installing Thunder on each one. You also need to execute a helper script that installs NumPy and SciPy on the workers.</p>
-<br>
-<pre><code class="bash">chmod +x /root/thunder/helper/install-numpy-scipy-ec2.sh
-/root/thunder/helper/install-numpy-scipy-ec2.sh</pre></code>
-<br>
-<p>And set a variable with the URL of the master</p>
-<br>
-<pre><code class="bash">export MASTER=$(< /root/spark-ec2/cluster-url)
-</pre></code>
-<br>
-<p>Now Thunder is ready to run, but you’ll need some data to analyze. If your data is stored in Amazon’s S3, copy it into HDFS by running</p>
-<br>
-<pre><code class="bash">/root/ephemeral-hdfs/bin/start-all.sh
-/root/ephemeral-hdfs/bin/hadoop distcp s3n://your_aws_access_key:your_aws_secret_access_key@your_s3_bucket_name/your_file_name hdfs:///data
-</pre></code>
-<br>
-<p>This step may take a while, especially for larger data sets. Once it’s done, set a path to the data:</p>
-<br>
-<pre><code class="bash">export MASTER_URL=$(< /root/spark-ec2/masters)
-export DATA=hdfs://$MASTER_URL:9000/data
-</pre></code>
-<br>
-<p>Then go into the top-level Thunder directory and run an analysis</p>
-<br>
-<pre><code class="bash">/root/spark/pyspark python/thunder/factorization/pca.py $MASTER $DATA ~/results 4
-</pre></code>
-<br>
-<p>At this point, you should be able to run any of the analyses in Thunder!</p>
-<p>If you want to run in interactive mode, just start the shell</p>
-<br>
-<pre><code class="bash">/root/spark/pyspark
-</pre></code>
-<br>
-<p>Make sure that <samp id="inline">MASTER</samp> is set correctly (see above), otherwise PySpark might be running in local mode even though you are on a cluster. At the start of an analysis, you'll want to import any packages from thunder that you'll need, for example</p>
-<br>
-<pre><code class="python">>> from thunder.factorization.pca import pca
->> from thunder.factorization.ica import ica
-</pre></code>
-<br>
-<p>You will also want to add Thunder's egg to the SparkContext (this is done automatically at the start of Thunder's scripts)</p>
-<br>
-<pre><code class="python">>> import glob, os
->> egg = glob.glob(os.environ['THUNDER_EGG'] + "*.egg")
->> sc.addPyFile(egg)
-</pre></code>
-<br>
-
-<h2 id="docsubtitle">Instructions for a private cluster</h2>
-<p>To run Thunder on a private cluster, you’ll first need to set up Spark. The simplest option is to set up in Standalone mode, following <a href="http://spark.incubator.apache.org/docs/latest/spark-standalone.html">these instructions</a>. I recommend giving this information to a systems administrator (or whoever manages the cluster), they should be able to help.</p>
-<p>Once Spark is up and running, you can run Thunder by downloading and installing it on the master node (as discussed above). Remember to provide the IP address of the master when starting an analysis in Thunder, either by setting the environmental variable <samp id="inline">MASTER</samp> (for running in interactive mode) or by providing it as an argument to an analysis script. Make sure that NumPy and SciPy are installed on all the worker nodes, and that the data is available to all the worker nodes (via HDFS or another networked-file-system).</p>
-                </div>
-
-
+    
                 <div class="tab-pane fade" id="InputFormat">
 <h1 id="doctitle">Input format</h1>
 <p>All analyses in Thunder operate on an RDD of data points; each data point is a (key, array) tuple, where key is either an integer or a tuple of integers, and value is a numpy array. Only a subset of analyses use keys explicitly (see Analyses), but all analyses assume an RDD of key, value pairs.</p>
 <p>Thunder provides a utility function for loading raw data from disk into an RDD, and applying any desired preprocessing. At the beginning of a script (or from within the shell), you might load data like this:</p>
 <br>
-<pre><code class="python">>> data = load(sc, path_to_data, preprocessmethod="dff", nkey=3)
+<pre><code class="python">>> from thunder.io import load
+>> data = load(sc, path_to_data, preprocessmethod="dff", nkey=3)
 >> data.cache()
 </pre></code>
 <br>
@@ -205,26 +138,28 @@ export DATA=hdfs://$MASTER_URL:9000/data
 
                 <div class="tab-pane fade" id="OutputFormat">
 <h1 id="doctitle">Output format</h1>
-<p>The results of analyses in Thunder can be written to multiple formats: text, MAT, or images. MAT is good for visualization in MATLAB. Images are useful when working with data that have a well-defined spatial component (e.g. calcium imaging). Text is simple and generic. Results can also be directly visualized using matplotlib if running Thunder within a shell.</p>
-<p>Saving is handled by the utility function <samp id="inline">saveout</samp>. At the end of performing an analysis (in a script or from the shell), you might save three different results like this:</p>
+<p>The results of analyses in Thunder can be visualized directly within Python, or written to multiple output formats: text, MAT, or images. MAT is good for visualization in MATLAB. Images are useful when working with data that have a well-defined spatial component (e.g. calcium imaging). Text is simple and generic. Analysis-specific visualization routines within Python are in development.</p>
+<p>Saving is handled by the utility function <samp id="inline">save</samp>. At the end of performing an analysis (in a script or from the shell), you might save three different results like this:</p>
 <br>
-<pre><code class="python">>> saveout(data1, outputdir, "data1", "matlab")
->> saveout(data2, outputdir, "data2", "text")
->> saveout(data3, outputdir, "data3", "image")
+<pre><code class="python">>> from thunder.io import save
+>> save(data1, outputdir, "data1", "matlab")
+>> save(data2, outputdir, "data2", "text")
+>> save(data3, outputdir, "data3", "image")
 </pre></code>
 <br>
-<p>The first line will save data1 to a MAT file called data1 in the specified output directory. The second line will save data2 to a text file. The third line will save the contents of data3 as an image of width 100 and height 200. Image brightness will be automatically rescaled based on the data. The input to <samp id="inline">saveout</samp> can be a numpy array, but frequently in Thunder you'll have results in the form of RDDs. If passed as an input, RDDs will automatically be detected and appropriately formatted for saving; this includes reshaping based on the keys. If the input is an RDD with multiple entries per data point, a result file for each entry will be saved separately. This is neccessary when saving large result files (e.g. entire imaging volumes).
+<p>The first line will save data1 to a MAT file called data1 in the specified output directory. The second line will save data2 to a text file. The third line will save the contents of data3 as an image of width 100 and height 200. Image brightness will be automatically rescaled based on the data. The input to <samp id="inline">saveout</samp> can be a numpy array, but frequently in Thunder you'll have results in the form of RDDs. If passed as an input, RDDs will automatically be detected and appropriately formatted for saving; this includes packing into arrays based on the keys. If the input is an RDD with multiple entries per data point, a result file for each entry will be saved separately. This is neccessary when saving large result files (e.g. entire imaging volumes).
                 </div>
                 
 
                 <div class="tab-pane fade" id="Analyses">
 <h1 id="doctitle">Analyses</h1>
-<p>Thunder includes four analysis packages: clustering, factorization, regression, and signal processing, as well as utils for shared methods. Each package has stand-alone scripts that perform common analysis routines, alongside loading data and saving results. But the main functions in each script, as well as any shared algorithms and classes, can be called directly from within the PySpark shell (for interactive use), or from other scripts (when developing your own analyses). Here, we explain the main functionality through example calls to these functions. We assume <samp id="inline">data</samp> is an RDD where each element is a numpy array, and possibly a key identifier (see Input format for more details). For each example, the necessary functions must be imported before use.</p>
+<p>Thunder includes four analysis packages: clustering, factorization, regression, and time series, as well as a utility package include a class for working with matrices. Each package has stand-alone scripts that perform common analysis routines, alongside loading data and saving results. But the core functionality is in the form of classes that can be used directly from within the PySpark shell (for interactive use), or from other scripts (when developing your own analyses). Here, we explain the main functionality through example calls to these analyses. We assume <samp id="inline">data</samp> is an RDD where each element is a numpy array, and possibly a key identifier (see Input format for more details). For each example, the necessary functions must be imported before use.</p>
 <h2 id="docsubtitle">Clustering</h2>
 <p>Analyses: kMeans</p>
 <p>Clustering analyses try to associate data points with particular categories based on a distance metric. kMeans assigns each data point to one of k clusters using an iterative algorithm. To run, call</p>
 <br>
-<pre><code class="python">labels, centers = kmeans(data, k, maxiter, tol)
+<pre><code class="python">>> clusters = KMeans(k, maxiter, tol).train(data)
+>> clusters.predict(data)
 </pre></code>
 <br>
 <p>Where k is the number of clusters, maxiters is the maximum number of iterations, and tol is the tolerance for change in cluster estimates. Labels is an RDD with the assigned label of each data point, and clusters is a numpy array with the estimated cluster centers.</p>
@@ -233,22 +168,22 @@ export DATA=hdfs://$MASTER_URL:9000/data
 <p>Analyses: Principal Component Analysis, Independent Component Analysis</p>
 <p>Factorization methods separate or decompose a data matrix into smaller, lower-rank matrices by optimizing an objective function. PCA finds a decomposition that minimizes the squared error between the true data matrix and the matrix reconstructed from the low-rank matrices. To run PCA, call</p>
 <br>
-<pre><code class="python">scores, latent, comps = pca(data, k, svdmethod)
+<pre><code class="python">model = PCA(k, svdmethod).fit(data)
 </pre></code>
 <br>
 <p>Where k is the number of principal components to return, and svdmethod specifies which SVD method to use ('direct' or 'em', see below). comps is an array with the principal components, latent is an array with the variance explained by each component, and scores is an RDD with the data projected into the principal component space.</p>
 <p>The source model for PCA is that the data is Gaussian-distributed with a low-rank covariance determined by the components. ICA, in contrast, assumes that the components and non-Gaussian and statistically independent from one another, and estimates them by iteratively maximizing an objective function that computes the non-Gaussanity of the components. As is common, Thunder's ICA first reduces the dimensionality of the data using PCA. To run ICA, call</p>
 <br>
-<pre><code class="python">w, sigs = ica(data, k, c, svdmethod, maxiter, tol)
+<pre><code class="python">model = ICA(k, c, svdmethod, maxiter, tol).fit(data)
 </pre></code>
 <br>
 <p>Where k is the reduced dimensionality to use, c is the number of independent components to find, svdmethod is which SVD to use to do the initial PCA, and maxiter and tol control the iterative ICA algorithm.</p>
 <p>Both PCA and ICA rely on a large-scale singular value decomposition (SVD), which has two variants. One is direct: it maps the outer product of all time series data, and then adds the results through an accumulator. This is highly efficient for many data points with few time points (e.g. a "tall and skinny" matrix), but for longer time series data it will become inefficient. So Thunder also includes an iterative method using expectation maximization. To call the SVD directly call</p>
 <br>
-<pre><code class="python">scores, latent, comps = svd(data, k, meansubtract, svdmethod)
+<pre><code class="python">model = SVD(k, svdmethod).calc(data)
 </pre></code>
 <br>
-<p>Inputs are similar to those for PCA, with the additional specification of whether or not to subtract the mean of each data point (0 or 1).</p>
+<p>Inputs are similar to those for PCA.</p>
 <h2 id="docsubtitle">Regression</h1>
 <p>Analyses: Regression (linear, bilinear), Tuning (gaussian, circular)
 <p>Regression models describes each time series as a function of some underlying variables. Thunder includes both linear and bilinear regression, called by:</p>
@@ -260,8 +195,8 @@ betas, stats, resid = model.fit(data)
 <p>modelfile is an array, tuple of arrays, or a string with the name of a file, specifying the parameters to regress each time series against (often called a design matrix). regressmode is the form of regression: current options are “linear”, “bilinear”. “linear” fits each time series as a linear combination of some variables, plus a constant. “bilinear” uses two design matrix; it uses the first to estimate a basis function that is common to each of several conditions, and uses the second to describe each condition as a scaled version of that basis function.</p>
 <p>betas, stats, and resid are RDDs with the regression results. betas contains the coefficients, stats contains the r2 value for each data point, and resid contains the residuals. It's easy to pass these values to other algorithms. For example, the regression coefficients are often still large (many coefficients per data point), but can be simplified further by doing PCA or kMeans.</p>
 <br>
-<pre><code class="python">scores, latent, comps = pca(betas, 2)
-labels, centers = kmeans(betas, 2)
+<pre><code class="python">model = PCA(k=2).fit(betas)
+clusters = KMeans(k=2).train(betas)
 </pre></code>
 <br>
 <p>Tuning models estimate the parameters of a tuning curve that relate an input value to an output value. Tuning curves are estimated by:</p>
@@ -275,37 +210,34 @@ params = model.fit(data)
 <p>Analyses: Stats, Fourier, Cross Correlation, Local Correlation, Query</p>
 <p>Signal processing analyses compute statistics on data (typically time series data), either simple summary statistics, or the results of more complex signal processing. Stats is for computing summary statistics, called by:</p>
 <br>
-<pre><code class="python">method = SigProcessingMethod.load('stats', statistic)
-out = method.calc(data)
+<pre><code class="python">>> vals = Stats(statistic).calc(data)
 </pre></code>
 <br>
-<p>statistic can be 'mean', 'median', 'std', or 'norm', and out is an RDD with the value of that statistic for each data point.</p>
+<p>statistic can be 'mean', 'median', 'std', or 'norm', and vals is an RDD with the value of that statistic for each data point.</p>
 <p>Fourier analysis estimates the statistics of the Fourier transform, specifically, the amplitude and phase of the time series at the specified frequency. Call it by:</p>
 <br>
-<pre><code class="python">method = SigProcessingMethod.load('fourier', freq)
-out = method.calc(data)
+<pre><code class="python">>> vals = Fourier(freq).calc(data)
 </pre></code>
 <br>
-<p>Where freq is the frequency (total number of cycles per time series minus 1). out is an RDD of tuples, each containing the coherence and phase for a data point. (coherence is Fourier amplitude normalized by the amplitude of all frequencies, yielding a number between 0 and 1 that is more interpretable than raw amplitude.)</p>
+<p>Where freq is the frequency (total number of cycles per time series minus 1). vals is an RDD of tuples, each containing the coherence and phase for a data point. (coherence is Fourier amplitude normalized by the amplitude of all frequencies, yielding a number between 0 and 1 that is more interpretable than raw amplitude.)</p>
 <p>crosscorr computes the cross correlation between data and a signal of interest at multiple time lags. Call it by:</p>
 <br>
-<pre><code class="python">method = SigProcessingMethod.load('crosscorr', sigfile, lag)
-betas = method.calc(data)
+<pre><code class="python">>> vals = CrossCorr(sigfile, lag).calc(data)
 </pre></code>
 <br>
 <p>Where sigfile is an array or string with a file name specifying the signal to correlate against, and lag is the maximum temporal lag to consider. betas is an RDD containing the cross-correlation function for each data point (of size 2 x lag + 1). If lag is large, this will still be a big data set, so it's often useful to do PCA on betas</p>
 <p>For spatio-temporal data, localcorr estimates the correlation between each time series and the average time series of its neighbors, useful for detecting structures with locally correlated activity.</p>
 <br>
-<pre><code class="python">corrs = localcorr(data, sz)
+<pre><code class="python">>> corrs = LocalCorr(sz).calc(data)
 </pre></code>
 <br>
 <p>Where sz is the neighborhood size used in computing the local averages. This method assumes that data is an RDD of (Tuple, Array) pairs where Tuple contains the x,y,z coordinates of each data point, and Array is its time series.</p>
 <p>query is a method for quickly extracting local averages from spatio-temporal data, by specifying a set of indices to include in the average, called by:</p>
 <br>
-<pre><code class="python">ts = query(data, indsfile)
+<pre><code class="python">>> ts = Query(indsfile).calc(data)
 </pre></code>
 <br>
-<p>Where indsfile is an array of arrays containing the different sets of indices, or the name of a file. This method assumes that data is an RDD of (Int, Array) pairs where the Int is a linear index for each data point (based on its x,y,z coordinates), and Array is its time series.</p>
+<p>Where indsfile is an array of arrays containing the different sets of indices, or the name of a file.</p>
                 </div>
 
 
