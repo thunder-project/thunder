@@ -111,7 +111,7 @@ sbt/sbt assembly</pre></code>
    <pre><code class="python">>> from thunder.io import DataSets
 >> from thunder.factorization import PCA
 >> data = DataSets.load(sc, "iris")
->> model = PCA(k=4).fit(data.rdd)</code></pre>
+>> model = PCA(k=4).fit(data)</code></pre>
    <br>
   
             </div>
@@ -143,7 +143,7 @@ export AWS_SECRET_ACCESS_KEY=your_secret_access_key</pre></code>
 >> from thunder.io import DataSets
 >> from thunder.factorization import PCA
 >> data = DataSets.load(sc, "iris")
->> model = PCA(k=4).fit(data.rdd)</code></pre>
+>> model = PCA(k=4).fit(data)</code></pre>
 <br>
 
 
