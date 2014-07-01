@@ -168,19 +168,19 @@ sbt/sbt assembly
 <p>Analyses: Principal Component Analysis, Independent Component Analysis</p>
 <p>Factorization methods separate or decompose a data matrix into smaller, lower-rank matrices by optimizing an objective function. PCA finds a decomposition that minimizes the squared error between the true data matrix and the matrix reconstructed from the low-rank matrices. To run PCA, call</p>
 <br>
-<pre><code class="python">model = PCA(k, svdmethod).fit(data)
+<pre><code class="python">>> model = PCA(k, svdmethod).fit(data)
 </pre></code>
 <br>
 <p>Where k is the number of principal components to return, and svdmethod specifies which SVD method to use ('direct' or 'em', see below). comps is an array with the principal components, latent is an array with the variance explained by each component, and scores is an RDD with the data projected into the principal component space.</p>
 <p>The source model for PCA is that the data is Gaussian-distributed with a low-rank covariance determined by the components. ICA, in contrast, assumes that the components and non-Gaussian and statistically independent from one another, and estimates them by iteratively maximizing an objective function that computes the non-Gaussanity of the components. As is common, Thunder's ICA first reduces the dimensionality of the data using PCA. To run ICA, call</p>
 <br>
-<pre><code class="python">model = ICA(k, c, svdmethod, maxiter, tol).fit(data)
+<pre><code class="python">>> model = ICA(k, c, svdmethod, maxiter, tol).fit(data)
 </pre></code>
 <br>
 <p>Where k is the reduced dimensionality to use, c is the number of independent components to find, svdmethod is which SVD to use to do the initial PCA, and maxiter and tol control the iterative ICA algorithm.</p>
 <p>Both PCA and ICA rely on a large-scale singular value decomposition (SVD), which has two variants. One is direct: it maps the outer product of all time series data, and then adds the results through an accumulator. This is highly efficient for many data points with few time points (e.g. a "tall and skinny" matrix), but for longer time series data it will become inefficient. So Thunder also includes an iterative method using expectation maximization. To call the SVD directly call</p>
 <br>
-<pre><code class="python">model = SVD(k, svdmethod).calc(data)
+<pre><code class="python">>> model = SVD(k, svdmethod).calc(data)
 </pre></code>
 <br>
 <p>Inputs are similar to those for PCA.</p>
@@ -188,21 +188,21 @@ sbt/sbt assembly
 <p>Analyses: Regression (linear, bilinear), Tuning (gaussian, circular)
 <p>Regression models describes each time series as a function of some underlying variables. Thunder includes both linear and bilinear regression, called by:</p>
 <br>
-<pre><code class="python">model = RegressionModel.load(modelfile, regressmode)
-betas, stats, resid = model.fit(data)
+<pre><code class="python">>> model = RegressionModel.load(modelfile, regressmode)
+>> betas, stats, resid = model.fit(data)
 </pre></code>
 <br>
 <p>modelfile is an array, tuple of arrays, or a string with the name of a file, specifying the parameters to regress each time series against (often called a design matrix). regressmode is the form of regression: current options are “linear”, “bilinear”. “linear” fits each time series as a linear combination of some variables, plus a constant. “bilinear” uses two design matrix; it uses the first to estimate a basis function that is common to each of several conditions, and uses the second to describe each condition as a scaled version of that basis function.</p>
 <p>betas, stats, and resid are RDDs with the regression results. betas contains the coefficients, stats contains the r2 value for each data point, and resid contains the residuals. It's easy to pass these values to other algorithms. For example, the regression coefficients are often still large (many coefficients per data point), but can be simplified further by doing PCA or kMeans.</p>
 <br>
-<pre><code class="python">model = PCA(k=2).fit(betas)
-clusters = KMeans(k=2).train(betas)
+<pre><code class="python">>> model = PCA(k=2).fit(betas)
+>> clusters = KMeans(k=2).train(betas)
 </pre></code>
 <br>
 <p>Tuning models estimate the parameters of a tuning curve that relate an input value to an output value. Tuning curves are estimated by:</p>
 <br>
-<pre><code class="python">model = TuningModel.load(modelfile, tuningmode)
-params = model.fit(data)
+<pre><code class="python">>> model = TuningModel.load(modelfile, tuningmode)
+>> params = model.fit(data)
 </pre></code>
 <br>
 <p>Where modelfile is an array or string with the name of a file specifying the  input value corresponding to the entries of each data point.</p>
