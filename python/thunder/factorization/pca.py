@@ -67,7 +67,7 @@ class PCA(object):
 
         return self
 
-    def plot(self, notebook=False, colormap='polar', scale=1, maptype='points', savename=None):
+    def plot(self, notebook=False, colormap='polar', scale=1, maptype='points', show=True, savename=None):
 
         # make a spatial map based on the scores
         fig = pyplot.figure(figsize=(12, 5))
@@ -89,11 +89,13 @@ class PCA(object):
 
         plugins.connect(fig, LinkedView(h2, h3[0], linedata))
 
-        if notebook is False:
+        if show and notebook is False:
             mpld3.show()
 
         if savename is not None:
             mpld3.save_html(fig, savename)
+        elif show is False:
+            return mpld3.fig_to_html(fig)
 
 
 if __name__ == "__main__":
