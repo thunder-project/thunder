@@ -13,7 +13,7 @@ from thunder.io import load
 from thunder.io import save
 from thunder.factorization import SVD
 from thunder.util.matrices import RowMatrix
-from thunder.viz.plugins import LinkedView
+from thunder.viz.plugins import LinkedView, HiddenAxes
 from thunder.viz.plots import pointmap, imagemap, scatter, tsrecon
 from pyspark import SparkContext
 
@@ -67,7 +67,7 @@ class PCA(object):
 
         return self
 
-    def plot(self, notebook=False, colormap='polar', scale=1, maptype='points', savename=None):
+    def plot(self, notebook=False, colormap='polar', scale=1, maptype='points', show=True, savename=None):
 
         # make a spatial map based on the scores
         fig = pyplot.figure(figsize=(12, 5))
@@ -88,12 +88,15 @@ class PCA(object):
         ax3, h3, linedata = tsrecon(self.comps, samples, ax=ax3)
 
         plugins.connect(fig, LinkedView(h2, h3[0], linedata))
+        plugins.connect(fig, HiddenAxes())
 
-        if notebook is False:
+        if show and notebook is False:
             mpld3.show()
 
         if savename is not None:
             mpld3.save_html(fig, savename)
+        elif show is False:
+            return mpld3.fig_to_html(fig)
 
 
 if __name__ == "__main__":
