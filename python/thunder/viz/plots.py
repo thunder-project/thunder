@@ -66,7 +66,12 @@ def scatter(pts, nsamples=100, colormap=None, scale=1, thresh=0.001, ax=None, st
         pts = asarray(pts)
 
     if colormap is not None:
-        clrs = Colorize(colormap, scale).calc(pts)
+        # pass in strings or actual colormap objects
+        if isinstance(colormap, basestring):
+            clrs = Colorize(colormap, scale).calc(pts)
+        else:
+            clrs = colormap.calc(pts)
+
     else:
         clrs = 'indianred'
 
@@ -75,7 +80,8 @@ def scatter(pts, nsamples=100, colormap=None, scale=1, thresh=0.001, ax=None, st
     if store is True:
         return ax, h, pts
     else:
-        return ax, h
+        return ax, h, pts
+
 
 
 def tsrecon(tsbase, samples, ax=None):
