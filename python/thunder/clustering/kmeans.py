@@ -5,14 +5,19 @@ Classes and standalone app for KMeans clustering
 import os
 import argparse
 import glob
-from numpy import sum, array, argmin, corrcoef
+from numpy import sum, array, argmin, corrcoef, size
 from scipy.spatial.distance import cdist
 from thunder.io import load
 from thunder.io import save
 from pyspark import SparkContext
+from matplotlib import pyplot
+import mpld3
+from mpld3 import plugins
+from thunder.viz.plugins import HiddenAxes
+from thunder.viz.plots import pointmap, imagemap, scatter
+from thunder.viz.colorize import Colorize
 from thunder.io.load import isrdd
 import colorsys
-
 
 class KMeansModel(object):
     """Class for an estimated KMeans model
@@ -23,6 +28,7 @@ class KMeansModel(object):
         The cluster centers
     """
     def __init__(self, centers):
+
         self.centers = centers
 
         # get unique colors for plotting
@@ -45,10 +51,43 @@ class KMeansModel(object):
             For each data point, gives an array with the closest center for each data point,
             and the correlation with that center
         """
+
         if isrdd(data):
             return data.mapValues(lambda x: KMeans.similarity(x, self.centers))
         else:
             return map(lambda x: KMeans.similarity(x, self.centers), data)
+
+
+    def plot(self, data, notebook=False, show=True, savename=None):
+
+        fig = pyplot.figure()
+        ncenters = len(self.centers)
+
+        colorizer = KMeansColorize()
+        colorizer.model = self
+
+        # plot time series of each center
+        for i, center in enumerate(self.centers):
+            ax = pyplot.subplot2grid((ncenters, 3), (i, 0))
+            ax.plot(center, color=self.colors[i], linewidth=5)
+            fig.add_axes(ax)
+
+        # make a scatter plot of the data
+        ax2 = pyplot.subplot2grid((ncenters, 3), (0, 1), rowspan=ncenters, colspan=2)
+        ax2, h2 = scatter(data, colormap=colorizer, ax=ax2)
+        fig.add_axes(ax2)
+
+        plugins.connect(fig, HiddenAxes())
+
+
+        if show and notebook is False:
+            mpld3.show()
+
+        if savename is not None:
+            mpld3.save_html(fig, savename)
+
+        elif show is False:
+            return mpld3.fig_to_html(fig)
 
 
 
@@ -130,6 +169,7 @@ class KMeansColorize(Colorize):
 
     def get(self, line):
         return self.model.colors[int(line[0])]
+
 
 
 if __name__ == "__main__":
