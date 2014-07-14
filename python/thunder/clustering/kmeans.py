@@ -10,6 +10,7 @@ from scipy.spatial.distance import cdist
 from thunder.io import load
 from thunder.io import save
 from pyspark import SparkContext
+from thunder.io.load import isrdd
 
 
 class KMeansModel(object):
@@ -37,8 +38,11 @@ class KMeansModel(object):
             For each data point, gives an array with the closest center for each data point,
             and the correlation with that center
         """
-        closest = data.mapValues(lambda x: KMeans.similarity(x, self.centers))
-        return closest
+        if isrdd(data):
+            return data.mapValues(lambda x: KMeans.similarity(x, self.centers))
+        else:
+            return map(lambda x: KMeans.similarity(x, self.centers), data)
+
 
 
 class KMeans(object):
