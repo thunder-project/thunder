@@ -13,7 +13,7 @@ from thunder.io import load
 from thunder.io import save
 from thunder.factorization import SVD
 from thunder.util.matrices import RowMatrix
-from thunder.viz.plugins import LinkedView
+from thunder.viz.plugins import LinkedView, HiddenAxes
 from thunder.viz.plots import pointmap, imagemap, scatter, tsrecon
 from pyspark import SparkContext
 
@@ -88,6 +88,7 @@ class PCA(object):
         ax3, h3, linedata = tsrecon(self.comps, samples, ax=ax3)
 
         plugins.connect(fig, LinkedView(h2, h3[0], linedata))
+        plugins.connect(fig, HiddenAxes())
 
         if show and notebook is False:
             mpld3.show()
