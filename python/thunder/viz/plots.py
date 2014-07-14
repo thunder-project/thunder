@@ -80,7 +80,7 @@ def scatter(pts, nsamples=100, colormap=None, scale=1, thresh=0.001, ax=None, st
     if store is True:
         return ax, h, pts
     else:
-        return ax, h, pts
+        return ax, h
 
 
 
