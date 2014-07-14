@@ -42,13 +42,18 @@ class LinkedView(plugins.PluginBase):
                       "idline": utils.get_id(line),
                       "data": linedata}
 
+
+class HiddenAxes(plugins.PluginBase):
+
+    def __init__(self):
+        self.dict_ = {"type": "hiddenaxes"}
         self.css_ = """
-                    g.mpld3-xaxis, g.mpld3-yaxis {
-                        display: none;
-                    }
+            g.mpld3-xaxis, g.mpld3-yaxis {
+                display: none;
+            }
 
-                    rect.mpld3-axesbg {
-                        display: none;
-                    }
+            rect.mpld3-axesbg {
+                display: none;
+            }
+        """
 
-                    """
