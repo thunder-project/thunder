@@ -11,6 +11,7 @@ from thunder.io import load
 from thunder.io import save
 from pyspark import SparkContext
 from thunder.io.load import isrdd
+import colorsys
 
 
 class KMeansModel(object):
@@ -23,6 +24,12 @@ class KMeansModel(object):
     """
     def __init__(self, centers):
         self.centers = centers
+
+        # get unique colors for plotting
+        n = len(self.centers)
+        hsv_tuples = [(x*1.0/n, 0.5, 0.5) for x in range(n)]
+        self.colors = map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples)
+
 
     def predict(self, data):
         """Predict the cluster that all data points belong to, and the similarity
@@ -106,6 +113,23 @@ class KMeans(object):
             iter += 1
 
         return KMeansModel(centers)
+
+
+
+class KMeansColorize(Colorize):
+
+    def calc(self, data):
+
+        if isrdd(data):
+            self.checkargs(size(data.first()[1]))
+            return self.model.predict(data).mapValues(lambda x: self.get(x))
+        else:
+            self.checkargs(size(data[0]))
+            return map(lambda x: self.get(x), self.model.predict(data))
+
+
+    def get(self, line):
+        return self.model.colors[int(line[0])]
 
 
 if __name__ == "__main__":
