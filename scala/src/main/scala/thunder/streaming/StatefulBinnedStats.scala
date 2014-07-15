@@ -73,7 +73,7 @@ class StatefulBinnedStats (
     val currentCount = values.size
     val n = features.size
 
-    if ((currentCount != 0) & (n != 0)) {
+    if ((currentCount != 0) && (n != 0)) {
 
       // group new data by the features
       val pairs = features.zip(values)
