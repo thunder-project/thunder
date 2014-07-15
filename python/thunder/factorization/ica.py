@@ -6,7 +6,7 @@ import os
 import argparse
 import glob
 from numpy import random, sqrt, zeros, real, dot, outer, diag, transpose
-from scipy.linalg import sqrtm, inv, orth
+from scipy.linalg import sqrtm, inv, orth, pinv
 from thunder.io import load
 from thunder.io import save
 from thunder.factorization import SVD
@@ -39,6 +39,9 @@ class ICA(object):
     Attributes
     ----------
     `w` : array, shape (c, ncols)
+        Recovered unmixing matrix
+
+    `a` : array, shape (ncols, ncols)
         Recovered mixing matrix
 
     `sigs` : RDD of nrows (tuple, array) pairs, each array of shape (c,)
@@ -103,12 +106,16 @@ class ICA(object):
             errvec[iter-1] = (1 - minabscos)
 
         # get un-mixing matrix
-        w = dot(transpose(b), whtmat)
+        w = dot(b.T, whtmat)
+
+        # get mixing matrix
+        a = dot(unwhtmat, b)
 
         # get components
         sigs = data.times(w.T).rdd
 
         self.w = w
+        self.a = a
         self.sigs = sigs
 
         return self
