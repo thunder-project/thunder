@@ -1,16 +1,10 @@
-import os
 import shutil
 import tempfile
-from numpy import array, allclose, transpose
+from numpy import array, allclose, transpose, linspace, random, sign, sin, c_, dot, corrcoef
 import scipy.linalg as LinAlg
-from scipy.io import loadmat
 from thunder.factorization import ICA
 from thunder.factorization import SVD
-from thunder.io import load
 from test_utils import PySparkTestCase
-
-# Hack to find the data files:
-DATA_DIR = os.path.join(os.path.dirname(__file__), "../../data")
 
 
 class FactorizationTestCase(PySparkTestCase):
@@ -71,20 +65,34 @@ class TestSVD(FactorizationTestCase):
 
 
 class TestICA(FactorizationTestCase):
-    """Test that ICA returns correct
-    results by comparing to known, vetted
-    results for the example data set
-    and a fixed random seed
+    """Test ICA results against ground truth,
+    taking into account possible sign flips and permutations
     """
     def test_ica(self):
-        ica_data = os.path.join(DATA_DIR, "ica.txt")
-        ica_results = os.path.join(DATA_DIR, "results/ica")
-        data = load(self.sc, ica_data, "raw")
-        ica = ICA(k=4, c=4, svdmethod="direct", seed=1)
-        ica.fit(data)
-        w_true = loadmat(os.path.join(ica_results, "w.mat"))["w"]
-        sigs_true = loadmat(os.path.join(ica_results, "sigs.mat"))["sigs"]
-        tol = 10e-02
-        assert(allclose(ica.w, w_true, atol=tol))
-        assert(allclose(transpose(ica.sigs.map(lambda (_, v): v).collect()), sigs_true, atol=tol))
+        random.seed(42)
+        nsamples = 100
+        time = linspace(0, 10, nsamples)
+        s1 = sin(2 * time)
+        s2 = sign(sin(3 * time))
+        s = c_[s1, s2]
+        s += 0.2 * random.randn(s.shape[0], s.shape[1])  # Add noise
+        s /= s.std(axis=0)
+        a = array([[1, 1], [0.5, 2]])
+        x = dot(s, a.T)
 
+        data = self.sc.parallelize(zip(range(nsamples), x))
+
+        ica = ICA(k=2, c=2, svdmethod="direct", seed=1)
+        ica.fit(data)
+
+        s_ = array(ica.sigs.values().collect())
+
+        # test accurate recovery of original signals
+        tol = 0.01
+        assert(allclose(abs(corrcoef(s[:, 0], s_[:, 0])[0, 1]), 1, atol=tol)
+               or allclose(abs(corrcoef(s[:, 0], s_[:, 1])[0, 1]), 1, atol=tol))
+        assert(allclose(abs(corrcoef(s[:, 1], s_[:, 0])[0, 1]), 1, atol=tol)
+               or allclose(abs(corrcoef(s[:, 1], s_[:, 1])[0, 1]), 1, atol=tol))
+
+        # test accurate reconstruction from sources
+        assert(allclose(x, dot(s_, ica.a.T)))
