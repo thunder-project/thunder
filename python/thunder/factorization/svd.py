@@ -3,7 +3,8 @@ Class for performing Singular Value Decomposition
 """
 
 from numpy import random, sum, real, argsort, mean, transpose, dot, inner, outer, zeros, shape, sqrt
-from scipy.linalg import eig, inv, orth
+from scipy.linalg import inv, orth
+from numpy.linalg import eigh
 from thunder.util.matrices import RowMatrix
 
 
@@ -62,15 +63,13 @@ class SVD(object):
         if self.method == "direct":
 
             # get the normalized gramian matrix
-            c = mat.gramian() / mat.nrows
+            cov = mat.gramian() / mat.nrows
 
             # do a local eigendecomposition
-            eigw, eigv = eig(c)
-            eigw = real(eigw)
-            eigv = real(eigv)
+            eigw, eigv = eigh(cov)
             inds = argsort(eigw)[::-1]
             s = sqrt(eigw[inds[0:self.k]]) * sqrt(mat.nrows)
-            v = transpose(eigv[:, inds[0:self.k]])
+            v = eigv[:, inds[0:self.k]].T
 
             # project back into data, normalize by singular values
             u = mat.times(v.T / s)
@@ -92,7 +91,7 @@ class SVD(object):
             while (iter < self.maxiter) & (error > self.tol):
                 c_old = c
                 # pre compute (c'c)^-1 c'
-                c_inv = dot(transpose(c), inv(dot(c, transpose(c))))
+                c_inv = dot(c.T, inv(dot(c, c.T)))
                 # compute (xx')^-1 through a map reduce
                 xx = mat.times(c_inv).gramian()
                 xx_inv = inv(xx)
@@ -100,21 +99,19 @@ class SVD(object):
                 premult2 = mat.rdd.context.broadcast(dot(c_inv, xx_inv))
                 # compute the new c through a map reduce
                 c = mat.rows().map(lambda x: outer(x, dot(x, premult2.value))).sum()
-                c = transpose(c)
+                c = c.T
 
                 error = sum(sum((c - c_old) ** 2))
                 iter += 1
 
             # project data into subspace spanned by columns of c
             # use standard eigendecomposition to recover an orthonormal basis
-            c = orth(transpose(c))
+            c = orth(c.T)
             cov = mat.times(c).gramian() / mat.nrows
-            eigw, eigv = eig(cov)
-            eigw = real(eigw)
-            eigv = real(eigv)
+            eigw, eigv = eigh(cov)
             inds = argsort(eigw)[::-1]
             s = sqrt(eigw[inds[0:self.k]]) * sqrt(mat.nrows)
-            v = dot(transpose(eigv[:, inds[0:self.k]]), c.T)
+            v = dot(eigv[:, inds[0:self.k]].T, c.T)
             u = mat.times(v.T / s)
 
             self.u = u.rdd
