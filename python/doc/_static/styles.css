@@ -1,0 +1,19 @@
+@media (min-width: 1200px) {
+  .container{
+      width: 970px;
+  }
+}
+
+a {
+     transition: all .25s; 
+     -moz-transition: all .25s; 
+     -webkit-transition: all .25s;
+     border: 0;
+}
+
+a:hover {
+     text-decoration: none;
+     transition: all .25s; 
+     -moz-transition: all .25s; 
+     -webkit-transition: all .25s;
+}
