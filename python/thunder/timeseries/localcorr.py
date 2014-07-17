@@ -6,7 +6,7 @@ import os
 import argparse
 import glob
 from numpy import corrcoef
-from thunder.io import load
+from thunder.io import load, getdims
 from thunder.io import save
 from pyspark import SparkContext
 
@@ -48,7 +48,7 @@ class LocalCorr(object):
             else:
                 return val
 
-        def maptoneighborhood(ind, ts, sz, mn_x, mx_x, mn_y, mx_y):
+        def maptoneighborhood(ind, ts, sz, mn, mx):
             """Create a list of key value pairs with multiple shifted copies
             of the time series ts over a region specified by sz
             """
@@ -57,25 +57,17 @@ class LocalCorr(object):
             out = list()
             for x in rng_x:
                 for y in rng_y:
-                    new_x = clip(ind[0] + x, mn_x, mx_x)
-                    new_y = clip(ind[1] + y, mn_y, mx_y)
+                    new_x = clip(ind[0] + x, mn[0], mx[0])
+                    new_y = clip(ind[1] + y, mn[1], mx[1])
                     newind = (new_x, new_y, ind[2])
                     out.append((newind, ts))
             return out
 
-        # get boundaries
-        xs = data.map(lambda (k, _): k[0])
-        ys = data.map(lambda (k, _): k[1])
-        mx_x = xs.reduce(max)
-        mn_x = xs.reduce(min)
-        mx_y = ys.reduce(max)
-        mn_y = ys.reduce(min)
+        # get boundaries using dimension keys
+        dims = getdims(data)
 
         # flat map to key value pairs where the key is neighborhood identifier and value is time series
-        neighbors = data.flatMap(lambda (k, v): maptoneighborhood(k, v, self.neighborhood, mn_x, mx_x, mn_y, mx_y))
-
-        # printing here seems to fix a hang later, possibly a PySpark bug
-        print(neighbors.first())
+        neighbors = data.flatMap(lambda (k, v): maptoneighborhood(k, v, self.neighborhood, dims.min[0:2], dims.max[0:2]))
 
         # reduce by key to get the average time series for each neighborhood
         means = neighbors.reduceByKey(lambda x, y: x + y).mapValues(lambda x: x / ((2*self.neighborhood+1)**2))
