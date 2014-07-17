@@ -95,6 +95,7 @@ class PCA(object):
 
         if savename is not None:
             mpld3.save_html(fig, savename)
+
         elif show is False:
             return mpld3.fig_to_html(fig)
 

@@ -5,19 +5,20 @@ Classes and standalone app for KMeans clustering
 import os
 import argparse
 import glob
-from numpy import sum, array, argmin, corrcoef, size
+from numpy import sum, array, argmin, corrcoef
 from scipy.spatial.distance import cdist
-from thunder.io import load
-from thunder.io import save
-from pyspark import SparkContext
 from matplotlib import pyplot
+import colorsys
 import mpld3
 from mpld3 import plugins
+from pyspark import SparkContext
+from thunder.io import load
+from thunder.io import save
 from thunder.viz.plugins import HiddenAxes
-from thunder.viz.plots import pointmap, imagemap, scatter
+from thunder.viz.plots import scatter
 from thunder.viz.colorize import Colorize
 from thunder.io.load import isrdd
-import colorsys
+
 
 class KMeansModel(object):
     """Class for an estimated KMeans model
@@ -36,37 +37,38 @@ class KMeansModel(object):
         hsv_tuples = [(x*1.0/n, 0.5, 0.5) for x in range(n)]
         self.colors = map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples)
 
-
     def predict(self, data):
         """Predict the cluster that all data points belong to, and the similarity
 
         Parameters
         ----------
-        data : RDD of (tuple, array) pairs
-            The data
+        data : RDD of (tuple, array) pairs, a list of arrays, or a single array
+            The data to predict cluster assignments on
 
         Returns
         -------
-        closest : RDD of (tuple, array) pairs
+        closest : RDD of (tuple, array) pairs, list of arrays, or a single array
             For each data point, gives an array with the closest center for each data point,
             and the correlation with that center
         """
 
         if isrdd(data):
             return data.mapValues(lambda x: KMeans.similarity(x, self.centers))
-        else:
+        elif type(data) is list:
             return map(lambda x: KMeans.similarity(x, self.centers), data)
-
+        else:
+            return KMeans.similarity(data, self.centers)
 
     def plot(self, data, notebook=False, show=True, savename=None):
 
         fig = pyplot.figure()
         ncenters = len(self.centers)
 
-        colorizer = KMeansColorize()
-        colorizer.model = self
+        colorizer = Colorize()
+        colorizer.get = lambda x: self.colors[int(self.predict(x)[0])]
 
         # plot time series of each center
+        # TODO move into a time series plotting function in viz.plots
         for i, center in enumerate(self.centers):
             ax = pyplot.subplot2grid((ncenters, 3), (i, 0))
             ax.plot(center, color=self.colors[i], linewidth=5)
@@ -79,7 +81,6 @@ class KMeansModel(object):
 
         plugins.connect(fig, HiddenAxes())
 
-
         if show and notebook is False:
             mpld3.show()
 
@@ -88,7 +89,6 @@ class KMeansModel(object):
 
         elif show is False:
             return mpld3.fig_to_html(fig)
-
 
 
 class KMeans(object):
@@ -152,24 +152,6 @@ class KMeans(object):
             iter += 1
 
         return KMeansModel(centers)
-
-
-
-class KMeansColorize(Colorize):
-
-    def calc(self, data):
-
-        if isrdd(data):
-            self.checkargs(size(data.first()[1]))
-            return self.model.predict(data).mapValues(lambda x: self.get(x))
-        else:
-            self.checkargs(size(data[0]))
-            return map(lambda x: self.get(x), self.model.predict(data))
-
-
-    def get(self, line):
-        return self.model.colors[int(line[0])]
-
 
 
 if __name__ == "__main__":
