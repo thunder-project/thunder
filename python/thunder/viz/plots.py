@@ -83,7 +83,6 @@ def scatter(pts, nsamples=100, colormap=None, scale=1, thresh=0.001, ax=None, st
         return ax, h
 
 
-
 def tsrecon(tsbase, samples, ax=None):
     """Plot a single time series to represent a reconstruction using some low dimensional basis,
     and use a set of weights to create many possible lines for interactive plotting"""
