@@ -4,6 +4,10 @@
   }
 }
 
+.navbar-brand {
+	margin-top: -5px;
+}
+
 a {
      transition: all .25s; 
      -moz-transition: all .25s; 

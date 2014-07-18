@@ -108,10 +108,13 @@ pygments_style = 'sphinx'
 # a list of builtin themes.
 html_theme = 'bootstrap'
 
+html_logo = "thunder_logo.png"
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
+  'navbar_title': " ",
   'source_link_position': "footer",
   'bootstrap_version': "3",
   'bootswatch_theme': "simplex",
