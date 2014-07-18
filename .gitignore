@@ -10,3 +10,5 @@ target*
 python/dist
 python/build
 python/Thunder.egg-info
+python/doc/generated
+python/doc/_build
