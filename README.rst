@@ -1,4 +1,5 @@
-.. |Build Status| image:: https://travis-ci.org/freeman-lab/thunder.png
+.. figure:: https://travis-ci.org/freeman-lab/thunder.png
+   :align: center
    :target: https://travis-ci.org/freeman-lab/thunder
 
 Thunder
