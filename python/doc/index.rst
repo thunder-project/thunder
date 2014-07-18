@@ -3,11 +3,15 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+About
+=====
 
-Thunder
-===================================
+.. include:: ../../README.rst
+	:start-after: About
+	:end-before: Quick start
 
-Contents:
+Contents
+--------
 
 .. toctree::
    :maxdepth: 1
