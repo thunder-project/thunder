@@ -1,77 +1,70 @@
 .. figure:: https://travis-ci.org/freeman-lab/thunder.png
-   :align: center
+   :align: left
    :target: https://travis-ci.org/freeman-lab/thunder
 
 Thunder
 =======
 
-Large-scale neural data analysis with Spark - <http://freeman-lab.github.io/thunder/>
+Large-scale neural data analysis with Spark - `project page`_
+
+.. _project page: http://freeman-lab.github.io/thunder/
 
 About
 -----
 
-Thunder is a library for analyzing large-scale neural data. It's fast to run, easy to develop for, and can be run interactively. It is built on Spark, a powerful new framework for distributed computing.
+Thunder is a library for analyzing large-scale neural data. It's fast to run, easy to develop for, and can be run interactively. It is built on Spark, a new framework for cluster computing.
 
-Thunder includes utilties for data loading and saving, and modular functions for time series statistics, matrix decompositions, and fitting algorithms. Analyses can easily be scripted or combined. It is written in Spark's Python API (Pyspark), making use of scipy, numpy, and scikit-learn. Experimental streaming analyses are availiable in Scala, and we plan to port some functionality to Scala in the future.
+Thunder includes utilties for data loading and saving, and modular functions for time series statistics, matrix decompositions, and fitting algorithms. Analyses can easily be scripted or combined. It is written in Spark's Python API (Pyspark), making use of scipy, numpy, and scikit-learn. Experimental streaming analyses are availiable in Scala, and we plan to port some functionality to Scala in the future for improved performance.
 
 Quick start
 -----------
 
-Here’s a quick guide to getting up and running, assuming you are already running Spark either locally or on a cluster (if not, consult the `project page`_). First, download the latest `build`_ and add it to your path.
+Thunder is designed to run on a cluster, but local testing is a great way to learn and develop. Many computers can install it with just a few simple steps. If you aren't currently using Python for scientific computing, `Anaconda`_ is highly recommended.
 
-.. _project page: http://spark.apache.org/
-.. _build: https://github.com/freeman-lab/thunder/archive/master.zip
+.. _Anaconda: https://store.continuum.io/cshop/anaconda/
 
-::
+1) Download the latest, pre-built version of `Spark`_, and set one environmental variable
 
-	PYTHONPATH=<your/path/to/thunder>/python/:$PYTHONPATH
-
-Now run an analysis on test data.
+.. _Spark: http://spark.apache.org/downloads.html
 
 ::
 
-	<your/path/to/spark>/bin/spark-submit <your/path/to/thunder>/python/thunder/factorization/pca.py local data/iris.txt ~/results 4
+	export SPARK_HOME=/your/path/to/spark
 
-This will run principal components on the “iris” data set with 4 components, and write results to a folder in your home directory. The same analysis can be run interactively. Start PySpark:
+2) Install Thunder
 
-::
+:: 
 
-	<your/path/to/spark>/bin/pyspark
+	pip install thunder-python
 
-Then do the analysis
+3) Start Thunder from the terminal
 
-::
+:: 
 
-	>> from thunder.io import load
-	>> from thunder.factorization import PCA
-	>> data = load(sc, 'data/iris.txt')
-	>> pca = PCA(k=4)
-	>> pca.fit(data)
+	thunder
+	>> from thunder.utils import DataSets
+	>> from thunder.factorization import ICA
+	>> data = DataSets.make(sc, "ica")
+	>> model = ICA(k=2).fit(data)
 
-To run in iPython, just set this environmental variable before staring PySpark:
+To run in iPython, just set this environmental variable before staring:
 
 ::
 
 	export IPYTHON=1
 
-If you are running Thunder on a cluster, create an egg first:
+To run analyses as standalone jobs, use the submit script
 
 ::
 
-	cd <your/path/to/thunder>/python/
-	./setup.py bdist_egg
+	thunder-submit timeseries/stats <datadirectory> <outputdirectory> <opts>
 
-We include a script for automatically importing commonly used functions in the shell
-
-::
-
-	>> execfile('helper/thunder-startup.py')
-
-Finally, we include a script for easily launching an Amazon EC2 cluster with Thunder presintalled
+We also include a script for launching an Amazon EC2 cluster with Thunder presintalled
 
 ::
 
-	>> <your/path/to/thunder>/helper/ec2/thunder-ec2 -k mykey -i mykey.pem -s <number-of-nodes> launch <cluster-name>
+	>> thunder-ec2 -k mykey -i mykey.pem -s <number-of-nodes> launch <cluster-name>
+
 
 Analyses
 --------
@@ -81,10 +74,20 @@ Thunder currently includes five packages: classification, clustering, factorizat
 Input and output
 ----------------
 
-Thunder is built around a commmon input format for raw neural data: a set of signals as key-value pairs, where the key is an identifier, and the value is a response time series. In imaging data, for example, each record would be a voxel or an ROI, the key an xyz coordinate, and the value a flouresence time series. This is a useful and efficient representation of raw data because the analyses parallelize across neural signals (i.e. across records). 
+Thunder is built around a commmon input format for raw neural data: a set of signals as key-value pairs, where the key is an identifier, and the value is a response time series. In imaging data, for example, each record would be a voxel or an ROI, the key an xyz coordinate, and the value a flouresence time series. This is a useful representation because most analyses parallelize across neural signals (i.e. across records). 
 
-These key-value records can, in principle, be stored in a variety of formats on a cluster-accessible file system; the core functionality (besides loading) does not depend on the file format, only that the data are key-value pairs. Currently, the loading function assumes a text file input, where the rows are neural signals, and the columns are the keys and values, each number separated by space. Support for flat binary files is coming soon. We are also developing workflows that faciliate converting raw data (e.g. images) into the commmon data format.
+These key-value records can, in principle, be stored in a variety of cluster-accessible formats, and it does not affect the core functionality (besides loading). Currently, the loading function assumes a text file input, where the rows are neural signals, and the columns are the keys and values, each number separated by space. Support for flat binary files is coming soon.
 
 All metadata (e.g. parameters of the stimulus or behavior for regression analyses) can be provided as numpy arrays or loaded from MAT files, see relavant functions for more details.
 
-Results can be visualized directly from the python shell using matplotlib, or saved as MAT files (including automatic reshaping and sorting), text files, or images (including automatic rescaling).
+Results can be visualized directly from the python shell ir iPython notebook, or saved as MAT files, text files, or images.
+
+Road map
+----------------
+If you have other ideas or want to contribute, submit an issue or pull request!
+
+- New file formats for input data
+- Automatic extract-transform-load for more raw formats (e.g. raw images)
+- Analysis-specific visualizations
+- Unified metadata representation
+- Port versions of most common workflows to scala
