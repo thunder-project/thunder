@@ -42,7 +42,7 @@ if not ("local" in master):
 		os.system(os.path.join(calldir, 'build'))
 		egg = glob.glob(os.path.join(dist, "*.egg"))
 
-	files = "--py-files " + egg
+	files = "--py-files " + egg[0]
 
 
 master = "--master " + master
