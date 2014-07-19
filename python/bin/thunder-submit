@@ -47,7 +47,7 @@ if not ("local" in master):
 
 master = "--master " + master
 
-if notlocal:
+if not ("local" in master):
 	os.system(os.path.join(spark, 'bin/spark-submit ') + master + " " + analysis + " " + files + " " + opts)
 else:
 	os.system(os.path.join(spark, 'bin/spark-submit ') + master + " " + analysis + " " + opts)
