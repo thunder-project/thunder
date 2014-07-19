@@ -3,6 +3,7 @@
 import os
 import sys
 import glob
+import thunder
 
 # get arguments
 args = sys.argv[1:]
@@ -11,6 +12,8 @@ if len(args) < 2:
  	exit(-1)
 analysis = args[0]
 opts = ' '.join(args[1:])
+thunderdir = os.path.dirname(os.path.realpath(thunder.__file__))
+analysis = os.path.join(thunderdir, analysis + ".py")
 
 # check for SPARK_HOME
 spark = os.getenv('SPARK_HOME')
