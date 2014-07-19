@@ -45,7 +45,7 @@ Thunder is designed to run on a cluster, but local testing is a great way to lea
 	>> from thunder.utils import DataSets
 	>> from thunder.factorization import ICA
 	>> data = DataSets.make(sc, "ica")
-	>> model = ICA(k=2).fit(data)
+	>> model = ICA(c=2).fit(data)
 
 To run in iPython, just set this environmental variable before staring:
 
