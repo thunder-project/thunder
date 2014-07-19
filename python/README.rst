@@ -57,13 +57,13 @@ To run analyses as standalone jobs, use the submit script
 
 ::
 
-	thunder-submit timeseries/stats <datadirectory> <outputdirectory> <opts>
+	thunder-submit <package/analysis> <datadirectory> <outputdirectory> <opts>
 
 We also include a script for launching an Amazon EC2 cluster with Thunder presintalled
 
 ::
 
-	>> thunder-ec2 -k mykey -i mykey.pem -s <number-of-nodes> launch <cluster-name>
+	thunder-ec2 -k mykey -i mykey.pem -s <number-of-nodes> launch <cluster-name>
 
 
 Analyses
