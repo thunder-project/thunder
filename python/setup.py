@@ -19,6 +19,7 @@ setup(
   					'thunder.utils',
   					'thunder.viz'],
   scripts = ['bin/thunder', 'bin/thunder-submit', 'bin/thunder-ec2'],
+  package_data = {'thunder.utils': ['data/fish.txt', 'data/iris.txt']},
   long_description=open('README.rst').read(),
   install_requires=open('requirements.txt').read().split()
 )

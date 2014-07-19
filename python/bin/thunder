@@ -5,7 +5,7 @@ import glob
 
 spark = os.getenv('SPARK_HOME')
 if spark is None or spark == '':
-    raise Exception('must assign the environemntal variable SPARK_HOME with the location of Spark')
+    raise Exception('You must assign the environemntal variable SPARK_HOME with the location of Spark')
 
 if os.getenv('PYTHONPATH') is None:
 	os.environ['PYTHONPATH'] = ""
