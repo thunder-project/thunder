@@ -1,9 +1,10 @@
 import shutil
 import tempfile
-from numpy import array, allclose, transpose, linspace, random, sign, sin, c_, dot, corrcoef
+from numpy import array, allclose, transpose, random, dot, corrcoef
 import scipy.linalg as LinAlg
 from thunder.factorization import ICA
 from thunder.factorization import SVD
+from thunder.utils import DataSets
 from test_utils import PySparkTestCase
 
 
@@ -69,20 +70,11 @@ class TestICA(FactorizationTestCase):
     taking into account possible sign flips and permutations
     """
     def test_ica(self):
+
         random.seed(42)
-        nsamples = 100
-        time = linspace(0, 10, nsamples)
-        s1 = sin(2 * time)
-        s2 = sign(sin(3 * time))
-        s = c_[s1, s2]
-        s += 0.2 * random.randn(s.shape[0], s.shape[1])  # Add noise
-        s /= s.std(axis=0)
-        a = array([[1, 1], [0.5, 2]])
-        x = dot(s, a.T)
+        data, s, a = DataSets.make(self.sc, "ica", nrows=100, params=True)
 
-        data = self.sc.parallelize(zip(range(nsamples), x))
-
-        ica = ICA(k=2, c=2, svdmethod="direct", seed=1)
+        ica = ICA(c=2, svdmethod="direct", seed=1)
         ica.fit(data)
 
         s_ = array(ica.sigs.values().collect())
@@ -95,4 +87,4 @@ class TestICA(FactorizationTestCase):
                or allclose(abs(corrcoef(s[:, 1], s_[:, 1])[0, 1]), 1, atol=tol))
 
         # test accurate reconstruction from sources
-        assert(allclose(x, dot(s_, ica.a.T)))
+        assert(allclose(array(data.values().collect()), dot(s_, ica.a.T)))

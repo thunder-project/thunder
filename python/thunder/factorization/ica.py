@@ -48,10 +48,7 @@ class ICA(object):
         Estimated independent components
     """
 
-    def __init__(self, k, c, svdmethod="direct", maxiter=10, tol=0.000001, seed=0):
-        if c > k:
-            raise Exception("number of independent comps " + str(c) +
-                            " must be less than the number of principal comps " + str(k))
+    def __init__(self, c, k=None, svdmethod="direct", maxiter=10, tol=0.000001, seed=0):
         self.k = k
         self.c = c
         self.svdmethod = svdmethod
@@ -72,6 +69,19 @@ class ICA(object):
         ----------
         self : returns an instance of self.
         """
+
+        d = len(data.first()[1])
+
+        if self.k is None:
+            self.k = d
+
+        if self.c > self.k:
+            raise Exception("number of independent comps " + str(self.c) +
+                            " must be less than the number of principal comps " + str(self.k))
+
+        if self.k > d:
+            raise Exception("number of principal comps " + str(self.k) +
+                            " must be less than the data dimensionality " + str(d))
 
         if type(data) is not RowMatrix:
             data = RowMatrix(data)
