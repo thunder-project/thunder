@@ -32,12 +32,13 @@ def get_s3_keys():
 def install_thunder(master, opts):
     """ Install Thunder and dependencies on a Spark EC2 cluster"""
     print "Installing Thunder on the cluster..."
-    ssh(master, opts, "git clone https://github.com/freeman-lab/thunder.git")
+    ssh(master, opts, "rm -rf thunder && git clone https://github.com/freeman-lab/thunder.git")
     ssh(master, opts, "chmod u+x thunder/python/bin/build")
     ssh(master, opts, "thunder/python/bin/build")
-    ssh(master, opts, "pip install mpld3")
+    ssh(master, opts, "source ~/.bash_profile && pip install mpld3")
     ssh(master, opts, "echo 'export SPARK_HOME=/root/spark' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export PYTHONPATH=/root/thunder/python' >> /root/.bash_profile")
+    ssh(master, opts, "echo 'export IPYTHON=1' >> /root/.bash_profile")
     print "\n\n"
     print "-------------------------------"
     print "Thunder successfully installed!"
