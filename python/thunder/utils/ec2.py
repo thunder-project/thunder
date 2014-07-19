@@ -35,6 +35,7 @@ def install_thunder(master, opts):
     ssh(master, opts, "git clone https://github.com/freeman-lab/thunder.git")
     ssh(master, opts, "chmod u+x thunder/python/bin/build")
     ssh(master, opts, "thunder/python/bin/build")
+    ssh(master, opts, "pip install mpld3")
     ssh(master, opts, "echo 'export SPARK_HOME=/root/spark' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export PYTHONPATH=/root/thunder/python' >> /root/.bash_profile")
     print "\n\n"
@@ -135,14 +136,14 @@ if __name__ == "__main__":
         if opts.zone == "":
             opts.zone = random.choice(conn.get_all_zones()).name
 
-        opts.ami = get_spark_ami(opts)
+        opts.ami = "ami-3ecd0c56"
         opts.ebs_vol_size = 0
         opts.spot_price = None
         opts.master_instance_type = ""
         opts.wait = 160
         opts.hadoop_major_version = "1"
         opts.ganglia = True
-        opts.spark_version = "1.0.0"
+        opts.spark_version = "1.0.1"
         opts.swap = 1024
         opts.worker_instances = 1
         opts.master_opts = ""
