@@ -17,15 +17,17 @@ spark = os.getenv('SPARK_HOME')
 if spark is None or spark == '':
     raise Exception('must assign the environemntal variable SPARK_HOME with the location of Spark')
 
-# check the name of the master, set explicitly to local if empty
+# check the name of the master, set explicitly to local if empty, unless we're on ec2
 master = os.getenv('MASTER')
-if master is None or master == "":
-	master = "local"
-
-notlocal = not ("local" in master)
+ec2 = os.path.isfile('/root/spark-ec2/cluster-url')
+if master is None:
+	if ec2:
+		master = os.popen('cat /root/spark-ec2/cluster-url').read().replace('\n','')
+	else:
+		master = "local"
 
 # if not running locally, check whether egg exists, and if not, build it
-if notlocal:
+if not ("local" in master):
 
   # get calling directory
 	calldir = os.path.dirname(os.path.realpath(__file__))

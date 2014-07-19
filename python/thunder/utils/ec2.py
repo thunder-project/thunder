@@ -35,6 +35,8 @@ def install_thunder(master, opts):
     ssh(master, opts, "git clone https://github.com/freeman-lab/thunder.git")
     ssh(master, opts, "chmod u+x thunder/python/bin/build")
     ssh(master, opts, "thunder/python/bin/build")
+    ssh(master, opts, "echo 'export SPARK_HOME=/root/spark' >> /root/.bash_profile")
+    ssh(master, opts, "echo 'export PYTHONPATH=/root/thunder/python' >> /root/.bash_profile")
     print "\n\n"
     print "-------------------------------"
     print "Thunder successfully installed!"
