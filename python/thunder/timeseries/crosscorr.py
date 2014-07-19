@@ -5,11 +5,12 @@ Standalone app for cross correlations
 import os
 import argparse
 import glob
+from pyspark import SparkContext
 from thunder.timeseries import CrossCorr
 from thunder.factorization import PCA
-from thunder.io import load
-from thunder.io import save
-from pyspark import SparkContext
+from thunder.utils import load
+from thunder.utils import save
+
 
 
 if __name__ == "__main__":

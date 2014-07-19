@@ -1,0 +1,9 @@
+#!/usr/bin/env python
+
+import os
+import glob
+
+calldir = os.path.dirname(os.path.realpath(__file__))
+setup = os.path.join(calldir, '../setup.py')
+os.system(setup + ' bdist_egg')
+

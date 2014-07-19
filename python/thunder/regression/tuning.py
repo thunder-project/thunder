@@ -6,8 +6,8 @@ import os
 import argparse
 import glob
 from thunder.regression import RegressionModel, TuningModel
-from thunder.io import load
-from thunder.io import save
+from thunder.utils import load
+from thunder.utils import save
 from pyspark import SparkContext
 
 

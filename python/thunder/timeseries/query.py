@@ -7,9 +7,9 @@ import argparse
 import glob
 from numpy import zeros
 from scipy.io import loadmat
-from thunder.io import load, getdims, subtoind
-from thunder.io import save
 from pyspark import SparkContext
+from thunder.utils import load, getdims, subtoind
+from thunder.utils import save
 
 
 class Query(object):

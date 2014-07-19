@@ -12,12 +12,12 @@ import colorsys
 import mpld3
 from mpld3 import plugins
 from pyspark import SparkContext
-from thunder.io import load
-from thunder.io import save
+from thunder.utils import load
+from thunder.utils import save
 from thunder.viz.plugins import HiddenAxes
 from thunder.viz.plots import scatter
 from thunder.viz.colorize import Colorize
-from thunder.io.load import isrdd
+from thunder.utils.load import isrdd
 
 
 class KMeansModel(object):

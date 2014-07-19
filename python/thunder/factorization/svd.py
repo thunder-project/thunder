@@ -2,10 +2,10 @@
 Class for performing Singular Value Decomposition
 """
 
-from numpy import random, sum, real, argsort, mean, transpose, dot, inner, outer, zeros, shape, sqrt
+from numpy import random, sum, argsort, dot, outer, sqrt
 from scipy.linalg import inv, orth
 from numpy.linalg import eigh
-from thunder.util.matrices import RowMatrix
+from thunder.utils.matrices import RowMatrix
 
 
 class SVD(object):

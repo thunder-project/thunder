@@ -6,11 +6,11 @@ import os
 import argparse
 import glob
 from numpy import random, sqrt, zeros, real, dot, outer, diag, transpose
-from scipy.linalg import sqrtm, inv, orth, pinv
-from thunder.io import load
-from thunder.io import save
+from scipy.linalg import sqrtm, inv, orth
+from thunder.utils import load
+from thunder.utils import save
 from thunder.factorization import SVD
-from thunder.util.matrices import RowMatrix
+from thunder.utils.matrices import RowMatrix
 from pyspark import SparkContext
 
 

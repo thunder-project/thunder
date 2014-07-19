@@ -5,17 +5,16 @@ Class and standalone app for Principal Component Analysis
 import os
 import argparse
 import glob
-from numpy import array, std
 from matplotlib import pyplot
 import mpld3
 from mpld3 import plugins
-from thunder.io import load
-from thunder.io import save
+from pyspark import SparkContext
 from thunder.factorization import SVD
-from thunder.util.matrices import RowMatrix
+from thunder.utils import load
+from thunder.utils import save
+from thunder.utils.matrices import RowMatrix
 from thunder.viz.plugins import LinkedView, HiddenAxes
 from thunder.viz.plots import pointmap, imagemap, scatter, tsrecon
-from pyspark import SparkContext
 
 
 class PCA(object):

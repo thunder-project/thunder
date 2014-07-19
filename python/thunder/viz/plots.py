@@ -1,6 +1,6 @@
 from numpy import amin, amax, shape, array, transpose, asarray, std
-from thunder.io.load import isrdd
-from thunder.io.save import pack
+from thunder.utils.load import isrdd
+from thunder.utils.save import pack
 from thunder.viz import Colorize
 from matplotlib import pyplot
 

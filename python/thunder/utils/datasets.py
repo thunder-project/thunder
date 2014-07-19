@@ -3,9 +3,8 @@ Utilities for generating test datasets
 """
 
 import os
-from string import replace
-from numpy import array, random, arange, ceil, floor, dot, shape, sqrt, arange, meshgrid, ones
-from thunder.io import load
+from numpy import array, random, floor, dot, shape
+from thunder.utils import load
 
 
 def appendkeys(data):
@@ -22,7 +21,7 @@ class DataSets(object):
 
     def __init__(self, sc):
         self.sc = sc
-        self.path = os.path.dirname(os.path.realpath(__file__)).replace('python/thunder/io', 'data')
+        self.path = os.path.dirname(os.path.realpath(__file__)).replace('python/thunder/utils', 'data')
 
     @staticmethod
     def create(sc, name, **opts):

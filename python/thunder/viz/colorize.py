@@ -1,6 +1,6 @@
-from numpy import arctan2, sqrt, pi, array, size, ndarray
+from numpy import arctan2, sqrt, pi, array, size
 from matplotlib import colors, cm
-from thunder.io.load import isrdd
+from thunder.utils.load import isrdd
 
 
 class Colorize(object):

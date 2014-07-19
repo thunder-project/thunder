@@ -6,9 +6,9 @@ import os
 import argparse
 import glob
 from numpy import corrcoef
-from thunder.io import load, getdims
-from thunder.io import save
 from pyspark import SparkContext
+from thunder.utils import load, getdims
+from thunder.utils import save
 
 
 class LocalCorr(object):

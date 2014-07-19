@@ -7,7 +7,7 @@ from scipy.io import savemat
 from math import isnan
 from numpy import array, squeeze, sum, shape, reshape, transpose, maximum, minimum, float16, uint8, savetxt, size, arange
 from PIL import Image
-from thunder.io.load import getdims, subtoind, isrdd, Dimensions
+from thunder.utils.load import getdims, subtoind, isrdd, Dimensions
 
 
 def arraytoim(mat, filename, format="tif"):

@@ -6,5 +6,4 @@ PIL
 matplotlib
 mpld3
 jinja2
-py4j
 nose
