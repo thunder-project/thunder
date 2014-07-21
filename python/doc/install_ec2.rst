@@ -1,4 +1,6 @@
 .. _install_ec2_ref:
 
-Installion
+Running on EC2
 ==============
+
+Coming soon...

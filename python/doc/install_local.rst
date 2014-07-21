@@ -1,4 +1,6 @@
 .. _install_local_ref:
 
-Install local
-=============
+Installing and getting started
+==============================
+
+Coming soon...
