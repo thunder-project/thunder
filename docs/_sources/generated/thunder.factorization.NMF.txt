@@ -1,0 +1,15 @@
+:mod:`thunder.factorization`.NMF
+=======================================
+
+.. currentmodule:: thunder.factorization
+
+.. autoclass:: NMF
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~NMF.__init__
+      ~NMF.calc
+   
+

@@ -1,0 +1,269 @@
+
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>API Reference &mdash; Thunder 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootswatch-3.1.0/simplex/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/styles.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="Thunder 0.1.0 documentation" href="index.html" />
+    <link rel="next" title="thunder.factorization.PCA" href="generated/thunder.factorization.PCA.html" />
+    <link rel="prev" title="Running on EC2" href="install_ec2.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html"><img src="_static/thunder_logo.png">
+           </a>
+        <span class="navbar-text navbar-version pull-left"><b>0.1.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            <li class="divider-vertical"></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="install_local.html">Installing and getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install_ec2.html">Running on EC2</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">API Reference</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">API Reference</a><ul>
+<li><a class="reference internal" href="#module-thunder.factorization">Factorization</a></li>
+<li><a class="reference internal" href="#module-thunder.regression">Regression</a></li>
+<li><a class="reference internal" href="#module-thunder.clustering">Clustering</a></li>
+<li><a class="reference internal" href="#module-thunder.timeseries">Time Series</a></li>
+<li><a class="reference internal" href="#module-thunder.utils">Utilities</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+            
+            
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <div class="section" id="api-reference">
+<span id="api-ref"></span><h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-thunder.factorization">
+<span id="factorization"></span><h2>Factorization<a class="headerlink" href="#module-thunder.factorization" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/thunder.factorization.PCA.html#thunder.factorization.PCA" title="thunder.factorization.PCA"><tt class="xref py py-obj docutils literal"><span class="pre">factorization.PCA</span></tt></a>([k,&nbsp;svdmethod])</td>
+<td>Perform principal components analysis</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/thunder.factorization.ICA.html#thunder.factorization.ICA" title="thunder.factorization.ICA"><tt class="xref py py-obj docutils literal"><span class="pre">factorization.ICA</span></tt></a>(c[,&nbsp;k,&nbsp;svdmethod,&nbsp;...])</td>
+<td>Independent component analysis on a dense matrix</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/thunder.factorization.NMF.html#thunder.factorization.NMF" title="thunder.factorization.NMF"><tt class="xref py py-obj docutils literal"><span class="pre">factorization.NMF</span></tt></a>([k,&nbsp;method,&nbsp;maxiter,&nbsp;tol,&nbsp;...])</td>
+<td>Large-scale non-negative matrix factorization on a dense matrix</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/thunder.factorization.SVD.html#thunder.factorization.SVD" title="thunder.factorization.SVD"><tt class="xref py py-obj docutils literal"><span class="pre">factorization.SVD</span></tt></a>([k,&nbsp;method,&nbsp;maxiter,&nbsp;tol])</td>
+<td>Large-scale singular value decomposiiton on a dense matrix</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="module-thunder.regression">
+<span id="regression"></span><h2>Regression<a class="headerlink" href="#module-thunder.regression" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/thunder.regression.RegressionModel.html#thunder.regression.RegressionModel" title="thunder.regression.RegressionModel"><tt class="xref py py-obj docutils literal"><span class="pre">regression.RegressionModel</span></tt></a></td>
+<td>Base class for loading and fitting regression models</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/thunder.regression.TuningModel.html#thunder.regression.TuningModel" title="thunder.regression.TuningModel"><tt class="xref py py-obj docutils literal"><span class="pre">regression.TuningModel</span></tt></a>(modelfile)</td>
+<td>Base class for loading and fitting tuning models</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/thunder.regression.base.MeanRegressionModel.html#thunder.regression.base.MeanRegressionModel" title="thunder.regression.base.MeanRegressionModel"><tt class="xref py py-obj docutils literal"><span class="pre">regression.base.MeanRegressionModel</span></tt></a>(modelfile)</td>
+<td>Class for regression in the form of simple averaging</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/thunder.regression.base.LinearRegressionModel.html#thunder.regression.base.LinearRegressionModel" title="thunder.regression.base.LinearRegressionModel"><tt class="xref py py-obj docutils literal"><span class="pre">regression.base.LinearRegressionModel</span></tt></a>(modelfile)</td>
+<td>Class for ordinary least squares linear regression</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/thunder.regression.base.BilinearRegressionModel.html#thunder.regression.base.BilinearRegressionModel" title="thunder.regression.base.BilinearRegressionModel"><tt class="xref py py-obj docutils literal"><span class="pre">regression.base.BilinearRegressionModel</span></tt></a>(...)</td>
+<td>Class for bilinear regression with two design matrices</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/thunder.regression.base.GaussianTuningModel.html#thunder.regression.base.GaussianTuningModel" title="thunder.regression.base.GaussianTuningModel"><tt class="xref py py-obj docutils literal"><span class="pre">regression.base.GaussianTuningModel</span></tt></a>(modelfile)</td>
+<td>Class for gaussian tuning</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/thunder.regression.base.CircularTuningModel.html#thunder.regression.base.CircularTuningModel" title="thunder.regression.base.CircularTuningModel"><tt class="xref py py-obj docutils literal"><span class="pre">regression.base.CircularTuningModel</span></tt></a>(modelfile)</td>
+<td>Class for circular tuning</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="module-thunder.clustering">
+<span id="clustering"></span><h2>Clustering<a class="headerlink" href="#module-thunder.clustering" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/thunder.clustering.KMeans.html#thunder.clustering.KMeans" title="thunder.clustering.KMeans"><tt class="xref py py-obj docutils literal"><span class="pre">clustering.KMeans</span></tt></a>(k[,&nbsp;maxiter,&nbsp;tol])</td>
+<td>Class for KMeans clustering</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="module-thunder.timeseries">
+<span id="time-series"></span><h2>Time Series<a class="headerlink" href="#module-thunder.timeseries" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/thunder.timeseries.Fourier.html#thunder.timeseries.Fourier" title="thunder.timeseries.Fourier"><tt class="xref py py-obj docutils literal"><span class="pre">timeseries.Fourier</span></tt></a>(freq)</td>
+<td>Class for computing fourier transform</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/thunder.timeseries.Stats.html#thunder.timeseries.Stats" title="thunder.timeseries.Stats"><tt class="xref py py-obj docutils literal"><span class="pre">timeseries.Stats</span></tt></a>(statistic)</td>
+<td>Class for computing simple summary statistics</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/thunder.timeseries.Query.html#thunder.timeseries.Query" title="thunder.timeseries.Query"><tt class="xref py py-obj docutils literal"><span class="pre">timeseries.Query</span></tt></a>(indsfile)</td>
+<td>Class for querying time series data by averaging together</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/thunder.timeseries.CrossCorr.html#thunder.timeseries.CrossCorr" title="thunder.timeseries.CrossCorr"><tt class="xref py py-obj docutils literal"><span class="pre">timeseries.CrossCorr</span></tt></a>(sigfile,&nbsp;lag)</td>
+<td>Class for computing lagged cross correlations</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/thunder.timeseries.LocalCorr.html#thunder.timeseries.LocalCorr" title="thunder.timeseries.LocalCorr"><tt class="xref py py-obj docutils literal"><span class="pre">timeseries.LocalCorr</span></tt></a>([neighborhood])</td>
+<td>Class for computing local correlations</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="module-thunder.utils">
+<span id="utilities"></span><h2>Utilities<a class="headerlink" href="#module-thunder.utils" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/thunder.utils.load.html#thunder.utils.load" title="thunder.utils.load"><tt class="xref py py-obj docutils literal"><span class="pre">utils.load</span></tt></a>(sc,&nbsp;datafile[,&nbsp;preprocessmethod,&nbsp;...])</td>
+<td>Load data from a text file (or a directory of files) with format &lt;k1&gt; &lt;k2&gt; ...</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/thunder.utils.save.html#thunder.utils.save" title="thunder.utils.save"><tt class="xref py py-obj docutils literal"><span class="pre">utils.save</span></tt></a>(data,&nbsp;outputdir,&nbsp;outputfile,&nbsp;...)</td>
+<td>Save data to a variety of formats</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+        <br/>
+        
+<div id="sourcelink">
+  <a href="_sources/api.txt"
+     rel="nofollow">Source</a>
+</div>
+      
+    </p>
+    <p>
+        &copy; Copyright 2014, Jeremy Freeman.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

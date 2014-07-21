@@ -1,0 +1,17 @@
+:mod:`thunder.regression.base`.LinearRegressionModel
+===========================================================
+
+.. currentmodule:: thunder.regression.base
+
+.. autoclass:: LinearRegressionModel
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~LinearRegressionModel.__init__
+      ~LinearRegressionModel.fit
+      ~LinearRegressionModel.get
+      ~LinearRegressionModel.load
+   
+

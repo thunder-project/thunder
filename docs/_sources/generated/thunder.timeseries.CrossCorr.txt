@@ -1,0 +1,16 @@
+:mod:`thunder.timeseries`.CrossCorr
+==========================================
+
+.. currentmodule:: thunder.timeseries
+
+.. autoclass:: CrossCorr
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~CrossCorr.__init__
+      ~CrossCorr.calc
+      ~CrossCorr.get
+   
+

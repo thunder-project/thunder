@@ -1,0 +1,17 @@
+:mod:`thunder.regression.base`.MeanRegressionModel
+=========================================================
+
+.. currentmodule:: thunder.regression.base
+
+.. autoclass:: MeanRegressionModel
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~MeanRegressionModel.__init__
+      ~MeanRegressionModel.fit
+      ~MeanRegressionModel.get
+      ~MeanRegressionModel.load
+   
+

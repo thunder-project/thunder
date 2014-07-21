@@ -1,0 +1,17 @@
+:mod:`thunder.regression.base`.CircularTuningModel
+=========================================================
+
+.. currentmodule:: thunder.regression.base
+
+.. autoclass:: CircularTuningModel
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~CircularTuningModel.__init__
+      ~CircularTuningModel.fit
+      ~CircularTuningModel.get
+      ~CircularTuningModel.load
+   
+

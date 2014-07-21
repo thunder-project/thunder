@@ -1,0 +1,15 @@
+:mod:`thunder.factorization`.SVD
+=======================================
+
+.. currentmodule:: thunder.factorization
+
+.. autoclass:: SVD
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~SVD.__init__
+      ~SVD.calc
+   
+

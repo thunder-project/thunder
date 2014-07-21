@@ -1,0 +1,16 @@
+:mod:`thunder.timeseries`.Query
+======================================
+
+.. currentmodule:: thunder.timeseries
+
+.. autoclass:: Query
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~Query.__init__
+      ~Query.calc
+      ~Query.select
+   
+

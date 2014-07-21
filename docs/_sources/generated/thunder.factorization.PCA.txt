@@ -1,0 +1,16 @@
+:mod:`thunder.factorization`.PCA
+=======================================
+
+.. currentmodule:: thunder.factorization
+
+.. autoclass:: PCA
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~PCA.__init__
+      ~PCA.fit
+      ~PCA.plot
+   
+

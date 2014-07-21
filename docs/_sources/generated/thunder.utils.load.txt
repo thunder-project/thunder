@@ -1,0 +1,7 @@
+:mod:`thunder.utils`.load
+======================================
+
+.. currentmodule:: thunder.utils
+
+.. autofunction:: load
+
