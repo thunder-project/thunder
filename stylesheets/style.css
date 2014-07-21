@@ -104,7 +104,7 @@ pre code {
      margin-bottom: 0px;
      margin-top: 0px;
      line-height: 2.1428571435;
-     height: 500px;
+     height: 550px;
      
  }
 
@@ -193,7 +193,7 @@ pre code {
 	font-size: 85px;
      font-weight: 400;
      color: white;
-     font-family: Source sans pro;
+     font-family: 'Source Sans Pro', sans-serif;
 }
 
 #features {
@@ -294,7 +294,7 @@ pre code {
 
 @media (max-width: 480px) {
      .jumbotron {
-          height: 300px;
+          height: 400px;
      }
 
      #subheader {
