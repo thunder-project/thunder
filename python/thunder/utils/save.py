@@ -138,20 +138,19 @@ def save(data, outputdir, outputfile, outputformat, sorting=False, dimsmax=None,
 
     filename = os.path.join(outputdir, outputfile)
 
-    if dimsmax is not None:
-        dims = Dimensions()
-        dims.max = dimsmax
-        if dimsmin is not None:
-            dims.min = dimsmin
-        else:
-            dims.min = (1, 1, 1)
-    elif dimsmin is not None:
-        raise Exception('cannot provide dimsmin without dimsmax')
-    else:
-        dims = getdims(data)
-
     if isrdd(data):
         nout = size(data.first()[1])
+        if dimsmax is not None:
+            dims = Dimensions()
+            dims.max = dimsmax
+            if dimsmin is not None:
+                dims.min = dimsmin
+            else:
+                dims.min = (1, 1, 1)
+        elif dimsmin is not None:
+            raise Exception('cannot provide dimsmin without dimsmax')
+        else:
+            dims = getdims(data)
 
     if (outputformat == "matlab") | (outputformat == "text"):
         if isrdd(data):
