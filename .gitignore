@@ -9,6 +9,6 @@ project/target
 target*
 python/dist
 python/build
-python/Thunder.egg-info
+python/Thunder_python.egg-info
 python/doc/generated
 python/doc/_build

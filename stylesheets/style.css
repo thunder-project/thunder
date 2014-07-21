@@ -1,26 +1,54 @@
 body {
-	background-color: rgb(51,51,51);
-	color: rgb(220,220,220);
-     text-shadow: 0 1px 3px rgba(0,0,0,.5);
-     font-family: Lato;
+	background-color: rgb(200,200,200);
+	color: #2d3c48;
+     font: 18px "Helvetica Neue", sans-serif;
      font-weight: 300;
+     -webkit-font-smoothing: antialiased;
 }
 
 p {
-     font-size: 20px;
-     color: white;
+     font-size: 18px;
 }
 
 a {
-     color: rgb(157,204,122);
+     color: #d9230f;
      transition: all .25s; 
      -moz-transition: all .25s; 
      -webkit-transition: all .25s;
      border: 0;
 }
 
+h3 {
+     color: #2d3c48;
+}
+
+
+.btn-white-outline{
+     color:#fff;
+     border:2px solid #fff;
+     background:transparent;
+     -webkit-transition:all .3s;
+     -moz-transition:all .3s;
+     -ms-transition:all .3s;
+     -o-transition:all .3s;
+     transition:all .3s;
+     -webkit-border-radius:6px;
+     border-radius:6px;
+     -webkit-background-clip:padding-box;
+     background-clip:padding-box;
+     font-weight:600;
+     -webkit-font-smoothing:antialiased
+}
+
+.btn-white-outline:hover,.btn-white-outline:focus{
+     border:2px solid #f7f7f7;
+     color:#f7f7f7;
+     background:rgba(255,255,255,0.2)
+}
+
+
 a:hover {
-     color: rgb(115,201,152);
+     color: #91170a;
      text-decoration: none;
      transition: all .25s; 
      -moz-transition: all .25s; 
@@ -28,8 +56,8 @@ a:hover {
 }
 
 footer {
-     background-color: rgb(30,30,30);
-     box-shadow: inset 0 3px 30px rgba(0,0,0,.9);
+     background-color: rgb(230,230,230);
+     border-top: 1px solid rgb(180,180,180);
      padding: 25px;
 }
 
@@ -42,14 +70,13 @@ article {
 }
 
 pre {
-     box-shadow: inset 0 1px 10px rgba(0,0,0,.3),0 1px 0 rgba(255,255,255,.1),0 -1px 0 rgba(0,0,0,.5);
-     background-color: rgb(51,51,51);
-     border: none;
+     border: 1px solid rgb(180,180,180);
+     background-color: rgb(230,230,230);
 }
 
 pre code {
      background: transparent;
-     font-size: 15px;
+     font-size: 12px;
 }
 
 #inline {
@@ -65,7 +92,7 @@ pre code {
 
 @media (min-width: 1200px) {
     .container{
-        width: 970px;
+        width: 1030px;
     }
 }
 
@@ -77,15 +104,18 @@ pre code {
      margin-bottom: 0px;
      margin-top: 0px;
      line-height: 2.1428571435;
-     height: 150px;
-     box-shadow: inset 0 3px 30px rgba(0,0,0,.9)
+     height: 500px;
      
  }
 
 
 .jumbotron:after {
      content:"";
-     background: url("../images/banner.png");
+     background: url("../images/banner-full.png") left center;
+     -webkit-background-size: cover;
+     -moz-background-size: cover;
+     -o-background-size: cover;
+     background-size: cover;
      opacity: 1;
      top: 0;
      left: 0;
@@ -148,15 +178,34 @@ pre code {
 }
 
 #header {
-	width: 400px;
+	width: 270px;
      margin-top: 10px;
-     float: right;
+     margin-left: 10px;
+     padding-bottom: 20px;
+}
+
+#header-container {
+     font-size: 85px;
+     line-height: 1.2;
 }
 
 #subheader {
 	font-size: 85px;
-	font-weight: 100;
-     line-height: 1.2;
+     font-weight: 400;
+     color: white;
+     font-family: Source sans pro;
+}
+
+#features {
+     border-bottom: 1px solid rgb(180,180,180);
+     background-color: rgb(230,230,230);
+}
+
+#getting-started {
+     padding-top: 40px;
+     transition: all .25s; 
+     -moz-transition: all .25s; 
+     -webkit-transition: all .25s;
 }
 
 #docs {
@@ -172,26 +221,27 @@ pre code {
 }
 
 #subtitle1 {
-     color: rgb(248,92,123);
+     color: rgb(58,219,123);
 }
 
 #subtitle2 {
-     color: rgb(220,144,112);
+     color: rgb(249,168,95);
 }
 
 #subtitle3 {
-     color: rgb(176,153,178);
+     color: rgb(190,121,209);
 }
 
 #subtitle1, #subtitle2, #subtitle3 {
      font-style: italic;
-     font-weight: 500;
+     font-weight: 700;
+     margin-top: 50px;
 }
 
 #subcontent {
      font-weight: 200;
      line-height: 1.3;
-     margin-bottom: 50px;
+     margin-bottom: 80px;
 }
 
 #docsubtitle {
@@ -244,16 +294,9 @@ pre code {
 
 @media (max-width: 480px) {
      .jumbotron {
-          height: 100px;
+          height: 300px;
      }
 
-     #header {
-          width: 270px;
-          display: block;
-          margin-left: auto;
-          margin-right: auto;
-          float: none;
-     }
      #subheader {
           font-size: 35px;
           text-align: center;
@@ -261,7 +304,6 @@ pre code {
 
      p {
           font-size: 14px;
-          color: white;
      }
 
      pre code {
@@ -271,7 +313,7 @@ pre code {
 
      #subtitle1, #subtitle2, #subtitle3, #subcontent {
           text-align: center;
-          font-size: 24px;
+          font-size: 18px;
      }
 
      #docs {
