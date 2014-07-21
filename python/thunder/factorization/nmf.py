@@ -7,12 +7,14 @@ import numpy as np
 from pyspark import SparkContext
 from thunder.utils import load, save
 
+
 class NMF(object):
     """
     Large-scale non-negative matrix factorization on a dense matrix
     represented as an RDD with nrows and ncols
 
-    Parameters:
+    Parameters
+    ----------
     method : string, optional, default 'als'
         Specifies which iterative algorithm is to be used. Currently only 'als' supported
 
@@ -25,16 +27,16 @@ class NMF(object):
     tol : float, optional, default = 0.001
         Tolerance for convergence of iterative algorithm
 
-    h0: non-negative k x ncols array, optional
+    h0 : non-negative k x ncols array, optional
         Value at which H is initialized
 
-    w0: RDD of nrows (tuple, array) pairs, each array of shape (k,), optional, default = None
+    w0 : RDD of nrows (tuple, array) pairs, each array of shape (k,), optional, default = None
         Value at which W is initialized
 
-    w_hist: Bool, optional, default = False
+    w_hist : Bool, optional, default = False
         If true, keep track of convergence of w at each iteration
 
-    recon_hist: Bool, optional, default = False
+    recon_hist : Bool, optional, default = False
         If true, keep track of reconstruction error at each iteration
 
     Attributes
@@ -212,9 +214,6 @@ class NMF(object):
 
 
 if __name__ == "__main__":
-    """
-    Command-line functionality for nmf algorithm
-    """
     parser = argparse.ArgumentParser(description="do non-negative matrix factorization")
     parser.add_argument("master", type=str)
     parser.add_argument("datafile", type=str)
