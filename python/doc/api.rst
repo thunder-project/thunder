@@ -18,6 +18,7 @@ Factorization
 
 	factorization.PCA
 	factorization.ICA
+	factorization.NMF
 	factorization.SVD
 
 
