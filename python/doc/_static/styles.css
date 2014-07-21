@@ -8,11 +8,18 @@
 	margin-top: -5px;
 }
 
+body {
+	color: #2d3c48;
+	font: 17px "Helvetica Neue", sans-serif;
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+}
+
 a {
      transition: all .25s; 
      -moz-transition: all .25s; 
      -webkit-transition: all .25s;
-     border: 0;
+     border: none;
 }
 
 a:hover {
@@ -20,4 +27,20 @@ a:hover {
      transition: all .25s; 
      -moz-transition: all .25s; 
      -webkit-transition: all .25s;
+}
+
+a:focus {
+	outline: 0;
+}
+
+h1 {
+	font-size: 48px;
+}
+
+.mythumbnail {
+	border-radius: 10px;
+	display: block;
+	margin-left: -15px;
+	margin-right: auto;
+	max-width: 120%;
 }

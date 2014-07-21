@@ -77,12 +77,11 @@ Time Series
 	timeseries.Query
 	timeseries.CrossCorr
 	timeseries.LocalCorr
-	
 
-IO
+Utilities
 -------------
 
-.. automodule:: thunder.io
+.. automodule:: thunder.utils
    :no-members:
    :no-inherited-members:
 
@@ -92,15 +91,8 @@ IO
 	:toctree: generated/
 	:template: function.rst
 
-	io.load
-	io.save
-
-	:template: class.rst
-
-	io.DataSets
-	io.datasets.KMeansData
-	io.datasets.PCAData
-	io.datasets.FishData
-	io.datasets.IrisData
+	utils.load
+	utils.save
 
 
+	

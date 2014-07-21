@@ -12,7 +12,7 @@ Large-scale neural data analysis with Spark - `project page`_
 About
 -----
 
-Thunder is a library for analyzing large-scale neural data. It's fast to run, easy to develop for, and can be run interactively. It is built on Spark, a new framework for cluster computing.
+Thunder is a library for analyzing large-scale neural data. It's fast to run, easy to develop for, and can be used interactively. It is built on Spark, a new framework for cluster computing.
 
 Thunder includes utilties for data loading and saving, and modular functions for time series statistics, matrix decompositions, and fitting algorithms. Analyses can easily be scripted or combined. It is written in Spark's Python API (Pyspark), making use of scipy, numpy, and scikit-learn. Experimental streaming analyses are availiable in Scala, and we plan to port some functionality to Scala in the future for improved performance.
 
