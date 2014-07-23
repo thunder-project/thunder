@@ -2,7 +2,7 @@
    :align: left
    :target: https://travis-ci.org/freeman-lab/thunder
 
-Thunder
+thunder
 =======
 
 Large-scale neural data analysis with Spark - `project page`_
@@ -12,14 +12,14 @@ Large-scale neural data analysis with Spark - `project page`_
 About
 -----
 
-Thunder is a library for analyzing large-scale neural data. It's fast to run, easy to develop for, and can be used interactively. It is built on Spark, a new framework for cluster computing.
+thunder is a library for analyzing large-scale neural data. It's fast to run, easy to develop for, and can be used interactively. It is built on Spark, a new framework for cluster computing.
 
-Thunder includes utilties for data loading and saving, and modular functions for time series statistics, matrix decompositions, and fitting algorithms. Analyses can easily be scripted or combined. It is written in Spark's Python API (Pyspark), making use of scipy, numpy, and scikit-learn.
+thunder includes utilties for data loading and saving, and modular functions for time series statistics, matrix decompositions, and fitting algorithms. Analyses can easily be scripted or combined. It is written in Spark's Python API (Pyspark), making use of scipy, numpy, and scikit-learn.
 
 Quick start
 -----------
 
-Thunder is designed to run on a cluster, but local testing is a great way to learn and develop. Many computers can install it with just a few simple steps. If you aren't currently using Python for scientific computing, `Anaconda`_ is highly recommended.
+thunder is designed to run on a cluster, but local testing is a great way to learn and develop. Many computers can install it with just a few simple steps. If you aren't currently using Python for scientific computing, `Anaconda`_ is highly recommended.
 
 .. _Anaconda: https://store.continuum.io/cshop/anaconda/
 
@@ -31,13 +31,13 @@ Thunder is designed to run on a cluster, but local testing is a great way to lea
 
 	export SPARK_HOME=/your/path/to/spark
 
-2) Install Thunder
+2) Install thunder
 
 :: 
 
 	pip install thunder-python
 
-3) Start Thunder from the terminal
+3) Start thunder from the terminal
 
 :: 
 
@@ -59,7 +59,7 @@ To run analyses as standalone jobs, use the submit script
 
 	thunder-submit <package/analysis> <datadirectory> <outputdirectory> <opts>
 
-We also include a script for launching an Amazon EC2 cluster with Thunder presintalled
+We also include a script for launching an Amazon EC2 cluster with thunder presintalled
 
 ::
 
@@ -69,12 +69,12 @@ We also include a script for launching an Amazon EC2 cluster with Thunder presin
 Analyses
 --------
 
-Thunder currently includes five packages: classification, clustering, factorization, regression, and timeseries, as well as an io package for loading and saving (see Input format and Output format), and a util package for utilities (like common matrix operations). Packages include scripts for running standalone analyses, but the underlying classes and functions can be used from within the PySpark shell for easy interactive analysis.
+thunder currently includes five packages: classification (decoding), clustering, factorization, regression, and timeseries, as well as an utils package for loading and saving (see Input format and Output format) and other utilities (e.g. matrix operations). Scripts can be used to run standalone analyses, but the underlying classes and functions can be used from within the PySpark shell for easy interactive analysis.
 
 Input and output
 ----------------
 
-Thunder is built around a commmon input format for raw neural data: a set of signals as key-value pairs, where the key is an identifier, and the value is a response time series. In imaging data, for example, each record would be a voxel or an ROI, the key an xyz coordinate, and the value a flouresence time series. This is a useful representation because most analyses parallelize across neural signals (i.e. across records). 
+thunder is built around a commmon input format for raw neural data: a set of signals as key-value pairs, where the key is an identifier, and the value is a response time series. In imaging data, for example, each record would be a voxel or an ROI, the key an xyz coordinate, and the value a flouresence time series. This is a useful representation because most analyses parallelize across neural signals (i.e. across records). 
 
 These key-value records can, in principle, be stored in a variety of cluster-accessible formats, and it does not affect the core functionality (besides loading). Currently, the loading function assumes a text file input, where the rows are neural signals, and the columns are the keys and values, each number separated by space. Support for flat binary files is coming soon.
 

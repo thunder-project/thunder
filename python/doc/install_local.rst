@@ -3,9 +3,9 @@
 Installation
 ============
 
-Thunder can be installed on most modern computers running Python 2.7. It has only been tested on Mac OS X, but should also work on Windows and Linux. If you aren't already using scientific Python, we recommend getting the `Anaconda distribution <https://store.continuum.io/cshop/anaconda/>`_.
+thunder can be installed on most modern computers running Python 2.7. It has only been tested on Mac OS X, but should also work on Windows and Linux. If you aren't already using scientific Python, we recommend getting the `Anaconda distribution <https://store.continuum.io/cshop/anaconda/>`_.
 
-To follow along with the instructions below, you'll just need a command line (e.g. the Terminal app in Mac OS X), a web browser, and the ``pip`` Python package manager (which is included with Anaconda). These instructions get Spark and Thunder running on a local machine. That's great for learning the library and developing analyses. But Thunder is meant to run on a cluster. Once you install, the command ``thunder-ec2`` lets you launch a cluster on Amazon's EC2, see :ref:`install_ec2_ref`.
+To follow along with the instructions below, you'll just need a command line (e.g. the Terminal app in Mac OS X), a web browser, and the ``pip`` Python package manager (which is included with Anaconda). These instructions get Spark and thunder running on a local machine. That's great for learning the library and developing analyses. But thunder is meant to run on a cluster. Once you install, the command ``thunder-ec2`` lets you launch a cluster on Amazon's EC2, see :ref:`install_ec2_ref`.
 
 Installing Spark 
 ~~~~~~~~~~~~~~~~
@@ -19,7 +19,7 @@ Once you have downloaded Spark, set an environmental variable by typing the foll
 
 To make this setting permanent, add the above line to your bash profile (usually located in ``~/.bash_profile`` on Mac OS X), and open a new terminal so the change takes effect. Otherwise, you'll need to enter this line during each terminal session.
 
-Installing Thunder
+Installing thunder
 ~~~~~~~~~~~~~~~~~~
 Type the following line into the terminal
 
@@ -43,7 +43,7 @@ If you type ``thunder`` into the terminal it will start an interactive session i
 
 Dependencies 
 ~~~~~~~~~~~~
-Along with Spark, Thunder depends on these Python libraries (by installing using ``pip`` these will be added automatically).
+Along with Spark, thunder depends on these Python libraries (by installing using ``pip`` these will be added automatically).
 
 `numpy <http://www.numpy.org/>`__, `scipy <http://www.scipy.org/>`__, `scikit-learn <http://scikit-learn.org/stable/>`__, `PIL <http://www.pythonware.com/products/pil/>`__, `matplotlib <matplotlib.sourceforge.net>`__, `mpld3 <http://mpld3.github.io/>`__, `jinja2 <http://jinja.pocoo.org/docs/>`__
 
@@ -51,7 +51,7 @@ We recommend using the `Anaconda distribution <https://store.continuum.io/cshop/
 
 iPython
 ~~~~~~~
-Thunder and Spark work well alongside iPython and the iPython notebook. To use iPython, just set an environmental variable
+Spark and thunder work well alongside iPython and the iPython notebook. To use iPython, just set an environmental variable
 
 .. code-block:: bash
 
