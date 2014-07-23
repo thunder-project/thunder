@@ -37,6 +37,19 @@ h1 {
 	font-size: 48px;
 }
 
+pre {
+  font-size: 14px;
+}
+
+code {
+  font-size: 14px;
+  color: #2d3c48;
+}
+
+footer {
+  margin-top: 30px;
+}
+
 .mythumbnail {
 	border-radius: 10px;
 	display: block;

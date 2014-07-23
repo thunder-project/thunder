@@ -58,13 +58,14 @@
    <div class="container-fluid">
    <div class="row">
    <div class="col-md-6">
-   <h2>Getting started</h2>
+   <h2>Documentation</h2>
 
 .. toctree::
    :maxdepth: 1
 
    install_local
    install_ec2
+   contributing
 
 .. raw:: html
 

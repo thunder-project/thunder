@@ -58,6 +58,9 @@ master_doc = 'index'
 project = u'Thunder'
 copyright = u'2014, Jeremy Freeman'
 
+
+html_show_copyright = False
+
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
@@ -121,6 +124,8 @@ html_theme_options = {
   'bootswatch_theme': "simplex",
   'navbar_sidebarrel': False
 }
+
+
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
