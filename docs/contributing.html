@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>&lt;no title&gt; &mdash; Thunder 0.1.0 documentation</title>
+    <title>Contributing &mdash; Thunder 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -31,8 +31,9 @@
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.1.0 documentation" href="#" />
-    <link rel="next" title="Installation" href="install_local.html" />
+    <link rel="top" title="Thunder 0.1.0 documentation" href="index.html" />
+    <link rel="next" title="API Reference" href="api.html" />
+    <link rel="prev" title="Running on EC2" href="install_ec2.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -50,7 +51,7 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="#"><img src="_static/thunder_logo.png">
+        <a class="navbar-brand" href="index.html"><img src="_static/thunder_logo.png">
            </a>
         <span class="navbar-text navbar-version pull-left"><b>0.1.0</b></span>
       </div>
@@ -65,13 +66,13 @@
      id="dLabelGlobalToc"
      data-toggle="dropdown"
      data-target="#"
-     href="#">Site <b class="caret"></b></a>
+     href="index.html">Site <b class="caret"></b></a>
   <ul class="dropdown-menu globaltoc"
       role="menu"
-      aria-labelledby="dLabelGlobalToc"><ul>
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="install_local.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install_ec2.html">Running on EC2</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Contributing</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
@@ -88,6 +89,11 @@
   <ul class="dropdown-menu localtoc"
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Contributing</a><ul>
+<li><a class="reference internal" href="#setting-up">Setting up</a></li>
+<li><a class="reference internal" href="#running-the-tests">Running the tests</a></li>
+</ul>
+</li>
 </ul>
 </ul>
 </li>
@@ -117,65 +123,39 @@
   <div class="row">
     <div class="col-md-12">
       
-  <h1>thunder: neural data analysis in spark</h1>
-<br><div style="clear: both"></div>
-<div class="container-fluid hidden-xs hidden-sm">
-  <div class="row">
-    <a>
-      <div class="col-md-2">
-        <img class="mythumbnail" src="_static/thumbnail_1.png">
-      </div>
-    </a>
-    <a>
-      <div class="col-md-2">
-        <img class="mythumbnail" src="_static/thumbnail_2.png">
-      </div>
-    </a>
-    <a>
-      <div class="col-md-2">
-        <img class="mythumbnail" src="_static/thumbnail_3.png">
-      </div>
-    </a>
-    <a>
-      <div class="col-md-2">
-        <img class="mythumbnail" src="_static/thumbnail_4.png">
-      </div>
-    </a>
-    <a>
-      <div class="col-md-2">
-        <img class="mythumbnail" src="_static/thumbnail_5.png">
-      </div>
-    </a>
-    <a>
-      <div class="col-md-2">
-        <img class="mythumbnail" src="_static/thumbnail_6.png">
-      </div>
-    </a>
-  </div>
+  <div class="section" id="contributing">
+<span id="id1"></span><h1>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h1>
+<p>With Thunder we want to provide a centralized library to develop and vet analyses. If you want to contribute, follow these steps to download and use the source code. If you have a contribution, submit a <a class="reference external" href="https://github.com/freeman-lab/thunder/pulls">pull request</a>. If you find a problem, submit an <a class="reference external" href="https://github.com/freeman-lab/thunder/issues">issue</a>!</p>
+<div class="section" id="setting-up">
+<h2>Setting up<a class="headerlink" href="#setting-up" title="Permalink to this headline">¶</a></h2>
+<p>For development, you&#8217;ll want to clone the repository from github (or fork your own branch):</p>
+<div class="highlight-bash"><div class="highlight"><pre>git clone git://github.com/freeman-lab/thunder.git
+</pre></div>
 </div>
-<br><hr class="docutils" />
-<p>Thunder is a library for analyzing large-scale neural data. It&#8217;s fast to run, easy to develop for, and can be used interactively. It is built on Spark, a new framework for cluster computing.</p>
-<p>Thunder includes utilties for data loading and saving, and modular functions for time series statistics, matrix decompositions, and fitting algorithms. Analyses can easily be scripted or combined. It is written in Spark&#8217;s Python API (Pyspark), making use of scipy, numpy, and scikit-learn.</p>
-<div class="container-fluid">
-<div class="row">
-<div class="col-md-6">
-<h2>Documentation</h2><div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="install_local.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="install_ec2.html">Running on EC2</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
-</ul>
+<p>Then set two additional environmental variables to make sure the code and executables are on your paths (we assume you cloned into a directory called <tt class="docutils literal"><span class="pre">code</span></tt>)</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nb">export </span><span class="nv">PYTHONPATH</span><span class="o">=</span>~/code/thunder/python/:<span class="nv">$PYTHONPATH</span>
+<span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span>~/code/thunder/python/bin:<span class="nv">$PATH</span>
+</pre></div>
+</div>
+<p>To avoid confusion, if you had already installed Thunder previously using <tt class="docutils literal"><span class="pre">pip</span></tt>, we recommend uninstalling it first using <tt class="docutils literal"><span class="pre">pip</span> <span class="pre">uninstall</span> <span class="pre">thunder-python</span></tt>.</p>
+<p>Using an IDE for development is highly recommended, we use <a class="reference external" href="http://www.jetbrains.com/pycharm/">PyCharm</a> for Python and <a class="reference external" href="http://www.jetbrains.com/idea/">IntelliJ</a> for Scala. And here&#8217;s a good <a class="reference external" href="https://gun.io/blog/how-to-github-fork-branch-and-pull-request/">article</a> on how to contribute a pull request to a project using github.</p>
+</div>
+<div class="section" id="running-the-tests">
+<h2>Running the tests<a class="headerlink" href="#running-the-tests" title="Permalink to this headline">¶</a></h2>
+<p>You can run the unit tests with <tt class="docutils literal"><span class="pre">nose</span></tt> by calling</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nb">cd</span> ~/code/thunder/python/test
+./run_tests.sh
+</pre></div>
+</div>
+<p>You must run the tests from within this folder. You can run just one set of tests, or a single test within a suite, like this</p>
+<div class="highlight-bash"><div class="highlight"><pre>./run_tests.sh <span class="s2">&quot;test_timeseries.py&quot;</span>
+./run_tests.sh <span class="s2">&quot;test_timeseries.py:TestStats&quot;</span>
+</pre></div>
+</div>
+<p>If you develop a new analysis or component, you should write a unit test for it! See the existing tests for examples.</p>
 </div>
 </div>
-<div class="col-md-6">
-<h2>Further reading</h2><div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
-</ul>
-</div>
-</div>
-</div>
-</div>
+
 
     </div>
       
@@ -189,7 +169,7 @@
         <br/>
         
 <div id="sourcelink">
-  <a href="_sources/index.txt"
+  <a href="_sources/contributing.txt"
      rel="nofollow">Source</a>
 </div>
       
