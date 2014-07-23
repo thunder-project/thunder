@@ -4,6 +4,10 @@
   }
 }
 
+p {
+  line-height: 1.4em
+}
+
 .navbar-brand {
 	margin-top: -5px;
 }
