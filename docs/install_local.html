@@ -91,7 +91,7 @@
       aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">Installation</a><ul>
 <li><a class="reference internal" href="#installing-spark">Installing Spark</a></li>
-<li><a class="reference internal" href="#installing-thunder">Installing Thunder</a></li>
+<li><a class="reference internal" href="#installing-thunder">Installing thunder</a></li>
 <li><a class="reference internal" href="#dependencies">Dependencies</a></li>
 <li><a class="reference internal" href="#ipython">iPython</a></li>
 </ul>
@@ -127,8 +127,8 @@
       
   <div class="section" id="installation">
 <span id="install-local-ref"></span><h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
-<p>Thunder can be installed on most modern computers running Python 2.7. It has only been tested on Mac OS X, but should also work on Windows and Linux. If you aren&#8217;t already using scientific Python, we recommend getting the <a class="reference external" href="https://store.continuum.io/cshop/anaconda/">Anaconda distribution</a>.</p>
-<p>To follow along with the instructions below, you&#8217;ll just need a command line (e.g. the Terminal app in Mac OS X), a web browser, and the <tt class="docutils literal"><span class="pre">pip</span></tt> Python package manager (which is included with Anaconda). These instructions get Spark and Thunder running on a local machine. That&#8217;s great for learning the library and developing analyses. But Thunder is meant to run on a cluster. Once you install, the command <tt class="docutils literal"><span class="pre">thunder-ec2</span></tt> lets you launch a cluster on Amazon&#8217;s EC2, see <a class="reference internal" href="install_ec2.html#install-ec2-ref"><em>Running on EC2</em></a>.</p>
+<p>thunder can be installed on most modern computers running Python 2.7. It has only been tested on Mac OS X, but should also work on Windows and Linux. If you aren&#8217;t already using scientific Python, we recommend getting the <a class="reference external" href="https://store.continuum.io/cshop/anaconda/">Anaconda distribution</a>.</p>
+<p>To follow along with the instructions below, you&#8217;ll just need a command line (e.g. the Terminal app in Mac OS X), a web browser, and the <tt class="docutils literal"><span class="pre">pip</span></tt> Python package manager (which is included with Anaconda). These instructions get Spark and thunder running on a local machine. That&#8217;s great for learning the library and developing analyses. But thunder is meant to run on a cluster. Once you install, the command <tt class="docutils literal"><span class="pre">thunder-ec2</span></tt> lets you launch a cluster on Amazon&#8217;s EC2, see <a class="reference internal" href="install_ec2.html#install-ec2-ref"><em>Running on EC2</em></a>.</p>
 <div class="section" id="installing-spark">
 <h2>Installing Spark<a class="headerlink" href="#installing-spark" title="Permalink to this headline">¶</a></h2>
 <p>First you need a working installation of Spark. You can <a class="reference external" href="http://spark.apache.org/downloads.html">download</a> one of the pre-built versions, or you can download the sources, and follow <a class="reference external" href="http://spark.apache.org/docs/latest/building-with-maven.html">these instructions</a> to build from source.</p>
@@ -139,7 +139,7 @@
 <p>To make this setting permanent, add the above line to your bash profile (usually located in <tt class="docutils literal"><span class="pre">~/.bash_profile</span></tt> on Mac OS X), and open a new terminal so the change takes effect. Otherwise, you&#8217;ll need to enter this line during each terminal session.</p>
 </div>
 <div class="section" id="installing-thunder">
-<h2>Installing Thunder<a class="headerlink" href="#installing-thunder" title="Permalink to this headline">¶</a></h2>
+<h2>Installing thunder<a class="headerlink" href="#installing-thunder" title="Permalink to this headline">¶</a></h2>
 <p>Type the following line into the terminal</p>
 <div class="highlight-bash"><div class="highlight"><pre>pip install python-thunder
 </pre></div>
@@ -156,13 +156,13 @@
 </div>
 <div class="section" id="dependencies">
 <h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
-<p>Along with Spark, Thunder depends on these Python libraries (by installing using <tt class="docutils literal"><span class="pre">pip</span></tt> these will be added automatically).</p>
+<p>Along with Spark, thunder depends on these Python libraries (by installing using <tt class="docutils literal"><span class="pre">pip</span></tt> these will be added automatically).</p>
 <p><a class="reference external" href="http://www.numpy.org/">numpy</a>, <a class="reference external" href="http://www.scipy.org/">scipy</a>, <a class="reference external" href="http://scikit-learn.org/stable/">scikit-learn</a>, <a class="reference external" href="http://www.pythonware.com/products/pil/">PIL</a>, <a class="reference external" href="matplotlib.sourceforge.net">matplotlib</a>, <a class="reference external" href="http://mpld3.github.io/">mpld3</a>, <a class="reference external" href="http://jinja.pocoo.org/docs/">jinja2</a></p>
 <p>We recommend using the <a class="reference external" href="https://store.continuum.io/cshop/anaconda/">Anaconda distribution</a>, which includes most of these dependencies (and many other useful packages). Especially if you aren&#8217;t already using Python for scientific computing, it&#8217;s a great way to start.</p>
 </div>
 <div class="section" id="ipython">
 <h2>iPython<a class="headerlink" href="#ipython" title="Permalink to this headline">¶</a></h2>
-<p>Thunder and Spark work well alongside iPython and the iPython notebook. To use iPython, just set an environmental variable</p>
+<p>Spark and thunder work well alongside iPython and the iPython notebook. To use iPython, just set an environmental variable</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nb">export </span><span class="nv">IPYTHON</span><span class="o">=</span>1
 </pre></div>
 </div>
