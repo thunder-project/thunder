@@ -95,12 +95,10 @@ class PreProcessor(object):
         if preprocessmethod == "dff-detrend-percentile":
 
             def func(y):
-                # first do linear detrending
-                mnval = mean(y)
-                y = (y - mnval) / (mnval + 0.1)
+                # first do linear detrending (but don't subtract the intercept)
                 x = arange(1, len(y)+1)
                 p = polyfit(x, y, 1)
-                yy = polyval(p, x)
+                yy = p[0] * x  # subtract off just the slope term
                 y = y - yy
 
                 # then take 20th percentile as baseline
