@@ -4,7 +4,7 @@ from datetime import datetime
 from numpy import arange, array, add, float16, random, outer, dot, zeros, real, transpose, diag, argsort, sqrt, inner
 from scipy.linalg import sqrtm, inv, orth, eig
 from scipy.io import savemat
-from thunder.io import load
+from thunder.utils import load
 from thunder.timeseries import Stats, Fourier, CrossCorr
 from thunder.regression import RegressionModel
 from thunder.factorization import SVD
