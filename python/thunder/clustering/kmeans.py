@@ -2,10 +2,8 @@
 Classes and standalone app for KMeans clustering
 """
 
-import os
 import argparse
-import glob
-from numpy import sum, array, argmin, corrcoef, random
+from numpy import sum, array, argmin, corrcoef, random, ndarray
 from scipy.spatial.distance import cdist
 from matplotlib import pyplot
 import colorsys
@@ -61,7 +59,6 @@ class KMeansModel(object):
             else:
                 return map(lambda x: func(centers, x), data)
 
-
     def predict(self, data):
         """Predict the cluster that all data points belong to, and the similarity
 
@@ -78,8 +75,7 @@ class KMeansModel(object):
 
         closestpoint = lambda centers, p: argmin(cdist(centers, array([p])))
         return self.calc(data, closestpoint)
-        
-        
+
     def similarity(self, data):
         """Estimate similarity between each data point and the cluster it belongs to
 
@@ -96,7 +92,6 @@ class KMeansModel(object):
 
         similarity = lambda centers, p: corrcoef(centers[argmin(cdist(centers, array([p])))], p)[0,1]
         return self.calc(data, similarity)
-        
 
     def plot(self, data, notebook=False, show=True, savename=None):
 
@@ -152,7 +147,6 @@ class KMeans(object):
         if not (init == "random" or init == "sample"):
             raise Exception("init must be random or sample")
 
-
     def train(self, data):
         """Train the clustering model using the standard
         k-means algorithm
@@ -180,7 +174,7 @@ class KMeans(object):
         iter = 0
 
         while (tempdist > self.tol) & (iter < self.maxiter):
-            
+
             closest = data.map(lambda (_, v): v).map(lambda p: (argmin(cdist(centers, array([p]))), (p, 1)))
             pointstats = closest.reduceByKey(lambda (x1, y1), (x2, y2): (x1 + x2, y1 + y2))
             newpoints = pointstats.map(lambda (x, (y, z)): (x, y / z)).collect()
