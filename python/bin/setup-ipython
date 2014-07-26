@@ -18,3 +18,4 @@ c.NotebookApp.port = 8888
 
 PWDFILE='/root/.ipython/profile_default/nbpasswd.txt'
 c.NotebookApp.password = open(PWDFILE).read().strip()" >> /root/.ipython/profile_default/ipython_notebook_config.py
+echo 'export IPYTHON_OPTS="notebook --pylab inline"' >> /root/.bash_profile
