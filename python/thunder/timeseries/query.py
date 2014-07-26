@@ -74,7 +74,7 @@ class Query(object):
         # loop over indices, averaging time series
         ts = zeros((self.n, len(data.first()[1])))
         for i in range(0, self.n):
-            if len(self.inds[i]) > 1:
+            if len(self.inds[i]) > 0:
                 ts[i, :] = self.select(data, i).map(lambda (k, x): x).sum() / len(self.inds[i])
 
         return ts
