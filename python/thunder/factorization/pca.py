@@ -5,13 +5,13 @@ Class and standalone app for Principal Component Analysis
 import os
 import argparse
 import glob
+from numpy import array, std
 from matplotlib import pyplot
 import mpld3
 from mpld3 import plugins
 from pyspark import SparkContext
 from thunder.factorization import SVD
-from thunder.utils import load
-from thunder.utils import save
+from thunder.utils import load, save
 from thunder.utils.matrices import RowMatrix
 from thunder.viz.plugins import LinkedView, HiddenAxes
 from thunder.viz.plots import pointmap, imagemap, scatter, tsrecon
@@ -66,7 +66,8 @@ class PCA(object):
 
         return self
 
-    def plot(self, notebook=False, colormap='polar', scale=1, maptype='points', show=True, savename=None):
+    def plot(self, notebook=False, colormap='polar', scale=1, maptype='points',
+             nsamples=1000, thresh=0.01, show=True, savename=None):
 
         # make a spatial map based on the scores
         fig = pyplot.figure(figsize=(12, 5))
@@ -79,12 +80,15 @@ class PCA(object):
 
         # make a scatter plot of sampled scores
         ax2 = pyplot.subplot2grid((2, 3), (1, 0))
-        ax2, h2, samples = scatter(self.scores, colormap=colormap, scale=scale, thresh=0.01, nsamples=1000, ax=ax2, store=True)
+        pts = array(self.scores.values().filter(lambda x: std(x) > thresh).takeSample(False, nsamples))
+        if len(pts) == 0:
+            raise Exception('no samples found, most likely your threshold is too low')
+        ax2, h2 = scatter(pts, colormap=colormap, scale=scale, ax=ax2)
         fig.add_axes(ax2)
 
         # make the line plot of reconstructions from principal components for the same samples
         ax3 = pyplot.subplot2grid((2, 3), (0, 0))
-        ax3, h3, linedata = tsrecon(self.comps, samples, ax=ax3)
+        ax3, h3, linedata = tsrecon(self.comps, pts, ax=ax3)
 
         plugins.connect(fig, LinkedView(h2, h3[0], linedata))
         plugins.connect(fig, HiddenAxes())
