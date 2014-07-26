@@ -60,6 +60,33 @@ Remember to ``exit`` the cluster and shut it down when you are done!
 	
 	thunder-ec2 -k mykey -i ~/mykey.pem destroy <cluster-name>
 
+Use the iPython notebook
+~~~~~~~~~~~~~~~~~~~~~~~~
+The iPython notebook is an especially useful way to do analyses interactively and look at results.
+
+To setup the iPython notebook on EC2, just login to your cluster
+
+.. code-block:: bash
+
+	thunder-ec2 -k mykey -i ~/mykey.pem login <cluster-name>
+
+and type:
+
+.. code-block:: bash
+
+	setup-notebook
+
+This will run a script that configures an iPython notebook server. During the script you will be asked to enter a password. Rememember what you give, as we'll need it again soon. At the end of the configuration you'll see the message ``iPython notebook successfully set up!`` followed by a link to a URL. If you now type:
+
+.. code-block:: bash
+
+	source /root/.bash_profile
+	thunder
+
+and go to the URL from the previous step in a web browser, it should ask for the password we gave (if you get a message about SSL security, just click proceed). You are now running an iPython notebook server! Click ``New Notebook`` to start a session.
+
+
+
 
 
 
