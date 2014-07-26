@@ -13,7 +13,7 @@ import subprocess
 from sys import stderr
 from optparse import OptionParser
 from spark_ec2 import ssh, launch_cluster, get_existing_cluster, wait_for_cluster, deploy_files, setup_spark_cluster, \
-    get_spark_ami, ssh_command, ssh_read, ssh_write
+    get_spark_ami, ssh_command, ssh_read, ssh_write, get_or_make_group
 
 
 def get_s3_keys():
@@ -160,6 +160,9 @@ if __name__ == "__main__":
             (master_nodes, slave_nodes) = get_existing_cluster(conn, opts, cluster_name)
         else:
             (master_nodes, slave_nodes) = launch_cluster(conn, opts, cluster_name)
+
+        master_group = get_or_make_group(conn, cluster_name + "-master")
+        master_group.authorize('tcp', 8888, 8888, '0.0.0.0/0')
 
         wait_for_cluster(conn, opts.wait, master_nodes, slave_nodes)
         setup_cluster(conn, master_nodes, slave_nodes, opts, True)
