@@ -40,6 +40,11 @@ def install_thunder(master, opts):
     ssh(master, opts, "echo 'export PYTHONPATH=/root/thunder/python' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export IPYTHON=1' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export PATH=/root/thunder/python/bin:$PATH' >> /root/.bash_profile")
+    configstring = "<property><name>fs.s3n.awsAccessKeyId</name><value>ACCESS</value></property><property>" \
+                   "<name>fs.s3n.awsSecretAccessKey</name><value>SECRET</value></property>"
+    access, secret = get_s3_keys()
+    filled = configstring.replace('ACCESS', access).replace('SECRET', secret)
+    ssh(master, opts, "sed -i'f' 's,.*</configuration>.*,"+filled+"&,' /root/ephemeral-hdfs/conf/core-site.xml")
     print "\n\n"
     print "-------------------------------"
     print "Thunder successfully installed!"
@@ -138,7 +143,7 @@ if __name__ == "__main__":
         if opts.zone == "":
             opts.zone = random.choice(conn.get_all_zones()).name
 
-        opts.ami = "ami-3ecd0c56"
+        opts.ami = "ami-3ecd0c56" #get_spark_ami(opts)
         opts.ebs_vol_size = 0
         opts.spot_price = None
         opts.master_instance_type = ""
