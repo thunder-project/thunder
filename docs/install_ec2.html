@@ -94,6 +94,7 @@
 <li><a class="reference internal" href="#create-your-key-pair">Create your key pair</a></li>
 <li><a class="reference internal" href="#launch-a-cluster">Launch a cluster</a></li>
 <li><a class="reference internal" href="#login-and-start">Login and start</a></li>
+<li><a class="reference internal" href="#use-the-ipython-notebook">Use the iPython notebook</a></li>
 </ul>
 </li>
 </ul>
@@ -170,6 +171,24 @@
 <div class="highlight-bash"><div class="highlight"><pre>thunder-ec2 -k mykey -i ~/mykey.pem destroy &lt;cluster-name&gt;
 </pre></div>
 </div>
+</div>
+<div class="section" id="use-the-ipython-notebook">
+<h2>Use the iPython notebook<a class="headerlink" href="#use-the-ipython-notebook" title="Permalink to this headline">¶</a></h2>
+<p>The iPython notebook is an especially useful way to do analyses interactively and look at results.</p>
+<p>To setup the iPython notebook on EC2, just login to your cluster</p>
+<div class="highlight-bash"><div class="highlight"><pre>thunder-ec2 -k mykey -i ~/mykey.pem login &lt;cluster-name&gt;
+</pre></div>
+</div>
+<p>and type:</p>
+<div class="highlight-bash"><div class="highlight"><pre>setup-notebook
+</pre></div>
+</div>
+<p>This will run a script that configures an iPython notebook server. During the script you will be asked to enter a password. Rememember what you give, as we&#8217;ll need it again soon. At the end of the configuration you&#8217;ll see the message <tt class="docutils literal"><span class="pre">iPython</span> <span class="pre">notebook</span> <span class="pre">successfully</span> <span class="pre">set</span> <span class="pre">up!</span></tt> followed by a link to a URL. If you now type:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nb">source</span> /root/.bash_profile
+thunder
+</pre></div>
+</div>
+<p>and go to the URL from the previous step in a web browser, it should ask for the password we gave (if you get a message about SSL security, just click proceed). You are now running an iPython notebook server! Click <tt class="docutils literal"><span class="pre">New</span> <span class="pre">Notebook</span></tt> to start a session.</p>
 </div>
 </div>
 

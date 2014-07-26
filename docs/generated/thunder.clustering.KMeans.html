@@ -124,7 +124,7 @@
 <h1><a class="reference internal" href="../api.html#module-thunder.clustering" title="thunder.clustering"><tt class="xref py py-mod docutils literal"><span class="pre">thunder.clustering</span></tt></a>.KMeans<a class="headerlink" href="#thunder-clustering-kmeans" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="thunder.clustering.KMeans">
-<em class="property">class </em><tt class="descclassname">thunder.clustering.</tt><tt class="descname">KMeans</tt><big>(</big><em>k</em>, <em>maxiter=20</em>, <em>tol=0.001</em><big>)</big><a class="headerlink" href="#thunder.clustering.KMeans" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">thunder.clustering.</tt><tt class="descname">KMeans</tt><big>(</big><em>k</em>, <em>maxiter=20</em>, <em>tol=0.001</em>, <em>init='random'</em><big>)</big><a class="headerlink" href="#thunder.clustering.KMeans" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class for KMeans clustering</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -153,13 +153,7 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>(k[,&nbsp;maxiter,&nbsp;tol])</td>
-<td></td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.clustering.KMeans.closestpoint" title="thunder.clustering.KMeans.closestpoint"><tt class="xref py py-obj docutils literal"><span class="pre">closestpoint</span></tt></a>(p,&nbsp;centers)</td>
-<td>Return the index of the closest point in centers to p</td>
-</tr>
-<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">similarity</span></tt>(p,&nbsp;centers)</td>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>(k[,&nbsp;maxiter,&nbsp;tol,&nbsp;init])</td>
 <td></td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.clustering.KMeans.train" title="thunder.clustering.KMeans.train"><tt class="xref py py-obj docutils literal"><span class="pre">train</span></tt></a>(data)</td>
@@ -167,12 +161,6 @@
 </tr>
 </tbody>
 </table>
-<dl class="staticmethod">
-<dt id="thunder.clustering.KMeans.closestpoint">
-<em class="property">static </em><tt class="descname">closestpoint</tt><big>(</big><em>p</em>, <em>centers</em><big>)</big><a class="headerlink" href="#thunder.clustering.KMeans.closestpoint" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the index of the closest point in centers to p</p>
-</dd></dl>
-
 <dl class="method">
 <dt id="thunder.clustering.KMeans.train">
 <tt class="descname">train</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#thunder.clustering.KMeans.train" title="Permalink to this definition">¶</a></dt>

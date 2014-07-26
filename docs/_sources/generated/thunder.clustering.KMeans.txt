@@ -10,8 +10,6 @@
    .. autosummary::
    
       ~KMeans.__init__
-      ~KMeans.closestpoint
-      ~KMeans.similarity
       ~KMeans.train
    
 
