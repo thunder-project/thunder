@@ -9,13 +9,14 @@ from thunder.utils import load
 
 class DataSets(object):
 
-    def __init__(self, sc):
+    def __init__(self, sc, returnparams=False):
         self.sc = sc
         self.path = os.path.dirname(os.path.realpath(__file__))
+        self.returnparams = returnparams
 
     @staticmethod
-    def make(sc, name, **opts):
-        return DATASET_MAKERS[name](sc).generate(**opts)
+    def make(sc, name, returnparams=False, **opts):
+        return DATASET_MAKERS[name](sc, returnparams).generate(**opts)
 
     @staticmethod
     def load(sc, name):
@@ -35,13 +36,13 @@ def appendkeys(data):
 
 class KMeansData(DataSets):
 
-    def generate(self, k=5, npartitions=10, ndims=5, nrecords=100, noise=0.1, seed=None, params=False):
+    def generate(self, k=5, npartitions=10, ndims=5, nrecords=100, noise=0.1, seed=None):
         random.seed(seed)
         centers = random.randn(k, ndims)
         gen_func = lambda i: centers[int(floor(random.rand(1, 1) * k))] + noise*random.rand(ndims)
         data_local = map(gen_func, range(0, nrecords))
         data = self.sc.parallelize(appendkeys(data_local), npartitions)
-        if params is True:
+        if self.returnparams is True:
             return data, centers
         else:
             return data
@@ -49,14 +50,14 @@ class KMeansData(DataSets):
 
 class PCAData(DataSets):
 
-    def generate(self, k=3, npartitions=10, nrows=100, ncols=10, seed=None, params=False):
+    def generate(self, k=3, npartitions=10, nrows=100, ncols=10, seed=None):
         random.seed(seed)
         u = random.randn(nrows, k)
         v = random.randn(k, ncols)
         a = dot(u, v)
         a += random.randn(shape(a)[0], shape(a)[1])
         data = self.sc.parallelize(appendkeys(a), npartitions)
-        if params is True:
+        if self.returnparams is True:
             return data, u, v
         else:
             return data
@@ -64,7 +65,7 @@ class PCAData(DataSets):
 
 class ICAData(DataSets):
 
-    def generate(self, npartitions=10, nrows=100, params=False):
+    def generate(self, npartitions=10, nrows=100):
         random.seed(42)
         time = linspace(0, 10, nrows)
         s1 = sin(2 * time)
@@ -75,7 +76,7 @@ class ICAData(DataSets):
         a = array([[1, 1], [0.5, 2]])
         x = dot(s, a.T)
         data = self.sc.parallelize(appendkeys(x), npartitions)
-        if params is True:
+        if self.returnparams is True:
             return data, s, a
         else:
             return data
