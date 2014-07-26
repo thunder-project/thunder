@@ -48,20 +48,15 @@ def pointmap(data, colormap='polar', scale=1.0, ax=None):
     return ax, h
 
 
-def scatter(pts, nsamples=100, colormap=None, scale=1, thresh=0.001, ax=None, store=False):
-    """Create a scatter plot of x and y points from an array or an RDD (through sampling)
+def scatter(pts, colormap=None, scale=1, ax=None):
+    """Create a scatter plot of x and y points from an array
     Can optionally use the values to determine colors"""
 
     if ax is None:
         ax = pyplot.gca()
 
     if isrdd(pts):
-        if thresh is not None:
-            pts = array(pts.values().filter(lambda x: std(x) > thresh).takeSample(False, nsamples))
-        else:
-            pts = array(pts.values().takeSample(False, nsamples))
-        if len(pts) == 0:
-            raise Exception('no samples found, most likely your threshold is too low')
+        pts = array(pts.values().takeSample(False, 100))
     else:
         pts = asarray(pts)
 
@@ -71,16 +66,12 @@ def scatter(pts, nsamples=100, colormap=None, scale=1, thresh=0.001, ax=None, st
             clrs = Colorize(colormap, scale).calc(pts)
         else:
             clrs = colormap.calc(pts)
-
     else:
         clrs = 'indianred'
 
     h = ax.scatter(pts[:, 0], pts[:, 1], s=100, c=clrs, alpha=0.6, edgecolor='black', linewidth=0.2)
 
-    if store is True:
-        return ax, h, pts
-    else:
-        return ax, h
+    return ax, h
 
 
 def tsrecon(tsbase, samples, ax=None):
