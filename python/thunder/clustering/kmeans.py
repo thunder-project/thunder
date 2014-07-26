@@ -54,7 +54,7 @@ class KMeansModel(object):
             return map(lambda x: func(centers, x), data)
 
         elif isinstance(data, ndarray):
-            if data.ndims == 1:
+            if data.ndim == 1:
                 return func(centers, data)
             else:
                 return map(lambda x: func(centers, x), data)
@@ -90,16 +90,17 @@ class KMeansModel(object):
             For each data point, gives the similarity to its nearest cluster
         """
 
-        similarity = lambda centers, p: corrcoef(centers[argmin(cdist(centers, array([p])))], p)[0,1]
+        similarity = lambda centers, p: corrcoef(centers[argmin(cdist(centers, array([p])))], p)[0, 1]
         return self.calc(data, similarity)
 
-    def plot(self, data, notebook=False, show=True, savename=None):
+    def plot(self, data, notebook=False, nsamples=100, show=True, savename=None):
 
         fig = pyplot.figure()
         ncenters = len(self.centers)
 
+        # custom colorizer that uses model predictions
         colorizer = Colorize()
-        colorizer.get = lambda x: self.colors[int(self.predict(x)[0])]
+        colorizer.get = lambda x: self.colors[int(self.predict(x))]
 
         # plot time series of each center
         # TODO move into a time series plotting function in viz.plots
@@ -110,7 +111,8 @@ class KMeansModel(object):
 
         # make a scatter plot of the data
         ax2 = pyplot.subplot2grid((ncenters, 3), (0, 1), rowspan=ncenters, colspan=2)
-        ax2, h2 = scatter(data, colormap=colorizer, ax=ax2)
+        pts = array(data.values().takeSample(False, nsamples))
+        ax2, h2 = scatter(pts, colormap=colorizer, ax=ax2)
         fig.add_axes(ax2)
 
         plugins.connect(fig, HiddenAxes())
