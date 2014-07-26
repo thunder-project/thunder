@@ -6,7 +6,7 @@ from thunder.utils.load import isrdd
 class Colorize(object):
     """ Class for turning numerical data into colors"""
 
-    def __init__(self, totype='rgb', scale=1):
+    def __init__(self, totype='Pastel1', scale=1):
         self.totype = totype
         self.scale = scale
 
