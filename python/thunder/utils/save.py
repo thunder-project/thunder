@@ -59,6 +59,7 @@ def rescale(data):
         data = data.mapValues(lambda x: uint8(255 * ((x / (2 * mxvals)) + 0.5)))
     return data
 
+
 def subset(data, nsamples=100, thresh=None):
     """Extract subset of points from an RDD into a local array,
     filtering on the standard deviation
