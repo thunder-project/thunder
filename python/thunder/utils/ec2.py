@@ -116,7 +116,7 @@ if __name__ == "__main__":
     parser.add_option("-i", "--identity-file", help="SSH private key file to use for logging into instances")
     parser.add_option("-r", "--region", default="us-east-1", help="EC2 region zone to launch instances "
                                                                   "in (default: us-east-1)")
-    parser.add_option("-t", "--instance-type", default="m1.large", help="Type of instance to launch (default: m1.large)."
+    parser.add_option("-t", "--instance-type", default="m3.2xlarge", help="Type of instance to launch (default: m3.2xlarge)."
                                                                         " WARNING: must be 64-bit; small instances "
                                                                         "won't work")
     parser.add_option("-u", "--user", default="root", help="User name for cluster (default: root)")
