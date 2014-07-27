@@ -4,6 +4,7 @@ Utilities for loading test datasets
 
 import os
 from numpy import array, random, shape, floor, dot, linspace, sin, sign, c_
+from scipy.io import loadmat
 from thunder.utils import load
 
 
@@ -82,10 +83,20 @@ class ICAData(DataSets):
             return data
 
 
-class FishData(DataSets):
+class ZebrafishTestData(DataSets):
 
     def fromfile(self):
         return load(self.sc, os.path.join(self.path, 'data/fish.txt'))
+
+
+class ZebrafishOptomotorResponseData(DataSets):
+
+    def fromfile(self):
+        if 'ec' not in self.sc.master:
+            raise Exception("must be running on EC2 to load the example data sets")
+        path = os.path.join(self.path, 's3n://zebrafish.datasets/optomotor-response/1/')
+        params = loadmat(path + "stim/trials_X.mat")['X']
+        return load(self.sc, path + 'data/', npartitions=1000), params
 
 
 class IrisData(DataSets):
@@ -102,5 +113,6 @@ DATASET_MAKERS = {
 
 DATASET_LOADERS = {
     'iris': IrisData,
-    'fish': FishData
+    'zebrafish-test': ZebrafishTestData,
+    'zebrafish-optomotor-response': ZebrafishOptomotorResponseData
 }
