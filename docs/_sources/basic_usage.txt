@@ -11,7 +11,7 @@ For an interactive analysis, we first start the shell
 
 	thunder
 
-Import the functions and classes we'll need, in this case ``DataSets``, and ``Stats``.
+Import the functions and classes we'll need, in this case ``DataSets`` and ``Stats``.
 
 .. code-block:: python
 
@@ -54,7 +54,7 @@ The exact same analysis can easily be run as a standalone job directly from the 
 
 .. code-block:: bash
 
-	thunder-submit timeseries/stats <oath/to/data> <path/to/output> "std"
+	thunder-submit timeseries/stats <path/to/data> <path/to/output> "std"
 
 
 
