@@ -1,7 +1,6 @@
 from numpy import arctan2, sqrt, pi, array, size, shape, ones, abs, dstack, clip, transpose, zeros
 import colorsys
 from matplotlib import colors, cm
-from thunder.utils.load import isrdd
 
 
 class Colorize(object):
@@ -45,7 +44,7 @@ class Colorize(object):
             raise Exception("points must have 1 or 2 dimensions")
 
         if pts.ndim == 1:
-            out = clip(self.get(line), 0, 1)
+            out = clip(self.get(pts), 0, 1)
         else:
             out = map(lambda line: clip(self.get(line), 0, 1), pts)
 
@@ -76,9 +75,9 @@ class Colorize(object):
         if (self.totype == 'rgb') or (self.totype == 'hsv'):
             out = abs(img) * self.scale
             if img.ndim == 4:
-                out = transpose(out, (1,2,3,0))
+                out = transpose(out, (1, 2, 3, 0))
             if img.ndim == 3:
-                out = transpose(out, (1,2,0))
+                out = transpose(out, (1, 2, 0))
 
         elif self.totype == 'polar':
             theta = ((arctan2(-img[0], -img[1]) + pi/2) % (pi*2)) / (2 * pi)
@@ -87,20 +86,17 @@ class Colorize(object):
                 saturation = ones((d[1],d[2]))
                 out = zeros((d[1], d[2], d[3], 3))
                 for i in range(0, d[3]):
-                    out[:, :, i, :] = colors.hsv_to_rgb(dstack((theta[:,:,i], saturation, self.scale*rho[:,:,i])))
+                    out[:, :, i, :] = colors.hsv_to_rgb(dstack((theta[:, :, i], saturation, self.scale*rho[:, :, i])))
             if img.ndim == 3:
                 saturation = ones((d[1], d[2]))
                 out = colors.hsv_to_rgb(dstack((theta, saturation, self.scale*rho)))
-            if img.ndim == 2:
-                saturation = ones(d[1])
-                out = squeeze(colors.hsv_to_rgb(dstack((theta, saturation, rho * self.scale))))
 
         else:
             out = cm.get_cmap(self.totype, 256)(img[0] * self.scale)
             if img.ndim == 4:
-                out = out[:,:,:,0:3]
+                out = out[:, :, :, 0:3]
             if img.ndim == 3:
-                out = out[:,:,0:3]
+                out = out[:, :, 0:3]
 
         return clip(out, 0, 1)
 
