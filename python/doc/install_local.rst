@@ -45,9 +45,9 @@ Dependencies
 ~~~~~~~~~~~~
 Along with Spark, thunder depends on these Python libraries (by installing using ``pip`` these will be added automatically).
 
-`numpy <http://www.numpy.org/>`__, `scipy <http://www.scipy.org/>`__, `scikit-learn <http://scikit-learn.org/stable/>`__, `PIL <http://www.pythonware.com/products/pil/>`__, `matplotlib <matplotlib.sourceforge.net>`__, `mpld3 <http://mpld3.github.io/>`__, `jinja2 <http://jinja.pocoo.org/docs/>`__
+`numpy <http://www.numpy.org/>`__, `scipy <http://www.scipy.org/>`__, `scikit-learn <http://scikit-learn.org/stable/>`__, `PIL <http://www.pythonware.com/products/pil/>`__, `matplotlib <matplotlib.sourceforge.net>`__
 
-We recommend using the `Anaconda distribution <https://store.continuum.io/cshop/anaconda/>`_, which includes most of these dependencies (and many other useful packages). Especially if you aren't already using Python for scientific computing, it's a great way to start. 
+We recommend using the `Anaconda distribution <https://store.continuum.io/cshop/anaconda/>`_, which includes these dependencies (and many other useful packages). Especially if you aren't already using Python for scientific computing, it's a great way to start. 
 
 iPython
 ~~~~~~~
