@@ -17,8 +17,8 @@ Decoding
 	:template: class.rst
 
 	decoding.MassUnivariateClassifier
-	decoding.base.GaussNaiveBayesClassifier
-	decoding.base.TTestClassifier
+	decoding.uniclassify.GaussNaiveBayesClassifier
+	decoding.uniclassify.TTestClassifier
 
 Factorization
 -------------
@@ -54,11 +54,11 @@ Regression
 
 	regression.RegressionModel
 	regression.TuningModel
-	regression.base.MeanRegressionModel
-	regression.base.LinearRegressionModel
-	regression.base.BilinearRegressionModel
-	regression.base.GaussianTuningModel
-	regression.base.CircularTuningModel
+	regression.regress.MeanRegressionModel
+	regression.regress.LinearRegressionModel
+	regression.regress.BilinearRegressionModel
+	regression.tuning.GaussianTuningModel
+	regression.tuning.CircularTuningModel
 
 
 Clustering

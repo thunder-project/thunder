@@ -2,14 +2,12 @@
 Standalone app for mass-unvariate regression combined with PCA
 """
 
-import os
 import argparse
-import glob
+from pyspark import SparkContext
 from thunder.regression import RegressionModel
 from thunder.factorization import PCA
 from thunder.utils import load
 from thunder.utils import save
-from pyspark import SparkContext
 
 
 if __name__ == "__main__":

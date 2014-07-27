@@ -1,4 +1,3 @@
-import os
 import shutil
 import tempfile
 from numpy import array, allclose, mean, median, std, corrcoef

@@ -2,16 +2,14 @@
 Class and standalone app for Independent Component Analysis
 """
 
-import os
 import argparse
-import glob
 from numpy import random, sqrt, zeros, real, dot, outer, diag, transpose
 from scipy.linalg import sqrtm, inv, orth
+from pyspark import SparkContext
 from thunder.utils import load
 from thunder.utils import save
 from thunder.factorization import SVD
 from thunder.utils.matrices import RowMatrix
-from pyspark import SparkContext
 
 
 class ICA(object):

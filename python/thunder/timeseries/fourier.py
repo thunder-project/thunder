@@ -1,14 +1,37 @@
 """
-Standalone app for Fourier analysis
+Class and standalone app for Fourier analysis
 """
 
-import os
 import argparse
-import glob
+from numpy import mean, fix, sqrt, pi, array, angle
+from numpy.fft import fft
 from pyspark import SparkContext
-from thunder.timeseries import Fourier
+from thunder.timeseries.base import TimeSeriesBase
 from thunder.utils import load
 from thunder.utils import save
+
+
+class Fourier(TimeSeriesBase):
+    """Class for computing fourier transform"""
+
+    def __init__(self, freq):
+        self.freq = freq
+
+    def get(self, y):
+        """Compute fourier amplitude (coherence) and phase"""
+
+        y = y - mean(y)
+        nframes = len(y)
+        ft = fft(y)
+        ft = ft[0:int(fix(nframes/2))]
+        amp_ft = 2*abs(ft)/nframes
+        amp = amp_ft[self.freq]
+        amp_sum = sqrt(sum(amp_ft**2))
+        co = amp / amp_sum
+        ph = -(pi/2) - angle(ft[self.freq])
+        if ph < 0:
+            ph += pi * 2
+        return array([co, ph])
 
 
 if __name__ == "__main__":

@@ -2,9 +2,7 @@
 Class and standalone app for local correlation
 """
 
-import os
 import argparse
-import glob
 from numpy import corrcoef
 from pyspark import SparkContext
 from thunder.utils import load, getdims

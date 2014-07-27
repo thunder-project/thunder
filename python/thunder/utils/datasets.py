@@ -4,7 +4,6 @@ Utilities for loading test datasets
 
 import os
 from numpy import array, random, shape, floor, dot, linspace, sin, sign, c_
-from scipy.io import loadmat
 from thunder.utils import load
 
 

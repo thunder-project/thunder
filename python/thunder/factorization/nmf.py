@@ -2,7 +2,7 @@
 Class for performing non-negative matrix factorization
 """
 
-import argparse, glob, os
+import argparse
 import numpy as np
 from pyspark import SparkContext
 from thunder.utils import load, save

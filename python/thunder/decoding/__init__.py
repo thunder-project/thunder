@@ -1,1 +1,1 @@
-from .base import MassUnivariateClassifier
+from .uniclassify import MassUnivariateClassifier

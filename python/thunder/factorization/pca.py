@@ -2,9 +2,7 @@
 Class and standalone app for Principal Component Analysis
 """
 
-import os
 import argparse
-import glob
 from pyspark import SparkContext
 from thunder.factorization import SVD
 from thunder.utils import load, save

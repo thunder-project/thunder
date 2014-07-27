@@ -2,9 +2,7 @@
 Class and standalone app for querying
 """
 
-import os
 import argparse
-import glob
 from numpy import zeros
 from scipy.io import loadmat
 from pyspark import SparkContext
