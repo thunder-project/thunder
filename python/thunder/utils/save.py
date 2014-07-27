@@ -4,6 +4,7 @@ Utilities for saving data
 
 import os
 from scipy.io import savemat
+from numpy import std
 from math import isnan
 from numpy import array, squeeze, sum, shape, reshape, transpose, maximum, minimum, float16, uint8, savetxt, size, arange
 from PIL import Image
@@ -57,6 +58,32 @@ def rescale(data):
         mxvals = maximum(abs(mxvals), abs(mnvals))
         data = data.mapValues(lambda x: uint8(255 * ((x / (2 * mxvals)) + 0.5)))
     return data
+
+def subset(data, nsamples=100, thresh=None):
+    """Extract subset of points from an RDD into a local array,
+    filtering on the standard deviation
+
+    Parameters
+    ----------
+    data : RDD of (tuple, array) pairs
+        The data to get a subset from
+
+    nsamples : int, optional, default = 100
+        The number of data points to sample
+
+    thresh : float, optional, default = None
+        A threshold on standard deviation to use when picking points
+
+    Returns
+    -------
+    result : array
+        A local numpy array with the subset of points
+    """
+    if thresh is not None:
+        result = array(data.values().filter(lambda x: std(x) > thresh).takeSample(False, nsamples))
+    else:
+        result = array(data.values().takeSample(False, nsamples))
+    return result
 
 
 def pack(data, ind=None, dims=None, sorting=False, axes=None):
