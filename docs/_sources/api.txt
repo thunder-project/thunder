@@ -3,6 +3,23 @@
 API Reference
 =============
 
+Decoding
+-------------
+
+.. automodule:: thunder.decoding
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: thunder
+
+.. autosummary::
+	:toctree: generated/
+	:template: class.rst
+
+	decoding.MassUnivariateClassifier
+	decoding.base.GaussNaiveBayesClassifier
+	decoding.base.TTestClassifier
+
 Factorization
 -------------
 

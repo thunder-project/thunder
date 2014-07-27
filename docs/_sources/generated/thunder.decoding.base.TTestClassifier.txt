@@ -1,0 +1,17 @@
+:mod:`thunder.decoding.base`.TTestClassifier
+===================================================
+
+.. currentmodule:: thunder.decoding.base
+
+.. autoclass:: TTestClassifier
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~TTestClassifier.__init__
+      ~TTestClassifier.classify
+      ~TTestClassifier.get
+      ~TTestClassifier.load
+   
+

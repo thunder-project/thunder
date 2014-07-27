@@ -11,6 +11,5 @@
    
       ~PCA.__init__
       ~PCA.fit
-      ~PCA.plot
    
 

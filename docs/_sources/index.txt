@@ -65,6 +65,7 @@
 
    install_local
    install_ec2
+   basic_usage
    contributing
 
 .. raw:: html

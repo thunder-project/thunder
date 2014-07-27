@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>thunder.factorization.NMF &mdash; Thunder 0.1.0 documentation</title>
+    <title>thunder.decoding.MassUnivariateClassifier &mdash; Thunder 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -33,8 +33,8 @@
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="Thunder 0.1.0 documentation" href="../index.html" />
     <link rel="up" title="API Reference" href="../api.html" />
-    <link rel="next" title="thunder.factorization.SVD" href="thunder.factorization.SVD.html" />
-    <link rel="prev" title="thunder.factorization.ICA" href="thunder.factorization.ICA.html" />
+    <link rel="next" title="thunder.decoding.base.GaussNaiveBayesClassifier" href="thunder.decoding.base.GaussNaiveBayesClassifier.html" />
+    <link rel="prev" title="thunder.utils.save" href="thunder.utils.save.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -91,7 +91,7 @@
   <ul class="dropdown-menu localtoc"
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">thunder.factorization</span></tt>.NMF</a></li>
+<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">thunder.decoding</span></tt>.MassUnivariateClassifier</a></li>
 </ul>
 </ul>
 </li>
@@ -121,48 +121,27 @@
   <div class="row">
     <div class="col-md-12">
       
-  <div class="section" id="thunder-factorization-nmf">
-<h1><a class="reference internal" href="../api.html#module-thunder.factorization" title="thunder.factorization"><tt class="xref py py-mod docutils literal"><span class="pre">thunder.factorization</span></tt></a>.NMF<a class="headerlink" href="#thunder-factorization-nmf" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="thunder-decoding-massunivariateclassifier">
+<h1><a class="reference internal" href="../api.html#module-thunder.decoding" title="thunder.decoding"><tt class="xref py py-mod docutils literal"><span class="pre">thunder.decoding</span></tt></a>.MassUnivariateClassifier<a class="headerlink" href="#thunder-decoding-massunivariateclassifier" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
-<dt id="thunder.factorization.NMF">
-<em class="property">class </em><tt class="descclassname">thunder.factorization.</tt><tt class="descname">NMF</tt><big>(</big><em>k=5</em>, <em>method='als'</em>, <em>maxiter=20</em>, <em>tol=0.001</em>, <em>h0=None</em>, <em>w0=None</em>, <em>w_hist=False</em>, <em>recon_hist=False</em><big>)</big><a class="headerlink" href="#thunder.factorization.NMF" title="Permalink to this definition">¶</a></dt>
-<dd><p>Large-scale non-negative matrix factorization on a dense matrix
-represented as an RDD with nrows and ncols</p>
+<dt id="thunder.decoding.MassUnivariateClassifier">
+<em class="property">class </em><tt class="descclassname">thunder.decoding.</tt><tt class="descname">MassUnivariateClassifier</tt><big>(</big><em>paramfile</em><big>)</big><a class="headerlink" href="#thunder.decoding.MassUnivariateClassifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for mass univariate classification.
+Assumes that for each signal, each time point belongs to one
+of several categories. Uses independent classifiers to train and predict.
+Example usage: determining how well each individual neural signal
+predicts a behavior.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>method</strong> : string, optional, default &#8216;als&#8217;</p>
-<blockquote>
-<div><p>Specifies which iterative algorithm is to be used. Currently only &#8216;als&#8217; supported</p>
-</div></blockquote>
-<p><strong>k</strong> : int, optional, default = 5</p>
-<blockquote>
-<div><p>Size of low-dimensional basis</p>
-</div></blockquote>
-<p><strong>maxiter</strong> : int, optional, default = 20</p>
-<blockquote>
-<div><p>Maximum number of iterations</p>
-</div></blockquote>
-<p><strong>tol</strong> : float, optional, default = 0.001</p>
-<blockquote>
-<div><p>Tolerance for convergence of iterative algorithm</p>
-</div></blockquote>
-<p><strong>h0</strong> : non-negative k x ncols array, optional</p>
-<blockquote>
-<div><p>Value at which H is initialized</p>
-</div></blockquote>
-<p><strong>w0</strong> : RDD of nrows (tuple, array) pairs, each array of shape (k,), optional, default = None</p>
-<blockquote>
-<div><p>Value at which W is initialized</p>
-</div></blockquote>
-<p><strong>w_hist</strong> : Bool, optional, default = False</p>
-<blockquote>
-<div><p>If true, keep track of convergence of w at each iteration</p>
-</div></blockquote>
-<p><strong>recon_hist</strong> : Bool, optional, default = False</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>paramfile</strong> : str or dict</p>
 <blockquote class="last">
-<div><p>If true, keep track of reconstruction error at each iteration</p>
+<div><p>A MAT file or Python dictionary containing parameters for training classifiers.
+At minimum must contain a &#8220;labels&#8221; field, with the label the classify at each
+time point. Can additionally include fields for &#8220;features&#8221; (which feature
+was present at each time point) and &#8220;samples&#8221; (which sample was present
+at each time point)</p>
 </div></blockquote>
 </td>
 </tr>
@@ -171,24 +150,27 @@ represented as an RDD with nrows and ncols</p>
 <p class="rubric">Attributes</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="13%" />
-<col width="87%" />
+<col width="17%" />
+<col width="83%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><cite>w</cite></td>
-<td>(RDD of nrows (tuple, array) pairs, each array of shape (k,)) Left bases</td>
+<tr class="row-odd"><td><cite>labels</cite></td>
+<td>(array) Array containing the label for each time point</td>
 </tr>
-<tr class="row-even"><td><cite>h</cite></td>
-<td>(array, shape (k, ncols)) Right bases</td>
+<tr class="row-even"><td><cite>features</cite></td>
+<td>(array) Which feature was present at each time point</td>
 </tr>
-<tr class="row-odd"><td>&#8216;h_convergence`</td>
-<td>(list of floats) List of Frobenius norms between successive estimates of h</td>
+<tr class="row-odd"><td><cite>nfeatures</cite></td>
+<td>(int, optional) Number of features</td>
 </tr>
-<tr class="row-even"><td><cite>w_convergence</cite></td>
-<td>(None or list of floats) If w_hist==True, a list of Frobenius norms between successive estimates of w</td>
+<tr class="row-even"><td><cite>samples</cite></td>
+<td>(array) Which sample does each time point belong to</td>
 </tr>
-<tr class="row-odd"><td><cite>rec_err</cite></td>
-<td>(None or list of floats) if recon_hist==true, a list of the reconstruction error at each iteration</td>
+<tr class="row-odd"><td><cite>sampleids</cite></td>
+<td>(list) Unique samples</td>
+</tr>
+<tr class="row-even"><td><cite>nsamples</cite></td>
+<td>(int) Number of samples</td>
 </tr>
 </tbody>
 </table>
@@ -199,29 +181,42 @@ represented as an RDD with nrows and ncols</p>
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>([k,&nbsp;method,&nbsp;maxiter,&nbsp;tol,&nbsp;h0,&nbsp;w0,&nbsp;...])</td>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>(paramfile)</td>
 <td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.factorization.NMF.calc" title="thunder.factorization.NMF.calc"><tt class="xref py py-obj docutils literal"><span class="pre">calc</span></tt></a>(data)</td>
-<td>Calcuate the non-negative matrix decomposition</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.decoding.MassUnivariateClassifier.classify" title="thunder.decoding.MassUnivariateClassifier.classify"><tt class="xref py py-obj docutils literal"><span class="pre">classify</span></tt></a>(data[,&nbsp;featureset])</td>
+<td>Run classification on an RDD</td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">get</span></tt>(x[,&nbsp;set])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">load</span></tt>(paramfile,&nbsp;classifymode,&nbsp;**opts)</td>
+<td></td>
 </tr>
 </tbody>
 </table>
 <dl class="method">
-<dt id="thunder.factorization.NMF.calc">
-<tt class="descname">calc</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#thunder.factorization.NMF.calc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calcuate the non-negative matrix decomposition</p>
+<dt id="thunder.decoding.MassUnivariateClassifier.classify">
+<tt class="descname">classify</tt><big>(</big><em>data</em>, <em>featureset=None</em><big>)</big><a class="headerlink" href="#thunder.decoding.MassUnivariateClassifier.classify" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run classification on an RDD</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>mat</strong> : RDD of (tuple, array) pairs, or RowMatrix</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data: RDD of (tuple, array) pairs</strong></p>
 <blockquote>
-<div><p>Matrix to compute non-negative bases from</p>
+<div><p>The data</p>
+</div></blockquote>
+<p><strong>featureset</strong> : array, optional, default = None</p>
+<blockquote>
+<div><p>Which features to use</p>
 </div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><strong>self</strong> : returns an instance of self.</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>perf</strong> : RDD of scalars</p>
+<blockquote class="last">
+<div><p>The performance of the classifer for each record</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -245,7 +240,7 @@ represented as an RDD with nrows and ncols</p>
         <br/>
         
 <div id="sourcelink">
-  <a href="../_sources/generated/thunder.factorization.NMF.txt"
+  <a href="../_sources/generated/thunder.decoding.MassUnivariateClassifier.txt"
      rel="nofollow">Source</a>
 </div>
       
