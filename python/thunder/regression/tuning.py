@@ -13,22 +13,18 @@ from pyspark import SparkContext
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="fit a parametric tuning curve to regression results")
-    parser.add_argument("master", type=str)
     parser.add_argument("datafile", type=str)
     parser.add_argument("tuningmodelfile", type=str)
     parser.add_argument("outputdir", type=str)
     parser.add_argument("tuningmode", choices=("circular", "gaussian"), help="form of tuning curve")
-    parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub"), default="raw", required=False)
     parser.add_argument("--regressmodelfile", type=str)
     parser.add_argument("--regressmode", choices=("linear", "bilinear"), help="form of regression")
+    parser.add_argument("--preprocess", choices=("raw", "dff", "sub", "dff-highpass", "dff-percentile"
+                        "dff-detrendnonlin", "dff-detrend-percentile"), default="raw", required=False)
 
     args = parser.parse_args()
     
-    sc = SparkContext(args.master, "tuning")
-
-    if args.master != "local":
-        egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
-        sc.addPyFile(egg[0])
+    sc = SparkContext(appName="tuning")
 
     data = load(sc, args.datafile, args.preprocess)
     tuningmodel = TuningModel.load(args.tuningmodelfile, args.tuningmode)

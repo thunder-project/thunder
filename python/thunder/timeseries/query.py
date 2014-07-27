@@ -82,19 +82,15 @@ class Query(object):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="query time series data by averaging values for given indices")
-    parser.add_argument("master", type=str)
     parser.add_argument("datafile", type=str)
     parser.add_argument("indsfile", type=str)
     parser.add_argument("outputdir", type=str)
-    parser.add_argument("--preprocess", choices=("raw", "dff", "dff-percentile", "dff-highpass", "sub"), default="raw", required=False)
+    parser.add_argument("--preprocess", choices=("raw", "dff", "sub", "dff-highpass", "dff-percentile"
+                        "dff-detrendnonlin", "dff-detrend-percentile"), default="raw", required=False)
 
     args = parser.parse_args()
 
-    sc = SparkContext(args.master, "query")
-
-    if args.master != "local":
-        egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
-        sc.addPyFile(egg[0])
+    sc = SparkContext(appName="query")
 
     data = load(sc, args.datafile, args.preprocess).cache()
     ts = Query(args.indsfile).calc(data)

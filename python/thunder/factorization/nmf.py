@@ -215,7 +215,6 @@ class NMF(object):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="do non-negative matrix factorization")
-    parser.add_argument("master", type=str)
     parser.add_argument("datafile", type=str)
     parser.add_argument("outputdir", type=str)
     parser.add_argument("k", type=int)
@@ -224,16 +223,12 @@ if __name__ == "__main__":
     parser.add_argument("--tol", type=float, default=0.001, required=False)
     parser.add_argument("--w_hist", type=bool, default=False, required=False)
     parser.add_argument("--recon_hist", type=bool, default=False, required=False)
-    parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub", "dff-percentile"),
-                        default="dff-percentile", required=False)
+    parser.add_argument("--preprocess", choices=("raw", "dff", "sub", "dff-highpass", "dff-percentile"
+                        "dff-detrendnonlin", "dff-detrend-percentile"), default="raw", required=False)
 
     args = parser.parse_args()
 
-    sc = SparkContext(args.master, "nmf")
-
-    if args.master != "local":
-        egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
-        sc.addPyFile(egg[0])
+    sc = SparkContext(appName="nmf")
 
     data = load(sc, args.datafile, args.preprocess).cache()
     nmf = NMF(k=args.k, method=args.nmfmethod, maxiter=args.maxiter, tol=args.tol, w_hist=args.w_hist,

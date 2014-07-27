@@ -12,24 +12,19 @@ from thunder.utils import load
 from thunder.utils import save
 
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="fit a regression model")
-    parser.add_argument("master", type=str)
     parser.add_argument("datafile", type=str)
     parser.add_argument("sigfile", type=str)
     parser.add_argument("outputdir", type=str)
     parser.add_argument("lag", type=int)
-    parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub"), default="raw", required=False)
+    parser.add_argument("--preprocess", choices=("raw", "dff", "sub", "dff-highpass", "dff-percentile"
+                        "dff-detrendnonlin", "dff-detrend-percentile"), default="raw", required=False)
 
     args = parser.parse_args()
 
-    sc = SparkContext(args.master, "crosscorr")
+    sc = SparkContext(appName="crosscorr")
 
-    if args.master != "local":
-        egg = glob.glob(os.path.join(os.environ['THUNDER_EGG'], "*.egg"))
-        sc.addPyFile(egg[0])
-    
     data = load(sc, args.datafile, args.preprocess).cache()
 
     outputdir = args.outputdir + "-crosscorr"

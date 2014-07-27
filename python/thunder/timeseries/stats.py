@@ -17,7 +17,8 @@ if __name__ == "__main__":
     parser.add_argument("datafile", type=str)
     parser.add_argument("outputdir", type=str)
     parser.add_argument("mode", choices=("mean", "median", "std", "norm"), help="which summary statistic")
-    parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub"), default="raw", required=False)
+    parser.add_argument("--preprocess", choices=("raw", "dff", "sub", "dff-highpass", "dff-percentile"
+                        "dff-detrendnonlin", "dff-detrend-percentile"), default="raw", required=False)
 
     args = parser.parse_args()
 
