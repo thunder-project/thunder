@@ -13,7 +13,7 @@ setup(
   packages=['thunder',
   					'thunder.regression',
   					'thunder.factorization',
-  					'thunder.classification',
+  					'thunder.decoding',
   					'thunder.clustering',
   					'thunder.timeseries',
   					'thunder.utils',

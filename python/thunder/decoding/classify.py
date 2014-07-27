@@ -20,7 +20,8 @@ if __name__ == "__main__":
     parser.add_argument("classifymode", choices="naivebayes", help="form of classifier")
     parser.add_argument("--featureset", type=array, default="None", required=False)
     parser.add_argument("--cv", type=int, default="0", required=False)
-    parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub"), default="raw", required=False)
+    parser.add_argument("--preprocess", choices=("raw", "dff", "sub", "dff-highpass", "dff-percentile"
+                        "dff-detrendnonlin", "dff-detrend-percentile"), default="raw", required=False)
 
     args = parser.parse_args()
 
