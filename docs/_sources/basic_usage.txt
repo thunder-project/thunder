@@ -1,4 +1,4 @@
-.. _contributing:
+.. _basic_usage:
 
 Basic usage
 ===========

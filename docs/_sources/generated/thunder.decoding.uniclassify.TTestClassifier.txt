@@ -1,0 +1,17 @@
+:mod:`thunder.decoding.uniclassify`.TTestClassifier
+==========================================================
+
+.. currentmodule:: thunder.decoding.uniclassify
+
+.. autoclass:: TTestClassifier
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~TTestClassifier.__init__
+      ~TTestClassifier.classify
+      ~TTestClassifier.get
+      ~TTestClassifier.load
+   
+

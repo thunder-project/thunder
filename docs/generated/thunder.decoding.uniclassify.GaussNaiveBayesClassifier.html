@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>thunder.factorization.PCA &mdash; Thunder 0.1.0 documentation</title>
+    <title>thunder.decoding.uniclassify.GaussNaiveBayesClassifier &mdash; Thunder 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -33,8 +33,8 @@
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="Thunder 0.1.0 documentation" href="../index.html" />
     <link rel="up" title="API Reference" href="../api.html" />
-    <link rel="next" title="thunder.factorization.ICA" href="thunder.factorization.ICA.html" />
-    <link rel="prev" title="thunder.decoding.uniclassify.TTestClassifier" href="thunder.decoding.uniclassify.TTestClassifier.html" />
+    <link rel="next" title="thunder.decoding.uniclassify.TTestClassifier" href="thunder.decoding.uniclassify.TTestClassifier.html" />
+    <link rel="prev" title="thunder.decoding.MassUnivariateClassifier" href="thunder.decoding.MassUnivariateClassifier.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -91,7 +91,7 @@
   <ul class="dropdown-menu localtoc"
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">thunder.factorization</span></tt>.PCA</a></li>
+<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">thunder.decoding.uniclassify</span></tt>.GaussNaiveBayesClassifier</a></li>
 </ul>
 </ul>
 </li>
@@ -121,44 +121,25 @@
   <div class="row">
     <div class="col-md-12">
       
-  <div class="section" id="thunder-factorization-pca">
-<h1><a class="reference internal" href="../api.html#module-thunder.factorization" title="thunder.factorization"><tt class="xref py py-mod docutils literal"><span class="pre">thunder.factorization</span></tt></a>.PCA<a class="headerlink" href="#thunder-factorization-pca" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="thunder-decoding-uniclassify-gaussnaivebayesclassifier">
+<h1><tt class="xref py py-mod docutils literal"><span class="pre">thunder.decoding.uniclassify</span></tt>.GaussNaiveBayesClassifier<a class="headerlink" href="#thunder-decoding-uniclassify-gaussnaivebayesclassifier" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
-<dt id="thunder.factorization.PCA">
-<em class="property">class </em><tt class="descclassname">thunder.factorization.</tt><tt class="descname">PCA</tt><big>(</big><em>k=3</em>, <em>svdmethod='direct'</em><big>)</big><a class="headerlink" href="#thunder.factorization.PCA" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform principal components analysis
-using the singular value decomposition</p>
+<dt id="thunder.decoding.uniclassify.GaussNaiveBayesClassifier">
+<em class="property">class </em><tt class="descclassname">thunder.decoding.uniclassify.</tt><tt class="descname">GaussNaiveBayesClassifier</tt><big>(</big><em>paramfile</em>, <em>cv=0</em><big>)</big><a class="reference internal" href="../_modules/thunder/decoding/uniclassify.html#GaussNaiveBayesClassifier"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.decoding.uniclassify.GaussNaiveBayesClassifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Classifier for Gaussian Naive Bayes classification</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>k</strong> : int</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>paramfile</strong> : str or dict</p>
 <blockquote>
-<div><p>Number of principal components to estimate</p>
+<div><p>Parameters for classification, see MassUnivariateClassifier</p>
 </div></blockquote>
-<p><strong>svdmethod</strong> : str, optional, default = &#8220;direct&#8221;</p>
+<p><strong>cv</strong> : int</p>
 <blockquote class="last">
-<div><p>Which method to use for performing the SVD</p>
+<div><p>Folds of cross-validation, none if 0</p>
 </div></blockquote>
 </td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Attributes</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="6%" />
-<col width="94%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><cite>comps</cite></td>
-<td>(array, shape (k, ncols)) The k principal components</td>
-</tr>
-<tr class="row-even"><td><cite>latent</cite></td>
-<td>(array, shape (k,)) The latent values</td>
-</tr>
-<tr class="row-odd"><td><cite>scores</cite></td>
-<td>(RDD of nrows (tuple, array) pairs, each of shape (k,)) The scores (i.e. the representation of the data in PC space)</td>
 </tr>
 </tbody>
 </table>
@@ -169,23 +150,71 @@ using the singular value decomposition</p>
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>([k,&nbsp;svdmethod])</td>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>(paramfile[,&nbsp;cv])</td>
 <td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.factorization.PCA.fit" title="thunder.factorization.PCA.fit"><tt class="xref py py-obj docutils literal"><span class="pre">fit</span></tt></a>(data)</td>
-<td>Estimate principal components</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.decoding.uniclassify.GaussNaiveBayesClassifier.classify" title="thunder.decoding.uniclassify.GaussNaiveBayesClassifier.classify"><tt class="xref py py-obj docutils literal"><span class="pre">classify</span></tt></a>(data[,&nbsp;featureset])</td>
+<td>Run classification on an RDD</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.decoding.uniclassify.GaussNaiveBayesClassifier.get" title="thunder.decoding.uniclassify.GaussNaiveBayesClassifier.get"><tt class="xref py py-obj docutils literal"><span class="pre">get</span></tt></a>(x[,&nbsp;featureset])</td>
+<td>Compute classification performance</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">load</span></tt>(paramfile,&nbsp;classifymode,&nbsp;**opts)</td>
+<td></td>
 </tr>
 </tbody>
 </table>
 <dl class="method">
-<dt id="thunder.factorization.PCA.fit">
-<tt class="descname">fit</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#thunder.factorization.PCA.fit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Estimate principal components</p>
+<dt id="thunder.decoding.uniclassify.GaussNaiveBayesClassifier.classify">
+<tt class="descname">classify</tt><big>(</big><em>data</em>, <em>featureset=None</em><big>)</big><a class="headerlink" href="#thunder.decoding.uniclassify.GaussNaiveBayesClassifier.classify" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run classification on an RDD</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> : RDD of (tuple, array) pairs, or RowMatrix</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data: RDD of (tuple, array) pairs</strong></p>
+<blockquote>
+<div><p>The data</p>
+</div></blockquote>
+<p><strong>featureset</strong> : array, optional, default = None</p>
+<blockquote>
+<div><p>Which features to use</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>perf</strong> : RDD of scalars</p>
+<blockquote class="last">
+<div><p>The performance of the classifer for each record</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.decoding.uniclassify.GaussNaiveBayesClassifier.get">
+<tt class="descname">get</tt><big>(</big><em>x</em>, <em>featureset=None</em><big>)</big><a class="reference internal" href="../_modules/thunder/decoding/uniclassify.html#GaussNaiveBayesClassifier.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.decoding.uniclassify.GaussNaiveBayesClassifier.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute classification performance</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x</strong> : array</p>
+<blockquote>
+<div><p>Data for a single record</p>
+</div></blockquote>
+<p><strong>featureset</strong> : array, optional, default = None</p>
+<blockquote>
+<div><p>Which features to use</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>perf</strong> : scalar</p>
+<blockquote class="last">
+<div><p>Performance of the classifier on this record</p>
+</div></blockquote>
+</td>
 </tr>
 </tbody>
 </table>
@@ -208,7 +237,7 @@ using the singular value decomposition</p>
         <br/>
         
 <div id="sourcelink">
-  <a href="../_sources/generated/thunder.factorization.PCA.txt"
+  <a href="../_sources/generated/thunder.decoding.uniclassify.GaussNaiveBayesClassifier.txt"
      rel="nofollow">Source</a>
 </div>
       

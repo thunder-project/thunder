@@ -1,0 +1,17 @@
+:mod:`thunder.decoding.uniclassify`.GaussNaiveBayesClassifier
+====================================================================
+
+.. currentmodule:: thunder.decoding.uniclassify
+
+.. autoclass:: GaussNaiveBayesClassifier
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~GaussNaiveBayesClassifier.__init__
+      ~GaussNaiveBayesClassifier.classify
+      ~GaussNaiveBayesClassifier.get
+      ~GaussNaiveBayesClassifier.load
+   
+

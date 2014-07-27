@@ -32,9 +32,6 @@
     <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="Thunder 0.1.0 documentation" href="../index.html" />
-    <link rel="up" title="API Reference" href="../api.html" />
-    <link rel="next" title="thunder.regression.base.GaussianTuningModel" href="thunder.regression.base.GaussianTuningModel.html" />
-    <link rel="prev" title="thunder.regression.base.LinearRegressionModel" href="thunder.regression.base.LinearRegressionModel.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -76,8 +73,8 @@
 <li class="toctree-l1"><a class="reference internal" href="../basic_usage.html">Basic usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
 </ul>
-<ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a></li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
 </ul>
 </ul>
 </li>
@@ -123,104 +120,6 @@
       
   <div class="section" id="thunder-regression-base-bilinearregressionmodel">
 <h1><tt class="xref py py-mod docutils literal"><span class="pre">thunder.regression.base</span></tt>.BilinearRegressionModel<a class="headerlink" href="#thunder-regression-base-bilinearregressionmodel" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
-<dt id="thunder.regression.base.BilinearRegressionModel">
-<em class="property">class </em><tt class="descclassname">thunder.regression.base.</tt><tt class="descname">BilinearRegressionModel</tt><big>(</big><em>modelfile</em><big>)</big><a class="reference internal" href="../_modules/thunder/regression/base.html#BilinearRegressionModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.regression.base.BilinearRegressionModel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Class for bilinear regression with two design matrices</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>modelfile</strong> : tuple(array), or string</p>
-<blockquote class="last">
-<div><p>Tuple of arrays each contaiing a design matrix,
-or location of MAT files with names modelfile_X1.mat and
-modelfile_X2.mat containing variables X1 and X2</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Attributes</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="9%" />
-<col width="91%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td>x1</td>
-<td>(array) The first design matrix</td>
-</tr>
-<tr class="row-even"><td>x2</td>
-<td>(array) The second design matrix</td>
-</tr>
-<tr class="row-odd"><td>x1hat</td>
-<td>(array) Pseudoinverse of the first design matrix</td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Methods</p>
-<table border="1" class="longtable docutils">
-<colgroup>
-<col width="10%" />
-<col width="90%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>(modelfile)</td>
-<td></td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.regression.base.BilinearRegressionModel.fit" title="thunder.regression.base.BilinearRegressionModel.fit"><tt class="xref py py-obj docutils literal"><span class="pre">fit</span></tt></a>(data[,&nbsp;comps])</td>
-<td>Fit mass univariate regression models</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.regression.base.BilinearRegressionModel.get" title="thunder.regression.base.BilinearRegressionModel.get"><tt class="xref py py-obj docutils literal"><span class="pre">get</span></tt></a>(y)</td>
-<td>Compute regression coefficients from the second design matrix,</td>
-</tr>
-<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">load</span></tt>(modelfile,&nbsp;regressmode,&nbsp;**opts)</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<dl class="method">
-<dt id="thunder.regression.base.BilinearRegressionModel.fit">
-<tt class="descname">fit</tt><big>(</big><em>data</em>, <em>comps=None</em><big>)</big><a class="headerlink" href="#thunder.regression.base.BilinearRegressionModel.fit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fit mass univariate regression models</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : RDD of (tuple, array) pairs</p>
-<blockquote>
-<div><p>The data to fit</p>
-</div></blockquote>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>betas</strong> : RDD of (tuple, array) pairs</p>
-<blockquote>
-<div><p>Fitted model parameters for each record</p>
-</div></blockquote>
-<p><strong>stats</strong> : RDD of (tuple, float) pairs</p>
-<blockquote>
-<div><p>Model fit statistic for each record</p>
-</div></blockquote>
-<p><strong>resid</strong> : RDD of (tuple, array) pairs</p>
-<blockquote class="last">
-<div><p>Residuals for each record</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="thunder.regression.base.BilinearRegressionModel.get">
-<tt class="descname">get</tt><big>(</big><em>y</em><big>)</big><a class="reference internal" href="../_modules/thunder/regression/base.html#BilinearRegressionModel.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.regression.base.BilinearRegressionModel.get" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute regression coefficients from the second design matrix,
-a single r2 statistic, and residuals for the full model</p>
-</dd></dl>
-
-</dd></dl>
-
 </div>
 
 

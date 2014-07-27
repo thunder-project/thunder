@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Overview: module code &mdash; Thunder 0.1.0 documentation</title>
+    <title>thunder.regression.tuning.CircularTuningModel &mdash; Thunder 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -32,6 +32,9 @@
     <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="Thunder 0.1.0 documentation" href="../index.html" />
+    <link rel="up" title="API Reference" href="../api.html" />
+    <link rel="next" title="thunder.clustering.KMeans" href="thunder.clustering.KMeans.html" />
+    <link rel="prev" title="thunder.regression.tuning.GaussianTuningModel" href="thunder.regression.tuning.GaussianTuningModel.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -73,8 +76,8 @@
 <li class="toctree-l1"><a class="reference internal" href="../basic_usage.html">Basic usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
 </ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a></li>
 </ul>
 </ul>
 </li>
@@ -87,7 +90,10 @@
      href="#">Page <b class="caret"></b></a>
   <ul class="dropdown-menu localtoc"
       role="menu"
-      aria-labelledby="dLabelLocalToc"></ul>
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">thunder.regression.tuning</span></tt>.CircularTuningModel</a></li>
+</ul>
+</ul>
 </li>
               
             
@@ -115,19 +121,69 @@
   <div class="row">
     <div class="col-md-12">
       
-  <h1>All modules for which code is available</h1>
-<ul><li><a href="thunder/clustering.html">thunder.clustering</a></li>
-<li><a href="thunder/decoding.html">thunder.decoding</a></li>
-<ul><li><a href="thunder/decoding/base.html">thunder.decoding.base</a></li>
-<li><a href="thunder/decoding/uniclassify.html">thunder.decoding.uniclassify</a></li>
-</ul><li><a href="thunder/factorization.html">thunder.factorization</a></li>
-<li><a href="thunder/regression.html">thunder.regression</a></li>
-<ul><li><a href="thunder/regression/base.html">thunder.regression.base</a></li>
-<li><a href="thunder/regression/regress.html">thunder.regression.regress</a></li>
-<li><a href="thunder/regression/tuning.html">thunder.regression.tuning</a></li>
-</ul><li><a href="thunder/timeseries.html">thunder.timeseries</a></li>
-<li><a href="thunder/utils.html">thunder.utils</a></li>
-</ul>
+  <div class="section" id="thunder-regression-tuning-circulartuningmodel">
+<h1><tt class="xref py py-mod docutils literal"><span class="pre">thunder.regression.tuning</span></tt>.CircularTuningModel<a class="headerlink" href="#thunder-regression-tuning-circulartuningmodel" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="thunder.regression.tuning.CircularTuningModel">
+<em class="property">class </em><tt class="descclassname">thunder.regression.tuning.</tt><tt class="descname">CircularTuningModel</tt><big>(</big><em>modelfile</em><big>)</big><a class="reference internal" href="../_modules/thunder/regression/tuning.html#CircularTuningModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.regression.tuning.CircularTuningModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for circular tuning</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>(modelfile)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.regression.tuning.CircularTuningModel.fit" title="thunder.regression.tuning.CircularTuningModel.fit"><tt class="xref py py-obj docutils literal"><span class="pre">fit</span></tt></a>(data)</td>
+<td>Fit a mass univariate tuning model</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.regression.tuning.CircularTuningModel.get" title="thunder.regression.tuning.CircularTuningModel.get"><tt class="xref py py-obj docutils literal"><span class="pre">get</span></tt></a>(y)</td>
+<td>Estimate the circular mean and variance (&#8220;kappa&#8221;),</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">load</span></tt>(modelfile,&nbsp;tuningmode)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="thunder.regression.tuning.CircularTuningModel.fit">
+<tt class="descname">fit</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#thunder.regression.tuning.CircularTuningModel.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit a mass univariate tuning model</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : RDD of (tuple, array) pairs</p>
+<blockquote>
+<div><p>The data to fit</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>params</strong> : RDD of (tuple, array) pairs</p>
+<blockquote class="last">
+<div><p>Fitted tuning parameters for each record</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.regression.tuning.CircularTuningModel.get">
+<tt class="descname">get</tt><big>(</big><em>y</em><big>)</big><a class="reference internal" href="../_modules/thunder/regression/tuning.html#CircularTuningModel.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.regression.tuning.CircularTuningModel.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimate the circular mean and variance (&#8220;kappa&#8221;),
+identical to the max likelihood estimates of the
+parameters of the best fitting von-mises function</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
 
     </div>
       
@@ -140,6 +196,10 @@
       
         <br/>
         
+<div id="sourcelink">
+  <a href="../_sources/generated/thunder.regression.tuning.CircularTuningModel.txt"
+     rel="nofollow">Source</a>
+</div>
       
     </p>
     <p>

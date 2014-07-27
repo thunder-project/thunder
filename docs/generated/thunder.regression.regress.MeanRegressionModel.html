@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>thunder.factorization.PCA &mdash; Thunder 0.1.0 documentation</title>
+    <title>thunder.regression.regress.MeanRegressionModel &mdash; Thunder 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -33,8 +33,8 @@
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="Thunder 0.1.0 documentation" href="../index.html" />
     <link rel="up" title="API Reference" href="../api.html" />
-    <link rel="next" title="thunder.factorization.ICA" href="thunder.factorization.ICA.html" />
-    <link rel="prev" title="thunder.decoding.uniclassify.TTestClassifier" href="thunder.decoding.uniclassify.TTestClassifier.html" />
+    <link rel="next" title="thunder.regression.regress.LinearRegressionModel" href="thunder.regression.regress.LinearRegressionModel.html" />
+    <link rel="prev" title="thunder.regression.TuningModel" href="thunder.regression.TuningModel.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -91,7 +91,7 @@
   <ul class="dropdown-menu localtoc"
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">thunder.factorization</span></tt>.PCA</a></li>
+<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">thunder.regression.regress</span></tt>.MeanRegressionModel</a></li>
 </ul>
 </ul>
 </li>
@@ -121,24 +121,21 @@
   <div class="row">
     <div class="col-md-12">
       
-  <div class="section" id="thunder-factorization-pca">
-<h1><a class="reference internal" href="../api.html#module-thunder.factorization" title="thunder.factorization"><tt class="xref py py-mod docutils literal"><span class="pre">thunder.factorization</span></tt></a>.PCA<a class="headerlink" href="#thunder-factorization-pca" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="thunder-regression-regress-meanregressionmodel">
+<h1><tt class="xref py py-mod docutils literal"><span class="pre">thunder.regression.regress</span></tt>.MeanRegressionModel<a class="headerlink" href="#thunder-regression-regress-meanregressionmodel" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
-<dt id="thunder.factorization.PCA">
-<em class="property">class </em><tt class="descclassname">thunder.factorization.</tt><tt class="descname">PCA</tt><big>(</big><em>k=3</em>, <em>svdmethod='direct'</em><big>)</big><a class="headerlink" href="#thunder.factorization.PCA" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform principal components analysis
-using the singular value decomposition</p>
+<dt id="thunder.regression.regress.MeanRegressionModel">
+<em class="property">class </em><tt class="descclassname">thunder.regression.regress.</tt><tt class="descname">MeanRegressionModel</tt><big>(</big><em>modelfile</em><big>)</big><a class="reference internal" href="../_modules/thunder/regression/regress.html#MeanRegressionModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.regression.regress.MeanRegressionModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for regression in the form of simple averaging
+via multiplication by a design matrix</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>k</strong> : int</p>
-<blockquote>
-<div><p>Number of principal components to estimate</p>
-</div></blockquote>
-<p><strong>svdmethod</strong> : str, optional, default = &#8220;direct&#8221;</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>modelfile</strong> : array, or string</p>
 <blockquote class="last">
-<div><p>Which method to use for performing the SVD</p>
+<div><p>Array contaiing design matrix, or location of a MAT file
+with name modelfile_X.mat containing a variable X</p>
 </div></blockquote>
 </td>
 </tr>
@@ -147,18 +144,15 @@ using the singular value decomposition</p>
 <p class="rubric">Attributes</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="6%" />
-<col width="94%" />
+<col width="9%" />
+<col width="91%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><cite>comps</cite></td>
-<td>(array, shape (k, ncols)) The k principal components</td>
+<tr class="row-odd"><td>x</td>
+<td>(array) The design matrix</td>
 </tr>
-<tr class="row-even"><td><cite>latent</cite></td>
-<td>(array, shape (k,)) The latent values</td>
-</tr>
-<tr class="row-odd"><td><cite>scores</cite></td>
-<td>(RDD of nrows (tuple, array) pairs, each of shape (k,)) The scores (i.e. the representation of the data in PC space)</td>
+<tr class="row-even"><td>xhat</td>
+<td>(array) Pseudoinverse of the design matrix</td>
 </tr>
 </tbody>
 </table>
@@ -169,26 +163,56 @@ using the singular value decomposition</p>
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>([k,&nbsp;svdmethod])</td>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>(modelfile)</td>
 <td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.factorization.PCA.fit" title="thunder.factorization.PCA.fit"><tt class="xref py py-obj docutils literal"><span class="pre">fit</span></tt></a>(data)</td>
-<td>Estimate principal components</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.regression.regress.MeanRegressionModel.fit" title="thunder.regression.regress.MeanRegressionModel.fit"><tt class="xref py py-obj docutils literal"><span class="pre">fit</span></tt></a>(data[,&nbsp;comps])</td>
+<td>Fit mass univariate regression models</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.regression.regress.MeanRegressionModel.get" title="thunder.regression.regress.MeanRegressionModel.get"><tt class="xref py py-obj docutils literal"><span class="pre">get</span></tt></a>(y)</td>
+<td>Compute regression coefficients, r2 statistic, and residuals</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">load</span></tt>(modelfile,&nbsp;regressmode,&nbsp;**opts)</td>
+<td></td>
 </tr>
 </tbody>
 </table>
 <dl class="method">
-<dt id="thunder.factorization.PCA.fit">
-<tt class="descname">fit</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#thunder.factorization.PCA.fit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Estimate principal components</p>
+<dt id="thunder.regression.regress.MeanRegressionModel.fit">
+<tt class="descname">fit</tt><big>(</big><em>data</em>, <em>comps=None</em><big>)</big><a class="headerlink" href="#thunder.regression.regress.MeanRegressionModel.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit mass univariate regression models</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> : RDD of (tuple, array) pairs, or RowMatrix</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : RDD of (tuple, array) pairs</p>
+<blockquote>
+<div><p>The data to fit</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>betas</strong> : RDD of (tuple, array) pairs</p>
+<blockquote>
+<div><p>Fitted model parameters for each record</p>
+</div></blockquote>
+<p><strong>stats</strong> : RDD of (tuple, float) pairs</p>
+<blockquote>
+<div><p>Model fit statistic for each record</p>
+</div></blockquote>
+<p><strong>resid</strong> : RDD of (tuple, array) pairs</p>
+<blockquote class="last">
+<div><p>Residuals for each record</p>
+</div></blockquote>
+</td>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.regression.regress.MeanRegressionModel.get">
+<tt class="descname">get</tt><big>(</big><em>y</em><big>)</big><a class="reference internal" href="../_modules/thunder/regression/regress.html#MeanRegressionModel.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.regression.regress.MeanRegressionModel.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute regression coefficients, r2 statistic, and residuals</p>
 </dd></dl>
 
 </dd></dl>
@@ -208,7 +232,7 @@ using the singular value decomposition</p>
         <br/>
         
 <div id="sourcelink">
-  <a href="../_sources/generated/thunder.factorization.PCA.txt"
+  <a href="../_sources/generated/thunder.regression.regress.MeanRegressionModel.txt"
      rel="nofollow">Source</a>
 </div>
       

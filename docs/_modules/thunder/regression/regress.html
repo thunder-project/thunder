@@ -1,0 +1,367 @@
+
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>thunder.regression.regress &mdash; Thunder 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bootswatch-3.1.0/simplex/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/styles.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="Thunder 0.1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="thunder.regression" href="../regression.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../index.html"><img src="../../../_static/thunder_logo.png">
+           </a>
+        <span class="navbar-text navbar-version pull-left"><b>0.1.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            <li class="divider-vertical"></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install_local.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../install_ec2.html">Running on EC2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../basic_usage.html">Basic usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributing</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+            
+            
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <h1>Source code for thunder.regression.regress</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Classes and standalone app for mass-unvariate regression</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">from</span> <span class="nn">scipy.io</span> <span class="kn">import</span> <span class="n">loadmat</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="nb">sum</span><span class="p">,</span> <span class="n">outer</span><span class="p">,</span> <span class="n">inner</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dot</span><span class="p">,</span> <span class="n">transpose</span><span class="p">,</span> <span class="n">concatenate</span><span class="p">,</span> <span class="n">ones</span>
+<span class="kn">from</span> <span class="nn">scipy.linalg</span> <span class="kn">import</span> <span class="n">inv</span>
+<span class="kn">from</span> <span class="nn">pyspark</span> <span class="kn">import</span> <span class="n">SparkContext</span>
+<span class="kn">from</span> <span class="nn">thunder.utils</span> <span class="kn">import</span> <span class="n">load</span>
+<span class="kn">from</span> <span class="nn">thunder.utils</span> <span class="kn">import</span> <span class="n">save</span>
+
+
+<span class="k">class</span> <span class="nc">RegressionModel</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for loading and fitting regression models&quot;&quot;&quot;</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">modelfile</span><span class="p">,</span> <span class="n">regressmode</span><span class="p">,</span> <span class="o">**</span><span class="n">opts</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">REGRESSION_MODELS</span><span class="p">[</span><span class="n">regressmode</span><span class="p">](</span><span class="n">modelfile</span><span class="p">,</span> <span class="o">**</span><span class="n">opts</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">comps</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fit mass univariate regression models</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : RDD of (tuple, array) pairs</span>
+<span class="sd">            The data to fit</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        betas : RDD of (tuple, array) pairs</span>
+<span class="sd">            Fitted model parameters for each record</span>
+
+<span class="sd">        stats : RDD of (tuple, float) pairs</span>
+<span class="sd">            Model fit statistic for each record</span>
+
+<span class="sd">        resid : RDD of (tuple, array) pairs</span>
+<span class="sd">            Residuals for each record</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">comps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">traj</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span> <span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">outer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">inner</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">comps</span><span class="p">)))</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span>
+                    <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">)</span> <span class="o">/</span> <span class="n">data</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">traj</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">mapValues</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+            <span class="n">betas</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">mapValues</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">stats</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">mapValues</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">resid</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">mapValues</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">betas</span><span class="p">,</span> <span class="n">stats</span><span class="p">,</span> <span class="n">resid</span>
+
+
+<div class="viewcode-block" id="MeanRegressionModel"><a class="viewcode-back" href="../../../generated/thunder.regression.regress.MeanRegressionModel.html#thunder.regression.regress.MeanRegressionModel">[docs]</a><span class="k">class</span> <span class="nc">MeanRegressionModel</span><span class="p">(</span><span class="n">RegressionModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class for regression in the form of simple averaging</span>
+<span class="sd">    via multiplication by a design matrix</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    modelfile : array, or string</span>
+<span class="sd">        Array contaiing design matrix, or location of a MAT file</span>
+<span class="sd">        with name modelfile_X.mat containing a variable X</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x : array</span>
+<span class="sd">        The design matrix</span>
+
+<span class="sd">    xhat : array</span>
+<span class="sd">        Pseudoinverse of the design matrix</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">modelfile</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">modelfile</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">loadmat</span><span class="p">(</span><span class="n">modelfile</span> <span class="o">+</span> <span class="s">&quot;_X.mat&quot;</span><span class="p">)[</span><span class="s">&#39;X&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">modelfile</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">x_hat</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">T</span> <span class="o">/</span> <span class="nb">sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">T</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_hat</span> <span class="o">=</span> <span class="n">x_hat</span>
+
+<div class="viewcode-block" id="MeanRegressionModel.get"><a class="viewcode-back" href="../../../generated/thunder.regression.regress.MeanRegressionModel.html#thunder.regression.regress.MeanRegressionModel.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute regression coefficients, r2 statistic, and residuals&quot;&quot;&quot;</span>
+
+        <span class="n">b</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_hat</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">predic</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">resid</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">predic</span>
+        <span class="n">sse</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">((</span><span class="n">predic</span> <span class="o">-</span> <span class="n">y</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">sst</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">((</span><span class="n">y</span> <span class="o">-</span> <span class="n">mean</span><span class="p">(</span><span class="n">y</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sst</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">r2</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">r2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">sse</span> <span class="o">/</span> <span class="n">sst</span>
+        <span class="k">return</span> <span class="n">b</span><span class="p">,</span> <span class="n">r2</span><span class="p">,</span> <span class="n">resid</span>
+
+</div></div>
+<div class="viewcode-block" id="LinearRegressionModel"><a class="viewcode-back" href="../../../generated/thunder.regression.regress.LinearRegressionModel.html#thunder.regression.regress.LinearRegressionModel">[docs]</a><span class="k">class</span> <span class="nc">LinearRegressionModel</span><span class="p">(</span><span class="n">RegressionModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class for ordinary least squares linear regression</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    modelfile : array, or string</span>
+<span class="sd">        Array contaiing design matrix, or location of a MAT file</span>
+<span class="sd">        with name modelfile_X.mat containing a variable X</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x : array</span>
+<span class="sd">        The design matrix</span>
+
+<span class="sd">    xhat : array</span>
+<span class="sd">        Pseudoinverse of the design matrix</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">modelfile</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">modelfile</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">loadmat</span><span class="p">(</span><span class="n">modelfile</span> <span class="o">+</span> <span class="s">&quot;_X.mat&quot;</span><span class="p">)[</span><span class="s">&#39;X&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">modelfile</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">concatenate</span><span class="p">((</span><span class="n">ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">1</span><span class="p">])),</span> <span class="n">x</span><span class="p">))</span>
+        <span class="n">x_hat</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">inv</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">transpose</span><span class="p">(</span><span class="n">x</span><span class="p">))),</span> <span class="n">x</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_hat</span> <span class="o">=</span> <span class="n">x_hat</span>
+
+<div class="viewcode-block" id="LinearRegressionModel.get"><a class="viewcode-back" href="../../../generated/thunder.regression.regress.LinearRegressionModel.html#thunder.regression.regress.LinearRegressionModel.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute regression coefficients, r2 statistic, and residuals&quot;&quot;&quot;</span>
+
+        <span class="n">b</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_hat</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">predic</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">resid</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">predic</span>
+        <span class="n">sse</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">((</span><span class="n">predic</span> <span class="o">-</span> <span class="n">y</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">sst</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">((</span><span class="n">y</span> <span class="o">-</span> <span class="n">mean</span><span class="p">(</span><span class="n">y</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sst</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">r2</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">r2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">sse</span> <span class="o">/</span> <span class="n">sst</span>
+        <span class="k">return</span> <span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">r2</span><span class="p">,</span> <span class="n">resid</span>
+
+</div></div>
+<div class="viewcode-block" id="BilinearRegressionModel"><a class="viewcode-back" href="../../../generated/thunder.regression.regress.BilinearRegressionModel.html#thunder.regression.regress.BilinearRegressionModel">[docs]</a><span class="k">class</span> <span class="nc">BilinearRegressionModel</span><span class="p">(</span><span class="n">RegressionModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class for bilinear regression with two design matrices</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    modelfile : tuple(array), or string</span>
+<span class="sd">        Tuple of arrays each contaiing a design matrix,</span>
+<span class="sd">        or location of MAT files with names modelfile_X1.mat and</span>
+<span class="sd">        modelfile_X2.mat containing variables X1 and X2</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x1 : array</span>
+<span class="sd">        The first design matrix</span>
+
+<span class="sd">    x2 : array</span>
+<span class="sd">        The second design matrix</span>
+
+<span class="sd">    x1hat : array</span>
+<span class="sd">        Pseudoinverse of the first design matrix</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">modelfile</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">modelfile</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">x1</span> <span class="o">=</span> <span class="n">loadmat</span><span class="p">(</span><span class="n">modelfile</span> <span class="o">+</span> <span class="s">&quot;_X1.mat&quot;</span><span class="p">)[</span><span class="s">&#39;X1&#39;</span><span class="p">]</span>
+            <span class="n">x2</span> <span class="o">=</span> <span class="n">loadmat</span><span class="p">(</span><span class="n">modelfile</span> <span class="o">+</span> <span class="s">&quot;_X2.mat&quot;</span><span class="p">)[</span><span class="s">&#39;X2&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">x1</span> <span class="o">=</span> <span class="n">modelfile</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">x2</span> <span class="o">=</span> <span class="n">modelfile</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">x1_hat</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">inv</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">transpose</span><span class="p">(</span><span class="n">x1</span><span class="p">))),</span> <span class="n">x1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x1</span> <span class="o">=</span> <span class="n">x1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x2</span> <span class="o">=</span> <span class="n">x2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x1_hat</span> <span class="o">=</span> <span class="n">x1_hat</span>
+
+<div class="viewcode-block" id="BilinearRegressionModel.get"><a class="viewcode-back" href="../../../generated/thunder.regression.regress.BilinearRegressionModel.html#thunder.regression.regress.BilinearRegressionModel.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute regression coefficients from the second design matrix,</span>
+<span class="sd">        a single r2 statistic, and residuals for the full model&quot;&quot;&quot;</span>
+
+        <span class="n">b1</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x1_hat</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">b1</span> <span class="o">=</span> <span class="n">b1</span> <span class="o">-</span> <span class="nb">min</span><span class="p">(</span><span class="n">b1</span><span class="p">)</span>
+        <span class="n">b1_hat</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">transpose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x1</span><span class="p">),</span> <span class="n">b1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">b1_hat</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">b1_hat</span> <span class="o">+=</span> <span class="mf">1E-06</span>
+        <span class="n">x3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x2</span> <span class="o">*</span> <span class="n">b1_hat</span>
+        <span class="n">x3</span> <span class="o">=</span> <span class="n">concatenate</span><span class="p">((</span><span class="n">ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="p">(</span><span class="n">x3</span><span class="p">)[</span><span class="mi">1</span><span class="p">])),</span> <span class="n">x3</span><span class="p">))</span>
+        <span class="n">x3_hat</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">inv</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">x3</span><span class="p">,</span> <span class="n">transpose</span><span class="p">(</span><span class="n">x3</span><span class="p">))),</span> <span class="n">x3</span><span class="p">)</span>
+        <span class="n">b2</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">x3_hat</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">predic</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">b2</span><span class="p">,</span> <span class="n">x3</span><span class="p">)</span>
+        <span class="n">resid</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">predic</span>
+        <span class="n">sse</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">((</span><span class="n">predic</span> <span class="o">-</span> <span class="n">y</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">sst</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">((</span><span class="n">y</span> <span class="o">-</span> <span class="n">mean</span><span class="p">(</span><span class="n">y</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sst</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">r2</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">r2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">sse</span> <span class="o">/</span> <span class="n">sst</span>
+
+        <span class="k">return</span> <span class="n">b2</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">r2</span><span class="p">,</span> <span class="n">resid</span>
+</div></div>
+<span class="n">REGRESSION_MODELS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;linear&#39;</span><span class="p">:</span> <span class="n">LinearRegressionModel</span><span class="p">,</span>
+    <span class="s">&#39;bilinear&#39;</span><span class="p">:</span> <span class="n">BilinearRegressionModel</span><span class="p">,</span>
+    <span class="s">&#39;mean&#39;</span><span class="p">:</span> <span class="n">MeanRegressionModel</span>
+<span class="p">}</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s">&quot;fit a regression model&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&quot;datafile&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&quot;modelfile&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&quot;outputdir&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&quot;regressmode&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;mean&quot;</span><span class="p">,</span> <span class="s">&quot;linear&quot;</span><span class="p">,</span> <span class="s">&quot;bilinear&quot;</span><span class="p">),</span> <span class="n">help</span><span class="o">=</span><span class="s">&quot;form of regression&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&quot;--preprocess&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;raw&quot;</span><span class="p">,</span> <span class="s">&quot;dff&quot;</span><span class="p">,</span> <span class="s">&quot;sub&quot;</span><span class="p">,</span> <span class="s">&quot;dff-highpass&quot;</span><span class="p">,</span> <span class="s">&quot;dff-percentile&quot;</span>
+                        <span class="s">&quot;dff-detrendnonlin&quot;</span><span class="p">,</span> <span class="s">&quot;dff-detrend-percentile&quot;</span><span class="p">),</span> <span class="n">default</span><span class="o">=</span><span class="s">&quot;raw&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="n">sc</span> <span class="o">=</span> <span class="n">SparkContext</span><span class="p">(</span><span class="n">appName</span><span class="o">=</span><span class="s">&quot;regress&quot;</span><span class="p">)</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">datafile</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">preprocess</span><span class="p">)</span>
+    <span class="n">stats</span><span class="p">,</span> <span class="n">betas</span><span class="p">,</span> <span class="n">resid</span> <span class="o">=</span> <span class="n">RegressionModel</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">modelfile</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">regressmode</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="n">outputdir</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">outputdir</span> <span class="o">+</span> <span class="s">&quot;-regress&quot;</span>
+    <span class="n">save</span><span class="p">(</span><span class="n">stats</span><span class="p">,</span> <span class="n">outputdir</span><span class="p">,</span> <span class="s">&quot;stats&quot;</span><span class="p">,</span> <span class="s">&quot;matlab&quot;</span><span class="p">)</span>
+    <span class="n">save</span><span class="p">(</span><span class="n">betas</span><span class="p">,</span> <span class="n">outputdir</span><span class="p">,</span> <span class="s">&quot;betas&quot;</span><span class="p">,</span> <span class="s">&quot;matlab&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+        <br/>
+        
+      
+    </p>
+    <p>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

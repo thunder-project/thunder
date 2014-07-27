@@ -1,0 +1,17 @@
+:mod:`thunder.regression.tuning`.GaussianTuningModel
+===========================================================
+
+.. currentmodule:: thunder.regression.tuning
+
+.. autoclass:: GaussianTuningModel
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~GaussianTuningModel.__init__
+      ~GaussianTuningModel.fit
+      ~GaussianTuningModel.get
+      ~GaussianTuningModel.load
+   
+
