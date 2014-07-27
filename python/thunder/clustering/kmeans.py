@@ -5,16 +5,9 @@ Classes and standalone app for KMeans clustering
 import argparse
 from numpy import sum, array, argmin, corrcoef, random, ndarray
 from scipy.spatial.distance import cdist
-from matplotlib import pyplot
-import colorsys
-import mpld3
-from mpld3 import plugins
 from pyspark import SparkContext
 from thunder.utils import load
 from thunder.utils import save
-from thunder.viz.plugins import HiddenAxes
-from thunder.viz.plots import scatter
-from thunder.viz.colorize import Colorize
 from thunder.utils.load import isrdd
 
 
@@ -38,8 +31,6 @@ class KMeansModel(object):
 
         self.centers = centers
         n = len(self.centers)
-        hsv_tuples = [(x*1.0/n, 0.5, 0.5) for x in range(n)]
-        self.colors = map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples)
 
     def calc(self, data, func):
         """Base function for making clustering predictions"""
@@ -92,39 +83,6 @@ class KMeansModel(object):
 
         similarity = lambda centers, p: corrcoef(centers[argmin(cdist(centers, array([p])))], p)[0, 1]
         return self.calc(data, similarity)
-
-    def plot(self, data, notebook=False, nsamples=100, show=True, savename=None):
-
-        fig = pyplot.figure()
-        ncenters = len(self.centers)
-
-        # custom colorizer that uses model predictions
-        colorizer = Colorize()
-        colorizer.get = lambda x: self.colors[int(self.predict(x))]
-
-        # plot time series of each center
-        # TODO move into a time series plotting function in viz.plots
-        for i, center in enumerate(self.centers):
-            ax = pyplot.subplot2grid((ncenters, 3), (i, 0))
-            ax.plot(center, color=self.colors[i], linewidth=5)
-            fig.add_axes(ax)
-
-        # make a scatter plot of the data
-        ax2 = pyplot.subplot2grid((ncenters, 3), (0, 1), rowspan=ncenters, colspan=2)
-        pts = array(data.values().takeSample(False, nsamples))
-        ax2, h2 = scatter(pts, colormap=colorizer, ax=ax2)
-        fig.add_axes(ax2)
-
-        plugins.connect(fig, HiddenAxes())
-
-        if show and notebook is False:
-            mpld3.show()
-
-        if savename is not None:
-            mpld3.save_html(fig, savename)
-
-        elif show is False:
-            return mpld3.fig_to_html(fig)
 
 
 class KMeans(object):
@@ -197,7 +155,8 @@ if __name__ == "__main__":
     parser.add_argument("k", type=int)
     parser.add_argument("--maxiter", type=float, default=20, required=False)
     parser.add_argument("--tol", type=float, default=0.001, required=False)
-    parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub"), default="raw", required=False)
+    parser.add_argument("--preprocess", choices=("raw", "dff", "sub", "dff-highpass", "dff-percentile"
+                        "dff-detrendnonlin", "dff-detrend-percentile"), default="raw", required=False)
 
     args = parser.parse_args()
 
