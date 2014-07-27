@@ -52,6 +52,7 @@ class Parser(object):
 
 class PreProcessor(object):
     """Class for preprocessing data"""
+     # TODO Refactor to make it easier to combine options
 
     def __init__(self, preprocessmethod):
         if preprocessmethod == "sub":
