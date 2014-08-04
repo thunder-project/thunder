@@ -5,8 +5,7 @@ Class and standalone app for local correlation
 import argparse
 from numpy import corrcoef
 from pyspark import SparkContext
-from thunder.utils import load, getdims
-from thunder.utils import save
+from thunder.utils import load, save, indtosub, subtoind, getdims
 
 
 class LocalCorr(object):
@@ -74,7 +73,10 @@ class LocalCorr(object):
         result = data.join(means)
 
         # get correlations
-        corr = result.mapValues(lambda x: corrcoef(x[0], x[1])[0, 1]).sortByKey()
+        corr = result.mapValues(lambda x: corrcoef(x[0], x[1])[0, 1])
+
+        # must sort outputs
+        corr = indtosub(subtoind(corr, dims.max).sortByKey(), dims.max)
 
         return corr
 
