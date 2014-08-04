@@ -73,10 +73,10 @@ class LocalCorr(object):
         result = data.join(means)
 
         # get correlations
-        corr = result.mapValues(lambda x: corrcoef(x[0], x[1])[0, 1])
+        corr = result.mapValues(lambda x: corrcoef(x[0], x[1])[0, 1]).sortByKey()
 
         # must sort outputs
-        corr = indtosub(subtoind(corr, dims.max).sortByKey(), dims.max)
+        #corr = indtosub(subtoind(corr, dims.max).sortByKey(), dims.max)
 
         return corr
 
