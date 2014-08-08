@@ -5,6 +5,7 @@ import org.apache.hadoop.mapreduce.{JobContext, InputSplit, RecordReader, TaskAt
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 import org.apache.hadoop.fs.Path
 import java.io.{FileFilter, File}
+import org.apache.hadoop.conf.Configuration
 
 /**
  * Custom Input Format for processing flat binary files that contain records, each of which
@@ -25,38 +26,37 @@ object FixedLengthBinaryInputFormat {
    *
    */
   def getRecordLength(context: JobContext): Int = {
-    val path = FileInputFormat.getInputPaths(context)
-    val file = new File(path(0).toString.replace("file:",""))
-    val name = if (file.isDirectory) {
-      val filter = new FileFilter() {
-        def accept(file: File): Boolean = {
-          !file.isHidden
+
+    // retrieve record length from configuration
+    val recordLength = context.getConfiguration.get("recordLength").toInt
+
+    // try to use filename to get record length (used in streaming applications
+    // where record length is not constant)
+    if (Option(recordLength) == None) {
+      val path = FileInputFormat.getInputPaths(context)
+      val file = new File(path(0).toString.replace("file:",""))
+      val name = if (file.isDirectory) {
+        val filter = new FileFilter() {
+          def accept(file: File): Boolean = {
+            !file.isHidden
+          }
         }
+        val list = file.listFiles(filter)
+        list(0).toString
+      } else {
+        path(0).toString
       }
-      val list = file.listFiles(filter)
-      list(0).toString
-    } else {
-      path(0).toString
-    }
-    val start = name.indexOf("bytes")
-    if (start == -1) {
-      throw new IllegalArgumentException("cannot find string 'bytes' in file name")
-    }
-    val recordLength = name.slice(start, name.length).drop(5).dropRight(4).toInt
-    if (recordLength <= 0) {
-      throw new IllegalArgumentException("record length must be positive")
+      val start = name.indexOf("bytes")
+      if (start == -1) {
+        throw new IllegalArgumentException("cannot find string 'bytes' in file name")
+      }
+      val recordLength = name.slice(start, name.length).drop(5).dropRight(4).toInt
+      if (recordLength <= 0) {
+        throw new IllegalArgumentException("record length must be positive")
+      }
     }
     recordLength
   }
-
-//  Alternative approach using a header
-//
-//  def getRecordLength(context: JobContext): Int = {
-//    val path = FileInputFormat.getInputPaths(context)
-//    val file = new File(path(0).getParent.toString, "recordLength.txt")
-//    Source.fromFile(file.getPath.replace("file:","")).getLines().toIndexedSeq(0).toString.toInt
-//  }
-
 
 }
 
