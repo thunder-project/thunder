@@ -2,35 +2,54 @@
 
 import os
 import glob
-from numpy import prod, zeros, fromfile, int16, ceil, savetxt
+from numpy import prod, zeros, fromfile, int16, ceil, shape, asarray, concatenate
+from thunder.utils import indtosub
 
 
-#def transform(sc, path, npartitions):
+def transform(sc, datadir, npartitions=None, savedir=None, saveformat=None, dims=None):
+    """ Convienience function for transforming input formats """
 
-    # try to figure out the format
-    # if stack -> data = Transform(sc, npartitions).fromstack(path)
-    # if tif -> data = Transform(sc, npartitions).fromtif(path)
+    # find first file in the path
+    if os.path.isdir(datadir):
+        files = sorted(glob.glob(os.path.join(datadir, '*')))
+    else:
+        files = sorted(glob.glob(datadir))
 
-    # if given a path and a save dir, make sure we're given a format
-    # if binary -> data.tobinary(savedir)
-    # if text -> data.totext(savedir)
+    # determine format
+    loadformat = os.path.split(files[0])[1].split('.')[1]
 
-    # otherwise, just return the rdd
-    # return data.tordd()
+    if loadformat == 'stack':
+        if not dims:
+            raise StandardError("must provide dimensions for stack data")
+        data = Transform(sc, npartitions).fromstack(datadir, dims)
+    elif loadformat == 'tif':
+        data = Transform(sc, npartitions).fromtif(datadir)
+    else:
+        raise NotImplementedError("loading from %s not implemented" % loadformat)
+
+    if saveformat:
+        if saveformat == 'binary':
+            data.tobinary(savedir)
+        elif saveformat == 'text':
+            data.totext(savedir)
+        else:
+            raise NotImplementedError("saving to %s not implemented" % saveformat)
+    else:
+        return data.tordd()
 
 
 class Transform(object):
 
     def __init__(self, sc, npartitions=None):
-        if npartitions is not None:
-            self.npartitions = npartitions
-        else:
+        if npartitions is None:
             self.npartitions = sc.defaultMinPartitions
+        else:
+            self.npartitions = npartitions
         self._sc = sc
 
-    def fromstack(self, path, dims):
-        """ Transform data from binary stack files,
-        assuming raw data are a series of stack files
+    def fromstack(self, datadir, dims):
+        """ Transform data from binary multi-band stack files,
+        assuming raw data are a series of stack files with int16 values
 
         (stack, file 0), (stack, file 1), ... (stack, file n)
 
@@ -43,21 +62,35 @@ class Transform(object):
         where a block is a contiguous region from a stack
         """
 
-        def readblock(part, files):
+        def readblock(part, files, blocksize):
+            # get start position for this block
             position = part * blocksize
+            # adjust if at end of file
             if (position + blocksize) > totaldim:
-                mat = zeros((totaldim - position, len(files)))
-            else:
-                mat = zeros((blocksize, len(files)))
+                blocksize = int(totaldim - position)
+            # loop over files, loading one block from each
+            mat = zeros((blocksize, len(files)))
             for i, f in enumerate(files):
                 fid = open(f, "rb")
                 fid.seek(position * 2)
                 mat[:, i] = fromfile(fid, dtype=int16, count=blocksize)
-            return mat
+            # append subscript keys based on dimensions
+            lininds = range(position + 1, position + shape(mat)[0] + 1)
+            keys = asarray(map(lambda (k, v): k, indtosub(zip(lininds, zeros(blocksize)), dims)))
+            return (('%05g-' * len(dims)) % tuple(keys[0]))[:-1], concatenate((keys, mat), axis=1)
 
         # get the paths to the data
-        files = glob.glob(path)
+        if os.path.isdir(datadir):
+            files = sorted(glob.glob(os.path.join(datadir, '*.stack')))
+        else:
+            files = sorted(glob.glob(datadir))
+
+        if len(files) < 1:
+            raise IOError('cannot find any files in %s' % datadir)
+
         self.files = files
+        self.nkeys = len(dims)
+        self.nvals = len(files)
 
         # get the total stack dimensions
         totaldim = float(prod(dims))
@@ -70,30 +103,38 @@ class Transform(object):
 
         # map over parts
         parts = range(0, self.npartitions)
-        rdd = self._sc.parallelize(parts, len(parts)).map(lambda ip: (ip, readblock(ip, files)))
-
+        rdd = self._sc.parallelize(parts, len(parts)).map(lambda ip: readblock(ip, files, blocksize))
         self._rdd = rdd
+
         return self
 
+    def fromtif(self, path):
+        """ Transform data from tif image stacks """
+
+        raise NotImplementedError('loading from tifs not yet implemented')
+
     def tobinary(self, path):
-        """ Write data to flat binary files """
+        """ Write blocks to flat binary files """
 
         def writeblock(part, mat, path):
-            filename = path + str(part) + ".bin"
+            filename = os.path.join(path, "part-" + str(part) + ".bin")
             mat.tofile(filename)
+
+        if os.path.isdir(path):
+            raise IOError('path %s already exists' % path)
+        else:
+            os.mkdir(path)
 
         self._rdd.foreach(lambda (ip, mat): writeblock(ip, mat, path))
 
     def totext(self, path):
-        """ Write data to text files """
+        """ Write blocks to text files """
 
-        #def writeblock(part, mat, path):
-        #    filename = path + "part-" + str(part) + ".txt"
-        #    savetxt(filename, mat, fmt="%g")
-
-        #self._rdd.foreach(lambda (ip, mat): writeblock(ip, mat, path))
-        n = len(self.files)
+        n = self.nkeys + self.nvals
         self._rdd.values().map(lambda x: "\n".join(map(lambda y: ("%g " * n) % tuple(y), x))).saveAsTextFile(path)
 
     def tordd(self):
-        return self._rdd.flatMap(lambda (k, x): list(x))
+        """ Convert blocks to RDD of key-value records """
+
+        n = self.nkeys
+        return self._rdd.values().flatMap(lambda x: list(x)).map(lambda x: (tuple(x[0:n].astype(int)), x[n:]))
