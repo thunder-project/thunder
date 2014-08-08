@@ -62,22 +62,29 @@ class Transform(object):
         where a block is a contiguous region from a stack
         """
 
+        # TODO currently assumes int16, allow for arbitrary formats
+
         def readblock(part, files, blocksize):
             # get start position for this block
             position = part * blocksize
+
             # adjust if at end of file
             if (position + blocksize) > totaldim:
                 blocksize = int(totaldim - position)
+
             # loop over files, loading one block from each
             mat = zeros((blocksize, len(files)))
+
             for i, f in enumerate(files):
                 fid = open(f, "rb")
                 fid.seek(position * 2)
                 mat[:, i] = fromfile(fid, dtype=int16, count=blocksize)
+
             # append subscript keys based on dimensions
             lininds = range(position + 1, position + shape(mat)[0] + 1)
             keys = asarray(map(lambda (k, v): k, indtosub(zip(lininds, zeros(blocksize)), dims)))
-            return (('%05g-' * len(dims)) % tuple(keys[0]))[:-1], concatenate((keys, mat), axis=1)
+            partlabel = "%05g-" % part + (('%05g-' * len(dims)) % tuple(keys[0]))[:-1]
+            return partlabel, concatenate((keys, mat), axis=1).astype(int16)
 
         # get the paths to the data
         if os.path.isdir(datadir):
