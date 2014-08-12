@@ -8,8 +8,9 @@ import java.io.{FileFilter, File}
 import org.apache.hadoop.conf.Configuration
 
 /**
- * Custom Input Format for processing flat binary files that contain records, each of which
- * are a fixed size in bytes. The desired fixed record size is specified through the file names,
+ * Custom Input Format for reading and splitting flat binary files that contain records, each of which
+ * are a fixed size in bytes. The fixed record size is specified through a parameter recordLength
+ * in the hadoop configuration. Alternatively, the record size can be specified in the file names,
  * by embedding a string of the form "bytesXXX" at the end of every file to be processed,
  * for example, "mydata_bytes8.bin". If specifying a directory or a list of files, all files must
  * contain this string. All files must also have the same fixed record size,
@@ -19,7 +20,8 @@ import org.apache.hadoop.conf.Configuration
 object FixedLengthBinaryInputFormat {
 
   /**
-   * This function checks the first file retrieved through the Job Context for the record
+   * This function retrieves the recordLength by checking the configuration parameter, 
+   * and if not found, by checking the first file retrieved through the Job Context for the record
    * size specification embeeded in its file name, in the form "mydata_bytesXXX.bin". If it is a file,
    * it checks the name of that file. If it is a directory, it finds the first non-hidden file
    * within the directory and uses the name of that file.

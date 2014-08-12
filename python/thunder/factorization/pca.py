@@ -3,10 +3,8 @@ Class and standalone app for Principal Component Analysis
 """
 
 import argparse
-from pyspark import SparkContext
 from thunder.factorization import SVD
-from thunder.utils import load, save
-from thunder.utils.matrices import RowMatrix
+from thunder.utils import ThunderContext, RowMatrix, save
 
 
 class PCA(object):
@@ -69,9 +67,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    sc = SparkContext(appName="pca")
+    tsc = ThunderContext.start(appName="pca")
 
-    data = load(sc, args.datafile, args.preprocess).cache()
+    data = tsc.loadText(args.datafile, args.preprocess).cache()
     result = PCA(args.k, args.svdmethod).fit(data)
 
     outputdir = args.outputdir + "-pca"

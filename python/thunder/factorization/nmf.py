@@ -4,8 +4,7 @@ Class for performing non-negative matrix factorization
 
 import argparse
 import numpy as np
-from pyspark import SparkContext
-from thunder.utils import load, save
+from thunder.utils import ThunderContext, save
 
 
 class NMF(object):
@@ -228,9 +227,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    sc = SparkContext(appName="nmf")
+    tsc = ThunderContext.start(appName="nmf")
 
-    data = load(sc, args.datafile, args.preprocess).cache()
+    data = tsc.loadText(args.datafile, args.preprocess).cache()
     nmf = NMF(k=args.k, method=args.nmfmethod, maxiter=args.maxiter, tol=args.tol, w_hist=args.w_hist,
               recon_hist=args.recon_hist)
     nmf.calc(data)

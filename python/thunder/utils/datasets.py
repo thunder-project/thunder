@@ -1,26 +1,22 @@
 """
-Utilities for loading test datasets
+Utilities for generating example datasets
 """
 
-import os
 from numpy import array, random, shape, floor, dot, linspace, sin, sign, c_
-from thunder.utils import load
 
 
 class DataSets(object):
 
     def __init__(self, sc, returnparams=False):
         self.sc = sc
-        self.path = os.path.dirname(os.path.realpath(__file__))
         self.returnparams = returnparams
 
     @staticmethod
     def make(sc, name, returnparams=False, **opts):
-        return DATASET_MAKERS[name](sc, returnparams).generate(**opts)
-
-    @staticmethod
-    def load(sc, name):
-        return DATASET_LOADERS[name](sc).fromfile()
+        try:
+            return DATASET_MAKERS[name](sc, returnparams).generate(**opts)
+        except KeyError:
+            raise NotImplementedError("no dataset generator for '%s'" % name)
 
 
 def appendkeys(data):
@@ -82,35 +78,8 @@ class ICAData(DataSets):
             return data
 
 
-class ZebrafishTestData(DataSets):
-
-    def fromfile(self):
-        return load(self.sc, os.path.join(self.path, 'data/fish.txt'))
-
-
-class ZebrafishOptomotorResponseData(DataSets):
-
-    def fromfile(self):
-        if 'ec' not in self.sc.master:
-            raise Exception("must be running on EC2 to load the example data sets")
-        path = 's3n://zebrafish.datasets/optomotor-response/1/'
-        return load(self.sc, path + 'data/dat_plane*.txt', npartitions=1000)
-
-
-class IrisData(DataSets):
-
-    def fromfile(self):
-        return load(self.sc, os.path.join(self.path, 'data/iris.txt'))
-
-
 DATASET_MAKERS = {
     'kmeans': KMeansData,
     'pca': PCAData,
     'ica': ICAData
-}
-
-DATASET_LOADERS = {
-    'iris': IrisData,
-    'zebrafish-test': ZebrafishTestData,
-    'zebrafish-optomotor-response': ZebrafishOptomotorResponseData
 }

@@ -5,9 +5,8 @@ Classes and standalone app for mass-unvariate tuning analyses
 import argparse
 from scipy.io import loadmat
 from numpy import array, sum, inner, dot, angle, abs, exp
-from pyspark import SparkContext
 from thunder.regression import RegressionModel
-from thunder.utils import load
+from thunder.utils import ThunderContext
 from thunder.utils import save
 
 
@@ -121,9 +120,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     
-    sc = SparkContext(appName="tuning")
+    tsc = ThunderContext.start(appName="tuning")
 
-    data = load(sc, args.datafile, args.preprocess)
+    data = tsc.loadText(args.datafile, args.preprocess)
     tuningmodel = TuningModel.load(args.tuningmodelfile, args.tuningmode)
     if args.regressmodelfile is not None:
         # use regression results
