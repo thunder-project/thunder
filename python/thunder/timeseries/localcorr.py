@@ -75,9 +75,6 @@ class LocalCorr(object):
         result = data.join(means)
 
         # get correlations
-        corr = result.mapValues(lambda x: corrcoef(x[0], x[1])[0, 1]).sortByKey()
-
-        # get correlations
         corr = result.mapValues(lambda x: corrcoef(x[0], x[1])[0, 1])
 
         # force sorting, but reverse keys for correct ordering
