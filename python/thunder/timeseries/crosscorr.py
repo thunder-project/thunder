@@ -3,14 +3,12 @@ Class and standalone app for cross correlations
 """
 
 import argparse
-from pyspark import SparkContext
 from numpy import mean, zeros, roll, shape, dot
 from scipy.linalg import norm
 from scipy.io import loadmat
 from thunder.timeseries.base import TimeSeriesBase
 from thunder.factorization import PCA
-from thunder.utils import load
-from thunder.utils import save
+from thunder.utils import ThunderContext, save
 
 
 class CrossCorr(TimeSeriesBase):
@@ -77,9 +75,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    sc = SparkContext(appName="crosscorr")
+    tsc = ThunderContext.start(appName="crosscorr")
 
-    data = load(sc, args.datafile, args.preprocess).cache()
+    data = tsc.loadText(args.datafile, args.preprocess).cache()
 
     outputdir = args.outputdir + "-crosscorr"
 

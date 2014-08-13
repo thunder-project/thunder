@@ -5,10 +5,8 @@ Class and standalone app for Fourier analysis
 import argparse
 from numpy import mean, fix, sqrt, pi, array, angle
 from numpy.fft import fft
-from pyspark import SparkContext
 from thunder.timeseries.base import TimeSeriesBase
-from thunder.utils import load
-from thunder.utils import save
+from thunder.utils import ThunderContext, save
 
 
 class Fourier(TimeSeriesBase):
@@ -44,9 +42,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    sc = SparkContext(appName="fourier")
+    tsc = ThunderContext.start(appName="fourier")
 
-    data = load(sc, args.datafile, args.preprocess).cache()
+    data = tsc.loadText(args.datafile, args.preprocess).cache()
     out = Fourier(freq=args.freq).calc(data)
 
     outputdir = args.outputdir + "-fourier"

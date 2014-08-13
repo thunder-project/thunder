@@ -8,9 +8,7 @@ from scipy.io import loadmat
 from scipy.stats import ttest_ind
 from sklearn.naive_bayes import GaussianNB
 from sklearn import cross_validation
-from pyspark import SparkContext
-from thunder.utils import load
-from thunder.utils import save
+from thunder.utils import ThunderContext, save
 
 
 class MassUnivariateClassifier(object):
@@ -227,9 +225,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    sc = SparkContext("classify")
+    tsc = ThunderContext.start("classify")
 
-    data = load(sc, args.datafile, args.preprocess)
+    data = tsc.loadText(args.datafile, args.preprocess)
     clf = MassUnivariateClassifier.load(args.paramfile, args.classifymode, cv=args.cv)
     perf = clf.classify(data, args.featureset)
 

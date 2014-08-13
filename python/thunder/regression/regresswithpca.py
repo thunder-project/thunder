@@ -3,10 +3,9 @@ Standalone app for mass-unvariate regression combined with PCA
 """
 
 import argparse
-from pyspark import SparkContext
 from thunder.regression import RegressionModel
 from thunder.factorization import PCA
-from thunder.utils import load
+from thunder.utils import ThunderContext
 from thunder.utils import save
 
 
@@ -22,9 +21,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     
-    sc = SparkContext(appName="regresswithpca")
+    tsc = ThunderContext.start(appName="regresswithpca")
 
-    data = load(sc, args.datafile, args.preprocess)
+    data = tsc.loadText(args.datafile, args.preprocess)
     model = RegressionModel.load(args.modelfile, args.regressmode)  # do regression
     betas, stats, resid = model.fit(data)
     pca = PCA(args.k).fit(betas)  # do PCA

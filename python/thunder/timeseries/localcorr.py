@@ -4,8 +4,7 @@ Class and standalone app for local correlation
 
 import argparse
 from numpy import corrcoef
-from pyspark import SparkContext
-from thunder.utils import load, save, indtosub, subtoind, getdims
+from thunder.utils import ThunderContext, save, indtosub, subtoind, getdims
 
 
 class LocalCorr(object):
@@ -63,6 +62,9 @@ class LocalCorr(object):
         # get boundaries using dimension keys
         dims = getdims(data)
 
+        if len(dims.max) not in [2, 3]:
+            raise NotImplementedError('keys must have 2 or 3 dimensions to compute local correlations')
+
         # flat map to key value pairs where the key is neighborhood identifier and value is time series
         neighbors = data.flatMap(lambda (k, v): maptoneighborhood(k, v, self.neighborhood, dims.min[0:2], dims.max[0:2]))
 
@@ -78,8 +80,6 @@ class LocalCorr(object):
         # force sorting, but reverse keys for correct ordering
         return corr.map(lambda (k, v): (k[::-1], v)).sortByKey().map(lambda (k, v): (k[::-1], v))
 
-        return corr
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="correlate time series with neighbors")
@@ -91,9 +91,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    sc = SparkContext(appName="localcorr")
+    tsc = ThunderContext.start(appName="localcorr")
 
-    data = load(sc, args.datafile, args.preprocess).cache()
+    data = tsc.loadText(args.datafile, filter=args.preprocess).cache()
     corrs = LocalCorr(args.sz).calc(data)
 
     outputdir = args.outputdir + "-localcorr"

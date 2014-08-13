@@ -87,7 +87,7 @@ def subset(data, nsamples=100, thresh=None):
     return result
 
 
-def pack(data, ind=None, dims=None, sorting=False, axes=None):
+def pack(data, ind=None, dims=None, sorting=False, axis=None):
     """Pack an RDD into a dense local array, with options for
     sorting, reshaping, and projecting based on keys
 
@@ -105,7 +105,7 @@ def pack(data, ind=None, dims=None, sorting=False, axes=None):
     sorting : Boolean, optional, default = False
         Whether to sort the RDD before packing
 
-    axes : int, optional, default = None
+    axis : int, optional, default = None
         Which axis to do maximum projection along
 
     Returns
@@ -118,11 +118,13 @@ def pack(data, ind=None, dims=None, sorting=False, axes=None):
     if dims is None:
         dims = getdims(data)
 
-    if axes is not None:
+    if axis is not None:
         nkeys = len(data.first()[0])
-        data = data.map(lambda (k, v): (tuple(array(k)[arange(0, nkeys) != axes]), v)).reduceByKey(maximum)
-        dims.min = list(array(dims.min)[arange(0, nkeys) != axes])
-        dims.max = list(array(dims.max)[arange(0, nkeys) != axes])
+        if axis > nkeys - 1:
+            raise IndexError('only %g keys, cannot compute maximum along axis %g' % (nkeys, axis))
+        data = data.map(lambda (k, v): (tuple(array(k)[arange(0, nkeys) != axis]), v)).reduceByKey(maximum)
+        dims.min = list(array(dims.min)[arange(0, nkeys) != axis])
+        dims.max = list(array(dims.max)[arange(0, nkeys) != axis])
         sorting = True  # will always need to sort because reduceByKey changes order
 
     if ind is None:
@@ -137,7 +139,17 @@ def pack(data, ind=None, dims=None, sorting=False, axes=None):
         keys = data.map(lambda (k, _): int(k)).collect()
         result = array([v for (k, v) in sorted(zip(keys, result), key=lambda (k, v): k)])
 
-    return squeeze(transpose(reshape(result, ((nout,) + dims.count())[::-1])))
+    # reshape into a dense array of shape (b, x, y, z)  or (b, x, y) or (b, x)
+    # where b is the number of outputs per record
+    out = transpose(reshape(result, ((nout,) + dims.count())[::-1]))
+
+    # flip xy for spatial data
+    if size(dims.count()) == 3:  # (b, x, y, z) -> (b, y, x, z)
+        out = out.transpose([0, 2, 1, 3])
+    if size(dims.count()) == 2:  # (b, x, y) -> (b, y, x)
+        out = out.transpose([0, 2, 1])
+
+    return squeeze(out)
 
 
 def save(data, outputdir, outputfile, outputformat, sorting=False, dimsmax=None, dimsmin=None):

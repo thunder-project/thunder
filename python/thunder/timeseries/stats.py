@@ -5,10 +5,8 @@ Class and standalone app for calculating time series statistics
 import argparse
 from numpy import median, mean, std
 from scipy.linalg import norm
-from pyspark import SparkContext
 from thunder.timeseries.base import TimeSeriesBase
-from thunder.utils import load
-from thunder.utils import save
+from thunder.utils import ThunderContext, save
 
 
 class Stats(TimeSeriesBase):
@@ -37,9 +35,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    sc = SparkContext(appName="stats")
+    tsc = ThunderContext.start(appName="stats")
 
-    data = load(sc, args.datafile, args.preprocess).cache()
+    data = tsc.loadText(args.datafile, args.preprocess).cache()
     vals = Stats(args.mode).calc(data)
 
     outputdir = args.outputdir + "-stats"

@@ -2,10 +2,9 @@
 Utilities for loading and preprocessing data
 """
 
-import os
-import glob
 import pyspark
-from numpy import array, mean, cumprod, append, mod, ceil, size, polyfit, polyval, arange, percentile, inf, subtract
+from numpy import array, mean, cumprod, append, mod, ceil, size, \
+    polyfit, polyval, arange, percentile, inf, subtract
 from scipy.signal import butter, lfilter
 
 
@@ -189,51 +188,3 @@ def indtosub(data, dims):
 
     else:
         return data
-
-
-def load(sc, datafile, preprocessmethod="raw", nkeys=3, npartitions=None):
-    """Load data from a text file (or a directory of files) with format
-    <k1> <k2> ... <t1> <t2> ...
-    where <k1> <k2> ... are keys (Int) and <t1> <t2> ... are the data values (Double)
-    If passed a directory, will automatically sort files by name
-
-    Parameters
-    ----------
-    sc : SparkContext
-        The Spark Context
-
-    datafile : str
-        Location of raw data
-
-    preprocessmethod : str, optional, default = "raw" (no preprocessing)
-        Which preprocessing to perform
-
-    nkeys : int, optional, default = 3
-        Number of keys per data point
-
-    npartitions : int, optional, default = None
-        Number of partitions
-
-    Returns
-    -------
-    data : RDD of (tuple, array) pairs
-        The parsed and preprocessed data as an RDD
-    """
-    # TODO: Add support for binary files using the new hadoop input format support
-
-    if os.path.isdir(datafile):
-        files = sorted(glob.glob(os.path.join(datafile, '*')))
-        datafile = ''.join([files[x] + ',' for x in range(0, len(files))])[0:-1]
-
-    lines = sc.textFile(datafile, npartitions)
-    parser = Parser(nkeys)
-
-    data = lines.map(parser.get)
-
-    if preprocessmethod != "raw":
-        preprocessor = PreProcessor(preprocessmethod)
-        data = data.mapValues(preprocessor.get)
-
-    return data
-
-

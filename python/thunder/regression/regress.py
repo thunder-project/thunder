@@ -6,8 +6,7 @@ import argparse
 from scipy.io import loadmat
 from numpy import sum, outer, inner, mean, shape, dot, transpose, concatenate, ones
 from scipy.linalg import inv
-from pyspark import SparkContext
-from thunder.utils import load
+from thunder.utils import ThunderContext
 from thunder.utils import save
 
 
@@ -216,9 +215,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    sc = SparkContext(appName="regress")
+    tsc = ThunderContext.start(appName="regress")
 
-    data = load(sc, args.datafile, args.preprocess)
+    data = tsc.loadText(args.datafile, args.preprocess)
     stats, betas, resid = RegressionModel.load(args.modelfile, args.regressmode).fit(data)
 
     outputdir = args.outputdir + "-regress"

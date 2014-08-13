@@ -5,9 +5,7 @@ Classes and standalone app for KMeans clustering
 import argparse
 from numpy import sum, array, argmin, corrcoef, random, ndarray
 from scipy.spatial.distance import cdist
-from pyspark import SparkContext
-from thunder.utils import load
-from thunder.utils import save
+from thunder.utils import ThunderContext, save
 from thunder.utils.load import isrdd
 
 
@@ -160,9 +158,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    sc = SparkContext(appName="kmeans")
+    tsc = ThunderContext.start(appName="kmeans")
 
-    data = load(sc, args.datafile, args.preprocess).cache()
+    data = tsc.loadText(args.datafile, args.preprocess).cache()
     model = KMeans(k=args.k, maxiter=args.maxiter, tol=args.tol).train(data)
     labels = model.predict(data)
 
