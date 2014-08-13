@@ -255,7 +255,7 @@ class ThunderContext():
         else:
             files = sorted(glob.glob(datafile))
         if len(files) < 1:
-            raise IOError('cannot find any files in %s' % datafile)
+            raise IOError('cannot find any stack files in %s' % datafile)
 
         # get the total stack dimensions
         totaldim = float(prod(dims))
