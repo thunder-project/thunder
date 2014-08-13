@@ -280,9 +280,9 @@ class ThunderContext():
             npartitions = kupdated * dims[2]
             blocksize = int(totaldim / npartitions)
         else:
-            # otherwise just round to make sure that partitions divide blocks evenly
+            # otherwise just round to make partitions divide blocks nearly evenly
             blocksize = int(ceil(totaldim / float(npartitions)))
-            npartitions = int(round(totaldim / float(blocksize)))
+            npartitions = int(ceil(totaldim / float(blocksize)))
 
         def readblock(part, files, blocksize):
             # get start position for this block
