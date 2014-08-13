@@ -181,7 +181,7 @@ class ThunderContext():
         else:
             raise NotImplementedError("dataset '%s' not availiable" % dataset)
 
-    def convertStack(self, datafile, dims, savefile, npartitions=None, filerange=None):
+    def convertStack(self, datafile, dims, savefile, nblocks=None, filerange=None):
         """
         Convert data from binary stack files to reformatted flat binary files,
         see also convertStack
@@ -197,14 +197,14 @@ class ThunderContext():
         savefile : str, optional, default = None (directly return RDD)
             Location to save the converted data
 
-        npartitions : int, optional, default = None (automatically set)
-            Number of partitions for splitting data
+        nblocks : int, optional, default = None (automatically set)
+            Number of blocks to split data into
 
         filerange : list, optional, default = None (all files)
             Indices of first and last file to include
 
         """
-        rdd = self.importStackAsBlocks(datafile, dims, npartitions=npartitions, filerange=filerange)
+        rdd = self.importStackAsBlocks(datafile, dims, nblocks=nblocks, filerange=filerange)
 
         # save blocks of data to flat binary files
         def writeblock(part, mat, path):
@@ -230,8 +230,8 @@ class ThunderContext():
         dims : list
             Stack dimensions
 
-        npartitions : int, optional, automatically set
-            Number of partitions for splitting data
+        nblocks : int, optional, automatically set
+            Number of blocks to split data into
 
         filerange : list, optional, default = None (all files)
             Indices of first and last file to include
@@ -244,12 +244,12 @@ class ThunderContext():
         data : RDD of (tuple, array) pairs
             Parsed and preprocessed data
         """
-        rdd = self.importStackAsBlocks(datafile, dims, npartitions=npartitions, filerange=filerange)
+        rdd = self.importStackAsBlocks(datafile, dims, nblocks=nblocks, filerange=filerange)
         nkeys = len(dims)
         data = rdd.values().flatMap(lambda x: list(x)).map(lambda x: (tuple(x[0:nkeys].astype(int)), x[nkeys:]))
         return preprocess(data, method=filter)
 
-    def importStackAsBlocks(self, datafile, dims, npartitions=None, filerange=None):
+    def importStackAsBlocks(self, datafile, dims, nblocks=None, filerange=None):
         """
         Convert data from binary stack files to blocks of an RDD,
         which can either be saved to flat binary files,
@@ -277,25 +277,25 @@ class ThunderContext():
         # if number of partitions not provided, start by setting it
         # so that each partition is approximately 64 MB or less
         # NOTE: currently assumes integer valued data
-        if not npartitions:
-            npartitions = int(max(floor((totaldim * len(files) * 2) / (64 * 10**6)), 1))
+        if not nblocks:
+            nblocks = int(max(floor((totaldim * len(files) * 2) / (200 * 10**6)), 1))
 
         if len(dims) == 3:
             # for 3D stacks, do calculations to ensure that
             # different planes appear in distinct files
-            k = max(int(floor(float(npartitions) / dims[2])), 1)
+            k = max(int(floor(float(nblocks) / dims[2])), 1)
             n = dims[0] * dims[1]
             kupdated = [x for x in range(1, k+1) if mod(n, x) == 0][-1]
-            npartitions = kupdated * dims[2]
-            blocksize = int(totaldim / npartitions)
+            nblocks = kupdated * dims[2]
+            blocksize = int(totaldim / nblocks)
         else:
-            # otherwise just round to make partitions divide into nearly even blocks
-            blocksize = int(ceil(totaldim / float(npartitions)))
-            npartitions = int(ceil(totaldim / float(blocksize)))
+            # otherwise just round to make contents divide into nearly even blocks
+            blocksize = int(ceil(totaldim / float(nblocks)))
+            nblocks = int(ceil(totaldim / float(blocksize)))
 
-        def readblock(part, files, blocksize):
+        def readblock(block, files, blocksize):
             # get start position for this block
-            position = part * blocksize
+            position = block * blocksize
 
             # adjust if at end of file
             if (position + blocksize) > totaldim:
@@ -312,12 +312,12 @@ class ThunderContext():
             # append subscript keys based on dimensions
             lininds = range(position + 1, position + shape(mat)[0] + 1)
             keys = asarray(map(lambda (k, v): k, indtosub(zip(lininds, zeros(blocksize)), dims)))
-            partlabel = "%05g-" % part + (('%05g-' * len(dims)) % tuple(keys[0]))[:-1]
+            partlabel = "%05g-" % block + (('%05g-' * len(dims)) % tuple(keys[0]))[:-1]
             return partlabel, concatenate((keys, mat), axis=1).astype(int16)
 
-        # map over parts
-        parts = range(0, npartitions)
-        return self._sc.parallelize(parts, len(parts)).map(lambda ip: readblock(ip, files, blocksize))
+        # map over blocks
+        blocks = range(0, nblocks)
+        return self._sc.parallelize(blocks, len(blocks)).map(lambda b: readblock(b, files, blocksize))
 
     def loadBinaryLocal(self, datafile, nvalues, nkeys, format=int16, keyfile=None, method=None):
         """
