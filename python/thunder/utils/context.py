@@ -226,7 +226,8 @@ class ThunderContext():
             else:
                 files = glob.glob(datafile)
             filerange = [0, len(files)-1]
-        logout = {'input': datafile, 'filerange': filerange, 'dims': dims}
+        logout = {'input': datafile, 'filerange': filerange, 'dims': dims,
+                  'nkeys': len(dims), 'nvalues': filerange[1]-filerange[0]+1}
         f = open(os.path.join(savefile, 'SUCCESS.json'), 'w')
         json.dump(logout, f, indent=2)
 
