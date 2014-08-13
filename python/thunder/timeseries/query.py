@@ -5,8 +5,7 @@ Class and standalone app for querying
 import argparse
 from numpy import zeros
 from scipy.io import loadmat
-from pyspark import SparkContext
-from thunder.utils import load, getdims, subtoind
+from thunder.utils import ThunderContext, getdims, subtoind
 from thunder.utils import save
 
 
@@ -88,9 +87,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    sc = SparkContext(appName="query")
+    tsc = ThunderContext.start(appName="query")
 
-    data = load(sc, args.datafile, args.preprocess).cache()
+    data = tsc.loadText(args.datafile, args.preprocess).cache()
     ts = Query(args.indsfile).calc(data)
 
     outputdir = args.outputdir + "-query"
