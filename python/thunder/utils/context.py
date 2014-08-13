@@ -71,8 +71,7 @@ class ThunderContext():
         <k1> <k2> ... <v1> <v2> ... <k1> <k2> ... <v1> <v2> ...
         where <k1> <k2> ... are keys and <v1> <v2> ... are data values
         Each record must contain the same total number of keys and values
-        If the there are no keys, a linear index key will auomatically
-        be added to each record
+        If nkeys is 0, a single index key will be added to each record
         Files can be local or stored on HDFS / S3
 
         Parameters
@@ -100,6 +99,10 @@ class ThunderContext():
 
         nvalues += nkeys
         nvalues *= dtype(format).itemsize
+
+        if os.path.isdir(datafile):
+            datafile = os.path.join(datafile, '*.bin')
+
         lines = self._sc.newAPIHadoopFile(datafile, 'thunder.util.io.hadoop.FixedLengthBinaryInputFormat',
                                           'org.apache.hadoop.io.LongWritable',
                                           'org.apache.hadoop.io.BytesWritable',
