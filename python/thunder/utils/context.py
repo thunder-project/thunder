@@ -66,7 +66,7 @@ class ThunderContext():
 
         return preprocess(data, method=filter)
 
-    def loadBinary(self, datafile, nvalues, nkeys=0, format=int16, filter=None):
+    def loadBinary(self, datafile, nvalues, nkeys=3, format=int16, filter=None):
         """
         Load data from flat binary file (or a directory of files) with format
         <k1> <k2> ... <v1> <v2> ... <k1> <k2> ... <v1> <v2> ...
@@ -113,7 +113,7 @@ class ThunderContext():
         if nkeys > 0:
             data = parsed.map(lambda (k, v): (tuple(v[0:nkeys].astype(int)), v[nkeys:].astype(float)))
         else:
-            data = parsed.map(lambda (k, v): ((k,), v))
+            data = parsed.map(lambda (k, v): ((k,), v.astype(float)))
 
         return preprocess(data, method=filter)
 
