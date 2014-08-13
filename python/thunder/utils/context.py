@@ -65,12 +65,14 @@ class ThunderContext():
 
         return preprocess(data, method=filter)
 
-    def loadBinary(self, datafile, nvalues, nkeys, format=int16, filter=None):
+    def loadBinary(self, datafile, nvalues, nkeys=0, format=int16, filter=None):
         """
         Load data from flat binary file (or a directory of files) with format
         <k1> <k2> ... <v1> <v2> ... <k1> <k2> ... <v1> <v2> ...
-        where <k1> <k2> ... are keys and <t1> <t2> ... are data values
+        where <k1> <k2> ... are keys and <v1> <v2> ... are data values
         Each record must contain the same total number of keys and values
+        If the there are no keys, a linear index key will auomatically
+        be added to each record
         Files can be local or stored on HDFS / S3
 
         Parameters
@@ -81,7 +83,7 @@ class ThunderContext():
         nvalues : int
             Number of values per record
 
-        nkeys : int
+        nkeys : int, optional, default = 0
             Number of keys per record
 
         format : numpy.dtype, optional, default = int16
@@ -103,8 +105,11 @@ class ThunderContext():
                                           'org.apache.hadoop.io.BytesWritable',
                                           conf={'recordLength': str(nvalues)})
 
-        data = lines.map(lambda (k, v): frombuffer(v, format))\
-            .map(lambda v: (tuple(v[0:nkeys].astype(int)), v[nkeys:].astype(float)))
+        parsed = lines.map(lambda (k, v): (k, frombuffer(v, format)))
+        if nkeys > 0:
+            data = parsed.map(lambda (k, v): (tuple(v[0:nkeys].astype(int)), v[nkeys:].astype(float)))
+        else:
+            data = parsed.map(lambda (k, v): ((k,), v))
 
         return preprocess(data, method=filter)
 

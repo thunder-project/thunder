@@ -1,16 +1,15 @@
 package thunder.util.io.hadoop
 
-import org.apache.hadoop.io.{LongWritable, BytesWritable}
-import org.apache.hadoop.mapreduce.{JobContext, InputSplit, RecordReader, TaskAttemptContext}
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
-import org.apache.hadoop.fs.Path
 import java.io.{FileFilter, File}
-import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
+import org.apache.hadoop.io.{LongWritable, BytesWritable}
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
+import org.apache.hadoop.mapreduce.{JobContext, InputSplit, RecordReader, TaskAttemptContext}
 
 /**
  * Custom Input Format for reading and splitting flat binary files that contain records, each of which
  * are a fixed size in bytes. The fixed record size is specified through a parameter recordLength
- * in the hadoop configuration. Alternatively, the record size can be specified in the file names,
+ * in the Hadoop configuration. Alternatively, the record size can be specified in the file names,
  * by embedding a string of the form "bytesXXX" at the end of every file to be processed,
  * for example, "mydata_bytes8.bin". If specifying a directory or a list of files, all files must
  * contain this string. All files must also have the same fixed record size,
