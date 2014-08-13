@@ -270,6 +270,16 @@ class ThunderContext():
 
         Stacks are typically flat binary files containing
         2-dimensional or 3-dimensional image data
+
+        We assume there are multiple files:
+
+        file0.stack, file1.stack, file2.stack, ...
+
+        This function loads the same contiguous block from all files,
+        and rewrites the result to flat binary files of the form:
+
+        block0.bin, block1.bin, block2.bin, ...
+
         """
 
         # TODO: assumes int16, add support for other formats
@@ -287,8 +297,8 @@ class ThunderContext():
         # get the total stack dimensions
         totaldim = float(prod(dims))
 
-        # if number of partitions not provided, start by setting it
-        # so that each partition is approximately 64 MB or less
+        # if number of blocks not provided, start by setting it
+        # so that each block is approximately 200 MB
         # NOTE: currently assumes integer valued data
         if not nblocks:
             nblocks = int(max(floor((totaldim * len(files) * 2) / (200 * 10**6)), 1))
@@ -319,7 +329,7 @@ class ThunderContext():
 
             for i, f in enumerate(files):
                 fid = open(f, "rb")
-                fid.seek(position * 2)
+                fid.seek(position * dtype(int16).itemsize)
                 mat[:, i] = fromfile(fid, dtype=int16, count=blocksize)
 
             # append subscript keys based on dimensions
