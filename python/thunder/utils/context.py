@@ -181,7 +181,7 @@ class ThunderContext():
         else:
             raise NotImplementedError("dataset '%s' not availiable" % dataset)
 
-    def convertStack(self, datafile, dims, npartitions=None, savefile=None):
+    def convertStack(self, datafile, dims, savefile, npartitions=None, filerange=None):
         """
         Convert data from binary stack files to reformatted flat binary files,
         see also convertStack
@@ -194,13 +194,17 @@ class ThunderContext():
         dims : list
             Stack dimensions
 
-        npartitions : int, optional, automatically set
-            Number of partitions for splitting data
-
         savefile : str, optional, default = None (directly return RDD)
             Location to save the converted data
+
+        npartitions : int, optional, default = None (automatically set)
+            Number of partitions for splitting data
+
+        filerange : list, optional, default = None (all files)
+            Indices of first and last file to include
+
         """
-        rdd = self.importStackAsBlocks(datafile, dims, npartitions=npartitions)
+        rdd = self.importStackAsBlocks(datafile, dims, npartitions=npartitions, filerange=filerange)
 
         # save blocks of data to flat binary files
         def writeblock(part, mat, path):
@@ -214,7 +218,7 @@ class ThunderContext():
 
         rdd.foreach(lambda (ip, mat): writeblock(ip, mat, savefile))
 
-    def importStack(self, datafile, dims, npartitions=None, filter=None):
+    def importStack(self, datafile, dims, npartitions=None, filerange=None, filter=None):
         """
         Import data from binary stack files as an RDD, see also convertStack
 
@@ -229,6 +233,9 @@ class ThunderContext():
         npartitions : int, optional, automatically set
             Number of partitions for splitting data
 
+        filerange : list, optional, default = None (all files)
+            Indices of first and last file to include
+
         filter : str, optional, default = None (no preprocessing)
             Which preprocessing to perform
 
@@ -237,12 +244,12 @@ class ThunderContext():
         data : RDD of (tuple, array) pairs
             Parsed and preprocessed data
         """
-        rdd = self.importStackAsBlocks(datafile, dims, npartitions=npartitions)
+        rdd = self.importStackAsBlocks(datafile, dims, npartitions=npartitions, filerange=filerange)
         nkeys = len(dims)
         data = rdd.values().flatMap(lambda x: list(x)).map(lambda x: (tuple(x[0:nkeys].astype(int)), x[nkeys:]))
         return preprocess(data, method=filter)
 
-    def importStackAsBlocks(self, datafile, dims, npartitions=None):
+    def importStackAsBlocks(self, datafile, dims, npartitions=None, filerange=None):
         """
         Convert data from binary stack files to blocks of an RDD,
         which can either be saved to flat binary files,
@@ -261,6 +268,8 @@ class ThunderContext():
             files = sorted(glob.glob(datafile))
         if len(files) < 1:
             raise IOError('cannot find any stack files in %s' % datafile)
+        if filerange:
+            files = files[filerange[0]:filerange[1]+1]
 
         # get the total stack dimensions
         totaldim = float(prod(dims))
@@ -280,7 +289,7 @@ class ThunderContext():
             npartitions = kupdated * dims[2]
             blocksize = int(totaldim / npartitions)
         else:
-            # otherwise just round to make partitions divide blocks nearly evenly
+            # otherwise just round to make partitions divide into nearly even blocks
             blocksize = int(ceil(totaldim / float(npartitions)))
             npartitions = int(ceil(totaldim / float(blocksize)))
 
