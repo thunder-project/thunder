@@ -2,7 +2,7 @@
 
 import glob
 import os
-from numpy import int16, dtype, frombuffer, zeros, fromfile, asarray, ceil, shape, concatenate, prod
+from numpy import int16, dtype, frombuffer, zeros, fromfile, asarray, mod, floor, ceil, shape, concatenate, prod
 from pyspark import SparkContext
 from thunder.utils.load import PreProcessor, Parser, indtosub
 from thunder.utils import DataSets
@@ -247,7 +247,12 @@ class ThunderContext():
         Convert data from binary stack files to blocks of an RDD,
         which can either be saved to flat binary files,
         or returned as an flattened RDD (see convertStack and importStack)
+
+        Stacks are typically flat binary files containing
+        2-dimensional or 3-dimensional image data
         """
+
+        # TODO: assumes int16, add support for other formats
 
         # get the paths to the data
         if os.path.isdir(datafile):
@@ -260,12 +265,24 @@ class ThunderContext():
         # get the total stack dimensions
         totaldim = float(prod(dims))
 
-        # compute a block size
-        # TODO add automatic calculation of evenly distributed partitions
-        blocksize = int(ceil(int(ceil(totaldim / float(npartitions)))))
+        # if number of partitions not provided, start by setting it
+        # so that each partition is approximately 64 MB or less
+        # NOTE: currently assumes integer valued data
+        if not npartitions:
+            npartitions = int(max(floor((totaldim * len(files) * 2) / (64 * 10**6)), 1))
 
-        # recompute number of partitions based on block size
-        npartitions = int(round(totaldim / float(blocksize)))
+        if len(dims) == 3:
+            # for 3D stacks, do calculations to ensure that
+            # different planes appear in distinct files
+            k = max(int(floor(float(npartitions) / dims[2])), 1)
+            n = dims[0] * dims[1]
+            kupdated = [x for x in range(1, k+1) if mod(n, x) == 0][-1]
+            npartitions = kupdated * dims[2]
+            blocksize = int(totaldim / npartitions)
+        else:
+            # otherwise just round to make sure that partitions divide blocks evenly
+            blocksize = int(ceil(totaldim / float(npartitions)))
+            npartitions = int(round(totaldim / float(blocksize)))
 
         def readblock(part, files, blocksize):
             # get start position for this block
