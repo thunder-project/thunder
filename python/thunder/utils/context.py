@@ -2,6 +2,7 @@
 
 import glob
 import os
+import json
 from numpy import int16, dtype, frombuffer, zeros, fromfile, asarray, mod, floor, ceil, shape, concatenate, prod
 from pyspark import SparkContext
 from thunder.utils.load import PreProcessor, Parser, indtosub
@@ -218,9 +219,21 @@ class ThunderContext():
 
         rdd.foreach(lambda (ip, mat): writeblock(ip, mat, savefile))
 
-    def importStack(self, datafile, dims, npartitions=None, filerange=None, filter=None):
+        # write log file
+        if not filerange:
+            if os.path.isdir(datafile):
+                files = glob.glob(os.path.join(datafile, '*.stack'))
+            else:
+                files = glob.glob(datafile)
+            filerange = [0, len(files)-1]
+        logout = {'input': datafile, 'filerange': filerange, 'dims': dims}
+        f = open(os.path.join(savefile, 'SUCCESS.json'), 'w')
+        json.dump(logout, f, indent=2)
+
+    def importStack(self, datafile, dims, nblocks=None, filerange=None, filter=None):
         """
-        Import data from binary stack files as an RDD, see also convertStack
+        Import data from binary stack files as an RDD,
+        see also convertStack
 
         Parameters
         ----------
