@@ -48,9 +48,11 @@
     </div>
     <br>
 
-.. include:: ../../README.rst
-	:start-after: About
-	:end-before: Quick start
+.. raw:: html
+  
+  <hr>
+  <p>thunder is a library for analyzing large-scale neural data. It's fast to run, easy to develop for, and can be used interactively. It is built on Spark, a new framework for cluster computing.</p>
+  <p>thunder includes utilties for data loading and saving, and modular functions for time series statistics, matrix decompositions, and fitting algorithms. Analyses can easily be scripted or combined. It is written in Spark's Python API (Pyspark), making use of scipy, numpy, and scikit-learn.</p>
 
 
 .. raw:: html
