@@ -32,6 +32,7 @@ if not ((master is None) or ("local" in master)) or ec2:
     # check for egg
     egg = glob.glob(os.path.join(dist, "*.egg"))
 
+    # TODO check version
     if len(egg) == 0:
         os.system(os.path.join(calldir, 'build'))
         egg = glob.glob(os.path.join(dist, "*.egg"))
