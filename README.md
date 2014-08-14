@@ -2,8 +2,8 @@ thunder
 =======
 
 <div class="row">
-  <a>
-      <img src="http://thefreemanlab.com/thunder/docs/_static/thumbnail_row.png" width="800px" height="100px">
+  <a href="http://freeman-lab.github.io/thunder/">
+      <img src="http://thefreemanlab.com/thunder/docs/_static/thumbnail_row.png" width="800px" height="125px">
   </a>
 </div>
 
