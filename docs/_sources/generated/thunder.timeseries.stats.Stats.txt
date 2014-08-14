@@ -1,0 +1,16 @@
+:mod:`thunder.timeseries.stats`.Stats
+============================================
+
+.. currentmodule:: thunder.timeseries.stats
+
+.. autoclass:: Stats
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~Stats.__init__
+      ~Stats.calc
+      ~Stats.get
+   
+

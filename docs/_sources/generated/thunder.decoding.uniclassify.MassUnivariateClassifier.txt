@@ -1,0 +1,17 @@
+:mod:`thunder.decoding.uniclassify`.MassUnivariateClassifier
+===================================================================
+
+.. currentmodule:: thunder.decoding.uniclassify
+
+.. autoclass:: MassUnivariateClassifier
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~MassUnivariateClassifier.__init__
+      ~MassUnivariateClassifier.classify
+      ~MassUnivariateClassifier.get
+      ~MassUnivariateClassifier.load
+   
+

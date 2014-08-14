@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>thunder.decoding.uniclassify &mdash; Thunder 0.1.0 documentation</title>
+    <title>thunder.decoding.uniclassify &mdash; Thunder 0.2.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.1.0',
+        VERSION:     '0.2.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,7 +31,7 @@
     <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../../../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.1.0 documentation" href="../../../index.html" />
+    <link rel="top" title="Thunder 0.2.0 documentation" href="../../../index.html" />
     <link rel="up" title="thunder.decoding" href="../decoding.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html"><img src="../../../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.1.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -127,12 +127,10 @@
 <span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">ttest_ind</span>
 <span class="kn">from</span> <span class="nn">sklearn.naive_bayes</span> <span class="kn">import</span> <span class="n">GaussianNB</span>
 <span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">cross_validation</span>
-<span class="kn">from</span> <span class="nn">pyspark</span> <span class="kn">import</span> <span class="n">SparkContext</span>
-<span class="kn">from</span> <span class="nn">thunder.utils</span> <span class="kn">import</span> <span class="n">load</span>
-<span class="kn">from</span> <span class="nn">thunder.utils</span> <span class="kn">import</span> <span class="n">save</span>
+<span class="kn">from</span> <span class="nn">thunder.utils</span> <span class="kn">import</span> <span class="n">ThunderContext</span><span class="p">,</span> <span class="n">save</span>
 
 
-<span class="k">class</span> <span class="nc">MassUnivariateClassifier</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="MassUnivariateClassifier"><a class="viewcode-back" href="../../../generated/thunder.decoding.uniclassify.MassUnivariateClassifier.html#thunder.decoding.uniclassify.MassUnivariateClassifier">[docs]</a><span class="k">class</span> <span class="nc">MassUnivariateClassifier</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Base class for mass univariate classification.</span>
 <span class="sd">    Assumes that for each signal, each time point belongs to one</span>
 <span class="sd">    of several categories. Uses independent classifiers to train and predict.</span>
@@ -196,7 +194,7 @@
     <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="nb">set</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">pass</span>
 
-    <span class="k">def</span> <span class="nf">classify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">featureset</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="MassUnivariateClassifier.classify"><a class="viewcode-back" href="../../../generated/thunder.decoding.uniclassify.MassUnivariateClassifier.html#thunder.decoding.uniclassify.MassUnivariateClassifier.classify">[docs]</a>    <span class="k">def</span> <span class="nf">classify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">featureset</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Run classification on an RDD</span>
 
 <span class="sd">        Parameters</span>
@@ -224,7 +222,7 @@
 
         <span class="k">return</span> <span class="n">perf</span>
 
-
+</div></div>
 <div class="viewcode-block" id="GaussNaiveBayesClassifier"><a class="viewcode-back" href="../../../generated/thunder.decoding.uniclassify.GaussNaiveBayesClassifier.html#thunder.decoding.uniclassify.GaussNaiveBayesClassifier">[docs]</a><span class="k">class</span> <span class="nc">GaussNaiveBayesClassifier</span><span class="p">(</span><span class="n">MassUnivariateClassifier</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Classifier for Gaussian Naive Bayes classification</span>
 
@@ -346,9 +344,9 @@
 
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
 
-    <span class="n">sc</span> <span class="o">=</span> <span class="n">SparkContext</span><span class="p">(</span><span class="s">&quot;classify&quot;</span><span class="p">)</span>
+    <span class="n">tsc</span> <span class="o">=</span> <span class="n">ThunderContext</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="s">&quot;classify&quot;</span><span class="p">)</span>
 
-    <span class="n">data</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">datafile</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">preprocess</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadText</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">datafile</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">preprocess</span><span class="p">)</span>
     <span class="n">clf</span> <span class="o">=</span> <span class="n">MassUnivariateClassifier</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">paramfile</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">classifymode</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">cv</span><span class="p">)</span>
     <span class="n">perf</span> <span class="o">=</span> <span class="n">clf</span><span class="o">.</span><span class="n">classify</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">featureset</span><span class="p">)</span>
 

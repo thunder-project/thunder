@@ -1,0 +1,17 @@
+:mod:`thunder.regression.tuning`.TuningModel
+===================================================
+
+.. currentmodule:: thunder.regression.tuning
+
+.. autoclass:: TuningModel
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~TuningModel.__init__
+      ~TuningModel.fit
+      ~TuningModel.get
+      ~TuningModel.load
+   
+

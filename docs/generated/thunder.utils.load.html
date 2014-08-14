@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>thunder.utils.load &mdash; Thunder 0.1.0 documentation</title>
+    <title>thunder.utils.load &mdash; Thunder 0.2.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.1.0',
+        VERSION:     '0.2.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,10 +31,7 @@
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.1.0 documentation" href="../index.html" />
-    <link rel="up" title="API Reference" href="../api.html" />
-    <link rel="next" title="thunder.utils.save" href="thunder.utils.save.html" />
-    <link rel="prev" title="thunder.timeseries.LocalCorr" href="thunder.timeseries.LocalCorr.html" />
+    <link rel="top" title="Thunder 0.2.0 documentation" href="../index.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -54,7 +51,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.1.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -76,8 +73,8 @@
 <li class="toctree-l1"><a class="reference internal" href="../basic_usage.html">Basic usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
 </ul>
-<ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a></li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
 </ul>
 </ul>
 </li>
@@ -125,45 +122,8 @@
 <h1><a class="reference internal" href="../api.html#module-thunder.utils" title="thunder.utils"><tt class="xref py py-mod docutils literal"><span class="pre">thunder.utils</span></tt></a>.load<a class="headerlink" href="#thunder-utils-load" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="thunder.utils.load">
-<tt class="descclassname">thunder.utils.</tt><tt class="descname">load</tt><big>(</big><em>sc</em>, <em>datafile</em>, <em>preprocessmethod='raw'</em>, <em>nkeys=3</em>, <em>npartitions=None</em><big>)</big><a class="headerlink" href="#thunder.utils.load" title="Permalink to this definition">¶</a></dt>
-<dd><p>Load data from a text file (or a directory of files) with format
-&lt;k1&gt; &lt;k2&gt; ... &lt;t1&gt; &lt;t2&gt; ...
-where &lt;k1&gt; &lt;k2&gt; ... are keys (Int) and &lt;t1&gt; &lt;t2&gt; ... are the data values (Double)
-If passed a directory, will automatically sort files by name</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>sc</strong> : SparkContext</p>
-<blockquote>
-<div><p>The Spark Context</p>
-</div></blockquote>
-<p><strong>datafile</strong> : str</p>
-<blockquote>
-<div><p>Location of raw data</p>
-</div></blockquote>
-<p><strong>preprocessmethod</strong> : str, optional, default = &#8220;raw&#8221; (no preprocessing)</p>
-<blockquote>
-<div><p>Which preprocessing to perform</p>
-</div></blockquote>
-<p><strong>nkeys</strong> : int, optional, default = 3</p>
-<blockquote>
-<div><p>Number of keys per data point</p>
-</div></blockquote>
-<p><strong>npartitions</strong> : int, optional, default = None</p>
-<blockquote>
-<div><p>Number of partitions</p>
-</div></blockquote>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>data</strong> : RDD of (tuple, array) pairs</p>
-<blockquote class="last">
-<div><p>The parsed and preprocessed data as an RDD</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
+<tt class="descclassname">thunder.utils.</tt><tt class="descname">load</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.utils.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Utilities for loading and preprocessing data</p>
 </dd></dl>
 
 </div>

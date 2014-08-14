@@ -1,0 +1,16 @@
+:mod:`thunder.regression.regress`.RegressionModel
+========================================================
+
+.. currentmodule:: thunder.regression.regress
+
+.. autoclass:: RegressionModel
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~RegressionModel.fit
+      ~RegressionModel.get
+      ~RegressionModel.load
+   
+

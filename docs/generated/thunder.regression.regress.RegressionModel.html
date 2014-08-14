@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>thunder.regression.base.MeanRegressionModel &mdash; Thunder 0.1.0 documentation</title>
+    <title>thunder.regression.regress.RegressionModel &mdash; Thunder 0.2.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.1.0',
+        VERSION:     '0.2.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,7 +31,10 @@
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.1.0 documentation" href="../index.html" />
+    <link rel="top" title="Thunder 0.2.0 documentation" href="../index.html" />
+    <link rel="up" title="API Reference" href="../api.html" />
+    <link rel="next" title="thunder.regression.regress.MeanRegressionModel" href="thunder.regression.regress.MeanRegressionModel.html" />
+    <link rel="prev" title="thunder.factorization.svd.SVD" href="thunder.factorization.svd.SVD.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -51,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.1.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -73,8 +76,8 @@
 <li class="toctree-l1"><a class="reference internal" href="../basic_usage.html">Basic usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
 </ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a></li>
 </ul>
 </ul>
 </li>
@@ -88,7 +91,7 @@
   <ul class="dropdown-menu localtoc"
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">thunder.regression.base</span></tt>.MeanRegressionModel</a></li>
+<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">thunder.regression.regress</span></tt>.RegressionModel</a></li>
 </ul>
 </ul>
 </li>
@@ -118,8 +121,64 @@
   <div class="row">
     <div class="col-md-12">
       
-  <div class="section" id="thunder-regression-base-meanregressionmodel">
-<h1><tt class="xref py py-mod docutils literal"><span class="pre">thunder.regression.base</span></tt>.MeanRegressionModel<a class="headerlink" href="#thunder-regression-base-meanregressionmodel" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="thunder-regression-regress-regressionmodel">
+<h1><tt class="xref py py-mod docutils literal"><span class="pre">thunder.regression.regress</span></tt>.RegressionModel<a class="headerlink" href="#thunder-regression-regress-regressionmodel" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="thunder.regression.regress.RegressionModel">
+<em class="property">class </em><tt class="descclassname">thunder.regression.regress.</tt><tt class="descname">RegressionModel</tt><a class="reference internal" href="../_modules/thunder/regression/regress.html#RegressionModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.regression.regress.RegressionModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for loading and fitting regression models</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.regression.regress.RegressionModel.fit" title="thunder.regression.regress.RegressionModel.fit"><tt class="xref py py-obj docutils literal"><span class="pre">fit</span></tt></a>(data[,&nbsp;comps])</td>
+<td>Fit mass univariate regression models</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">get</span></tt>(y)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">load</span></tt>(modelfile,&nbsp;regressmode,&nbsp;**opts)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="thunder.regression.regress.RegressionModel.fit">
+<tt class="descname">fit</tt><big>(</big><em>data</em>, <em>comps=None</em><big>)</big><a class="reference internal" href="../_modules/thunder/regression/regress.html#RegressionModel.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.regression.regress.RegressionModel.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit mass univariate regression models</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : RDD of (tuple, array) pairs</p>
+<blockquote>
+<div><p>The data to fit</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>betas</strong> : RDD of (tuple, array) pairs</p>
+<blockquote>
+<div><p>Fitted model parameters for each record</p>
+</div></blockquote>
+<p><strong>stats</strong> : RDD of (tuple, float) pairs</p>
+<blockquote>
+<div><p>Model fit statistic for each record</p>
+</div></blockquote>
+<p><strong>resid</strong> : RDD of (tuple, array) pairs</p>
+<blockquote class="last">
+<div><p>Residuals for each record</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 
 
@@ -135,7 +194,7 @@
         <br/>
         
 <div id="sourcelink">
-  <a href="../_sources/generated/thunder.regression.base.MeanRegressionModel.txt"
+  <a href="../_sources/generated/thunder.regression.regress.RegressionModel.txt"
      rel="nofollow">Source</a>
 </div>
       
