@@ -3,22 +3,7 @@ thunder
 
 <div class="row">
   <a>
-      <img style="border-radius:10px" src="http://thefreemanlab.com/thunder/docs/_static/thumbnail_1.png" width="135px" height="135px">
-  </a>
-  <a>
-      <img style="border-radius:10px" src="http://thefreemanlab.com/thunder/docs/_static/thumbnail_2.png" width="135px" height="135px">
-  </a>
-  <a>
-      <img style="border-radius:10px" src="http://thefreemanlab.com/thunder/docs/_static/thumbnail_3.png" width="135px" height="135px">
-  </a>
-  <a>
-      <img style="border-radius:10px" src="http://thefreemanlab.com/thunder/docs/_static/thumbnail_4.png" width="135px" height="135px">
-  </a>
-  <a>
-      <img style="border-radius:10px" src="http://thefreemanlab.com/thunder/docs/_static/thumbnail_5.png" width="135px" height="135px">
-  </a>
-  <a>
-      <img style="border-radius:10px"  src="http://thefreemanlab.com/thunder/docs/_static/thumbnail_6.png" width="135px" height="135px">
+      <img src="http://thefreemanlab.com/thunder/docs/_static/thumbnail_row.png" width="800px" height="100px">
   </a>
 </div>
 
