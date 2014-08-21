@@ -92,6 +92,21 @@ class PreProcessor(object):
                 yy = polyval(p, x)
                 return y - yy
 
+        if preprocessmethod == "dff-detrendnonlin-percentile":
+
+            def func(y):
+                # first do nonlinear detrending (but don't subtract the intercept)
+                x = arange(1, len(y)+1)
+                p = polyfit(x, y, 5)
+                p[-1] = 0  # do not subtract intercept
+                yy = polyval(p, x)
+                y = y - yy
+
+                # then take 20th percentile as baseline
+                mnval = percentile(y, 20)
+                y = (y - mnval) / (mnval + 0.1)
+                return y
+
         if preprocessmethod == "dff-detrend-percentile":
 
             def func(y):
