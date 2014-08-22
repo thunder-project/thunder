@@ -25,13 +25,13 @@ Type the following line into the terminal
 
 .. code-block:: bash
 	
-	pip install python-thunder
+	pip install thunder-python
 
 If it didn't work, try
 
 .. code-block:: bash
 	
-	sudo pip install python-thunder
+	sudo pip install thunder-python
 
 If the installation was successful you will have three new commands available: ``thunder``, ``thunder-submit``, and ``thunder-ec2``. You can check the location of these commands by typing
 
