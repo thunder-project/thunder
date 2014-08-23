@@ -40,7 +40,7 @@ if not ((master is None) or ("local" in master)) or ec2:
     os.environ['ADD_FILES'] = egg[0]
 
 # get location of jar and add to the submit classpath
-jar = os.path.join(calldir, '../thunder/lib/thunder_2.10-'+str(thunder.__version__)+'.jar')
+jar = os.path.join(os.path.dirname(os.path.realpath(thunder.__file__)), 'lib/thunder_2.10-'+str(thunder.__version__)+'.jar')
 
 if os.getenv('SPARK_SUBMIT_CLASSPATH') is None:
     os.environ['SPARK_SUBMIT_CLASSPATH'] = ""
