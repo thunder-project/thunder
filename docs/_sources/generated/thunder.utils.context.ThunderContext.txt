@@ -10,9 +10,9 @@
    .. autosummary::
    
       ~ThunderContext.__init__
-      ~ThunderContext.convertStack
-      ~ThunderContext.importStack
-      ~ThunderContext.importStackAsBlocks
+      ~ThunderContext.convertStacks
+      ~ThunderContext.importStacks
+      ~ThunderContext.importStacksAsBlocks
       ~ThunderContext.loadBinary
       ~ThunderContext.loadBinaryLocal
       ~ThunderContext.loadExample

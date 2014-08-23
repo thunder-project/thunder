@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>thunder.utils.context &mdash; Thunder 0.2.0 documentation</title>
+    <title>thunder.utils.context &mdash; Thunder 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.2.0',
+        VERSION:     '0.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,8 +31,8 @@
     <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../../../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.2.0 documentation" href="../../../index.html" />
-    <link rel="up" title="thunder.utils" href="../utils.html" />
+    <link rel="top" title="Thunder 0.3.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html"><img src="../../../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.3.0</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -121,9 +121,12 @@
 
 <span class="kn">import</span> <span class="nn">glob</span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">int16</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">frombuffer</span><span class="p">,</span> <span class="n">zeros</span><span class="p">,</span> <span class="n">fromfile</span><span class="p">,</span> <span class="n">asarray</span><span class="p">,</span> <span class="n">mod</span><span class="p">,</span> <span class="n">floor</span><span class="p">,</span> <span class="n">ceil</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">concatenate</span><span class="p">,</span> <span class="n">prod</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">int16</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">frombuffer</span><span class="p">,</span> <span class="n">zeros</span><span class="p">,</span> <span class="n">fromfile</span><span class="p">,</span> \
+    <span class="n">asarray</span><span class="p">,</span> <span class="n">mod</span><span class="p">,</span> <span class="n">floor</span><span class="p">,</span> <span class="n">ceil</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">concatenate</span><span class="p">,</span> <span class="n">prod</span><span class="p">,</span> <span class="n">arange</span>
+<span class="kn">from</span> <span class="nn">scipy.io</span> <span class="kn">import</span> <span class="n">loadmat</span>
 <span class="kn">from</span> <span class="nn">pyspark</span> <span class="kn">import</span> <span class="n">SparkContext</span>
+<span class="kn">import</span> <span class="nn">urllib</span>
+<span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">from</span> <span class="nn">thunder.utils.load</span> <span class="kn">import</span> <span class="n">PreProcessor</span><span class="p">,</span> <span class="n">Parser</span><span class="p">,</span> <span class="n">indtosub</span>
 <span class="kn">from</span> <span class="nn">thunder.utils</span> <span class="kn">import</span> <span class="n">DataSets</span>
 
@@ -146,7 +149,7 @@
         <span class="sd">&quot;&quot;&quot;Starts a ThunderContext using the same arguments as SparkContext&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">ThunderContext</span><span class="p">(</span><span class="n">SparkContext</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
 </div>
-<div class="viewcode-block" id="ThunderContext.loadText"><a class="viewcode-back" href="../../../generated/thunder.utils.context.ThunderContext.html#thunder.utils.context.ThunderContext.loadText">[docs]</a>    <span class="k">def</span> <span class="nf">loadText</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datafile</span><span class="p">,</span> <span class="n">nkeys</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">npartitions</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="ThunderContext.loadText"><a class="viewcode-back" href="../../../generated/thunder.utils.context.ThunderContext.html#thunder.utils.context.ThunderContext.loadText">[docs]</a>    <span class="k">def</span> <span class="nf">loadText</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datafile</span><span class="p">,</span> <span class="n">nkeys</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">minPartitions</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Load data from text file (or a directory of files) with rows as</span>
 <span class="sd">        &lt;k1&gt; &lt;k2&gt; ... &lt;v1&gt; &lt;v2&gt; ...</span>
@@ -179,13 +182,13 @@
             <span class="n">files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">datafile</span><span class="p">,</span> <span class="s">&#39;*.txt&#39;</span><span class="p">)))</span>
             <span class="n">datafile</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">files</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39;,&#39;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">))])[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
-        <span class="n">lines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="o">.</span><span class="n">textFile</span><span class="p">(</span><span class="n">datafile</span><span class="p">,</span> <span class="n">npartitions</span><span class="p">)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="o">.</span><span class="n">textFile</span><span class="p">(</span><span class="n">datafile</span><span class="p">,</span> <span class="n">minPartitions</span><span class="p">)</span>
         <span class="n">parser</span> <span class="o">=</span> <span class="n">Parser</span><span class="p">(</span><span class="n">nkeys</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">lines</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">preprocess</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="nb">filter</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="ThunderContext.loadBinary"><a class="viewcode-back" href="../../../generated/thunder.utils.context.ThunderContext.html#thunder.utils.context.ThunderContext.loadBinary">[docs]</a>    <span class="k">def</span> <span class="nf">loadBinary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datafile</span><span class="p">,</span> <span class="n">nvalues</span><span class="p">,</span> <span class="n">nkeys</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="n">int16</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="ThunderContext.loadBinary"><a class="viewcode-back" href="../../../generated/thunder.utils.context.ThunderContext.html#thunder.utils.context.ThunderContext.loadBinary">[docs]</a>    <span class="k">def</span> <span class="nf">loadBinary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datafile</span><span class="p">,</span> <span class="n">nvalues</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="s">&#39;int16&#39;</span><span class="p">,</span> <span class="n">nkeys</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Load data from flat binary file (or a directory of files) with format</span>
 <span class="sd">        &lt;k1&gt; &lt;k2&gt; ... &lt;v1&gt; &lt;v2&gt; ... &lt;k1&gt; &lt;k2&gt; ... &lt;v1&gt; &lt;v2&gt; ...</span>
@@ -193,20 +196,24 @@
 <span class="sd">        Each record must contain the same total number of keys and values</span>
 <span class="sd">        If nkeys is 0, a single index key will be added to each record</span>
 <span class="sd">        Files can be local or stored on HDFS / S3</span>
+<span class="sd">        Data parameters (number of values, number of keys, and format) can be</span>
+<span class="sd">        given as keyword arguments, or provided in a JSON configuration file.</span>
+<span class="sd">        Without a configuration file, must provide at least the number of values.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        datafile : str</span>
 <span class="sd">            Location of file(s)</span>
 
-<span class="sd">        nvalues : int</span>
+<span class="sd">        nvalues : int, optional, default = None</span>
 <span class="sd">            Number of values per record</span>
 
-<span class="sd">        nkeys : int, optional, default = 0</span>
+<span class="sd">        nkeys : int, optional, default = 3</span>
 <span class="sd">            Number of keys per record</span>
 
-<span class="sd">        format : numpy.dtype, optional, default = int16</span>
-<span class="sd">            Format to use when parsing binary data</span>
+<span class="sd">        format : string, optional, default = &#39;int16&#39;</span>
+<span class="sd">            Format to use when parsing binary data, string specification</span>
+<span class="sd">            of a numpy.dtype</span>
 
 <span class="sd">        filter : str, optional, default = None (no preprocessing)</span>
 <span class="sd">            Which preprocessing to perform</span>
@@ -217,22 +224,32 @@
 <span class="sd">            The parsed and preprocessed data as an RDD</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="n">nvalues</span> <span class="o">+=</span> <span class="n">nkeys</span>
-        <span class="n">nvalues</span> <span class="o">*=</span> <span class="n">dtype</span><span class="p">(</span><span class="n">format</span><span class="p">)</span><span class="o">.</span><span class="n">itemsize</span>
-
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">datafile</span><span class="p">):</span>
-            <span class="n">datafile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">datafile</span><span class="p">,</span> <span class="s">&#39;*.bin&#39;</span><span class="p">)</span>
+            <span class="n">basepath</span> <span class="o">=</span> <span class="n">datafile</span>
+            <span class="n">datafile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">basepath</span><span class="p">,</span> <span class="s">&#39;*.bin&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">basepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">datafile</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">basepath</span><span class="p">,</span> <span class="s">&#39;conf.json&#39;</span><span class="p">),</span> <span class="s">&#39;r&#39;</span><span class="p">)</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="n">nvalues</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s">&#39;nvalues&#39;</span><span class="p">]</span>
+            <span class="n">nkeys</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s">&#39;nkeys&#39;</span><span class="p">]</span>
+            <span class="n">format</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s">&#39;format&#39;</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">nvalues</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">StandardError</span><span class="p">(</span><span class="s">&#39;must specify nvalues if there is no configuration file&#39;</span><span class="p">)</span>
+
+        <span class="n">recordsize</span> <span class="o">=</span> <span class="n">nvalues</span> <span class="o">+</span> <span class="n">nkeys</span>
+        <span class="n">recordsize</span> <span class="o">*=</span> <span class="n">dtype</span><span class="p">(</span><span class="n">FORMATS</span><span class="p">[</span><span class="n">format</span><span class="p">])</span><span class="o">.</span><span class="n">itemsize</span>
 
         <span class="n">lines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="o">.</span><span class="n">newAPIHadoopFile</span><span class="p">(</span><span class="n">datafile</span><span class="p">,</span> <span class="s">&#39;thunder.util.io.hadoop.FixedLengthBinaryInputFormat&#39;</span><span class="p">,</span>
                                           <span class="s">&#39;org.apache.hadoop.io.LongWritable&#39;</span><span class="p">,</span>
                                           <span class="s">&#39;org.apache.hadoop.io.BytesWritable&#39;</span><span class="p">,</span>
-                                          <span class="n">conf</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;recordLength&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">nvalues</span><span class="p">)})</span>
+                                          <span class="n">conf</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;recordLength&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">recordsize</span><span class="p">)})</span>
 
         <span class="n">parsed</span> <span class="o">=</span> <span class="n">lines</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">frombuffer</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">format</span><span class="p">)))</span>
-        <span class="k">if</span> <span class="n">nkeys</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">parsed</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">nkeys</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)),</span> <span class="n">v</span><span class="p">[</span><span class="n">nkeys</span><span class="p">:]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">parsed</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span> <span class="p">((</span><span class="n">k</span><span class="p">,),</span> <span class="n">v</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)))</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">parsed</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">nkeys</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)),</span> <span class="n">v</span><span class="p">[</span><span class="n">nkeys</span><span class="p">:]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)))</span>
 
         <span class="k">return</span> <span class="n">preprocess</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="nb">filter</span><span class="p">)</span>
 </div>
@@ -272,9 +289,9 @@
         <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">__file__</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="n">dataset</span> <span class="o">==</span> <span class="s">&quot;iris&quot;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">loadText</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s">&#39;data/iris.txt&#39;</span><span class="p">))</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">loadText</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s">&#39;data/iris.txt&#39;</span><span class="p">),</span> <span class="n">minPartitions</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">dataset</span> <span class="o">==</span> <span class="s">&quot;fish&quot;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">loadText</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s">&#39;data/fish.txt&#39;</span><span class="p">))</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">loadText</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s">&#39;data/fish.txt&#39;</span><span class="p">),</span> <span class="n">minPartitions</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;dataset &#39;</span><span class="si">%s</span><span class="s">&#39; not found&quot;</span> <span class="o">%</span> <span class="n">dataset</span><span class="p">)</span>
 </div>
@@ -291,20 +308,30 @@
 <span class="sd">        -------</span>
 <span class="sd">        data : RDD of (tuple, array) pairs</span>
 <span class="sd">            Generated dataset</span>
+
+<span class="sd">        params : Tuple or numpy array</span>
+<span class="sd">            Parameters or metadata for dataset</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="s">&#39;ec&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="o">.</span><span class="n">master</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;must be running on EC2 to load this example data sets&quot;</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">dataset</span> <span class="o">==</span> <span class="s">&quot;zebrafish-optomotor-response&quot;</span><span class="p">:</span>
-            <span class="n">path</span> <span class="o">=</span> <span class="s">&#39;s3n://zebrafish.datasets/optomotor-response/1/&#39;</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">loadText</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="s">&#39;data/dat_plane*.txt&#39;</span><span class="p">,</span> <span class="n">npartitions</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="s">&#39;zebrafish.datasets/optomotor-response/1/&#39;</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loadText</span><span class="p">(</span><span class="s">&quot;s3n://&quot;</span> <span class="o">+</span> <span class="n">path</span> <span class="o">+</span> <span class="s">&#39;data/dat_plane*.txt&#39;</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="s">&#39;dff&#39;</span><span class="p">,</span> <span class="n">minPartitions</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+            <span class="n">opener</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">URLopener</span><span class="p">()</span>
+            <span class="n">myfile</span> <span class="o">=</span> <span class="n">opener</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s">&quot;https://s3.amazonaws.com/&quot;</span> <span class="o">+</span> <span class="n">path</span> <span class="o">+</span> <span class="s">&quot;params.json&quot;</span><span class="p">)</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">myfile</span><span class="p">)</span>
+            <span class="n">modelfile</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;trials&#39;</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">modelfile</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;dataset &#39;</span><span class="si">%s</span><span class="s">&#39; not availiable&quot;</span> <span class="o">%</span> <span class="n">dataset</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="ThunderContext.convertStack"><a class="viewcode-back" href="../../../generated/thunder.utils.context.ThunderContext.html#thunder.utils.context.ThunderContext.convertStack">[docs]</a>    <span class="k">def</span> <span class="nf">convertStack</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datafile</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">savefile</span><span class="p">,</span> <span class="n">nblocks</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">filerange</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="ThunderContext.convertStacks"><a class="viewcode-back" href="../../../generated/thunder.utils.context.ThunderContext.html#thunder.utils.context.ThunderContext.convertStacks">[docs]</a>    <span class="k">def</span> <span class="nf">convertStacks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datafile</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">savefile</span><span class="p">,</span> <span class="n">nblocks</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">filerange</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convert data from binary stack files to reformatted flat binary files,</span>
 <span class="sd">        see also convertStack</span>
+
+<span class="sd">        Currently only supported on a local or networked file system</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -314,7 +341,7 @@
 <span class="sd">        dims : list</span>
 <span class="sd">            Stack dimensions</span>
 
-<span class="sd">        savefile : str, optional, default = None (directly return RDD)</span>
+<span class="sd">        savefile : str</span>
 <span class="sd">            Location to save the converted data</span>
 
 <span class="sd">        nblocks : int, optional, default = None (automatically set)</span>
@@ -324,7 +351,7 @@
 <span class="sd">            Indices of first and last file to include</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">rdd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">importStackAsBlocks</span><span class="p">(</span><span class="n">datafile</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">nblocks</span><span class="o">=</span><span class="n">nblocks</span><span class="p">,</span> <span class="n">filerange</span><span class="o">=</span><span class="n">filerange</span><span class="p">)</span>
+        <span class="n">rdd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">importStacksAsBlocks</span><span class="p">(</span><span class="n">datafile</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">nblocks</span><span class="o">=</span><span class="n">nblocks</span><span class="p">,</span> <span class="n">filerange</span><span class="o">=</span><span class="n">filerange</span><span class="p">)</span>
 
         <span class="c"># save blocks of data to flat binary files</span>
         <span class="k">def</span> <span class="nf">writeblock</span><span class="p">(</span><span class="n">part</span><span class="p">,</span> <span class="n">mat</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
@@ -338,7 +365,7 @@
 
         <span class="n">rdd</span><span class="o">.</span><span class="n">foreach</span><span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">mat</span><span class="p">):</span> <span class="n">writeblock</span><span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">mat</span><span class="p">,</span> <span class="n">savefile</span><span class="p">))</span>
 
-        <span class="c"># write log file</span>
+        <span class="c"># write configuration file</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">filerange</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">datafile</span><span class="p">):</span>
                 <span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">datafile</span><span class="p">,</span> <span class="s">&#39;*.stack&#39;</span><span class="p">))</span>
@@ -346,14 +373,22 @@
                 <span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">datafile</span><span class="p">)</span>
             <span class="n">filerange</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">logout</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;input&#39;</span><span class="p">:</span> <span class="n">datafile</span><span class="p">,</span> <span class="s">&#39;filerange&#39;</span><span class="p">:</span> <span class="n">filerange</span><span class="p">,</span> <span class="s">&#39;dims&#39;</span><span class="p">:</span> <span class="n">dims</span><span class="p">,</span>
-                  <span class="s">&#39;nkeys&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">dims</span><span class="p">),</span> <span class="s">&#39;nvalues&#39;</span><span class="p">:</span> <span class="n">filerange</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">filerange</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">}</span>
-        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">savefile</span><span class="p">,</span> <span class="s">&#39;SUCCESS.json&#39;</span><span class="p">),</span> <span class="s">&#39;w&#39;</span><span class="p">)</span>
+                  <span class="s">&#39;nkeys&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">dims</span><span class="p">),</span> <span class="s">&#39;nvalues&#39;</span><span class="p">:</span> <span class="n">filerange</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">filerange</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="s">&#39;format&#39;</span><span class="p">:</span> <span class="s">&#39;int16&#39;</span><span class="p">}</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">savefile</span><span class="p">,</span> <span class="s">&#39;conf.json&#39;</span><span class="p">),</span> <span class="s">&#39;w&#39;</span><span class="p">)</span>
         <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">logout</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="c"># write SUCCESS file</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">savefile</span><span class="p">,</span> <span class="s">&#39;SUCCESS&#39;</span><span class="p">),</span> <span class="s">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </div>
-<div class="viewcode-block" id="ThunderContext.importStack"><a class="viewcode-back" href="../../../generated/thunder.utils.context.ThunderContext.html#thunder.utils.context.ThunderContext.importStack">[docs]</a>    <span class="k">def</span> <span class="nf">importStack</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datafile</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">nblocks</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">filerange</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="ThunderContext.importStacks"><a class="viewcode-back" href="../../../generated/thunder.utils.context.ThunderContext.html#thunder.utils.context.ThunderContext.importStacks">[docs]</a>    <span class="k">def</span> <span class="nf">importStacks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datafile</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">nblocks</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">filerange</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Import data from binary stack files as an RDD,</span>
 <span class="sd">        see also convertStack</span>
+
+<span class="sd">        Currently only supported on a local or networked file system</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -363,7 +398,7 @@
 <span class="sd">        dims : list</span>
 <span class="sd">            Stack dimensions</span>
 
-<span class="sd">        nblocks : int, optional, automatically set</span>
+<span class="sd">        nblocks : int, optional, default = None (automatically set)</span>
 <span class="sd">            Number of blocks to split data into</span>
 
 <span class="sd">        filerange : list, optional, default = None (all files)</span>
@@ -377,12 +412,12 @@
 <span class="sd">        data : RDD of (tuple, array) pairs</span>
 <span class="sd">            Parsed and preprocessed data</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">rdd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">importStackAsBlocks</span><span class="p">(</span><span class="n">datafile</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">nblocks</span><span class="o">=</span><span class="n">nblocks</span><span class="p">,</span> <span class="n">filerange</span><span class="o">=</span><span class="n">filerange</span><span class="p">)</span>
+        <span class="n">rdd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">importStacksAsBlocks</span><span class="p">(</span><span class="n">datafile</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">nblocks</span><span class="o">=</span><span class="n">nblocks</span><span class="p">,</span> <span class="n">filerange</span><span class="o">=</span><span class="n">filerange</span><span class="p">)</span>
         <span class="n">nkeys</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dims</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">rdd</span><span class="o">.</span><span class="n">values</span><span class="p">()</span><span class="o">.</span><span class="n">flatMap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">nkeys</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)),</span> <span class="n">x</span><span class="p">[</span><span class="n">nkeys</span><span class="p">:]))</span>
         <span class="k">return</span> <span class="n">preprocess</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="nb">filter</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="ThunderContext.importStackAsBlocks"><a class="viewcode-back" href="../../../generated/thunder.utils.context.ThunderContext.html#thunder.utils.context.ThunderContext.importStackAsBlocks">[docs]</a>    <span class="k">def</span> <span class="nf">importStackAsBlocks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datafile</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">nblocks</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">filerange</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="ThunderContext.importStacksAsBlocks"><a class="viewcode-back" href="../../../generated/thunder.utils.context.ThunderContext.html#thunder.utils.context.ThunderContext.importStacksAsBlocks">[docs]</a>    <span class="k">def</span> <span class="nf">importStacksAsBlocks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datafile</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">nblocks</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">filerange</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convert data from binary stack files to blocks of an RDD,</span>
 <span class="sd">        which can either be saved to flat binary files,</span>
@@ -400,9 +435,12 @@
 
 <span class="sd">        block0.bin, block1.bin, block2.bin, ...</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        Currently only supported on a local or networked file system</span>
 
-        <span class="c"># TODO: assumes int16, add support for other formats</span>
+<span class="sd">        TODO: Add support for EC2 loading</span>
+<span class="sd">        TODO: assumes int16, add support for other formats</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c"># get the paths to the data</span>
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">datafile</span><span class="p">):</span>
@@ -419,7 +457,6 @@
 
         <span class="c"># if number of blocks not provided, start by setting it</span>
         <span class="c"># so that each block is approximately 200 MB</span>
-        <span class="c"># NOTE: currently assumes integer valued data</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">nblocks</span><span class="p">:</span>
             <span class="n">nblocks</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">floor</span><span class="p">((</span><span class="n">totaldim</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">200</span> <span class="o">*</span> <span class="mi">10</span><span class="o">**</span><span class="mi">6</span><span class="p">)),</span> <span class="mi">1</span><span class="p">))</span>
 
@@ -462,19 +499,52 @@
         <span class="n">blocks</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nblocks</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="o">.</span><span class="n">parallelize</span><span class="p">(</span><span class="n">blocks</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">blocks</span><span class="p">))</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">b</span><span class="p">:</span> <span class="n">readblock</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="n">blocksize</span><span class="p">))</span>
 </div>
-<div class="viewcode-block" id="ThunderContext.loadBinaryLocal"><a class="viewcode-back" href="../../../generated/thunder.utils.context.ThunderContext.html#thunder.utils.context.ThunderContext.loadBinaryLocal">[docs]</a>    <span class="k">def</span> <span class="nf">loadBinaryLocal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datafile</span><span class="p">,</span> <span class="n">nvalues</span><span class="p">,</span> <span class="n">nkeys</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="n">int16</span><span class="p">,</span> <span class="n">keyfile</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="ThunderContext.loadBinaryLocal"><a class="viewcode-back" href="../../../generated/thunder.utils.context.ThunderContext.html#thunder.utils.context.ThunderContext.loadBinaryLocal">[docs]</a>    <span class="k">def</span> <span class="nf">loadBinaryLocal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datafile</span><span class="p">,</span> <span class="n">nvalues</span><span class="p">,</span> <span class="n">nkeys</span><span class="p">,</span> <span class="n">format</span><span class="p">,</span> <span class="n">keyfile</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Load data from a local binary file</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
-<div class="viewcode-block" id="ThunderContext.loadMatLocal"><a class="viewcode-back" href="../../../generated/thunder.utils.context.ThunderContext.html#thunder.utils.context.ThunderContext.loadMatLocal">[docs]</a>    <span class="k">def</span> <span class="nf">loadMatLocal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datafile</span><span class="p">,</span> <span class="n">keyfile</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="ThunderContext.loadMatLocal"><a class="viewcode-back" href="../../../generated/thunder.utils.context.ThunderContext.html#thunder.utils.context.ThunderContext.loadMatLocal">[docs]</a>    <span class="k">def</span> <span class="nf">loadMatLocal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datafile</span><span class="p">,</span> <span class="n">varname</span><span class="p">,</span> <span class="n">keyfile</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">minPartitions</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Load data from a local MAT file</span>
+<span class="sd">        Load data from a local MAT file, from a variable containing</span>
+<span class="sd">        either a 1d or 2d matrix, into an RDD of (key,value) pairs.</span>
+<span class="sd">        Each row of the input matrix will become the value of each record.</span>
+
+<span class="sd">        Keys can be provided in an extra MAT file containing a variable &#39;keys&#39;.</span>
+<span class="sd">        If not provided, linear indices will be used as keys.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        datafile : str</span>
+<span class="sd">            MAT file to import</span>
+
+<span class="sd">        varname : str</span>
+<span class="sd">            Variable name to load from MAT file</span>
+
+<span class="sd">        keyfile : str</span>
+<span class="sd">            MAT file to import with keys (must contain a variable &#39;keys&#39;)</span>
+
+<span class="sd">        filter : str, optional, default = None (no preprocessing)</span>
+<span class="sd">            Which preprocessing to perform</span>
+
+<span class="sd">        minPartitions : Int, optional, default = 1</span>
+<span class="sd">            Number of partitions for data</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">loadmat</span><span class="p">(</span><span class="n">datafile</span><span class="p">)[</span><span class="n">varname</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s">&#39;input data must be one or two dimensional&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">keyfile</span><span class="p">:</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">int16</span><span class="p">)),</span> <span class="n">loadmat</span><span class="p">(</span><span class="n">keyfile</span><span class="p">)[</span><span class="s">&#39;keys&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="p">(</span><span class="n">data</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">rdd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="o">.</span><span class="n">parallelize</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">data</span><span class="p">),</span> <span class="n">minPartitions</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">preprocess</span><span class="p">(</span><span class="n">rdd</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="nb">filter</span><span class="p">)</span>
 
 </div></div>
 <span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -484,6 +554,11 @@
         <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">mapValues</span><span class="p">(</span><span class="n">preprocessor</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">data</span>
+
+<span class="n">FORMATS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;int16&#39;</span><span class="p">:</span> <span class="n">int16</span><span class="p">,</span>
+    <span class="s">&#39;float&#39;</span><span class="p">:</span> <span class="nb">float</span>
+<span class="p">}</span>
 </pre></div>
 
     </div>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>thunder.utils.context.ThunderContext &mdash; Thunder 0.2.0 documentation</title>
+    <title>thunder.utils.context.ThunderContext &mdash; Thunder 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.2.0',
+        VERSION:     '0.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,7 +31,7 @@
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.2.0 documentation" href="../index.html" />
+    <link rel="top" title="Thunder 0.3.0 documentation" href="../index.html" />
     <link rel="up" title="API Reference" href="../api.html" />
     <link rel="next" title="thunder.utils.save.save" href="thunder.utils.save.save.html" />
     <link rel="prev" title="thunder.timeseries.localcorr.LocalCorr" href="thunder.timeseries.localcorr.LocalCorr.html" />
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.3.0</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -122,7 +122,7 @@
     <div class="col-md-12">
       
   <div class="section" id="thunder-utils-context-thundercontext">
-<h1><a class="reference internal" href="thunder.utils.context.html#thunder.utils.context" title="thunder.utils.context"><tt class="xref py py-mod docutils literal"><span class="pre">thunder.utils.context</span></tt></a>.ThunderContext<a class="headerlink" href="#thunder-utils-context-thundercontext" title="Permalink to this headline">¶</a></h1>
+<h1><tt class="xref py py-mod docutils literal"><span class="pre">thunder.utils.context</span></tt>.ThunderContext<a class="headerlink" href="#thunder-utils-context-thundercontext" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="thunder.utils.context.ThunderContext">
 <em class="property">class </em><tt class="descclassname">thunder.utils.context.</tt><tt class="descname">ThunderContext</tt><big>(</big><em>sparkcontext</em><big>)</big><a class="reference internal" href="../_modules/thunder/utils/context.html#ThunderContext"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.utils.context.ThunderContext" title="Permalink to this definition">¶</a></dt>
@@ -149,19 +149,19 @@
 <tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>(sparkcontext)</td>
 <td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.convertStack" title="thunder.utils.context.ThunderContext.convertStack"><tt class="xref py py-obj docutils literal"><span class="pre">convertStack</span></tt></a>(datafile,&nbsp;dims,&nbsp;savefile[,&nbsp;...])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.convertStacks" title="thunder.utils.context.ThunderContext.convertStacks"><tt class="xref py py-obj docutils literal"><span class="pre">convertStacks</span></tt></a>(datafile,&nbsp;dims,&nbsp;savefile[,&nbsp;...])</td>
 <td>Convert data from binary stack files to reformatted flat binary files,</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.importStack" title="thunder.utils.context.ThunderContext.importStack"><tt class="xref py py-obj docutils literal"><span class="pre">importStack</span></tt></a>(datafile,&nbsp;dims[,&nbsp;nblocks,&nbsp;...])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.importStacks" title="thunder.utils.context.ThunderContext.importStacks"><tt class="xref py py-obj docutils literal"><span class="pre">importStacks</span></tt></a>(datafile,&nbsp;dims[,&nbsp;nblocks,&nbsp;...])</td>
 <td>Import data from binary stack files as an RDD,</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.importStackAsBlocks" title="thunder.utils.context.ThunderContext.importStackAsBlocks"><tt class="xref py py-obj docutils literal"><span class="pre">importStackAsBlocks</span></tt></a>(datafile,&nbsp;dims[,&nbsp;...])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.importStacksAsBlocks" title="thunder.utils.context.ThunderContext.importStacksAsBlocks"><tt class="xref py py-obj docutils literal"><span class="pre">importStacksAsBlocks</span></tt></a>(datafile,&nbsp;dims[,&nbsp;...])</td>
 <td>Convert data from binary stack files to blocks of an RDD,</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadBinary" title="thunder.utils.context.ThunderContext.loadBinary"><tt class="xref py py-obj docutils literal"><span class="pre">loadBinary</span></tt></a>(datafile,&nbsp;nvalues[,&nbsp;nkeys,&nbsp;...])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadBinary" title="thunder.utils.context.ThunderContext.loadBinary"><tt class="xref py py-obj docutils literal"><span class="pre">loadBinary</span></tt></a>(datafile[,&nbsp;nvalues,&nbsp;format,&nbsp;...])</td>
 <td>Load data from flat binary file (or a directory of files) with format &lt;k1&gt; &lt;k2&gt; ...</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadBinaryLocal" title="thunder.utils.context.ThunderContext.loadBinaryLocal"><tt class="xref py py-obj docutils literal"><span class="pre">loadBinaryLocal</span></tt></a>(datafile,&nbsp;nvalues,&nbsp;nkeys[,&nbsp;...])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadBinaryLocal" title="thunder.utils.context.ThunderContext.loadBinaryLocal"><tt class="xref py py-obj docutils literal"><span class="pre">loadBinaryLocal</span></tt></a>(datafile,&nbsp;nvalues,&nbsp;nkeys,&nbsp;format)</td>
 <td>Load data from a local binary file</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadExample" title="thunder.utils.context.ThunderContext.loadExample"><tt class="xref py py-obj docutils literal"><span class="pre">loadExample</span></tt></a>(dataset)</td>
@@ -170,10 +170,10 @@
 <tr class="row-even"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadExampleEC2" title="thunder.utils.context.ThunderContext.loadExampleEC2"><tt class="xref py py-obj docutils literal"><span class="pre">loadExampleEC2</span></tt></a>(dataset)</td>
 <td>Load an example data set from EC2</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadMatLocal" title="thunder.utils.context.ThunderContext.loadMatLocal"><tt class="xref py py-obj docutils literal"><span class="pre">loadMatLocal</span></tt></a>(datafile[,&nbsp;keyfile,&nbsp;method])</td>
-<td>Load data from a local MAT file</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadMatLocal" title="thunder.utils.context.ThunderContext.loadMatLocal"><tt class="xref py py-obj docutils literal"><span class="pre">loadMatLocal</span></tt></a>(datafile,&nbsp;varname[,&nbsp;keyfile,&nbsp;...])</td>
+<td>Load data from a local MAT file, from a variable containing either a 1d or 2d matrix, into an RDD of (key,value) pairs.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadText" title="thunder.utils.context.ThunderContext.loadText"><tt class="xref py py-obj docutils literal"><span class="pre">loadText</span></tt></a>(datafile[,&nbsp;nkeys,&nbsp;filter,&nbsp;npartitions])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadText" title="thunder.utils.context.ThunderContext.loadText"><tt class="xref py py-obj docutils literal"><span class="pre">loadText</span></tt></a>(datafile[,&nbsp;nkeys,&nbsp;filter,&nbsp;...])</td>
 <td>Load data from text file (or a directory of files) with rows as &lt;k1&gt; &lt;k2&gt; ...</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.makeExample" title="thunder.utils.context.ThunderContext.makeExample"><tt class="xref py py-obj docutils literal"><span class="pre">makeExample</span></tt></a>(dataset,&nbsp;**opts)</td>
@@ -185,10 +185,11 @@
 </tbody>
 </table>
 <dl class="method">
-<dt id="thunder.utils.context.ThunderContext.convertStack">
-<tt class="descname">convertStack</tt><big>(</big><em>datafile</em>, <em>dims</em>, <em>savefile</em>, <em>nblocks=None</em>, <em>filerange=None</em><big>)</big><a class="reference internal" href="../_modules/thunder/utils/context.html#ThunderContext.convertStack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.utils.context.ThunderContext.convertStack" title="Permalink to this definition">¶</a></dt>
+<dt id="thunder.utils.context.ThunderContext.convertStacks">
+<tt class="descname">convertStacks</tt><big>(</big><em>datafile</em>, <em>dims</em>, <em>savefile</em>, <em>nblocks=None</em>, <em>filerange=None</em><big>)</big><a class="reference internal" href="../_modules/thunder/utils/context.html#ThunderContext.convertStacks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.utils.context.ThunderContext.convertStacks" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert data from binary stack files to reformatted flat binary files,
 see also convertStack</p>
+<p>Currently only supported on a local or networked file system</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -201,7 +202,7 @@ see also convertStack</p>
 <blockquote>
 <div><p>Stack dimensions</p>
 </div></blockquote>
-<p><strong>savefile</strong> : str, optional, default = None (directly return RDD)</p>
+<p><strong>savefile</strong> : str</p>
 <blockquote>
 <div><p>Location to save the converted data</p>
 </div></blockquote>
@@ -220,10 +221,11 @@ see also convertStack</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="thunder.utils.context.ThunderContext.importStack">
-<tt class="descname">importStack</tt><big>(</big><em>datafile</em>, <em>dims</em>, <em>nblocks=None</em>, <em>filerange=None</em>, <em>filter=None</em><big>)</big><a class="reference internal" href="../_modules/thunder/utils/context.html#ThunderContext.importStack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.utils.context.ThunderContext.importStack" title="Permalink to this definition">¶</a></dt>
+<dt id="thunder.utils.context.ThunderContext.importStacks">
+<tt class="descname">importStacks</tt><big>(</big><em>datafile</em>, <em>dims</em>, <em>nblocks=None</em>, <em>filerange=None</em>, <em>filter=None</em><big>)</big><a class="reference internal" href="../_modules/thunder/utils/context.html#ThunderContext.importStacks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.utils.context.ThunderContext.importStacks" title="Permalink to this definition">¶</a></dt>
 <dd><p>Import data from binary stack files as an RDD,
 see also convertStack</p>
+<p>Currently only supported on a local or networked file system</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -236,7 +238,7 @@ see also convertStack</p>
 <blockquote>
 <div><p>Stack dimensions</p>
 </div></blockquote>
-<p><strong>nblocks</strong> : int, optional, automatically set</p>
+<p><strong>nblocks</strong> : int, optional, default = None (automatically set)</p>
 <blockquote>
 <div><p>Number of blocks to split data into</p>
 </div></blockquote>
@@ -261,8 +263,8 @@ see also convertStack</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="thunder.utils.context.ThunderContext.importStackAsBlocks">
-<tt class="descname">importStackAsBlocks</tt><big>(</big><em>datafile</em>, <em>dims</em>, <em>nblocks=None</em>, <em>filerange=None</em><big>)</big><a class="reference internal" href="../_modules/thunder/utils/context.html#ThunderContext.importStackAsBlocks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.utils.context.ThunderContext.importStackAsBlocks" title="Permalink to this definition">¶</a></dt>
+<dt id="thunder.utils.context.ThunderContext.importStacksAsBlocks">
+<tt class="descname">importStacksAsBlocks</tt><big>(</big><em>datafile</em>, <em>dims</em>, <em>nblocks=None</em>, <em>filerange=None</em><big>)</big><a class="reference internal" href="../_modules/thunder/utils/context.html#ThunderContext.importStacksAsBlocks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.utils.context.ThunderContext.importStacksAsBlocks" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert data from binary stack files to blocks of an RDD,
 which can either be saved to flat binary files,
 or returned as an flattened RDD (see convertStack and importStack)</p>
@@ -273,17 +275,23 @@ or returned as an flattened RDD (see convertStack and importStack)</p>
 <p>This function loads the same contiguous block from all files,
 and rewrites the result to flat binary files of the form:</p>
 <p>block0.bin, block1.bin, block2.bin, ...</p>
+<p>Currently only supported on a local or networked file system</p>
+<p>TODO: Add support for EC2 loading
+TODO: assumes int16, add support for other formats</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="thunder.utils.context.ThunderContext.loadBinary">
-<tt class="descname">loadBinary</tt><big>(</big><em>datafile</em>, <em>nvalues</em>, <em>nkeys=3</em>, <em>format=&lt;type 'numpy.int16'&gt;</em>, <em>filter=None</em><big>)</big><a class="reference internal" href="../_modules/thunder/utils/context.html#ThunderContext.loadBinary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.utils.context.ThunderContext.loadBinary" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">loadBinary</tt><big>(</big><em>datafile</em>, <em>nvalues=None</em>, <em>format='int16'</em>, <em>nkeys=3</em>, <em>filter=None</em><big>)</big><a class="reference internal" href="../_modules/thunder/utils/context.html#ThunderContext.loadBinary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.utils.context.ThunderContext.loadBinary" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load data from flat binary file (or a directory of files) with format
 &lt;k1&gt; &lt;k2&gt; ... &lt;v1&gt; &lt;v2&gt; ... &lt;k1&gt; &lt;k2&gt; ... &lt;v1&gt; &lt;v2&gt; ...
 where &lt;k1&gt; &lt;k2&gt; ... are keys and &lt;v1&gt; &lt;v2&gt; ... are data values
 Each record must contain the same total number of keys and values
 If nkeys is 0, a single index key will be added to each record
-Files can be local or stored on HDFS / S3</p>
+Files can be local or stored on HDFS / S3
+Data parameters (number of values, number of keys, and format) can be
+given as keyword arguments, or provided in a JSON configuration file.
+Without a configuration file, must provide at least the number of values.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -292,17 +300,18 @@ Files can be local or stored on HDFS / S3</p>
 <blockquote>
 <div><p>Location of file(s)</p>
 </div></blockquote>
-<p><strong>nvalues</strong> : int</p>
+<p><strong>nvalues</strong> : int, optional, default = None</p>
 <blockquote>
 <div><p>Number of values per record</p>
 </div></blockquote>
-<p><strong>nkeys</strong> : int, optional, default = 0</p>
+<p><strong>nkeys</strong> : int, optional, default = 3</p>
 <blockquote>
 <div><p>Number of keys per record</p>
 </div></blockquote>
-<p><strong>format</strong> : numpy.dtype, optional, default = int16</p>
+<p><strong>format</strong> : string, optional, default = &#8216;int16&#8217;</p>
 <blockquote>
-<div><p>Format to use when parsing binary data</p>
+<div><p>Format to use when parsing binary data, string specification
+of a numpy.dtype</p>
 </div></blockquote>
 <p><strong>filter</strong> : str, optional, default = None (no preprocessing)</p>
 <blockquote>
@@ -322,7 +331,7 @@ Files can be local or stored on HDFS / S3</p>
 
 <dl class="method">
 <dt id="thunder.utils.context.ThunderContext.loadBinaryLocal">
-<tt class="descname">loadBinaryLocal</tt><big>(</big><em>datafile</em>, <em>nvalues</em>, <em>nkeys</em>, <em>format=&lt;type 'numpy.int16'&gt;</em>, <em>keyfile=None</em>, <em>method=None</em><big>)</big><a class="reference internal" href="../_modules/thunder/utils/context.html#ThunderContext.loadBinaryLocal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.utils.context.ThunderContext.loadBinaryLocal" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">loadBinaryLocal</tt><big>(</big><em>datafile</em>, <em>nvalues</em>, <em>nkeys</em>, <em>format</em>, <em>keyfile=None</em>, <em>method=None</em><big>)</big><a class="reference internal" href="../_modules/thunder/utils/context.html#ThunderContext.loadBinaryLocal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.utils.context.ThunderContext.loadBinaryLocal" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load data from a local binary file</p>
 </dd></dl>
 
@@ -365,8 +374,12 @@ Files can be local or stored on HDFS / S3</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>data</strong> : RDD of (tuple, array) pairs</p>
-<blockquote class="last">
+<blockquote>
 <div><p>Generated dataset</p>
+</div></blockquote>
+<p><strong>params</strong> : Tuple or numpy array</p>
+<blockquote class="last">
+<div><p>Parameters or metadata for dataset</p>
 </div></blockquote>
 </td>
 </tr>
@@ -376,13 +389,45 @@ Files can be local or stored on HDFS / S3</p>
 
 <dl class="method">
 <dt id="thunder.utils.context.ThunderContext.loadMatLocal">
-<tt class="descname">loadMatLocal</tt><big>(</big><em>datafile</em>, <em>keyfile=None</em>, <em>method=None</em><big>)</big><a class="reference internal" href="../_modules/thunder/utils/context.html#ThunderContext.loadMatLocal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.utils.context.ThunderContext.loadMatLocal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Load data from a local MAT file</p>
+<tt class="descname">loadMatLocal</tt><big>(</big><em>datafile</em>, <em>varname</em>, <em>keyfile=None</em>, <em>filter=None</em>, <em>minPartitions=1</em><big>)</big><a class="reference internal" href="../_modules/thunder/utils/context.html#ThunderContext.loadMatLocal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.utils.context.ThunderContext.loadMatLocal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load data from a local MAT file, from a variable containing
+either a 1d or 2d matrix, into an RDD of (key,value) pairs.
+Each row of the input matrix will become the value of each record.</p>
+<p>Keys can be provided in an extra MAT file containing a variable &#8216;keys&#8217;.
+If not provided, linear indices will be used as keys.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>datafile</strong> : str</p>
+<blockquote>
+<div><p>MAT file to import</p>
+</div></blockquote>
+<p><strong>varname</strong> : str</p>
+<blockquote>
+<div><p>Variable name to load from MAT file</p>
+</div></blockquote>
+<p><strong>keyfile</strong> : str</p>
+<blockquote>
+<div><p>MAT file to import with keys (must contain a variable &#8216;keys&#8217;)</p>
+</div></blockquote>
+<p><strong>filter</strong> : str, optional, default = None (no preprocessing)</p>
+<blockquote>
+<div><p>Which preprocessing to perform</p>
+</div></blockquote>
+<p><strong>minPartitions</strong> : Int, optional, default = 1</p>
+<blockquote class="last">
+<div><p>Number of partitions for data</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="thunder.utils.context.ThunderContext.loadText">
-<tt class="descname">loadText</tt><big>(</big><em>datafile</em>, <em>nkeys=3</em>, <em>filter=None</em>, <em>npartitions=None</em><big>)</big><a class="reference internal" href="../_modules/thunder/utils/context.html#ThunderContext.loadText"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.utils.context.ThunderContext.loadText" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">loadText</tt><big>(</big><em>datafile</em>, <em>nkeys=3</em>, <em>filter=None</em>, <em>minPartitions=None</em><big>)</big><a class="reference internal" href="../_modules/thunder/utils/context.html#ThunderContext.loadText"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.utils.context.ThunderContext.loadText" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load data from text file (or a directory of files) with rows as
 &lt;k1&gt; &lt;k2&gt; ... &lt;v1&gt; &lt;v2&gt; ...
 where &lt;k1&gt; &lt;k2&gt; ... are keys and &lt;v1&gt; &lt;v2&gt; ... are the data values

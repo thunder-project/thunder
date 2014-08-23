@@ -88,9 +88,8 @@
             <div class="col-md-4">
               <p><b>3.</b> Start <b>thunder</b> and try an analysis!</p>
               <pre><code class="bash">thunder
->> from thunder.utils import DataSets
 >> from thunder.factorization import ICA
->> data = DataSets.make(sc, "ica")
+>> data = tsc.makeExample("ica")
 >> model = ICA(c=2).fit(data)
 </pre></code>
             </div>

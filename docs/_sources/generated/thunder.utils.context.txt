@@ -1,7 +1,0 @@
-:mod:`thunder.utils`.context
-=========================================
-
-.. currentmodule:: thunder.utils
-
-.. autofunction:: context
-

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>thunder.factorization.nmf.NMF &mdash; Thunder 0.2.0 documentation</title>
+    <title>thunder.factorization.nmf.NMF &mdash; Thunder 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.2.0',
+        VERSION:     '0.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,7 +31,7 @@
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.2.0 documentation" href="../index.html" />
+    <link rel="top" title="Thunder 0.3.0 documentation" href="../index.html" />
     <link rel="up" title="API Reference" href="../api.html" />
     <link rel="next" title="thunder.factorization.svd.SVD" href="thunder.factorization.svd.SVD.html" />
     <link rel="prev" title="thunder.factorization.ica.ICA" href="thunder.factorization.ica.ICA.html" />
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.3.0</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -125,7 +125,7 @@
 <h1><tt class="xref py py-mod docutils literal"><span class="pre">thunder.factorization.nmf</span></tt>.NMF<a class="headerlink" href="#thunder-factorization-nmf-nmf" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="thunder.factorization.nmf.NMF">
-<em class="property">class </em><tt class="descclassname">thunder.factorization.nmf.</tt><tt class="descname">NMF</tt><big>(</big><em>k=5</em>, <em>method='als'</em>, <em>maxiter=20</em>, <em>tol=0.001</em>, <em>h0=None</em>, <em>w0=None</em>, <em>w_hist=False</em>, <em>recon_hist=False</em><big>)</big><a class="reference internal" href="../_modules/thunder/factorization/nmf.html#NMF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.factorization.nmf.NMF" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">thunder.factorization.nmf.</tt><tt class="descname">NMF</tt><big>(</big><em>k=5</em>, <em>method='als'</em>, <em>maxiter=20</em>, <em>tol=0.001</em>, <em>h0=None</em>, <em>w_hist=False</em>, <em>recon_hist='none'</em><big>)</big><a class="reference internal" href="../_modules/thunder/factorization/nmf.html#NMF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.factorization.nmf.NMF" title="Permalink to this definition">¶</a></dt>
 <dd><p>Large-scale non-negative matrix factorization on a dense matrix
 represented as an RDD with nrows and ncols</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -160,9 +160,10 @@ represented as an RDD with nrows and ncols</p>
 <blockquote>
 <div><p>If true, keep track of convergence of w at each iteration</p>
 </div></blockquote>
-<p><strong>recon_hist</strong> : Bool, optional, default = False</p>
+<p><strong>recon_hist</strong> : str in {&#8216;none&#8217;, &#8216;final&#8217;, &#8216;all&#8217;}</p>
 <blockquote class="last">
-<div><p>If true, keep track of reconstruction error at each iteration</p>
+<div><p>if &#8216;none&#8217;, reconstruction error is never computed. if &#8216;all&#8217;, it is computed at every iteration.
+if &#8216;final&#8217;, reconstruction error is computed on the final solution.</p>
 </div></blockquote>
 </td>
 </tr>
@@ -171,8 +172,8 @@ represented as an RDD with nrows and ncols</p>
 <p class="rubric">Attributes</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="13%" />
-<col width="87%" />
+<col width="12%" />
+<col width="88%" />
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><td><cite>w</cite></td>
@@ -187,8 +188,8 @@ represented as an RDD with nrows and ncols</p>
 <tr class="row-even"><td><cite>w_convergence</cite></td>
 <td>(None or list of floats) If w_hist==True, a list of Frobenius norms between successive estimates of w</td>
 </tr>
-<tr class="row-odd"><td><cite>rec_err</cite></td>
-<td>(None or list of floats) if recon_hist==true, a list of the reconstruction error at each iteration</td>
+<tr class="row-odd"><td><cite>recon_err</cite></td>
+<td>(None, int, or list) Output of the reconstruction error at the iterations specified by parameter recon_hist</td>
 </tr>
 </tbody>
 </table>
@@ -199,17 +200,17 @@ represented as an RDD with nrows and ncols</p>
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>([k,&nbsp;method,&nbsp;maxiter,&nbsp;tol,&nbsp;h0,&nbsp;w0,&nbsp;...])</td>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>([k,&nbsp;method,&nbsp;maxiter,&nbsp;tol,&nbsp;h0,&nbsp;...])</td>
 <td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.factorization.nmf.NMF.calc" title="thunder.factorization.nmf.NMF.calc"><tt class="xref py py-obj docutils literal"><span class="pre">calc</span></tt></a>(data)</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.factorization.nmf.NMF.calc" title="thunder.factorization.nmf.NMF.calc"><tt class="xref py py-obj docutils literal"><span class="pre">calc</span></tt></a>(mat)</td>
 <td>Calcuate the non-negative matrix decomposition</td>
 </tr>
 </tbody>
 </table>
 <dl class="method">
 <dt id="thunder.factorization.nmf.NMF.calc">
-<tt class="descname">calc</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../_modules/thunder/factorization/nmf.html#NMF.calc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.factorization.nmf.NMF.calc" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">calc</tt><big>(</big><em>mat</em><big>)</big><a class="reference internal" href="../_modules/thunder/factorization/nmf.html#NMF.calc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.factorization.nmf.NMF.calc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calcuate the non-negative matrix decomposition</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />

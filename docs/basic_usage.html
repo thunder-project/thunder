@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Basic usage &mdash; Thunder 0.2.0 documentation</title>
+    <title>Basic usage &mdash; Thunder 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.2.0',
+        VERSION:     '0.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,7 +31,7 @@
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.2.0 documentation" href="index.html" />
+    <link rel="top" title="Thunder 0.3.0 documentation" href="index.html" />
     <link rel="next" title="Contributing" href="contributing.html" />
     <link rel="prev" title="Running on EC2" href="install_ec2.html" />
 <meta charset='utf-8'>
@@ -53,7 +53,7 @@
         </button>
         <a class="navbar-brand" href="index.html"><img src="_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.3.0</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -127,16 +127,15 @@
 <div class="highlight-bash"><div class="highlight"><pre>thunder
 </pre></div>
 </div>
-<p>Import the functions and classes we&#8217;ll need, in this case <tt class="docutils literal"><span class="pre">DataSets</span></tt> and <tt class="docutils literal"><span class="pre">Stats</span></tt>.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="o">&gt;&gt;</span> <span class="kn">from</span> <span class="nn">thunder.utils</span> <span class="kn">import</span> <span class="n">DataSets</span>
-<span class="o">&gt;&gt;</span> <span class="kn">from</span> <span class="nn">thunder.timeseries</span> <span class="kn">import</span> <span class="n">Stats</span>
+<p>Import the functions and classes we&#8217;ll need, in this case <tt class="docutils literal"><span class="pre">Stats</span></tt>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="o">&gt;&gt;</span> <span class="kn">from</span> <span class="nn">thunder.timeseries</span> <span class="kn">import</span> <span class="n">Stats</span>
 </pre></div>
 </div>
 <p>First we load some toy example data</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="o">&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">DataSets</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="s">&quot;zebrafish-test&quot;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="o">&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&quot;fish&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Then use the stats class to compute the standard deviation</p>
+<p><tt class="docutils literal"><span class="pre">tsc</span></tt> is a modified Spark Context, created when you start thunder, that serves as an entry point for loading distributed datasets. Once the data is loaded, use the stats class to compute the standard deviation</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="o">&gt;&gt;</span> <span class="n">stat</span> <span class="o">=</span> <span class="n">Stats</span><span class="p">(</span><span class="s">&quot;std&quot;</span><span class="p">)</span>
 <span class="o">&gt;&gt;</span> <span class="n">vals</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">calc</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 </pre></div>

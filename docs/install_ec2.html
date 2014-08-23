@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Running on EC2 &mdash; Thunder 0.2.0 documentation</title>
+    <title>Running on EC2 &mdash; Thunder 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.2.0',
+        VERSION:     '0.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,7 +31,7 @@
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.2.0 documentation" href="index.html" />
+    <link rel="top" title="Thunder 0.3.0 documentation" href="index.html" />
     <link rel="next" title="Basic usage" href="basic_usage.html" />
     <link rel="prev" title="Installation" href="install_local.html" />
 <meta charset='utf-8'>
@@ -53,7 +53,7 @@
         </button>
         <a class="navbar-brand" href="index.html"><img src="_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.3.0</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -176,7 +176,8 @@
 <div class="section" id="use-the-ipython-notebook">
 <h2>Use the iPython notebook<a class="headerlink" href="#use-the-ipython-notebook" title="Permalink to this headline">¶</a></h2>
 <p>The iPython notebook is an especially useful way to do analyses interactively and look at results.</p>
-<p>To setup the iPython notebook on EC2, just login to your cluster</p>
+<p>To setup the iPython notebook on EC2, you need to do one manual port configuration on the AWS console website. Go to the <a class="reference external" href="https://console.aws.amazon.com/ec2/v2/home">EC2 dashboard</a>, click on &#8220;Security groups&#8221; in the list on the left, and find the name of your cluster in the list, and click on the entry &#8220;&lt;cluster-name&gt;-master&#8221;. So if you called your cluster &#8220;test&#8221;, look for &#8220;test-master&#8221;. After selecting it, in the panel below, click the &#8220;Inbound&#8221; tab, click &#8220;Edit&#8221;, click &#8220;Add rule&#8221;, then type 8888 in the port range, and select &#8220;Anywhere&#8221; under source, then click &#8220;Save&#8221;.</p>
+<p>The rest is easy. Just login to your cluster</p>
 <div class="highlight-bash"><div class="highlight"><pre>thunder-ec2 -k mykey -i ~/mykey.pem login &lt;cluster-name&gt;
 </pre></div>
 </div>
