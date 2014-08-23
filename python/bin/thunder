@@ -22,7 +22,7 @@ ec2 = os.path.isfile('/root/spark-ec2/cluster-url')
 calldir = os.path.dirname(os.path.realpath(__file__))
 
 # add python script
-os.environ['PYTHONSTARTUP'] = os.path.join(calldir, '../thunder/utils/shell.py')
+os.environ['PYTHONSTARTUP'] = os.path.join(os.path.dirname(os.path.realpath(thunder.__file__)), 'utils/shell.py')
 
 if not ((master is None) or ("local" in master)) or ec2:
 
