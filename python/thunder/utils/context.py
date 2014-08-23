@@ -2,7 +2,6 @@
 
 import glob
 import os
-import json
 from numpy import int16, dtype, frombuffer, zeros, fromfile, asarray, mod, floor, ceil, shape, concatenate, prod
 from pyspark import SparkContext
 import urllib
@@ -192,7 +191,7 @@ class ThunderContext():
         else:
             raise NotImplementedError("dataset '%s' not availiable" % dataset)
 
-    def convertStack(self, datafile, dims, savefile, nblocks=None, filerange=None):
+    def convertStacks(self, datafile, dims, savefile, nblocks=None, filerange=None):
         """
         Convert data from binary stack files to reformatted flat binary files,
         see also convertStack
@@ -215,7 +214,7 @@ class ThunderContext():
             Indices of first and last file to include
 
         """
-        rdd = self.importStackAsBlocks(datafile, dims, nblocks=nblocks, filerange=filerange)
+        rdd = self.importStacksAsBlocks(datafile, dims, nblocks=nblocks, filerange=filerange)
 
         # save blocks of data to flat binary files
         def writeblock(part, mat, path):
@@ -241,7 +240,7 @@ class ThunderContext():
         f = open(os.path.join(savefile, 'SUCCESS.json'), 'w')
         json.dump(logout, f, indent=2)
 
-    def importStack(self, datafile, dims, nblocks=None, filerange=None, filter=None):
+    def importStacks(self, datafile, dims, nblocks=None, filerange=None, filter=None):
         """
         Import data from binary stack files as an RDD,
         see also convertStack
@@ -268,12 +267,12 @@ class ThunderContext():
         data : RDD of (tuple, array) pairs
             Parsed and preprocessed data
         """
-        rdd = self.importStackAsBlocks(datafile, dims, nblocks=nblocks, filerange=filerange)
+        rdd = self.importStacksAsBlocks(datafile, dims, nblocks=nblocks, filerange=filerange)
         nkeys = len(dims)
         data = rdd.values().flatMap(lambda x: list(x)).map(lambda x: (tuple(x[0:nkeys].astype(int)), x[nkeys:]))
         return preprocess(data, method=filter)
 
-    def importStackAsBlocks(self, datafile, dims, nblocks=None, filerange=None):
+    def importStacksAsBlocks(self, datafile, dims, nblocks=None, filerange=None):
         """
         Convert data from binary stack files to blocks of an RDD,
         which can either be saved to flat binary files,
