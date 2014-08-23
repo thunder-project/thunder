@@ -30,12 +30,12 @@ if not ((master is None) or ("local" in master)) or ec2:
     dist = os.path.join(calldir, '../dist')
 
     # check for egg
-    egg = glob.glob(os.path.join(dist, "*.egg"))
+    egg = glob.glob(os.path.join(dist, "thunder_python-" + str(thunder.__version__) + "*.egg"))
 
-    # TODO check version
+    # build if egg not found
     if len(egg) == 0:
         os.system(os.path.join(calldir, 'build'))
-        egg = glob.glob(os.path.join(dist, "*.egg"))
+        egg = glob.glob(os.path.join(dist, "thunder_python-" + str(thunder.__version__) + "*.egg"))
 
     os.environ['ADD_FILES'] = egg[0]
 
