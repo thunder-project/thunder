@@ -5,6 +5,8 @@ import os
 import json
 from numpy import int16, dtype, frombuffer, zeros, fromfile, asarray, mod, floor, ceil, shape, concatenate, prod
 from pyspark import SparkContext
+import urllib
+import json
 from thunder.utils.load import PreProcessor, Parser, indtosub
 from thunder.utils import DataSets
 
@@ -172,13 +174,21 @@ class ThunderContext():
         -------
         data : RDD of (tuple, array) pairs
             Generated dataset
+
+        params : Tuple or numpy array
+            Parameters or metadata for dataset
         """
 
         if 'ec' not in self._sc.master:
             raise Exception("must be running on EC2 to load this example data sets")
         elif dataset == "zebrafish-optomotor-response":
-            path = 's3n://zebrafish.datasets/optomotor-response/1/'
-            return self.loadText(path + 'data/dat_plane*.txt', npartitions=1000)
+            path = 'zebrafish.datasets/optomotor-response/1/'
+            data = self.loadText("s3n://" + path + 'data/dat_plane*.txt', npartitions=1000)
+            opener = urllib.URLopener()
+            myfile = opener.open("https://s3.amazonaws.com/" + path + "params.json")
+            params = json.load(myfile)
+            modelfile = asarray(params['trials'])
+            return data, modelfile
         else:
             raise NotImplementedError("dataset '%s' not availiable" % dataset)
 
