@@ -2,7 +2,7 @@
 
 import glob
 import os
-from numpy import int16, dtype, frombuffer, zeros, fromfile, asarray, mod, floor, ceil, shape, concatenate, prod
+from numpy import int16, float, dtype, frombuffer, zeros, fromfile, asarray, mod, floor, ceil, shape, concatenate, prod
 from pyspark import SparkContext
 import urllib
 import json
@@ -67,7 +67,7 @@ class ThunderContext():
 
         return preprocess(data, method=filter)
 
-    def loadBinary(self, datafile, nvalues, nkeys=3, format=int16, filter=None):
+    def loadBinary(self, datafile, nvalues=None, format='int16', nkeys=3, filter=None):
         """
         Load data from flat binary file (or a directory of files) with format
         <k1> <k2> ... <v1> <v2> ... <k1> <k2> ... <v1> <v2> ...
@@ -75,20 +75,24 @@ class ThunderContext():
         Each record must contain the same total number of keys and values
         If nkeys is 0, a single index key will be added to each record
         Files can be local or stored on HDFS / S3
+        Data parameters (number of values, number of keys, and format) can be
+        given as keyword arguments, or provided in a JSON configuration file.
+        Without a configuration file, must provide at least the number of values.
 
         Parameters
         ----------
         datafile : str
             Location of file(s)
 
-        nvalues : int
+        nvalues : int, optional, default = None
             Number of values per record
 
-        nkeys : int, optional, default = 0
+        nkeys : int, optional, default = 3
             Number of keys per record
 
-        format : numpy.dtype, optional, default = int16
-            Format to use when parsing binary data
+        format : string, optional, default = 'int16'
+            Format to use when parsing binary data, string specification
+            of a numpy.dtype
 
         filter : str, optional, default = None (no preprocessing)
             Which preprocessing to perform
@@ -99,22 +103,32 @@ class ThunderContext():
             The parsed and preprocessed data as an RDD
         """
 
-        nvalues += nkeys
-        nvalues *= dtype(format).itemsize
-
         if os.path.isdir(datafile):
-            datafile = os.path.join(datafile, '*.bin')
+            basepath = datafile
+            datafile = os.path.join(basepath, '*.bin')
+        else:
+            basepath = os.path.dirname(datafile)
+
+        try:
+            f = open(os.path.join(basepath, 'conf.json'), 'r')
+            params = json.load(f)
+            nvalues = params['nvalues']
+            nkeys = params['nkeys']
+            format = params['format']
+        except IOError:
+            if nvalues is None:
+                raise StandardError('must specify nvalues if there is no configuration file')
+
+        recordsize = nvalues + nkeys
+        recordsize *= dtype(FORMATS[format]).itemsize
 
         lines = self._sc.newAPIHadoopFile(datafile, 'thunder.util.io.hadoop.FixedLengthBinaryInputFormat',
                                           'org.apache.hadoop.io.LongWritable',
                                           'org.apache.hadoop.io.BytesWritable',
-                                          conf={'recordLength': str(nvalues)})
+                                          conf={'recordLength': str(recordsize)})
 
         parsed = lines.map(lambda (k, v): (k, frombuffer(v, format)))
-        if nkeys > 0:
-            data = parsed.map(lambda (k, v): (tuple(v[0:nkeys].astype(int)), v[nkeys:].astype(float)))
-        else:
-            data = parsed.map(lambda (k, v): ((k,), v.astype(float)))
+        data = parsed.map(lambda (k, v): (tuple(v[0:nkeys].astype(int)), v[nkeys:].astype(float)))
 
         return preprocess(data, method=filter)
 
@@ -154,9 +168,9 @@ class ThunderContext():
         path = os.path.dirname(os.path.realpath(__file__))
 
         if dataset == "iris":
-            return self.loadText(os.path.join(path, 'data/iris.txt'))
+            return self.loadText(os.path.join(path, 'data/iris.txt'), minPartitions=1)
         elif dataset == "fish":
-            return self.loadText(os.path.join(path, 'data/fish.txt'))
+            return self.loadText(os.path.join(path, 'data/fish.txt'), minPartitions=1)
         else:
             raise NotImplementedError("dataset '%s' not found" % dataset)
 
@@ -196,6 +210,8 @@ class ThunderContext():
         Convert data from binary stack files to reformatted flat binary files,
         see also convertStack
 
+        Currently only supported on a local or networked file system
+
         Parameters
         ----------
         datafile : str
@@ -204,7 +220,7 @@ class ThunderContext():
         dims : list
             Stack dimensions
 
-        savefile : str, optional, default = None (directly return RDD)
+        savefile : str
             Location to save the converted data
 
         nblocks : int, optional, default = None (automatically set)
@@ -228,7 +244,7 @@ class ThunderContext():
 
         rdd.foreach(lambda (ip, mat): writeblock(ip, mat, savefile))
 
-        # write log file
+        # write configuration file
         if not filerange:
             if os.path.isdir(datafile):
                 files = glob.glob(os.path.join(datafile, '*.stack'))
@@ -236,14 +252,22 @@ class ThunderContext():
                 files = glob.glob(datafile)
             filerange = [0, len(files)-1]
         logout = {'input': datafile, 'filerange': filerange, 'dims': dims,
-                  'nkeys': len(dims), 'nvalues': filerange[1]-filerange[0]+1}
-        f = open(os.path.join(savefile, 'SUCCESS.json'), 'w')
+                  'nkeys': len(dims), 'nvalues': filerange[1]-filerange[0]+1, 'format': 'int16'}
+        f = open(os.path.join(savefile, 'conf.json'), 'w')
         json.dump(logout, f, indent=2)
+        f.close()
+
+        # write SUCCESS file
+        f = open(os.path.join(savefile, 'SUCCESS'), 'w')
+        f.write(' ')
+        f.close()
 
     def importStacks(self, datafile, dims, nblocks=None, filerange=None, filter=None):
         """
         Import data from binary stack files as an RDD,
         see also convertStack
+
+        Currently only supported on a local or networked file system
 
         Parameters
         ----------
@@ -253,7 +277,7 @@ class ThunderContext():
         dims : list
             Stack dimensions
 
-        nblocks : int, optional, automatically set
+        nblocks : int, optional, default = None (automatically set)
             Number of blocks to split data into
 
         filerange : list, optional, default = None (all files)
@@ -290,9 +314,12 @@ class ThunderContext():
 
         block0.bin, block1.bin, block2.bin, ...
 
-        """
+        Currently only supported on a local or networked file system
 
-        # TODO: assumes int16, add support for other formats
+        TODO: Add support for EC2 loading
+        TODO: assumes int16, add support for other formats
+
+        """
 
         # get the paths to the data
         if os.path.isdir(datafile):
@@ -309,7 +336,6 @@ class ThunderContext():
 
         # if number of blocks not provided, start by setting it
         # so that each block is approximately 200 MB
-        # NOTE: currently assumes integer valued data
         if not nblocks:
             nblocks = int(max(floor((totaldim * len(files) * 2) / (200 * 10**6)), 1))
 
@@ -375,3 +401,7 @@ def preprocess(data, method=None):
     else:
         return data
 
+FORMATS = {
+    'int16': int16,
+    'float': float
+}
