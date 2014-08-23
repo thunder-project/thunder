@@ -28,7 +28,7 @@ class ThunderContext():
         """Starts a ThunderContext using the same arguments as SparkContext"""
         return ThunderContext(SparkContext(*args, **kwargs))
 
-    def loadText(self, datafile, nkeys=3, filter=None, npartitions=None):
+    def loadText(self, datafile, nkeys=3, filter=None, minPartitions=None):
         """
         Load data from text file (or a directory of files) with rows as
         <k1> <k2> ... <v1> <v2> ...
@@ -61,7 +61,7 @@ class ThunderContext():
             files = sorted(glob.glob(os.path.join(datafile, '*.txt')))
             datafile = ''.join([files[x] + ',' for x in range(0, len(files))])[0:-1]
 
-        lines = self._sc.textFile(datafile, npartitions)
+        lines = self._sc.textFile(datafile, minPartitions)
         parser = Parser(nkeys)
         data = lines.map(parser.get)
 
