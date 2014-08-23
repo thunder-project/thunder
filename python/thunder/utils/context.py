@@ -2,7 +2,9 @@
 
 import glob
 import os
-from numpy import int16, float, dtype, frombuffer, zeros, fromfile, asarray, mod, floor, ceil, shape, concatenate, prod
+from numpy import int16, float, dtype, frombuffer, zeros, fromfile, \
+    asarray, mod, floor, ceil, shape, concatenate, prod, arange
+from scipy.io import loadmat
 from pyspark import SparkContext
 import urllib
 import json
@@ -378,19 +380,52 @@ class ThunderContext():
         blocks = range(0, nblocks)
         return self._sc.parallelize(blocks, len(blocks)).map(lambda b: readblock(b, files, blocksize))
 
-    def loadBinaryLocal(self, datafile, nvalues, nkeys, format=int16, keyfile=None, method=None):
+    def loadBinaryLocal(self, datafile, nvalues, nkeys, format, keyfile=None, method=None):
         """
         Load data from a local binary file
         """
 
         raise NotImplementedError
 
-    def loadMatLocal(self, datafile, keyfile=None, method=None):
+    def loadMatLocal(self, datafile, varname, keyfile=None, filter=None, minPartitions=1):
         """
-        Load data from a local MAT file
+        Load data from a local MAT file, from a variable containing
+        either a 1d or 2d matrix, into an RDD of (key,value) pairs.
+        Each row of the input matrix will become the value of each record.
+
+        Keys can be provided in an extra MAT file containing a variable 'keys'.
+        If not provided, linear indices will be used as keys.
+
+        Parameters
+        ----------
+        datafile : str
+            MAT file to import
+
+        varname : str
+            Variable name to load from MAT file
+
+        keyfile : str
+            MAT file to import with keys (must contain a variable 'keys')
+
+        filter : str, optional, default = None (no preprocessing)
+            Which preprocessing to perform
+
+        minPartitions : Int, optional, default = 1
+            Number of partitions for data
+
         """
 
-        raise NotImplementedError
+        data = loadmat(datafile)[varname]
+        if data.ndim > 2:
+            raise IOError('input data must be one or two dimensional')
+        if keyfile:
+            keys = map(lambda x: tuple(x.astype(int16)), loadmat(keyfile)['keys'])
+        else:
+            keys = arange(1, shape(data)[0]+1)
+
+        rdd = self._sc.parallelize(zip(keys, data), minPartitions)
+
+        return preprocess(rdd, method=filter)
 
 
 def preprocess(data, method=None):
