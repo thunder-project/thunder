@@ -42,9 +42,8 @@ thunder is designed to run on a cluster, but local testing is a great way to lea
 :: 
 
 	thunder
-	>> from thunder.utils import DataSets
 	>> from thunder.factorization import ICA
-	>> data = DataSets.make(sc, "ica")
+	>> data = tsc.makeExample("ica")
 	>> model = ICA(c=2).fit(data)
 
 To run in iPython, just set this environmental variable before staring:
@@ -74,21 +73,21 @@ thunder currently includes five packages: classification (decoding), clustering,
 Input and output
 ----------------
 
-thunder is built around a commmon input format for raw neural data: a set of signals as key-value pairs, where the key is an identifier, and the value is a response time series. In imaging data, for example, each record would be a voxel or an ROI, the key an xyz coordinate, and the value a flouresence time series. This is a useful representation because most analyses parallelize across neural signals (i.e. across records). 
+thunder is built around a commmon input format for time series data: a set of signals or channels as key-value pairs, where the key is an identifier, and the value is a time series. In neural imaging data, for example, each record would be a voxel or an ROI, the key an xyz coordinate, and the value a flouresence time series.
 
-These key-value records can, in principle, be stored in a variety of cluster-accessible formats, and it does not affect the core functionality (besides loading). Currently, the loading function assumes a text file input, where the rows are neural signals, and the columns are the keys and values, each number separated by space. Support for flat binary files is coming soon.
+These key-value records can be derived from variety of cluster-accessible formats. thunder currently includes methods for loading data from text or flat binary files stored locally, in HDFS, or on a networked file system, and preliminary support for importing and converting data from other formats.
 
 All metadata (e.g. parameters of the stimulus or behavior for regression analyses) can be provided as numpy arrays or loaded from MAT files, see relavant functions for more details.
 
-Results can be visualized directly from the python shell ir iPython notebook, or saved as MAT files, text files, or images.
+Results can be visualized directly from the python shell or in iPython notebook, or saved as images, MAT files. Other output formats coming soon. 
 
 Road map
 ----------------
 If you have other ideas or want to contribute, submit an issue or pull request!
 
-- New file formats for input data
-- Automatic extract-transform-load for different raw formats (e.g. raw images)
+- Integrate more scikit learn functionality
 - Analysis-specific visualizations
+- Input format support: HD5, tif
+- Port versions of most common workflows to scala
 - Unified metadata representation
 - Streaming analyses
-- Port versions of most common workflows to scala

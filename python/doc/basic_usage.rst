@@ -11,20 +11,19 @@ For an interactive analysis, we first start the shell
 
 	thunder
 
-Import the functions and classes we'll need, in this case ``DataSets`` and ``Stats``.
+Import the functions and classes we'll need, in this case ``Stats``.
 
 .. code-block:: python
 
-	>> from thunder.utils import DataSets
 	>> from thunder.timeseries import Stats
 
 First we load some toy example data
 
 .. code-block:: python
 
-	>> data = DataSets.load(sc, "zebrafish-test")
+	>> data = tsc.loadExample("fish")
 
-Then use the stats class to compute the standard deviation
+``tsc`` is a modified Spark Context, created when you start thunder, that serves as an entry point for loading distributed datasets. Once the data is loaded, use the stats class to compute the standard deviation
 
 .. code-block:: python
 

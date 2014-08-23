@@ -64,7 +64,9 @@ Use the iPython notebook
 ~~~~~~~~~~~~~~~~~~~~~~~~
 The iPython notebook is an especially useful way to do analyses interactively and look at results.
 
-To setup the iPython notebook on EC2, just login to your cluster
+To setup the iPython notebook on EC2, you need to do one manual port configuration on the AWS console website. Go to the `EC2 dashboard <https://console.aws.amazon.com/ec2/v2/home>`_, click on "Security groups" in the list on the left, and find the name of your cluster in the list, and click on the entry "<cluster-name>-master". So if you called your cluster "test", look for "test-master". After selecting it, in the panel below, click the "Inbound" tab, click "Edit", click "Add rule", then type 8888 in the port range, and select "Anywhere" under source, then click "Save". 
+
+The rest is easy. Just login to your cluster
 
 .. code-block:: bash
 
