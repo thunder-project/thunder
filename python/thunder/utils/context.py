@@ -182,7 +182,7 @@ class ThunderContext():
             raise Exception("must be running on EC2 to load this example data sets")
         elif dataset == "zebrafish-optomotor-response":
             path = 'zebrafish.datasets/optomotor-response/1/'
-            data = self.loadText("s3n://" + path + 'data/dat_plane*.txt', npartitions=1000)
+            data = self.loadText("s3n://" + path + 'data/dat_plane*.txt', filter='dff', minPartitions=1000)
             opener = urllib.URLopener()
             myfile = opener.open("https://s3.amazonaws.com/" + path + "params.json")
             params = json.load(myfile)
