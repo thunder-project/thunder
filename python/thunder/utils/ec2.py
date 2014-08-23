@@ -184,4 +184,7 @@ if __name__ == "__main__":
             for inst in slave_nodes:
                 inst.terminate()
 
+        else:
+            raise NotImplementedError("action: " + action + "not recognized")
+
 
