@@ -39,7 +39,12 @@ if not ((master is None) or ("local" in master)) or ec2:
 
     os.environ['ADD_FILES'] = egg[0]
 
-# get location of jar
+# get location of jar and add to the submit classpath
 jar = os.path.join(calldir, '../thunder/lib/thunder_2.10-'+str(thunder.__version__)+'.jar')
 
-os.system(os.path.join(spark, 'bin/pyspark --jars ' + jar + ' --driver-class-path ' + jar))
+if os.getenv('SPARK_SUBMIT_CLASSPATH') is None:
+    os.environ['SPARK_SUBMIT_CLASSPATH'] = ""
+
+os.environ['SPARK_SUBMIT_CLASSPATH'] = os.environ['SPARK_SUBMIT_CLASSPATH'] + ":" + jar
+
+os.system(os.path.join(spark, 'bin/pyspark --jars ' + jar))
