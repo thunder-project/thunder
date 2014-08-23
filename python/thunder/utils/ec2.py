@@ -134,7 +134,7 @@ if __name__ == "__main__":
         opts.wait = 160
         opts.hadoop_major_version = "1"
         opts.ganglia = True
-        opts.spark_version = "1.0.1"
+        opts.spark_version = "1.0.2"
         opts.swap = 1024
         opts.worker_instances = 1
         opts.master_opts = ""
