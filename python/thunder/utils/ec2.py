@@ -35,7 +35,7 @@ def install_thunder(master, opts):
     ssh(master, opts, "rm -rf thunder && git clone https://github.com/freeman-lab/thunder.git")
     ssh(master, opts, "chmod u+x thunder/python/bin/build")
     ssh(master, opts, "thunder/python/bin/build")
-    ssh(master, opts, "source ~/.bash_profile && pip install mpld3")
+    ssh(master, opts, "source ~/.bash_profile && pip install mpld3 && pip install seaborn")
     ssh(master, opts, "rm /root/pyspark_notebook_example.ipynb")
     ssh(master, opts, "echo 'export SPARK_HOME=/root/spark' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export PYTHONPATH=/root/thunder/python' >> /root/.bash_profile")
