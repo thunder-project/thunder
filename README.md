@@ -65,7 +65,7 @@ These key-value records can be derived from variety of cluster-accessible format
 
 All metadata (e.g. parameters of the stimulus or behavior for regression analyses) can be provided as numpy arrays or loaded from MAT files, see relavant functions for more details.
 
-Results can be visualized directly from the python shell or in iPython notebook, or saved as images, numpy files, or MAT files. Other output formats coming soon. 
+Results can be visualized directly from the python shell or in iPython notebook, or saved as images or MAT files. Other output formats coming soon. 
 
 Road map
 ----------------
@@ -73,7 +73,7 @@ If you have other ideas or want to contribute, submit an issue or pull request!
 
 - Integrate more scikit learn functionality
 - Analysis-specific visualizations
-- Input format support: HD5, tif
+- Input format support: HDF5, tif
 - Port versions of most common workflows to scala
 - Unified metadata representation
 - Streaming analyses
