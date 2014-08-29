@@ -17,6 +17,8 @@ class RegressionModel(object):
     def load(modelfile, regressmode, **opts):
         return REGRESSION_MODELS[regressmode](modelfile, **opts)
 
+    #TODO add a make method to construct regressors from parameters
+
     def get(self, y):
         pass
 
