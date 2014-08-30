@@ -199,9 +199,8 @@ class ThunderContext():
         elif dataset == "zebrafish-optomotor-response":
             path = 'zebrafish.datasets/optomotor-response/1/'
             data = self.loadText("s3n://" + path + 'data/dat_plane*.txt', filter='dff', minPartitions=1000)
-            opener = urllib.URLopener()
-            myfile = opener.open("https://s3.amazonaws.com/" + path + "params.json")
-            params = json.load(myfile)
+            paramfile = self._sc.textFile("s3n://" + path + "params.json")
+            params = json.loads(paramfile.first())
             modelfile = asarray(params['trials'])
             return data, modelfile
         else:
