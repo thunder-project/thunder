@@ -385,6 +385,13 @@ class ThunderContext():
 
         raise NotImplementedError
 
+    def loadArrayLocal(self, values, keys=None, method=None):
+        """
+        Load data from local arrays
+        """
+
+        raise NotImplementedError
+
     def loadMatLocal(self, datafile, varname, keyfile=None, filter=None, minPartitions=1):
         """
         Load data from a local MAT file, from a variable containing
