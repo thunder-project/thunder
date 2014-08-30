@@ -6,7 +6,6 @@ from numpy import int16, float, dtype, frombuffer, zeros, fromfile, \
     asarray, mod, floor, ceil, shape, concatenate, prod, arange
 from scipy.io import loadmat
 from pyspark import SparkContext
-import urllib
 import json
 from thunder.utils.load import PreProcessor, Parser, indtosub
 from thunder.utils import DataSets
