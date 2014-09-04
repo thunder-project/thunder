@@ -46,7 +46,7 @@ To run analyses as standalone jobs, use the submit script
 
 	thunder-submit <package/analysis> <datadirectory> <outputdirectory> <opts>
 
-We also include a script for launching an Amazon EC2 cluster with thunder presintalled
+We also include a script for launching an Amazon EC2 cluster with thunder preinstalled
 
 	thunder-ec2 -k mykey -i mykey.pem -s <number-of-nodes> launch <cluster-name>
 
@@ -59,9 +59,9 @@ thunder currently includes five packages: classification (decoding), clustering,
 Input and output
 ----------------
 
-thunder is built around a commmon input format for time series data: a set of signals or channels as key-value pairs, where the key is an identifier, and the value is a time series. In neural imaging data, for example, each record would be a voxel or an ROI, the key an xyz coordinate, and the value a flouresence time series.
+thunder is built around a common input format for time series data: a set of signals or channels as key-value pairs, where the key is an identifier, and the value is a time series. In neural imaging data, for example, each record would be a voxel or an ROI, the key an xyz coordinate, and the value a flouresence time series.
 
-These key-value records can be derived from variety of cluster-accessible formats. thunder currently includes methods for loading data from text or flat binary files stored locally, in HDFS, or on a networked file system, and preliminary support for importing and converting data from other formats.
+These key-value records can be derived from a variety of cluster-accessible formats. thunder currently includes methods for loading data from text or flat binary files stored locally, in HDFS, or on a networked file system, and preliminary support for importing and converting data from other formats.
 
 All metadata (e.g. parameters of the stimulus or behavior for regression analyses) can be provided as numpy arrays or loaded from MAT files, see relavant functions for more details.
 
