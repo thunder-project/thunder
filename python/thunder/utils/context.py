@@ -424,7 +424,7 @@ class ThunderContext():
         if data.ndim > 2:
             raise IOError('input data must be one or two dimensional')
         if keyfile:
-            keys = map(lambda x: tuple(x.astype(int16)), loadmat(keyfile)['keys'])
+            keys = map(lambda x: tuple(x), loadmat(keyfile)['keys'])
         else:
             keys = arange(1, shape(data)[0]+1)
 
