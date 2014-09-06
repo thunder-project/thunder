@@ -181,8 +181,14 @@ def _check_order(order):
 
 def subtoind(data, dims, order='F', one_based=True):
     """Convert subscript indexing to linear indexing
-    :param order: 'C' or 'F', for row-major or column-major array indexing. See numpy.ravel_multi_index.
-    :param one_based: True if generated subscript indices are to start at 1, False to start at 0
+
+    Parameters
+    ----------
+    order : str, 'C' or 'F', default = 'F'
+        Specifies row-major or column-major array indexing. See numpy.ravel_multi_index.
+
+    onebased : boolean, default = True
+        True if subscript indices start at 1, False if they start at 0
     """
     _check_order(order)
 
@@ -224,8 +230,14 @@ def subtoind(data, dims, order='F', one_based=True):
 
 def indtosub(data, dims, order='F', one_based=True):
     """Convert linear indexing to subscript indexing
-    :param order: 'C' or 'F', for row-major or column-major array indexing. See numpy.unravel_index.
-    :param one_based: True if generated subscript indices are to start at 1, False to start at 0
+
+    Parameters
+    ----------
+    order : str, 'C' or 'F', default = 'F'
+        Specifies row-major or column-major array indexing. See numpy.unravel_index.
+
+    onebased : boolean, default = True
+        True if generated subscript indices are to start at 1, False to start at 0
     """
     _check_order(order)
 
