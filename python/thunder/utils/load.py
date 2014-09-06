@@ -179,7 +179,7 @@ def _check_order(order):
         raise TypeError("Order %s not understood, should be 'C' or 'F'.")
 
 
-def subtoind(data, dims, order='F', one_based=True):
+def subtoind(data, dims, order='F', onebased=True):
     """Convert subscript indexing to linear indexing
 
     Parameters
@@ -214,7 +214,7 @@ def subtoind(data, dims, order='F', one_based=True):
             dimprod = cumprod(dims[::-1])[0:-1][::-1]
             inline_fcn = subtoind_inline_rowmajor
 
-        prod_fcn = onebased_prod if one_based else zerobased_prod
+        prod_fcn = onebased_prod if onebased else zerobased_prod
 
         if isrdd(data):
             return data.map(lambda (k, v): (inline_fcn(k, dimprod, prod_fcn), v))
@@ -228,7 +228,7 @@ def subtoind(data, dims, order='F', one_based=True):
             return map(lambda (k, v): (k[0], v), data)
 
 
-def indtosub(data, dims, order='F', one_based=True):
+def indtosub(data, dims, order='F', onebased=True):
     """Convert linear indexing to subscript indexing
 
     Parameters
@@ -247,7 +247,7 @@ def indtosub(data, dims, order='F', one_based=True):
     def indtosub_inline_zerobased(k, dimprod):
         return tuple(map(lambda (x, y): int(mod(ceil(float(k+1)/y) - 1, x)), dimprod))
 
-    inline_fcn = indtosub_inline_onebased if one_based else indtosub_inline_zerobased
+    inline_fcn = indtosub_inline_onebased if onebased else indtosub_inline_zerobased
 
     if size(dims) > 1:
         if order == 'F':
