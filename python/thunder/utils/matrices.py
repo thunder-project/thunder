@@ -115,12 +115,16 @@ class RowMatrix(object):
     def times(self, other, method="reduce"):
         """
         Multiply a RowMatrix by another matrix, either another RowMatrix
-        or
+        or a local matrix
+        NOTE: If multiplying two RowMatrices, they must have the same
+        number of partitions and number of records per partition,
+        e.g. because one was created through a map of the other,
+        see zip
 
         Parameters
         ----------
         other : RowMatrix, scalar, or numpy array
-            Matrix to multiple with
+            Matrix to multiply with
 
         method : string, optional, default = "reduce"
             Method to use for summation
@@ -159,12 +163,16 @@ class RowMatrix(object):
 
     def elementwise(self, other, op):
         """
-        Apply an elementwise operation to a MatrixRDD
+        Apply an elementwise operation to two RowMatrices
+        or between a RowMatrix and a local array
+        NOTE: For two RowMatrices, must have the same partitions
+        and number of records per iteration (e.g. because
+        one was created through a map on the other, see zip)
 
         Parameters
         ----------
         other : RowMatrix, scalar, or numpy array
-            Matrix to multiple with
+            Matrix to combine with element-wise
 
         op : function
             Binary operator to use for elementwise operations, e.g. add, subtract
