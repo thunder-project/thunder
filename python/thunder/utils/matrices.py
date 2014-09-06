@@ -132,7 +132,7 @@ class RowMatrix(object):
                     "cannot multiply shapes ("+str(self.nrows)+","+str(self.ncols)+") and ("+str(other.nrows)+","+str(other.ncols)+")")
             else:
                 if method is "reduce":
-                    return self.rdd.join(other.rdd).map(lambda (k, v): v).mapPartitions(matrixsum_iterator_other).sum()
+                    return self.rdd.zip(other.rdd).map(lambda ((k1, x), (k2, y)): (x, y)).mapPartitions(matrixsum_iterator_other).sum()
                 if method is "accum":
                     global mat
                     mat = self.rdd.context.accumulator(zeros((self.ncols, other.ncols)), MatrixAccumulatorParam())
@@ -140,7 +140,7 @@ class RowMatrix(object):
                     def outersum(x):
                         global mat
                         mat += outer(x[0], x[1])
-                    self.rdd.join(other.rdd).map(lambda (k, v): v).foreach(outersum)
+                    self.rdd.zip(other.rdd).map(lambda ((k1, x), (k2, y)): (x, y)).foreach(outersum)
                     return mat.value
                 else:
                     raise Exception("method must be reduce or accum")
@@ -175,7 +175,7 @@ class RowMatrix(object):
                 raise Exception(
                     "cannot do elementwise op for shapes ("+self.nrows+","+self.ncols+") and ("+other.nrows+","+other.ncols+")")
             else:
-                return RowMatrix(self.rdd.join(other.rdd).mapValues(lambda (x, y): op(x, y)), self.nrows, self.ncols)
+                return RowMatrix(self.rdd.zip(other.rdd).map(lambda ((k1, x), (k2, y)): (k1, add(x, y))), self.nrows, self.ncols)
         else:
             if dtype is ndarray:
                 dims = shape(other)
