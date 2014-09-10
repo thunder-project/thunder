@@ -2,6 +2,5 @@ argparse
 numpy
 scipy
 scikit-learn
-pillow
 matplotlib
 nose

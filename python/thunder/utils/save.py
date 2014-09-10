@@ -7,12 +7,13 @@ from scipy.io import savemat
 from numpy import std
 from math import isnan
 from numpy import array, squeeze, sum, shape, reshape, transpose, maximum, minimum, float16, uint8, savetxt, size, arange
-from PIL import Image
+from matplotlib.pyplot import imsave
+from matplotlib import cm
 from thunder.utils.load import getdims, subtoind, isrdd, Dimensions
 
 
-def arraytoim(mat, filename, format="tif"):
-    """Write a numpy array to a png image. If mat is 3D,
+def arraytoim(mat, filename, format="png"):
+    """Write a 2D numpy array to a grayscale image. If mat is 3D,
     will separately write each image along the 3rd dimension
 
     Parameters
@@ -23,16 +24,16 @@ def arraytoim(mat, filename, format="tif"):
     filename : str
         Base filename for writing
 
-    format : str, optional, default = "tif"
-        Image format to write (see PIL for options)
+    format : str, optional, default = "png"
+        Image format to write (see matplotlib's imsave for options)
     """
     dims = shape(mat)
     if len(dims) > 2:
         for z in range(0, dims[2]):
             cdata = mat[:, :, z]
-            Image.fromarray(cdata).save(filename+"-"+str(z)+"."+format)
+            imsave(filename+"-"+str(z)+"."+format, cdata, cmap=cm.gray)
     elif len(dims) == 2:
-        Image.fromarray(mat).save(filename+"."+format)
+        imsave(filename+"."+format, mat, cmap=cm.gray)
     else:
         raise NotImplementedError('array must be 2 or 3 dimensions for image writing')
 
