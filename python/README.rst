@@ -14,7 +14,15 @@ About
 
 thunder is a library for analyzing large-scale neural data. It's fast to run, easy to develop for, and can be used interactively. It is built on Spark, a new framework for cluster computing.
 
-thunder includes utilties for data loading and saving, and modular functions for time series statistics, matrix decompositions, and fitting algorithms. Analyses can easily be scripted or combined. It is written in Spark's Python API (Pyspark), making use of scipy, numpy, and scikit-learn.
+thunder includes utilties for data loading and saving, and modular functions for time series statistics, matrix decompositions, and fitting algorithms. Analyses can easily be scripted or combined. It is written in Spark's Python API (Pyspark), making use of scipy, numpy, and scikit-learn. 
+
+Documentation
+-------------
+This README contains basic information for installation and usage. See the `documentation`_ for more details, example usage, and API references. If you have a problem, question, or idea, post to the `mailing list`_. If you find a bug, submit an `issue`_. If posting an issue, please provide information about your environment (e.g. local usage or EC2, operating system) and instructions for reproducing the error.
+
+.. _documentation: http://thefreemanlab.com/thunder/docs/
+.. _mailing list: https://groups.google.com/forum/?hl=en#!forum/thunder-user
+.. _issue: https://github.com/freeman-lab/thunder/issues
 
 Quick start
 -----------
