@@ -100,13 +100,17 @@ class SeriesLoader(object):
         return Series(data)
 
     @staticmethod
-    def loadConf(datafile):
-        if os.path.isdir(datafile):
-            basepath = datafile
-        else:
-            basepath = os.path.dirname(datafile)
+    def loadConf(datafile, conffile='conf.json'):
+
+        if not os.path.isfile(conffile):
+            if os.path.isdir(datafile):
+                basepath = datafile
+            else:
+                basepath = os.path.dirname(datafile)
+            conffile = os.path.join(basepath, conffile)
+
         try:
-            f = open(os.path.join(basepath, 'conf.json'), 'r')
+            f = open(conffile, 'r')
             params = json.load(f)
         except IOError:
             params = None

@@ -28,7 +28,8 @@ class ThunderContext():
         """Starts a ThunderContext using the same arguments as SparkContext"""
         return ThunderContext(SparkContext(*args, **kwargs))
 
-    def loadSeries(self, datafile, nkeys=3, nvalues=None, inputformat='binary', minPartitions=None):
+    def loadSeries(self, datafile, nkeys=3, nvalues=None, inputformat='binary', minPartitions=None,
+                   conffile='conf.json'):
         """
         Loads a Series RDD from data stored as text or binary files.
 
@@ -53,10 +54,14 @@ class ThunderContext():
         minPartitions: int, optional
             Explicitly specify minimum number of Spark partitions to be generated from this data. Used only for
             text data. Default is to use minParallelism attribute of Spark context object.
+
+        conffile: string, optional, default 'conf.json'
+            Path to JSON file with configuration options including 'nkeys' and 'nvalues'. If a file is not found at the
+            given path, then the base directory given in 'datafile' will also be checked.
         """
         if not inputformat.lower() in ('text', 'binary'):
             raise ValueError("inputformat must be either 'text' or 'binary', got %s" % inputformat)
-        params = SeriesLoader.loadConf(datafile)
+        params = SeriesLoader.loadConf(datafile, conffile=conffile)
         if params is None:
             if inputformat.lower() == 'binary' and nvalues is None:
                 raise ValueError('Must specify nvalues for binary input if not providing a configuration file')
