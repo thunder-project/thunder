@@ -72,19 +72,34 @@ class ThunderContext():
         return data
 
     def loadImages(self, datafile, dims=None, inputformat='stack'):
-        """Load an Images RDD from data"""
+        """
+        Loads an Images RDD from data stored as a binary image stack, tif, or png files.
 
+        Parameters
+        ----------
+        datafile: string
+            path to single file or directory. If directory, will be expected to contain multiple *.stack, *.tif, or
+            *.png files, for 'stack', 'tif', and 'png' inputformats, respectively.
+
+        dims: tuple of ints, optional
+            Gives expected shape of a single file of input stack data (for example, x,y,z dimensions for 3d image
+            files.) Expected to be in numpy 'F' (Fortran/Matlab; column-major) convention. Used only for 'stack'
+            inputformat.
+
+        inputformat: string, optional, default = 'stack'
+            Format of data to be read. Must be either 'stack', 'tif', or 'png'.
+        """
+        if not inputformat.lower() in ('stack', 'png', 'tif'):
+            raise ValueError("inputformat must be either 'stack', 'png', or 'tif', got %s" % inputformat)
         loader = ImagesLoader(dims=dims)
 
-        if inputformat == 'stack':
+        if inputformat.lower() == 'stack':
             data = loader.fromStack(datafile, self._sc)
-        elif inputformat == 'tif':
+        elif inputformat.lower() == 'tif':
             data = loader.fromTif(datafile, self._sc)
-        elif inputformat == 'png':
-            data = loader.fromPng(datafile, self._sc)
         else:
-            raise Exception('Input format for Images must be stack, tif, or png')
-
+            # inputformat must be either 'stack', 'tif', or 'png'
+            data = loader.fromPng(datafile, self._sc)
         return data
 
     def makeExample(self, dataset, **opts):
