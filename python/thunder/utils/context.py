@@ -29,23 +29,46 @@ class ThunderContext():
         return ThunderContext(SparkContext(*args, **kwargs))
 
     def loadSeries(self, datafile, nkeys=3, nvalues=None, inputformat='binary', minPartitions=None):
-        """Load a Series RDD from data"""
+        """
+        Loads a Series RDD from data stored as text or binary files.
 
+        Parameters
+        ----------
+        datafile: string
+            path to single file or directory. If directory, will be expected to contain multiple *.txt (if
+            text) or *.bin (if binary) data files.
+
+        nkeys: int, optional, default = 3
+            dimensionality of data keys. (For instance, (x,y,z) keyed data for 3-dimensional image timeseries data.)
+            Will be overridden by values specified in 'conf.json' file is such a file is found in the same directory as
+            given by 'datafile'.
+
+        nvalues: int, optional
+            Number of values expected to be read. For binary data, nvalues must be specified either in this parameter
+            or in a conf.json file in the same directory as given by 'datafile'.
+
+        inputformat: string, optional, default = 'binary'
+            Format of data to be read. Must be either 'text' or 'binary'.
+
+        minPartitions: int, optional
+            Explicitly specify minimum number of Spark partitions to be generated from this data. Used only for
+            text data. Default is to use minParallelism attribute of Spark context object.
+        """
+        if not inputformat.lower() in ('text', 'binary'):
+            raise ValueError("inputformat must be either 'text' or 'binary', got %s" % inputformat)
         params = SeriesLoader.loadConf(datafile)
         if params is None:
-            if inputformat == 'binary' and nvalues is None:
-                raise Exception('Must specify nvalues if not providing a configuration file')
+            if inputformat.lower() == 'binary' and nvalues is None:
+                raise ValueError('Must specify nvalues for binary input if not providing a configuration file')
             loader = SeriesLoader(nkeys=nkeys, nvalues=nvalues, minPartitions=minPartitions)
         else:
             loader = SeriesLoader(nkeys=params['nkeys'], nvalues=params['nvalues'], minPartitions=minPartitions)
 
-        if inputformat == 'text':
+        if inputformat.lower() == 'text':
             data = loader.fromText(datafile, self._sc)
-        elif inputformat == 'binary':
-            data = loader.fromBinary(datafile, self._sc)
         else:
-            raise Exception('Input format for Series must be binary or text')
-
+            # must be either 'text' or 'binary'
+            data = loader.fromBinary(datafile, self._sc)
         return data
 
     def loadImages(self, datafile, dims=None, inputformat='stack'):
