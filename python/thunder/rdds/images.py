@@ -2,7 +2,7 @@ import glob
 import os
 from numpy import shape, ndarray, fromfile, int16, uint16, prod
 from matplotlib.pyplot import imread
-from thunder.rdds import Data
+from thunder.rdds.data import Data
 
 
 class Images(Data):

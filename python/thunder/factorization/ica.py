@@ -8,7 +8,7 @@ from scipy.linalg import sqrtm, inv, orth
 from thunder.utils import ThunderContext
 from thunder.utils import save
 from thunder.factorization import SVD
-from thunder.rdds import RowMatrix
+from thunder.rdds.matrices import RowMatrix
 
 
 class ICA(object):

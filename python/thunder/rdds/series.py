@@ -4,7 +4,7 @@ import json
 import types
 from numpy import ndarray, frombuffer, dtype, int16, float, array, sum, mean
 from thunder.utils.load import Parser
-from thunder.rdds import Data
+from thunder.rdds.data import Data
 
 
 class Series(Data):
