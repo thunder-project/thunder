@@ -87,9 +87,3 @@ class ImagesLoader(object):
             files = files[self.filerange[0]:self.filerange[1]+1]
 
         return files
-
-
-FORMATS = {
-    'int16': int16,
-    'float': float
-}

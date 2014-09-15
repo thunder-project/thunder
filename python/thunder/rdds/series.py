@@ -4,7 +4,7 @@ import json
 import types
 from numpy import ndarray, frombuffer, dtype, int16, float, array, sum, mean
 from thunder.utils.load import Parser
-from thunder.rdds import Data
+from thunder.rdds import Data, FORMATS
 
 
 class Series(Data):
@@ -116,8 +116,3 @@ class SeriesLoader(object):
             params = None
         return params
 
-
-FORMATS = {
-    'int16': int16,
-    'float': float
-}
