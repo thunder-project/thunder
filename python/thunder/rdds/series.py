@@ -3,7 +3,7 @@ import glob
 import json
 import types
 from numpy import ndarray, frombuffer, dtype, int16, float, array, sum, mean, std, size
-from thunder.rdds.data import Data
+from thunder.rdds.data import Data, FORMATS
 
 
 class Series(Data):
@@ -88,6 +88,22 @@ class Series(Data):
 
     # add a filterWith method
 
+class Parser(object):
+    """Class for parsing lines of a data file"""
+
+    def __init__(self, nkeys):
+        def func(line):
+            vec = [float(x) for x in line.split(' ')]
+            ts = array(vec[nkeys:])
+            keys = tuple(int(x) for x in vec[:nkeys])
+            return keys, ts
+
+        self.func = func
+
+    def get(self, y):
+        return self.func(y)
+
+
 class SeriesLoader(object):
 
     def __init__(self, nkeys, nvalues, keytype='int16', valuetype='int16', minPartitions=None):
@@ -136,20 +152,19 @@ class SeriesLoader(object):
         return Series(data)
 
     @staticmethod
-    def loadConf(datafile):
-        if os.path.isdir(datafile):
-            basepath = datafile
-        else:
-            basepath = os.path.dirname(datafile)
+    def loadConf(datafile, conffile='conf.json'):
+
+        if not os.path.isfile(conffile):
+            if os.path.isdir(datafile):
+                basepath = datafile
+            else:
+                basepath = os.path.dirname(datafile)
+            conffile = os.path.join(basepath, conffile)
+
         try:
-            f = open(os.path.join(basepath, 'conf.json'), 'r')
+            f = open(conffile, 'r')
             params = json.load(f)
         except IOError:
             params = None
         return params
 
-
-FORMATS = {
-    'int16': int16,
-    'float': float
-}

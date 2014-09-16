@@ -1,3 +1,9 @@
+from numpy import int16
+
+FORMATS = {
+    'int16': int16,
+    'float': float
+}
 
 
 class Data(object):
