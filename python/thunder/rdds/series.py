@@ -86,6 +86,7 @@ class Series(Data):
         rdd = self.rdd.mapValues(lambda x: array([x.size, mean(x), std(x), max(x), min(x)]))
         return Series(rdd, index=['size', 'mean', 'std', 'max', 'min'])
 
+    # add a filterWith method
 
 class SeriesLoader(object):
 
