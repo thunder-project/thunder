@@ -88,21 +88,6 @@ class Series(Data):
 
     # add a filterWith method
 
-class Parser(object):
-    """Class for parsing lines of a data file"""
-
-    def __init__(self, nkeys):
-        def func(line):
-            vec = [float(x) for x in line.split(' ')]
-            ts = array(vec[nkeys:])
-            keys = tuple(int(x) for x in vec[:nkeys])
-            return keys, ts
-
-        self.func = func
-
-    def get(self, y):
-        return self.func(y)
-
 
 class SeriesLoader(object):
 
@@ -136,18 +121,23 @@ class SeriesLoader(object):
         if os.path.isdir(datafile):
             datafile = os.path.join(datafile, '*.bin')
 
-        recordsize = self.nvalues + self.nkeys
-        recordsize *= dtype(FORMATS[self.valuetype]).itemsize
+        keysize = self.nkeys * dtype(self.keytype).itemsize
+        recordsize = keysize + self.nvalues * dtype(self.valuetype).itemsize
 
         lines = sc.newAPIHadoopFile(datafile, 'thunder.util.io.hadoop.FixedLengthBinaryInputFormat',
                                               'org.apache.hadoop.io.LongWritable',
                                               'org.apache.hadoop.io.BytesWritable',
                                               conf={'recordLength': str(recordsize)})
 
-        valuetype = self.valuetype
-        nkeys = self.nkeys
-        parsed = lines.map(lambda (k, v): (k, frombuffer(v, valuetype)))
-        data = parsed.map(lambda (k, v): (tuple(v[0:nkeys].astype(int)), v[nkeys:].astype(float)))
+        def _parseKeysFromBinaryBuffer(buf, keydtype, keybufsize):
+            return frombuffer(buffer(buf, 0, keybufsize), dtype=keydtype)
+
+        def _parseValsFromBinaryBuffer(buf, valsdtype, keybufsize):
+            return frombuffer(buffer(buf, keybufsize), dtype=valsdtype)
+
+        data = lines.map(lambda (_, v):
+                         (tuple(_parseKeysFromBinaryBuffer(v, dtype(self.keytype), keysize)),
+                          _parseValsFromBinaryBuffer(v, dtype(self.valuetype), keysize)))
 
         return Series(data)
 

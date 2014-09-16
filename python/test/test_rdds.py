@@ -5,7 +5,6 @@ import os
 import logging
 from numpy import dtype, array, allclose
 from nose.tools import assert_equals, assert_true
-from pyspark import SparkContext
 from thunder.rdds.series import SeriesLoader
 from test_utils import PySparkTestCase
 
@@ -84,14 +83,14 @@ class SeriesBinaryTestData(object):
             f.write(struct.pack(self.keyStructFormat, *keys))
             f.write(struct.pack(self.valStructFormat, *vals))
 
-    @classmethod
-    def _validateLengths(cls, dat):
+    @staticmethod
+    def _validateLengths(dat):
         l = len(dat[0])
         for d in dat:
             assert len(d) == l, "Data of unequal lengths, %d and %d" % (l, len(d))
 
-    @classmethod
-    def _normalizeDType(cls, dtypeinst, data):
+    @staticmethod
+    def _normalizeDType(dtypeinst, data):
         if dtypeinst is None:
             return data.dtype
         return dtype(dtypeinst)
@@ -130,10 +129,14 @@ class TestSeriesBinaryLoader(RDDsSparkTestCase):
         # run this as a single big test so as to avoid repeated setUp and tearDown of the spark context
         DATA = []
         # data will be a sequence of test data
-        # each test data item will be a sequence of key, value pairs
-        # each key, value pair will be a 2-tuple of numpy arrays
         # all keys and all values in a test data item must be of the same length
         DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11, 12, 13]], 'int16', 'int16'))
+        DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3], [5, 6, 7]], [[11], [12]], 'int16', 'int16'))
+        DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11, 12, 13]], 'int16', 'int32'))
+        DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11, 12, 13]], 'int32', 'int16'))
+        DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11.0, 12.0, 13.0]], 'int16', 'float32'))
+        DATA.append(SeriesBinaryTestData.fromArrays([[1.0, 2.0, 3.0]], [[11.0, 12.0, 13.0]], 'float32', 'float32'))
+        DATA.append(SeriesBinaryTestData.fromArrays([[1.5, 2.5, 3.5]], [[11.0, 12.0, 13.0]], 'float32', 'float32'))
 
         for itemidx, item in enumerate(DATA):
             fname = os.path.join(self.outputdir, 'inputfile%d.bin' % itemidx)
@@ -158,5 +161,6 @@ class TestSeriesBinaryLoader(RDDsSparkTestCase):
                 assert_true(allclose(expectedvals, actual[1]),
                             "Value mismatch in item %d; expected %s, got %s" %
                             (itemidx, str(expectedvals), str(actual[1])))
-
-
+                assert_equals(item.valDType, actual[1].dtype,
+                              "Value type mismatch in item %d; expected %s, got %s" %
+                              (itemidx, str(item.valDType), str(actual[1].dtype)))
