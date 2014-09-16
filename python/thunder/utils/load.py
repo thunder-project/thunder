@@ -34,22 +34,6 @@ class Dimensions(object):
         return self
 
 
-class Parser(object):
-    """Class for parsing lines of a data file"""
-
-    def __init__(self, nkeys):
-        def func(line):
-            vec = [float(x) for x in line.split(' ')]
-            ts = array(vec[nkeys:])
-            keys = tuple(int(x) for x in vec[:nkeys])
-            return keys, ts
-
-        self.func = func
-
-    def get(self, y):
-        return self.func(y)
-
-
 class PreProcessor(object):
     """Class for preprocessing data"""
      # TODO Refactor to make it easier to combine options
