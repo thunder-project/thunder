@@ -69,7 +69,7 @@ class ImagesLoader(object):
 
         return Images(self.fromFile(datafile, sc, reader, ext='png'))
 
-    def fromFile(self, datafile, reader, sc, ext):
+    def fromFile(self, datafile, sc, reader, ext):
 
         files = self.listFiles(datafile, ext)
         files = zip(range(0, len(files)), files)
