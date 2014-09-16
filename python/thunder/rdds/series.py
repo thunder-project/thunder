@@ -3,8 +3,9 @@ import glob
 import json
 import types
 from numpy import ndarray, frombuffer, dtype, int16, float, array, sum, mean
-from thunder.utils.load import Parser
-from thunder.rdds import Data, FORMATS
+#from thunder.utils.load import Parser
+#import thunder.utils.load
+from thunder.rdds.data import Data, FORMATS
 
 
 class Series(Data):
@@ -56,6 +57,22 @@ class Series(Data):
         rdd = self.rdd.mapValues(lambda x: array([y[0] for y in zip(array(x), index) if crit(y[1])]))
 
         return Series(rdd, index=newindex)
+
+
+class Parser(object):
+    """Class for parsing lines of a data file"""
+
+    def __init__(self, nkeys):
+        def func(line):
+            vec = [float(x) for x in line.split(' ')]
+            ts = array(vec[nkeys:])
+            keys = tuple(int(x) for x in vec[:nkeys])
+            return keys, ts
+
+        self.func = func
+
+    def get(self, y):
+        return self.func(y)
 
 
 class SeriesLoader(object):
