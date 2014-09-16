@@ -6,8 +6,9 @@ import unittest
 import logging
 from numpy import dtype, array, allclose
 from nose.tools import assert_equals, assert_true
-from pyspark import SparkContext, SparkConf
+from pyspark import SparkContext
 from thunder.rdds.series import SeriesLoader
+
 
 class PySparkTestCase(unittest.TestCase):
     def setUp(self):
