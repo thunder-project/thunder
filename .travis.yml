@@ -15,6 +15,6 @@ install:
   # https://github.com/travis-ci/travis-cookbooks/issues/155
   - "sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm"
 script:
-    - export SPARK_HOME=`pwd`/spark-1.0.0-bin-hadoop1
+    - export SPARK_HOME=`pwd`/spark-1.1.0-bin-hadoop1
     - cd python/test
     - ./run_tests.sh
