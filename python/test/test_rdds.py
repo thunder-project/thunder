@@ -3,9 +3,10 @@ import struct
 import tempfile
 import os
 import logging
-from numpy import dtype, array, allclose
-from nose.tools import assert_equals, assert_true
+from numpy import dtype, array, allclose, ndarray
+from nose.tools import assert_equals, assert_true, assert_almost_equal
 from thunder.rdds.series import SeriesLoader
+from thunder.rdds.images import ImagesLoader
 from test_utils import PySparkTestCase
 
 
@@ -14,6 +15,7 @@ class RDDsSparkTestCase(PySparkTestCase):
         super(RDDsSparkTestCase, self).setUp()
         # suppress lots of DEBUG output from py4j
         logging.getLogger("py4j").setLevel(logging.WARNING)
+        logging.getLogger("py4j.java_gateway").setLevel(logging.WARNING)
         self.outputdir = tempfile.mkdtemp()
 
     def tearDown(self):
@@ -164,3 +166,46 @@ class TestSeriesBinaryLoader(RDDsSparkTestCase):
                 assert_equals(item.valDType, actual[1].dtype,
                               "Value type mismatch in item %d; expected %s, got %s" %
                               (itemidx, str(item.valDType), str(actual[1].dtype)))
+
+
+class TestImagesFileLoaders(RDDsSparkTestCase):
+    @staticmethod
+    def _findTestResourcesDir(resourcesdirname="resources"):
+        for path in os.environ["PYTHONPATH"].split(os.pathsep):
+            if os.path.dirname(path).endswith(resourcesdirname):
+                possibledir = os.path.dirname(path)
+            else:
+                possibledir = os.path.join(path, resourcesdirname)
+            if os.path.isdir(possibledir):
+                return possibledir
+        raise IOError("Test resources directory "+resourcesdirname+" not found on or immediately under $PYTHONPATH")
+
+    def setUp(self):
+        super(TestImagesFileLoaders, self).setUp()
+        self.testresourcesdir = self._findTestResourcesDir()
+
+    def test_fromPng(self):
+        imagepath = os.path.join(self.testresourcesdir, "singlelayer_png", "dot1.png")
+        pngimage = ImagesLoader().fromPng(imagepath, self.sc)
+        firstpngimage = pngimage.first()
+        assert_equals(0, firstpngimage[0], "Key error; expected first image key to be 0, was "+str(firstpngimage[0]))
+        expectedshape = (70, 75, 4)  # 4 channel png; RGBalpha
+        assert_true(isinstance(firstpngimage[1], ndarray),
+                    "Value type error; expected first image value to be numpy ndarray, was " +
+                    str(type(firstpngimage[1])))
+        assert_equals(expectedshape, firstpngimage[1].shape)
+        assert_almost_equal(0.97, firstpngimage[1][:, :, 0].flatten().max(), places=2)
+        assert_almost_equal(0.03, firstpngimage[1][:, :, 0].flatten().min(), places=2)
+
+    def test_fromTif(self):
+        imagepath = os.path.join(self.testresourcesdir, "singlelayer_tif", "dot1.tif")
+        tifimage = ImagesLoader().fromPng(imagepath, self.sc)
+        firsttifimage = tifimage.first()
+        assert_equals(0, firsttifimage[0], "Key error; expected first image key to be 0, was "+str(firsttifimage[0]))
+        expectedshape = (70, 75, 4)  # 4 channel tif; RGBalpha
+        assert_true(isinstance(firsttifimage[1], ndarray),
+                    "Value type error; expected first image value to be numpy ndarray, was " +
+                    str(type(firsttifimage[1])))
+        assert_equals(expectedshape, firsttifimage[1].shape)
+        assert_equals(248, firsttifimage[1][:, :, 0].flatten().max())
+        assert_equals(8, firsttifimage[1][:, :, 0].flatten().min())
