@@ -2,13 +2,15 @@ import os
 import glob
 import json
 import types
-from numpy import ndarray, frombuffer, dtype, int16, float, array, sum, mean
-#from thunder.utils.load import Parser
-#import thunder.utils.load
+from numpy import ndarray, frombuffer, dtype, int16, float, array, sum, mean, std, size
 from thunder.rdds.data import Data, FORMATS
 
 
 class Series(Data):
+    """A series backed by an RDD of (tuple,array) pairs
+    where the tuple is an identifier for each record,
+    and the value is an array indexed by a
+    common, fixed list (e.g. a time series)"""
 
     def __init__(self, rdd, index=None):
         super(Series, self).__init__(rdd)
@@ -58,6 +60,33 @@ class Series(Data):
 
         return Series(rdd, index=newindex)
 
+    def seriesSum(self):
+        return self.seriesStat('sum')
+
+    def seriesMean(self):
+        return self.seriesStat('mean')
+
+    def seriesStdev(self):
+        return self.seriesStat('stdev')
+
+    def seriesStat(self, stat):
+        STATS = {
+            'sum': sum,
+            'mean': mean,
+            'stdev': std,
+            'max': max,
+            'min': min,
+            'count': size
+        }
+        func = STATS[stat]
+        rdd = self.rdd.mapValues(lambda x: func(x))
+        return Series(rdd, index=[stat])
+
+    def seriesStats(self):
+        rdd = self.rdd.mapValues(lambda x: array([x.size, mean(x), std(x), max(x), min(x)]))
+        return Series(rdd, index=['size', 'mean', 'std', 'max', 'min'])
+
+    # add a filterWith method
 
 class Parser(object):
     """Class for parsing lines of a data file"""
@@ -90,9 +119,15 @@ class SeriesLoader(object):
             files = sorted(glob.glob(os.path.join(datafile, '*.txt')))
             datafile = ''.join([files[x] + ',' for x in range(0, len(files))])[0:-1]
 
+        def parse(line, nkeys):
+            vec = [float(x) for x in line.split(' ')]
+            ts = array(vec[nkeys:])
+            keys = tuple(int(x) for x in vec[:nkeys])
+            return keys, ts
+
         lines = sc.textFile(datafile, self.minPartitions)
-        parser = Parser(self.nkeys)
-        data = lines.map(parser.get)
+        nkeys = self.nkeys
+        data = lines.map(lambda x: parse(x, nkeys))
 
         return Series(data)
 

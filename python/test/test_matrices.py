@@ -1,7 +1,7 @@
 import shutil
 import tempfile
 from numpy import array, array_equal, add
-from thunder.utils.matrices import RowMatrix
+from thunder.rdds.matrices import RowMatrix
 from test_utils import PySparkTestCase
 
 

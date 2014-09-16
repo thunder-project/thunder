@@ -2,13 +2,14 @@
 Utilities for loading and preprocessing data
 """
 
-import pyspark
 from numpy import array, mean, cumprod, append, mod, ceil, size, \
     polyfit, polyval, arange, percentile, inf, subtract, \
     asarray, ravel_multi_index
 from scipy.signal import butter, lfilter
+from thunder.utils.common import isrdd
 
 
+# to Series
 class Dimensions(object):
     """Helper class for estimating and storing dimensions of data
     based on the keys"""
@@ -34,22 +35,7 @@ class Dimensions(object):
         return self
 
 
-class Parser(object):
-    """Class for parsing lines of a data file"""
-
-    def __init__(self, nkeys):
-        def func(line):
-            vec = [float(x) for x in line.split(' ')]
-            ts = array(vec[nkeys:])
-            keys = tuple(int(x) for x in vec[:nkeys])
-            return keys, ts
-
-        self.func = func
-
-    def get(self, y):
-        return self.func(y)
-
-
+# to series
 class PreProcessor(object):
     """Class for preprocessing data"""
      # TODO Refactor to make it easier to combine options
@@ -139,16 +125,7 @@ class PreProcessor(object):
         return self.func(y)
 
 
-def isrdd(data):
-    """ Check whether data is an RDD or not"""
-
-    dtype = type(data)
-    if (dtype == pyspark.rdd.RDD) | (dtype == pyspark.rdd.PipelinedRDD):
-        return True
-    else:
-        return False
-
-
+# to series
 def getdims(data):
     """Get dimensions of data via the keys. Ranges can have arbtirary minima
     and maximum, but they must be contiguous (e.g. the indices of a dense matrix)."""
@@ -173,12 +150,12 @@ def getdims(data):
 
     return d
 
-
+# to series
 def _check_order(order):
     if not order in ('C', 'F'):
         raise TypeError("Order %s not understood, should be 'C' or 'F'.")
 
-
+# to series
 def subtoind(data, dims, order='F', onebased=True):
     """Convert subscript indexing to linear indexing
 
@@ -227,7 +204,7 @@ def subtoind(data, dims, order='F', onebased=True):
         else:
             return map(lambda (k, v): (k[0], v), data)
 
-
+# to series
 def indtosub(data, dims, order='F', onebased=True):
     """Convert linear indexing to subscript indexing
 

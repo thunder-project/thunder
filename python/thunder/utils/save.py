@@ -9,7 +9,8 @@ from math import isnan
 from numpy import array, squeeze, sum, shape, reshape, transpose, maximum, minimum, float16, uint8, savetxt, size, arange
 from matplotlib.pyplot import imsave
 from matplotlib import cm
-from thunder.utils.load import getdims, subtoind, isrdd, Dimensions
+from thunder.utils.load import getdims, subtoind, Dimensions
+from thunder.utils.common import isrdd
 
 
 def arraytoim(mat, filename, format="png"):

@@ -4,14 +4,14 @@ Utilities for representing and working with matrices as RDDs
 
 from numpy import dot, outer, shape, ndarray, mean, add, subtract, multiply, zeros, std, divide, sqrt
 from pyspark.accumulators import AccumulatorParam
-from thunder.rdds.data import Data
+from thunder.rdds.series import Series
 
 # TODO: right divide and left divide
 # TODO: common operation is multiplying an RDD by its transpose times a matrix, how to do this cleanly?
 # TODO: test using these in the various analyses packages (especially thunder.factorization)
 
 
-class RowMatrix(Data):
+class RowMatrix(Series):
     """
     A large matrix backed by an RDD of (tuple, array) pairs
     The tuple can contain a row index, or any other useful
@@ -216,31 +216,6 @@ class RowMatrix(Data):
         Elementwise division (see elementwise)
         """
         return RowMatrix.elementwise(self, other, divide)
-
-    def sum(self):
-        """
-        Compute the row sum
-        """
-        return self.rdd.map(lambda (k, v): v).sum()
-
-    def mean(self):
-        """
-        Compute the row mean
-        """
-        return self.rdd.map(lambda (k, v): v).sum() / self.nrows
-
-    def var(self):
-        """
-        Compute the row sample variance
-        """
-        meanVec = self.mean()
-        return self.rdd.map(lambda (k, v): (v - meanVec) ** 2).sum() / (self.nrows - 1)
-
-    def std(self):
-        """
-        Compute the row standard deviation
-        """
-        return sqrt(self.var())
 
     def center(self, axis=0):
         """
