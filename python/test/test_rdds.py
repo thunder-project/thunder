@@ -2,32 +2,19 @@ import shutil
 import struct
 import tempfile
 import os
-import unittest
 import logging
 from numpy import dtype, array, allclose
 from nose.tools import assert_equals, assert_true
 from pyspark import SparkContext
 from thunder.rdds.series import SeriesLoader
-
-
-class PySparkTestCase(unittest.TestCase):
-    def setUp(self):
-        class_name = self.__class__.__name__
-        logging.getLogger("py4j").setLevel(logging.WARNING)
-        #self.sc = SparkContext('local', class_name)
-        #conf = SparkConf()
-        self.sc = SparkContext('local', class_name)
-
-    def tearDown(self):
-        self.sc.stop()
-        # To avoid Akka rebinding to the same port, since it doesn't unbind
-        # immediately on shutdown
-        self.sc._jvm.System.clearProperty("spark.driver.port")
+from test_utils import PySparkTestCase
 
 
 class RDDsSparkTestCase(PySparkTestCase):
     def setUp(self):
         super(RDDsSparkTestCase, self).setUp()
+        # suppress lots of DEBUG output from py4j
+        logging.getLogger("py4j").setLevel(logging.WARNING)
         self.outputdir = tempfile.mkdtemp()
 
     def tearDown(self):
@@ -36,9 +23,30 @@ class RDDsSparkTestCase(PySparkTestCase):
 
 
 class SeriesBinaryTestData(object):
+    """
+    Data object for SeriesLoader binary test.
+    """
     __slots__ = ('keys', 'vals', 'keyDType', 'valDType')
 
     def __init__(self, keys, vals, keydtype, valdtype):
+        """
+        Constructor, intended to be called from fromArrays class factory method.
+
+        Expects m x n and m x p data for keys and vals.
+
+        Parameters
+        ----------
+        keys: two dimensional array or sequence
+        vals: two dimensional array or sequence
+        keydtype: object castable to numpy dtype
+            data type of keys
+        valdtype: object castable to numpy dtype
+            data type of values
+
+        Returns
+        -------
+        self: new instance of SeriesBinaryTestData
+        """
         self.keys = keys
         self.vals = vals
         self.keyDType = keydtype
@@ -64,6 +72,18 @@ class SeriesBinaryTestData(object):
     def nvals(self):
         return len(self.vals[0])
 
+    def writeToFile(self, f):
+        """
+        Writes own key, value data to passed file handle in binary format
+        Parameters
+        ----------
+        f: file handle, open for writing
+            f will remain open after this call
+        """
+        for keys, vals in self.data:
+            f.write(struct.pack(self.keyStructFormat, *keys))
+            f.write(struct.pack(self.valStructFormat, *vals))
+
     @classmethod
     def _validateLengths(cls, dat):
         l = len(dat[0])
@@ -78,10 +98,26 @@ class SeriesBinaryTestData(object):
 
     @classmethod
     def fromArrays(cls, keys, vals, keydtype=None, valdtype=None):
-        # validation:
+        """
+        Factory method for SeriesBinaryTestData. Validates input before calling class __init__ method.
+
+        Expects m x n and m x p data for keys and vals.
+
+        Parameters
+        ----------
+        keys: two dimensional array or sequence
+        vals: two dimensional array or sequence
+        keydtype: object castable to numpy dtype
+            data type of keys
+        valdtype: object castable to numpy dtype
+            data type of values
+
+        Returns
+        -------
+        self: new instance of SeriesBinaryTestData
+        """
         keydtype = cls._normalizeDType(keydtype, keys)
         valdtype = cls._normalizeDType(valdtype, vals)
-
         assert len(keys) == len(vals), "Unequal numbers of keys and values, %d and %d" % (len(keys), len(vals))
         cls._validateLengths(keys)
         cls._validateLengths(vals)
@@ -102,9 +138,7 @@ class TestSeriesBinaryLoader(RDDsSparkTestCase):
         for itemidx, item in enumerate(DATA):
             fname = os.path.join(self.outputdir, 'inputfile%d.bin' % itemidx)
             with open(fname, 'wb') as f:
-                for keys, vals in item.data:
-                    f.write(struct.pack(item.keyStructFormat, *keys))
-                    f.write(struct.pack(item.valStructFormat, *vals))
+                item.writeToFile(f)
 
             loader = SeriesLoader(item.nkeys, item.nvals, keytype=str(item.keyDType), valuetype=str(item.valDType))
             series = loader.fromBinary(fname, self.sc)
