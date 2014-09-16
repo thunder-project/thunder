@@ -5,8 +5,7 @@ Classes and standalone app for KMeans clustering
 import argparse
 from numpy import sum, array, argmin, corrcoef, random, ndarray
 from scipy.spatial.distance import cdist
-from thunder.utils import ThunderContext, save
-from thunder.utils.load import isrdd
+from thunder.utils import ThunderContext, save, isrdd
 
 
 class KMeansModel(object):
