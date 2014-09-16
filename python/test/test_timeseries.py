@@ -2,7 +2,6 @@ import shutil
 import tempfile
 from numpy import array, allclose, mean, median, std, corrcoef
 from scipy.linalg import norm
-from thunder.timeseries import Stats
 from thunder.timeseries import Fourier
 from thunder.timeseries import CrossCorr
 from thunder.timeseries import LocalCorr
@@ -18,36 +17,6 @@ class TimeSeriesTestCase(PySparkTestCase):
     def tearDown(self):
         super(TimeSeriesTestCase, self).tearDown()
         shutil.rmtree(self.outputdir)
-
-
-class TestStats(TimeSeriesTestCase):
-    """Test accuracy for signal statistics
-    by comparison to direct evaluation using numpy/scipy
-    """
-    def test_stats(self):
-        data_local = [
-            array([1.0, 2.0, -4.0, 5.0]),
-            array([2.0, 2.0, -4.0, 5.0]),
-            array([3.0, 2.0, -4.0, 5.0]),
-            array([4.0, 2.0, -4.0, 5.0]),
-        ]
-
-        data = self.sc.parallelize(zip(range(1, 5), data_local))
-        data_local = array(data_local)
-
-        vals = Stats("mean").calc(data).map(lambda (_, v): v)
-
-        assert(allclose(vals.collect(), mean(data_local, axis=1)))
-
-        vals = Stats("median").calc(data).map(lambda (_, v): v)
-        assert(allclose(vals.collect(), median(data_local, axis=1)))
-
-        vals = Stats("std").calc(data).map(lambda (_, v): v)
-        assert(allclose(vals.collect(), std(data_local, axis=1)))
-
-        vals = Stats("norm").calc(data).map(lambda (_, v): v)
-        for i in range(0, 4):
-            assert(allclose(vals.collect()[i], norm(data_local[i, :] - mean(data_local[i, :]))))
 
 
 class TestFourier(TimeSeriesTestCase):
