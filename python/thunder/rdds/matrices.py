@@ -4,7 +4,7 @@ Utilities for representing and working with matrices as RDDs
 
 from numpy import dot, outer, shape, ndarray, mean, add, subtract, multiply, zeros, std, divide, sqrt
 from pyspark.accumulators import AccumulatorParam
-from thunder.rdds import Data
+from thunder.rdds.data import Data
 
 # TODO: right divide and left divide
 # TODO: common operation is multiplying an RDD by its transpose times a matrix, how to do this cleanly?
