@@ -215,23 +215,37 @@ class TestImagesFileLoaders(RDDsSparkTestCase):
         assert_equals(248, firsttifimage[1][:, :, 0].flatten().max())
         assert_equals(8, firsttifimage[1][:, :, 0].flatten().min())
 
+    @staticmethod
+    def _evaluateMultipleImages(tifimages, expectednum, expectedshape, expectedkeys, expectedsums):
+        assert_equals(expectednum, len(tifimages), "Expected %s images, got %d" % (expectednum, len(tifimages)))
+        for img, expectedkey, expectedsum in zip(tifimages, expectedkeys, expectedsums):
+            assert_equals(expectedkey, img[0], "Expected key %s, got %s" % (str(expectedkey), str(img[0])))
+
+            assert_true(isinstance(img[1], ndarray),
+                        "Value type error; expected image value to be numpy ndarray, was " + str(type(img[1])))
+            assert_equals(expectedshape, img[1].shape)
+            assert_equals(expectedsum, img[1][:, :, 0].sum())
+
+    def test_fromTifWithMultipleFiles(self):
+        imagepath = os.path.join(self.testresourcesdir, "singlelayer_tif", "dot*_lzw.tif")
+        tifimages = ImagesLoader().fromTif(imagepath, self.sc).collect()
+
+        expectednum = 3
+        expectedshape = (70, 75, 4)  # 4 channel tif; RGBalpha
+        expectedsums = [1282192, 1261328, 1241520]  # 3 images have increasing #s of black dots, so lower luminance overall
+        expectedkeys = range(expectednum)
+        self._evaluateMultipleImages(tifimages, expectednum, expectedshape, expectedkeys, expectedsums)
+
     @unittest.skipIf(not _have_image, "PIL/pillow not installed")
     def test_fromMultipageTif(self):
         imagepath = os.path.join(self.testresourcesdir, "multilayer_tif", "dotdotdot_lzw.tif")
-        tifimage = ImagesLoader().fromMultipageTif(imagepath, self.sc)
-        tifimages = tifimage.collect()
+        tifimages = ImagesLoader().fromMultipageTif(imagepath, self.sc).collect()
 
+        expectednum = 3
         expectedshape = (70, 75, 4)  # 4 channel tif; RGBalpha
         expectedsums = [1282192, 1261328, 1241520]  # 3 images have increasing #s of black dots, so lower luminance overall
-        assert_equals(3, len(tifimages), "Expected 3 images, got %d" % len(tifimages))
-        for imgidx, img in enumerate(tifimages):
-            assert_equals((0, imgidx), img[0], "Expected key %s, got %s" % (str((0, imgidx)), str(img[0])))
-
-            assert_true(isinstance(img[1], ndarray),
-                        "Value type error; expected first image value to be numpy ndarray, was " +
-                        str(type(img[1])))
-            assert_equals(expectedshape, img[1].shape)
-            assert_equals(expectedsums[imgidx], img[1][:, :, 0].sum())
+        expectedkeys = [(0, i) for i in xrange(expectednum)]
+        self._evaluateMultipleImages(tifimages, expectednum, expectedshape, expectedkeys, expectedsums)
 
 if __name__ == "__main__":
     if not _have_image:
