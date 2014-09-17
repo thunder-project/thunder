@@ -66,7 +66,7 @@ class Series(Data):
         Detrend series data with linear or nonlinear detrending
         Preserve intercept so that subsequent steps can adjust the baseline
         """
-        checkparams(method, ['linear', 'nonlinear'])
+        checkparams(method, ['linear', 'nonlin'])
 
         if method.lower() == 'linear':
             order = 1
