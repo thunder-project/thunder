@@ -10,3 +10,11 @@ def isrdd(data):
         return True
     else:
         return False
+
+
+def checkparams(param, opts):
+    """ Check whether param is contained in opts (including lowercase version),
+    return error otherwise
+    """
+    if not param.lower() in opts:
+        raise ValueError("method must be one of %s, got %s" % (str(opts)[1:-1], param))
