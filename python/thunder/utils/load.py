@@ -2,10 +2,7 @@
 Utilities for loading and preprocessing data
 """
 
-from numpy import array, mean, cumprod, append, mod, ceil, size, \
-    polyfit, polyval, arange, percentile, inf, subtract, \
-    asarray, ravel_multi_index
-from scipy.signal import butter, lfilter
+from numpy import cumprod, append, mod, ceil, size, inf, subtract
 from thunder.utils.common import isrdd
 
 
@@ -33,7 +30,7 @@ class Dimensions(object):
         self.min = tuple(map(min, self.min, other.min))
         self.max = tuple(map(max, self.max, other.max))
         return self
-    
+
 
 # to series
 def getdims(data):

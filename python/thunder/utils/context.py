@@ -5,7 +5,6 @@ import json
 from numpy import asarray, floor, ceil, shape, arange
 from scipy.io import loadmat
 from pyspark import SparkContext
-from thunder.utils.load import PreProcessor, indtosub
 from thunder.utils import DataSets
 from thunder.rdds.series import SeriesLoader
 from thunder.rdds.images import ImagesLoader
