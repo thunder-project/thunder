@@ -171,14 +171,11 @@ class TestSeriesBinaryLoader(RDDsSparkTestCase):
 class TestImagesFileLoaders(RDDsSparkTestCase):
     @staticmethod
     def _findTestResourcesDir(resourcesdirname="resources"):
-        for path in os.environ["PYTHONPATH"].split(os.pathsep):
-            if os.path.dirname(path).endswith(resourcesdirname):
-                possibledir = os.path.dirname(path)
-            else:
-                possibledir = os.path.join(path, resourcesdirname)
-            if os.path.isdir(possibledir):
-                return possibledir
-        raise IOError("Test resources directory "+resourcesdirname+" not found on or immediately under $PYTHONPATH")
+        testdirpath = os.path.dirname(os.path.realpath(__file__))
+        testresourcesdirpath = os.path.join(testdirpath, resourcesdirname)
+        if not os.path.isdir(testresourcesdirpath):
+            raise IOError("Test resources directory "+testresourcesdirpath+" not found")
+        return testresourcesdirpath
 
     def setUp(self):
         super(TestImagesFileLoaders, self).setUp()
