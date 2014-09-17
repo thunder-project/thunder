@@ -8,7 +8,8 @@ from scipy.linalg import norm
 from scipy.io import loadmat
 from thunder.timeseries.base import TimeSeriesBase
 from thunder.factorization import PCA
-from thunder.utils import ThunderContext, save
+from thunder.utils.context import ThunderContext
+from thunder.utils import save
 
 
 class CrossCorr(TimeSeriesBase):

@@ -4,7 +4,8 @@ Class and standalone app for local correlation
 
 import argparse
 from numpy import corrcoef
-from thunder.utils import ThunderContext, save, indtosub, subtoind, getdims
+from thunder.utils.context import ThunderContext
+from thunder.utils import save, getdims
 
 
 class LocalCorr(object):

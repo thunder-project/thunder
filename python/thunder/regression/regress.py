@@ -6,7 +6,7 @@ import argparse
 from scipy.io import loadmat
 from numpy import sum, outer, inner, mean, shape, dot, transpose, concatenate, ones
 from scipy.linalg import inv
-from thunder.utils import ThunderContext
+from thunder.utils.context import ThunderContext
 from thunder.utils import save
 
 

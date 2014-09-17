@@ -3,7 +3,8 @@ Class and standalone app for calculating series statistics
 """
 
 import argparse
-from thunder.utils import ThunderContext, save
+from thunder.utils.context import ThunderContext
+from thunder.utils import save
 
 
 if __name__ == "__main__":

@@ -4,7 +4,8 @@ Class and standalone app for Principal Component Analysis
 
 import argparse
 from thunder.factorization import SVD
-from thunder.utils import ThunderContext, save
+from thunder.utils.context import ThunderContext
+from thunder.utils import save
 from thunder.rdds.matrices import RowMatrix
 
 

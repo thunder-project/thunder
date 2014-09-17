@@ -4,7 +4,8 @@ Class for performing non-negative matrix factorization
 
 import argparse
 import numpy as np
-from thunder.utils import ThunderContext, save
+from thunder.utils.context import ThunderContext
+from thunder.utils import save
 
 
 class NMF(object):

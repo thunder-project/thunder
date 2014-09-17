@@ -6,7 +6,8 @@ import argparse
 from numpy import mean, fix, sqrt, pi, array, angle
 from numpy.fft import fft
 from thunder.timeseries.base import TimeSeriesBase
-from thunder.utils import ThunderContext, save
+from thunder.utils.context import ThunderContext
+from thunder.utils import save
 
 
 class Fourier(TimeSeriesBase):
