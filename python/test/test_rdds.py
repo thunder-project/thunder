@@ -195,7 +195,7 @@ class TestImagesFileLoaders(RDDsSparkTestCase):
         assert_almost_equal(0.03, firstpngimage[1][:, :, 0].flatten().min(), places=2)
 
     def test_fromTif(self):
-        imagepath = os.path.join(self.testresourcesdir, "singlelayer_tif", "dot1.tif")
+        imagepath = os.path.join(self.testresourcesdir, "singlelayer_tif", "dot1_lzw.tif")
         tifimage = ImagesLoader().fromPng(imagepath, self.sc)
         firsttifimage = tifimage.first()
         assert_equals(0, firsttifimage[0], "Key error; expected first image key to be 0, was "+str(firsttifimage[0]))
