@@ -3,10 +3,10 @@ import struct
 import tempfile
 import os
 import logging
-from numpy import dtype, array, allclose
-from nose.tools import assert_equals, assert_true
-from pyspark import SparkContext
+from numpy import dtype, array, allclose, ndarray
+from nose.tools import assert_equals, assert_true, assert_almost_equal
 from thunder.rdds.series import SeriesLoader
+from thunder.rdds.images import ImagesLoader
 from test_utils import PySparkTestCase
 
 
@@ -15,6 +15,7 @@ class RDDsSparkTestCase(PySparkTestCase):
         super(RDDsSparkTestCase, self).setUp()
         # suppress lots of DEBUG output from py4j
         logging.getLogger("py4j").setLevel(logging.WARNING)
+        logging.getLogger("py4j.java_gateway").setLevel(logging.WARNING)
         self.outputdir = tempfile.mkdtemp()
 
     def tearDown(self):
@@ -84,14 +85,14 @@ class SeriesBinaryTestData(object):
             f.write(struct.pack(self.keyStructFormat, *keys))
             f.write(struct.pack(self.valStructFormat, *vals))
 
-    @classmethod
-    def _validateLengths(cls, dat):
+    @staticmethod
+    def _validateLengths(dat):
         l = len(dat[0])
         for d in dat:
             assert len(d) == l, "Data of unequal lengths, %d and %d" % (l, len(d))
 
-    @classmethod
-    def _normalizeDType(cls, dtypeinst, data):
+    @staticmethod
+    def _normalizeDType(dtypeinst, data):
         if dtypeinst is None:
             return data.dtype
         return dtype(dtypeinst)
@@ -130,10 +131,14 @@ class TestSeriesBinaryLoader(RDDsSparkTestCase):
         # run this as a single big test so as to avoid repeated setUp and tearDown of the spark context
         DATA = []
         # data will be a sequence of test data
-        # each test data item will be a sequence of key, value pairs
-        # each key, value pair will be a 2-tuple of numpy arrays
         # all keys and all values in a test data item must be of the same length
         DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11, 12, 13]], 'int16', 'int16'))
+        DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3], [5, 6, 7]], [[11], [12]], 'int16', 'int16'))
+        DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11, 12, 13]], 'int16', 'int32'))
+        DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11, 12, 13]], 'int32', 'int16'))
+        DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11.0, 12.0, 13.0]], 'int16', 'float32'))
+        DATA.append(SeriesBinaryTestData.fromArrays([[1.0, 2.0, 3.0]], [[11.0, 12.0, 13.0]], 'float32', 'float32'))
+        DATA.append(SeriesBinaryTestData.fromArrays([[1.5, 2.5, 3.5]], [[11.0, 12.0, 13.0]], 'float32', 'float32'))
 
         for itemidx, item in enumerate(DATA):
             fname = os.path.join(self.outputdir, 'inputfile%d.bin' % itemidx)
@@ -158,5 +163,46 @@ class TestSeriesBinaryLoader(RDDsSparkTestCase):
                 assert_true(allclose(expectedvals, actual[1]),
                             "Value mismatch in item %d; expected %s, got %s" %
                             (itemidx, str(expectedvals), str(actual[1])))
+                assert_equals(item.valDType, actual[1].dtype,
+                              "Value type mismatch in item %d; expected %s, got %s" %
+                              (itemidx, str(item.valDType), str(actual[1].dtype)))
 
 
+class TestImagesFileLoaders(RDDsSparkTestCase):
+    @staticmethod
+    def _findTestResourcesDir(resourcesdirname="resources"):
+        testdirpath = os.path.dirname(os.path.realpath(__file__))
+        testresourcesdirpath = os.path.join(testdirpath, resourcesdirname)
+        if not os.path.isdir(testresourcesdirpath):
+            raise IOError("Test resources directory "+testresourcesdirpath+" not found")
+        return testresourcesdirpath
+
+    def setUp(self):
+        super(TestImagesFileLoaders, self).setUp()
+        self.testresourcesdir = self._findTestResourcesDir()
+
+    def test_fromPng(self):
+        imagepath = os.path.join(self.testresourcesdir, "singlelayer_png", "dot1.png")
+        pngimage = ImagesLoader().fromPng(imagepath, self.sc)
+        firstpngimage = pngimage.first()
+        assert_equals(0, firstpngimage[0], "Key error; expected first image key to be 0, was "+str(firstpngimage[0]))
+        expectedshape = (70, 75, 4)  # 4 channel png; RGBalpha
+        assert_true(isinstance(firstpngimage[1], ndarray),
+                    "Value type error; expected first image value to be numpy ndarray, was " +
+                    str(type(firstpngimage[1])))
+        assert_equals(expectedshape, firstpngimage[1].shape)
+        assert_almost_equal(0.97, firstpngimage[1][:, :, 0].flatten().max(), places=2)
+        assert_almost_equal(0.03, firstpngimage[1][:, :, 0].flatten().min(), places=2)
+
+    def test_fromTif(self):
+        imagepath = os.path.join(self.testresourcesdir, "singlelayer_tif", "dot1_lzw.tif")
+        tifimage = ImagesLoader().fromPng(imagepath, self.sc)
+        firsttifimage = tifimage.first()
+        assert_equals(0, firsttifimage[0], "Key error; expected first image key to be 0, was "+str(firsttifimage[0]))
+        expectedshape = (70, 75, 4)  # 4 channel tif; RGBalpha
+        assert_true(isinstance(firsttifimage[1], ndarray),
+                    "Value type error; expected first image value to be numpy ndarray, was " +
+                    str(type(firsttifimage[1])))
+        assert_equals(expectedshape, firsttifimage[1].shape)
+        assert_equals(248, firsttifimage[1][:, :, 0].flatten().max())
+        assert_equals(8, firsttifimage[1][:, :, 0].flatten().min())

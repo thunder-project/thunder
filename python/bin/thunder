@@ -6,13 +6,22 @@ import thunder
 
 spark = os.getenv('SPARK_HOME')
 if spark is None or spark == '':
-    raise Exception('You must assign the environemntal variable SPARK_HOME with the location of Spark')
+    raise Exception('You must assign the environmental variable SPARK_HOME with the location of Spark')
 
 if os.getenv('PYTHONPATH') is None:
     os.environ['PYTHONPATH'] = ""
 
-os.environ['PYTHONPATH'] = os.environ['PYTHONPATH'] + ":" + os.environ['SPARK_HOME'] + "/python:../"
-os.environ['PYTHONPATH'] = os.environ['PYTHONPATH'] + ":" + os.environ['SPARK_HOME'] + "/python/lib/py4j-0.8.1-src.zip"
+os.environ['PYTHONPATH'] = os.environ['PYTHONPATH'] + ":" + spark + "/python:../"
+
+
+def findPy4J(sparkpath):
+    py4jglob = os.path.join(sparkpath, "python", "lib", "py4j-*-src.zip")
+    try:
+        return glob.iglob(py4jglob).next()
+    except StopIteration:
+        raise Exception("No py4j jar found at "+py4jglob+"; is SPARK_HOME set correctly?")
+
+os.environ['PYTHONPATH'] = os.environ['PYTHONPATH'] + ":" + findPy4J(spark)
 
 # if not running locally, check whether egg exists, and if not, build it
 master = os.getenv('MASTER')

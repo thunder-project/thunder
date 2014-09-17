@@ -14,7 +14,7 @@ class Data(object):
     def first(self):
         return self.rdd.first()
 
-    def collet(self):
+    def collect(self):
         return self.rdd.collect()
 
     def count(self):

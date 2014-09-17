@@ -3,7 +3,7 @@ import glob
 import json
 import types
 from numpy import ndarray, frombuffer, dtype, array, sum, mean, std, size, arange, polyfit, polyval, percentile
-from thunder.rdds.data import Data, FORMATS
+from thunder.rdds.data import Data
 from thunder.utils.common import checkparams
 
 
@@ -188,18 +188,25 @@ class SeriesLoader(object):
         if os.path.isdir(datafile):
             datafile = os.path.join(datafile, '*.bin')
 
-        recordsize = self.nvalues + self.nkeys
-        recordsize *= dtype(FORMATS[self.valuetype]).itemsize
+        keysize = self.nkeys * dtype(self.keytype).itemsize
+        recordsize = keysize + self.nvalues * dtype(self.valuetype).itemsize
 
         lines = sc.newAPIHadoopFile(datafile, 'thunder.util.io.hadoop.FixedLengthBinaryInputFormat',
                                               'org.apache.hadoop.io.LongWritable',
                                               'org.apache.hadoop.io.BytesWritable',
                                               conf={'recordLength': str(recordsize)})
 
-        valuetype = self.valuetype
-        nkeys = self.nkeys
-        parsed = lines.map(lambda (k, v): (k, frombuffer(v, valuetype)))
-        data = parsed.map(lambda (k, v): (tuple(v[0:nkeys].astype(int)), v[nkeys:].astype(float)))
+        def _parseKeysFromBinaryBuffer(buf, keydtype, keybufsize):
+            return frombuffer(buffer(buf, 0, keybufsize), dtype=keydtype)
+
+        def _parseValsFromBinaryBuffer(buf, valsdtype, keybufsize):
+            return frombuffer(buffer(buf, keybufsize), dtype=valsdtype)
+
+        keydtype = dtype(self.keytype)
+        valdtype = dtype(self.valuetype)
+        data = lines.map(lambda (_, v):
+                         (tuple(_parseKeysFromBinaryBuffer(v, keydtype, keysize)),
+                          _parseValsFromBinaryBuffer(v, valdtype, keysize)))
 
         return Series(data)
 

@@ -1,6 +1,6 @@
 import glob
 import os
-from numpy import shape, ndarray, fromfile, int16, uint16, prod
+from numpy import ndarray, fromfile, int16, uint16, prod
 from matplotlib.pyplot import imread
 from thunder.rdds.data import Data
 
@@ -9,11 +9,14 @@ class Images(Data):
 
     def __init__(self, rdd, dims=None):
         super(Images, self).__init__(rdd)
-        if dims is None:
-            record = self._rdd.first()
-            self.dims = shape(record)
-        else:
-            self.dims = dims
+        self._dims = dims
+
+    @property
+    def dims(self):
+        if self._dims is None:
+            record = self.rdd.first()
+            self._dims = record[1].shape
+        return self._dims
 
     @staticmethod
     def _check_type(record):
@@ -66,7 +69,7 @@ class ImagesLoader(object):
 
         return Images(self.fromFile(datafile, sc, reader, ext='png'))
 
-    def fromFile(self, datafile, reader, sc, ext):
+    def fromFile(self, datafile, sc, reader, ext):
 
         files = self.listFiles(datafile, ext)
         files = zip(range(0, len(files)), files)
