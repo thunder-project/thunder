@@ -2,14 +2,15 @@ import os
 import glob
 import json
 import types
-from numpy import ndarray, frombuffer, dtype, int16, float, array, sum, mean, std, size
+from numpy import ndarray, frombuffer, dtype, array, sum, mean, std, size, arange, polyfit, polyval, percentile
 from thunder.rdds.data import Data, FORMATS
+from thunder.utils.common import checkparams
 
 
 class Series(Data):
     """A series backed by an RDD of (tuple,array) pairs
     where the tuple is an identifier for each record,
-    and the value is an array indexed by a
+    and each value is an array indexed by a
     common, fixed list (e.g. a time series)"""
 
     def __init__(self, rdd, index=None):
@@ -60,16 +61,83 @@ class Series(Data):
 
         return Series(rdd, index=newindex)
 
+    def detrend(self, method='linear', **kwargs):
+        """
+        Detrend series data with linear or nonlinear detrending
+        Preserve intercept so that subsequent steps can adjust the baseline
+        """
+        checkparams(method, ['linear', 'nonlinear'])
+
+        if method.lower() == 'linear':
+            order = 1
+        else:
+            if 'order' in kwargs:
+                order = kwargs['order']
+            else:
+                order = 5
+
+        def func(y):
+            x = arange(1, len(y)+1)
+            p = polyfit(x, y, order)
+            p[-1] = 0
+            yy = polyval(p, x)
+            return y - yy
+
+        return self.apply(func)
+
+    def center(self):
+        """ Center series data by subtracting the mean """
+        return self.apply(lambda x: x - mean(x))
+
+    def normalize(self, baseline='mean', **kwargs):
+        """ Normalize series data by subtracting and dividing
+        by a baseline
+        """
+        checkparams(baseline, ['mean', 'percentile'])
+
+        if baseline.lower() == 'mean':
+            basefunc = mean
+        if baseline.lower() == 'percentile':
+            if 'percentile' in kwargs:
+                perc = kwargs['percentile']
+            else:
+                perc = 20
+            basefunc = lambda x: percentile(x, perc)
+
+        def func(y):
+            baseline = basefunc(y)
+            return (y - baseline) / (baseline + 0.1)
+
+        return self.apply(func)
+
+    def standardize(self):
+        """ Standardize series data by dividing by the standard deviation """
+        return self.apply(lambda x: x / std(x))
+
+    def zscore(self):
+        """ Zscore series data by subtracting the mean and
+        dividing by the standard deviation """
+        return self.apply(lambda x: (x - mean(x)) / std(x))
+
+    def apply(self, func):
+        """ Apply arbitrary function to values of a Series """
+        rdd = self.rdd.mapValues(lambda x: func(x))
+        return Series(rdd, index=self.index)
+
     def seriesSum(self):
+        """ Compute the value sum of each record in a Series """
         return self.seriesStat('sum')
 
     def seriesMean(self):
+        """ Compute the value mean of each record in a Series """
         return self.seriesStat('mean')
 
     def seriesStdev(self):
+        """ Compute the value std of each record in a Series """
         return self.seriesStat('stdev')
 
     def seriesStat(self, stat):
+        """ Compute a simple statistic for each record in a Series """
         STATS = {
             'sum': sum,
             'mean': mean,
@@ -83,25 +151,9 @@ class Series(Data):
         return Series(rdd, index=[stat])
 
     def seriesStats(self):
+        """ Compute a collection of statistics for each record in a Series """
         rdd = self.rdd.mapValues(lambda x: array([x.size, mean(x), std(x), max(x), min(x)]))
         return Series(rdd, index=['size', 'mean', 'std', 'max', 'min'])
-
-    # add a filterWith method
-
-class Parser(object):
-    """Class for parsing lines of a data file"""
-
-    def __init__(self, nkeys):
-        def func(line):
-            vec = [float(x) for x in line.split(' ')]
-            ts = array(vec[nkeys:])
-            keys = tuple(int(x) for x in vec[:nkeys])
-            return keys, ts
-
-        self.func = func
-
-    def get(self, y):
-        return self.func(y)
 
 
 class SeriesLoader(object):
