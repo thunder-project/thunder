@@ -202,9 +202,11 @@ class SeriesLoader(object):
         def _parseValsFromBinaryBuffer(buf, valsdtype, keybufsize):
             return frombuffer(buffer(buf, keybufsize), dtype=valsdtype)
 
+        keydtype = dtype(self.keytype)
+        valdtype = dtype(self.valuetype)
         data = lines.map(lambda (_, v):
-                         (tuple(_parseKeysFromBinaryBuffer(v, dtype(self.keytype), keysize)),
-                          _parseValsFromBinaryBuffer(v, dtype(self.valuetype), keysize)))
+                         (tuple(_parseKeysFromBinaryBuffer(v, keydtype, keysize)),
+                          _parseValsFromBinaryBuffer(v, valdtype, keysize)))
 
         return Series(data)
 
