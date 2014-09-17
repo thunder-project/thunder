@@ -89,7 +89,7 @@ class Series(Data):
         """ Center series data by subtracting the mean """
         return self.apply(lambda x: x - mean(x))
 
-    def normalize(self, baseline='mean', **kwargs):
+    def normalize(self, baseline='percentile', **kwargs):
         """ Normalize series data by subtracting and dividing
         by a baseline
         """
