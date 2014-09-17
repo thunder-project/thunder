@@ -62,18 +62,62 @@ class ImagesLoader(object):
 
         return Images(self.fromFile(datafile, sc, reader, ext='tif'))
 
-    def fromPng(self, datafile, sc):
+    def fromMultipageTif(self, datafile, sc, ext='tif'):
+        """
+        Sets up a new Images object with data to be read from one or more multi-page tif files.
 
-        def reader(file):
-            return imread(file)
+        The RDD underlying the returned Images will have key, value data as follows:
 
-        return Images(self.fromFile(datafile, sc, reader, ext='png'))
+        key: tuple of int, int
+            key[0] is index of original data file in lexicographic order
+            key[1] is index of tif page within the original data file
+        value: numpy ndarray
+
+        This method attempts to explicitly import PIL. ImportError may be thrown if 'from PIL import Image' is
+        unsuccessful. (PIL/pillow is not an explicit requirement for thunder.)
+        """
+        try:
+            from PIL import Image
+        except ImportError, e:
+            raise ImportError("fromMultipageTif requires a successful 'from PIL import Image'; " +
+                              "the PIL/pillow library appears to be missing or broken.", e)
+        from matplotlib.image import pil_to_array
+
+        def multitifReader(f):
+            multipage = Image.open(f)
+            pageidx = 0
+            imgarys = []
+            while True:
+                try:
+                    multipage.seek(pageidx)
+                    imgarys.append(pil_to_array(multipage))
+                    pageidx += 1
+                except EOFError:
+                    # past last page in tif
+                    break
+            return imgarys
+
+        def multitifSplitter(kv):
+            fileidxkey, tifpageseqvals = kv
+            return [((fileidxkey, pageidx), pageval) for pageidx, pageval in enumerate(tifpageseqvals)]
+
+        files = self.listFiles(datafile, ext)
+        files = zip(range(0, len(files)), files)
+        rdd = sc.parallelize(files, len(files)).map(lambda (k, v): (k, multitifReader(v))).flatMap(multitifSplitter)
+        return Images(rdd)
 
     def fromFile(self, datafile, sc, reader, ext):
 
         files = self.listFiles(datafile, ext)
         files = zip(range(0, len(files)), files)
         return sc.parallelize(files, len(files)).map(lambda (k, v): (k, reader(v)))
+
+    def fromPng(self, datafile, sc):
+
+        def reader(file):
+            return imread(file)
+
+        return Images(self.fromFile(datafile, sc, reader, ext='png'))
 
     def listFiles(self, datafile, ext):
 
