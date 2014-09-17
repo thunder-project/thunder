@@ -8,7 +8,8 @@ from scipy.io import loadmat
 from scipy.stats import ttest_ind
 from sklearn.naive_bayes import GaussianNB
 from sklearn import cross_validation
-from thunder.utils import ThunderContext, save
+from thunder.utils.context import ThunderContext
+from thunder.utils import save
 
 
 class MassUnivariateClassifier(object):

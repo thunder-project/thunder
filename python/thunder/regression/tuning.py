@@ -6,7 +6,7 @@ import argparse
 from scipy.io import loadmat
 from numpy import array, sum, inner, dot, angle, abs, exp
 from thunder.regression import RegressionModel
-from thunder.utils import ThunderContext
+from thunder.utils.context import ThunderContext
 from thunder.utils import save
 
 

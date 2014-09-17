@@ -1,5 +1,5 @@
 import thunder
-from thunder.utils import ThunderContext
+from thunder.utils.context import ThunderContext
 
 tsc = ThunderContext(sc)
 

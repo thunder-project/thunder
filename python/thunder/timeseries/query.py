@@ -5,8 +5,8 @@ Class and standalone app for querying
 import argparse
 from numpy import zeros, mean
 from scipy.io import loadmat
-from thunder.utils import ThunderContext, getdims, subtoind, indtosub
-from thunder.utils import save
+from thunder.utils.context import ThunderContext
+from thunder.utils import save, getdims, subtoind, indtosub
 
 
 class Query(object):
