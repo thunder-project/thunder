@@ -1,6 +1,6 @@
 import glob
 import os
-from numpy import ndarray, fromfile, int16, uint16, prod
+from numpy import ndarray, fromfile, int16, uint16, prod, concatenate
 from matplotlib.pyplot import imread
 from thunder.rdds.data import Data
 
@@ -64,10 +64,13 @@ class ImagesLoader(object):
 
         The RDD underlying the returned Images will have key, value data as follows:
 
-        key: tuple of int, int
-            key[0] is index of original data file in lexicographic order
-            key[1] is index of tif page within the original data file
+        key: int
+            key is index of original data file, determined by lexicographic ordering of filenames
         value: numpy ndarray
+            value dimensions with be x by y by num_channels*num_pages; all channels and pages in a file are
+            concatenated together in the third dimension of the resulting ndarray. For pages 0, 1, etc
+            of a multipage TIF of RGB images, ary[:,:,0] will be R channel of page 0 ("R0"), ary[:,:,1] will be B0,
+            ... ary[:,:,3] == R1, and so on.
 
         This method attempts to explicitly import PIL. ImportError may be thrown if 'from PIL import Image' is
         unsuccessful. (PIL/pillow is not an explicit requirement for thunder.)
@@ -91,14 +94,10 @@ class ImagesLoader(object):
                 except EOFError:
                     # past last page in tif
                     break
-            return imgarys
-
-        def multitifSplitter(kv):
-            fileidxkey, tifpageseqvals = kv
-            return [((fileidxkey, pageidx), pageval) for pageidx, pageval in enumerate(tifpageseqvals)]
+            return concatenate(imgarys, axis=2)
 
         files = self.listFiles(datafile, ext)
-        rdd = self.sc.parallelize(enumerate(files), len(files)).map(lambda (k, v): (k, multitifReader(v))).flatMap(multitifSplitter)
+        rdd = self.sc.parallelize(enumerate(files), len(files)).map(lambda (k, v): (k, multitifReader(v)))
         return Images(rdd)
 
     def fromFile(self, datafile, reader, ext=None):

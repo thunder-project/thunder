@@ -236,16 +236,25 @@ class TestImagesFileLoaders(RDDsSparkTestCase):
         expectedkeys = range(expectednum)
         self._evaluateMultipleImages(tifimages, expectednum, expectedshape, expectedkeys, expectedsums)
 
-    @unittest.skipIf(not _have_image, "PIL/pillow not installed")
+    @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
     def test_fromMultipageTif(self):
         imagepath = os.path.join(self.testresourcesdir, "multilayer_tif", "dotdotdot_lzw.tif")
         tifimages = ImagesLoader(self.sc).fromMultipageTif(imagepath, self.sc).collect()
 
-        expectednum = 3
-        expectedshape = (70, 75, 4)  # 4 channel tif; RGBalpha
+        expectednum = 1
+        expectedshape = (70, 75, 4*3)  # 4 channel tifs of RGBalpha times 3 concatenated pages
         expectedsums = [1282192, 1261328, 1241520]  # 3 images have increasing #s of black dots, so lower luminance overall
-        expectedkeys = [(0, i) for i in xrange(expectednum)]
-        self._evaluateMultipleImages(tifimages, expectednum, expectedshape, expectedkeys, expectedsums)
+        expectedkey = 0
+        #self._evaluateMultipleImages(tifimages, expectednum, expectedshape, expectedkeys, expectedsums)
+
+        assert_equals(expectednum, len(tifimages), "Expected %s images, got %d" % (expectednum, len(tifimages)))
+        tifimage = tifimages[0]
+        assert_equals(expectedkey, tifimage[0], "Expected key %s, got %s" % (str(expectedkey), str(tifimage[0])))
+        assert_true(isinstance(tifimage[1], ndarray),
+                    "Value type error; expected image value to be numpy ndarray, was " + str(type(tifimage[1])))
+        assert_equals(expectedshape, tifimage[1].shape)
+        for channelidx in xrange(0, expectedshape[2], 4):
+            assert_equals(expectedsums[channelidx/4], tifimage[1][:, :, channelidx].flatten().sum())
 
 if __name__ == "__main__":
     if not _have_image:
