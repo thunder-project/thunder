@@ -40,17 +40,15 @@ class Images(Data):
 
 class ImagesLoader(object):
 
-    def __init__(self, sparkcontext, dims=None, valuetype=None, filerange=None):
+    def __init__(self, sparkcontext, filerange=None):
         self.sc = sparkcontext
-        self.dims = dims
-        self.valuetype = valuetype
         self.filerange = filerange
 
-    def fromStack(self, datafile, ext='stack'):
+    def fromStack(self, datafile, dims, ext='stack'):
 
-        def reader(file):
-            f = open(file, 'rb')
-            stack = fromfile(f, int16, prod(self.dims)).reshape(self.dims, order='F')
+        def reader(filepath):
+            f = open(filepath, 'rb')
+            stack = fromfile(f, int16, prod(dims)).reshape(dims, order='F')
             f.close()
             return stack.astype(uint16)
 
