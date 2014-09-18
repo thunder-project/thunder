@@ -52,11 +52,11 @@ class ImagesLoader(object):
             f.close()
             return stack.astype(uint16)
 
-        return Images(self.fromFile(datafile, reader, ext), dims=self.dims)
+        return Images(self.fromFile(datafile, reader, ext=ext), dims=dims)
 
     def fromTif(self, datafile, ext='tif'):
 
-        return Images(self.fromFile(datafile, imread, ext))
+        return Images(self.fromFile(datafile, imread, ext=ext))
 
     def fromMultipageTif(self, datafile, ext='tif'):
         """
@@ -101,24 +101,27 @@ class ImagesLoader(object):
         rdd = self.sc.parallelize(enumerate(files), len(files)).map(lambda (k, v): (k, multitifReader(v))).flatMap(multitifSplitter)
         return Images(rdd)
 
-    def fromFile(self, datafile, reader, ext):
+    def fromFile(self, datafile, reader, ext=None):
 
-        files = self.listFiles(datafile, ext)
+        files = self.listFiles(datafile, ext=ext)
         return self.sc.parallelize(enumerate(files), len(files)).map(lambda (k, v): (k, reader(v)))
 
     def fromPng(self, datafile, ext='png'):
 
-        return Images(self.fromFile(datafile, imread, ext))
+        return Images(self.fromFile(datafile, imread, ext=ext))
 
-    def listFiles(self, datafile, ext):
+    def listFiles(self, datafile, ext=None):
 
         if os.path.isdir(datafile):
-            files = sorted(glob.glob(os.path.join(datafile, '*.' + ext)))
+            if ext:
+                files = sorted(glob.glob(os.path.join(datafile, '*.' + ext)))
+            else:
+                files = sorted(os.listdir(datafile))
         else:
             files = sorted(glob.glob(datafile))
 
         if len(files) < 1:
-            raise IOError('cannot find files of type %s in %s' % (ext, datafile))
+            raise IOError('cannot find files of type "%s" in %s' % (ext if ext else '*', datafile))
 
         if self.filerange:
             files = files[self.filerange[0]:self.filerange[1]+1]
