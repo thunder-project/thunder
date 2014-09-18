@@ -55,12 +55,9 @@ class ImagesLoader(object):
 
         return Images(self.fromFile(datafile, sc, reader, ext='stack'), dims=self.dims)
 
-    def fromTif(self, datafile, sc):
+    def fromTif(self, datafile, sc, ext='tif'):
 
-        def reader(file):
-            return imread(file)
-
-        return Images(self.fromFile(datafile, sc, reader, ext='tif'))
+        return Images(self.fromFile(datafile, sc, imread, ext=ext))
 
     def fromMultipageTif(self, datafile, sc, ext='tif'):
         """
@@ -102,22 +99,17 @@ class ImagesLoader(object):
             return [((fileidxkey, pageidx), pageval) for pageidx, pageval in enumerate(tifpageseqvals)]
 
         files = self.listFiles(datafile, ext)
-        files = zip(range(0, len(files)), files)
-        rdd = sc.parallelize(files, len(files)).map(lambda (k, v): (k, multitifReader(v))).flatMap(multitifSplitter)
+        rdd = sc.parallelize(enumerate(files), len(files)).map(lambda (k, v): (k, multitifReader(v))).flatMap(multitifSplitter)
         return Images(rdd)
 
     def fromFile(self, datafile, sc, reader, ext):
 
         files = self.listFiles(datafile, ext)
-        files = zip(range(0, len(files)), files)
-        return sc.parallelize(files, len(files)).map(lambda (k, v): (k, reader(v)))
+        return sc.parallelize(enumerate(files), len(files)).map(lambda (k, v): (k, reader(v)))
 
-    def fromPng(self, datafile, sc):
+    def fromPng(self, datafile, sc, ext='png'):
 
-        def reader(file):
-            return imread(file)
-
-        return Images(self.fromFile(datafile, sc, reader, ext='png'))
+        return Images(self.fromFile(datafile, sc, imread, ext=ext))
 
     def listFiles(self, datafile, ext):
 
