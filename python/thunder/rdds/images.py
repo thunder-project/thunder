@@ -40,12 +40,13 @@ class Images(Data):
 
 class ImagesLoader(object):
 
-    def __init__(self, dims=None, valuetype=None, filerange=None):
+    def __init__(self, sparkcontext, dims=None, valuetype=None, filerange=None):
+        self.sc = sparkcontext
         self.dims = dims
         self.valuetype = valuetype
         self.filerange = filerange
 
-    def fromStack(self, datafile, sc):
+    def fromStack(self, datafile, ext='stack'):
 
         def reader(file):
             f = open(file, 'rb')
@@ -53,13 +54,13 @@ class ImagesLoader(object):
             f.close()
             return stack.astype(uint16)
 
-        return Images(self.fromFile(datafile, sc, reader, ext='stack'), dims=self.dims)
+        return Images(self.fromFile(datafile, reader, ext), dims=self.dims)
 
-    def fromTif(self, datafile, sc, ext='tif'):
+    def fromTif(self, datafile, ext='tif'):
 
-        return Images(self.fromFile(datafile, sc, imread, ext=ext))
+        return Images(self.fromFile(datafile, imread, ext))
 
-    def fromMultipageTif(self, datafile, sc, ext='tif'):
+    def fromMultipageTif(self, datafile, ext='tif'):
         """
         Sets up a new Images object with data to be read from one or more multi-page tif files.
 
@@ -99,17 +100,17 @@ class ImagesLoader(object):
             return [((fileidxkey, pageidx), pageval) for pageidx, pageval in enumerate(tifpageseqvals)]
 
         files = self.listFiles(datafile, ext)
-        rdd = sc.parallelize(enumerate(files), len(files)).map(lambda (k, v): (k, multitifReader(v))).flatMap(multitifSplitter)
+        rdd = self.sc.parallelize(enumerate(files), len(files)).map(lambda (k, v): (k, multitifReader(v))).flatMap(multitifSplitter)
         return Images(rdd)
 
-    def fromFile(self, datafile, sc, reader, ext):
+    def fromFile(self, datafile, reader, ext):
 
         files = self.listFiles(datafile, ext)
-        return sc.parallelize(enumerate(files), len(files)).map(lambda (k, v): (k, reader(v)))
+        return self.sc.parallelize(enumerate(files), len(files)).map(lambda (k, v): (k, reader(v)))
 
-    def fromPng(self, datafile, sc, ext='png'):
+    def fromPng(self, datafile, ext='png'):
 
-        return Images(self.fromFile(datafile, sc, imread, ext=ext))
+        return Images(self.fromFile(datafile, imread, ext))
 
     def listFiles(self, datafile, ext):
 
