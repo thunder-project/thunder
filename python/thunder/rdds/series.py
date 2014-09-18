@@ -66,7 +66,7 @@ class Series(Data):
         Detrend series data with linear or nonlinear detrending
         Preserve intercept so that subsequent steps can adjust the baseline
         """
-        checkparams(method, ['linear', 'nonlinear'])
+        checkparams(method, ['linear', 'nonlin'])
 
         if method.lower() == 'linear':
             order = 1
@@ -89,7 +89,7 @@ class Series(Data):
         """ Center series data by subtracting the mean """
         return self.apply(lambda x: x - mean(x))
 
-    def normalize(self, baseline='mean', **kwargs):
+    def normalize(self, baseline='percentile', **kwargs):
         """ Normalize series data by subtracting and dividing
         by a baseline
         """
