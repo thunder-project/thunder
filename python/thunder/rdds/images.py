@@ -33,7 +33,7 @@ class Images(Data):
 
         raise NotImplementedError
 
-    def saveAsSeries(self):
+    def saveAsBinarySeries(self):
 
         blocks = self.toBlocks()
 
