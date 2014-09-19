@@ -28,7 +28,7 @@ class ThunderContext():
         """Starts a ThunderContext using the same arguments as SparkContext"""
         return ThunderContext(SparkContext(*args, **kwargs))
 
-    def loadSeries(self, datafile, nkeys=3, nvalues=None, inputformat='binary', minPartitions=None,
+    def loadSeries(self, datafile, nkeys=None, nvalues=None, inputformat='binary', minPartitions=None,
                    conffile='conf.json'):
         """
         Loads a Series RDD from data stored as text or binary files.
@@ -39,14 +39,15 @@ class ThunderContext():
             path to single file or directory. If directory, will be expected to contain multiple *.txt (if
             text) or *.bin (if binary) data files.
 
-        nkeys: int, optional, default = 3
+        nkeys: int, optional
             dimensionality of data keys. (For instance, (x,y,z) keyed data for 3-dimensional image timeseries data.)
-            Will be overridden by values specified in 'conf.json' file is such a file is found in the same directory as
-            given by 'datafile'.
+            For text data, number of keys must be specified in this parameter; for binary data, number of keys must be
+            specified either in this parameter or in a configuration file named by the 'conffile' argument if this
+            parameter is not set.
 
         nvalues: int, optional
             Number of values expected to be read. For binary data, nvalues must be specified either in this parameter
-            or in a conf.json file in the same directory as given by 'datafile'.
+            or in a configuration file named by the 'conffile' argument if this parameter is not set.
 
         inputformat: string, optional, default = 'binary'
             Format of data to be read. Must be either 'text' or 'binary'.
@@ -57,26 +58,22 @@ class ThunderContext():
 
         conffile: string, optional, default 'conf.json'
             Path to JSON file with configuration options including 'nkeys' and 'nvalues'. If a file is not found at the
-            given path, then the base directory given in 'datafile' will also be checked.
+            given path, then the base directory given in 'datafile' will also be checked. Parameters specified as
+            explicit arguments to this method take priority over those found in conffile if both are present.
         """
         if not inputformat.lower() in ('text', 'binary'):
             raise ValueError("inputformat must be either 'text' or 'binary', got %s" % inputformat)
-        params = SeriesLoader.loadConf(datafile, conffile=conffile)
-        if params is None:
-            if inputformat.lower() == 'binary' and nvalues is None:
-                raise ValueError('Must specify nvalues for binary input if not providing a configuration file')
-            loader = SeriesLoader(nkeys=nkeys, nvalues=nvalues, minPartitions=minPartitions)
-        else:
-            loader = SeriesLoader(nkeys=params['nkeys'], nvalues=params['nvalues'], minPartitions=minPartitions)
+
+        loader = SeriesLoader(self._sc, minPartitions=minPartitions)
 
         if inputformat.lower() == 'text':
-            data = loader.fromText(datafile, self._sc)
+            data = loader.fromText(datafile, nkeys=nkeys)
         else:
             # must be either 'text' or 'binary'
-            data = loader.fromBinary(datafile, self._sc)
+            data = loader.fromBinary(datafile, conffilename=conffile, nkeys=nkeys, nvalues=nvalues)
         return data
 
-    def loadImages(self, datafile, dims=None, inputformat='stack'):
+    def loadImages(self, datafile, dims=None, inputformat='stack', startidx=None, stopidx=None):
         """
         Loads an Images RDD from data stored as a binary image stack, tif, or png files.
 
@@ -96,15 +93,15 @@ class ThunderContext():
         """
         if not inputformat.lower() in ('stack', 'png', 'tif'):
             raise ValueError("inputformat must be either 'stack', 'png', or 'tif', got %s" % inputformat)
-        loader = ImagesLoader(dims=dims)
+        loader = ImagesLoader(self._sc)
 
         if inputformat.lower() == 'stack':
-            data = loader.fromStack(datafile, self._sc)
+            data = loader.fromStack(datafile, dims, startidx=startidx, stopidx=stopidx)
         elif inputformat.lower() == 'tif':
-            data = loader.fromTif(datafile, self._sc)
+            data = loader.fromTif(datafile, startidx=startidx, stopidx=stopidx)
         else:
             # inputformat must be either 'stack', 'tif', or 'png'
-            data = loader.fromPng(datafile, self._sc)
+            data = loader.fromPng(datafile,  startidx=startidx, stopidx=stopidx)
         return data
 
     def makeExample(self, dataset, **opts):
