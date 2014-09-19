@@ -3,12 +3,20 @@ import struct
 import tempfile
 import os
 import logging
+import unittest
 from numpy import dtype, array, allclose, ndarray
 from nose.tools import assert_equals, assert_true, assert_almost_equal
 from thunder.rdds.series import SeriesLoader
 from thunder.rdds.images import ImagesLoader
 from test_utils import PySparkTestCase
 
+_have_image = False
+try:
+    from PIL import Image
+    _have_image = True
+except ImportError:
+    # PIL not available; skip tests that require it
+    pass
 
 class RDDsSparkTestCase(PySparkTestCase):
     def setUp(self):
@@ -183,7 +191,7 @@ class TestImagesFileLoaders(RDDsSparkTestCase):
 
     def test_fromPng(self):
         imagepath = os.path.join(self.testresourcesdir, "singlelayer_png", "dot1.png")
-        pngimage = ImagesLoader().fromPng(imagepath, self.sc)
+        pngimage = ImagesLoader(self.sc).fromPng(imagepath, self.sc)
         firstpngimage = pngimage.first()
         assert_equals(0, firstpngimage[0], "Key error; expected first image key to be 0, was "+str(firstpngimage[0]))
         expectedshape = (70, 75, 4)  # 4 channel png; RGBalpha
@@ -196,7 +204,7 @@ class TestImagesFileLoaders(RDDsSparkTestCase):
 
     def test_fromTif(self):
         imagepath = os.path.join(self.testresourcesdir, "singlelayer_tif", "dot1_lzw.tif")
-        tifimage = ImagesLoader().fromPng(imagepath, self.sc)
+        tifimage = ImagesLoader(self.sc).fromTif(imagepath, self.sc)
         firsttifimage = tifimage.first()
         assert_equals(0, firsttifimage[0], "Key error; expected first image key to be 0, was "+str(firsttifimage[0]))
         expectedshape = (70, 75, 4)  # 4 channel tif; RGBalpha
@@ -206,3 +214,51 @@ class TestImagesFileLoaders(RDDsSparkTestCase):
         assert_equals(expectedshape, firsttifimage[1].shape)
         assert_equals(248, firsttifimage[1][:, :, 0].flatten().max())
         assert_equals(8, firsttifimage[1][:, :, 0].flatten().min())
+
+    @staticmethod
+    def _evaluateMultipleImages(tifimages, expectednum, expectedshape, expectedkeys, expectedsums):
+        assert_equals(expectednum, len(tifimages), "Expected %s images, got %d" % (expectednum, len(tifimages)))
+        for img, expectedkey, expectedsum in zip(tifimages, expectedkeys, expectedsums):
+            assert_equals(expectedkey, img[0], "Expected key %s, got %s" % (str(expectedkey), str(img[0])))
+
+            assert_true(isinstance(img[1], ndarray),
+                        "Value type error; expected image value to be numpy ndarray, was " + str(type(img[1])))
+            assert_equals(expectedshape, img[1].shape)
+            assert_equals(expectedsum, img[1][:, :, 0].sum())
+
+    def test_fromTifWithMultipleFiles(self):
+        imagepath = os.path.join(self.testresourcesdir, "singlelayer_tif", "dot*_lzw.tif")
+        tifimages = ImagesLoader(self.sc).fromTif(imagepath, self.sc).collect()
+
+        expectednum = 3
+        expectedshape = (70, 75, 4)  # 4 channel tif; RGBalpha
+        expectedsums = [1282192, 1261328, 1241520]  # 3 images have increasing #s of black dots, so lower luminance overall
+        expectedkeys = range(expectednum)
+        self._evaluateMultipleImages(tifimages, expectednum, expectedshape, expectedkeys, expectedsums)
+
+    @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
+    def test_fromMultipageTif(self):
+        imagepath = os.path.join(self.testresourcesdir, "multilayer_tif", "dotdotdot_lzw.tif")
+        tifimages = ImagesLoader(self.sc).fromMultipageTif(imagepath, self.sc).collect()
+
+        expectednum = 1
+        expectedshape = (70, 75, 4*3)  # 4 channel tifs of RGBalpha times 3 concatenated pages
+        expectedsums = [1282192, 1261328, 1241520]  # 3 images have increasing #s of black dots, so lower luminance overall
+        expectedkey = 0
+        #self._evaluateMultipleImages(tifimages, expectednum, expectedshape, expectedkeys, expectedsums)
+
+        assert_equals(expectednum, len(tifimages), "Expected %s images, got %d" % (expectednum, len(tifimages)))
+        tifimage = tifimages[0]
+        assert_equals(expectedkey, tifimage[0], "Expected key %s, got %s" % (str(expectedkey), str(tifimage[0])))
+        assert_true(isinstance(tifimage[1], ndarray),
+                    "Value type error; expected image value to be numpy ndarray, was " + str(type(tifimage[1])))
+        assert_equals(expectedshape, tifimage[1].shape)
+        for channelidx in xrange(0, expectedshape[2], 4):
+            assert_equals(expectedsums[channelidx/4], tifimage[1][:, :, channelidx].flatten().sum())
+
+if __name__ == "__main__":
+    if not _have_image:
+        print "NOTE: Skipping PIL/pillow tests as neither seem to be installed and functional"
+    unittest.main()
+    if not _have_image:
+        print "NOTE: PIL/pillow tests were skipped as neither seem to be installed and functional"

@@ -1,6 +1,6 @@
 import glob
 import os
-from numpy import ndarray, fromfile, int16, uint16, prod
+from numpy import ndarray, fromfile, int16, uint16, prod, concatenate
 from matplotlib.pyplot import imread
 from thunder.rdds.data import Data
 
@@ -40,50 +40,87 @@ class Images(Data):
 
 class ImagesLoader(object):
 
-    def __init__(self, dims=None, valuetype=None, filerange=None):
-        self.dims = dims
-        self.valuetype = valuetype
+    def __init__(self, sparkcontext, filerange=None):
+        self.sc = sparkcontext
         self.filerange = filerange
 
-    def fromStack(self, datafile, sc):
+    def fromStack(self, datafile, dims, ext='stack'):
 
-        def reader(file):
-            f = open(file, 'rb')
-            stack = fromfile(f, int16, prod(self.dims)).reshape(self.dims, order='F')
+        def reader(filepath):
+            f = open(filepath, 'rb')
+            stack = fromfile(f, int16, prod(dims)).reshape(dims, order='F')
             f.close()
             return stack.astype(uint16)
 
-        return Images(self.fromFile(datafile, sc, reader, ext='stack'), dims=self.dims)
+        return Images(self.fromFile(datafile, reader, ext=ext), dims=dims)
 
-    def fromTif(self, datafile, sc):
+    def fromTif(self, datafile, ext='tif'):
 
-        def reader(file):
-            return imread(file)
+        return Images(self.fromFile(datafile, imread, ext=ext))
 
-        return Images(self.fromFile(datafile, sc, reader, ext='tif'))
+    def fromMultipageTif(self, datafile, ext='tif'):
+        """
+        Sets up a new Images object with data to be read from one or more multi-page tif files.
 
-    def fromPng(self, datafile, sc):
+        The RDD underlying the returned Images will have key, value data as follows:
 
-        def reader(file):
-            return imread(file)
+        key: int
+            key is index of original data file, determined by lexicographic ordering of filenames
+        value: numpy ndarray
+            value dimensions with be x by y by num_channels*num_pages; all channels and pages in a file are
+            concatenated together in the third dimension of the resulting ndarray. For pages 0, 1, etc
+            of a multipage TIF of RGB images, ary[:,:,0] will be R channel of page 0 ("R0"), ary[:,:,1] will be B0,
+            ... ary[:,:,3] == R1, and so on.
 
-        return Images(self.fromFile(datafile, sc, reader, ext='png'))
+        This method attempts to explicitly import PIL. ImportError may be thrown if 'from PIL import Image' is
+        unsuccessful. (PIL/pillow is not an explicit requirement for thunder.)
+        """
+        try:
+            from PIL import Image
+        except ImportError, e:
+            raise ImportError("fromMultipageTif requires a successful 'from PIL import Image'; " +
+                              "the PIL/pillow library appears to be missing or broken.", e)
+        from matplotlib.image import pil_to_array
 
-    def fromFile(self, datafile, sc, reader, ext):
+        def multitifReader(f):
+            multipage = Image.open(f)
+            pageidx = 0
+            imgarys = []
+            while True:
+                try:
+                    multipage.seek(pageidx)
+                    imgarys.append(pil_to_array(multipage))
+                    pageidx += 1
+                except EOFError:
+                    # past last page in tif
+                    break
+            return concatenate(imgarys, axis=2)
 
         files = self.listFiles(datafile, ext)
-        files = zip(range(0, len(files)), files)
-        return sc.parallelize(files, len(files)).map(lambda (k, v): (k, reader(v)))
+        rdd = self.sc.parallelize(enumerate(files), len(files)).map(lambda (k, v): (k, multitifReader(v)))
+        return Images(rdd)
 
-    def listFiles(self, datafile, ext):
+    def fromFile(self, datafile, reader, ext=None):
+
+        files = self.listFiles(datafile, ext=ext)
+        return self.sc.parallelize(enumerate(files), len(files)).map(lambda (k, v): (k, reader(v)))
+
+    def fromPng(self, datafile, ext='png'):
+
+        return Images(self.fromFile(datafile, imread, ext=ext))
+
+    def listFiles(self, datafile, ext=None):
 
         if os.path.isdir(datafile):
-            files = sorted(glob.glob(os.path.join(datafile, '*.' + ext)))
+            if ext:
+                files = sorted(glob.glob(os.path.join(datafile, '*.' + ext)))
+            else:
+                files = sorted(os.listdir(datafile))
         else:
             files = sorted(glob.glob(datafile))
 
         if len(files) < 1:
-            raise IOError('cannot find files of type %s in %s' % (ext, datafile))
+            raise IOError('cannot find files of type "%s" in %s' % (ext if ext else '*', datafile))
 
         if self.filerange:
             files = files[self.filerange[0]:self.filerange[1]+1]
