@@ -19,7 +19,7 @@ class Series(Data):
             self.index = index
         else:
             record = self.rdd.first()
-            self.index = range(0, len(record[1]))
+            self.index = arange(0, len(record[1]))
 
     @staticmethod
     def _check_type(record):
