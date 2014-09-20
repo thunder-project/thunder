@@ -1,6 +1,6 @@
 import glob
 import os
-from numpy import ndarray, fromfile, int16, uint16, prod, concatenate
+from numpy import ndarray, array, arange, fromfile, int16, uint16, prod, concatenate, amax, amin, size, squeeze
 from matplotlib.pyplot import imread
 from thunder.rdds.data import Data
 
@@ -25,11 +25,92 @@ class Images(Data):
         if not isinstance(record[1], ndarray):
             raise Exception('Values must be ndarrays')
 
+    def maxProjection(self, axis=2):
+        """
+        Compute maximum projections of images / volumes
+        along the specified dimension.
+
+        Parameters
+        ----------
+        axis : int, optional, default = 2
+            Which axis to compute projection along
+        """
+        if axis >= size(self.dims):
+            raise Exception("Axis for projection (%s) exceeds image dimensions (%s-%s)" % (axis, 0, size(self.dims)-1))
+
+        proj = self.rdd.mapValues(lambda x: amax(x, axis))
+        return Images(proj, dims=list(array(self.dims)[arange(0, len(self.dims)) != axis]))
+
+    def maxminProjection(self, axis=2):
+        """
+        Compute maximum-minimum projections of images / volumes
+        along the specified dimension. This computes the sum
+        of the maximum and minimum values along the given dimension.
+
+        Parameters
+        ----------
+        axis : int, optional, default = 2
+            Which axis to compute projection along
+        """
+        proj = self.rdd.mapValues(lambda x: amax(x, axis) + amin(x, axis))
+        return Images(proj, dims=list(array(self.dims)[arange(0, len(self.dims)) != axis]))
+
+    def planes(self, bottom, top, inclusive=True):
+        """
+        Subselect planes for three-dimensional image data.
+
+        Parameters
+        ----------
+        bottom : int
+            Bottom plane in desired selection
+
+        top : int
+            Top plane in desired selection
+
+        inclusive : boolean, optional, default = True
+            Whether returned subset of planes should include bounds
+        """
+        if len(self.dims) == 2 or self.dims[2] == 1:
+            raise Exception("Cannot subselect planes, images must be 3D")
+
+        if inclusive is True:
+            zrange = arange(bottom, top+1)
+        else:
+            zrange = arange(bottom+1, top)
+        newdims = [self.dims[0], self.dims[1], size(zrange)]
+
+        return Images(self.rdd.mapValues(lambda v: squeeze(v[:, :, zrange])), dims=newdims)
+
+    def subtract(self, val):
+        """
+        Subtract a constant value or an image / volume from
+        all images / volumes in the data set.
+
+        Parameters
+        ----------
+        val : int, float, or ndarray
+            Value to subtract
+        """
+        if size(val) != 1:
+            if val.shape != self.dims:
+                raise Exception('Cannot subtract image with dimensions %s '
+                                'from images with dimension %s' % (str(val.shape), str(self.dims)))
+
+        return self.apply(lambda x: x - val)
+
+    def apply(self, func):
+        """
+        Apple a function to all images / volumes,
+        preserving keys and dimensions
+
+        Parameters
+        ----------
+        func : function
+            Function to apply
+        """
+        return Images(self.rdd.mapValues(func), dims=self.dims)
+
     def toSeries(self):
-
-        raise NotImplementedError
-
-    def toBlocks(self):
 
         raise NotImplementedError
 
