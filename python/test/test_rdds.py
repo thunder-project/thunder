@@ -6,8 +6,8 @@ import logging
 import unittest
 from numpy import dtype, array, allclose, ndarray
 from nose.tools import assert_equals, assert_true, assert_almost_equal
-from thunder.rdds.series import SeriesLoader
-from thunder.rdds.images import ImagesLoader
+from thunder.rdds.series import SeriesLoader, Series
+from thunder.rdds.images import ImagesLoader, Images
 from test_utils import PySparkTestCase
 
 _have_image = False
@@ -17,6 +17,7 @@ try:
 except ImportError:
     # PIL not available; skip tests that require it
     pass
+
 
 class RDDsSparkTestCase(PySparkTestCase):
     def setUp(self):
@@ -153,8 +154,8 @@ class TestSeriesBinaryLoader(RDDsSparkTestCase):
             with open(fname, 'wb') as f:
                 item.writeToFile(f)
 
-            loader = SeriesLoader(item.nkeys, item.nvals, keytype=str(item.keyDType), valuetype=str(item.valDType))
-            series = loader.fromBinary(fname, self.sc)
+            loader = SeriesLoader(self.sc, item.nkeys, item.nvals, keytype=str(item.keyDType), valuetype=str(item.valDType))
+            series = loader.fromBinary(fname)
             seriesdata = series.rdd.collect()
 
             expecteddata = item.data
@@ -255,6 +256,48 @@ class TestImagesFileLoaders(RDDsSparkTestCase):
         assert_equals(expectedshape, tifimage[1].shape)
         for channelidx in xrange(0, expectedshape[2], 4):
             assert_equals(expectedsums[channelidx/4], tifimage[1][:, :, channelidx].flatten().sum())
+
+
+class TestSeriesMethods(RDDsSparkTestCase):
+
+    def test_between(self):
+        rdd = self.sc.parallelize([(0, array([4, 5, 6, 7])), (1, array([8, 9, 10, 11]))])
+        data = Series(rdd).between(0, 1)
+        allclose(data.index, array([0, 1]))
+        allclose(data.first()[1], array([4, 5]))
+
+    def test_select(self):
+        rdd = self.sc.parallelize([(0, array([4, 5, 6, 7])), (1, array([8, 9, 10, 11]))])
+        data = Series(rdd, index=['label1', 'label2', 'label3', 'label4'])
+        selection1 = data.select(['label1'])
+        allclose(selection1.first()[1], array([4]))
+        selection2 = data.select(['label1', 'label2'])
+        allclose(selection2.first()[1], array([4, 5]))
+
+    def test_detrend(self):
+        rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5]))])
+        data = Series(rdd).detrend('linear')
+        # detrending linearly increasing data should yield all 0s
+        allclose(data.first()[1], array([0, 0, 0, 0, 0]))
+
+    def test_series_stats(self):
+        rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5]))])
+        data = Series(rdd)
+        allclose(data.seriesMean().first()[1], 3.0)
+        allclose(data.seriesSum().first()[1], 15.0)
+        allclose(data.seriesStdev().first()[1], 1.4142135)
+        allclose(data.seriesStat('mean').first()[1], 3.0)
+        allclose(data.seriesStats().select('mean').first()[1], 3.0)
+        allclose(data.seriesStats().select('count').first()[1], 5)
+
+    def test_standardization(self):
+        rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5]))])
+        data = Series(rdd)
+        allclose(data.center().first()[1], array([-2, -1, 0, 1, 2]))
+        allclose(data.normalize().first()[1], array([-0.42105,  0.10526,  0.63157,  1.15789,  1.68421]))
+        allclose(data.standardize().first()[1], array([0.70710,  1.41421,  2.12132,  2.82842,  3.53553]))
+        allclose(data.zscore().first()[1], array([-1.41421, -0.70710,  0,  0.70710,  1.41421]))
+
 
 if __name__ == "__main__":
     if not _have_image:
