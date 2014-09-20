@@ -34,6 +34,20 @@ class Series(Data):
                 raise Exception('Values must be 1d arrays')
 
     def between(self, left, right, inclusive=True):
+        """
+        Select subset of values within the given index range
+
+        Parameters
+        ----------
+        left : int
+            Left-most index in the desired range
+
+        right: int
+            Right-most index in the desired range
+
+        inclusive : boolean, optional, default = True
+            Whether selection should include bounds
+        """
         if inclusive:
             crit = lambda x: left <= x <= right
         else:
@@ -41,7 +55,14 @@ class Series(Data):
         return self.select(crit)
 
     def select(self, crit):
-        """Select subset of values that match a given index criterion"""
+        """
+        Select subset of values that match a given index criterion
+
+        Parameters
+        ----------
+        crit : function
+            Criterion function to apply to indices
+        """
         index = self.index
 
         if not isinstance(crit, types.FunctionType):
@@ -65,6 +86,14 @@ class Series(Data):
         """
         Detrend series data with linear or nonlinear detrending
         Preserve intercept so that subsequent steps can adjust the baseline
+
+        Parameters
+        ----------
+        method : str, optional, default = 'linear'
+            Detrending method
+
+        order : int, optional, default = 5
+            Order of polynomial, for non-linear detrending only
         """
         checkparams(method, ['linear', 'nonlin'])
 
@@ -92,6 +121,14 @@ class Series(Data):
     def normalize(self, baseline='percentile', **kwargs):
         """ Normalize series data by subtracting and dividing
         by a baseline
+
+        Parameters
+        ----------
+        baseline : str, optional, default = 'percentile'
+            Quantity to use as the baseline
+
+        perc : int, optional, default = 20
+            Percentile value to use, for 'percentile' baseline only
         """
         checkparams(baseline, ['mean', 'percentile'])
 
@@ -120,7 +157,14 @@ class Series(Data):
         return self.apply(lambda x: (x - mean(x)) / std(x))
 
     def apply(self, func):
-        """ Apply arbitrary function to values of a Series """
+        """ Apply arbitrary function to values of a Series,
+        preserving keys and indices
+
+        Parameters
+        ----------
+        func : function
+            Function to apply
+        """
         rdd = self.rdd.mapValues(lambda x: func(x))
         return Series(rdd, index=self.index)
 
@@ -137,7 +181,13 @@ class Series(Data):
         return self.seriesStat('stdev')
 
     def seriesStat(self, stat):
-        """ Compute a simple statistic for each record in a Series """
+        """ Compute a simple statistic for each record in a Series
+
+        Parameters
+        ----------
+        stat : str
+            Which statistic to compute
+        """
         STATS = {
             'sum': sum,
             'mean': mean,
