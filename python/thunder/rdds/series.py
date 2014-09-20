@@ -2,7 +2,8 @@ import os
 import glob
 import json
 import types
-from numpy import ndarray, frombuffer, dtype, array, sum, mean, std, size, arange, polyfit, polyval, percentile
+from numpy import ndarray, frombuffer, dtype, array, sum, mean, std, size, arange, polyfit, polyval, percentile, load
+from scipy.io import loadmat
 from thunder.rdds.data import Data
 from thunder.utils.common import checkparams
 
@@ -259,6 +260,34 @@ class SeriesLoader(object):
                           _parseValsFromBinaryBuffer(v, valdtype, keysize)))
 
         return Series(data)
+
+    def fromMatLocal(self, datafile, varname, keyfile=None):
+
+        data = loadmat(datafile)[varname]
+        if data.ndim > 2:
+            raise IOError('Input data must be one or two dimensional')
+        if keyfile:
+            keys = map(lambda x: tuple(x), loadmat(keyfile)['keys'])
+        else:
+            keys = arange(0, data.shape[0])
+
+        rdd = Series(self.sc.parallelize(zip(keys, data), self.minPartitions))
+
+        return rdd
+
+    def fromNpyLocal(self, datafile, keyfile=None):
+
+        data = load(datafile)
+        if data.ndim > 2:
+            raise IOError('Input data must be one or two dimensional')
+        if keyfile:
+            keys = map(lambda x: tuple(x), load(keyfile))
+        else:
+            keys = arange(0, data.shape[0])
+
+        rdd = Series(self.sc.parallelize(zip(keys, data), self.minPartitions))
+
+        return rdd
 
     @staticmethod
     def loadConf(datafile, conffile='conf.json'):
