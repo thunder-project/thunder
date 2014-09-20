@@ -204,19 +204,20 @@ class Series(Data):
     def seriesStats(self):
         """ Compute a collection of statistics for each record in a Series """
         rdd = self.rdd.mapValues(lambda x: array([x.size, mean(x), std(x), max(x), min(x)]))
-        return Series(rdd, index=['size', 'mean', 'std', 'max', 'min'])
+        return Series(rdd, index=['count', 'mean', 'std', 'max', 'min'])
 
 
 class SeriesLoader(object):
 
-    def __init__(self, nkeys, nvalues, keytype='int16', valuetype='int16', minPartitions=None):
+    def __init__(self, sparkcontext, nkeys, nvalues, keytype='int16', valuetype='int16', minPartitions=None):
+        self.sc = sparkcontext
         self.nkeys = nkeys
         self.nvalues = nvalues
         self.keytype = keytype
         self.valuetype = valuetype
         self.minPartitions = minPartitions
 
-    def fromText(self, datafile, sc):
+    def fromText(self, datafile):
 
         if os.path.isdir(datafile):
             files = sorted(glob.glob(os.path.join(datafile, '*.txt')))
@@ -228,13 +229,13 @@ class SeriesLoader(object):
             keys = tuple(int(x) for x in vec[:nkeys])
             return keys, ts
 
-        lines = sc.textFile(datafile, self.minPartitions)
+        lines = self.sc.textFile(datafile, self.minPartitions)
         nkeys = self.nkeys
         data = lines.map(lambda x: parse(x, nkeys))
 
         return Series(data)
 
-    def fromBinary(self, datafile, sc):
+    def fromBinary(self, datafile):
 
         if os.path.isdir(datafile):
             datafile = os.path.join(datafile, '*.bin')
@@ -242,7 +243,7 @@ class SeriesLoader(object):
         keysize = self.nkeys * dtype(self.keytype).itemsize
         recordsize = keysize + self.nvalues * dtype(self.valuetype).itemsize
 
-        lines = sc.newAPIHadoopFile(datafile, 'thunder.util.io.hadoop.FixedLengthBinaryInputFormat',
+        lines = self.sc.newAPIHadoopFile(datafile, 'thunder.util.io.hadoop.FixedLengthBinaryInputFormat',
                                               'org.apache.hadoop.io.LongWritable',
                                               'org.apache.hadoop.io.BytesWritable',
                                               conf={'recordLength': str(recordsize)})
