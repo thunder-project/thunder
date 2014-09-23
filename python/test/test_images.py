@@ -6,9 +6,8 @@ import os
 from numpy import ndarray, arange, array, array_equal, concatenate, dtype, prod
 from nose.tools import assert_equals, assert_true, assert_almost_equal, assert_raises
 import itertools
-from test_rdds import PySparkTestCaseWithOutputDir
 from thunder.rdds.images import ImagesLoader, ImageBlockValue
-from test_utils import PySparkTestCase
+from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
 
 _have_image = False
 try:
@@ -290,8 +289,6 @@ class TestImageBlockValue(unittest.TestCase):
             assert_equals(expected[0], actual[0])
             # check value equality
             assert_true(array_equal(expected[1], actual[1]))
-
-
 
 
 if __name__ == "__main__":

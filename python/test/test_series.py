@@ -1,21 +1,9 @@
-import shutil
 import struct
-import tempfile
 import os
 from numpy import dtype, array, allclose
 from nose.tools import assert_equals, assert_true, assert_almost_equal
 from thunder.rdds.series import SeriesLoader, Series
-from test_utils import PySparkTestCase
-
-
-class PySparkTestCaseWithOutputDir(PySparkTestCase):
-    def setUp(self):
-        super(PySparkTestCaseWithOutputDir, self).setUp()
-        self.outputdir = tempfile.mkdtemp()
-
-    def tearDown(self):
-        super(PySparkTestCaseWithOutputDir, self).tearDown()
-        shutil.rmtree(self.outputdir)
+from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
 
 
 class SeriesBinaryTestData(object):
