@@ -3,6 +3,7 @@
 import os
 import json
 from numpy import asarray, floor, ceil, shape, arange
+from scipy.io import loadmat
 from pyspark import SparkContext
 from thunder.utils import DataSets, checkparams
 from thunder.rdds.series import SeriesLoader
@@ -27,7 +28,7 @@ class ThunderContext():
         """Starts a ThunderContext using the same arguments as SparkContext"""
         return ThunderContext(SparkContext(*args, **kwargs))
 
-    def loadSeries(self, datafile, nkeys=3, nvalues=None, inputformat='binary', minPartitions=None,
+    def loadSeries(self, datafile, nkeys=None, nvalues=None, inputformat='binary', minPartitions=None,
                    conffile='conf.json'):
         """
         Loads a Series RDD from data stored as text or binary files.
@@ -38,14 +39,15 @@ class ThunderContext():
             path to single file or directory. If directory, will be expected to contain multiple *.txt (if
             text) or *.bin (if binary) data files.
 
-        nkeys: int, optional, default = 3
+        nkeys: int, optional
             dimensionality of data keys. (For instance, (x,y,z) keyed data for 3-dimensional image timeseries data.)
-            Will be overridden by values specified in 'conf.json' file is such a file is found in the same directory as
-            given by 'datafile'.
+            For text data, number of keys must be specified in this parameter; for binary data, number of keys must be
+            specified either in this parameter or in a configuration file named by the 'conffile' argument if this
+            parameter is not set.
 
         nvalues: int, optional
             Number of values expected to be read. For binary data, nvalues must be specified either in this parameter
-            or in a conf.json file in the same directory as given by 'datafile'.
+            or in a configuration file named by the 'conffile' argument if this parameter is not set.
 
         inputformat: string, optional, default = 'binary'
             Format of data to be read. Must be either 'text' or 'binary'.
@@ -56,21 +58,19 @@ class ThunderContext():
 
         conffile: string, optional, default 'conf.json'
             Path to JSON file with configuration options including 'nkeys' and 'nvalues'. If a file is not found at the
-            given path, then the base directory given in 'datafile' will also be checked.
+            given path, then the base directory given in 'datafile' will also be checked. Parameters specified as
+            explicit arguments to this method take priority over those found in conffile if both are present.
         """
         checkparams(inputformat, ['text', 'binary'])
-        params = SeriesLoader.loadConf(datafile, conffile=conffile)
-        if params is None:
-            if inputformat.lower() == 'binary' and nvalues is None:
-                raise ValueError('Must specify nvalues for binary input if not providing a configuration file')
-            loader = SeriesLoader(self._sc, nkeys=nkeys, nvalues=nvalues, minPartitions=minPartitions)
-        else:
-            loader = SeriesLoader(self._sc, nkeys=params['nkeys'], nvalues=params['nvalues'], minPartitions=minPartitions)
+
+        loader = SeriesLoader(self._sc, minPartitions=minPartitions)
 
         if inputformat.lower() == 'text':
-            data = loader.fromText(datafile)
+            data = loader.fromText(datafile, nkeys=nkeys)
         else:
-            data = loader.fromBinary(datafile)
+            # must be either 'text' or 'binary'
+            data = loader.fromBinary(datafile, conffilename=conffile, nkeys=nkeys, nvalues=nvalues)
+
         return data
 
     def loadSeriesLocal(self, datafile, nkeys=3, nvalues=None, inputformat='npy', minPartitions=None):
@@ -85,7 +85,7 @@ class ThunderContext():
 
         return data
 
-    def loadImages(self, datafile, dims=None, inputformat='stack'):
+    def loadImages(self, datafile, dims=None, inputformat='stack', startidx=None, stopidx=None):
         """
         Loads an Images RDD from data stored as a binary image stack, tif, or png files.
 
@@ -107,13 +107,14 @@ class ThunderContext():
         loader = ImagesLoader(self._sc)
 
         if inputformat.lower() == 'stack':
-            data = loader.fromStack(datafile, dims)
+            data = loader.fromStack(datafile, dims, startidx=startidx, stopidx=stopidx)
         elif inputformat.lower() == 'tif':
-            data = loader.fromTif(datafile)
+            data = loader.fromTif(datafile, startidx=startidx, stopidx=stopidx)
         elif inputformat.lower() == 'tif-stack':
-            data = loader.fromMultipageTif(datafile)
+            data = loader.fromMultipageTif(datafile, startidx=startidx, stopidx=stopidx)
         else:
             data = loader.fromPng(datafile)
+
         return data
 
     def makeExample(self, dataset, **opts):
@@ -188,6 +189,19 @@ class ThunderContext():
         else:
             raise NotImplementedError("dataset '%s' not availiable" % dataset)
 
+    def loadBinaryLocal(self, datafile, nvalues, nkeys, format, keyfile=None, method=None):
+        """
+        Load data from a local binary file
+        """
+
+        raise NotImplementedError
+
+    def loadArrayLocal(self, values, keys=None, method=None):
+        """
+        Load data from local arrays
+        """
+
+        raise NotImplementedError
 
     def loadMatLocal(self, datafile, varname, keyfile=None, filter=None, minPartitions=1):
         """
@@ -209,9 +223,31 @@ class ThunderContext():
         keyfile : str
             MAT file to import with keys (must contain a variable 'keys')
 
+        filter : str, optional, default = None (no preprocessing)
+            Which preprocessing to perform
+
         minPartitions : Int, optional, default = 1
             Number of partitions for data
 
         """
 
+        data = loadmat(datafile)[varname]
+        if data.ndim > 2:
+            raise IOError('input data must be one or two dimensional')
+        if keyfile:
+            keys = map(lambda x: tuple(x), loadmat(keyfile)['keys'])
+        else:
+            keys = arange(1, shape(data)[0]+1)
 
+        rdd = self._sc.parallelize(zip(keys, data), minPartitions)
+
+        return preprocess(rdd, method=filter)
+
+
+def preprocess(data, method=None):
+
+    if method:
+        preprocessor = PreProcessor(method)
+        return data.mapValues(preprocessor.get)
+    else:
+        return data

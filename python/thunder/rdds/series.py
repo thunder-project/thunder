@@ -1,3 +1,4 @@
+from collections import namedtuple
 import os
 import glob
 import json
@@ -209,53 +210,93 @@ class Series(Data):
 
 class SeriesLoader(object):
 
-    def __init__(self, sparkcontext, nkeys, nvalues, keytype='int16', valuetype='int16', minPartitions=None):
+    def __init__(self, sparkcontext, minPartitions=None):
         self.sc = sparkcontext
-        self.nkeys = nkeys
-        self.nvalues = nvalues
-        self.keytype = keytype
-        self.valuetype = valuetype
         self.minPartitions = minPartitions
 
-    def fromText(self, datafile):
+    def fromText(self, datafile, nkeys=None):
 
         if os.path.isdir(datafile):
             files = sorted(glob.glob(os.path.join(datafile, '*.txt')))
             datafile = ''.join([files[x] + ',' for x in range(0, len(files))])[0:-1]
 
-        def parse(line, nkeys):
+        def parse(line, nkeys_):
             vec = [float(x) for x in line.split(' ')]
-            ts = array(vec[nkeys:])
-            keys = tuple(int(x) for x in vec[:nkeys])
+            ts = array(vec[nkeys_:])
+            keys = tuple(int(x) for x in vec[:nkeys_])
             return keys, ts
 
         lines = self.sc.textFile(datafile, self.minPartitions)
-        nkeys = self.nkeys
         data = lines.map(lambda x: parse(x, nkeys))
 
         return Series(data)
 
-    def fromBinary(self, datafile):
+    BinaryLoadParameters = namedtuple('BinaryLoadParameters', 'nkeys nvalues keyformat format')
+    BinaryLoadParameters.__new__.__defaults__ = (None, None, 'int16', 'int16')
+
+    @staticmethod
+    def __loadParametersAndDefaults(datafile, conffilename, nkeys, nvalues, keytype, valuetype):
+        """Collects parameters to use for binary series loading.
+
+        Priority order is as follows:
+        1. parameters specified as keyword arguments;
+        2. parameters specified in a conf.json file;
+        3. default parameters
+
+        Returns
+        -------
+        BinaryLoadParameters instance
+        """
+        params = SeriesLoader.loadConf(datafile, conffile=conffilename)
+        # filter dict to include only recognized field names:
+        params = {k: v for k, v in params.items() if k in SeriesLoader.BinaryLoadParameters._fields}
+        keywordparams = {'nkeys': nkeys, 'nvalues': nvalues, 'keyformat': keytype, 'format': valuetype}
+        keywordparams = {k: v for k, v in keywordparams.items() if v}
+        params.update(keywordparams)
+        return SeriesLoader.BinaryLoadParameters(**params)
+
+    @staticmethod
+    def __checkBinaryParametersAreSpecified(paramsObj):
+        """Throws ValueError if any of the field values in the passed namedtuple instance evaluate to False.
+
+        Note this is okay only so long as zero is not a valid parameter value. Hmm.
+        """
+        missing = []
+        for paramname, paramval in paramsObj._asdict().iteritems():
+            if not paramval:
+                missing.append(paramname)
+        if missing:
+            raise ValueError("Missing parameters to load binary series files - " +
+                             "these must be given either as arguments or in a configuration file: " +
+                             str(tuple(missing)))
+
+    def fromBinary(self, datafile, ext='bin', conffilename='conf.json',
+                   nkeys=None, nvalues=None, keytype=None, valuetype=None):
 
         if os.path.isdir(datafile):
-            datafile = os.path.join(datafile, '*.bin')
+            datafile = os.path.join(datafile, '*.'+ext)
 
-        keysize = self.nkeys * dtype(self.keytype).itemsize
-        recordsize = keysize + self.nvalues * dtype(self.valuetype).itemsize
+        paramsObj = self.__loadParametersAndDefaults(datafile, conffilename, nkeys, nvalues, keytype, valuetype)
+        self.__checkBinaryParametersAreSpecified(paramsObj)
+
+        keydtype = dtype(paramsObj.keyformat)
+        valdtype = dtype(paramsObj.format)
+
+        keysize = paramsObj.nkeys * keydtype.itemsize
+        recordsize = keysize + paramsObj.nvalues * valdtype.itemsize
 
         lines = self.sc.newAPIHadoopFile(datafile, 'thunder.util.io.hadoop.FixedLengthBinaryInputFormat',
                                               'org.apache.hadoop.io.LongWritable',
                                               'org.apache.hadoop.io.BytesWritable',
                                               conf={'recordLength': str(recordsize)})
 
-        def _parseKeysFromBinaryBuffer(buf, keydtype, keybufsize):
-            return frombuffer(buffer(buf, 0, keybufsize), dtype=keydtype)
+        def _parseKeysFromBinaryBuffer(buf, keydtype_, keybufsize):
+            return frombuffer(buffer(buf, 0, keybufsize), dtype=keydtype_)
 
-        def _parseValsFromBinaryBuffer(buf, valsdtype, keybufsize):
-            return frombuffer(buffer(buf, keybufsize), dtype=valsdtype)
+        def _parseValsFromBinaryBuffer(buf, valsdtype_, keybufsize):
+            # note this indeed takes *key* buffer size as an argument, not valbufsize
+            return frombuffer(buffer(buf, keybufsize), dtype=valsdtype_)
 
-        keydtype = dtype(self.keytype)
-        valdtype = dtype(self.valuetype)
         data = lines.map(lambda (_, v):
                          (tuple(_parseKeysFromBinaryBuffer(v, keydtype, keysize)),
                           _parseValsFromBinaryBuffer(v, valdtype, keysize)))
@@ -292,7 +333,12 @@ class SeriesLoader(object):
 
     @staticmethod
     def loadConf(datafile, conffile='conf.json'):
+        """Returns a dict loaded from a json file.
 
+        Looks for file named _conffile_ in same directory as _datafile_.
+
+        Returns {} if file not found.
+        """
         if not os.path.isfile(conffile):
             if os.path.isdir(datafile):
                 basepath = datafile
@@ -300,10 +346,9 @@ class SeriesLoader(object):
                 basepath = os.path.dirname(datafile)
             conffile = os.path.join(basepath, conffile)
 
-        try:
-            f = open(conffile, 'r')
-            params = json.load(f)
-        except IOError:
-            params = None
+        params = {}
+        if os.path.isfile(conffile):
+            with open(conffile, 'r') as f:
+                params = json.load(f)
         return params
 

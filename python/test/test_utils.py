@@ -1,3 +1,5 @@
+import shutil
+import tempfile
 import unittest
 from pyspark import SparkContext
 
@@ -12,3 +14,13 @@ class PySparkTestCase(unittest.TestCase):
         # To avoid Akka rebinding to the same port, since it doesn't unbind
         # immediately on shutdown
         self.sc._jvm.System.clearProperty("spark.driver.port")
+
+
+class PySparkTestCaseWithOutputDir(PySparkTestCase):
+    def setUp(self):
+        super(PySparkTestCaseWithOutputDir, self).setUp()
+        self.outputdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        super(PySparkTestCaseWithOutputDir, self).tearDown()
+        shutil.rmtree(self.outputdir)
