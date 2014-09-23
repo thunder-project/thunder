@@ -3,7 +3,8 @@ import os
 import glob
 import json
 import types
-from numpy import ndarray, frombuffer, dtype, array, sum, mean, std, size, arange, polyfit, polyval, percentile
+from numpy import ndarray, frombuffer, dtype, array, sum, mean, std, size, arange, polyfit, polyval, percentile, load
+from scipy.io import loadmat
 from thunder.rdds.data import Data
 from thunder.utils.common import checkparams
 
@@ -20,7 +21,7 @@ class Series(Data):
             self.index = index
         else:
             record = self.rdd.first()
-            self.index = range(0, len(record[1]))
+            self.index = arange(0, len(record[1]))
 
     @staticmethod
     def _check_type(record):
@@ -35,6 +36,20 @@ class Series(Data):
                 raise Exception('Values must be 1d arrays')
 
     def between(self, left, right, inclusive=True):
+        """
+        Select subset of values within the given index range
+
+        Parameters
+        ----------
+        left : int
+            Left-most index in the desired range
+
+        right: int
+            Right-most index in the desired range
+
+        inclusive : boolean, optional, default = True
+            Whether selection should include bounds
+        """
         if inclusive:
             crit = lambda x: left <= x <= right
         else:
@@ -42,7 +57,14 @@ class Series(Data):
         return self.select(crit)
 
     def select(self, crit):
-        """Select subset of values that match a given index criterion"""
+        """
+        Select subset of values that match a given index criterion
+
+        Parameters
+        ----------
+        crit : function
+            Criterion function to apply to indices
+        """
         index = self.index
 
         if not isinstance(crit, types.FunctionType):
@@ -66,6 +88,14 @@ class Series(Data):
         """
         Detrend series data with linear or nonlinear detrending
         Preserve intercept so that subsequent steps can adjust the baseline
+
+        Parameters
+        ----------
+        method : str, optional, default = 'linear'
+            Detrending method
+
+        order : int, optional, default = 5
+            Order of polynomial, for non-linear detrending only
         """
         checkparams(method, ['linear', 'nonlin'])
 
@@ -93,6 +123,14 @@ class Series(Data):
     def normalize(self, baseline='percentile', **kwargs):
         """ Normalize series data by subtracting and dividing
         by a baseline
+
+        Parameters
+        ----------
+        baseline : str, optional, default = 'percentile'
+            Quantity to use as the baseline
+
+        perc : int, optional, default = 20
+            Percentile value to use, for 'percentile' baseline only
         """
         checkparams(baseline, ['mean', 'percentile'])
 
@@ -121,7 +159,14 @@ class Series(Data):
         return self.apply(lambda x: (x - mean(x)) / std(x))
 
     def apply(self, func):
-        """ Apply arbitrary function to values of a Series """
+        """ Apply arbitrary function to values of a Series,
+        preserving keys and indices
+
+        Parameters
+        ----------
+        func : function
+            Function to apply
+        """
         rdd = self.rdd.mapValues(lambda x: func(x))
         return Series(rdd, index=self.index)
 
@@ -138,7 +183,13 @@ class Series(Data):
         return self.seriesStat('stdev')
 
     def seriesStat(self, stat):
-        """ Compute a simple statistic for each record in a Series """
+        """ Compute a simple statistic for each record in a Series
+
+        Parameters
+        ----------
+        stat : str
+            Which statistic to compute
+        """
         STATS = {
             'sum': sum,
             'mean': mean,
@@ -154,7 +205,7 @@ class Series(Data):
     def seriesStats(self):
         """ Compute a collection of statistics for each record in a Series """
         rdd = self.rdd.mapValues(lambda x: array([x.size, mean(x), std(x), max(x), min(x)]))
-        return Series(rdd, index=['size', 'mean', 'std', 'max', 'min'])
+        return Series(rdd, index=['count', 'mean', 'std', 'max', 'min'])
 
 
 class SeriesLoader(object):
@@ -176,7 +227,6 @@ class SeriesLoader(object):
             return keys, ts
 
         lines = self.sc.textFile(datafile, self.minPartitions)
-        nkeys = nkeys
         data = lines.map(lambda x: parse(x, nkeys))
 
         return Series(data)
@@ -252,6 +302,34 @@ class SeriesLoader(object):
                           _parseValsFromBinaryBuffer(v, valdtype, keysize)))
 
         return Series(data)
+
+    def fromMatLocal(self, datafile, varname, keyfile=None):
+
+        data = loadmat(datafile)[varname]
+        if data.ndim > 2:
+            raise IOError('Input data must be one or two dimensional')
+        if keyfile:
+            keys = map(lambda x: tuple(x), loadmat(keyfile)['keys'])
+        else:
+            keys = arange(0, data.shape[0])
+
+        rdd = Series(self.sc.parallelize(zip(keys, data), self.minPartitions))
+
+        return rdd
+
+    def fromNpyLocal(self, datafile, keyfile=None):
+
+        data = load(datafile)
+        if data.ndim > 2:
+            raise IOError('Input data must be one or two dimensional')
+        if keyfile:
+            keys = map(lambda x: tuple(x), load(keyfile))
+        else:
+            keys = arange(0, data.shape[0])
+
+        rdd = Series(self.sc.parallelize(zip(keys, data), self.minPartitions))
+
+        return rdd
 
     @staticmethod
     def loadConf(datafile, conffile='conf.json'):

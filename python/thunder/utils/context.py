@@ -5,7 +5,7 @@ import json
 from numpy import asarray, floor, ceil, shape, arange
 from scipy.io import loadmat
 from pyspark import SparkContext
-from thunder.utils import DataSets
+from thunder.utils import DataSets, checkparams
 from thunder.rdds.series import SeriesLoader
 from thunder.rdds.images import ImagesLoader
 
@@ -61,8 +61,7 @@ class ThunderContext():
             given path, then the base directory given in 'datafile' will also be checked. Parameters specified as
             explicit arguments to this method take priority over those found in conffile if both are present.
         """
-        if not inputformat.lower() in ('text', 'binary'):
-            raise ValueError("inputformat must be either 'text' or 'binary', got %s" % inputformat)
+        checkparams(inputformat, ['text', 'binary'])
 
         loader = SeriesLoader(self._sc, minPartitions=minPartitions)
 
@@ -71,6 +70,19 @@ class ThunderContext():
         else:
             # must be either 'text' or 'binary'
             data = loader.fromBinary(datafile, conffilename=conffile, nkeys=nkeys, nvalues=nvalues)
+
+        return data
+
+    def loadSeriesLocal(self, datafile, nkeys=3, nvalues=None, inputformat='npy', minPartitions=None):
+
+        checkparams(inputformat, ['mat', 'npy'])
+        loader = SeriesLoader(self._sc, nkeys=nkeys, nvalues=nvalues, minPartitions=minPartitions)
+
+        if inputformat.lower() == 'mat':
+            data = loader.fromMatLocal(datafile)
+        else:
+            data = loader.fromNpyLocal(datafile)
+
         return data
 
     def loadImages(self, datafile, dims=None, inputformat='stack', startidx=None, stopidx=None):
@@ -91,17 +103,18 @@ class ThunderContext():
         inputformat: string, optional, default = 'stack'
             Format of data to be read. Must be either 'stack', 'tif', or 'png'.
         """
-        if not inputformat.lower() in ('stack', 'png', 'tif'):
-            raise ValueError("inputformat must be either 'stack', 'png', or 'tif', got %s" % inputformat)
+        checkparams(inputformat, ['stack', 'png', 'tif', 'tif-stack'])
         loader = ImagesLoader(self._sc)
 
         if inputformat.lower() == 'stack':
             data = loader.fromStack(datafile, dims, startidx=startidx, stopidx=stopidx)
         elif inputformat.lower() == 'tif':
             data = loader.fromTif(datafile, startidx=startidx, stopidx=stopidx)
+        elif inputformat.lower() == 'tif-stack':
+            data = loader.fromMultipageTif(datafile, startidx=startidx, stopidx=stopidx)
         else:
-            # inputformat must be either 'stack', 'tif', or 'png'
-            data = loader.fromPng(datafile,  startidx=startidx, stopidx=stopidx)
+            data = loader.fromPng(datafile)
+
         return data
 
     def makeExample(self, dataset, **opts):
