@@ -3,10 +3,11 @@ import os
 import itertools
 import struct
 import cStringIO as StringIO
-from numpy import ndarray, array, arange, fromfile, int16, uint16, prod, concatenate, amax, amin, size, squeeze, reshape, zeros
+from numpy import ndarray, array, arange, fromfile, int16, uint16, prod, concatenate, amax, amin, size, squeeze, reshape, zeros, \
+    dtype
 from matplotlib.pyplot import imread
 from series import Series
-from thunder.rdds.data import Data
+from thunder.rdds.data import Data, parseMemoryString
 
 
 class Images(Data):
@@ -52,10 +53,10 @@ class Images(Data):
         """Splits Images into ImageBlocks by extracting image planes along specified dimension
 
         Given an Images data object created from n image files each of dimensions x,y,z (fortran-order),
-        this method will return a new ImageBlocks with n*z items, one for each z-plane in the passed
-        images. There will be z unique keys, (0, 0, 0), (0, 0, 1), ... (0, 0, z-1). Each value will be
-        an instance of ImageBlockValue, representing an n,z plane within a larger volume of dimensions
-        n,x,y,z.
+        this method (with default arguments) will return a new ImageBlocks with n*z items, one for each
+        z-plane in the passed images. There will be z unique keys, (0, 0, 0), (0, 0, 1), ... (0, 0, z-1).
+        Each value will be an instance of ImageBlockValue, representing an n,z plane within a larger
+        volume of dimensions n,x,y,z.
 
         This method is not expected to be called directly by end users.
 
@@ -64,41 +65,77 @@ class Images(Data):
         groupingdim: integer, -ndim <= groupingdim < ndim, where ndim is the dimensionality of the image
             Specifies the index of the dimension along which the images are to be divided into planes.
             Negative groupingdims are interpreted as counting from the end of the sequence of dimensions,
-            so groupingdim == -1 represents slicing along the last dimension. -1 is the default.
-
-        Todos:
-        ------
-        * support concatinating time points as final dimension rather than first - would allow for contiguous
-        array access for fortran-ordered data
-        * figure out some way for total image number to be evaluated lazily
+            so groupingdim == -1 represents slicing along the last dimension. -1 is the default, corresponding
+            to grouping along z-planes for image files with dimensions x, y, z.
 
         """
+        dims = self.dims
         ndim = len(self.dims)
-        _dim = groupingDim if groupingDim >= 0 else ndim + groupingDim
-        if _dim < 0 or _dim >= ndim:
-            raise ValueError("Dimension to group by (%d) must be less than array dimensionality (%d)" %
-                             (_dim, ndim))
+        blocksperdim = [1] * ndim
+        blocksperdim[groupingDim] = dims[groupingDim]
+        return self._toBlocksBySplits(blocksperdim)
 
+    def _toBlocksBySplits(self, splitsPerDim):
+        """Splits Images into ImageBlocks by subdividing the image into logically contiguous blocks.
+
+        Parameters
+        ----------
+        splitsPerDim : n-tuple of positive int, with n = image dimensionality
+            Each value in the splitsPerDim tuple indicates the number of subdivisions into which
+            the image is to be divided along the corresponding dimension. For instance, given
+            an image of dimensions x, y, z:
+            * splitsPerDim (1, 1, 1) returns the original image
+            * splitsPerDim (1, 1, z) divides the image into z xy planes, as would be done by
+            _toBlocksByPlanes(groupingdim=2)
+            * splitsPerDim (1, 2, z) divides the image into 2z blocks, with each block being half
+            of an xy plane, divided in the middle of the y dimension
+
+        """
+        dims = self.dims
+        ndim = len(dims)
         totnumimages = self.nimages
 
-        def _groupByPlanes(imagearyval, _groupingdim, _tp, _numtp):
+        if not len(splitsPerDim) == ndim:
+            raise ValueError("splitsPerDim length (%d) must match image dimensionality (%d); got splitsPerDim %s" %
+                             (len(splitsPerDim), ndim, str(splitsPerDim)))
+        splitsPerDim = map(int, splitsPerDim)
+        if any((nsplits <= 0 for nsplits in splitsPerDim)):
+            raise ValueError("All numbers of blocks must be positive; got " + str(splitsPerDim))
+
+        # slices will be sequence of sequences of slices
+        # slices[i] will hold slices for ith dimension
+        slices = []
+        for nsplits, dimsize in zip(splitsPerDim, dims):
+            blocksize = dimsize / nsplits  # integer division
+            blockrem = dimsize % nsplits
+            st = 0
+            dimslices = []
+            for blockidx in xrange(nsplits):
+                en = st + blocksize
+                if blockrem:
+                    en += 1
+                    blockrem -= 1
+                dimslices.append(slice(st, min(en, dimsize), 1))
+                st = en
+            slices.append(dimslices)
+
+        def _groupBySlices(imagearyval, slices_, tp_, numtp_):
             ret_vals = []
-            origndim = imagearyval.ndim
-            origimagearyshape = imagearyval.shape
-            for groupingidx in xrange(origimagearyshape[_groupingdim]):
-                blockval = ImageBlockValue.fromArrayByPlane(imagearyval, planedim=_groupingdim, planeidx=groupingidx,
-                                                            docopy=False)
-                blockval = blockval.addDimension(newdimidx=_tp, newdimsize=_numtp)
-                newkey = [0] * origndim
-                newkey[_groupingdim] = groupingidx
+            sliceproduct = itertools.product(*slices_)
+            for blockslices in sliceproduct:
+                blockval = ImageBlockValue.fromArrayBySlices(imagearyval, blockslices, docopy=False)
+                blockval = blockval.addDimension(newdimidx=tp_, newdimsize=numtp_)
+                # resulting key will be (x, y, z) (for 3d data), where x, y, z are starting
+                # position of block within image volume
+                newkey = [sl.start for sl in blockslices]
                 ret_vals.append((tuple(newkey), blockval))
             return ret_vals
 
-        def _groupByPlanesAdapter(keyval):
+        def _groupBySlicesAdapter(keyval):
             tpkey, imgaryval = keyval
-            return _groupByPlanes(imgaryval, _dim, tpkey, totnumimages)
+            return _groupBySlices(imgaryval, slices, tpkey, totnumimages)
 
-        return ImageBlocks(self.rdd.flatMap(_groupByPlanesAdapter, preservesPartitioning=False))
+        return ImageBlocks(self.rdd.flatMap(_groupBySlicesAdapter, preservesPartitioning=False))
 
     def __validateOrCalcGroupingDim(self, groupingDim=None):
         """Bounds-checks the passed grouping dimension, calculating it if None is passed.
@@ -129,8 +166,7 @@ class Images(Data):
             gd = calcGroupingDim(imgdims)
         return gd
 
-    def toSeries(self, groupingdim=None):
-
+    def __toSeriesByPlanes(self, groupingdim):
         # normalize grouping dimension, or get a reasonable grouping dimension if unspecified
         # this may trigger a first() call:
         gd = self.__validateOrCalcGroupingDim(groupingDim=groupingdim)
@@ -138,23 +174,132 @@ class Images(Data):
         # returns keys of (z, y, x); with z as grouping dimension, key values will be (0, 0, 0), (1, 0, 0), ...
         # (z-1, 0, 0)
         blocksdata = self._toBlocksByImagePlanes(groupingDim=gd)
-        # key is still spatial without time; e.g. (z, y, x)
-        # block orig shape and slices include time and spatial dimensions; (t, z, y, x)
-        # toSeries expects grouping dimension to be relative to higher-dimensional space, including time:
-        expandedgd = gd + 1
-        return blocksdata.toSeries(expandedgd, seriesDim=0)
+        return blocksdata.toSeries(seriesDim=0)
 
-    def saveAsBinarySeries(self, outputdirname, groupingdim=None, overwrite=False):
+    def __calcBlocksPerDim(self, blockSize):
+        """Returns a partitioning strategy, represented as splits per dimension, that yields blocks
+        closely matching the requested size in bytes
+
+        Parameters
+        ----------
+        blockSize: positive int
+            Requested size of the resulting image blocks in bytes
+
+        Returns
+        -------
+        n-tuple of positive int, where n == len(self.dims)
+            Each value in the returned tuple represents the number of splits to apply along the
+            corresponding dimension in order to yield blocks close to the requested size.
+        """
+        import bisect
+        minseriessize = self.nimages * dtype(self.dtype).itemsize
+        dims = self.dims
+
+        memseq = _BlockMemoryAsReversedSequence(dims)
+        tmpidx = bisect.bisect_left(memseq, blockSize / float(minseriessize))
+        return memseq.indtosub(tmpidx)
+
+    def _scatterToBlocks(self, blockSize="150M", blocksPerDim=None, groupingDim=None):
+        if not groupingDim is None:
+            # get series from blocks defined by pivoting:
+            gd = self.__validateOrCalcGroupingDim(groupingDim=groupingDim)
+            blocksdata = self._toBlocksByImagePlanes(groupingDim=gd)
+
+        else:
+            # get series from blocks defined by splits
+            if not blocksPerDim:
+                # get splits from requested block size
+                if isinstance(blockSize, basestring):
+                    blockSize = parseMemoryString(blockSize)
+                else:
+                    blockSize = int(blockSize)
+                blocksPerDim = self.__calcBlocksPerDim(blockSize)
+            blocksdata = self._toBlocksBySplits(blocksPerDim)
+
+        return blocksdata
+
+    def toSeries(self, blockSize="150M", splitsPerDim=None, groupingDim=None):
+        """Converts this Images object to a Series object.
+
+        Conversion will be performed by grouping the constituent image time points into
+        smaller blocks, shuffling the blocks so that the same part of the image across time is
+        processed by the same machine, and finally grouping the pixels of the image blocks
+        together into a time series.
+
+        The parameters to this method control the size of the intermediate block representation,
+        which can impact performance; however results should be logically equivalent regardless of
+        intermediate block size.
+
+        Parameters
+        ----------
+        blockSize : positive int or string
+            Requests an average size for the intermediate blocks in bytes. A passed string should
+            be in a format like "256k" or "150M" (see data.parseMemoryString). If blocksPerDim
+            or groupingDim are passed, they will take precedence over this argument. See
+            images._BlockMemoryAsSequence for a description of the partitioning strategy used.
+
+        splitsPerDim : n-tuple of positive int, where n = dimensionality of image
+            Specifies that intermediate blocks are to be generated by splitting the i-th dimension
+            of the image into splitsPerDim[i] roughly equally-sized partitions.
+            1 <= splitsPerDim[i] <= self.dims[i]
+            groupingDim will take precedence over this argument if both are passed.
+
+        groupingDim : nonnegative int, 0 <= groupingDim <= len(self.dims)
+            Specifies that intermediate blocks are to be generated by splitting the image
+            into "planes" of dimensionality len(self.dims) - 1, along the dimension given by
+            self.dims[groupingDim]. For instance, if self.dims == (x, y, z), then
+            self.toSeries(groupingDim=2) would cause the images to be partioned into z intermediate
+            blocks, each of size x*y and dimensionality (x, y, 1). (This is equivalent to
+            self.toSeries(splitsPerDim=(1, 1, z))).
+
+        Returns
+        -------
+        new Series object
+        """
+        blocksdata = self._scatterToBlocks(blockSize=blockSize, blocksPerDim=splitsPerDim, groupingDim=groupingDim)
+
+        return blocksdata.toSeries(seriesDim=0)
+
+    def saveAsBinarySeries(self, outputdirname, blockSize="150M", splitsPerDim=None, groupingDim=None,
+                           overwrite=False):
+        """Writes Image into files on a local filesystem, suitable for loading by SeriesLoader.fromBinary()
+
+        The mount point specified by outputdirname must be visible to all workers; thus this method is
+        primarily useful either when Spark is being run locally or in the presence of an NFS mount or
+        similar shared filesystem.
+
+        Parameters
+        ----------
+        outputdirname : string path to directory to be created
+            Output files will be written underneath outputdirname. This directory must not yet exist
+            (unless overwrite is True), and must be no more than one level beneath an existing directory.
+            It will be created as a result of this call.
+
+        blockSize : positive int or string
+            Requests a particular size for individual output files; see toSeries()
+
+        splitsPerDim : n-tuple of positive int
+            Specifies that output files are to be generated by splitting the i-th dimension
+            of the image into splitsPerDim[i] roughly equally-sized partitions; see toSeries()
+
+        groupingDim : nonnegative int, 0 <= groupingDim <= len(self.dims)
+            Specifies that intermediate blocks are to be generated by splitting the image
+            into "planes" of dimensionality len(self.dims) - 1, along the dimension given by
+            self.dims[groupingDim]; see toSeries()
+
+        overwrite : bool
+            If true, outputdirname and all its contents will be deleted and recreated as part
+            of this call.
+
+        """
         if overwrite and os.path.isdir(outputdirname):
             import shutil
             shutil.rmtree(outputdirname)
         os.mkdir(outputdirname)
 
-        gd = self.__validateOrCalcGroupingDim(groupingDim=groupingdim)
-        blocksdata = self._toBlocksByImagePlanes(groupingDim=gd)
+        blocksdata = self._scatterToBlocks(blockSize=blockSize, blocksPerDim=splitsPerDim, groupingDim=groupingDim)
 
-        expandedgd = gd + 1
-        binseriesrdd = blocksdata.toBinarySeries(groupingDim=expandedgd, seriesDim=0)
+        binseriesrdd = blocksdata.toBinarySeries(seriesDim=0)
 
         def writeBinarySeriesFile(kv):
             binlabel, binvals = kv
@@ -375,62 +520,38 @@ class ImagesLoader(object):
 
 
 class ImageBlocks(Data):
+    """Intermediate representation used in conversion from Images to Series.
+
+    This class is not expected to be directly used by clients.
+    """
 
     @staticmethod
-    def __validateGroupingAndSeriesDims(groupingDim, seriesDim):
-        if groupingDim == seriesDim:
-            raise ValueError("Dimension used to collect image blocks (%d) cannot be the same as " % groupingDim +
-                             "time series dimension (%d)" % seriesDim)
-
-    @staticmethod
-    def _blockToSeries(blockKey, blockVal, keyGroupingDim, seriesDim):
-        planeIdx = blockKey[keyGroupingDim]
+    def _blockToSeries(blockVal, seriesDim):
         for seriesKey, seriesVal in blockVal.toSeriesIter(seriesDim=seriesDim):
-            # add plane index back into key:
-            seriesKey = list(seriesKey)
-            seriesKey.insert(keyGroupingDim, planeIdx)
             yield tuple(seriesKey), seriesVal
 
-    def toSeries(self, groupingDim=1, seriesDim=0):
-        """
-        key is expected to be spatial, without time; (z, y, x)
-        block origshape and slices have time appended; (t, z, y, x)
-        groupingDim is expected to be relative to block value, in higher-dimensional space (including time; t, z, y, x)
-        seriesDim is expected to be relative to block value, in higher-dimensional space (including time; t, z, y, x)
-        """
-        self.__validateGroupingAndSeriesDims(groupingDim, seriesDim)
+    def toSeries(self, seriesDim=0):
 
         def blockToSeriesAdapter(kv):
             blockKey, blockVal = kv
-            return ImageBlocks._blockToSeries(blockKey, blockVal, keyGroupingDim, seriesDim)
+            return ImageBlocks._blockToSeries(blockVal, seriesDim)
 
-        blockedrdd = self._groupIntoSeriesBlocks(groupingDim=groupingDim)
+        blockedrdd = self._groupIntoSeriesBlocks()
 
-        # the key does not include the time dimension, but the groupingDim argument is passed
-        #   assuming that time is included. decrement this if needed for reference into the key.
-        keyGroupingDim = groupingDim - 1 if seriesDim < groupingDim else groupingDim
-
-        # convert resulting (z, y, x) keys and (t, y, x) blocks into multiple
-        #   (z, y, x) keys (one per voxel) and t arrays
         # returns generator of (z, y, x) array data for all z, y, x
         seriesrdd = blockedrdd.flatMap(blockToSeriesAdapter)
         return Series(seriesrdd)
 
-    def toBinarySeries(self, groupingDim=1, seriesDim=0):
-        self.__validateGroupingAndSeriesDims(groupingDim, seriesDim)
+    def toBinarySeries(self, seriesDim=0):
 
-        blockedrdd = self._groupIntoSeriesBlocks(groupingDim=groupingDim)
-
-        # the key does not include the time dimension, but the groupingDim argument is passed
-        #   assuming that time is included. decrement this if needed for reference into the key.
-        keyGroupingDim = groupingDim - 1 if seriesDim < groupingDim else groupingDim
+        blockedrdd = self._groupIntoSeriesBlocks()
 
         def blockToBinarySeries(kv):
             blockKey, blockVal = kv
             label = '-'.join("%05g" % k for k in blockKey)
             keypacker = None
             buf = StringIO.StringIO()
-            for seriesKey, series in ImageBlocks._blockToSeries(blockKey, blockVal, keyGroupingDim, seriesDim):
+            for seriesKey, series in ImageBlocks._blockToSeries(blockVal, seriesDim):
                 if keypacker is None:
                     keypacker = struct.Struct('h'*len(seriesKey))
                 # print >> sys.stderr, seriesKey, series, series.tostring().encode('hex')
@@ -442,32 +563,22 @@ class ImageBlocks(Data):
 
         return blockedrdd.map(blockToBinarySeries)
 
-    def _groupIntoSeriesBlocks(self, groupingDim=1):
-        """Combine blocks representing individual image planes into a single planes-by-time volume
+    def _groupIntoSeriesBlocks(self):
+        """Combine blocks representing individual image blocks into a single time-by-blocks volume
 
         Returns:
         --------
         RDD, key/value: tuple of int, ImageBlockValue
         key:
-            spatial indicies of start of block, for instance (z, y, x): (0, 0, 0), (1, 0, 0),... (z_max-1, 0, 0)
+            spatial indicies of start of block, for instance (x, y, z): (0, 0, 0), (0, 0, 1),... (0, 0, z_max-1)
         value:
-            ImageBlockValue with single fully-populated array, dimensions of time by space, for instance (t, y, x):
-            ary[0:t_max, :, :]
+            ImageBlockValue with single fully-populated array, dimensions of time by space, for instance (t, x, y, z):
+            ary[0:t_max, :, :, z_i]
         """
-        # squeeze out dimension used for grouping
-        squeezedData = self.squeeze(groupingDim)
-
-        # combine blocks representing individual image planes into a single planes-by-time volume:
-        # key will be (z, y, x) for start of block
-        # val will be single blockValue array data with dimensions for instance (t, y, x)
-        return squeezedData.rdd.groupByKey().mapValues(ImageBlockValue.fromBlocks)
-
-    def squeeze(self, squeezedimidx=-1):
-        """Removes the specified dimension from all blocks.
-
-        Keys remain unchanged.
-        """
-        return ImageBlocks(self.rdd.mapValues(lambda v: v.squeeze(squeezedimidx)))
+        # key will be x, y, z for start of block
+        # val will be single blockvalue array data with origshape and origslices in dimensions (t, x, y, z)
+        # val array data will be t by (spatial block size)
+        return self.rdd.groupByKey().mapValues(lambda v: ImageBlockValue.fromPlanarBlocks(v, 0))
 
 
 class ImageBlockValue(object):
@@ -475,6 +586,23 @@ class ImageBlockValue(object):
     Helper data structure for transformations from Images to Series.
 
     Not intended for direct use by clients.
+
+    Attributes
+    ----------
+    origshape : n-sequence of positive int
+        Represents the shape of the overall volume of which this block is a component.
+
+    origslices : n-sequence of slices
+        Represents the position of this block of data within the overall volume of which the block is
+        a component. Effectively, an assertion that origVolume[self.origslices] == self.values.
+        Slices sl in origslices should either be equal to slice(None), representing the whole range
+        of the corresponding dimension, or else should have all of sl.start, sl.stop, and sl.step
+        specified.
+
+    values : numpy ndarray
+        Data making up this block.
+        values.ndim will be equal to len(origshape) and len(origslices).
+        values.shape will typically be smaller than origshape, but may be the same.
     """
     __slots__ = ('origshape', 'origslices', 'values')
 
@@ -513,14 +641,16 @@ class ImageBlockValue(object):
         """
         ndim = imagearray.ndim
         slices = [slice(None)] * ndim
-        slices[planedim] = slice(planeidx, planeidx+1)
-        if docopy:
-            return cls(imagearray.shape, tuple(slices), imagearray[slices].copy())
-        else:
-            return cls(imagearray.shape, tuple(slices), imagearray[slices])
+        slices[planedim] = slice(planeidx, planeidx+1, 1)
+        return cls.fromArrayBySlices(imagearray, slices, docopy=docopy)
 
     @classmethod
-    def fromBlocks(cls, blocksIter):
+    def fromArrayBySlices(cls, imagearray, slices, docopy=False):
+        slicedary = imagearray[slices].copy() if docopy else imagearray[slices]
+        return cls(imagearray.shape, tuple(slices), slicedary)
+
+    @classmethod
+    def fromBlocks_orig(cls, blocksIter):
         """Creates a new ImageBlockValue from an iterator over blocks with compatible origshape.
 
         The new ImageBlockValue created will have values of shape origshape. Each block will
@@ -538,6 +668,81 @@ class ImageBlockValue(object):
                                  (str(block.origshape), str(ary.shape)))
             ary[block.origslices] = block.values
         return cls.fromArray(ary)
+
+    @classmethod
+    def fromPlanarBlocks(cls, blocksIter, planarDim):
+        """Creates a new ImageBlockValue from an iterator over IBVs that have at least one singleton dimension.
+
+        The resulting block will effectively be the concatenation of all blocks in the passed iterator,
+        grouped as determined by each passed block's origslices attribute. This method assumes that
+        the passed blocks will all have either the first or the last slice in origslices specifying only
+        a single index. This index will be used to sort the consituent blocks into their proper positions
+        within the returned ImageBlockValue.
+
+        Parameters
+        ----------
+        blocksIter : iterable over ImageBlockValue
+            All blocks in blocksIter must have identical origshape, identical values.shape, and origslices
+            that are identical apart from origslices[planarDim]. For each block, origslices[planarDim]
+            must specify only a single index.
+
+        planarDim : integer
+            planarDim must currently be either 0, len(origshape)-1, or -1, specifying the first, last, or
+            last dimension of the block, respectively, as the dimension across which blocks are to be
+            combined. origslices[planarDim] must specify a single index.
+
+        """
+        def getBlockSlices(slices, planarDim_):
+            compatslices = list(slices[:])
+            del compatslices[planarDim_]
+            return tuple(compatslices)
+
+        def _initialize_fromPlanarBlocks(firstBlock, planarDim_):
+            # set up collection array:
+            fullndim = len(firstBlock.origshape)
+            if not (planarDim_ == 0 or planarDim_ == len(firstBlock.origshape)-1 or planarDim_ == -1):
+                raise ValueError("planarDim must specify either first or last dimension, got %d" % planarDim_)
+            if planarDim_ < 0:
+                planarDim_ = fullndim + planarDim_
+
+            newshape = list(firstBlock.values.shape[:])
+            newshape[planarDim_] = block.origshape[planarDim_]
+
+            ary = zeros(newshape, dtype=block.values.dtype)
+            matchingslices = getBlockSlices(block.origslices, planarDim_)
+            return ary, matchingslices, fullndim, block.origshape[:], planarDim_
+
+        def allequal(seqA, seqB):
+            return all([a == b for (a, b) in zip(seqA, seqB)])
+
+        ary = None
+        matchingslices = None
+        fullndim = None
+        origshape = None
+        for block in blocksIter:
+            if ary is None:
+                # set up collection array:
+                ary, matchingslices, fullndim, origshape, planarDim = \
+                    _initialize_fromPlanarBlocks(block, planarDim)
+
+            # check for compatible slices (apart from slice on planar dimension)
+            blockslices = getBlockSlices(block.origslices, planarDim)
+            if not allequal(matchingslices, blockslices):
+                raise ValueError("Incompatible slices; got %s and %s" % (str(matchingslices), str(blockslices)))
+            if not allequal(origshape, block.origshape):
+                raise ValueError("Incompatible original shapes; got %s and %s" % (str(origshape), str(block.origshape)))
+
+            # put values into collection array:
+            targslices = [slice(None)] * fullndim
+            targslices[planarDim] = block.origslices[planarDim]
+
+            ary[targslices] = block.values
+
+        # new slices should be full slice for formerly planar dimension, plus existing block slices
+        newslices = list(getBlockSlices(block.origslices, planarDim))
+        newslices.insert(planarDim, slice(None))
+
+        return cls(block.origshape, newslices, ary)
 
     def addDimension(self, newdimidx=0, newdimsize=1):
         """Returns a new ImageBlockValue embedded in a space of dimension n+1
@@ -574,27 +779,11 @@ class ImageBlockValue(object):
         newshape.insert(0, newdimsize)
         newslices = list(self.origslices)
         # todo: check array ordering here and insert at back if in 'F' order, to preserve contiguous ordering?
-        newslices.insert(0, slice(newdimidx, newdimidx+1))
+        newslices.insert(0, slice(newdimidx, newdimidx+1, 1))
         newblockshape = list(self.values.shape)
         newblockshape.insert(0, 1)
         newvalues = reshape(self.values, tuple(newblockshape))
         return type(self)(tuple(newshape), tuple(newslices), newvalues)
-
-    def squeeze(self, squeezedimidx=-1):
-        """Returns a new ImageBlockValue with the specified singleton dimension removed.
-
-        Passed dimension will be removed from origslices, origshape, and values. Exception will
-        be thrown (by numpy) if the dimension is not a singleton in values.
-
-        See numpy.squeeze.
-        """
-        newvalues = self.values.squeeze(squeezedimidx)
-        newslices = list(self.origslices)
-        del newslices[squeezedimidx]
-        newshape = list(self.origshape)
-        del newshape[squeezedimidx]
-
-        return ImageBlockValue(tuple(newshape), tuple(newslices), newvalues)
 
     def toSeriesIter(self, seriesDim=0):
         """Returns an iterator over key,array pairs suitable for casting into a Series object.
@@ -611,12 +800,27 @@ class ImageBlockValue(object):
         # correct for original dimensionality if inserting at end of list
         insertDim = seriesDim if seriesDim >= 0 else len(self.origshape) + seriesDim
         for idxSeq in itertools.product(*rangeiters):
-            slices = [slice(idx, idx+1) for idx in idxSeq]
-            slices.insert(insertDim, slice(None))
+            expandedIdxSeq = list(idxSeq[:])
+            expandedIdxSeq.insert(insertDim, None)
+            slices = []
+            for d, (idx, origslice) in enumerate(zip(expandedIdxSeq, self.origslices)):
+                if idx is None:
+                    newslice = slice(None)
+                else:
+                    # correct slice into our own value for any offset given by origslice:
+                    start = idx - origslice.start if not origslice == slice(None) else idx
+                    newslice = slice(start, start+1, 1)
+                slices.append(newslice)
+
             series = self.values[slices].squeeze()
             yield tuple(idxSeq), series
 
     def _get_range_iterators(self):
+        """Returns a sequence of iterators over the range of the slices in self.origslices
+
+        When passed to itertools.product, these iterators should cover the original image
+        volume represented by this block.
+        """
         iters = []
         noneSlice = slice(None)
         for sliceidx, sl in enumerate(self.origslices):
@@ -630,3 +834,88 @@ class ImageBlockValue(object):
     def __repr__(self):
         return "ImageBlockValue(origshape=%s, origslices=%s, values=%s)" % \
                (repr(self.origshape), repr(self.origslices), repr(self.values))
+
+
+class _BlockMemoryAsSequence(object):
+    """Helper class used in calculation of slices for requested block partitions of a particular size.
+
+    The partitioning strategy represented by objects of this class is to split into N equally-sized
+    subdivisions along each dimension, starting with the rightmost dimension.
+
+    So for instance consider an Image with spatial dimensions 5, 10, 3 in x, y, z. The first nontrivial
+    partition would be to split into 2 blocks along the z axis:
+    splits: (1, 1, 2)
+    In this example, downstream this would turn into two blocks, one of size (5, 10, 2) and another
+    of size (5, 10, 1).
+
+    The next partition would be to split into 3 blocks along the z axis, which happens to
+    corresponding to having a single block per z-plane:
+    splits: (1, 1, 3)
+    Here these splits would yield 3 blocks, each of size (5, 10, 1).
+
+    After this the z-axis cannot be partitioned further, so the next partition starts splitting along
+    the y-axis:
+    splits: (1, 2, 3)
+    This yields 6 blocks, each of size (5, 5, 1).
+
+    Several other splits are possible along the y-axis, going from (1, 2, 3) up to (1, 10, 3).
+    Following this we move on to the x-axis, starting with splits (2, 10, 3) and going up to
+    (5, 10, 3), which is the finest subdivision possible for this data.
+
+    Instances of this class represent the average size of a block yielded by this partitioning
+    strategy in a linear order, moving from the most coarse subdivision (1, 1, 1) to the finest
+    (x, y, z), where (x, y, z) are the dimensions of the array being partitioned.
+
+    This representation is intended to support binary search for the partitioning strategy yielding
+    a block size closest to a requested amount.
+    """
+    def __init__(self, dims):
+        self._dims = dims
+
+    def indtosub(self, idx):
+        """Converts a linear index to a corresponding partition strategy, represented as
+        number of splits along each dimension.
+        """
+        dims = self._dims
+        ndims = len(dims)
+        sub = [1] * ndims
+        for didx, d in enumerate(dims[::-1]):
+            didx = ndims - (didx + 1)
+            delta = min(dims[didx]-1, idx)
+            if delta > 0:
+                sub[didx] += delta
+                idx -= delta
+            if idx <= 0:
+                break
+        return tuple(sub)
+
+    def blockMemoryForSplits(self, sub):
+        """Returns the average number of cells in a block generated by the passed sequence of splits.
+        """
+        from operator import mul
+        sz = [d / float(s) for (d, s) in zip(self._dims, sub)]
+        return reduce(mul, sz)
+
+    def __len__(self):
+        return sum([d-1 for d in self._dims]) + 1
+
+    def __getitem__(self, item):
+        sub = self.indtosub(item)
+        return self.blockMemoryForSplits(sub)
+
+
+class _BlockMemoryAsReversedSequence(_BlockMemoryAsSequence):
+    """A version of _BlockMemoryAsSequence that represents the linear ordering of splits in the
+    opposite order, starting with the finest partitioning allowable for the array dimensions.
+
+    This can yield a sequence of block sizes in increasing order, which is required for binary
+    search using python's 'bisect' library.
+    """
+    def _reverseIdx(self, idx):
+        l = len(self)
+        if idx < 0 or idx >= l:
+            raise IndexError("list index out of range")
+        return l - (idx + 1)
+
+    def indtosub(self, idx):
+        return super(_BlockMemoryAsReversedSequence, self).indtosub(self._reverseIdx(idx))
