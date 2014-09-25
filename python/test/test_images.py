@@ -3,7 +3,8 @@ import glob
 import struct
 import unittest
 import os
-from numpy import ndarray, arange, array, array_equal, concatenate, dtype, prod
+from operator import mul
+from numpy import ndarray, arange, array, array_equal, concatenate, dtype, prod, zeros
 from nose.tools import assert_equals, assert_true, assert_almost_equal, assert_raises
 import itertools
 from thunder.rdds.images import ImagesLoader, ImageBlockValue
@@ -108,18 +109,38 @@ def _generate_test_arrays(narys, dtype='int16'):
 
 class TestImages(PySparkTestCase):
 
+    def evaluate_series(self, arys, series, sz):
+        assert_equals(sz, len(series))
+        for serieskey, seriesval in series:
+            expectedval = array([ary[serieskey] for ary in arys], dtype='int16')
+            assert_true(array_equal(expectedval, seriesval))
+
     def test_toSeries(self):
         # create 3 arrays of 4x3x3 images (C-order), containing sequential integers
         narys = 3
         arys, sh, sz = _generate_test_arrays(narys)
 
         imagedata = ImagesLoader(self.sc).fromArrays(arys)
-        series = imagedata.toSeries(groupingdim=0).collect()
+        series = imagedata.toSeries(groupingDim=0).collect()
 
-        assert_equals(sz, len(series))
-        for serieskey, seriesval in series:
-            expectedval = array([ary[serieskey] for ary in arys], dtype='int16')
-            assert_true(array_equal(expectedval, seriesval))
+        self.evaluate_series(arys, series, sz)
+
+    def test_toSeriesBySlices(self):
+        narys = 3
+        arys, sh, sz = _generate_test_arrays(narys)
+
+        imagedata = ImagesLoader(self.sc).fromArrays(arys)
+        imagedata.cache()
+
+        test_params = [
+            (1, 1, 1), (1, 1, 2), (1, 1, 3), (1, 2, 1), (1, 2, 2), (1, 2, 3),
+            (1, 3, 1), (1, 3, 2), (1, 3, 3),
+            (2, 1, 1), (2, 1, 2), (2, 1, 3), (2, 2, 1), (2, 2, 2), (2, 2, 3),
+            (2, 3, 1), (2, 3, 2), (2, 3, 3)]
+        for bpd in test_params:
+            series = imagedata.toSeries(splitsPerDim=bpd).collect()
+
+            self.evaluate_series(arys, series, sz)
 
     def test_toBlocksByPlanes(self):
         # create 3 arrays of 4x3x3 images (C-order), containing sequential integers
@@ -149,6 +170,36 @@ class TestImages(PySparkTestCase):
             expectedplane = arys[tpidx][planeidx, :, :]
             assert_true(array_equal(expectedplane, blockplane.values.squeeze()))
 
+    def test_toBlocksBySlices(self):
+        narys = 3
+        arys, sh, sz = _generate_test_arrays(narys)
+
+        imagedata = ImagesLoader(self.sc).fromArrays(arys)
+
+        test_params = [
+            (1, 1, 1), (1, 1, 2), (1, 1, 3), (1, 2, 1), (1, 2, 2), (1, 2, 3),
+            (1, 3, 1), (1, 3, 2), (1, 3, 3),
+            (2, 1, 1), (2, 1, 2), (2, 1, 3), (2, 2, 1), (2, 2, 2), (2, 2, 3),
+            (2, 3, 1), (2, 3, 2), (2, 3, 3)]
+        for bpd in test_params:
+            blocks = imagedata._toBlocksBySplits(bpd).collect()
+
+            expectednuniquekeys = reduce(mul, bpd)
+            expectedvalsperkey = narys
+
+            keystocounts = Counter([kv[0] for kv in blocks])
+            assert_equals(expectednuniquekeys, len(keystocounts))
+            assert_equals([expectedvalsperkey] * expectednuniquekeys, keystocounts.values())
+
+            gatheredary = None
+            for _, block in blocks:
+                if gatheredary is None:
+                    gatheredary = zeros(block.origshape, dtype='int16')
+                gatheredary[block.origslices] = block.values
+
+            for i in xrange(narys):
+                assert_true(array_equal(arys[i], gatheredary[i]))
+
 
 class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
@@ -161,7 +212,7 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
         images = ImagesLoader(self.sc).fromArrays(arys)
 
-        images.saveAsBinarySeries(outdir, groupingdim=groupingdim_)
+        images.saveAsBinarySeries(outdir, groupingDim=groupingdim_)
 
         ndims = len(aryshape)
         # prevent padding to 4-byte boundaries: "=" specifies no alignment
@@ -235,9 +286,31 @@ class TestImageBlockValue(unittest.TestCase):
         imageblock = ImageBlockValue.fromArrayByPlane(values, planedim=planedim, planeidx=planedimidx)
 
         assert_equals(values.shape, imageblock.origshape)
-        assert_equals(slice(planedimidx, planedimidx+1), imageblock.origslices[planedim])
+        assert_equals(slice(planedimidx, planedimidx+1, 1), imageblock.origslices[planedim])
         assert_equals(slice(None), imageblock.origslices[1])
         assert_true(array_equal(values[planedimidx, :].flatten(order='C'), imageblock.values.flatten(order='C')))
+
+    def test_fromArrayBySlices(self):
+        values = arange(12, dtype='int16').reshape((3, 4), order='C')
+
+        slices = [[slice(0, 3)], [slice(0, 2), slice(2, 4)]]
+        slicesiter = itertools.product(*slices)
+
+        imageblocks = [ImageBlockValue.fromArrayBySlices(values, sls) for sls in slicesiter]
+        assert_equals(2, len(imageblocks))
+        assert_equals((3, 2), imageblocks[0].values.shape)
+        assert_true(array_equal(values[(slice(0, 3), slice(0, 2))], imageblocks[0].values))
+
+    def test_fromPlanarBlocks(self):
+        values = arange(36, dtype='int16').reshape((3, 4, 3), order='F')
+
+        imageblocks = [ImageBlockValue.fromArrayByPlane(values, -1, i) for i in xrange(values.shape[2])]
+
+        recombblock = ImageBlockValue.fromPlanarBlocks(imageblocks, planarDim=-1)
+
+        assert_true(array_equal(values, recombblock.values))
+        assert_equals([slice(None)] * values.ndim, recombblock.origslices)
+        assert_equals(values.shape, recombblock.origshape)
 
     def test_addDimension(self):
         values = arange(12, dtype='int16').reshape((3, 4), order='C')
@@ -260,8 +333,8 @@ class TestImageBlockValue(unittest.TestCase):
         assert_equals(expectednslices, len(imageblock.origslices))
         assert_equals(expectednslices, len(anotherimageblock.origslices))
 
-        assert_equals(slice(0, 1), imageblock.origslices[0])
-        assert_equals(slice(1, 2), anotherimageblock.origslices[0])
+        assert_equals(slice(0, 1, 1), imageblock.origslices[0])
+        assert_equals(slice(1, 2, 1), anotherimageblock.origslices[0])
 
         expectedshape = tuple([1] + list(values.shape))
         assert_equals(expectedshape, imageblock.values.shape)
