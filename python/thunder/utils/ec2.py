@@ -160,6 +160,7 @@ if __name__ == "__main__":
         opts.swap = 1024
         opts.worker_instances = 1
         opts.master_opts = ""
+        opts.user_data = ""
 
         if opts.resume:
             (master_nodes, slave_nodes) = get_existing_cluster(conn, opts, cluster_name)
