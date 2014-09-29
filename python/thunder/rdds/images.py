@@ -3,11 +3,13 @@ import os
 import itertools
 import struct
 import cStringIO as StringIO
-from numpy import ndarray, array, arange, fromfile, int16, uint16, prod, concatenate, amax, amin, size, squeeze, reshape, zeros, \
+from numpy import ndarray, array, arange, frombuffer, prod, concatenate, amax, amin, size, squeeze, reshape, zeros, \
     dtype
 from matplotlib.pyplot import imread
+from io import BytesIO
 from series import Series
 from thunder.rdds.data import Data, parseMemoryString
+from thunder.rdds.readers import getReaderForPath
 
 
 class Images(Data):
@@ -434,17 +436,22 @@ class ImagesLoader(object):
         if not dims:
             raise ValueError("Image dimensions must be specified if loading from binary stack data")
 
-        def reader(filepath):
-            with open(filepath, 'rb') as f:
-                stack = fromfile(f, int16, prod(dims)).reshape(dims, order='F')
-            return stack.astype(uint16)
+        def toArray(buf):
+            # previously we were casting to uint16 - still necessary?
+            return frombuffer(buf, dtype='int16', count=prod(dims)).reshape(dims, order='F')
 
-        files = self.listFiles(datafile, ext=ext, startidx=startidx, stopidx=stopidx)
-        return Images(self._loadFiles(files, reader), nimages=len(files), dims=dims, dtype='uint16')
+        reader = getReaderForPath(datafile)(self.sc)
+        readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)
+        return Images(readerrdd.mapValues(toArray), nimages=reader.lastnrecs, dims=dims, dtype='int16')
 
     def fromTif(self, datafile, ext='tif', startidx=None, stopidx=None):
+        def readTifFromBuf(buf):
+            fbuf = BytesIO(buf)
+            return imread(fbuf, format='tif')
 
-        return self.fromFile(datafile, imread, ext=ext, startidx=startidx, stopidx=stopidx)
+        reader = getReaderForPath(datafile)(self.sc)
+        readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)
+        return Images(readerrdd.mapValues(readTifFromBuf), nimages=reader.lastnrecs)
 
     def fromMultipageTif(self, datafile, ext='tif', startidx=None, stopidx=None):
         """Sets up a new Images object with data to be read from one or more multi-page tif files.
@@ -469,8 +476,9 @@ class ImagesLoader(object):
                               "the PIL/pillow library appears to be missing or broken.", e)
         from matplotlib.image import pil_to_array
 
-        def multitifReader(f):
-            multipage = Image.open(f)
+        def multitifReader(buf):
+            fbuf = BytesIO(buf)
+            multipage = Image.open(fbuf)
             pageidx = 0
             imgarys = []
             while True:
@@ -483,17 +491,19 @@ class ImagesLoader(object):
                     break
             return concatenate(imgarys, axis=2)
 
-        return self.fromFile(datafile, multitifReader, ext=ext, startidx=startidx, stopidx=stopidx)
-
-    def _loadFiles(self, files, readerfcn):
-        return self.sc.parallelize(enumerate(files), len(files)).map(lambda (k, v): (k, readerfcn(v)))
-
-    def fromFile(self, datafile, reader, ext=None, startidx=None, stopidx=None):
-        files = self.listFiles(datafile, ext=ext, startidx=startidx, stopidx=stopidx)
-        return Images(self._loadFiles(files, reader), nimages=len(files))
+        reader = getReaderForPath(datafile)(self.sc)
+        readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)
+        return Images(readerrdd.mapValues(multitifReader), nimages=reader.lastnrecs)
 
     def fromPng(self, datafile, ext='png', startidx=None, stopidx=None):
-        return self.fromFile(datafile, imread, ext=ext, startidx=startidx, stopidx=stopidx)
+        def readPngFromBuf(buf):
+            fbuf = BytesIO(buf)
+            return imread(fbuf, format='png')
+
+        reader = getReaderForPath(datafile)(self.sc)
+        readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)
+        return Images(readerrdd.mapValues(readPngFromBuf), nimages=reader.lastnrecs)
+
 
     @staticmethod
     def listFiles(datafile, ext=None, startidx=None, stopidx=None):
