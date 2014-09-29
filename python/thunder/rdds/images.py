@@ -5,8 +5,8 @@ import struct
 import cStringIO as StringIO
 from numpy import ndarray, array, arange, frombuffer, prod, concatenate, amax, amin, size, squeeze, reshape, zeros, \
     dtype
-from matplotlib.pyplot import imread
 from io import BytesIO
+from matplotlib.pyplot import imread, imsave
 from series import Series
 from thunder.rdds.data import Data, parseMemoryString
 from thunder.rdds.readers import getReaderForPath
@@ -262,6 +262,14 @@ class Images(Data):
 
         return blocksdata.toSeries(seriesDim=0)
 
+    @staticmethod
+    def __checkAndCreateDirectory(outputdirname, overwrite):
+        if overwrite and os.path.isdir(outputdirname):
+            import shutil
+
+            shutil.rmtree(outputdirname)
+        os.mkdir(outputdirname)
+
     def saveAsBinarySeries(self, outputdirname, blockSize="150M", splitsPerDim=None, groupingDim=None,
                            overwrite=False):
         """Writes Image into files on a local filesystem, suitable for loading by SeriesLoader.fromBinary()
@@ -294,10 +302,7 @@ class Images(Data):
             of this call.
 
         """
-        if overwrite and os.path.isdir(outputdirname):
-            import shutil
-            shutil.rmtree(outputdirname)
-        os.mkdir(outputdirname)
+        self.__checkAndCreateDirectory(outputdirname, overwrite)
 
         blocksdata = self._scatterToBlocks(blockSize=blockSize, blocksPerDim=splitsPerDim, groupingDim=groupingDim)
 
@@ -322,6 +327,39 @@ class Images(Data):
         with open(os.path.join(outputdirname, "SUCCESS"), 'w'):
             pass
 
+    def exportAsPngs(self, outputdirname, fileprefix="export", overwrite=False):
+        """Write out basic png files for two-dimensional image data.
+
+        Files will be written into a newly-created directory on the local file system given by outputdirname.
+
+        All workers must be able to see the output directory via an NFS share or similar.
+
+        Parameters
+        ----------
+        outputdirname : string
+            Path to output directory to be created. Exception will be thrown if this directory already
+            exists, unless overwrite is True. Directory must be one level below an existing directory.
+
+        fileprefix : string
+            String to prepend to all filenames. Files will be named <fileprefix>00000.png, <fileprefix>00001.png, etc
+
+        overwrite : bool
+            If true, the directory given by outputdirname will first be deleted if it already exists.
+
+        """
+        dims = self.dims
+        if not len(dims) == 2:
+            raise ValueError("Only two-dimensional images can be exported as .png files; image is %d-dimensional." %
+                             len(dims))
+        self.__checkAndCreateDirectory(outputdirname, overwrite)
+
+        def writeAsPng(kv):
+            key, img = kv
+            fname = os.path.join(outputdirname, fileprefix+"%05d.png" % int(key))
+            imsave(fname, img)
+
+        self.rdd.foreach(writeAsPng)
+
     def maxProjection(self, axis=2):
         """
         Compute maximum projections of images / volumes
@@ -336,7 +374,10 @@ class Images(Data):
             raise Exception("Axis for projection (%s) exceeds image dimensions (%s-%s)" % (axis, 0, size(self.dims)-1))
 
         proj = self.rdd.mapValues(lambda x: amax(x, axis))
-        return Images(proj, dims=list(array(self.dims)[arange(0, len(self.dims)) != axis]))
+        # update dimensions to remove axis of projection
+        newdims = list(self.dims)
+        del newdims[axis]
+        return Images(proj, dims=newdims)
 
     def maxminProjection(self, axis=2):
         """
@@ -350,7 +391,38 @@ class Images(Data):
             Which axis to compute projection along
         """
         proj = self.rdd.mapValues(lambda x: amax(x, axis) + amin(x, axis))
-        return Images(proj, dims=list(array(self.dims)[arange(0, len(self.dims)) != axis]))
+        # update dimensions to remove axis of projection
+        newdims = list(self.dims)
+        del newdims[axis]
+        return Images(proj, dims=newdims)
+
+    def subsample(self, samplefactor):
+        """Downsample an image volume by an integer factor
+
+        Parameters
+        ----------
+        samplefactor : positive int or tuple of positive ints
+            Stride to use in subsampling. If a single int is passed, each dimension of the image
+            will be downsampled by this same factor. If a tuple is passed, it must have the same
+            dimensionality of the image. The strides given in a passed tuple will be applied to
+            each image dimension.
+        """
+        dims = self.dims
+        ndims = len(dims)
+        if not hasattr(samplefactor, "__len__"):
+            samplefactor = [samplefactor] * ndims
+        samplefactor = [int(sf) for sf in samplefactor]
+
+        if any((sf <= 0 for sf in samplefactor)):
+            raise ValueError("All sampling factors must be positive; got " + str(samplefactor))
+
+        sampleslices = [slice(0, dims[i], samplefactor[i]) for i in xrange(ndims)]
+        newdims = [dims[i] / samplefactor[i] for i in xrange(ndims)]  # integer division
+
+        def samplefunc(v, sampleslices_):
+            return v[sampleslices_]
+
+        return Images(self.rdd.mapValues(lambda v: samplefunc(v, sampleslices)), dims=newdims)
 
     def planes(self, bottom, top, inclusive=True):
         """
@@ -397,7 +469,7 @@ class Images(Data):
 
     def apply(self, func):
         """
-        Apple a function to all images / volumes,
+        Apply a function to all images / volumes,
         preserving keys and dimensions
 
         Parameters
