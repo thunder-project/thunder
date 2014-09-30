@@ -56,6 +56,7 @@ def install_thunder(master, opts):
     ssh(master, opts, "echo 'export PATH=/root/thunder/python/bin:$PATH' >> /root/.bash_profile")
     # customize spark configuration parameters
     ssh(master, opts, "echo 'spark.akka.frameSize=10000' >> /root/spark/conf/spark-defaults.conf")
+    ssh(master, opts, "echo 'spark.kryoserializer.buffer.mb=1024' >> /root/spark/conf/spark-defaults.conf")
     ssh(master, opts, "echo 'export SPARK_DRIVER_MEMORY=20g' >> /root/spark/conf/spark-env.sh")
     # add AWS credentials to core-site.xml
     configstring = "<property><name>fs.s3n.awsAccessKeyId</name><value>ACCESS</value></property><property>" \
