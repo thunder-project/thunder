@@ -41,20 +41,49 @@ class LocalFSFileWriter(object):
         self._overwrite = overwrite
         self._checked = False
 
-    def _checkFile(self):
+    def _checkWriteFile(self):
         if not self._checked:
             if os.path.isdir(self._abspath):
                 raise ValueError("LocalFSFileWriter must be initialized with path to file, not directory," +
                                  " in order to use writeFile. Got path: '%s', filename: '%s'" %
                                  (self._datapath, self._filename))
-            if not self._overwrite and os.path.exists(self._abspath):
-                raise ValueError("Path %s already exists, and overwrite is false" % self._datapath)
+            if (not self._overwrite) and os.path.exists(self._abspath):
+                raise ValueError("File %s already exists, and overwrite is false" % self._datapath)
             self._checked = True
 
     def writeFile(self, buf):
+        self._checkWriteFile()
         with open(os.path.join(self._abspath), 'wb') as f:
             f.write(buf)
 
+
+class LocalFSCollectedFileWriter(object):
+    def __init__(self, datapath, overwrite=False):
+        self._datapath = datapath
+        self._abspath = urllib.url2pathname(urlparse.urlparse(datapath).path)
+        self._overwrite = overwrite
+        self._checked = False
+
+    def _checkDirectory(self):
+        # todo: this is duplicated code with LocalFSParallelWriter
+        if not self._checked:
+            if os.path.isfile(self._abspath):
+                raise ValueError("LocalFSCollectedFileWriter must be initialized with path to directory not file" +
+                                 " in order to use writerFcn. Got: " + self._datapath)
+            if os.path.isdir(self._abspath):
+                if self._overwrite:
+                    shutil.rmtree(self._abspath)
+                else:
+                    raise ValueError("Directory %s already exists, and overwrite is false" % self._datapath)
+            os.mkdir(self._abspath)  # will throw error if is already a file
+            self._checked = True
+
+    def writeCollectedFiles(self, labelBufSequence):
+        self._checkDirectory()
+        for filename, buf in labelBufSequence:
+            abspath = os.path.join(self._abspath, filename)
+            with open(abspath, 'wb') as f:
+                f.write(buf)
 
 SCHEMAS_TO_PARALLELWRITERS = {
     '': LocalFSParallelWriter,
@@ -72,6 +101,14 @@ SCHEMAS_TO_FILEWRITERS = {
     'hdfs': None
 }
 
+SCHEMAS_TO_COLLECTEDFILEWRITERS = {
+
+    '': LocalFSCollectedFileWriter,
+    'file': LocalFSCollectedFileWriter,
+    's3': None,
+    's3n': None,
+    'hdfs': None
+}
 
 def __getWriter(datapath, lookup, default):
     parseresult = urlparse.urlparse(datapath)
@@ -87,3 +124,6 @@ def getParallelWriterForPath(datapath):
 
 def getFileWriterForPath(datapath):
     return __getWriter(datapath, SCHEMAS_TO_FILEWRITERS, LocalFSFileWriter)
+
+def getCollectedFileWriterForPath(datapath):
+    return __getWriter(datapath, SCHEMAS_TO_COLLECTEDFILEWRITERS, LocalFSCollectedFileWriter)
