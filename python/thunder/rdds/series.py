@@ -223,11 +223,6 @@ class SeriesLoader(object):
         # this appears to be a directory or similar. add wildcard match to specified extension
         return "file://" + datapath + "/*." + ext
 
-    @staticmethod
-    def __isLocalPath(datapath):
-        parseresult = urlparse.urlparse(datapath)
-        return (not parseresult.scheme) or (parseresult.scheme == 'file')
-
     def fromText(self, datafile, nkeys=None, ext="txt"):
         """
         Loads Series data from text files.
@@ -270,10 +265,8 @@ class SeriesLoader(object):
         -------
         BinaryLoadParameters instance
         """
-        if SeriesLoader.__isLocalPath(datafile):
-            params = SeriesLoader.loadConf(datafile, conffile=conffilename)
-        else:
-            params = {}
+        params = SeriesLoader.loadConf(datafile, conffile=conffilename)
+
         # filter dict to include only recognized field names:
         #params = {k: v for k, v in params.items() if k in SeriesLoader.BinaryLoadParameters._fields}
         for k in params.keys():
@@ -370,6 +363,8 @@ class SeriesLoader(object):
 
         Returns {} if file not found
         """
+        if not conffile:
+            return {}
         reader = getFileReaderForPath(datafile)
         try:
             jsonbuf = reader.read(datafile, filename=conffile)
