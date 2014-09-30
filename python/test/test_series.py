@@ -2,6 +2,7 @@ import struct
 import os
 from numpy import dtype, array, allclose
 from nose.tools import assert_equals, assert_true, assert_almost_equal
+import unittest
 from thunder.rdds.series import SeriesLoader, Series
 from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
 

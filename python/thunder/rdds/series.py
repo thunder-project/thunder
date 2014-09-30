@@ -1,10 +1,10 @@
 from collections import namedtuple
 import os
-import glob
 import json
 import types
 from numpy import ndarray, frombuffer, dtype, array, sum, mean, std, size, arange, polyfit, polyval, percentile, load
 from scipy.io import loadmat
+import urlparse
 from thunder.rdds.data import Data
 from thunder.utils.common import checkparams
 
@@ -68,10 +68,8 @@ class Series(Data):
         index = self.index
 
         if not isinstance(crit, types.FunctionType):
-            if isinstance(crit, list):
-                critlist = set(crit)
-            else:
-                critlist = {crit}
+            # set("foo") -> {"f", "o"}; wrap in list to prevent:
+            critlist = set([crit]) if isinstance(crit, basestring) else set(crit)
             crit = lambda x: x in critlist
 
         newindex = [i for i in index if crit(i)]
@@ -214,11 +212,37 @@ class SeriesLoader(object):
         self.sc = sparkcontext
         self.minPartitions = minPartitions
 
-    def fromText(self, datafile, nkeys=None):
+    @staticmethod
+    def __normalizeDatafilePattern(datapath, ext):
+        parseresult = urlparse.urlparse(datapath)
+        if parseresult.scheme:
+            # this appears to already be a fully-qualified URI
+            return datapath
+        if datapath.endswith(ext) or "*" in datapath:
+            # this appears to already be a filename given with the specified extension or a wildcard expression
+            return "file://" + datapath
+        # this appears to be a directory or similar. add wildcard match to specified extension
+        return "file://" + datapath + "/*." + ext
 
-        if os.path.isdir(datafile):
-            files = sorted(glob.glob(os.path.join(datafile, '*.txt')))
-            datafile = ''.join([files[x] + ',' for x in range(0, len(files))])[0:-1]
+    @staticmethod
+    def __isLocalPath(datapath):
+        parseresult = urlparse.urlparse(datapath)
+        return (not parseresult.scheme) or (parseresult.scheme == 'file')
+
+    def fromText(self, datafile, nkeys=None, ext="txt"):
+        """
+        Loads Series data from text files.
+
+        Parameters
+        ----------
+        datafile : string
+            Specifies the file or files to be loaded. Datafile may be either a URI (with scheme specified) or a path
+            on the local filesystem.
+            If a path is passed (determined by the absence of a scheme component when attempting to parse as a URI),
+            and it is not already a wildcard expression and does not end in <ext>, then it will be converted into a
+            wildcard pattern by appending '/*.ext'. This conversion can be avoided by passing a "file://" URI.
+        """
+        datafile = self.__normalizeDatafilePattern(datafile, ext)
 
         def parse(line, nkeys_):
             vec = [float(x) for x in line.split(' ')]
@@ -240,18 +264,27 @@ class SeriesLoader(object):
 
         Priority order is as follows:
         1. parameters specified as keyword arguments;
-        2. parameters specified in a conf.json file;
+        2. parameters specified in a conf.json file on the local filesystem;
         3. default parameters
 
         Returns
         -------
         BinaryLoadParameters instance
         """
-        params = SeriesLoader.loadConf(datafile, conffile=conffilename)
+        if SeriesLoader.__isLocalPath(datafile):
+            params = SeriesLoader.loadConfLocal(datafile, conffile=conffilename)
+        else:
+            params = {}
         # filter dict to include only recognized field names:
-        params = {k: v for k, v in params.items() if k in SeriesLoader.BinaryLoadParameters._fields}
+        #params = {k: v for k, v in params.items() if k in SeriesLoader.BinaryLoadParameters._fields}
+        for k in params.keys():
+            if not k in SeriesLoader.BinaryLoadParameters._fields:
+                del params[k]
         keywordparams = {'nkeys': nkeys, 'nvalues': nvalues, 'keyformat': keytype, 'format': valuetype}
-        keywordparams = {k: v for k, v in keywordparams.items() if v}
+        #keywordparams = {k: v for k, v in keywordparams.items() if v}
+        for k, v in keywordparams.items():
+            if not v:
+                del keywordparams[k]
         params.update(keywordparams)
         return SeriesLoader.BinaryLoadParameters(**params)
 
@@ -273,8 +306,7 @@ class SeriesLoader(object):
     def fromBinary(self, datafile, ext='bin', conffilename='conf.json',
                    nkeys=None, nvalues=None, keytype=None, valuetype=None):
 
-        if os.path.isdir(datafile):
-            datafile = os.path.join(datafile, '*.'+ext)
+        datafile = self.__normalizeDatafilePattern(datafile, ext)
 
         paramsObj = self.__loadParametersAndDefaults(datafile, conffilename, nkeys, nvalues, keytype, valuetype)
         self.__checkBinaryParametersAreSpecified(paramsObj)
@@ -332,12 +364,12 @@ class SeriesLoader(object):
         return rdd
 
     @staticmethod
-    def loadConf(datafile, conffile='conf.json'):
-        """Returns a dict loaded from a json file.
+    def loadConfLocal(datafile, conffile='conf.json'):
+        """Returns a dict loaded from a json file on the local filesystem.
 
         Looks for file named _conffile_ in same directory as _datafile_.
 
-        Returns {} if file not found.
+        Returns {} if file not found or is not on the local filesystem.
         """
         if not os.path.isfile(conffile):
             if os.path.isdir(datafile):

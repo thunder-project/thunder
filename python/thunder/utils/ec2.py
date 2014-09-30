@@ -125,9 +125,15 @@ if __name__ == "__main__":
                                                                         " WARNING: must be 64-bit; small instances "
                                                                         "won't work")
     parser.add_option("-u", "--user", default="root", help="User name for cluster (default: root)")
+    parser.add_option(
+        "-w", "--wait", type="int", default=160,
+        help="Seconds to wait for nodes to start (default: 160)")
     parser.add_option("-z", "--zone", default="", help="Availability zone to launch instances in, or 'all' to spread "
                                                        "slaves across multiple (an additional $0.01/Gb for "
                                                        "bandwidth between zones applies)")
+    parser.add_option("--spot-price", metavar="PRICE", type="float",
+                      help="If specified, launch slaves as spot instances with the given " +
+                           "maximum price (in dollars)")
     parser.add_option("--resume", default=False, action="store_true", help="Resume installation on a previously "
                                                         "launched cluster (for debugging)")
 
@@ -151,9 +157,7 @@ if __name__ == "__main__":
 
         opts.ami = get_spark_ami(opts) #"ami-3ecd0c56"
         opts.ebs_vol_size = 0
-        opts.spot_price = None
         opts.master_instance_type = ""
-        opts.wait = 160
         opts.hadoop_major_version = "1"
         opts.ganglia = True
         opts.spark_version = "1.1.0"
