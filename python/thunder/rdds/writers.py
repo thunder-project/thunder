@@ -2,6 +2,7 @@ import os
 import shutil
 import urllib
 import urlparse
+from rdds.readers import _BotoS3Client
 
 _have_boto = False
 try:
@@ -40,22 +41,9 @@ class LocalFSParallelWriter(object):
             f.write(buf)
 
 
-class _BotoS3Writer(object):
-    @staticmethod
-    def _parseS3Schema(datapath):
-        parseresult = urlparse.urlparse(datapath)
-        return parseresult.netloc, parseresult.path.lstrip("/")
-
+class _BotoS3Writer(_BotoS3Client):
     def __init__(self):
-        if not _have_boto:
-            raise ValueError("The boto package does not appear to be available; boto is required for BotoS3Reader")
-        if (not 'AWS_ACCESS_KEY_ID' in os.environ) or (not 'AWS_SECRET_ACCESS_KEY' in os.environ):
-            raise ValueError("The environment variables 'AWS_ACCESS_KEY_ID' and 'AWS_SECRET_ACCESS_KEY' must be set in order to read from s3")
-
-        # save keys in this object and serialize out to workers to prevent having to set env vars separately on all
-        # nodes in the cluster
-        self._access_key = os.environ['AWS_ACCESS_KEY_ID']
-        self._secret_key = os.environ['AWS_SECRET_ACCESS_KEY']
+        super(_BotoS3Writer, self).__init__()
 
         self._contextactive = False
         self._conn = None
@@ -68,8 +56,8 @@ class _BotoS3Writer(object):
 
         This is expected to end up being called once for each spark worker.
         """
-        conn = boto.connect_s3(self._access_key, self._secret_key)
-        bucketname, keyname = _BotoS3Writer._parseS3Schema(datapath)
+        conn = boto.connect_s3(self.accessKey, self.secretKey)
+        bucketname, keyname = _BotoS3Client._parseS3Schema(datapath)
         if isDirectory and (not keyname.endswith("/")):
             keyname += "/"
         bucket = conn.get_bucket(bucketname)

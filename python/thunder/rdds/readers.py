@@ -54,13 +54,13 @@ class LocalFSReader(object):
         return self.sc.parallelize(enumerate(filepaths), lfilepaths).map(lambda (k, v): (k, readfcn(v)))
 
 
-class BotoS3Reader(object):
+class _BotoS3Client(object):
     @staticmethod
     def _parseS3Schema(datapath):
         parseresult = urlparse.urlparse(datapath)
         return parseresult.netloc, parseresult.path.lstrip("/")
 
-    def __init__(self, sparkcontext):
+    def __init__(self):
         if not _have_boto:
             raise ValueError("The boto package does not appear to be available; boto is required for BotoS3Reader")
         if (not 'AWS_ACCESS_KEY_ID' in os.environ) or (not 'AWS_SECRET_ACCESS_KEY' in os.environ):
@@ -71,12 +71,24 @@ class BotoS3Reader(object):
         self._access_key = os.environ['AWS_ACCESS_KEY_ID']
         self._secret_key = os.environ['AWS_SECRET_ACCESS_KEY']
 
+    @property
+    def accessKey(self):
+        return self._access_key
+
+    @property
+    def secretKey(self):
+        return self._secret_key
+
+
+class BotoS3Reader(_BotoS3Client):
+    def __init__(self, sparkcontext):
+        super(BotoS3Reader, self).__init__()
         self.sc = sparkcontext
         self.lastnrecs = None
 
     def _listFiles(self, datapath, ext=None, startidx=None, stopidx=None):
-        bucketname, keyname = BotoS3Reader._parseS3Schema(datapath)
-        conn = boto.connect_s3(aws_access_key_id=self._access_key, aws_secret_access_key=self._secret_key)
+        bucketname, keyname = _BotoS3Client._parseS3Schema(datapath)
+        conn = boto.connect_s3(aws_access_key_id=self.accessKey, aws_secret_access_key=self.secretKey)
         bucket = conn.get_bucket(bucketname)
         keylist = bucket.list(prefix=keyname)
         if ext:
@@ -95,8 +107,8 @@ class BotoS3Reader(object):
     def read(self, datapath, ext=None, startidx=None, stopidx=None):
         bucketname, keynamelist = self._listFiles(datapath, ext=ext, startidx=startidx, stopidx=stopidx)
 
-        access_key = self._access_key
-        secret_key = self._secret_key
+        access_key = self.accessKey
+        secret_key = self.secretKey
 
         def readSplitFromS3(kvIter):
             conn = boto.connect_s3(aws_access_key_id=access_key, aws_secret_access_key=secret_key)
