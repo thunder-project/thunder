@@ -150,8 +150,8 @@ class LocalFSCollectedFileWriter(object):
 SCHEMAS_TO_PARALLELWRITERS = {
     '': LocalFSParallelWriter,
     'file': LocalFSParallelWriter,
-    's3': None,
-    's3n': None,
+    's3': BotoS3ParallelWriter,
+    's3n': BotoS3ParallelWriter,
     'hdfs': None
 }
 
@@ -171,6 +171,7 @@ SCHEMAS_TO_COLLECTEDFILEWRITERS = {
     's3n': None,
     'hdfs': None
 }
+
 
 def __getWriter(datapath, lookup, default):
     parseresult = urlparse.urlparse(datapath)
