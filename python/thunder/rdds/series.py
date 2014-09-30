@@ -68,7 +68,8 @@ class Series(Data):
         index = self.index
 
         if not isinstance(crit, types.FunctionType):
-            critlist = set(crit)
+            # set("foo") -> {"f", "o"}; wrap in list to prevent:
+            critlist = set([crit]) if isinstance(crit, basestring) else set(crit)
             crit = lambda x: x in critlist
 
         newindex = [i for i in index if crit(i)]

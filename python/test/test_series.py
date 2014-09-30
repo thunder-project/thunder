@@ -175,8 +175,6 @@ class TestSeriesMethods(PySparkTestCase):
         # detrending linearly increasing data should yield all 0s
         allclose(data.first()[1], array([0, 0, 0, 0, 0]))
 
-    # todo: currently failing with Exception("No indices found matching criterion")??
-    @unittest.skip
     def test_series_stats(self):
         rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5]))])
         data = Series(rdd)
