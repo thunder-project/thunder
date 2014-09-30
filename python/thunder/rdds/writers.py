@@ -135,17 +135,18 @@ class LocalFSFileWriter(object):
 
 class BotoS3FileWriter(_BotoS3Writer):
     # todo: needs to check before writing if overwrite is True
-    def __init__(self, datapath, overwrite=False):
+    def __init__(self, datapath, filename, overwrite=False):
         super(BotoS3FileWriter, self).__init__()
         self._datapath = datapath
+        self._filename = filename
         self._overwrite = overwrite
 
     def writeFile(self, buf):
         if not self.contextActive:
-            self.activateContext(self._datapath, False)
+            self.activateContext(self._datapath, True)
 
         s3key = boto.s3.key.Key(self.bucket)
-        s3key.name = self.keyname
+        s3key.name = self.keyname + self._filename
         s3key.set_contents_from_string(buf)
 
 
