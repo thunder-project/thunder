@@ -3,6 +3,13 @@ import shutil
 import urllib
 import urlparse
 
+_have_boto = False
+try:
+    import boto
+    _have_boto = True
+except ImportError:
+    pass
+
 
 class LocalFSParallelWriter(object):
     def __init__(self, datapath, overwrite=False):
@@ -31,6 +38,61 @@ class LocalFSParallelWriter(object):
         label, buf = kv
         with open(os.path.join(self._abspath, label), 'wb') as f:
             f.write(buf)
+
+
+class _BotoS3Writer(object):
+    @staticmethod
+    def _parseS3Schema(datapath):
+        parseresult = urlparse.urlparse(datapath)
+        return parseresult.netloc, parseresult.path.lstrip("/")
+
+    def __init__(self):
+        if not _have_boto:
+            raise ValueError("The boto package does not appear to be available; boto is required for BotoS3Reader")
+        if (not 'AWS_ACCESS_KEY_ID' in os.environ) or (not 'AWS_SECRET_ACCESS_KEY' in os.environ):
+            raise ValueError("The environment variables 'AWS_ACCESS_KEY_ID' and 'AWS_SECRET_ACCESS_KEY' must be set in order to read from s3")
+
+        # save keys in this object and serialize out to workers to prevent having to set env vars separately on all
+        # nodes in the cluster
+        self._access_key = os.environ['AWS_ACCESS_KEY_ID']
+        self._secret_key = os.environ['AWS_SECRET_ACCESS_KEY']
+
+
+class BotoS3ParallelWriter(_BotoS3Writer):
+    def __init__(self, datapath, overwrite=False):
+        super(BotoS3ParallelWriter, self).__init__()
+        self._datapath = datapath
+        self._overwrite = overwrite
+        self._contextactive = False
+        self._conn = None
+        self._keyname = None
+        self._bucket = None
+
+    def _setupContext(self):
+        """
+        Set up a boto s3 connection.
+
+        This is expected to end up being called once for each spark worker.
+        """
+        conn = boto.connect_s3(self._access_key, self._secret_key)
+        bucketname, keyname = _BotoS3Writer._parseS3Schema(self._datapath)
+        if not keyname.endswith("/"):
+            keyname += "/"
+        bucket = conn.get_bucket(bucketname)
+
+        self._conn = conn
+        self._keyname = keyname
+        self._bucket = bucket
+        self._contextactive = True
+
+    def writerFcn(self, kv):
+        if not self._contextactive:
+            self._setupContext()
+
+        label, buf = kv
+        s3key = boto.s3.key.Key(self._bucket)
+        s3key.name = self._keyname + label
+        s3key.set_contents_from_string(buf)
 
 
 class LocalFSFileWriter(object):
