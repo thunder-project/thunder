@@ -2,7 +2,7 @@ import os
 import shutil
 import urllib
 import urlparse
-from rdds.readers import _BotoS3Client
+from thunder.rdds.readers import _BotoS3Client, getByScheme
 
 _have_boto = False
 try:
@@ -189,7 +189,10 @@ SCHEMAS_TO_PARALLELWRITERS = {
     'file': LocalFSParallelWriter,
     's3': BotoS3ParallelWriter,
     's3n': BotoS3ParallelWriter,
-    'hdfs': None
+    'hdfs': None,
+    'http': None,
+    'https': None,
+    'ftp': None
 }
 
 SCHEMAS_TO_FILEWRITERS = {
@@ -197,7 +200,10 @@ SCHEMAS_TO_FILEWRITERS = {
     'file': LocalFSFileWriter,
     's3': BotoS3FileWriter,
     's3n': BotoS3FileWriter,
-    'hdfs': None
+    'hdfs': None,
+    'http': None,
+    'https': None,
+    'ftp': None
 }
 
 SCHEMAS_TO_COLLECTEDFILEWRITERS = {
@@ -206,24 +212,20 @@ SCHEMAS_TO_COLLECTEDFILEWRITERS = {
     'file': LocalFSCollectedFileWriter,
     's3': BotoS3CollectedFileWriter,
     's3n': BotoS3CollectedFileWriter,
-    'hdfs': None
+    'hdfs': None,
+    'http': None,
+    'https': None,
+    'ftp': None
 }
 
 
-def __getWriter(datapath, lookup, default):
-    parseresult = urlparse.urlparse(datapath)
-    clazz = lookup.get(parseresult.scheme, default)
-    if clazz is None:
-        raise NotImplementedError("No writer implemented for scheme " + parseresult.scheme)
-    return clazz
-
-
 def getParallelWriterForPath(datapath):
-    return __getWriter(datapath, SCHEMAS_TO_PARALLELWRITERS, LocalFSParallelWriter)
+    return getByScheme(datapath, SCHEMAS_TO_PARALLELWRITERS, LocalFSParallelWriter)
 
 
 def getFileWriterForPath(datapath):
-    return __getWriter(datapath, SCHEMAS_TO_FILEWRITERS, LocalFSFileWriter)
+    return getByScheme(datapath, SCHEMAS_TO_FILEWRITERS, LocalFSFileWriter)
+
 
 def getCollectedFileWriterForPath(datapath):
-    return __getWriter(datapath, SCHEMAS_TO_COLLECTEDFILEWRITERS, LocalFSCollectedFileWriter)
+    return getByScheme(datapath, SCHEMAS_TO_COLLECTEDFILEWRITERS, LocalFSCollectedFileWriter)

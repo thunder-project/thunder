@@ -8,7 +8,7 @@ from io import BytesIO
 from matplotlib.pyplot import imread, imsave
 from series import Series
 from thunder.rdds.data import Data, parseMemoryString
-from thunder.rdds.readers import getReaderForPath
+from thunder.rdds.readers import getParallelReaderForPath
 from thunder.rdds.writers import getFileWriterForPath, getParallelWriterForPath, getCollectedFileWriterForPath
 
 
@@ -516,7 +516,7 @@ class ImagesLoader(object):
             # previously we were casting to uint16 - still necessary?
             return frombuffer(buf, dtype='int16', count=prod(dims)).reshape(dims, order='F')
 
-        reader = getReaderForPath(datafile)(self.sc)
+        reader = getParallelReaderForPath(datafile)(self.sc)
         readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)
         return Images(readerrdd.mapValues(toArray), nimages=reader.lastnrecs, dims=dims, dtype='int16')
 
@@ -525,7 +525,7 @@ class ImagesLoader(object):
             fbuf = BytesIO(buf)
             return imread(fbuf, format='tif')
 
-        reader = getReaderForPath(datafile)(self.sc)
+        reader = getParallelReaderForPath(datafile)(self.sc)
         readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)
         return Images(readerrdd.mapValues(readTifFromBuf), nimages=reader.lastnrecs)
 
@@ -567,7 +567,7 @@ class ImagesLoader(object):
                     break
             return concatenate(imgarys, axis=2)
 
-        reader = getReaderForPath(datafile)(self.sc)
+        reader = getParallelReaderForPath(datafile)(self.sc)
         readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)
         return Images(readerrdd.mapValues(multitifReader), nimages=reader.lastnrecs)
 
@@ -576,7 +576,7 @@ class ImagesLoader(object):
             fbuf = BytesIO(buf)
             return imread(fbuf, format='png')
 
-        reader = getReaderForPath(datafile)(self.sc)
+        reader = getParallelReaderForPath(datafile)(self.sc)
         readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)
         return Images(readerrdd.mapValues(readPngFromBuf), nimages=reader.lastnrecs)
 

@@ -1,5 +1,6 @@
 import glob
 import os
+import urllib
 import urlparse
 
 _have_boto = False
@@ -10,24 +11,36 @@ except ImportError:
     pass
 
 
-class LocalFSReader(object):
+class LocalFSParallelReader(object):
     def __init__(self, sparkcontext):
         self.sc = sparkcontext
         self.lastnrecs = None
 
     @staticmethod
-    def listFiles(datapath, ext=None, startidx=None, stopidx=None):
+    def uriToPath(uri):
+        # thanks stack overflow:
+        # http://stackoverflow.com/questions/5977576/is-there-a-convenient-way-to-map-a-file-uri-to-os-path
+        path = urllib.url2pathname(urlparse.urlparse(uri).path)
+        if uri and (not path):
+            # passed a nonempty uri, got an empty path back
+            # this happens when given a file uri that starts with "file://" instead of "file:///"
+            # error here to prevent unexpected behavior of looking at current working directory
+            raise ValueError("Could not interpret %s as URI. Note absolute paths in URIs should start with 'file:///', not 'file://'")
+        return path
 
-        if os.path.isdir(datapath):
+    @staticmethod
+    def listFiles(abspath, ext=None, startidx=None, stopidx=None):
+
+        if os.path.isdir(abspath):
             if ext:
-                files = sorted(glob.glob(os.path.join(datapath, '*.' + ext)))
+                files = sorted(glob.glob(os.path.join(abspath, '*.' + ext)))
             else:
-                files = sorted(os.listdir(datapath))
+                files = sorted(os.listdir(abspath))
         else:
-            files = sorted(glob.glob(datapath))
+            files = sorted(glob.glob(abspath))
 
         if len(files) < 1:
-            raise IOError('cannot find files of type "%s" in %s' % (ext if ext else '*', datapath))
+            raise IOError('cannot find files of type "%s" in %s' % (ext if ext else '*', abspath))
 
         if startidx or stopidx:
             if startidx is None:
@@ -41,7 +54,8 @@ class LocalFSReader(object):
     def read(self, datapath, ext=None, startidx=None, stopidx=None):
         """Returns RDD of int, buffer k/v pairs
         """
-        filepaths = self.listFiles(datapath, ext=ext, startidx=startidx, stopidx=stopidx)
+        abspath = self.uriToPath(datapath)
+        filepaths = self.listFiles(abspath, ext=ext, startidx=startidx, stopidx=stopidx)
 
         def readfcn(filepath):
             buf = None
@@ -80,9 +94,9 @@ class _BotoS3Client(object):
         return self._secret_key
 
 
-class BotoS3Reader(_BotoS3Client):
+class BotoS3ParallelReader(_BotoS3Client):
     def __init__(self, sparkcontext):
-        super(BotoS3Reader, self).__init__()
+        super(BotoS3ParallelReader, self).__init__()
         self.sc = sparkcontext
         self.lastnrecs = None
 
@@ -126,14 +140,65 @@ class BotoS3Reader(_BotoS3Client):
         return self.sc.parallelize(enumerate(keynamelist)).mapPartitions(readSplitFromS3)
 
 
-SCHEMAS_TO_READERS = {
-    '': LocalFSReader,
-    'file': LocalFSReader,
-    's3': BotoS3Reader,
-    's3n': BotoS3Reader
+class LocalFSFileReader(object):
+    def read(self, datapath, filename=None):
+        abspath = LocalFSParallelReader.uriToPath(datapath)
+        if filename:
+            abspath = os.path.join(abspath, filename)
+
+        with open(abspath, 'rb') as f:
+            buf = f.read()
+        return buf
+
+
+class BotoS3FileReader(_BotoS3Client):
+    def read(self, datapath, filename=None):
+        bucketname, keyname = _BotoS3Client._parseS3Schema(datapath)
+
+        if filename:
+            if not keyname.endswith("/"):
+                keyname += "/"
+            keyname = keyname + filename
+
+        conn = boto.connect_s3(aws_access_key_id=self.accessKey, aws_secret_access_key=self.secretKey)
+        bucket = conn.get_bucket(bucketname)
+        return bucket.get_key(keyname).get_contents_as_string()
+
+
+SCHEMAS_TO_PARALLELREADERS = {
+    '': LocalFSParallelReader,
+    'file': LocalFSParallelReader,
+    's3': BotoS3ParallelReader,
+    's3n': BotoS3ParallelReader,
+    'hdfs': None,
+    'http': None,
+    'https': None,
+    'ftp': None
+}
+
+SCHEMAS_TO_FILEREADERS = {
+    '': LocalFSFileReader,
+    'file': LocalFSFileReader,
+    's3': BotoS3FileReader,
+    's3n': BotoS3FileReader,
+    'hdfs': None,
+    'http': None,
+    'https': None,
+    'ftp': None
 }
 
 
-def getReaderForPath(datapath):
+def getByScheme(datapath, lookup, default):
     parseresult = urlparse.urlparse(datapath)
-    return SCHEMAS_TO_READERS.get(parseresult.scheme, LocalFSReader)
+    clazz = lookup.get(parseresult.scheme, default)
+    if clazz is None:
+        raise NotImplementedError("No implementation for scheme " + parseresult.scheme)
+    return clazz
+
+
+def getParallelReaderForPath(datapath):
+    return getByScheme(datapath, SCHEMAS_TO_PARALLELREADERS, LocalFSParallelReader)
+
+
+def getFileReaderForPath(datapath):
+    return getByScheme(datapath, SCHEMAS_TO_FILEREADERS, LocalFSFileReader)

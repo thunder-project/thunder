@@ -1,10 +1,10 @@
 from collections import namedtuple
-import os
 import json
 import types
 from numpy import ndarray, frombuffer, dtype, array, sum, mean, std, size, arange, polyfit, polyval, percentile, load
 from scipy.io import loadmat
 import urlparse
+from thunder.rdds.readers import getFileReaderForPath
 from thunder.rdds.data import Data
 from thunder.utils.common import checkparams
 
@@ -271,7 +271,7 @@ class SeriesLoader(object):
         BinaryLoadParameters instance
         """
         if SeriesLoader.__isLocalPath(datafile):
-            params = SeriesLoader.loadConfLocal(datafile, conffile=conffilename)
+            params = SeriesLoader.loadConf(datafile, conffile=conffilename)
         else:
             params = {}
         # filter dict to include only recognized field names:
@@ -363,23 +363,22 @@ class SeriesLoader(object):
         return rdd
 
     @staticmethod
-    def loadConfLocal(datafile, conffile='conf.json'):
-        """Returns a dict loaded from a json file on the local filesystem.
+    def loadConf(datafile, conffile='conf.json'):
+        """Returns a dict loaded from a json file
 
         Looks for file named _conffile_ in same directory as _datafile_.
 
-        Returns {} if file not found or is not on the local filesystem.
+        Returns {} if file not found
         """
-        if not os.path.isfile(conffile):
-            if os.path.isdir(datafile):
-                basepath = datafile
-            else:
-                basepath = os.path.dirname(datafile)
-            conffile = os.path.join(basepath, conffile)
+        reader = getFileReaderForPath(datafile)
+        try:
+            jsonbuf = reader.read(datafile, filename=conffile)
+        except Exception:
+            # depending on the reader, any number of different exceptions
+            # could be getting thrown here. Would be good to standardize a bit
+            # if possible.
+            # todo: this is not always an error we want to squelch :(
+            jsonbuf = "{}"
+        return json.loads(jsonbuf)
 
-        params = {}
-        if os.path.isfile(conffile):
-            with open(conffile, 'r') as f:
-                params = json.load(f)
-        return params
 
