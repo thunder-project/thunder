@@ -153,9 +153,9 @@ class ThunderContext():
         path = os.path.dirname(os.path.realpath(__file__))
 
         if dataset == "iris":
-            return self.loadSeries(os.path.join(path, 'data/iris.txt'), inputformat="text", minPartitions=1)
+            return self.loadSeries(os.path.join(path, 'data/iris.txt'), inputformat="text", minPartitions=1, nkeys=3)
         elif dataset == "fish":
-            return self.loadSeries(os.path.join(path, 'data/fish.txt'), inputformat="text", minPartitions=1)
+            return self.loadSeries(os.path.join(path, 'data/fish.txt'), inputformat="text", minPartitions=1, nkeys=3)
         else:
             raise NotImplementedError("Dataset '%s' not found" % dataset)
 
