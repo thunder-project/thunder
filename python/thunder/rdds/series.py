@@ -306,10 +306,10 @@ class SeriesLoader(object):
     def fromBinary(self, datafile, ext='bin', conffilename='conf.json',
                    nkeys=None, nvalues=None, keytype=None, valuetype=None):
 
-        datafile = self.__normalizeDatafilePattern(datafile, ext)
-
         paramsObj = self.__loadParametersAndDefaults(datafile, conffilename, nkeys, nvalues, keytype, valuetype)
         self.__checkBinaryParametersAreSpecified(paramsObj)
+
+        datafile = self.__normalizeDatafilePattern(datafile, ext)
 
         keydtype = dtype(paramsObj.keyformat)
         valdtype = dtype(paramsObj.format)
@@ -322,16 +322,9 @@ class SeriesLoader(object):
                                               'org.apache.hadoop.io.BytesWritable',
                                               conf={'recordLength': str(recordsize)})
 
-        def _parseKeysFromBinaryBuffer(buf, keydtype_, keybufsize):
-            return frombuffer(buffer(buf, 0, keybufsize), dtype=keydtype_)
-
-        def _parseValsFromBinaryBuffer(buf, valsdtype_, keybufsize):
-            # note this indeed takes *key* buffer size as an argument, not valbufsize
-            return frombuffer(buffer(buf, keybufsize), dtype=valsdtype_)
-
         data = lines.map(lambda (_, v):
-                         (tuple(_parseKeysFromBinaryBuffer(v, keydtype, keysize)),
-                          _parseValsFromBinaryBuffer(v, valdtype, keysize)))
+                         (tuple(frombuffer(buffer(v, 0, keysize), dtype=keydtype)),
+                          frombuffer(buffer(v, keysize), dtype=valdtype)))
 
         return Series(data)
 
