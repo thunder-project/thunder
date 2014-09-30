@@ -365,7 +365,7 @@ class SeriesLoader(object):
         """
         if not conffile:
             return {}
-        reader = getFileReaderForPath(datafile)
+        reader = getFileReaderForPath(datafile)()
         try:
             jsonbuf = reader.read(datafile, filename=conffile)
         except Exception:
