@@ -265,7 +265,7 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
         outdir = os.path.join(self.outputdir, "anotherdir")
         os.mkdir(outdir)
-        assert_raises(OSError, ImagesLoader(self.sc).fromArrays(arys).saveAsBinarySeries, outdir, 0)
+        assert_raises(ValueError, ImagesLoader(self.sc).fromArrays(arys).saveAsBinarySeries, outdir, 0)
 
         groupingdims = xrange(len(aryshape))
         dtypes = ('int16', 'int32', 'float32')
