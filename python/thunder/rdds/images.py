@@ -9,7 +9,7 @@ from matplotlib.pyplot import imread, imsave
 from series import Series
 from thunder.rdds.data import Data, parseMemoryString
 from thunder.rdds.readers import getReaderForPath
-from thunder.rdds.writers import getFileWriterForPath, getParallelWriterForPath
+from thunder.rdds.writers import getFileWriterForPath, getParallelWriterForPath, getCollectedFileWriterForPath
 
 
 class Images(Data):
@@ -294,8 +294,6 @@ class Images(Data):
             of this call.
 
         """
-
-        # self.__checkAndCreateDirectory(outputdirname, overwrite)
         writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
 
         blocksdata = self._scatterToBlocks(blockSize=blockSize, blocksPerDim=splitsPerDim, groupingDim=groupingDim)
@@ -320,7 +318,8 @@ class Images(Data):
         successwriter = filewriterclass(outputdirname, "SUCCESS", overwrite=overwrite)
         successwriter.writeFile('')
 
-    def exportAsPngs(self, outputdirname, fileprefix="export", overwrite=False):
+    def exportAsPngs(self, outputdirname, fileprefix="export", overwrite=False,
+                     collectToDriver=True):
         """Write out basic png files for two-dimensional image data.
 
         Files will be written into a newly-created directory on the local file system given by outputdirname.
@@ -339,13 +338,15 @@ class Images(Data):
         overwrite : bool
             If true, the directory given by outputdirname will first be deleted if it already exists.
 
+        collectToDriver : bool, default True
+            If true, images will be collect()'ed at the driver first before being written out, allowing
+            for use of a local filesystem at the expense of network overhead. If false, images will be written
+            in parallel by each executor, presumably to a distributed or networked filesystem.
         """
         dims = self.dims
         if not len(dims) == 2:
             raise ValueError("Only two-dimensional images can be exported as .png files; image is %d-dimensional." %
                              len(dims))
-
-        writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
 
         def toFilenameAndPngBuf(kv):
             key, img = kv
@@ -354,7 +355,14 @@ class Images(Data):
             imsave(bytebuf, img, format="png")
             return fname, bytebuf.getvalue()
 
-        self.rdd.map(toFilenameAndPngBuf).foreach(writer.writerFcn)
+        bufrdd = self.rdd.map(toFilenameAndPngBuf)
+
+        if collectToDriver:
+            writer = getCollectedFileWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
+            writer.writeCollectedFiles(bufrdd.collect())
+        else:
+            writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
+            bufrdd.foreach(writer.writerFcn)
 
     def maxProjection(self, axis=2):
         """
