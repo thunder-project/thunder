@@ -376,10 +376,6 @@ class TestBlockMemoryAsSequence(unittest.TestCase):
         assert_equals((1, 1), undertest.indtosub(2))
         assert_raises(IndexError, undertest.indtosub, 3)
 
-    def test_search(self):
-        import bisect
-
-
 
 if __name__ == "__main__":
     if not _have_image:
