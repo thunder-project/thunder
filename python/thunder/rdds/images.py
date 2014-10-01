@@ -199,6 +199,10 @@ class Images(Data):
 
         memseq = _BlockMemoryAsReversedSequence(dims)
         tmpidx = bisect.bisect_left(memseq, blockSize / float(minseriessize))
+        if tmpidx == len(memseq):
+            # handle case where requested block is bigger than the biggest image
+            # we can produce; just give back the biggest block size
+            tmpidx -= 1
         return memseq.indtosub(tmpidx)
 
     def _scatterToBlocks(self, blockSize="150M", blocksPerDim=None, groupingDim=None):
