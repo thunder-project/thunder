@@ -4,7 +4,7 @@ import itertools
 import struct
 import cStringIO as StringIO
 from numpy import ndarray, array, arange, frombuffer, prod, concatenate, amax, amin, size, squeeze, reshape, zeros, \
-    dtype
+    dtype, dstack
 from io import BytesIO
 from matplotlib.pyplot import imread, imsave
 from series import Series
@@ -561,7 +561,7 @@ class ImagesLoader(object):
                 except EOFError:
                     # past last page in tif
                     break
-            return concatenate(imgarys, axis=2)
+            return dstack(imgarys)
 
         reader = getReaderForPath(datafile)(self.sc)
         readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)

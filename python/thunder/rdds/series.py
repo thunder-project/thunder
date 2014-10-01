@@ -17,6 +17,7 @@ class Series(Data):
 
     def __init__(self, rdd, index=None):
         super(Series, self).__init__(rdd)
+        # TODO make this lazy?
         if index is not None:
             self.index = index
         else:

@@ -40,6 +40,9 @@ class Data(object):
     def first(self):
         return self.rdd.first()
 
+    def take(self, *args, **kwards):
+        return self.rdd.take(*args, **kwards)
+
     def collect(self):
         return self.rdd.collect()
 
