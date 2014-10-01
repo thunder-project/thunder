@@ -7,7 +7,7 @@ from operator import mul
 from numpy import ndarray, arange, array, array_equal, concatenate, dtype, prod, zeros
 from nose.tools import assert_equals, assert_true, assert_almost_equal, assert_raises
 import itertools
-from thunder.rdds.images import ImagesLoader, ImageBlockValue
+from thunder.rdds.images import ImagesLoader, ImageBlockValue, _BlockMemoryAsReversedSequence
 from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
 
 _have_image = False
@@ -265,7 +265,7 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
         outdir = os.path.join(self.outputdir, "anotherdir")
         os.mkdir(outdir)
-        assert_raises(OSError, ImagesLoader(self.sc).fromArrays(arys).saveAsBinarySeries, outdir, 0)
+        assert_raises(ValueError, ImagesLoader(self.sc).fromArrays(arys).saveAsBinarySeries, outdir, 0)
 
         groupingdims = xrange(len(aryshape))
         dtypes = ('int16', 'int32', 'float32')
@@ -362,6 +362,19 @@ class TestImageBlockValue(unittest.TestCase):
             assert_equals(expected[0], actual[0])
             # check value equality
             assert_true(array_equal(expected[1], actual[1]))
+
+
+class TestBlockMemoryAsSequence(unittest.TestCase):
+
+    def test_range(self):
+        dims = (2, 2)
+        undertest = _BlockMemoryAsReversedSequence(dims)
+
+        assert_equals(3, len(undertest))
+        assert_equals((2, 2), undertest.indtosub(0))
+        assert_equals((1, 2), undertest.indtosub(1))
+        assert_equals((1, 1), undertest.indtosub(2))
+        assert_raises(IndexError, undertest.indtosub, 3)
 
 
 if __name__ == "__main__":

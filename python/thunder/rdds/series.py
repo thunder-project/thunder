@@ -1,10 +1,10 @@
 from collections import namedtuple
-import os
 import json
 import types
 from numpy import ndarray, frombuffer, dtype, array, sum, mean, std, size, arange, polyfit, polyval, percentile, load
 from scipy.io import loadmat
 import urlparse
+from thunder.rdds.readers import getFileReaderForPath, FileNotFoundError
 from thunder.rdds.data import Data
 from thunder.utils.common import checkparams
 
@@ -225,11 +225,6 @@ class SeriesLoader(object):
         # this appears to be a directory or similar. add wildcard match to specified extension
         return "file://" + datapath + "/*." + ext
 
-    @staticmethod
-    def __isLocalPath(datapath):
-        parseresult = urlparse.urlparse(datapath)
-        return (not parseresult.scheme) or (parseresult.scheme == 'file')
-
     def fromText(self, datafile, nkeys=None, ext="txt"):
         """
         Loads Series data from text files.
@@ -272,10 +267,8 @@ class SeriesLoader(object):
         -------
         BinaryLoadParameters instance
         """
-        if SeriesLoader.__isLocalPath(datafile):
-            params = SeriesLoader.loadConfLocal(datafile, conffile=conffilename)
-        else:
-            params = {}
+        params = SeriesLoader.loadConf(datafile, conffile=conffilename)
+
         # filter dict to include only recognized field names:
         #params = {k: v for k, v in params.items() if k in SeriesLoader.BinaryLoadParameters._fields}
         for k in params.keys():
@@ -306,6 +299,17 @@ class SeriesLoader(object):
 
     def fromBinary(self, datafile, ext='bin', conffilename='conf.json',
                    nkeys=None, nvalues=None, keytype=None, valuetype=None):
+        """
+        Load a Series object from a directory of binary files.
+
+        Parameters
+        ----------
+
+        datafile: string URI or local filesystem path
+            Specifies the directory in which to look for binary files. All files with the extension given by 'ext' in
+            the passed directory will be loaded.
+
+        """
 
         paramsObj = self.__loadParametersAndDefaults(datafile, conffilename, nkeys, nvalues, keytype, valuetype)
         self.__checkBinaryParametersAreSpecified(paramsObj)
@@ -358,23 +362,20 @@ class SeriesLoader(object):
         return rdd
 
     @staticmethod
-    def loadConfLocal(datafile, conffile='conf.json'):
-        """Returns a dict loaded from a json file on the local filesystem.
+    def loadConf(datafile, conffile='conf.json'):
+        """Returns a dict loaded from a json file
 
         Looks for file named _conffile_ in same directory as _datafile_.
 
-        Returns {} if file not found or is not on the local filesystem.
+        Returns {} if file not found
         """
-        if not os.path.isfile(conffile):
-            if os.path.isdir(datafile):
-                basepath = datafile
-            else:
-                basepath = os.path.dirname(datafile)
-            conffile = os.path.join(basepath, conffile)
+        if not conffile:
+            return {}
+        reader = getFileReaderForPath(datafile)()
+        try:
+            jsonbuf = reader.read(datafile, filename=conffile)
+        except FileNotFoundError:
+            return {}
+        return json.loads(jsonbuf)
 
-        params = {}
-        if os.path.isfile(conffile):
-            with open(conffile, 'r') as f:
-                params = json.load(f)
-        return params
 

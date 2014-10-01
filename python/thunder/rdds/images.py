@@ -1,15 +1,15 @@
-import glob
-import os
 import itertools
+import json
 import struct
 import cStringIO as StringIO
-from numpy import ndarray, array, arange, frombuffer, prod, concatenate, amax, amin, size, squeeze, reshape, zeros, \
+from numpy import ndarray, array, arange, frombuffer, prod, amax, amin, size, squeeze, reshape, zeros, \
     dtype, dstack
 from io import BytesIO
 from matplotlib.pyplot import imread, imsave
 from series import Series
 from thunder.rdds.data import Data, parseMemoryString
-from thunder.rdds.readers import getReaderForPath
+from thunder.rdds.readers import getParallelReaderForPath
+from thunder.rdds.writers import getFileWriterForPath, getParallelWriterForPath, getCollectedFileWriterForPath
 
 
 class Images(Data):
@@ -199,6 +199,10 @@ class Images(Data):
 
         memseq = _BlockMemoryAsReversedSequence(dims)
         tmpidx = bisect.bisect_left(memseq, blockSize / float(minseriessize))
+        if tmpidx == len(memseq):
+            # handle case where requested block is bigger than the biggest image
+            # we can produce; just give back the biggest block size
+            tmpidx -= 1
         return memseq.indtosub(tmpidx)
 
     def _scatterToBlocks(self, blockSize="150M", blocksPerDim=None, groupingDim=None):
@@ -262,14 +266,6 @@ class Images(Data):
 
         return blocksdata.toSeries(seriesDim=0)
 
-    @staticmethod
-    def __checkAndCreateDirectory(outputdirname, overwrite):
-        if overwrite and os.path.isdir(outputdirname):
-            import shutil
-
-            shutil.rmtree(outputdirname)
-        os.mkdir(outputdirname)
-
     def saveAsBinarySeries(self, outputdirname, blockSize="150M", splitsPerDim=None, groupingDim=None,
                            overwrite=False):
         """Writes Image into files on a local filesystem, suitable for loading by SeriesLoader.fromBinary()
@@ -280,7 +276,7 @@ class Images(Data):
 
         Parameters
         ----------
-        outputdirname : string path to directory to be created
+        outputdirname : string path or URI to directory to be created
             Output files will be written underneath outputdirname. This directory must not yet exist
             (unless overwrite is True), and must be no more than one level beneath an existing directory.
             It will be created as a result of this call.
@@ -302,32 +298,32 @@ class Images(Data):
             of this call.
 
         """
-        self.__checkAndCreateDirectory(outputdirname, overwrite)
+        writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
 
         blocksdata = self._scatterToBlocks(blockSize=blockSize, blocksPerDim=splitsPerDim, groupingDim=groupingDim)
 
         binseriesrdd = blocksdata.toBinarySeries(seriesDim=0)
 
-        def writeBinarySeriesFile(kv):
+        def appendBin(kv):
             binlabel, binvals = kv
-            with open(os.path.join(outputdirname, binlabel + ".bin"), 'wb') as f_:
-                f_.write(binvals)
+            return binlabel+'.bin', binvals
 
-        binseriesrdd.foreach(writeBinarySeriesFile)
+        binseriesrdd.map(appendBin).foreach(writer.writerFcn)
 
+        filewriterclass = getFileWriterForPath(outputdirname)
         # write configuration file
         conf = {'input': outputdirname, 'dims': self.dims,
                 'nkeys': len(self.dims), 'nvalues': self.nimages,
                 'format': self.dtype, 'keyformat': 'int16'}
-        with open(os.path.join(outputdirname, "conf.json"), 'w') as fconf:
-            import json
-            json.dump(conf, fconf, indent=2)
+        confwriter = filewriterclass(outputdirname, "conf.json", overwrite=overwrite)
+        confwriter.writeFile(json.dumps(conf, indent=2))
 
         # touch "SUCCESS" file as final action
-        with open(os.path.join(outputdirname, "SUCCESS"), 'w'):
-            pass
+        successwriter = filewriterclass(outputdirname, "SUCCESS", overwrite=overwrite)
+        successwriter.writeFile('')
 
-    def exportAsPngs(self, outputdirname, fileprefix="export", overwrite=False):
+    def exportAsPngs(self, outputdirname, fileprefix="export", overwrite=False,
+                     collectToDriver=True):
         """Write out basic png files for two-dimensional image data.
 
         Files will be written into a newly-created directory on the local file system given by outputdirname.
@@ -346,19 +342,31 @@ class Images(Data):
         overwrite : bool
             If true, the directory given by outputdirname will first be deleted if it already exists.
 
+        collectToDriver : bool, default True
+            If true, images will be collect()'ed at the driver first before being written out, allowing
+            for use of a local filesystem at the expense of network overhead. If false, images will be written
+            in parallel by each executor, presumably to a distributed or networked filesystem.
         """
         dims = self.dims
         if not len(dims) == 2:
             raise ValueError("Only two-dimensional images can be exported as .png files; image is %d-dimensional." %
                              len(dims))
-        self.__checkAndCreateDirectory(outputdirname, overwrite)
 
-        def writeAsPng(kv):
+        def toFilenameAndPngBuf(kv):
             key, img = kv
-            fname = os.path.join(outputdirname, fileprefix+"%05d.png" % int(key))
-            imsave(fname, img)
+            fname = fileprefix+"%05d.png" % int(key)
+            bytebuf = BytesIO()
+            imsave(bytebuf, img, format="png")
+            return fname, bytebuf.getvalue()
 
-        self.rdd.foreach(writeAsPng)
+        bufrdd = self.rdd.map(toFilenameAndPngBuf)
+
+        if collectToDriver:
+            writer = getCollectedFileWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
+            writer.writeCollectedFiles(bufrdd.collect())
+        else:
+            writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
+            bufrdd.foreach(writer.writerFcn)
 
     def maxProjection(self, axis=2):
         """
@@ -512,7 +520,7 @@ class ImagesLoader(object):
             # previously we were casting to uint16 - still necessary?
             return frombuffer(buf, dtype='int16', count=prod(dims)).reshape(dims, order='F')
 
-        reader = getReaderForPath(datafile)(self.sc)
+        reader = getParallelReaderForPath(datafile)(self.sc)
         readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)
         return Images(readerrdd.mapValues(toArray), nimages=reader.lastnrecs, dims=dims, dtype='int16')
 
@@ -521,7 +529,7 @@ class ImagesLoader(object):
             fbuf = BytesIO(buf)
             return imread(fbuf, format='tif')
 
-        reader = getReaderForPath(datafile)(self.sc)
+        reader = getParallelReaderForPath(datafile)(self.sc)
         readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)
         return Images(readerrdd.mapValues(readTifFromBuf), nimages=reader.lastnrecs)
 
@@ -563,7 +571,7 @@ class ImagesLoader(object):
                     break
             return dstack(imgarys)
 
-        reader = getReaderForPath(datafile)(self.sc)
+        reader = getParallelReaderForPath(datafile)(self.sc)
         readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)
         return Images(readerrdd.mapValues(multitifReader), nimages=reader.lastnrecs)
 
@@ -572,33 +580,9 @@ class ImagesLoader(object):
             fbuf = BytesIO(buf)
             return imread(fbuf, format='png')
 
-        reader = getReaderForPath(datafile)(self.sc)
+        reader = getParallelReaderForPath(datafile)(self.sc)
         readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)
         return Images(readerrdd.mapValues(readPngFromBuf), nimages=reader.lastnrecs)
-
-
-    @staticmethod
-    def listFiles(datafile, ext=None, startidx=None, stopidx=None):
-
-        if os.path.isdir(datafile):
-            if ext:
-                files = sorted(glob.glob(os.path.join(datafile, '*.' + ext)))
-            else:
-                files = sorted(os.listdir(datafile))
-        else:
-            files = sorted(glob.glob(datafile))
-
-        if len(files) < 1:
-            raise IOError('cannot find files of type "%s" in %s' % (ext if ext else '*', datafile))
-
-        if startidx or stopidx:
-            if startidx is None:
-                startidx = 0
-            if stopidx is None:
-                stopidx = len(files)
-            files = files[startidx:stopidx]
-
-        return files
 
 
 class ImageBlocks(Data):
@@ -630,7 +614,7 @@ class ImageBlocks(Data):
 
         def blockToBinarySeries(kv):
             blockKey, blockVal = kv
-            label = '-'.join("%05g" % k for k in blockKey)
+            label = '-'.join(reversed(["key%02d_%05g" % (ki, k) for (ki, k) in enumerate(blockKey)]))
             keypacker = None
             buf = StringIO.StringIO()
             for seriesKey, series in ImageBlocks._blockToSeries(blockVal, seriesDim):

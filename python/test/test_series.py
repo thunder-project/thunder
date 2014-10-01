@@ -1,3 +1,4 @@
+import json
 import struct
 import os
 from numpy import dtype, array, allclose
@@ -111,7 +112,7 @@ class SeriesBinaryTestData(object):
 
 class TestSeriesBinaryLoader(PySparkTestCaseWithOutputDir):
 
-    def test_fromBinary(self):
+    def _run_tst_fromBinary(self, useConfJson=False):
         # run this as a single big test so as to avoid repeated setUp and tearDown of the spark context
         DATA = []
         # data will be a sequence of test data
@@ -125,13 +126,26 @@ class TestSeriesBinaryLoader(PySparkTestCaseWithOutputDir):
         DATA.append(SeriesBinaryTestData.fromArrays([[1.5, 2.5, 3.5]], [[11.0, 12.0, 13.0]], 'float32', 'float32'))
 
         for itemidx, item in enumerate(DATA):
-            fname = os.path.join(self.outputdir, 'inputfile%d.bin' % itemidx)
+            outsubdir = os.path.join(self.outputdir, 'input%d' % itemidx)
+            os.mkdir(outsubdir)
+
+            fname = os.path.join(outsubdir, 'inputfile%d.bin' % itemidx)
             with open(fname, 'wb') as f:
                 item.writeToFile(f)
 
             loader = SeriesLoader(self.sc)
-            series = loader.fromBinary(fname, nkeys=item.nkeys, nvalues=item.nvals, keytype=str(item.keyDType),
-                                       valuetype=str(item.valDType))
+            if not useConfJson:
+                series = loader.fromBinary(outsubdir, nkeys=item.nkeys, nvalues=item.nvals, keytype=str(item.keyDType),
+                                           valuetype=str(item.valDType))
+            else:
+                # write configuration file
+                conf = {'input': outsubdir,
+                        'nkeys': item.nkeys, 'nvalues': item.nvals,
+                        'format': str(item.valDType), 'keyformat': str(item.keyDType)}
+                with open(os.path.join(outsubdir, "conf.json"), 'wb') as f:
+                    json.dump(conf, f, indent=2)
+                series = loader.fromBinary(outsubdir)
+
             seriesdata = series.rdd.collect()
 
             expecteddata = item.data
@@ -151,6 +165,12 @@ class TestSeriesBinaryLoader(PySparkTestCaseWithOutputDir):
                 assert_equals(item.valDType, actual[1].dtype,
                               "Value type mismatch in item %d; expected %s, got %s" %
                               (itemidx, str(item.valDType), str(actual[1].dtype)))
+
+    def test_fromBinary(self):
+        self._run_tst_fromBinary()
+
+    def test_fromBinaryWithConfFile(self):
+        self._run_tst_fromBinary(True)
 
 
 class TestSeriesMethods(PySparkTestCase):
