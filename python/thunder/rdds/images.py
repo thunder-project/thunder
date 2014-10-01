@@ -2,8 +2,8 @@ import itertools
 import json
 import struct
 import cStringIO as StringIO
-from numpy import ndarray, arange, frombuffer, prod, concatenate, amax, amin, size, squeeze, reshape, zeros, \
-    dtype
+from numpy import ndarray, array, arange, frombuffer, prod, amax, amin, size, squeeze, reshape, zeros, \
+    dtype, dstack
 from io import BytesIO
 from matplotlib.pyplot import imread, imsave
 from series import Series
@@ -565,7 +565,7 @@ class ImagesLoader(object):
                 except EOFError:
                     # past last page in tif
                     break
-            return concatenate(imgarys, axis=2)
+            return dstack(imgarys)
 
         reader = getParallelReaderForPath(datafile)(self.sc)
         readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)

@@ -17,6 +17,7 @@ class Series(Data):
 
     def __init__(self, rdd, index=None):
         super(Series, self).__init__(rdd)
+        # TODO make this lazy?
         if index is not None:
             self.index = index
         else:
@@ -68,7 +69,8 @@ class Series(Data):
         index = self.index
 
         if not isinstance(crit, types.FunctionType):
-            critlist = set(crit)
+            # set("foo") -> {"f", "o"}; wrap in list to prevent:
+            critlist = set([crit]) if isinstance(crit, basestring) else set(crit)
             crit = lambda x: x in critlist
 
         newindex = [i for i in index if crit(i)]
@@ -298,10 +300,10 @@ class SeriesLoader(object):
     def fromBinary(self, datafile, ext='bin', conffilename='conf.json',
                    nkeys=None, nvalues=None, keytype=None, valuetype=None):
 
-        datafile = self.__normalizeDatafilePattern(datafile, ext)
-
         paramsObj = self.__loadParametersAndDefaults(datafile, conffilename, nkeys, nvalues, keytype, valuetype)
         self.__checkBinaryParametersAreSpecified(paramsObj)
+
+        datafile = self.__normalizeDatafilePattern(datafile, ext)
 
         keydtype = dtype(paramsObj.keyformat)
         valdtype = dtype(paramsObj.format)
@@ -314,16 +316,9 @@ class SeriesLoader(object):
                                               'org.apache.hadoop.io.BytesWritable',
                                               conf={'recordLength': str(recordsize)})
 
-        def _parseKeysFromBinaryBuffer(buf, keydtype_, keybufsize):
-            return frombuffer(buffer(buf, 0, keybufsize), dtype=keydtype_)
-
-        def _parseValsFromBinaryBuffer(buf, valsdtype_, keybufsize):
-            # note this indeed takes *key* buffer size as an argument, not valbufsize
-            return frombuffer(buffer(buf, keybufsize), dtype=valsdtype_)
-
         data = lines.map(lambda (_, v):
-                         (tuple(_parseKeysFromBinaryBuffer(v, keydtype, keysize)),
-                          _parseValsFromBinaryBuffer(v, valdtype, keysize)))
+                         (tuple(frombuffer(buffer(v, 0, keysize), dtype=keydtype)),
+                          frombuffer(buffer(v, keysize), dtype=valdtype)))
 
         return Series(data)
 
