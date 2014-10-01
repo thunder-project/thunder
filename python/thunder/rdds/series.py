@@ -4,7 +4,7 @@ import types
 from numpy import ndarray, frombuffer, dtype, array, sum, mean, std, size, arange, polyfit, polyval, percentile, load
 from scipy.io import loadmat
 import urlparse
-from thunder.rdds.readers import getFileReaderForPath
+from thunder.rdds.readers import getFileReaderForPath, FileNotFoundError
 from thunder.rdds.data import Data
 from thunder.utils.common import checkparams
 
@@ -299,6 +299,17 @@ class SeriesLoader(object):
 
     def fromBinary(self, datafile, ext='bin', conffilename='conf.json',
                    nkeys=None, nvalues=None, keytype=None, valuetype=None):
+        """
+        Load a Series object from a directory of binary files.
+
+        Parameters
+        ----------
+
+        datafile: string URI or local filesystem path
+            Specifies the directory in which to look for binary files. All files with the extension given by 'ext' in
+            the passed directory will be loaded.
+
+        """
 
         paramsObj = self.__loadParametersAndDefaults(datafile, conffilename, nkeys, nvalues, keytype, valuetype)
         self.__checkBinaryParametersAreSpecified(paramsObj)
@@ -363,12 +374,8 @@ class SeriesLoader(object):
         reader = getFileReaderForPath(datafile)()
         try:
             jsonbuf = reader.read(datafile, filename=conffile)
-        except Exception:
-            # depending on the reader, any number of different exceptions
-            # could be getting thrown here. Would be good to standardize a bit
-            # if possible.
-            # todo: this is not always an error we want to squelch :(
-            jsonbuf = "{}"
+        except FileNotFoundError:
+            return {}
         return json.loads(jsonbuf)
 
 
