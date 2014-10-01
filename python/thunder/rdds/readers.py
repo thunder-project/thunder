@@ -2,6 +2,7 @@ import glob
 import os
 import urllib
 import urlparse
+import errno
 
 _have_boto = False
 try:
@@ -9,6 +10,34 @@ try:
     _have_boto = True
 except ImportError:
     pass
+
+
+class FileNotFoundError(IOError):
+    """An exception to be thrown when reader implementations can't find a requested file.
+
+    Implementations are responsible for watching for their own appropriate exceptions and rethrowing
+    FileNotFoundError.
+
+    See PEP 3151 for background and inspiration.
+    """
+    pass
+
+
+def _localRead(filepath):
+    """Wrapper around open(filepath, 'rb') that returns the contents of the file as a string.
+
+    Will rethrow FileNotFoundError if it receives an IOError with error number indicating that the file isn't found.
+    """
+    buf = None
+    try:
+        with open(filepath, 'rb') as f:
+            buf = f.read()
+    except IOError, e:
+        if e.errno == errno.ENOENT:
+            raise FileNotFoundError(e)
+        else:
+            raise
+    return buf
 
 
 class LocalFSParallelReader(object):
@@ -57,18 +86,13 @@ class LocalFSParallelReader(object):
         abspath = self.uriToPath(datapath)
         filepaths = self.listFiles(abspath, ext=ext, startidx=startidx, stopidx=stopidx)
 
-        def readfcn(filepath):
-            buf = None
-            with open(filepath, 'rb') as f:
-                buf = f.read()
-            return buf
-
         lfilepaths = len(filepaths)
         self.lastnrecs = lfilepaths
-        return self.sc.parallelize(enumerate(filepaths), lfilepaths).map(lambda (k, v): (k, readfcn(v)))
+        return self.sc.parallelize(enumerate(filepaths), lfilepaths).map(lambda (k, v): (k, _localRead(v)))
 
 
 class _BotoS3Client(object):
+    # todo: boto s3 readers should throw FileNotFoundError as appropriate
     @staticmethod
     def _parseS3Schema(datapath):
         parseresult = urlparse.urlparse(datapath)
@@ -146,9 +170,7 @@ class LocalFSFileReader(object):
         if filename:
             abspath = os.path.join(abspath, filename)
 
-        with open(abspath, 'rb') as f:
-            buf = f.read()
-        return buf
+        return _localRead(abspath)
 
 
 class BotoS3FileReader(_BotoS3Client):
