@@ -40,8 +40,14 @@ class Data(object):
     def first(self):
         return self.rdd.first()
 
-    def take(self, *args, **kwards):
-        return self.rdd.take(*args, **kwards)
+    def take(self, *args, **kwargs):
+        return self.rdd.take(*args, **kwargs)
+
+    def map(self, *args, **kwargs):
+        return Data(self.rdd.map(*args, **kwargs))
+
+    def mapValues(self, *args, **kwargs):
+        return Data(self.rdd.mapValues(*args, **kwargs))
 
     def collect(self):
         return self.rdd.collect()
