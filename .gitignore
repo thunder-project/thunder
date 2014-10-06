@@ -14,4 +14,7 @@ python/thunder_python.egg-info
 python/doc/_build
 python/doc/generated
 *.iml
+python/doc/tutorials/*.rst
+python/doc/tutorials/.ipynb*
+python/doc/tutorials/*_files
 

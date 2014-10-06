@@ -59,23 +59,41 @@
 
    <div class="container-fluid">
    <div class="row">
-   <div class="col-md-6">
+   <div class="col-md-4">
    <h2>Documentation</h2>
 
 .. toctree::
    :maxdepth: 1
 
+   introduction
    install_local
    install_ec2
-   basic_usage
    contributing
 
 .. raw:: html
 
-   </div>
-   <div class="col-md-6">
-   <h2>Further reading</h2>
+  </div>
+  <div class="col-md-4">
+  <h2>Tutorials</h2>
+  
+.. toctree::
+   :maxdepth: 1
 
+   tutorials/basic_usage
+   tutorials/thunder_context
+   tutorials/input_formats
+   tutorials/images
+   tutorials/series
+   tutorials/clustering
+   tutorials/factorization
+   tutorials/regression
+
+.. raw:: html
+
+   </div>
+   <div class="col-md-4">
+   <h2>Further reading</h2>
+   
 .. toctree::
    :maxdepth: 1
 
