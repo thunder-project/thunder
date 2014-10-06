@@ -1,1 +1,1 @@
-from .kmeans import KMeans
+from .kmeans import KMeans, KMeansModel
