@@ -880,8 +880,10 @@ class ImageBlockValue(object):
         del rangeiters[seriesDim]
         # correct for original dimensionality if inserting at end of list
         insertDim = seriesDim if seriesDim >= 0 else len(self.origshape) + seriesDim
-        for idxSeq in itertools.product(*rangeiters):
-            expandedIdxSeq = list(idxSeq[:])
+        # reverse rangeiters twice to ensure that first dimension is most rapidly varying
+        for idxSeq in itertools.product(*reversed(rangeiters)):
+            idxSeq = tuple(reversed(idxSeq))
+            expandedIdxSeq = list(idxSeq)
             expandedIdxSeq.insert(insertDim, None)
             slices = []
             for d, (idx, origslice) in enumerate(zip(expandedIdxSeq, self.origslices)):
