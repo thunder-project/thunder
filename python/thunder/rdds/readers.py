@@ -282,11 +282,20 @@ class BotoS3FileReader(_BotoS3Client):
         conn = boto.connect_s3(aws_access_key_id=self.accessKey, aws_secret_access_key=self.secretKey)
         bucket = conn.get_bucket(parse[0])
         keys = _BotoS3Client.retrieveKeys(bucket, parse[1], prefix=parse[2], postfix=parse[3])
-        if not keys:
+        # keys is probably a lazy-loading ifilter iterable
+        try:
+            key = keys.next()
+        except StopIteration:
             raise FileNotFoundError("Could not find S3 object for: '%s'" % datapath)
-        if len(keys) > 1:
-            raise ValueError("Found %d S3 keys for: '%s'" % (len(keys), datapath))
-        return keys[0].get_contents_as_string()
+        # we expect to only have a single key returned
+        nextkey = None
+        try:
+            nextkey = keys.next()
+        except StopIteration:
+            pass
+        if nextkey:
+            raise ValueError("Found multiple S3 keys for: '%s'" % datapath)
+        return key.get_contents_as_string()
 
 
 SCHEMAS_TO_PARALLELREADERS = {
