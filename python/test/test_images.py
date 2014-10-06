@@ -357,6 +357,9 @@ class TestImageBlockValue(unittest.TestCase):
             expectedkv = (ij[0], ij[1]), arange(n, n+4, dtype='int16')
             expectedseries.append(expectedkv)
 
+        # reverse order of expectedseries so that first dim is changing most rapidly
+        expectedseries.sort(key=lambda kv: tuple(reversed(kv[0])))
+
         for actual, expected in zip(series, expectedseries):
             # check key equality
             assert_equals(expected[0], actual[0])
