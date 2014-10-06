@@ -2,17 +2,20 @@
 
 import os
 import json
-from numpy import asarray, floor, ceil, shape, arange
-from scipy.io import loadmat
+from numpy import asarray, floor, ceil
 from pyspark import SparkContext
-from thunder.utils import DataSets, checkparams
+from thunder.utils.datasets import DataSets
+from thunder.utils.common import checkparams
 from thunder.rdds.series import SeriesLoader
 from thunder.rdds.images import ImagesLoader
 
 
 class ThunderContext():
     """
-    Wrapper for a Spark Context
+    Wrapper for a SparkContext that provides functionality for loading data.
+
+    Also supports creation of example datasets, and loading example
+    data both locally and from EC2.
 
     Attributes
     ----------
@@ -31,7 +34,10 @@ class ThunderContext():
     def loadSeries(self, datafile, nkeys=None, nvalues=None, inputformat='binary', minPartitions=None,
                    conffile='conf.json'):
         """
-        Loads a Series RDD from data stored as text or binary files.
+        Loads a Series object from data stored as text or binary files.
+
+        Supports single files or multiple files stored on a local file system, a networked file system (mounted
+        and available on all cluster nodes),Amazon S3, or HDFS.
 
         Parameters
         ----------
@@ -73,21 +79,12 @@ class ThunderContext():
 
         return data
 
-    def loadSeriesLocal(self, datafile, nkeys=3, nvalues=None, inputformat='npy', minPartitions=None):
-
-        checkparams(inputformat, ['mat', 'npy'])
-        loader = SeriesLoader(self._sc, nkeys=nkeys, nvalues=nvalues, minPartitions=minPartitions)
-
-        if inputformat.lower() == 'mat':
-            data = loader.fromMatLocal(datafile)
-        else:
-            data = loader.fromNpyLocal(datafile)
-
-        return data
-
     def loadImages(self, datafile, dims=None, inputformat='stack', startidx=None, stopidx=None):
         """
-        Loads an Images RDD from data stored as a binary image stack, tif, or png files.
+        Loads an Images object from data stored as a binary image stack, tif, tif-stack, or png files.
+
+        Supports single files or multiple files, stored on a local file system, a networked file sytem
+        (mounted and available on all nodes), or Amazon S3
 
         Parameters
         ----------
@@ -119,8 +116,10 @@ class ThunderContext():
 
     def makeExample(self, dataset, **opts):
         """
-        Make an example data set for testing analyses
-        see DataSets
+        Make an example data set for testing analyses.
+
+        Options include 'pca', 'kmeans', and 'ica'.
+        See thunder.utils.datasets for detailed options.
 
         Parameters
         ----------
@@ -131,13 +130,15 @@ class ThunderContext():
         -------
         data : RDD of (tuple, array) pairs
             Generated dataset
+
         """
+        checkparams(dataset, ['kmeans', 'pca', 'ica'])
 
         return DataSets.make(self._sc, dataset, **opts)
 
     def loadExample(self, dataset):
         """
-        Load a local example data set for testing analyses
+        Load a local example data set for testing analyses.
 
         Parameters
         ----------
@@ -161,7 +162,7 @@ class ThunderContext():
 
     def loadExampleEC2(self, dataset):
         """
-        Load an example data set from EC2
+        Load an example data set from EC2.
 
         Parameters
         ----------
@@ -189,65 +190,39 @@ class ThunderContext():
         else:
             raise NotImplementedError("dataset '%s' not availiable" % dataset)
 
-    def loadBinaryLocal(self, datafile, nvalues, nkeys, format, keyfile=None, method=None):
+    def loadSeriesLocal(self, datafile, inputformat='npy', minPartitions=None, keyfile=None, varname=None):
         """
-        Load data from a local binary file
-        """
+        Load a Series object from a local file (either npy or MAT format).
 
-        raise NotImplementedError
+        File should contain a 1d or 2d matrix, where each row
+        of the input matrix is a record.
 
-    def loadArrayLocal(self, values, keys=None, method=None):
-        """
-        Load data from local arrays
-        """
-
-        raise NotImplementedError
-
-    def loadMatLocal(self, datafile, varname, keyfile=None, filter=None, minPartitions=1):
-        """
-        Load data from a local MAT file, from a variable containing
-        either a 1d or 2d matrix, into an RDD of (key,value) pairs.
-        Each row of the input matrix will become the value of each record.
-
-        Keys can be provided in an extra MAT file containing a variable 'keys'.
-        If not provided, linear indices will be used as keys.
+        Keys can be provided in a separate file (with variable name 'keys', for MAT files).
+        If not provided, linear indices will be used for keys.
 
         Parameters
         ----------
         datafile : str
-            MAT file to import
+            File to import
 
-        varname : str
-            Variable name to load from MAT file
+        varname : str, optional, default = None
+            Variable name to load (for MAT files only)
 
-        keyfile : str
-            MAT file to import with keys (must contain a variable 'keys')
-
-        filter : str, optional, default = None (no preprocessing)
-            Which preprocessing to perform
+        keyfile : str, optional, default = None
+            File containing the keys for each record as another 1d or 2d array
 
         minPartitions : Int, optional, default = 1
-            Number of partitions for data
-
+            Number of partitions for RDD
         """
 
-        data = loadmat(datafile)[varname]
-        if data.ndim > 2:
-            raise IOError('input data must be one or two dimensional')
-        if keyfile:
-            keys = map(lambda x: tuple(x), loadmat(keyfile)['keys'])
+        checkparams(inputformat, ['mat', 'npy'])
+        loader = SeriesLoader(self._sc, minPartitions=minPartitions)
+
+        if inputformat.lower() == 'mat':
+            if varname is None:
+                raise Exception('Must provide variable name for loading MAT files')
+            data = loader.fromMatLocal(datafile, varname, keyfile)
         else:
-            keys = arange(1, shape(data)[0]+1)
+            data = loader.fromNpyLocal(datafile, keyfile)
 
-        rdd = self._sc.parallelize(zip(keys, data), minPartitions)
-
-        return preprocess(rdd, method=filter)
-
-
-def preprocess(data, method=None):
-
-    if method:
-        preprocessor = PreProcessor(method)
-        return data.mapValues(preprocessor.get)
-    else:
         return data
