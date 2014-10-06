@@ -20,13 +20,13 @@ class TestElementWise(MatrixRDDTestCase):
     def test_elementwise_rdd(self):
         mat1 = RowMatrix(self.sc.parallelize([(1, array([1, 2, 3])), (2, array([4, 5, 6]))], 2))
         mat2 = RowMatrix(self.sc.parallelize([(1, array([7, 8, 9])), (2, array([10, 11, 12]))], 2))
-        result = mat1.elementwise(mat2, add).collect()
+        result = mat1.elementwise(mat2, add).rows().collect()
         truth = array([[8, 10, 12], [14, 16, 18]])
         assert array_equal(result, truth)
 
     def test_elementwise_array(self):
         mat = RowMatrix(self.sc.parallelize([(1, array([1, 2, 3]))]))
-        assert array_equal(mat.elementwise(2, add).collect()[0], array([3, 4, 5]))
+        assert array_equal(mat.elementwise(2, add).rows().collect()[0], array([3, 4, 5]))
 
 
 class TestTimes(MatrixRDDTestCase):
@@ -44,7 +44,7 @@ class TestTimes(MatrixRDDTestCase):
         mat1 = RowMatrix(self.sc.parallelize([(1, array([1, 2, 3])), (2, array([4, 5, 6]))]))
         mat2 = array([[7, 8], [9, 10], [11, 12]])
         truth = [array([58, 64]), array([139, 154])]
-        result = mat1.times(mat2).collect()
+        result = mat1.times(mat2).rows().collect()
         assert array_equal(result, truth)
 
 
@@ -59,5 +59,3 @@ class TestOuter(MatrixRDDTestCase):
         assert array_equal(resultA, truth)
         assert array_equal(resultB1, truth)
         assert array_equal(resultB2, truth)
-
-# TODO: TestCenter, TestZScore

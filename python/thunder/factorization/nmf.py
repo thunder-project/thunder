@@ -2,16 +2,14 @@
 Class for performing non-negative matrix factorization
 """
 
-import argparse
 import numpy as np
-from thunder.utils.context import ThunderContext
-from thunder.utils import save
+from thunder.rdds import Series
 
 
+# TODO use RowMatrix throughout
 class NMF(object):
     """
-    Large-scale non-negative matrix factorization on a dense matrix
-    represented as an RDD with nrows and ncols
+    Non-negative matrix factorization on a distributed matrix.
 
     Parameters
     ----------
@@ -82,19 +80,26 @@ class NMF(object):
         else:
             self.recon_err = None
 
-    def calc(self, mat):
+    def fit(self, mat):
         """
-        Calcuate the non-negative matrix decomposition
+        Calcuate the non-negative matrix decomposition.
 
         Parameters
         ----------
-        mat : RDD of (tuple, array) pairs, or RowMatrix
-            Matrix to compute non-negative bases from
+        mat : Series or a subclass (e.g. RowMatrix)
+            Data to estimate independent components from, must be a collection of
+            key-value pairs where the keys are identifiers and the values are
+            one-dimensional arrays
 
         Returns
         ----------
         self : returns an instance of self.
         """
+
+        if not (isinstance(mat, Series)):
+            raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')
+
+        mat = mat.rdd
 
         # a helper function to take the Frobenius norm of two zippable RDDs
         def rddFrobeniusNorm(A, B):
@@ -201,33 +206,3 @@ class NMF(object):
 
         return self
 
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="do non-negative matrix factorization")
-    parser.add_argument("datafile", type=str)
-    parser.add_argument("outputdir", type=str)
-    parser.add_argument("k", type=int)
-    parser.add_argument("--nmfmethod", choices="als", default="als", required=False)
-    parser.add_argument("--maxiter", type=float, default=20, required=False)
-    parser.add_argument("--tol", type=float, default=0.001, required=False)
-    parser.add_argument("--w_hist", type=bool, default=False, required=False)
-    parser.add_argument("--recon_hist", type=bool, default=False, required=False)
-    parser.add_argument("--preprocess", choices=("raw", "dff", "sub", "dff-highpass", "dff-percentile"
-                        "dff-detrendnonlin", "dff-detrend-percentile"), default="raw", required=False)
-
-    args = parser.parse_args()
-
-    tsc = ThunderContext.start(appName="nmf")
-
-    data = tsc.loadText(args.datafile, args.preprocess).cache()
-    nmf = NMF(k=args.k, method=args.nmfmethod, maxiter=args.maxiter, tol=args.tol, w_hist=args.w_hist,
-              recon_hist=args.recon_hist)
-    nmf.calc(data)
-
-    outputdir = args.outputdir + "-nmf"
-    save(nmf.w, outputdir, "w", "matlab")
-    save(nmf.h, outputdir, "h", "matlab")
-    if args.w_hist:
-        save(nmf.w_convergence, outputdir, "w_convergence", "matlab")
-    if args.recon_hist:
-        save(nmf.recon_err, outputdir, "rec_err", "matlab")

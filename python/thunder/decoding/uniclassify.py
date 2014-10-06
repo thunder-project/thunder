@@ -1,20 +1,18 @@
 """
-Class and standalone app for mass-univariate classification
+Class for mass-univariate classification
 """
 
-import argparse
 from numpy import in1d, zeros, array, size, float64
 from scipy.io import loadmat
 from scipy.stats import ttest_ind
-from sklearn.naive_bayes import GaussianNB
-from sklearn import cross_validation
-from thunder.utils.context import ThunderContext
-from thunder.utils import save
+from thunder.rdds import Series
 
 
 class MassUnivariateClassifier(object):
-    """Base class for mass univariate classification.
-    Assumes that for each signal, each time point belongs to one
+    """
+    Base class for performing classification.
+
+    Assumes a Series with array data such that each entry belongs to one
     of several categories. Uses independent classifiers to train and predict.
     Example usage: determining how well each individual neural signal
     predicts a behavior.
@@ -22,11 +20,12 @@ class MassUnivariateClassifier(object):
     Parameters
     ----------
     paramfile : str or dict
-        A MAT file or Python dictionary containing parameters for training classifiers.
-        At minimum must contain a "labels" field, with the label the classify at each
+        A Python dictionary, or MAT file, containing parameters for training classifiers.
+        At minimum must contain a "labels" field, with the label to classify at each
         time point. Can additionally include fields for "features" (which feature
         was present at each time point) and "samples" (which sample was present
         at each time point)
+
 
     Attributes
     ----------
@@ -76,37 +75,43 @@ class MassUnivariateClassifier(object):
     def get(self, x, set=None):
         pass
 
-    def classify(self, data, featureset=None):
-        """Run classification on an RDD
+    def fit(self, data, featureset=None):
+        """
+        Run classification on each record in a data set
 
         Parameters
         ----------
-        data: RDD of (tuple, array) pairs
-            The data
+        data: Series or a subclass (e.g. RowMatrix)
+            Data to perform classification on, must be a collection of
+            key-value pairs where the keys are identifiers and the values are
+            one-dimensional arrays
 
         featureset : array, optional, default = None
             Which features to use
 
         Returns
         -------
-        perf : RDD of scalars
+        perf : Series
             The performance of the classifer for each record
         """
 
+        if not isinstance(data, Series):
+            raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')
+
         if self.nfeatures == 1:
-            perf = data.mapValues(lambda x: [self.get(x)])
+            perf = data.rdd.mapValues(lambda x: [self.get(x)])
         else:
             if featureset is None:
                 featureset = [[self.features[0]]]
             for i in featureset:
                 assert array([item in i for item in self.features]).sum() != 0, "Feature set invalid"
-            perf = data.mapValues(lambda x: map(lambda i: self.get(x, i), featureset))
+            perf = data.rdd.mapValues(lambda x: map(lambda i: self.get(x, i), featureset))
 
-        return perf
+        return Series(perf, index='performance')
 
 
 class GaussNaiveBayesClassifier(MassUnivariateClassifier):
-    """Classifier for Gaussian Naive Bayes classification
+    """Classifier for Gaussian Naive Bayes classification.
 
     Parameters
     ----------
@@ -119,12 +124,15 @@ class GaussNaiveBayesClassifier(MassUnivariateClassifier):
 
     def __init__(self, paramfile, cv=0):
         MassUnivariateClassifier.__init__(self, paramfile)
-
+        from sklearn.naive_bayes import GaussianNB
+        from sklearn import cross_validation
+        self.cv_func = cross_validation.cross_val_score
         self.cv = cv
         self.func = GaussianNB()
 
     def get(self, x, featureset=None):
-        """Compute classification performance
+        """
+        Compute classification performance
 
         Parameters
         ----------
@@ -151,7 +159,7 @@ class GaussNaiveBayesClassifier(MassUnivariateClassifier):
                 X[i, :] = x[inds]
 
         if self.cv > 0:
-            return cross_validation.cross_val_score(self.func, X, y, cv=self.cv).mean()
+            return self.cv_func(self.func, X, y, cv=self.cv).mean()
         else:
             ypred = self.func.fit(X, y).predict(X)
             perf = array(y == ypred).mean()
@@ -159,7 +167,8 @@ class GaussNaiveBayesClassifier(MassUnivariateClassifier):
 
 
 class TTestClassifier(MassUnivariateClassifier):
-    """Classifier for TTest classification
+    """
+    Classifier for TTest classification.
 
     Parameters
     ----------
@@ -178,7 +187,8 @@ class TTestClassifier(MassUnivariateClassifier):
             self.labels = array(map(lambda i: 0 if i == unique[0] else 1, self.labels))
 
     def get(self, x, featureset=None):
-        """Compute classification performance as a t-statistic
+        """
+        Compute classification performance as a t-statistic
 
         Parameters
         ----------
@@ -212,25 +222,3 @@ CLASSIFIERS = {
     'gaussnaivebayes': GaussNaiveBayesClassifier,
     'ttest': TTestClassifier
 }
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="fit a regression model")
-    parser.add_argument("datafile", type=str)
-    parser.add_argument("paramfile", type=str)
-    parser.add_argument("outputdir", type=str)
-    parser.add_argument("classifymode", choices="naivebayes", help="form of classifier")
-    parser.add_argument("--featureset", type=array, default="None", required=False)
-    parser.add_argument("--cv", type=int, default="0", required=False)
-    parser.add_argument("--preprocess", choices=("raw", "dff", "sub", "dff-highpass", "dff-percentile"
-                        "dff-detrendnonlin", "dff-detrend-percentile"), default="raw", required=False)
-
-    args = parser.parse_args()
-
-    tsc = ThunderContext.start("classify")
-
-    data = tsc.loadText(args.datafile, args.preprocess)
-    clf = MassUnivariateClassifier.load(args.paramfile, args.classifymode, cv=args.cv)
-    perf = clf.classify(data, args.featureset)
-
-    outputdir = args.outputdir + "-classify"
-    save(perf, outputdir, "perf", "matlab")

@@ -5,13 +5,12 @@ Class for performing Singular Value Decomposition
 from numpy import random, sum, argsort, dot, outer, sqrt
 from scipy.linalg import inv, orth
 from numpy.linalg import eigh
-from thunder.rdds.matrices import RowMatrix
+from thunder.rdds import Series, RowMatrix
 
 
 class SVD(object):
     """
-    Large-scale singular value decomposiiton on a dense matrix
-    represented as an RDD or RowMatrix with nrows and ncols
+    Singular value decomposiiton on a distributed matrix.
 
     Parameters
     ----------
@@ -29,7 +28,7 @@ class SVD(object):
 
     Attributes
     ----------
-    `u` : RDD of nrows (tuple, array) pairs, each array of shape (k,)
+    `u` : RowMatrix, nrows, each of shape (k,)
         Left singular vectors
 
     `s` : array, shape(nrows,)
@@ -50,15 +49,19 @@ class SVD(object):
 
         Parameters
         ----------
-        mat : RDD of (tuple, array) pairs, or RowMatrix
+        mat :  Series or a subclass (e.g. RowMatrix)
             Matrix to compute singular vectors from
 
         Returns
         ----------
         self : returns an instance of self.
         """
-        if type(mat) is not RowMatrix:
-            mat = RowMatrix(mat)
+
+        if not (isinstance(mat, Series)):
+            raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')
+
+        if not (isinstance(mat, RowMatrix)):
+            mat = mat.toRowMatrix()
 
         if self.method == "direct":
 
@@ -74,7 +77,7 @@ class SVD(object):
             # project back into data, normalize by singular values
             u = mat.times(v.T / s)
 
-            self.u = u.rdd
+            self.u = u
             self.s = s
             self.v = v
 
@@ -114,7 +117,7 @@ class SVD(object):
             v = dot(eigv[:, inds[0:self.k]].T, c.T)
             u = mat.times(v.T / s)
 
-            self.u = u.rdd
+            self.u = u
             self.s = s
             self.v = v
 

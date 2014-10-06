@@ -2,17 +2,26 @@ import itertools
 import json
 import struct
 import cStringIO as StringIO
-from numpy import ndarray, array, arange, frombuffer, prod, amax, amin, size, squeeze, reshape, zeros, \
+from numpy import ndarray, arange, frombuffer, prod, amax, amin, size, squeeze, reshape, zeros, \
     dtype, dstack
 from io import BytesIO
 from matplotlib.pyplot import imread, imsave
 from series import Series
-from thunder.rdds.data import Data, parseMemoryString
+from thunder.rdds import Data
+from thunder.rdds.data import parseMemoryString
 from thunder.rdds.readers import getParallelReaderForPath
 from thunder.rdds.writers import getFileWriterForPath, getParallelWriterForPath, getCollectedFileWriterForPath
 
 
 class Images(Data):
+    """
+    Distributed collection of images or volumes.
+
+    Backed by an RDD of key-value pairs, where the key
+    is an identifier and the value is a two or three-dimensional array.
+    """
+
+    _metadata = ['_dims', '_nimages', '_dtype']
 
     def __init__(self, rdd, dims=None, nimages=None, dtype=None):
         super(Images, self).__init__(rdd)
@@ -38,6 +47,10 @@ class Images(Data):
         if not self._dtype:
             self._populateParamsFromFirstRecord()
         return self._dtype
+
+    @property
+    def _constructor(self):
+        return Images
 
     def _populateParamsFromFirstRecord(self):
         record = self.rdd.first()
@@ -385,7 +398,7 @@ class Images(Data):
         # update dimensions to remove axis of projection
         newdims = list(self.dims)
         del newdims[axis]
-        return Images(proj, dims=newdims)
+        return self._constructor(proj, dims=newdims).__finalize__(self)
 
     def maxminProjection(self, axis=2):
         """
@@ -402,7 +415,7 @@ class Images(Data):
         # update dimensions to remove axis of projection
         newdims = list(self.dims)
         del newdims[axis]
-        return Images(proj, dims=newdims)
+        return self._constructor(proj, dims=newdims).__finalize__(self)
 
     def subsample(self, samplefactor):
         """Downsample an image volume by an integer factor
@@ -430,7 +443,8 @@ class Images(Data):
         def samplefunc(v, sampleslices_):
             return v[sampleslices_]
 
-        return Images(self.rdd.mapValues(lambda v: samplefunc(v, sampleslices)), dims=newdims)
+        return self._constructor(
+            self.rdd.mapValues(lambda v: samplefunc(v, sampleslices)), dims=newdims).__finalize__(self)
 
     def planes(self, bottom, top, inclusive=True):
         """
@@ -456,7 +470,8 @@ class Images(Data):
             zrange = arange(bottom+1, top)
         newdims = [self.dims[0], self.dims[1], size(zrange)]
 
-        return Images(self.rdd.mapValues(lambda v: squeeze(v[:, :, zrange])), dims=newdims)
+        return self._constructor(
+            self.rdd.mapValues(lambda v: squeeze(v[:, :, zrange])), dims=newdims).__finalize__(self)
 
     def subtract(self, val):
         """
@@ -478,14 +493,14 @@ class Images(Data):
     def apply(self, func):
         """
         Apply a function to all images / volumes,
-        preserving keys and dimensions
+        otherwise perserving attributes
 
         Parameters
         ----------
         func : function
             Function to apply
         """
-        return Images(self.rdd.mapValues(func), dims=self.dims)
+        return self._constructor(self.rdd.mapValues(func)).__finalize__(self)
 
 
 class ImagesLoader(object):

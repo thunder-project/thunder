@@ -1,9 +1,74 @@
 from numpy import int16
 
-FORMATS = {
-    'int16': int16,
-    'float': float
-}
+
+class Data(object):
+    """
+    Generic base class for data types in thunder.
+
+    All data types are backed by an RDD of key-value pairs
+    where the key is a tuple identifier and the value is an array
+
+    This base class mainly provides convienience functions for accessing
+    properties of the object using the appropriate RDD methods
+    """
+
+    _metadata = []
+
+    def __init__(self, rdd):
+        self.rdd = rdd
+
+    def __finalize__(self, other):
+        """
+        Lazily propagate attributes from other to self, only if attributes
+        are not already defined in self
+
+        Parameters
+        ----------
+        other : the object from which to get the attributes that we are going
+            to propagate
+
+        """
+        if isinstance(other, Data):
+            for name in self._metadata:
+                if (getattr(other, name, None) is not None) and (getattr(self, name, None) is None):
+                    object.__setattr__(self, name, getattr(other, name, None))
+        return self
+
+    def first(self):
+        return self.rdd.first()
+
+    def take(self, *args, **kwargs):
+        return self.rdd.take(*args, **kwargs)
+
+    def values(self):
+        return self.rdd.values()
+
+    def keys(self):
+        return self.rdd.keys()
+
+    def collect(self):
+        return self.rdd.collect()
+
+    def count(self):
+        return self.rdd.count()
+
+    def mean(self):
+        return self.rdd.values().mean()
+
+    def sum(self):
+        return self.rdd.values().sum()
+
+    def variance(self):
+        return self.rdd.values().variance()
+
+    def stdev(self):
+        return self.rdd.values().stdev()
+
+    def stats(self):
+        return self.rdd.values().stats()
+
+    def cache(self):
+        self.rdd.cache()
 
 
 def parseMemoryString(memstr):
@@ -32,43 +97,7 @@ def parseMemoryString(memstr):
     return quant
 
 
-class Data(object):
-
-    def __init__(self, rdd):
-        self.rdd = rdd
-
-    def first(self):
-        return self.rdd.first()
-
-    def take(self, *args, **kwargs):
-        return self.rdd.take(*args, **kwargs)
-
-    def map(self, *args, **kwargs):
-        return Data(self.rdd.map(*args, **kwargs))
-
-    def mapValues(self, *args, **kwargs):
-        return Data(self.rdd.mapValues(*args, **kwargs))
-
-    def collect(self):
-        return self.rdd.collect()
-
-    def count(self):
-        return self.rdd.count()
-
-    def mean(self):
-        return self.rdd.values().mean()
-
-    def sum(self):
-        return self.rdd.values().sum()
-
-    def variance(self):
-        return self.rdd.values().variance()
-
-    def stdev(self):
-        return self.rdd.values().stdev()
-
-    def stats(self):
-        return self.rdd.values().stats()
-
-    def cache(self):
-        self.rdd.cache()
+FORMATS = {
+    'int16': int16,
+    'float': float
+}

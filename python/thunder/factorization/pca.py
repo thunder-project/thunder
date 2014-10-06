@@ -1,17 +1,14 @@
 """
-Class and standalone app for Principal Component Analysis
+Class for Principal Component Analysis
 """
 
-import argparse
 from thunder.factorization import SVD
-from thunder.utils.context import ThunderContext
-from thunder.utils import save
-from thunder.rdds.matrices import RowMatrix
+from thunder.rdds import Series, RowMatrix
 
 
 class PCA(object):
-    """Perform principal components analysis
-    using the singular value decomposition
+    """
+    Principal components analysis on a distributed matrix.
 
     Parameters
     ----------
@@ -29,8 +26,12 @@ class PCA(object):
     `latent` : array, shape (k,)
         The latent values
 
-    `scores` : RDD of nrows (tuple, array) pairs, each of shape (k,)
+    `scores` : RowMatrix, nrows, each of shape (k,)
         The scores (i.e. the representation of the data in PC space)
+
+    See also
+    --------
+    SVD : singular value decomposition
     """
 
     def __init__(self, k=3, svdmethod='direct'):
@@ -42,15 +43,22 @@ class PCA(object):
 
         Parameters
         ----------
-        data : RDD of (tuple, array) pairs, or RowMatrix
+        data : Series or a subclass (e.g. RowMatrix)
+            Data to estimate independent components from, must be a collection of
+            key-value pairs where the keys are identifiers and the values are
+            one-dimensional arrays
         """
 
-        if type(data) is not RowMatrix:
-            data = RowMatrix(data)
+        if not (isinstance(data, Series)):
+            raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')
 
-        data.center(0)
+        if type(data) is not RowMatrix:
+            data = data.toRowMatrix()
+
+        mat = data.center(0)
+
         svd = SVD(k=self.k, method=self.svdmethod)
-        svd.calc(data)
+        svd.calc(mat)
 
         self.scores = svd.u
         self.latent = svd.s
@@ -58,23 +66,28 @@ class PCA(object):
 
         return self
 
+    def transform(self, data):
+        """Project data into principal component space
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="do principal components analysis")
-    parser.add_argument("datafile", type=str)
-    parser.add_argument("outputdir", type=str)
-    parser.add_argument("k", type=int)
-    parser.add_argument("--svdmethod", choices=("direct", "em"), default="direct", required=False)
-    parser.add_argument("--preprocess", choices=("raw", "dff", "dff-highpass", "sub"), default="raw", required=False)
+        Parameters
+        ----------
+        data : Series or a subclass (e.g. RowMatrix)
+            Data to estimate independent components from, must be a collection of
+            key-value pairs where the keys are identifiers and the values are
+            one-dimensional arrays
 
-    args = parser.parse_args()
+        Returns
+        -------
+        scores : RowMatrix, nrows, each of shape (k,)
+            The scores (i.e. the representation of the data in PC space)
+        """
 
-    tsc = ThunderContext.start(appName="pca")
+        if not (isinstance(data, Series)):
+            raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')
 
-    data = tsc.loadText(args.datafile, args.preprocess).cache()
-    result = PCA(args.k, args.svdmethod).fit(data)
+        if type(data) is not RowMatrix:
+            data = RowMatrix(data)
 
-    outputdir = args.outputdir + "-pca"
-    save(result.comps, outputdir, "comps", "matlab")
-    save(result.latent, outputdir, "latent", "matlab")
-    save(result.scores, outputdir, "scores", "matlab")
+        mat = data.center(0)
+        scores = mat.times(self.comps.T / self.latent)
+        return scores

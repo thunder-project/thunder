@@ -1,10 +1,10 @@
 """
-Utilities for representing and working with matrices as RDDs
+Class with utilities for representing and working with matrices
 """
 
-from numpy import dot, outer, shape, ndarray, mean, add, subtract, multiply, zeros, std, divide, sqrt
+from numpy import dot, outer, shape, ndarray, add, subtract, multiply, zeros, divide
 from pyspark.accumulators import AccumulatorParam
-from thunder.rdds.series import Series
+from thunder.rdds import Series
 
 # TODO: right divide and left divide
 # TODO: common operation is multiplying an RDD by its transpose times a matrix, how to do this cleanly?
@@ -13,48 +13,62 @@ from thunder.rdds.series import Series
 
 class RowMatrix(Series):
     """
-    A large matrix backed by an RDD of (tuple, array) pairs
-    The tuple can contain a row index, or any other useful
-    identifier for each row.
+    Distributed matrix data.
+
+    Backed by an RDD of key-value pairs where the
+    key is a tuple identifier, and the value is a one-dimensional array.
 
     Parameters
     ----------
     rdd : RDD of (tuple, array) pairs
-        RDD with matrix data
+        RDD containing the series data
 
-    nrows : int, optional, default = None
-        Number of rows, will be automatially computed if not provided
+    index : array-like or one-dimensional list
+        Values must be unique, same length as the arrays in the input data.
+        Defaults to arange(len(data)) if not provided.
 
-    ncols : int, optional, default = None
-        Number of columns, will be automatically computed if not provided
+    dims : Dimensions
+        Specify the dimensions of the keys (min, max, and count),
+        can avoid computation if known in advance
+
+    nrows : int
+        Number of rows, will be automatially computed if not provided,
+        can save computation to specify if known in advance
+
+    ncols : int
+        Number of columns, will be automatically computed if not provided,
+        can save computation to specify if known in advance
 
     """
-    def __init__(self, rdd, nrows=None, ncols=None):
+
+    _metadata = ['_index', '_dims', '_ncols', '_nrows']
+
+    def __init__(self, rdd, index=None, dims=None, nrows=None, ncols=None):
         super(RowMatrix, self).__init__(rdd)
-        if nrows is None:
-            self.nrows = rdd.count()
-        else:
-            self.nrows = nrows
-        if ncols is None:
-            vec = rdd.first()[1]
+        self._index = index
+        self._dims = dims
+        self._nrows = nrows
+        self._ncols = ncols
+
+    @property
+    def nrows(self):
+        if self._nrows is None:
+            self._nrows = self.rdd.count()
+        return self._nrows
+
+    @property
+    def ncols(self):
+        if self._ncols is None:
+            vec = self.rdd.first()[1]
             if type(vec) is ndarray:
-                self.ncols = len(vec)
+                self._ncols = len(vec)
             else:
-                self.ncols = 1
-        else:
-            self.ncols = ncols
+                self._ncols = 1
+        return self._ncols
 
-    def collect(self):
-        """
-        Collect the rows of the matrix, dropping the keys
-        """
-        return self.rdd.map(lambda (k, v): v).collect()
-
-    def first(self):
-        """
-        Get the first row of the matrix
-        """
-        return self.rdd.first()[1]
+    @property
+    def _constructor(self):
+        return RowMatrix
 
     def rows(self):
         """
@@ -160,7 +174,8 @@ class RowMatrix(Series):
                 else:
                     new_d = dims[1]
             other_b = self.rdd.context.broadcast(other)
-            return RowMatrix(self.rdd.mapValues(lambda x: dot(x, other_b.value)), self.nrows, new_d)
+            return self._constructor(self.rdd.mapValues(lambda x: dot(x, other_b.value)),
+                                     nrows=self._nrows, ncols=new_d).__finalize__(self)
 
     def elementwise(self, other, op):
         """
@@ -184,14 +199,16 @@ class RowMatrix(Series):
                 raise Exception(
                     "cannot do elementwise op for shapes ("+self.nrows+","+self.ncols+") and ("+other.nrows+","+other.ncols+")")
             else:
-                return RowMatrix(self.rdd.zip(other.rdd).map(lambda ((k1, x), (k2, y)): (k1, add(x, y))), self.nrows, self.ncols)
+                return self._constructor(
+                    self.rdd.zip(other.rdd).map(lambda ((k1, x), (k2, y)): (k1, add(x, y)))).__finalize__(self)
         else:
             if dtype is ndarray:
                 dims = shape(other)
                 if len(dims) > 1 or dims[0] is not self.ncols:
                     raise Exception(
                         "cannot do elementwise operation for shapes ("+str(self.nrows)+","+str(self.ncols)+") and " + str(dims))
-            return RowMatrix(self.rdd.mapValues(lambda x: op(x, other)), self.nrows, self.ncols)
+            return self._constructor(
+                self.rdd.mapValues(lambda x: op(x, other))).__finalize__(self)
 
     def plus(self, other):
         """
@@ -216,42 +233,6 @@ class RowMatrix(Series):
         Elementwise division (see elementwise)
         """
         return RowMatrix.elementwise(self, other, divide)
-
-    def center(self, axis=0):
-        """
-        Center a RowMatrix in place by mean subtraction
-
-        Parameters
-        ----------
-        axis : int, optional, default = 0
-            Which axis to center along, rows (0) or columns (1)
-        """
-        if axis is 0:
-            self.rdd = self.rdd.mapValues(lambda x: x - mean(x))
-            return self
-        if axis is 1:
-            meanvec = self.mean()
-            self.rdd = self.minus(meanvec).rdd
-        else:
-            raise Exception("axis must be 0 or 1")
-
-    def zscore(self, axis=0):
-        """
-        ZScore a RowMatrix in place by mean subtraction and division by standard deviation
-
-        Parameters
-        ----------
-        axis : int, optional, default = 0
-            Which axis to zscore along, rows (0) or columns (1)
-        """
-        if axis is 0:
-            self.rdd = self.rdd.mapValues(lambda x: (x - mean(x))/std(x))
-        if axis is 1:
-            meanvec = self.mean()
-            stdvec = self.std()
-            self.rdd = self.minus(meanvec).dotdivide(stdvec).rdd
-        else:
-            raise Exception("axis must be 0 or 1")
 
 
 def matrixsum_iterator_self(iterator):
