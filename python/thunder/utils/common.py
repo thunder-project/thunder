@@ -1,10 +1,8 @@
-
 import pyspark
 
 
 def isrdd(data):
     """ Check whether data is an RDD or not"""
-
     dtype = type(data)
     if (dtype == pyspark.rdd.RDD) | (dtype == pyspark.rdd.PipelinedRDD):
         return True
@@ -17,4 +15,4 @@ def checkparams(param, opts):
     return error otherwise
     """
     if not param.lower() in opts:
-        raise ValueError("method must be one of %s, got %s" % (str(opts)[1:-1], param))
+        raise ValueError("Option must be one of %s, got %s" % (str(opts)[1:-1], param))
