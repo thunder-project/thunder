@@ -3,7 +3,6 @@
 import os
 import json
 from numpy import asarray, floor, ceil
-from pyspark import SparkContext
 from thunder.utils.datasets import DataSets
 from thunder.utils.common import checkparams
 from thunder.rdds.series import SeriesLoader
@@ -29,6 +28,7 @@ class ThunderContext():
     @classmethod
     def start(cls, *args, **kwargs):
         """Starts a ThunderContext using the same arguments as SparkContext"""
+        from pyspark import SparkContext
         return ThunderContext(SparkContext(*args, **kwargs))
 
     def loadSeries(self, datafile, nkeys=None, nvalues=None, inputformat='binary', minPartitions=None,
