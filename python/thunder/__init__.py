@@ -10,6 +10,4 @@ from .decoding import MassUnivariateClassifier
 from .decoding.uniclassify import GaussNaiveBayesClassifier, TTestClassifier
 from .utils.export import export
 
-set()
-
 __version__ = "0.3.2"
