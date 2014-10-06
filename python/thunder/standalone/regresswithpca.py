@@ -1,12 +1,12 @@
 """
-Standalone app for mass-unvariate regression combined with PCA
+Example standalone app for mass-unvariate regression combined with PCA
 """
 
 import argparse
 from thunder.regression import RegressionModel
 from thunder.factorization import PCA
 from thunder.utils.context import ThunderContext
-from thunder.utils import save
+from thunder.utils.save import save
 
 
 if __name__ == "__main__":
@@ -20,7 +20,7 @@ if __name__ == "__main__":
                         "dff-detrendnonlin", "dff-detrend-percentile"), default="raw", required=False)
 
     args = parser.parse_args()
-    
+
     tsc = ThunderContext.start(appName="regresswithpca")
 
     data = tsc.loadText(args.datafile, args.preprocess)
