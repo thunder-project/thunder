@@ -1,6 +1,6 @@
 @media (min-width: 1200px) {
   .container{
-      width: 970px;
+      width: 1020px;
   }
 }
 
@@ -38,7 +38,7 @@ a:focus {
 }
 
 h1 {
-	font-size: 48px;
+	font-size: 40px;
 }
 
 pre {
@@ -53,6 +53,14 @@ code {
 footer {
   margin-top: 30px;
 }
+
+table td {
+    border-top: none;
+}
+
+.table th, .table td { 
+     border-top: none; 
+ }
 
 .mythumbnail {
 	border-radius: 10px;
