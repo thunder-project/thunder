@@ -1,7 +1,7 @@
 from matplotlib.pyplot import imread
 from io import BytesIO
 from numpy import frombuffer, prod, dstack
-from thunder.rdds.rddio.readers import getParallelReaderForPath
+from thunder.rdds.fileio.readers import getParallelReaderForPath
 from thunder import Images
 
 

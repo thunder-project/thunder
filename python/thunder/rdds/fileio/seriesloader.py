@@ -3,7 +3,7 @@ import json
 from numpy import array, dtype, frombuffer, arange, load
 from scipy.io import loadmat
 import urlparse
-from thunder.rdds.rddio.readers import getFileReaderForPath, FileNotFoundError
+from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError
 from thunder import Series
 
 

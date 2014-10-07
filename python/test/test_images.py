@@ -8,7 +8,7 @@ from numpy import arange, array, array_equal, dtype, prod, zeros
 import itertools
 from nose.tools import assert_equals, assert_true, assert_almost_equal, assert_raises
 
-from thunder.rdds.rddio.imagesloader import ImagesLoader
+from thunder.rdds.fileio.imagesloader import ImagesLoader
 from thunder.rdds.images import _BlockMemoryAsReversedSequence
 from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
 

@@ -8,7 +8,7 @@ from matplotlib.pyplot import imsave
 from thunder.rdds.imageblocks import ImageBlocks, ImageBlockValue
 from thunder.rdds import Data
 from thunder.rdds.data import parseMemoryString
-from thunder.rdds.rddio.writers import getFileWriterForPath, getParallelWriterForPath, getCollectedFileWriterForPath
+from thunder.rdds.fileio.writers import getFileWriterForPath, getParallelWriterForPath, getCollectedFileWriterForPath
 
 
 class Images(Data):

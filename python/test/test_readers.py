@@ -1,7 +1,7 @@
 import unittest
 from nose.tools import assert_raises
 
-from thunder.rdds.rddio.readers import LocalFSFileReader, FileNotFoundError
+from thunder.rdds.fileio.readers import LocalFSFileReader, FileNotFoundError
 
 
 class TestLocalReader(unittest.TestCase):

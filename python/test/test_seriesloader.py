@@ -4,7 +4,7 @@ import os
 import struct
 from nose.tools import assert_equals, assert_true, assert_almost_equal
 
-from thunder.rdds.rddio.seriesloader import SeriesLoader
+from thunder.rdds.fileio.seriesloader import SeriesLoader
 from test_utils import PySparkTestCaseWithOutputDir
 
 
