@@ -3,6 +3,7 @@ import os
 import urllib
 import urlparse
 import errno
+import itertools
 
 _have_boto = False
 try:
@@ -21,6 +22,24 @@ class FileNotFoundError(IOError):
     See PEP 3151 for background and inspiration.
     """
     pass
+
+
+def appendExtensionToPathSpec(datapath, ext=None):
+    if ext:
+        if '*' in datapath:
+            if datapath[-1] == '*':
+                # path ends in wildcard but without postfix
+                # use ext as postfix
+                return datapath + ext
+            else:
+                # ext specified, but datapath apparently already has a postfix
+                # drop ext and use existing postfix
+                return datapath
+        else:
+            # no wildcard in path yet
+            return datapath+'*'+ext
+    else:
+        return datapath
 
 
 def _localRead(filepath):
@@ -69,7 +88,7 @@ class LocalFSParallelReader(object):
             files = sorted(glob.glob(abspath))
 
         if len(files) < 1:
-            raise IOError('cannot find files of type "%s" in %s' % (ext if ext else '*', abspath))
+            raise FileNotFoundError('cannot find files of type "%s" in %s' % (ext if ext else '*', abspath))
 
         if startidx or stopidx:
             if startidx is None:
@@ -94,9 +113,84 @@ class LocalFSParallelReader(object):
 class _BotoS3Client(object):
     # todo: boto s3 readers should throw FileNotFoundError as appropriate
     @staticmethod
-    def _parseS3Schema(datapath):
-        parseresult = urlparse.urlparse(datapath)
-        return parseresult.netloc, parseresult.path.lstrip("/")
+    def parseS3Query(query, delim='/'):
+        keyname = ''
+        prefix = ''
+        postfix = ''
+
+        parseresult = urlparse.urlparse(query)
+        bucketname = parseresult.netloc
+        keyquery = parseresult.path.lstrip(delim)
+
+        if not parseresult.scheme.lower() in ('', "s3", "s3n"):
+            raise ValueError("Query scheme must be one of '', 's3', or 's3n'; got: '%s'" % parseresult.scheme)
+
+        # special case handling for strings of form "/bucket/dir":
+        if (not bucketname.strip()) and keyquery:
+            toks = keyquery.split(delim, 1)
+            bucketname = toks[0]
+            if len(toks) == 2:
+                keyquery = toks[1]
+            else:
+                keyquery = ''
+
+        if not bucketname.strip():
+            raise ValueError("Could not parse bucket name from query string '%s'" % query)
+
+        keytoks = keyquery.split("*")
+        nkeytoks = len(keytoks)
+        if nkeytoks == 0:
+            pass
+        elif nkeytoks == 1:
+            keyname = keytoks[0]
+        elif nkeytoks == 2:
+            rdelimidx = keytoks[0].rfind(delim)
+            if rdelimidx >= 0:
+                keyname = keytoks[0][:(rdelimidx+1)]
+                prefix = keytoks[0][(rdelimidx+1):] if len(keytoks[0]) > (rdelimidx+1) else ''
+            else:
+                prefix = keytoks[0]
+            postfix = keytoks[1]
+        else:
+            raise ValueError("Only one wildcard ('*') allowed in query string, got: '%s'" % query)
+
+        return bucketname, keyname, prefix, postfix
+
+    @staticmethod
+    def checkPrefix(bucket, keypath, delim='/'):
+        return len(bucket.get_all_keys(prefix=keypath, delimiter=delim, max_keys=1)) > 0
+
+    @staticmethod
+    def filterPredicate(key, post, inclusive=False):
+        kname = key.name
+        retval = not inclusive
+        if kname.endswith(post):
+            retval = not retval
+
+        return retval
+
+    @staticmethod
+    def retrieveKeys(bucket, key, prefix='', postfix='', delim='/', exclude_directories=True):
+        if key and prefix:
+            assert key.endswith(delim)
+
+        keypath = key+prefix
+        # if we are asking for a key that doesn't end in a delimiter, check whether it might
+        # actually be a directory
+        if not keypath.endswith(delim) and keypath:
+            # not all directories have actual keys associated with them
+            # check for matching prefix instead of literal key:
+            if _BotoS3Client.checkPrefix(bucket, keypath+delim, delim=delim):
+                # found a directory; change path so that it explicitly refers to directory
+                keypath += delim
+
+        results = bucket.list(prefix=keypath, delimiter=delim)
+        if postfix:
+            return itertools.ifilter(lambda k_: _BotoS3Client.filterPredicate(k_, postfix, inclusive=True), results)
+        elif exclude_directories:
+            return itertools.ifilter(lambda k_: _BotoS3Client.filterPredicate(k_, delim, inclusive=False), results)
+        else:
+            return results
 
     def __init__(self):
         if not _have_boto:
@@ -124,26 +218,30 @@ class BotoS3ParallelReader(_BotoS3Client):
         self.sc = sparkcontext
         self.lastnrecs = None
 
-    def _listFiles(self, datapath, ext=None, startidx=None, stopidx=None):
-        bucketname, keyname = _BotoS3Client._parseS3Schema(datapath)
+    def _listFiles(self, datapath, startidx=None, stopidx=None):
+        parse = _BotoS3Client.parseS3Query(datapath)
+
         conn = boto.connect_s3(aws_access_key_id=self.accessKey, aws_secret_access_key=self.secretKey)
-        bucket = conn.get_bucket(bucketname)
-        keylist = bucket.list(prefix=keyname)
-        if ext:
-            keynamelist = [key.name for key in keylist if key.name.endswith(ext)]
-        else:
-            keynamelist = [key.name for key in keylist]
+        bucket = conn.get_bucket(parse[0])
+        keys = _BotoS3Client.retrieveKeys(bucket, parse[1], prefix=parse[2], postfix=parse[3])
+        keynamelist = [key.name for key in keys]
         keynamelist.sort()
+
         if startidx or stopidx:
             if startidx is None:
                 startidx = 0
             if stopidx is None:
                 stopidx = len(keynamelist)
             keynamelist = keynamelist[startidx:stopidx]
-        return bucketname, keynamelist
+
+        return bucket.name, keynamelist
 
     def read(self, datapath, ext=None, startidx=None, stopidx=None):
-        bucketname, keynamelist = self._listFiles(datapath, ext=ext, startidx=startidx, stopidx=stopidx)
+        datapath = appendExtensionToPathSpec(datapath, ext)
+        bucketname, keynamelist = self._listFiles(datapath, startidx=startidx, stopidx=stopidx)
+
+        if not keynamelist:
+            raise FileNotFoundError("No S3 objects found for '%s'" % datapath)
 
         access_key = self.accessKey
         secret_key = self.secretKey
@@ -167,24 +265,64 @@ class BotoS3ParallelReader(_BotoS3Client):
 class LocalFSFileReader(object):
     def read(self, datapath, filename=None):
         abspath = LocalFSParallelReader.uriToPath(datapath)
-        if filename:
-            abspath = os.path.join(abspath, filename)
 
-        return _localRead(abspath)
+        if filename:
+            if os.path.isdir(abspath):
+                abspath = os.path.join(abspath, filename)
+            else:
+                abspath = os.path.join(os.path.dirname(abspath), filename)
+
+        globnames = glob.glob(abspath)
+        if not globnames:
+            raise FileNotFoundError("No file found matching: '%s'" % abspath)
+        if len(globnames) > 1:
+            raise ValueError("Found multiple files matching: '%s'" % abspath)
+
+        return _localRead(globnames[0])
 
 
 class BotoS3FileReader(_BotoS3Client):
     def read(self, datapath, filename=None):
-        bucketname, keyname = _BotoS3Client._parseS3Schema(datapath)
+
+        parse = _BotoS3Client.parseS3Query(datapath)
+        conn = boto.connect_s3(aws_access_key_id=self.accessKey, aws_secret_access_key=self.secretKey)
+        bucketname = parse[0]
+        keyname = parse[1]
+        bucket = conn.get_bucket(bucketname)
 
         if filename:
+            # check whether last section of datapath refers to a directory
             if not keyname.endswith("/"):
-                keyname += "/"
-            keyname = keyname + filename
+                if self.checkPrefix(bucket, keyname + "/"):
+                    # keyname is a directory, but we've omitted the trailing "/"
+                    keyname += "/"
+                else:
+                    # assume keyname refers to an object other than a directory
+                    # look for filename in same directory as keyname
+                    slidx = keyname.rfind("/")
+                    if slidx >= 0:
+                        keyname = keyname[:(slidx+1)]
+                    else:
+                        # no directory separators, so our object is in the top level of the bucket
+                        keyname = ""
+            keyname += filename
 
-        conn = boto.connect_s3(aws_access_key_id=self.accessKey, aws_secret_access_key=self.secretKey)
-        bucket = conn.get_bucket(bucketname)
-        return bucket.get_key(keyname).get_contents_as_string()
+
+        keys = _BotoS3Client.retrieveKeys(bucket, keyname)
+        # keys is probably a lazy-loading ifilter iterable
+        try:
+            key = keys.next()
+        except StopIteration:
+            raise FileNotFoundError("Could not find S3 object for bucket: '%s', keyname: '%s'" % (bucket.name, keyname))
+        # we expect to only have a single key returned
+        nextkey = None
+        try:
+            nextkey = keys.next()
+        except StopIteration:
+            pass
+        if nextkey:
+            raise ValueError("Found multiple S3 keys for: '%s'" % datapath)
+        return key.get_contents_as_string()
 
 
 SCHEMAS_TO_PARALLELREADERS = {

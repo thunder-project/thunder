@@ -57,7 +57,9 @@ class _BotoS3Writer(_BotoS3Client):
         This is expected to end up being called once for each spark worker.
         """
         conn = boto.connect_s3(self.accessKey, self.secretKey)
-        bucketname, keyname = _BotoS3Client._parseS3Schema(datapath)
+        parsed = _BotoS3Client.parseS3Query(datapath)
+        bucketname = parsed[0]
+        keyname = parsed[1]
         if isDirectory and (not keyname.endswith("/")):
             keyname += "/"
         bucket = conn.get_bucket(bucketname)

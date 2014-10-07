@@ -500,15 +500,20 @@ class SeriesLoader(object):
 
     @staticmethod
     def __normalizeDatafilePattern(datapath, ext):
+        if ext and (not datapath.endswith(ext)):
+            if datapath.endswith("*"):
+                datapath += ext
+            elif datapath.endswith("/"):
+                datapath += "*" + ext
+            else:
+                datapath += "/*" + ext
+
         parseresult = urlparse.urlparse(datapath)
         if parseresult.scheme:
             # this appears to already be a fully-qualified URI
             return datapath
-        if datapath.endswith(ext) or "*" in datapath:
-            # this appears to already be a filename given with the specified extension or a wildcard expression
+        else:
             return "file://" + datapath
-        # this appears to be a directory or similar. add wildcard match to specified extension
-        return "file://" + datapath + "/*." + ext
 
     def fromText(self, datafile, nkeys=None, ext="txt"):
         """
@@ -656,6 +661,7 @@ class SeriesLoader(object):
         """
         if not conffile:
             return {}
+
         reader = getFileReaderForPath(datafile)()
         try:
             jsonbuf = reader.read(datafile, filename=conffile)
