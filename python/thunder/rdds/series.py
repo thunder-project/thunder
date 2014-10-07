@@ -503,14 +503,17 @@ class SeriesLoader(object):
         if ext and (not datapath.endswith(ext)):
             if datapath.endswith("*"):
                 datapath += ext
-            else:
+            elif datapath.endswith("/"):
                 datapath += "*" + ext
+            else:
+                datapath += "/*" + ext
+
         parseresult = urlparse.urlparse(datapath)
         if parseresult.scheme:
             # this appears to already be a fully-qualified URI
             return datapath
         else:
-            return "file://" + datapath + "/*." + ext
+            return "file://" + datapath
 
     def fromText(self, datafile, nkeys=None, ext="txt"):
         """
@@ -658,10 +661,7 @@ class SeriesLoader(object):
         """
         if not conffile:
             return {}
-        slashidx = datafile.rfind("/")
-        # truncate path at last directory separator if present
-        if slashidx >= 0:
-            datafile = datafile[:slashidx+1]
+
         reader = getFileReaderForPath(datafile)()
         try:
             jsonbuf = reader.read(datafile, filename=conffile)

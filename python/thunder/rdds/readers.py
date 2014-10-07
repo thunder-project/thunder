@@ -265,28 +265,55 @@ class BotoS3ParallelReader(_BotoS3Client):
 class LocalFSFileReader(object):
     def read(self, datapath, filename=None):
         abspath = LocalFSParallelReader.uriToPath(datapath)
-        if filename:
-            abspath = os.path.join(abspath, filename)
 
-        return _localRead(abspath)
+        if filename:
+            if os.path.isdir(abspath):
+                abspath = os.path.join(abspath, filename)
+            else:
+                abspath = os.path.join(os.path.dirname(abspath), filename)
+
+        globnames = glob.glob(abspath)
+        if not globnames:
+            raise FileNotFoundError("No file found matching: '%s'" % abspath)
+        if len(globnames) > 1:
+            raise ValueError("Found multiple files matching: '%s'" % abspath)
+
+        return _localRead(globnames[0])
 
 
 class BotoS3FileReader(_BotoS3Client):
     def read(self, datapath, filename=None):
-        if filename:
-            if not datapath.endswith("/"):
-                datapath += "/"
-            datapath = datapath + filename
 
         parse = _BotoS3Client.parseS3Query(datapath)
         conn = boto.connect_s3(aws_access_key_id=self.accessKey, aws_secret_access_key=self.secretKey)
-        bucket = conn.get_bucket(parse[0])
-        keys = _BotoS3Client.retrieveKeys(bucket, parse[1], prefix=parse[2], postfix=parse[3])
+        bucketname = parse[0]
+        keyname = parse[1]
+        bucket = conn.get_bucket(bucketname)
+
+        if filename:
+            # check whether last section of datapath refers to a directory
+            if not keyname.endswith("/"):
+                if self.checkPrefix(bucket, keyname + "/"):
+                    # keyname is a directory, but we've omitted the trailing "/"
+                    keyname += "/"
+                else:
+                    # assume keyname refers to an object other than a directory
+                    # look for filename in same directory as keyname
+                    slidx = keyname.rfind("/")
+                    if slidx >= 0:
+                        keyname = keyname[:(slidx+1)]
+                    else:
+                        # no directory separators, so our object is in the top level of the bucket
+                        keyname = ""
+            keyname += filename
+
+
+        keys = _BotoS3Client.retrieveKeys(bucket, keyname)
         # keys is probably a lazy-loading ifilter iterable
         try:
             key = keys.next()
         except StopIteration:
-            raise FileNotFoundError("Could not find S3 object for: '%s'" % datapath)
+            raise FileNotFoundError("Could not find S3 object for bucket: '%s', keyname: '%s'" % (bucket.name, keyname))
         # we expect to only have a single key returned
         nextkey = None
         try:
