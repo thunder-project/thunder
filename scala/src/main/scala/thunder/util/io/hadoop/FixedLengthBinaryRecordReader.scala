@@ -1,6 +1,7 @@
 package thunder.util.io.hadoop
 
 import java.io.IOException
+import scala.util.control.Breaks._
 import org.apache.hadoop.fs.FSDataInputStream
 import org.apache.hadoop.io.{BytesWritable, LongWritable}
 import org.apache.hadoop.io.compress.CompressionCodecFactory
@@ -105,10 +106,19 @@ class FixedLengthBinaryRecordReader extends RecordReader[LongWritable, BytesWrit
       // setup a buffer to store the record
       val buffer = recordValue.getBytes
 
-      fileInputStream.read(buffer, 0, recordLength)
-
-      // update our current position
-      currentPosition = currentPosition + recordLength
+      breakable {
+        var bytestoread: Int = recordLength
+        while (bytestoread > 0) {
+          val bytesread = fileInputStream.read(buffer, recordLength - bytestoread, bytestoread)
+          if (bytesread == -1) {
+            // EOF
+            break() 
+          }
+          // update our current position
+          currentPosition += bytesread
+          bytestoread -= bytesread
+        }
+      }
 
       // return true
       return true

@@ -1,6 +1,7 @@
-from nose.tools import assert_equals, assert_true, assert_almost_equal, assert_raises
 import unittest
-from thunder.rdds.readers import LocalFSFileReader, FileNotFoundError
+from nose.tools import assert_raises
+
+from thunder.rdds.fileio.readers import LocalFSFileReader, FileNotFoundError
 
 
 class TestLocalReader(unittest.TestCase):

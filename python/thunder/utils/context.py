@@ -3,10 +3,10 @@
 import os
 import json
 from numpy import asarray, floor, ceil
+from thunder.rdds.fileio.imagesloader import ImagesLoader
+from thunder.rdds.fileio.seriesloader import SeriesLoader
 from thunder.utils.datasets import DataSets
 from thunder.utils.common import checkparams
-from thunder.rdds.series import SeriesLoader
-from thunder.rdds.images import ImagesLoader
 
 
 class ThunderContext():

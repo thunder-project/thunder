@@ -2,7 +2,9 @@ import os
 import shutil
 import urllib
 import urlparse
-from thunder.rdds.readers import _BotoS3Client, getByScheme
+
+from thunder.rdds.fileio.readers import _BotoS3Client, getByScheme
+
 
 _have_boto = False
 try:
