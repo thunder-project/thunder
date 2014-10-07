@@ -1,10 +1,9 @@
 """
 Class with utilities for representing and working with matrices
 """
-
 from numpy import dot, outer, shape, ndarray, add, subtract, multiply, zeros, divide
-from pyspark.accumulators import AccumulatorParam
 from thunder.rdds import Series
+
 
 # TODO: right divide and left divide
 # TODO: common operation is multiplying an RDD by its transpose times a matrix, how to do this cleanly?
@@ -99,6 +98,17 @@ class RowMatrix(Series):
         method : string, optional, default = "reduce"
             Method to use for summation
         """
+
+        from pyspark.accumulators import AccumulatorParam
+
+        class MatrixAccumulatorParam(AccumulatorParam):
+            def zero(self, value):
+                return zeros(shape(value))
+
+            def addInPlace(self, val1, val2):
+                val1 += val2
+                return val1
+
         if method is "reduce":
             return self.rdd.map(lambda (k, v): v).mapPartitions(matrixsum_iterator_self).sum()
 
@@ -150,19 +160,7 @@ class RowMatrix(Series):
                 raise Exception(
                     "cannot multiply shapes ("+str(self.nrows)+","+str(self.ncols)+") and ("+str(other.nrows)+","+str(other.ncols)+")")
             else:
-                if method is "reduce":
-                    return self.rdd.zip(other.rdd).map(lambda ((k1, x), (k2, y)): (x, y)).mapPartitions(matrixsum_iterator_other).sum()
-                if method is "accum":
-                    global mat
-                    mat = self.rdd.context.accumulator(zeros((self.ncols, other.ncols)), MatrixAccumulatorParam())
-
-                    def outersum(x):
-                        global mat
-                        mat += outer(x[0], x[1])
-                    self.rdd.zip(other.rdd).map(lambda ((k1, x), (k2, y)): (x, y)).foreach(outersum)
-                    return mat.value
-                else:
-                    raise Exception("method must be reduce or accum")
+                return self.rdd.zip(other.rdd).map(lambda ((k1, x), (k2, y)): (x, y)).mapPartitions(matrixsum_iterator_other).sum()
         else:
             if dtype == ndarray:
                 dims = shape(other)
@@ -243,11 +241,5 @@ def matrixsum_iterator_other(iterator):
     yield sum(outer(x, y) for x, y in iterator)
 
 
-class MatrixAccumulatorParam(AccumulatorParam):
-    def zero(self, value):
-        return zeros(shape(value))
 
-    def addInPlace(self, val1, val2):
-        val1 += val2
-        return val1
 
