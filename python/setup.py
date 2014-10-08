@@ -16,6 +16,7 @@ setup(
               'thunder.factorization',
               'thunder.lib',
               'thunder.rdds',
+              'thunder.rdds.fileio',
               'thunder.regression',
               'thunder.standalone',
               'thunder.utils',
