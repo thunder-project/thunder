@@ -210,29 +210,29 @@ class TestSeriesBinaryWriteFromStack(PySparkTestCaseWithOutputDir):
                     raise AssertionError(msg, e)
 
     @staticmethod
-    def generate_test_images(narrays, dims, datatype):
+    def generate_tst_images(narrays, dims, datatype):
         nimgvals = reduce(lambda x, y: x * y, dims)
         return [arange(i*nimgvals, (i+1)*nimgvals, dtype=datatype).reshape(dims) for i in xrange(narrays)]
 
     def _roundtrip_tst_driver(self, moreTests=False):
         # parameterized test fixture
         #arrays = [arange(6, dtype='int16').reshape((2, 3), order='F')]
-        arrays = TestSeriesBinaryWriteFromStack.generate_test_images(1, (2, 3), "int16")
+        arrays = TestSeriesBinaryWriteFromStack.generate_tst_images(1, (2, 3), "int16")
         self._run_roundtrip_tst(0, arrays, 6*2)
         self._run_roundtrip_tst(1, arrays, 2*2)
         self._run_roundtrip_tst(2, arrays, 5*2)
         self._run_roundtrip_tst(3, arrays, 7*2)
 
         if moreTests:
-            arrays = TestSeriesBinaryWriteFromStack.generate_test_images(3, (5, 7, 5), "int16")
+            arrays = TestSeriesBinaryWriteFromStack.generate_tst_images(3, (5, 7, 5), "int16")
             self._run_roundtrip_tst(4, arrays, 3*5*2)
 
-            arrays = TestSeriesBinaryWriteFromStack.generate_test_images(3, (5, 7, 5), "int32")
+            arrays = TestSeriesBinaryWriteFromStack.generate_tst_images(3, (5, 7, 5), "int32")
             self._run_roundtrip_tst(5, arrays, 3*5*4)
             self._run_roundtrip_tst(6, arrays, 5*7*4)
             self._run_roundtrip_tst(7, arrays, 3*4)
 
-            arrays = TestSeriesBinaryWriteFromStack.generate_test_images(3, (2, 4, 6), "float32")
+            arrays = TestSeriesBinaryWriteFromStack.generate_tst_images(3, (2, 4, 6), "float32")
             self._run_roundtrip_tst(8, arrays, 5*4)
 
     def test_roundtrip(self):
