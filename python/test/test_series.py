@@ -113,3 +113,16 @@ class TestSeriesMethods(PySparkTestCase):
         keys, values = data.query(inds)
         assert(allclose(values[0, :], array([1.5, 2., 3.5])))
         assert(allclose(values[1, :], array([4.0, 2.0, 1.0])))
+
+    def test_query_linear_singleton(self):
+        data_local = [
+            ((1,), array([1.0, 2.0, 3.0])),
+            ((2,), array([2.0, 2.0, 4.0])),
+            ((3,), array([4.0, 2.0, 1.0]))
+        ]
+
+        data = Series(self.sc.parallelize(data_local))
+
+        inds = array([array([1, 2])])
+        keys, values = data.query(inds)
+        assert(allclose(values[0, :], array([1.5, 2., 3.5])))
