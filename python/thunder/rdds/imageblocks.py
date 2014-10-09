@@ -29,13 +29,25 @@ class ImageBlocks(Data):
         seriesrdd = blockedrdd.flatMap(blockToSeriesAdapter)
         return Series(seriesrdd)
 
+    @staticmethod
+    def getBinarySeriesNameForKey(blockKey):
+        """
+
+        Returns
+        -------
+        string blocklabel
+            Block label will be in form "key02_0000k-key01_0000j-key00_0000i" for i,j,k x,y,z indicies as first series
+            in block. No extension (e.g. ".bin") is appended to the block label.
+        """
+        return '-'.join(reversed(["key%02d_%05g" % (ki, k) for (ki, k) in enumerate(blockKey)]))
+
     def toBinarySeries(self, seriesDim=0):
 
         blockedrdd = self._groupIntoSeriesBlocks()
 
         def blockToBinarySeries(kv):
             blockKey, blockVal = kv
-            label = '-'.join(reversed(["key%02d_%05g" % (ki, k) for (ki, k) in enumerate(blockKey)]))
+            label = ImageBlocks.getBinarySeriesNameForKey(blockKey)
             keypacker = None
             buf = StringIO.StringIO()
             for seriesKey, series in ImageBlocks._blockToSeries(blockVal, seriesDim):

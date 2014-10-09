@@ -1,4 +1,4 @@
-from numpy import arctan2, sqrt, pi, array, size, shape, ones, abs, dstack, clip, transpose, zeros
+from numpy import arctan2, sqrt, pi, array, size, shape, ones, abs, dstack, clip, transpose, zeros, inf
 import colorsys
 from matplotlib import colors, cm
 
@@ -73,7 +73,7 @@ class Colorize(object):
             raise Exception("image data must have 3 or 4 dimensions, first is for coloring, remainder are xy(z)")
 
         if (self.totype == 'rgb') or (self.totype == 'hsv'):
-            out = abs(img) * self.scale
+            out = clip(img, 0, inf) * self.scale
             if img.ndim == 4:
                 out = transpose(out, (1, 2, 3, 0))
             if img.ndim == 3:

@@ -1,9 +1,11 @@
+import json
 import types
 import copy
 from numpy import ndarray, array, sum, mean, std, size, arange, \
-    polyfit, polyval, percentile, float16, asarray, maximum, zeros
+    polyfit, polyval, percentile, float16, asarray, maximum, zeros, corrcoef
 from scipy.io import loadmat
 
+from thunder.rdds.fileio.writers import getFileWriterForPath
 from thunder.rdds import Data
 from thunder.rdds.keys import Dimensions
 from thunder.utils.common import checkparams
@@ -191,11 +193,7 @@ class Series(Data):
                 perc = 20
             basefunc = lambda x: percentile(x, perc)
 
-        def func(y):
-            baseline = basefunc(y)
-            return (y - baseline) / (baseline + 0.1)
-
-        return self.apply(func)
+        return self.apply(lambda y: (y - basefunc(y)) / (basefunc(y) + 0.1))
 
     def center(self, axis=0):
         """ Center series data by subtracting the mean
@@ -224,7 +222,7 @@ class Series(Data):
             Which axis to standardize along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.apply(lambda x: x - mean(x))
+            return self.apply(lambda x: x / std(x))
         elif axis == 1:
             stdvec = self.stdev()
             return self.apply(lambda x: x / stdvec)
@@ -251,6 +249,43 @@ class Series(Data):
         else:
             raise Exception('Axis must be 0 or 1')
 
+    def correlate(self, signal, var='s'):
+        """
+        Correlate series data against one or many one-dimensional arrays
+
+        Parameters
+        ----------
+        signal : array, or str
+            Signal(s) to correlate against, can be a numpy array or a
+            MAT file containing the signal as a variable
+
+        var : str
+            Variable name if loading from a MAT file
+        """
+
+        if type(signal) is str:
+            s = loadmat(signal)[var]
+        else:
+            s = asarray(signal)
+
+        # handle the case of a 1d signal
+        if s.ndim == 1:
+            if size(s) != size(self.index):
+                raise Exception('Size of signal to correlate with, %g, does not match size of series' % size(s))
+            rdd = self.rdd.mapValues(lambda x: corrcoef(x, s)[0, 1])
+            newindex = 0
+        # handle multiple 1d signals
+        elif s.ndim == 2:
+            if s.shape[1] != size(self.index):
+                raise Exception('Length of signals to correlate with, %g, does not match size of series' % s.shape[1])
+            rdd = self.rdd.mapValues(lambda x: array([corrcoef(x, y)[0, 1] for y in s]))
+            newindex = range(0, s.shape[0])
+        else:
+            raise Exception('Signal to correlate with must have 1 or 2 dimensions')
+
+        # return result
+        return self._constructor(rdd, index=newindex).__finalize__(self)
+
     def apply(self, func):
         """ Apply arbitrary function to values of a Series,
         preserving keys and indices
@@ -260,7 +295,7 @@ class Series(Data):
         func : function
             Function to apply
         """
-        rdd = self.rdd.mapValues(lambda x: func(x))
+        rdd = self.rdd.mapValues(func)
         return self._constructor(rdd, index=self._index).__finalize__(self)
 
     def seriesSum(self):
@@ -420,15 +455,7 @@ class Series(Data):
             result = array(self.rdd.values().takeSample(False, nsamples))
         return result
 
-    def filterOn(self, inds):
-        """Filter to return records with indices matching inds"""
-
-        inds_set = set(inds.flat)
-        inds_bc = self.rdd.context.broadcast(inds_set)
-        subset = self.rdd.filter(lambda (k, _): k in inds_bc.value)
-        return subset
-
-    def query(self, inds):
+    def query(self, inds, var='inds'):
         """
         Extract records with indices matching those provided
 
@@ -437,7 +464,9 @@ class Series(Data):
         inds : str, or array-like (2D)
             Array of indices, each an array-like of integer indices, or
             filename of a MAT file containing a set of indices as a cell array
-            stored in the variable inds
+
+        var : str, optional, default = 'inds'
+            Variable name if loading from a MAT file
 
         Returns
         -------
@@ -449,7 +478,10 @@ class Series(Data):
         """
 
         if isinstance(inds, str):
-            inds = loadmat(inds)['inds'][0]
+            inds = loadmat(inds)[var][0]
+        else:
+            inds = asarray(inds)
+
         n = len(inds)
 
         from thunder.rdds.keys import _indtosub_converter
@@ -462,7 +494,9 @@ class Series(Data):
 
         for idx, indlist in enumerate(inds):
             if len(indlist) > 0:
-                values[idx, :] = data.filterOn(indlist).map(lambda (k, x): x).sum() / len(indlist)
+                inds_set = set(indlist)
+                inds_bc = self.rdd.context.broadcast(inds_set)
+                values[idx, :] = data.filterOnKeys(lambda k: k in inds_bc.value).values().sum() / len(indlist)
                 keys[idx, :] = mean(map(lambda k: converter(k), indlist), axis=0)
 
         return keys, values
@@ -487,5 +521,23 @@ class Series(Data):
         """
         from thunder.rdds import SpatialSeries
         return SpatialSeries(self.rdd).__finalize__(self)
+
+
+def writeSeriesConfig(outputdirname, nkeys, nvalues, dims=None, keytype='int16', valuetype='int16', confname="conf.json",
+                      overwrite=True):
+    filewriterclass = getFileWriterForPath(outputdirname)
+    # write configuration file
+    conf = {'input': outputdirname,
+            'nkeys': nkeys, 'nvalues': nvalues,
+            'format': str(valuetype), 'keyformat': str(keytype)}
+    if dims:
+        conf["dims"] = dims
+
+    confwriter = filewriterclass(outputdirname, confname, overwrite=overwrite)
+    confwriter.writeFile(json.dumps(conf, indent=2))
+
+    # touch "SUCCESS" file as final action
+    successwriter = filewriterclass(outputdirname, "SUCCESS", overwrite=overwrite)
+    successwriter.writeFile('')
 
 

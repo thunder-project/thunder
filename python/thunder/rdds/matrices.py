@@ -71,13 +71,13 @@ class RowMatrix(Series):
 
     def rows(self):
         """
-        Get the rows of the matrix, dropping the keys
+        Get the rows of the matrix, dropping the keys.
         """
         return self.rdd.map(lambda (_, v): v)
 
     def cov(self, axis=None):
         """
-        Compute a covariance matrix
+        Compute covariance of a distributed matrix.
 
         Parameters
         ----------
@@ -91,7 +91,9 @@ class RowMatrix(Series):
 
     def gramian(self, method="accum"):
         """
-        Compute gramian matrix (the product of the matrix with its transpose, i.e. A^T * A)
+        Compute gramian of a distributed matrix.
+
+        The product of the matrix with its transpose, i.e. A^T * A
 
         Parameters
         ----------
@@ -137,10 +139,11 @@ class RowMatrix(Series):
         else:
             raise Exception("method must be reduce or accum")
 
-    def times(self, other, method="reduce"):
+    def times(self, other):
         """
-        Multiply a RowMatrix by another matrix, either another RowMatrix
-        or a local matrix
+        Multiply a RowMatrix by another matrix.
+
+        Other matrix can be either another RowMatrix or a local matrix.
         NOTE: If multiplying two RowMatrices, they must have the same
         number of partitions and number of records per partition,
         e.g. because one was created through a map of the other,
@@ -177,8 +180,10 @@ class RowMatrix(Series):
 
     def elementwise(self, other, op):
         """
-        Apply an elementwise operation to two RowMatrices
-        or between a RowMatrix and a local array
+        Apply an elementwise operation to distributed matrices.
+
+        Can be applied to two RowMatrices,
+        or between a RowMatrix and a local array.
         NOTE: For two RowMatrices, must have the same partitions
         and number of records per iteration (e.g. because
         one was created through a map on the other, see zip)
@@ -210,25 +215,42 @@ class RowMatrix(Series):
 
     def plus(self, other):
         """
-        Elementwise addition (see elementwise)
+        Elementwise addition of distributed matrices.
+
+        See also
+        --------
+        elementwise
+
         """
         return RowMatrix.elementwise(self, other, add)
 
     def minus(self, other):
         """
-        Elementwise subtraction (see elementwise)
+        Elementwise division of distributed matrices.
+
+        See also
+        --------
+        elementwise
         """
         return RowMatrix.elementwise(self, other, subtract)
 
     def dottimes(self, other):
         """
-        Elementwise multiplcation (see elementwise)
+        Elementwise division of distributed matrices.
+
+        See also
+        --------
+        elementwise
         """
         return RowMatrix.elementwise(self, other, multiply)
 
     def dotdivide(self, other):
         """
-        Elementwise division (see elementwise)
+        Elementwise division of distributed matrices.
+
+        See also
+        --------
+        elementwise
         """
         return RowMatrix.elementwise(self, other, divide)
 

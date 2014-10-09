@@ -9,5 +9,6 @@ from .utils.datasets import DataSets
 from .decoding import MassUnivariateClassifier
 from .decoding.uniclassify import GaussNaiveBayesClassifier, TTestClassifier
 from .utils.export import export
+from .viz import Colorize
 
 __version__ = "0.3.2"

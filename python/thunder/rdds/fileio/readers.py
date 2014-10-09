@@ -42,7 +42,17 @@ def appendExtensionToPathSpec(datapath, ext=None):
         return datapath
 
 
-def _localRead(filepath):
+def selectByStartAndStopIndices(files, startidx, stopidx):
+    if startidx or stopidx:
+        if startidx is None:
+            startidx = 0
+        if stopidx is None:
+            stopidx = len(files)
+        files = files[startidx:stopidx]
+    return files
+
+
+def _localRead(filepath, startOffset=None, size=-1):
     """Wrapper around open(filepath, 'rb') that returns the contents of the file as a string.
 
     Will rethrow FileNotFoundError if it receives an IOError with error number indicating that the file isn't found.
@@ -50,7 +60,9 @@ def _localRead(filepath):
     buf = None
     try:
         with open(filepath, 'rb') as f:
-            buf = f.read()
+            if startOffset:
+                f.seek(startOffset)
+            buf = f.read(size)
     except IOError, e:
         if e.errno == errno.ENOENT:
             raise FileNotFoundError(e)
@@ -90,12 +102,7 @@ class LocalFSParallelReader(object):
         if len(files) < 1:
             raise FileNotFoundError('cannot find files of type "%s" in %s' % (ext if ext else '*', abspath))
 
-        if startidx or stopidx:
-            if startidx is None:
-                startidx = 0
-            if stopidx is None:
-                stopidx = len(files)
-            files = files[startidx:stopidx]
+        files = selectByStartAndStopIndices(files, startidx, stopidx)
 
         return files
 
@@ -227,12 +234,7 @@ class BotoS3ParallelReader(_BotoS3Client):
         keynamelist = [key.name for key in keys]
         keynamelist.sort()
 
-        if startidx or stopidx:
-            if startidx is None:
-                startidx = 0
-            if stopidx is None:
-                stopidx = len(keynamelist)
-            keynamelist = keynamelist[startidx:stopidx]
+        keynamelist = selectByStartAndStopIndices(keynamelist, startidx, stopidx)
 
         return bucket.name, keynamelist
 
@@ -263,7 +265,8 @@ class BotoS3ParallelReader(_BotoS3Client):
 
 
 class LocalFSFileReader(object):
-    def read(self, datapath, filename=None):
+
+    def list(self, datapath, filename=None):
         abspath = LocalFSParallelReader.uriToPath(datapath)
 
         if filename:
@@ -272,18 +275,22 @@ class LocalFSFileReader(object):
             else:
                 abspath = os.path.join(os.path.dirname(abspath), filename)
 
-        globnames = glob.glob(abspath)
-        if not globnames:
-            raise FileNotFoundError("No file found matching: '%s'" % abspath)
-        if len(globnames) > 1:
-            raise ValueError("Found multiple files matching: '%s'" % abspath)
+        return sorted(glob.glob(abspath))
 
-        return _localRead(globnames[0])
+    def read(self, datapath, filename=None, startOffset=None, size=-1):
+        filenames = self.list(datapath, filename=filename)
+
+        if not filenames:
+            raise FileNotFoundError("No file found matching: '%s'" % datapath)
+        if len(filenames) > 1:
+            raise ValueError("Found multiple files matching: '%s'" % datapath)
+
+        return _localRead(filenames[0], startOffset=startOffset, size=size)
 
 
 class BotoS3FileReader(_BotoS3Client):
-    def read(self, datapath, filename=None):
 
+    def __getMatchingKeys(self, datapath, filename=None):
         parse = _BotoS3Client.parseS3Query(datapath)
         conn = boto.connect_s3(aws_access_key_id=self.accessKey, aws_secret_access_key=self.secretKey)
         bucketname = parse[0]
@@ -307,13 +314,22 @@ class BotoS3FileReader(_BotoS3Client):
                         keyname = ""
             keyname += filename
 
+        return _BotoS3Client.retrieveKeys(bucket, keyname)
 
-        keys = _BotoS3Client.retrieveKeys(bucket, keyname)
+    def list(self, datapath, filename=None):
+        keys = self.__getMatchingKeys(datapath, filename=filename)
+        keynames = [key.bucket.name + "/" + key.name for key in keys]
+        return sorted(keynames)
+
+    def read(self, datapath, filename=None, startOffset=None, size=-1):
+
+        keys = self.__getMatchingKeys(datapath, filename=filename)
         # keys is probably a lazy-loading ifilter iterable
         try:
             key = keys.next()
         except StopIteration:
-            raise FileNotFoundError("Could not find S3 object for bucket: '%s', keyname: '%s'" % (bucket.name, keyname))
+            raise FileNotFoundError("Could not find S3 object for: '%s'" % datapath)
+
         # we expect to only have a single key returned
         nextkey = None
         try:
@@ -322,7 +338,21 @@ class BotoS3FileReader(_BotoS3Client):
             pass
         if nextkey:
             raise ValueError("Found multiple S3 keys for: '%s'" % datapath)
-        return key.get_contents_as_string()
+
+        if startOffset or (size > -1):
+            # specify Range header in S3 request
+            # see: http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.35
+            # and: http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGET.html
+            if not startOffset:
+                startOffset = 0
+            if size > -1:
+                sizestr = startOffset + size - 1  # range header is inclusive
+            else:
+                sizestr = ""
+            hdrs = {"Range": "bytes=%d-%s" % (startOffset, sizestr)}
+            return key.get_contents_as_string(headers=hdrs)
+        else:
+            return key.get_contents_as_string()
 
 
 SCHEMAS_TO_PARALLELREADERS = {

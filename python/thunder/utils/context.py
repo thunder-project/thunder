@@ -32,7 +32,7 @@ class ThunderContext():
         return ThunderContext(SparkContext(*args, **kwargs))
 
     def loadSeries(self, datafile, nkeys=None, nvalues=None, inputformat='binary', minPartitions=None,
-                   conffile='conf.json'):
+                   conffile='conf.json', keytype=None, valuetype=None):
         """
         Loads a Series object from data stored as text or binary files.
 
@@ -75,7 +75,8 @@ class ThunderContext():
             data = loader.fromText(datafile, nkeys=nkeys)
         else:
             # must be either 'text' or 'binary'
-            data = loader.fromBinary(datafile, conffilename=conffile, nkeys=nkeys, nvalues=nvalues)
+            data = loader.fromBinary(datafile, conffilename=conffile, nkeys=nkeys, nvalues=nvalues,
+                                     keytype=keytype, valuetype=valuetype)
 
         return data
 
@@ -113,6 +114,25 @@ class ThunderContext():
             data = loader.fromPng(datafile)
 
         return data
+
+    def loadImagesStackAsSeries(self, datapath, dims, blockSize="150M", startidx=None, stopidx=None, shuffle=False):
+        if shuffle:
+            loader = ImagesLoader(self._sc)
+            return loader.fromStack(datapath, dims, startidx=startidx, stopidx=stopidx).toSeries(blockSize=blockSize)
+        else:
+            loader = SeriesLoader(self._sc)
+            return loader.fromStack(datapath, dims, blockSize=blockSize, startidx=startidx, stopidx=stopidx)
+
+    def convertImagesStackToSeries(self, datapath, outputdirpath, dims, blockSize="150M", startidx=None, stopidx=None,
+                                   shuffle=False, overwrite=False):
+        if shuffle:
+            loader = ImagesLoader(self._sc)
+            loader.fromStack(datapath, dims, startidx=startidx, stopidx=stopidx)\
+                .saveAsBinarySeries(outputdirpath, blockSize=blockSize, overwrite=overwrite)
+        else:
+            loader = SeriesLoader(self._sc)
+            loader.saveFromStack(datapath, outputdirpath, dims, blockSize=blockSize, overwrite=overwrite,
+                                 startidx=startidx, stopidx=stopidx)
 
     def makeExample(self, dataset, **opts):
         """
@@ -154,9 +174,11 @@ class ThunderContext():
         path = os.path.dirname(os.path.realpath(__file__))
 
         if dataset == "iris":
-            return self.loadSeries(os.path.join(path, 'data/iris.txt'), inputformat="text", minPartitions=1, nkeys=3)
-        elif dataset == "fish":
+            return self.loadSeries(os.path.join(path, 'data/iris/iris.bin'))
+        elif dataset == "fish-series":
             return self.loadSeries(os.path.join(path, 'data/fish.txt'), inputformat="text", minPartitions=1, nkeys=3)
+        elif dataset == "fish-images":
+            return self.loadImages(os.path.join(path, 'data/fish/tif-stack'), inputformat="tif-stack")
         else:
             raise NotImplementedError("Dataset '%s' not found" % dataset)
 

@@ -46,7 +46,7 @@ class RegressionModel(object):
             return traj
         else:
             result = Series(data.rdd.mapValues(lambda x: self.get(x)),
-                            index=['betas', 'stats', 'resid']).__finalize__(self)
+                            index=['betas', 'stats', 'resid']).__finalize__(data)
             return result
 
 
