@@ -32,7 +32,7 @@ class ThunderContext():
         return ThunderContext(SparkContext(*args, **kwargs))
 
     def loadSeries(self, datafile, nkeys=None, nvalues=None, inputformat='binary', minPartitions=None,
-                   conffile='conf.json'):
+                   conffile='conf.json', keytype=None, valuetype=None):
         """
         Loads a Series object from data stored as text or binary files.
 
@@ -75,7 +75,8 @@ class ThunderContext():
             data = loader.fromText(datafile, nkeys=nkeys)
         else:
             # must be either 'text' or 'binary'
-            data = loader.fromBinary(datafile, conffilename=conffile, nkeys=nkeys, nvalues=nvalues)
+            data = loader.fromBinary(datafile, conffilename=conffile, nkeys=nkeys, nvalues=nvalues,
+                                     keytype=keytype, valuetype=valuetype)
 
         return data
 
