@@ -251,6 +251,43 @@ class Series(Data):
         else:
             raise Exception('Axis must be 0 or 1')
 
+    def correlate(self, signal, var='s'):
+        """
+        Correlate series data against one or many one-dimensional arrays
+
+        Parameters
+        ----------
+        signal : array, or str
+            Signal(s) to correlate against, can be a numpy array or a
+            MAT file containing the signal as a variable
+
+        var : str
+            Variable name if loading from a MAT file
+        """
+
+        if type(signal) is str:
+            s = loadmat(signal)[var]
+        else:
+            s = asarray(signal)
+
+        # handle the case of a 1d signal
+        if s.ndim == 1:
+            if size(s) != size(self.index):
+                raise Exception('Size of signal to correlate with, %g, does not match size of series' % size(s))
+            rdd = self.rdd.mapValues(lambda x: corrcoef(x, s)[0, 1])
+            newindex = 0
+        # handle multiple 1d signals
+        elif s.ndim == 2:
+            if s.shape[1] != size(self.index):
+                raise Exception('Length of signals to correlate with, %g, does not match size of series' % s.shape[1])
+            rdd = self.rdd.mapValues(lambda x: array([corrcoef(x, y)[0, 1] for y in s]))
+            newindex = range(0, s.shape[0])
+        else:
+            raise Exception('Signal to correlate with must have 1 or 2 dimensions')
+
+        # return result
+        return self._constructor(rdd, index=newindex).__finalize__(self)
+
     def apply(self, func):
         """ Apply arbitrary function to values of a Series,
         preserving keys and indices

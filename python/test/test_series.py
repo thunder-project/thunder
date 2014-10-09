@@ -76,6 +76,16 @@ class TestSeriesMethods(PySparkTestCase):
         allclose(data.standardize(1).first()[1], array([0.70710, 1.414213]))
         allclose(data.zscore(1).first()[1], array([-0.70710, -0.70710]))
 
+    def test_correlate(self):
+        rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5]))])
+        data = Series(rdd)
+        sig1 = [4, 5, 6, 7, 8]
+        corr = data.correlate(sig1).values().collect()
+        allclose(corr[0], 0)
+        sig12 = [[4, 5, 6, 7, 8], [8, 7, 6, 5, 4]]
+        corrs = data.correlate(sig12).values().collect()
+        allclose(corrs[0], [1, -1])
+
     def test_query_subscripts(self):
         data_local = [
             ((1, 1), array([1.0, 2.0, 3.0])),
