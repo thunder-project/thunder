@@ -1,9 +1,11 @@
+import json
 import types
 import copy
 from numpy import ndarray, array, sum, mean, std, size, arange, \
     polyfit, polyval, percentile, float16, asarray, maximum, zeros, corrcoef
 from scipy.io import loadmat
 
+from thunder.rdds.fileio.writers import getFileWriterForPath
 from thunder.rdds import Data
 from thunder.rdds.keys import Dimensions
 from thunder.utils.common import checkparams
@@ -519,5 +521,23 @@ class Series(Data):
         """
         from thunder.rdds import SpatialSeries
         return SpatialSeries(self.rdd).__finalize__(self)
+
+
+def writeSeriesConfig(outputdirname, nkeys, nvalues, dims=None, keytype='int16', valuetype='int16', confname="conf.json",
+                      overwrite=True):
+    filewriterclass = getFileWriterForPath(outputdirname)
+    # write configuration file
+    conf = {'input': outputdirname,
+            'nkeys': nkeys, 'nvalues': nvalues,
+            'format': str(valuetype), 'keyformat': str(keytype)}
+    if dims:
+        conf["dims"] = dims
+
+    confwriter = filewriterclass(outputdirname, confname, overwrite=overwrite)
+    confwriter.writeFile(json.dumps(conf, indent=2))
+
+    # touch "SUCCESS" file as final action
+    successwriter = filewriterclass(outputdirname, "SUCCESS", overwrite=overwrite)
+    successwriter.writeFile('')
 
 
