@@ -191,11 +191,7 @@ class Series(Data):
                 perc = 20
             basefunc = lambda x: percentile(x, perc)
 
-        def func(y):
-            baseline = basefunc(y)
-            return (y - baseline) / (baseline + 0.1)
-
-        return self.apply(func)
+        return self.apply(lambda y: (y - basefunc(y)) / (basefunc(y) + 0.1))
 
     def center(self, axis=0):
         """ Center series data by subtracting the mean
