@@ -222,7 +222,7 @@ class Series(Data):
             Which axis to standardize along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.apply(lambda x: x - mean(x))
+            return self.apply(lambda x: x / std(x))
         elif axis == 1:
             stdvec = self.stdev()
             return self.apply(lambda x: x / stdvec)
