@@ -144,7 +144,7 @@ class SeriesLoader(object):
                                               conf={'recordLength': str(recordsize)})
 
         data = lines.map(lambda (_, v):
-                         (tuple(frombuffer(buffer(v, 0, keysize), dtype=keydtype)),
+                         (tuple(int(x) for x in frombuffer(buffer(v, 0, keysize), dtype=keydtype)),
                           frombuffer(buffer(v, keysize), dtype=valdtype)))
 
         return Series(data)
