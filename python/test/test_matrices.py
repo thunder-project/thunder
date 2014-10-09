@@ -36,9 +36,7 @@ class TestTimes(MatrixRDDTestCase):
         mat2 = RowMatrix(self.sc.parallelize([(1, array([7, 8, 9])), (2, array([10, 11, 12]))], 2))
         truth = array([[47, 52, 57], [64, 71, 78], [81, 90, 99]])
         resultA = mat1.times(mat2)
-        resultB = mat1.times(mat2, "accum")
         assert array_equal(resultA, truth)
-        assert array_equal(resultB, truth)
 
     def test_times_array(self):
         mat1 = RowMatrix(self.sc.parallelize([(1, array([1, 2, 3])), (2, array([4, 5, 6]))]))
