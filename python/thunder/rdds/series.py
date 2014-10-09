@@ -1,7 +1,7 @@
 import types
 import copy
 from numpy import ndarray, array, sum, mean, std, size, arange, \
-    polyfit, polyval, percentile, float16, asarray, maximum, zeros
+    polyfit, polyval, percentile, float16, asarray, maximum, zeros, corrcoef
 from scipy.io import loadmat
 
 from thunder.rdds import Data
@@ -293,7 +293,7 @@ class Series(Data):
         func : function
             Function to apply
         """
-        rdd = self.rdd.mapValues(lambda x: func(x))
+        rdd = self.rdd.mapValues(func)
         return self._constructor(rdd, index=self._index).__finalize__(self)
 
     def seriesSum(self):
