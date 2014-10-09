@@ -453,15 +453,7 @@ class Series(Data):
             result = array(self.rdd.values().takeSample(False, nsamples))
         return result
 
-    def filterOn(self, inds):
-        """Filter to return records with indices matching inds"""
-
-        inds_set = set(inds.flat)
-        inds_bc = self.rdd.context.broadcast(inds_set)
-        subset = self.rdd.filter(lambda (k, _): k in inds_bc.value)
-        return subset
-
-    def query(self, inds):
+    def query(self, inds, var='inds'):
         """
         Extract records with indices matching those provided
 
@@ -470,7 +462,9 @@ class Series(Data):
         inds : str, or array-like (2D)
             Array of indices, each an array-like of integer indices, or
             filename of a MAT file containing a set of indices as a cell array
-            stored in the variable inds
+
+        var : str, optional, default = 'inds'
+            Variable name if loading from a MAT file
 
         Returns
         -------
@@ -482,7 +476,10 @@ class Series(Data):
         """
 
         if isinstance(inds, str):
-            inds = loadmat(inds)['inds'][0]
+            inds = loadmat(inds)[var][0]
+        else:
+            inds = asarray(inds)
+
         n = len(inds)
 
         from thunder.rdds.keys import _indtosub_converter
@@ -495,7 +492,9 @@ class Series(Data):
 
         for idx, indlist in enumerate(inds):
             if len(indlist) > 0:
-                values[idx, :] = data.filterOn(indlist).map(lambda (k, x): x).sum() / len(indlist)
+                inds_set = set(indlist)
+                inds_bc = self.rdd.context.broadcast(inds_set)
+                values[idx, :] = data.filterOnKeys(lambda k: k in inds_bc.value).values().sum() / len(indlist)
                 keys[idx, :] = mean(map(lambda k: converter(k), indlist), axis=0)
 
         return keys, values
