@@ -114,6 +114,25 @@ class ThunderContext():
 
         return data
 
+    def loadImagesStackAsSeries(self, datapath, dims, blockSize="150M", startidx=None, stopidx=None, shuffle=False):
+        if shuffle:
+            loader = ImagesLoader(self._sc)
+            return loader.fromStack(datapath, dims, startidx=startidx, stopidx=stopidx).toSeries(blockSize=blockSize)
+        else:
+            loader = SeriesLoader(self._sc)
+            return loader.fromStack(datapath, dims, blockSize=blockSize, startidx=startidx, stopidx=stopidx)
+
+    def convertImagesStackToSeries(self, datapath, outputdirpath, dims, blockSize="150M", startidx=None, stopidx=None,
+                                   shuffle=False, overwrite=False):
+        if shuffle:
+            loader = ImagesLoader(self._sc)
+            loader.fromStack(datapath, dims, startidx=startidx, stopidx=stopidx)\
+                .saveAsBinarySeries(outputdirpath, blockSize=blockSize, overwrite=overwrite)
+        else:
+            loader = SeriesLoader(self._sc)
+            loader.saveFromStack(datapath, outputdirpath, dims, blockSize=blockSize, overwrite=overwrite,
+                                 startidx=startidx, stopidx=stopidx)
+
     def makeExample(self, dataset, **opts):
         """
         Make an example data set for testing analyses.

@@ -81,20 +81,23 @@ def parseMemoryString(memstr):
 
     Recognized suffixes are k, m, and g. Parsing is case-insensitive.
     """
-    import re
-    regpat = r"""(\d+)([bBkKmMgG])?"""
-    m = re.match(regpat, memstr)
-    if not m:
-        raise ValueError("Could not parse %s as memory specification; should be NUMBER[k|m|g]" % memstr)
-    quant = int(m.group(1))
-    units = m.group(2).lower()
-    if units == "g":
-        return int(quant * 1e9)
-    elif units == 'm':
-        return int(quant * 1e6)
-    elif units == 'k':
-        return int(quant * 1e3)
-    return quant
+    if isinstance(memstr, basestring):
+        import re
+        regpat = r"""(\d+)([bBkKmMgG])?"""
+        m = re.match(regpat, memstr)
+        if not m:
+            raise ValueError("Could not parse %s as memory specification; should be NUMBER[k|m|g]" % memstr)
+        quant = int(m.group(1))
+        units = m.group(2).lower()
+        if units == "g":
+            return int(quant * 1e9)
+        elif units == 'm':
+            return int(quant * 1e6)
+        elif units == 'k':
+            return int(quant * 1e3)
+        return quant
+    else:
+        return int(memstr)
 
 
 FORMATS = {

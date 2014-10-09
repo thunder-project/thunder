@@ -1,9 +1,18 @@
+
 from collections import namedtuple
 import json
-from numpy import array, dtype, frombuffer, arange, load
+from numpy import array, dtype, frombuffer, arange, load, vstack, unravel_index
 from scipy.io import loadmat
+from cStringIO import StringIO
+import struct
 import urlparse
-from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError
+import math
+
+from thunder.rdds.series import writeSeriesConfig
+from thunder.rdds.data import parseMemoryString
+from thunder.rdds.fileio.writers import getParallelWriterForPath
+from thunder.rdds.imageblocks import ImageBlocks
+from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError, selectByStartAndStopIndices
 from thunder import Series
 
 
@@ -111,8 +120,10 @@ class SeriesLoader(object):
         ----------
 
         datafile: string URI or local filesystem path
-            Specifies the directory in which to look for binary files. All files with the extension given by 'ext' in
-            the passed directory will be loaded.
+            Specifies the directory or files to be loaded. May be formatted as a URI string with scheme (e.g. "file://",
+            "s3n://". If no scheme is present, will be interpreted as a path on the local filesystem. This path
+            must be valid on all workers. Datafile may also refer to a single file, or to a range of files specified
+            by a glob-style expression using a single wildcard character '*'.
 
         """
 
@@ -137,6 +148,146 @@ class SeriesLoader(object):
                           frombuffer(buffer(v, keysize), dtype=valdtype)))
 
         return Series(data)
+
+    def _getSeriesBlocksFromStack(self, datapath, dims, ext="stack", blockSize="150M", datatype='int16',
+                                  startidx=None, stopidx=None):
+        """Create an RDD of <string blocklabel, (int k-tuple indices,
+
+        Parameters
+        ----------
+
+        datafile: string URI or local filesystem path
+            Specifies the directory or files to be loaded. May be formatted as a URI string with scheme (e.g. "file://",
+            "s3n://". If no scheme is present, will be interpreted as a path on the local filesystem. This path
+            must be valid on all workers. Datafile may also refer to a single file, or to a range of files specified
+            by a glob-style expression using a single wildcard character '*'.
+
+
+        Returns
+        ---------
+        pair of (RDD, ntimepoints)
+
+        RDD: sequence of keys, values pairs
+            (call using flatMap)
+
+        RDD Key: tuple of int
+            zero-based indicies of position within original image volume
+
+        RDD Value: numpy array of datatype
+            series of values at position across loaded image volumes
+
+        ntimepoints: int
+            number of time points in returned series, determined from number of stack files found at datapath
+
+        """
+
+        datapath = self.__normalizeDatafilePattern(datapath, ext)
+        blockSize = parseMemoryString(blockSize)
+        totaldim = reduce(lambda x, y: x*y, dims)
+        datatype = dtype(datatype)
+
+        reader = getFileReaderForPath(datapath)()
+        filenames = reader.list(datapath)
+        if not filenames:
+            raise IOError("No files found for path '%s'" % datapath)
+        filenames = selectByStartAndStopIndices(filenames, startidx, stopidx)
+
+        datasize = totaldim * len(filenames) * datatype.itemsize
+        nblocks = max(datasize / blockSize, 1)  # integer division
+
+        if len(dims) >= 3:
+            # for 3D stacks, do calculations to ensure that
+            # different planes appear in distinct files
+            blocksperplane = max(nblocks / dims[-1], 1)
+
+            pixperplane = reduce(lambda x, y: x*y, dims[:-1])
+
+            # get the greatest number of blocks in a plane (up to as many as requested) that still divide the plane
+            # evenly. This will always be at least one.
+            kupdated = [x for x in range(1, blocksperplane+1) if not pixperplane % x][-1]
+            nblocks = kupdated * dims[-1]
+            blockSizePerStack = (totaldim / nblocks) * datatype.itemsize
+        else:
+            # otherwise just round to make contents divide into nearly even blocks
+            blockSizePerStack = int(math.ceil(totaldim / float(nblocks)))
+            nblocks = int(math.ceil(totaldim / float(blockSizePerStack)))
+            blockSizePerStack *= datatype.itemsize
+
+        filesize = totaldim * datatype.itemsize
+
+        def readblock(blocknum):
+            # copy size out from closure; will modify later:
+            blockSizePerStack_ = blockSizePerStack
+            # get start position for this block
+            position = blocknum * blockSizePerStack_
+
+            # adjust if at end of file
+            if (position + blockSizePerStack_) > filesize:
+                blockSizePerStack_ = int(filesize - position)
+            # loop over files, loading one block from each
+            bufs = []
+
+            for fname in filenames:
+                buf = reader.read(fname, startOffset=position, size=blockSizePerStack_)
+                bufs.append(frombuffer(buf, dtype=datatype))
+
+            buf = vstack(bufs).T  # dimensions are now linindex x time (images)
+            del bufs
+
+            # append subscript keys based on dimensions
+            itemposition = position / datatype.itemsize
+            itemblocksize = blockSizePerStack_ / datatype.itemsize
+            linindx = arange(itemposition, itemposition + itemblocksize)  # zero-based
+
+            keys = zip(*map(tuple, unravel_index(linindx, dims, order='F')))
+            return zip(keys, buf)
+
+        # map over blocks
+        return self.sc.parallelize(range(0, nblocks), nblocks).flatMap(lambda bn: readblock(bn)), len(filenames)
+
+    def fromStack(self, datapath, dims, ext="stack", blockSize="150M", datatype='int16', startidx=None, stopidx=None):
+        """Load a Series object directly from binary image stack files.
+
+        Parameters
+        ----------
+
+        datafile: string URI or local filesystem path
+            Specifies the directory or files to be loaded. May be formatted as a URI string with scheme (e.g. "file://",
+            "s3n://". If no scheme is present, will be interpreted as a path on the local filesystem. This path
+            must be valid on all workers. Datafile may also refer to a single file, or to a range of files specified
+            by a glob-style expression using a single wildcard character '*'.
+        """
+        seriesblocks, npointsinseries = self._getSeriesBlocksFromStack(datapath, dims, ext=ext, blockSize=blockSize,
+                                                                       datatype=datatype, startidx=startidx,
+                                                                       stopidx=stopidx)
+        # TODO: initialize index here?
+        return Series(seriesblocks, dims=dims)
+
+    def saveFromStack(self, datapath, outputdirname, dims, ext="stack", blockSize="150M", datatype='int16',
+                      startidx=None, stopidx=None, overwrite=False):
+
+        writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
+        seriesblocks, npointsinseries = self._getSeriesBlocksFromStack(datapath, dims, ext=ext, blockSize=blockSize,
+                                                                       datatype=datatype, startidx=startidx,
+                                                                       stopidx=stopidx)
+
+        def blockToBinarySeries(kviter):
+            label = None
+            keypacker = None
+            buf = StringIO()
+            for seriesKey, series in kviter:
+                if keypacker is None:
+                    keypacker = struct.Struct('h'*len(seriesKey))
+                    label = ImageBlocks.getBinarySeriesNameForKey(seriesKey) + ".bin"
+                buf.write(keypacker.pack(*seriesKey))
+                buf.write(series.tostring())
+            val = buf.getvalue()
+            buf.close()
+            return [(label, val)]
+
+        seriesblocks.mapPartitions(blockToBinarySeries).foreach(writer.writerFcn)
+        writeSeriesConfig(outputdirname, len(dims), npointsinseries, dims=dims, valuetype=datatype,
+                          overwrite=overwrite)
 
     def fromMatLocal(self, datafile, varname, keyfile=None):
 

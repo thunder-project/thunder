@@ -1,5 +1,4 @@
 import itertools
-import json
 from numpy import ndarray, arange, amax, amin, size, squeeze, dtype
 from io import BytesIO
 
@@ -8,7 +7,8 @@ from matplotlib.pyplot import imsave
 from thunder.rdds.imageblocks import ImageBlocks, ImageBlockValue
 from thunder.rdds import Data
 from thunder.rdds.data import parseMemoryString
-from thunder.rdds.fileio.writers import getFileWriterForPath, getParallelWriterForPath, getCollectedFileWriterForPath
+from thunder.rdds.fileio.writers import getParallelWriterForPath, getCollectedFileWriterForPath
+from thunder.rdds.series import writeSeriesConfig
 
 
 class Images(Data):
@@ -226,10 +226,7 @@ class Images(Data):
             # get series from blocks defined by splits
             if not blocksPerDim:
                 # get splits from requested block size
-                if isinstance(blockSize, basestring):
-                    blockSize = parseMemoryString(blockSize)
-                else:
-                    blockSize = int(blockSize)
+                blockSize = parseMemoryString(blockSize)
                 blocksPerDim = self.__calcBlocksPerDim(blockSize)
             blocksdata = self._toBlocksBySplits(blocksPerDim)
 
@@ -320,18 +317,8 @@ class Images(Data):
             return binlabel+'.bin', binvals
 
         binseriesrdd.map(appendBin).foreach(writer.writerFcn)
-
-        filewriterclass = getFileWriterForPath(outputdirname)
-        # write configuration file
-        conf = {'input': outputdirname, 'dims': self.dims,
-                'nkeys': len(self.dims), 'nvalues': self.nimages,
-                'format': self.dtype, 'keyformat': 'int16'}
-        confwriter = filewriterclass(outputdirname, "conf.json", overwrite=overwrite)
-        confwriter.writeFile(json.dumps(conf, indent=2))
-
-        # touch "SUCCESS" file as final action
-        successwriter = filewriterclass(outputdirname, "SUCCESS", overwrite=overwrite)
-        successwriter.writeFile('')
+        writeSeriesConfig(outputdirname, len(self.dims), self.nimages, dims=self.dims,
+                          keytype='int16', valuetype=self.dtype, overwrite=overwrite)
 
     def exportAsPngs(self, outputdirname, fileprefix="export", overwrite=False,
                      collectToDriver=True):

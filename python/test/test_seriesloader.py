@@ -1,5 +1,5 @@
 import json
-from numpy import dtype, array, allclose
+from numpy import dtype, array, allclose, arange
 import os
 import struct
 from nose.tools import assert_equals, assert_true, assert_almost_equal
@@ -171,3 +171,69 @@ class TestSeriesBinaryLoader(PySparkTestCaseWithOutputDir):
 
     def test_fromBinaryWithConfFile(self):
         self._run_tst_fromBinary(True)
+
+
+class TestSeriesBinaryWriteFromStack(PySparkTestCaseWithOutputDir):
+
+    def _run_roundtrip_tst(self, testCount, arrays, blockSize):
+        print "Running TestSeriesBinaryWriteFromStack roundtrip test #%d" % testCount
+        insubdir = os.path.join(self.outputdir, 'input%d' % testCount)
+        os.mkdir(insubdir)
+
+        outsubdir = os.path.join(self.outputdir, 'output%d' % testCount)
+        #os.mkdir(outsubdir)
+
+        for aryCount, array in enumerate(arrays):
+            # array.tofile always writes in column-major order...
+            array.tofile(os.path.join(insubdir, "img%02d.stack" % aryCount))
+
+        # ... but we will read and interpret these as though they are in row-major order
+        dims = list(arrays[0].shape)
+        dims.reverse()
+
+        underTest = SeriesLoader(self.sc)
+
+        underTest.saveFromStack(insubdir, outsubdir, dims, blockSize=blockSize, datatype=str(arrays[0].dtype))
+
+        roundtripped = underTest.fromBinary(outsubdir).collect()
+
+        for serieskeys, seriesvalues in roundtripped:
+            for seriesidx, seriesval in enumerate(seriesvalues):
+                #print "seriesidx: %d; serieskeys: %s; seriesval: %g" % (seriesidx, serieskeys, seriesval)
+                # flip indices again for row vs col-major insanity
+                arykeys = list(serieskeys)
+                arykeys.reverse()
+                msg = "Failure on test #%d, time point %d, indices %s" % (testCount, seriesidx, str(tuple(arykeys)))
+                try:
+                    assert_almost_equal(arrays[seriesidx][tuple(arykeys)], seriesval, places=4)
+                except AssertionError, e:
+                    raise AssertionError(msg, e)
+
+    @staticmethod
+    def generate_test_images(narrays, dims, datatype):
+        nimgvals = reduce(lambda x, y: x * y, dims)
+        return [arange(i*nimgvals, (i+1)*nimgvals, dtype=datatype).reshape(dims) for i in xrange(narrays)]
+
+    def _roundtrip_tst_driver(self, moreTests=False):
+        # parameterized test fixture
+        #arrays = [arange(6, dtype='int16').reshape((2, 3), order='F')]
+        arrays = TestSeriesBinaryWriteFromStack.generate_test_images(1, (2, 3), "int16")
+        self._run_roundtrip_tst(0, arrays, 6*2)
+        self._run_roundtrip_tst(1, arrays, 2*2)
+        self._run_roundtrip_tst(2, arrays, 5*2)
+        self._run_roundtrip_tst(3, arrays, 7*2)
+
+        if moreTests:
+            arrays = TestSeriesBinaryWriteFromStack.generate_test_images(3, (5, 7, 5), "int16")
+            self._run_roundtrip_tst(4, arrays, 3*5*2)
+
+            arrays = TestSeriesBinaryWriteFromStack.generate_test_images(3, (5, 7, 5), "int32")
+            self._run_roundtrip_tst(5, arrays, 3*5*4)
+            self._run_roundtrip_tst(6, arrays, 5*7*4)
+            self._run_roundtrip_tst(7, arrays, 3*4)
+
+            arrays = TestSeriesBinaryWriteFromStack.generate_test_images(3, (2, 4, 6), "float32")
+            self._run_roundtrip_tst(8, arrays, 5*4)
+
+    def test_roundtrip(self):
+        self._roundtrip_tst_driver(False)
