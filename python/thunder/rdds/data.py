@@ -34,6 +34,10 @@ class Data(object):
                     object.__setattr__(self, name, getattr(other, name, None))
         return self
 
+    @property
+    def _constructor(self):
+        raise NotImplementedError
+
     def first(self):
         return self.rdd.first()
 
