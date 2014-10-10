@@ -176,7 +176,7 @@ class ThunderContext():
         if dataset == "iris":
             return self.loadSeries(os.path.join(path, 'data/iris/iris.bin'))
         elif dataset == "fish-series":
-            return self.loadSeries(os.path.join(path, 'data/fish.txt'), inputformat="text", minPartitions=1, nkeys=3)
+            return self.loadSeries(os.path.join(path, 'data/fish/bin/'))
         elif dataset == "fish-images":
             return self.loadImages(os.path.join(path, 'data/fish/tif-stack'), inputformat="tif-stack")
         else:
