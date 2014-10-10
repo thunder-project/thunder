@@ -116,6 +116,9 @@ class ThunderContext():
         return data
 
     def loadImagesStackAsSeries(self, datapath, dims, blockSize="150M", startidx=None, stopidx=None, shuffle=False):
+        """
+        Load Images data as Series data.
+        """
         if shuffle:
             loader = ImagesLoader(self._sc)
             return loader.fromStack(datapath, dims, startidx=startidx, stopidx=stopidx).toSeries(blockSize=blockSize)
@@ -125,6 +128,9 @@ class ThunderContext():
 
     def convertImagesStackToSeries(self, datapath, outputdirpath, dims, blockSize="150M", startidx=None, stopidx=None,
                                    shuffle=False, overwrite=False):
+        """
+        Convert images data to Series data in flat binary format.
+        """
         if shuffle:
             loader = ImagesLoader(self._sc)
             loader.fromStack(datapath, dims, startidx=startidx, stopidx=stopidx)\
