@@ -130,5 +130,5 @@ class KMeans(object):
 
         model = mllib.KMeans.train(data.rdd.values(), k=self.k, maxIterations=self.maxIterations)
 
-        return KMeansModel(model.clusterCenters)
+        return KMeansModel(asarray(model.clusterCenters))
 
