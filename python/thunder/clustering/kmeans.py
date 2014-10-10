@@ -2,7 +2,7 @@
 Classes for KMeans clustering
 """
 
-from numpy import array, argmin, corrcoef, ndarray
+from numpy import array, argmin, corrcoef, ndarray, asarray, std
 from scipy.spatial.distance import cdist
 from thunder.rdds import Series
 
@@ -82,7 +82,8 @@ class KMeansModel(object):
             For each data point, gives the similarity to its nearest cluster
         """
 
-        similarity = lambda centers, p: corrcoef(centers[argmin(cdist(centers, array([p])))], p)[0, 1]
+        similarity = lambda centers, p: 0 if std(p) == 0 else \
+            corrcoef(centers[argmin(cdist(centers, array([p])))], p)[0, 1]
         out = self.calc(data, similarity)
         if isinstance(data, Series):
             out._index = 'similarity'
