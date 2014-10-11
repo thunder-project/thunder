@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>thunder.utils.context.ThunderContext &mdash; Thunder 0.3.0 documentation</title>
+    <title>thunder.utils.context.ThunderContext &mdash; Thunder 0.3.2 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.3.0',
+        VERSION:     '0.3.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,7 +31,7 @@
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.3.0 documentation" href="../index.html" />
+    <link rel="top" title="Thunder 0.3.2 documentation" href="../index.html" />
     <link rel="up" title="API Reference" href="../api.html" />
     <link rel="next" title="thunder.utils.save.save" href="thunder.utils.save.save.html" />
     <link rel="prev" title="thunder.timeseries.localcorr.LocalCorr" href="thunder.timeseries.localcorr.LocalCorr.html" />
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.3.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.3.2</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -78,6 +78,9 @@
 </ul>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://groups.google.com/forum/?hl=en#!forum/thunder-user">Mailing list</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/freeman-lab/thunder">Github repo</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://thefreemanlab.com/thunder/">Project page</a></li>
 </ul>
 </ul>
 </li>
@@ -158,28 +161,31 @@
 <tr class="row-even"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.importStacksAsBlocks" title="thunder.utils.context.ThunderContext.importStacksAsBlocks"><tt class="xref py py-obj docutils literal"><span class="pre">importStacksAsBlocks</span></tt></a>(datafile,&nbsp;dims[,&nbsp;...])</td>
 <td>Convert data from binary stack files to blocks of an RDD,</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadBinary" title="thunder.utils.context.ThunderContext.loadBinary"><tt class="xref py py-obj docutils literal"><span class="pre">loadBinary</span></tt></a>(datafile[,&nbsp;nvalues,&nbsp;format,&nbsp;...])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadArrayLocal" title="thunder.utils.context.ThunderContext.loadArrayLocal"><tt class="xref py py-obj docutils literal"><span class="pre">loadArrayLocal</span></tt></a>(values[,&nbsp;keys,&nbsp;method])</td>
+<td>Load data from local arrays</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadBinary" title="thunder.utils.context.ThunderContext.loadBinary"><tt class="xref py py-obj docutils literal"><span class="pre">loadBinary</span></tt></a>(datafile[,&nbsp;nvalues,&nbsp;format,&nbsp;...])</td>
 <td>Load data from flat binary file (or a directory of files) with format &lt;k1&gt; &lt;k2&gt; ...</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadBinaryLocal" title="thunder.utils.context.ThunderContext.loadBinaryLocal"><tt class="xref py py-obj docutils literal"><span class="pre">loadBinaryLocal</span></tt></a>(datafile,&nbsp;nvalues,&nbsp;nkeys,&nbsp;format)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadBinaryLocal" title="thunder.utils.context.ThunderContext.loadBinaryLocal"><tt class="xref py py-obj docutils literal"><span class="pre">loadBinaryLocal</span></tt></a>(datafile,&nbsp;nvalues,&nbsp;nkeys,&nbsp;format)</td>
 <td>Load data from a local binary file</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadExample" title="thunder.utils.context.ThunderContext.loadExample"><tt class="xref py py-obj docutils literal"><span class="pre">loadExample</span></tt></a>(dataset)</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadExample" title="thunder.utils.context.ThunderContext.loadExample"><tt class="xref py py-obj docutils literal"><span class="pre">loadExample</span></tt></a>(dataset)</td>
 <td>Load a local example data set for testing analyses</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadExampleEC2" title="thunder.utils.context.ThunderContext.loadExampleEC2"><tt class="xref py py-obj docutils literal"><span class="pre">loadExampleEC2</span></tt></a>(dataset)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadExampleEC2" title="thunder.utils.context.ThunderContext.loadExampleEC2"><tt class="xref py py-obj docutils literal"><span class="pre">loadExampleEC2</span></tt></a>(dataset)</td>
 <td>Load an example data set from EC2</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadMatLocal" title="thunder.utils.context.ThunderContext.loadMatLocal"><tt class="xref py py-obj docutils literal"><span class="pre">loadMatLocal</span></tt></a>(datafile,&nbsp;varname[,&nbsp;keyfile,&nbsp;...])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadMatLocal" title="thunder.utils.context.ThunderContext.loadMatLocal"><tt class="xref py py-obj docutils literal"><span class="pre">loadMatLocal</span></tt></a>(datafile,&nbsp;varname[,&nbsp;keyfile,&nbsp;...])</td>
 <td>Load data from a local MAT file, from a variable containing either a 1d or 2d matrix, into an RDD of (key,value) pairs.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadText" title="thunder.utils.context.ThunderContext.loadText"><tt class="xref py py-obj docutils literal"><span class="pre">loadText</span></tt></a>(datafile[,&nbsp;nkeys,&nbsp;filter,&nbsp;...])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.loadText" title="thunder.utils.context.ThunderContext.loadText"><tt class="xref py py-obj docutils literal"><span class="pre">loadText</span></tt></a>(datafile[,&nbsp;nkeys,&nbsp;filter,&nbsp;...])</td>
 <td>Load data from text file (or a directory of files) with rows as &lt;k1&gt; &lt;k2&gt; ...</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.makeExample" title="thunder.utils.context.ThunderContext.makeExample"><tt class="xref py py-obj docutils literal"><span class="pre">makeExample</span></tt></a>(dataset,&nbsp;**opts)</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.makeExample" title="thunder.utils.context.ThunderContext.makeExample"><tt class="xref py py-obj docutils literal"><span class="pre">makeExample</span></tt></a>(dataset,&nbsp;**opts)</td>
 <td>Make an example data set for testing analyses</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.start" title="thunder.utils.context.ThunderContext.start"><tt class="xref py py-obj docutils literal"><span class="pre">start</span></tt></a>(*args,&nbsp;**kwargs)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.utils.context.ThunderContext.start" title="thunder.utils.context.ThunderContext.start"><tt class="xref py py-obj docutils literal"><span class="pre">start</span></tt></a>(*args,&nbsp;**kwargs)</td>
 <td>Starts a ThunderContext using the same arguments as SparkContext</td>
 </tr>
 </tbody>
@@ -278,6 +284,12 @@ and rewrites the result to flat binary files of the form:</p>
 <p>Currently only supported on a local or networked file system</p>
 <p>TODO: Add support for EC2 loading
 TODO: assumes int16, add support for other formats</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.utils.context.ThunderContext.loadArrayLocal">
+<tt class="descname">loadArrayLocal</tt><big>(</big><em>values</em>, <em>keys=None</em>, <em>method=None</em><big>)</big><a class="reference internal" href="../_modules/thunder/utils/context.html#ThunderContext.loadArrayLocal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thunder.utils.context.ThunderContext.loadArrayLocal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load data from local arrays</p>
 </dd></dl>
 
 <dl class="method">

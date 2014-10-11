@@ -1,0 +1,272 @@
+
+.. \_images\_tutorial:
+
+.. currentmodule:: thunder
+
+Images
+======
+
+An ``Images`` object is a distributed collection of either 2d images or
+3d volumes. It supports several simple manipulations of image content,
+exporting image data, and conversion to other data formats.
+
+Loading images
+--------------
+
+Images can be loaded from a ``ThunderContext`` using the ``loadImages``
+method. See the ``Input Formats`` tutorial for more detail; here, we'll
+just load example image data.
+
+.. code:: python
+
+    data = tsc.loadExample('fish-images')
+We can check the dimensions, and the number of volumes
+
+.. code:: python
+
+    data.nimages
+
+
+
+.. parsed-literal::
+
+    20
+
+
+
+.. code:: python
+
+    data.dims
+
+
+
+.. parsed-literal::
+
+    (76, 87, 2)
+
+
+
+We can also look at the first record, which is a key-value pair. The
+first entry, the key, is an identifier (this is the first image, so it
+is 0).
+
+.. code:: python
+
+    data.first()[0]
+
+
+
+.. parsed-literal::
+
+    0
+
+
+
+The value is the volume.
+
+.. code:: python
+
+    img = data.first()[1]
+    img.shape
+
+
+
+.. parsed-literal::
+
+    (76, 87, 2)
+
+
+
+We can look at it as an image. It's two-dimensional, so there are two
+planes to look at.
+
+.. code:: python
+
+    %matplotlib inline
+.. code:: python
+
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    sns.set_style('white')
+    sns.set_context('notebook')
+    plt.imshow(img[:,:,0], cmap='gray');
+
+
+.. image:: images_files/images_14_0.png
+
+
+Here's the second plane
+
+.. code:: python
+
+    plt.imshow(img[:,:,1], cmap='gray');
+
+
+.. image:: images_files/images_16_0.png
+
+
+Image manipulations
+-------------------
+
+An ``Images`` object has a variety of methods for image manipulation.
+
+A common manipulation on volumetric data is computing a maximum
+projection in depth. We can perform a maximum projection in parallel
+across all volumes. Here, we compute the projections, and then show the
+first one.
+
+.. code:: python
+
+    projs = data.maxProjection(axis=2)
+    img = projs.first()[1]
+    from numpy import amax
+    plt.imshow(img, cmap='gray');
+
+
+.. image:: images_files/images_19_0.png
+
+
+We can also subselect a set of planes, specifying the top and bottom of
+the desired range:
+
+.. code:: python
+
+    sub = data.planes(0,0)
+    img = sub.first()[1]
+    plt.imshow(img, cmap='gray');
+
+
+.. image:: images_files/images_21_0.png
+
+
+And we can subsample in space:
+
+.. code:: python
+
+    sub = data.subsample([5,5,1])
+    img = sub.first()[1]
+    plt.imshow(img[:,:,0], cmap='gray');
+
+
+.. image:: images_files/images_23_0.png
+
+
+Finally, we can perform operations that aggregate across images. For
+example, computing the standard deviation:
+
+.. code:: python
+
+    img = data.stdev()
+    plt.imshow(img[:,:,0], cmap='gray');
+
+
+.. image:: images_files/images_25_0.png
+
+
+The result of distributed image operations can be saved by exporting
+each image to a ``png`` file. (NOTE: This support is currently limited
+to saving 2d image data.)
+
+.. code:: python
+
+    data.maxProjection().exportAsPngs('directory')
+Conversions
+-----------
+
+We commonly encounter images or volumes that correspond to different
+time points. It is useful to convert these data into a ``Series``
+object, the object used in ``thunder`` for distributed array data. After
+this conversion, the ``Series`` will be a distributed collection of
+records, where each record has a pixel identifier as a key, and a time
+series as a value.
+
+There are two ways to convert image or volume data into ``Series`` data.
+The first is to load ``Images`` data and then convert it into ``Series``
+data. This can be done on an ``Images`` object using the ``toSeries()``
+method, and it can also be done in one step using the ``ThunderContext``
+method ``loadImagesAsSeries``. Here, we load the example ``Images`` data
+and convert it to a ``Series``.
+
+.. code:: python
+
+    data = tsc.loadExample('fish-images')
+    ts = data.toSeries()
+    ts.cache()
+Let's check some properties of the resulting ``Series`` to make sure the
+conversion we did makes sense. We have twenty images, so there should be
+twenty time points, and the dimensions of the keys should match the
+dimensions of the original images.
+
+.. code:: python
+
+    ts.index
+
+
+
+.. parsed-literal::
+
+    array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
+           17, 18, 19])
+
+
+
+.. code:: python
+
+    ts.dims.max
+
+
+
+.. parsed-literal::
+
+    (75, 86, 1)
+
+
+
+.. code:: python
+
+    ts.dims.min
+
+
+
+.. parsed-literal::
+
+    (0, 0, 0)
+
+
+
+.. code:: python
+
+    ts.dims.count
+
+
+
+.. parsed-literal::
+
+    (76, 87, 2)
+
+
+
+We can also quickly look at some example time series:
+
+.. code:: python
+
+    samples = ts.normalize().subset(nsamples=50, thresh=0.05)
+    sns.set_style('darkgrid')
+    plt.plot(samples.T);
+
+
+.. image:: images_files/images_37_0.png
+
+
+For a large data set that will be analyzed repeatedly as a ``Series``,
+it is faster and more convienient to save ``Images`` data to a
+collection of flat binary files on a distributed file system, which can
+in turn be read back in as a ``Series``. This can again be performed
+using a ``ThunderContext`` method, ``convertImagesToSeries``, or can be
+performed directly on an ``Images`` object:
+
+.. code:: python
+
+    data = tsc.loadImages('/Users/freemanj11/fish/tif/', inputformat='tif-stack', startidx=0, stopidx=20)
+    data.saveAsBinarySeries('directory')
+    ts = tsc.loadSeries('directory')

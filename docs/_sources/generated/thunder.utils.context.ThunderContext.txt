@@ -13,6 +13,7 @@
       ~ThunderContext.convertStacks
       ~ThunderContext.importStacks
       ~ThunderContext.importStacksAsBlocks
+      ~ThunderContext.loadArrayLocal
       ~ThunderContext.loadBinary
       ~ThunderContext.loadBinaryLocal
       ~ThunderContext.loadExample

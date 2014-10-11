@@ -6,14 +6,14 @@ Running Spark and Thunder on Amazon's EC2 is an easy way to quickly leverage the
 
 Setting up an Amazon account
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-(You might be able to skip this step if you are already using EC2.) Go to `AWS <http://aws.amazon.com/>`_ to sign up for an account. Once you have created an account, go to `Identity and Access Management <https://console.aws.amazon.com/iam/#users>`_ and click "Create new users" at the top. Follow the instructions to create a user for yourself. After you create a user, a window will pop up letting you "Show User Security Credentials". Click this to see your access key ID and secret access key (long strings of characters/numbers). Write these down, or click download to save them to a file, and close the window. While you have these handy, add the following two lines to your ``bash_profile``.
+(You might be able to skip this step if you are already using EC2.) Go to `AWS <http://aws.amazon.com/>`_ to sign up for an account. Once you have created an account, go to `Identity and Access Management <https://console.aws.amazon.com/iam/#users>`_, select "Users" on the left, and click "Create new users" at the top. Follow the instructions to create a user for yourself. After you create a user, a window will pop up letting you "Show User Security Credentials". Click this to see your access key ID and secret access key (long strings of characters/numbers). Write these down, or click download to save them to a file, and close the window. While you have these handy, add the following two lines to your ``bash_profile``.
 
 .. code-block:: bash
 
 	export AWS_ACCESS_KEY_ID=<your-access-key-id>
 	export AWS_SECRET_ACCESS_KEY=<your-secret-access-key>
 
-Back on the AWS site, click the checkbox next to your user name. In the window that appears at the bottom of the page, select "Permissions > Attach user policy", select Administrator Access policy, and click Apply Policy. If you opened a brand new account it may take a couple hours for Amazon to verify it, so wait before proceeding.
+Open a new terminal window so these changes take effect. Back on the AWS site, click the checkbox next to your user name. In the window that appears at the bottom of the page, select "Permissions > Attach user policy", select Administrator Access policy, and click Apply Policy. If you opened a brand new account it may take a couple hours for Amazon to verify it, so wait before proceeding.
 
 
 Create your key pair

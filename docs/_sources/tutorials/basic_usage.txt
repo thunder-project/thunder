@@ -1,0 +1,132 @@
+
+.. \_basic\_usage\_tutorial:
+
+.. currentmodule:: thunder
+
+Basic usage
+===========
+
+thunder offers a variety of analyses and workflows for spatial and
+temporal data. We'll walk through a very simple example here as an
+introduction. The entry point for most workflows is the
+``ThunderContext``. If you type ``thunder`` to start the interactive
+shell, this context is automatically provided as ``tsc``, which is a
+thin wrapper for the ``SparkContext`` that provides functionality for
+loading data.
+
+We'll start by loading some example data
+
+.. code:: python
+
+    data = tsc.loadExample('fish-series')
+``data`` is a distributed collection of key-value records, each
+containing a coordinate identifier and the time series of a single
+voxel. We can look at the first record by using ``first()``. It's a
+tuple, where the first entry is a key (the coordinate) and the value is
+an one-dimensional array.
+
+.. code:: python
+
+    key, value = data.first()
+.. code:: python
+
+    key
+
+
+
+.. parsed-literal::
+
+    (0, 0, 0)
+
+
+
+.. code:: python
+
+    value.shape
+
+
+
+.. parsed-literal::
+
+    (240,)
+
+
+
+We can extract a random subset of voxels and plot their time series,
+after applying a simple baseline normalization. Here and elsewhere,
+we'll use the excellent ``seaborn`` package for styling figures, but
+this is entirely optional.
+
+.. code:: python
+
+    %matplotlib inline
+.. code:: python
+
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    sns.set_context("notebook")
+.. code:: python
+
+    examples = data.normalize().subset(50, thresh=0.05)
+    sns.set_style('darkgrid')
+    plt.plot(examples.T);
+
+
+.. image:: basic_usage_files/basic_usage_12_0.png
+
+
+We can also compute the mean value for each pixel using the
+``seriesMean`` method
+
+.. code:: python
+
+    means = data.seriesMean()
+    means.first()
+
+
+
+.. parsed-literal::
+
+    ((0, 0, 0), 25.824999999999999)
+
+
+
+``means`` contains the mean of each pixel. For this ``Series``, the keys
+correspond to spatial coordinates, which means we can ``pack`` the
+results into a local array. In this case, the result is 3d, with two
+planes.
+
+.. code:: python
+
+    img = means.pack()
+    img.shape
+
+
+
+.. parsed-literal::
+
+    (87, 76, 2)
+
+
+
+It's easy to look at the result directly using ``matplotlib``.
+
+.. code:: python
+
+    sns.set_style("white")
+    plt.imshow(img[:,:,0].T, cmap="gray");
+
+
+.. image:: basic_usage_files/basic_usage_18_0.png
+
+
+It's also easy to save the result to a ``numpy`` file, or to a ``MAT``
+file if you do the rest of your analysis in Matlab.
+
+.. code:: python
+
+    from thunder.utils import export
+    export(img, "directory", "meanval", "npy")
+    export(img, "directory", "meanval", "matlab")
+This will put a ``npy`` file or ``MAT`` file called ``meanval`` in the
+folder ``directory`` in your current directory.

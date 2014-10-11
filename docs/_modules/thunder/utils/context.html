@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>thunder.utils.context &mdash; Thunder 0.3.0 documentation</title>
+    <title>thunder.utils.context &mdash; Thunder 0.3.2 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.3.0',
+        VERSION:     '0.3.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,7 +31,7 @@
     <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../../../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.3.0 documentation" href="../../../index.html" />
+    <link rel="top" title="Thunder 0.3.2 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html"><img src="../../../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.3.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.3.2</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -76,6 +76,9 @@
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://groups.google.com/forum/?hl=en#!forum/thunder-user">Mailing list</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/freeman-lab/thunder">Github repo</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://thefreemanlab.com/thunder/">Project page</a></li>
 </ul>
 </ul>
 </li>
@@ -125,7 +128,6 @@
     <span class="n">asarray</span><span class="p">,</span> <span class="n">mod</span><span class="p">,</span> <span class="n">floor</span><span class="p">,</span> <span class="n">ceil</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">concatenate</span><span class="p">,</span> <span class="n">prod</span><span class="p">,</span> <span class="n">arange</span>
 <span class="kn">from</span> <span class="nn">scipy.io</span> <span class="kn">import</span> <span class="n">loadmat</span>
 <span class="kn">from</span> <span class="nn">pyspark</span> <span class="kn">import</span> <span class="n">SparkContext</span>
-<span class="kn">import</span> <span class="nn">urllib</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">from</span> <span class="nn">thunder.utils.load</span> <span class="kn">import</span> <span class="n">PreProcessor</span><span class="p">,</span> <span class="n">Parser</span><span class="p">,</span> <span class="n">indtosub</span>
 <span class="kn">from</span> <span class="nn">thunder.utils</span> <span class="kn">import</span> <span class="n">DataSets</span>
@@ -318,9 +320,8 @@
         <span class="k">elif</span> <span class="n">dataset</span> <span class="o">==</span> <span class="s">&quot;zebrafish-optomotor-response&quot;</span><span class="p">:</span>
             <span class="n">path</span> <span class="o">=</span> <span class="s">&#39;zebrafish.datasets/optomotor-response/1/&#39;</span>
             <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loadText</span><span class="p">(</span><span class="s">&quot;s3n://&quot;</span> <span class="o">+</span> <span class="n">path</span> <span class="o">+</span> <span class="s">&#39;data/dat_plane*.txt&#39;</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="s">&#39;dff&#39;</span><span class="p">,</span> <span class="n">minPartitions</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-            <span class="n">opener</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">URLopener</span><span class="p">()</span>
-            <span class="n">myfile</span> <span class="o">=</span> <span class="n">opener</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s">&quot;https://s3.amazonaws.com/&quot;</span> <span class="o">+</span> <span class="n">path</span> <span class="o">+</span> <span class="s">&quot;params.json&quot;</span><span class="p">)</span>
-            <span class="n">params</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">myfile</span><span class="p">)</span>
+            <span class="n">paramfile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="o">.</span><span class="n">textFile</span><span class="p">(</span><span class="s">&quot;s3n://&quot;</span> <span class="o">+</span> <span class="n">path</span> <span class="o">+</span> <span class="s">&quot;params.json&quot;</span><span class="p">)</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">paramfile</span><span class="o">.</span><span class="n">first</span><span class="p">())</span>
             <span class="n">modelfile</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;trials&#39;</span><span class="p">])</span>
             <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">modelfile</span>
         <span class="k">else</span><span class="p">:</span>
@@ -506,6 +507,13 @@
 
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
+<div class="viewcode-block" id="ThunderContext.loadArrayLocal"><a class="viewcode-back" href="../../../generated/thunder.utils.context.ThunderContext.html#thunder.utils.context.ThunderContext.loadArrayLocal">[docs]</a>    <span class="k">def</span> <span class="nf">loadArrayLocal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load data from local arrays</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</div>
 <div class="viewcode-block" id="ThunderContext.loadMatLocal"><a class="viewcode-back" href="../../../generated/thunder.utils.context.ThunderContext.html#thunder.utils.context.ThunderContext.loadMatLocal">[docs]</a>    <span class="k">def</span> <span class="nf">loadMatLocal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datafile</span><span class="p">,</span> <span class="n">varname</span><span class="p">,</span> <span class="n">keyfile</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">minPartitions</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Load data from a local MAT file, from a variable containing</span>
@@ -538,7 +546,7 @@
         <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s">&#39;input data must be one or two dimensional&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">keyfile</span><span class="p">:</span>
-            <span class="n">keys</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">int16</span><span class="p">)),</span> <span class="n">loadmat</span><span class="p">(</span><span class="n">keyfile</span><span class="p">)[</span><span class="s">&#39;keys&#39;</span><span class="p">])</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">loadmat</span><span class="p">(</span><span class="n">keyfile</span><span class="p">)[</span><span class="s">&#39;keys&#39;</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">keys</span> <span class="o">=</span> <span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="p">(</span><span class="n">data</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
 

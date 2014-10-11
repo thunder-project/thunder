@@ -1,0 +1,425 @@
+
+.. \_series\_tutorial:
+
+.. currentmodule:: thunder
+
+Series
+======
+
+A ``Series`` object is a distributed collection of 1d arrays, all of
+which share a common index. It supports several manipulations and
+computations on 1d data, some of which take the index into account.
+
+Loading series
+--------------
+
+Series can be loaded from a ``ThunderContext`` using the ``loadSeries``
+method. See the ``Input formats`` tutorial for more detail on loading
+methods and formats. Here, we'll just load example series data
+
+.. code:: python
+
+    data = tsc.loadExample('fish-series')
+Inpsection
+----------
+
+Let's plot a random subset of the data using the ``subset`` method,
+which thresholds based on the standard deviation
+
+.. code:: python
+
+    %matplotlib inline
+.. code:: python
+
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    sns.set_context('notebook')
+    examples = data.subset(nsamples=50, thresh=1)
+    plt.plot(examples.T);
+
+
+.. image:: series_files/series_7_0.png
+
+
+Note the variety in raw intensity levels.
+
+Preprocessing
+-------------
+
+A ``Series`` object has methods for normalizing and standardizing data,
+which can be useful during preprocessing. For example, ``center``
+subtracts the mean, and ``normalize`` subtracts and divides by a
+baseline (either the mean, or a percentile)
+
+.. code:: python
+
+    examples = data.center().subset(nsamples=50)
+    plt.plot(examples.T);
+
+
+.. image:: series_files/series_10_0.png
+
+
+.. code:: python
+
+    examples = data.normalize(baseline='percentile').subset(nsamples=50)
+    plt.plot(examples.T);
+
+
+.. image:: series_files/series_11_0.png
+
+
+Related methods include ``center``, ``standardize``, and ``detrend``
+
+Selections
+----------
+
+A ``Series`` has an index, which can be used to subselect values. For
+example, to select a range:
+
+.. code:: python
+
+    data.index
+
+
+
+.. parsed-literal::
+
+    array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
+           17, 18, 19])
+
+
+
+.. code:: python
+
+    data.between(0,10).first()
+
+
+
+.. parsed-literal::
+
+    ((1, 1, 1),
+     [103.0, 103.0, 104.0, 104.0, 103.0, 103.0, 103.0, 104.0, 103.0, 103.0, 104.0])
+
+
+
+Note that the index changes
+
+.. code:: python
+
+    data.between(0,10).index
+
+
+
+.. parsed-literal::
+
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+
+
+We can also select based on an arbitrary criterion
+
+.. code:: python
+
+    data.select(lambda x: x < 5).index
+
+
+
+.. parsed-literal::
+
+    [0, 1, 2, 3, 4]
+
+
+
+Statistics
+----------
+
+A ``Series`` can be summarized with statistics both within and across
+records. To summarize across records:
+
+.. code:: python
+
+    data.mean()
+
+
+
+.. parsed-literal::
+
+    array([ 227.00732656,  225.65176435,  223.89294258,  222.39279306,
+            222.32535885,  221.43764952,  220.06220096,  219.25059809,
+            218.2770634 ,  217.84688995,  218.5249701 ,  220.92957536,
+            222.809061  ,  224.95170455,  225.26869019,  226.72742225,
+            227.19991029,  227.89294258,  228.73639354,  228.82595694])
+
+
+
+.. code:: python
+
+    data.stdev()
+
+
+
+.. parsed-literal::
+
+    array([ 142.21182387,  140.39464624,  137.86271393,  135.97159186,
+            135.59360016,  134.47753098,  132.92788978,  132.10835637,
+            131.15309227,  130.86408017,  131.7913079 ,  134.16022913,
+            136.27699086,  138.87192227,  139.05110232,  141.48171603,
+            142.69438796,  143.81997223,  145.04565373,  144.36058562])
+
+
+
+To summarize within records:
+
+.. code:: python
+
+    data.seriesMean().first()
+
+
+
+.. parsed-literal::
+
+    ((1, 1, 1), 103.3)
+
+
+
+.. code:: python
+
+    data.seriesStdev().first()
+
+
+
+.. parsed-literal::
+
+    ((1, 1, 1), 0.45825756949558388)
+
+
+
+We can also correlate each record with a signal of interest
+
+.. code:: python
+
+    from numpy import random
+    signal = random.randn(20)
+    data.correlate(signal).first()
+
+
+
+.. parsed-literal::
+
+    ((1, 1, 1), -0.45241348732580722)
+
+
+
+Keys
+----
+
+We often use integer keys to index the records of a ``Series``. A few
+convienience methods are provided for working with keys. First, the
+attribute ``dims`` contains information about the range of the keys.
+Computing this requires a pass through the data, but if computed on a
+``Series`` it will be inherited by all derived objects, to avoid
+recomputation.
+
+.. code:: python
+
+    data.dims.max
+
+
+
+.. parsed-literal::
+
+    (88, 76, 1)
+
+
+
+.. code:: python
+
+    data.dims.min
+
+
+
+.. parsed-literal::
+
+    (1, 1, 1)
+
+
+
+For keys that correspond to subscripts (e.g. indices of the rows and
+columns of a matrix, coordinates in space), we can convert between
+subscript and linear indexing.
+
+.. code:: python
+
+    data.keys().take(10)
+
+
+
+.. parsed-literal::
+
+    [(1, 1, 1),
+     (2, 1, 1),
+     (3, 1, 1),
+     (4, 1, 1),
+     (5, 1, 1),
+     (6, 1, 1),
+     (7, 1, 1),
+     (8, 1, 1),
+     (9, 1, 1),
+     (10, 1, 1)]
+
+
+
+.. code:: python
+
+    data.subtoind().keys().take(10)
+
+
+
+.. parsed-literal::
+
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+
+
+.. code:: python
+
+    data.subtoind().indtosub().keys().take(10)
+
+
+
+.. parsed-literal::
+
+    [(1, 1, 1),
+     (2, 1, 1),
+     (3, 1, 1),
+     (4, 1, 1),
+     (5, 1, 1),
+     (6, 1, 1),
+     (7, 1, 1),
+     (8, 1, 1),
+     (9, 1, 1),
+     (10, 1, 1)]
+
+
+
+The ``query`` method can be used to subselect and average records based
+on their (linearized) keys. It returns the mean value and mean key for
+each of the provided index lists.
+
+.. code:: python
+
+    keys, values = data.query(inds=[[100,101],[200]])
+.. code:: python
+
+    keys
+
+
+
+.. parsed-literal::
+
+    array([[ 12.5,   2. ,   1. ],
+           [ 24. ,   3. ,   1. ]])
+
+
+
+.. code:: python
+
+    values
+
+
+
+.. parsed-literal::
+
+    array([[ 115. ,  115. ,  115. ,  115.5,  116. ,  116. ,  116. ,  115.5,
+             115. ,  115. ,  115. ,  115. ,  115. ,  116. ,  116.5,  116. ,
+             115.5,  115. ,  115. ,  115.5],
+           [ 105. ,  105. ,  105. ,  105. ,  105. ,  105. ,  105. ,  105. ,
+             104. ,  104. ,  104. ,  105. ,  105. ,  105. ,  105. ,  105. ,
+             105. ,  105. ,  105. ,  105. ]])
+
+
+
+The ``pack`` method collects a series into a local array, reshaped based
+on the keys. If there are multiple values per record, all will be
+collected into the local array, so typically we select a subset of
+values before packing.
+
+.. code:: python
+
+    out = data.select(0).pack()
+    out.shape
+
+
+
+.. parsed-literal::
+
+    (76, 88)
+
+
+
+.. code:: python
+
+    out = data.between(0,1).pack()
+    out.shape
+
+
+
+.. parsed-literal::
+
+    (2, 76, 88)
+
+
+
+Conversions
+-----------
+
+Subclasses of ``Series`` provide additional functionality for more
+specialized data types.
+
+A ``TimeSeries`` provides methods like ``fourier``, for computing the
+statistics of a Fourier transform
+
+.. code:: python
+
+    ts = data.toTimeSeries()
+    fr = ts.fourier(freq=5)
+    fr.index
+
+
+
+.. parsed-literal::
+
+    ['coherence', 'phase']
+
+
+
+.. code:: python
+
+    fr.select('coherence').first()
+
+
+
+.. parsed-literal::
+
+    ((1, 1, 1), 0.44721359549995798)
+
+
+
+A ``RowMatrix`` provides a variety of methods for working with
+distributed matrices and matrix operations
+
+.. code:: python
+
+    mat = data.toRowMatrix()
+.. code:: python
+
+    mat.cov().shape
+
+
+
+.. parsed-literal::
+
+    (20, 20)
+
+

@@ -80,6 +80,9 @@
    :maxdepth: 1
 
    api
+   Mailing list <https://groups.google.com/forum/?hl=en#!forum/thunder-user>
+   Github repo <https://github.com/freeman-lab/thunder>
+   Project page <http://thefreemanlab.com/thunder/>
 
 .. raw:: html
 

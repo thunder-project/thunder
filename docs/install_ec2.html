@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Running on EC2 &mdash; Thunder 0.3.0 documentation</title>
+    <title>Running on EC2 &mdash; Thunder 0.3.2 documentation</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.3.0',
+        VERSION:     '0.3.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,7 +31,7 @@
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.3.0 documentation" href="index.html" />
+    <link rel="top" title="Thunder 0.3.2 documentation" href="index.html" />
     <link rel="next" title="Basic usage" href="basic_usage.html" />
     <link rel="prev" title="Installation" href="install_local.html" />
 <meta charset='utf-8'>
@@ -53,7 +53,7 @@
         </button>
         <a class="navbar-brand" href="index.html"><img src="_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.3.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.3.2</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -77,6 +77,9 @@
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://groups.google.com/forum/?hl=en#!forum/thunder-user">Mailing list</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/freeman-lab/thunder">Github repo</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://thefreemanlab.com/thunder/">Project page</a></li>
 </ul>
 </ul>
 </li>
@@ -132,12 +135,12 @@
 <p>Running Spark and Thunder on Amazon&#8217;s EC2 is an easy way to quickly leverage the computational power of a large cluster. The following instructions assume you&#8217;ve already installed Thunder as described in <a class="reference internal" href="install_local.html#install-local-ref"><em>Installation</em></a>.</p>
 <div class="section" id="setting-up-an-amazon-account">
 <h2>Setting up an Amazon account<a class="headerlink" href="#setting-up-an-amazon-account" title="Permalink to this headline">¶</a></h2>
-<p>(You might be able to skip this step if you are already using EC2.) Go to <a class="reference external" href="http://aws.amazon.com/">AWS</a> to sign up for an account. Once you have created an account, go to <a class="reference external" href="https://console.aws.amazon.com/iam/#users">Identity and Access Management</a> and click &#8220;Create new users&#8221; at the top. Follow the instructions to create a user for yourself. After you create a user, a window will pop up letting you &#8220;Show User Security Credentials&#8221;. Click this to see your access key ID and secret access key (long strings of characters/numbers). Write these down, or click download to save them to a file, and close the window. While you have these handy, add the following two lines to your <tt class="docutils literal"><span class="pre">bash_profile</span></tt>.</p>
+<p>(You might be able to skip this step if you are already using EC2.) Go to <a class="reference external" href="http://aws.amazon.com/">AWS</a> to sign up for an account. Once you have created an account, go to <a class="reference external" href="https://console.aws.amazon.com/iam/#users">Identity and Access Management</a>, select &#8220;Users&#8221; on the left, and click &#8220;Create new users&#8221; at the top. Follow the instructions to create a user for yourself. After you create a user, a window will pop up letting you &#8220;Show User Security Credentials&#8221;. Click this to see your access key ID and secret access key (long strings of characters/numbers). Write these down, or click download to save them to a file, and close the window. While you have these handy, add the following two lines to your <tt class="docutils literal"><span class="pre">bash_profile</span></tt>.</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nb">export </span><span class="nv">AWS_ACCESS_KEY_ID</span><span class="o">=</span>&lt;your-access-key-id&gt;
 <span class="nb">export </span><span class="nv">AWS_SECRET_ACCESS_KEY</span><span class="o">=</span>&lt;your-secret-access-key&gt;
 </pre></div>
 </div>
-<p>Back on the AWS site, click the checkbox next to your user name. In the window that appears at the bottom of the page, select &#8220;Permissions &gt; Attach user policy&#8221;, select Administrator Access policy, and click Apply Policy. If you opened a brand new account it may take a couple hours for Amazon to verify it, so wait before proceeding.</p>
+<p>Open a new terminal window so these changes take effect. Back on the AWS site, click the checkbox next to your user name. In the window that appears at the bottom of the page, select &#8220;Permissions &gt; Attach user policy&#8221;, select Administrator Access policy, and click Apply Policy. If you opened a brand new account it may take a couple hours for Amazon to verify it, so wait before proceeding.</p>
 </div>
 <div class="section" id="create-your-key-pair">
 <h2>Create your key pair<a class="headerlink" href="#create-your-key-pair" title="Permalink to this headline">¶</a></h2>
