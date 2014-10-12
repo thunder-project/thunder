@@ -165,14 +165,14 @@ class Colorize(object):
                 if dims[0] != 2:
                     raise Exception('Must have 2 values per pixel for %s conversion' % self.totype)
 
-        if isinstance(self.totype, ListedColormap) or isinstance(self.totype, str):
+        elif isinstance(self.totype, ListedColormap) or isinstance(self.totype, str):
             if len(dims) not in [2, 3]:
                 raise Exception('Number of dimensions must be 2 or 3 for %s conversion' % self.totype)
 
     def _check_image_mask_args(self, mask_dims, img_dims):
 
         if self.totype in ['rgb', 'hsv', 'polar']:
-            if not allclose(mask_dims[1:] != img_dims):
+            if not allclose(mask_dims[1:], img_dims):
                 raise Exception
 
         if isinstance(self.totype, ListedColormap) or isinstance(self.totype, str):
