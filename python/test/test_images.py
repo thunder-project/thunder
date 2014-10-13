@@ -176,8 +176,8 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
             assert_equals(tuple(aryshape), tuple(conf['dims']))
             assert_equals(len(aryshape), conf['nkeys'])
             assert_equals(narys_, conf['nvalues'])
-            assert_equals(valdtype, conf['format'])
-            assert_equals('int16', conf['keyformat'])
+            assert_equals(valdtype, conf['valuetype'])
+            assert_equals('int16', conf['keytype'])
 
         assert_true(os.path.isfile(os.path.join(outdir, 'SUCCESS')))
 

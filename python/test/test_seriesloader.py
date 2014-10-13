@@ -142,7 +142,7 @@ class TestSeriesBinaryLoader(PySparkTestCaseWithOutputDir):
                 # write configuration file
                 conf = {'input': outsubdir,
                         'nkeys': item.nkeys, 'nvalues': item.nvals,
-                        'format': str(item.valDType), 'keyformat': str(item.keyDType)}
+                        'valuetype': str(item.valDType), 'keytype': str(item.keyDType)}
                 with open(os.path.join(outsubdir, "conf.json"), 'wb') as f:
                     json.dump(conf, f, indent=2)
                 series = loader.fromBinary(outsubdir)
