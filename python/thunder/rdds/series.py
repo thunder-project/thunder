@@ -2,7 +2,7 @@ from numpy import ndarray, array, sum, mean, std, size, arange, \
     polyfit, polyval, percentile, float16, asarray, maximum, zeros, corrcoef
 
 from thunder.rdds.data import Data
-from thunder.utils.common import checkparams
+from thunder.utils.common import checkparams, loadmatvar
 
 
 class Series(Data):
@@ -478,7 +478,7 @@ class Series(Data):
         """
 
         if isinstance(inds, str):
-            inds = loadmat(inds)[var][0]
+            inds = loadmatvar(inds, var)
         else:
             inds = asarray(inds)
 
