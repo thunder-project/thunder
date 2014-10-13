@@ -523,25 +523,3 @@ class Series(Data):
         return SpatialSeries(self.rdd).__finalize__(self)
 
 
-def writeSeriesConfig(outputdirname, nkeys, nvalues, dims=None, keytype='int16', valuetype='int16', confname="conf.json",
-                      overwrite=True):
-
-    import json
-    from thunder.rdds.fileio.writers import getFileWriterForPath
-
-    filewriterclass = getFileWriterForPath(outputdirname)
-    # write configuration file
-    conf = {'input': outputdirname,
-            'nkeys': nkeys, 'nvalues': nvalues,
-            'format': str(valuetype), 'keyformat': str(keytype)}
-    if dims:
-        conf["dims"] = dims
-
-    confwriter = filewriterclass(outputdirname, confname, overwrite=overwrite)
-    confwriter.writeFile(json.dumps(conf, indent=2))
-
-    # touch "SUCCESS" file as final action
-    successwriter = filewriterclass(outputdirname, "SUCCESS", overwrite=overwrite)
-    successwriter.writeFile('')
-
-

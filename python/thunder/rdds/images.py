@@ -3,7 +3,7 @@ from numpy import ndarray, arange, amax, amin, size, squeeze, dtype
 
 from thunder.rdds.data import parseMemoryString
 from thunder.rdds.data import Data
-from thunder.rdds.series import writeSeriesConfig
+from thunder.rdds.fileio.seriesloader import writeSeriesConfig
 
 
 class Images(Data):
