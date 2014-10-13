@@ -167,23 +167,6 @@ class Series(Data):
 
         return self.apply(func)
 
-    def normalizeTest(self, baseline='percentile', **kwargs):
-        checkparams(baseline, ['mean', 'percentile'])
-
-        if baseline.lower() == 'mean':
-            basefunc = mean
-        if baseline.lower() == 'percentile':
-            if 'percentile' in kwargs:
-                perc = kwargs['percentile']
-            else:
-                perc = 20
-            basefunc = lambda x: percentile(x, perc)
-
-        def func(y):
-            return (y - basefunc(y)) / (basefunc(y) + 0.1)
-
-        return self.apply(func)
-
     def normalize(self, baseline='percentile', **kwargs):
         """ Normalize each record in series data by
         subtracting and dividing by a baseline

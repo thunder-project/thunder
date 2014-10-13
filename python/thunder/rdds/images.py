@@ -1,10 +1,7 @@
-import itertools
-from numpy import ndarray, arange, amax, amin, size, squeeze, dtype
-from io import BytesIO
 
-from thunder.rdds.imageblocks import ImageBlocks, ImageBlockValue
+from numpy import ndarray, arange, amax, amin, size, squeeze, dtype
+
 from thunder.rdds.data import parseMemoryString
-from thunder.rdds.fileio.writers import getParallelWriterForPath, getCollectedFileWriterForPath
 from thunder.rdds.data import Data
 from thunder.rdds.series import writeSeriesConfig
 
@@ -102,6 +99,10 @@ class Images(Data):
             of an xy plane, divided in the middle of the y dimension
 
         """
+
+        import itertools
+        from thunder.rdds.imageblocks import ImageBlocks, ImageBlockValue
+
         dims = self.dims
         ndim = len(dims)
         totnumimages = self.nimages
@@ -304,6 +305,8 @@ class Images(Data):
             of this call.
 
         """
+        from thunder.rdds.fileio.writers import getParallelWriterForPath
+
         writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
 
         blocksdata = self._scatterToBlocks(blockSize=blockSize, blocksPerDim=splitsPerDim, groupingDim=groupingDim)
@@ -349,6 +352,8 @@ class Images(Data):
                              len(dims))
 
         from matplotlib.pyplot import imsave
+        from io import BytesIO
+        from thunder.rdds.fileio.writers import getParallelWriterForPath, getCollectedFileWriterForPath
 
         def toFilenameAndPngBuf(kv):
             key, img = kv

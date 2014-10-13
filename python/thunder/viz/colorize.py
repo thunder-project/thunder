@@ -51,6 +51,8 @@ class Colorize(object):
 
     def get(self, line):
 
+        from matplotlib.cm import get_cmap
+
         if (self.totype == 'rgb') or (self.totype == 'hsv'):
             return abs(line) * self.scale
 

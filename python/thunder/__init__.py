@@ -1,5 +1,4 @@
-# from thunder.rdds import RowMatrix, Images
-# from thunder.utils.context import ThunderContext
+# from thunder.rdds import Images
 
 # analyses
 from thunder.decoding.uniclassify import MassUnivariateClassifier
@@ -17,10 +16,13 @@ from thunder.regression.tuning import GaussianTuningModel, CircularTuningModel
 from thunder.rdds.series import Series
 from thunder.rdds.spatialseries import SpatialSeries
 from thunder.rdds.timeseries import TimeSeries
+from thunder.rdds.matrices import RowMatrix
+from thunder.rdds.images import Images
 
 # utilities
 from thunder.viz.colorize import Colorize
 from thunder.utils.datasets import DataSets
 from thunder.utils.export import export
+from thunder.utils.context import ThunderContext
 
 __version__ = "0.3.2"
