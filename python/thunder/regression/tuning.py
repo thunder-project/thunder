@@ -29,7 +29,7 @@ class TuningModel(object):
 
     def __init__(self, modelfile, var='s'):
         if type(modelfile) is str:
-            self.s = loadmat(modelfile)[var]
+            self.s = loadmatvar(modelfile, var)
         else:
             self.s = modelfile
 

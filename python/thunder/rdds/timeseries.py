@@ -2,6 +2,7 @@ from numpy import sqrt, pi, angle, fft, fix, zeros, roll, dot, mean, array, size
 from scipy.linalg import norm
 from scipy.io import loadmat
 from thunder.rdds import Series
+from thunder.utils.common import loadmatvar
 
 
 class TimeSeries(Series):
@@ -148,7 +149,7 @@ class TimeSeries(Series):
         """
 
         if type(signal) is str:
-            s = loadmat(signal)[var]
+            s = loadmatvar(signal, var)
         else:
             s = signal
 
