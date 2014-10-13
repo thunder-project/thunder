@@ -1,9 +1,8 @@
-# from thunder.rdds import Images
-
 # analyses
 from thunder.decoding.uniclassify import MassUnivariateClassifier
 from thunder.decoding.uniclassify import GaussNaiveBayesClassifier, TTestClassifier
 from thunder.factorization.pca import PCA
+from thunder.factorization.svd import SVD
 from thunder.factorization.ica import ICA
 from thunder.factorization.nmf import NMF
 from thunder.regression.regress import RegressionModel
