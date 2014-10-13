@@ -430,11 +430,8 @@ class Images(Data):
         sampleslices = [slice(0, dims[i], samplefactor[i]) for i in xrange(ndims)]
         newdims = [dims[i] / samplefactor[i] for i in xrange(ndims)]  # integer division
 
-        def samplefunc(v, sampleslices_):
-            return v[sampleslices_]
-
         return self._constructor(
-            self.rdd.mapValues(lambda v: samplefunc(v, sampleslices)), dims=newdims).__finalize__(self)
+            self.rdd.mapValues(lambda v: v[sampleslices]), dims=newdims).__finalize__(self)
 
     def planes(self, bottom, top, inclusive=True):
         """

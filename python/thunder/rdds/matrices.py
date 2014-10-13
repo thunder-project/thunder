@@ -7,8 +7,6 @@ from thunder.rdds.series import Series
 
 
 # TODO: right divide and left divide
-# TODO: common operation is multiplying an RDD by its transpose times a matrix, how to do this cleanly?
-# TODO: test using these in the various analyses packages (especially thunder.factorization)
 
 
 class RowMatrix(Series):
