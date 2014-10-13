@@ -81,10 +81,8 @@ thunder currently includes two primary data types for distributed spatial and te
 Input and output
 ----------------
 
-The primary data types in thunder -- Images and Series -- can each be loaded from a variety of raw input formats, including text or flat binary files (for Series) and tif or pngs (for Images). Files can be stored locally, on a networked file system, on Amazon's S3, or in HDFS. All metadata (e.g. model parameters) can be provided as numpy arrays or loaded from MAT files, see relavant functions for more details.
+The primary data types in thunder -- Images and Series -- can each be loaded from a variety of raw input formats, including text or flat binary files (for Series) and tif or pngs (for Images). Files can be stored locally, on a networked file system, on Amazon's S3, or in HDFS. Where needed, metadata (e.g. model parameters) can be provided as numpy arrays or loaded from MAT files. Results can be visualized directly from the python shell or in iPython notebook, or saved to external formats.
 
-Results can be visualized directly from the python shell or in iPython notebook, or saved to external formats.
-
-Road map
-----------------
+Contributions
+-------------
 If you have other ideas or want to contribute, submit an issue or pull request!
