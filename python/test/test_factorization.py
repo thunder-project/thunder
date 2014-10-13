@@ -3,7 +3,9 @@ import tempfile
 from numpy import array, allclose, transpose, random, dot, corrcoef, diag
 from numpy.linalg import norm
 import scipy.linalg as LinAlg
-from thunder.factorization import ICA, SVD, NMF
+from thunder.factorization.ica import ICA
+from thunder.factorization.svd import SVD
+from thunder.factorization.nmf import NMF
 from thunder.utils.datasets import DataSets
 from thunder.rdds.matrices import RowMatrix
 from test_utils import PySparkTestCase
@@ -68,7 +70,7 @@ class TestSVD(FactorizationTestCase):
         assert(allclose(u_test, u_true[:, 0], atol=tol) | allclose(-u_test, u_true[:, 0], atol=tol))
 
     def test_conversion(self):
-        from thunder.rdds import Series
+        from thunder.rdds.series import Series
         data_local = [
             array([1.0, 2.0, 6.0]),
             array([1.0, 3.0, 0.0]),

@@ -2,8 +2,7 @@
 Class for performing non-negative matrix factorization
 """
 
-import numpy as np
-from thunder.rdds import Series
+from thunder.rdds.series import Series
 
 
 # TODO use RowMatrix throughout
@@ -95,6 +94,8 @@ class NMF(object):
         ----------
         self : returns an instance of self.
         """
+
+        import numpy as np
 
         if not (isinstance(mat, Series)):
             raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')

@@ -2,10 +2,9 @@
 Class for Independent Component Analysis
 """
 
-from numpy import random, sqrt, zeros, real, dot, outer, diag, transpose
-from scipy.linalg import sqrtm, inv, orth
-from thunder.factorization import SVD
-from thunder.rdds import Series, RowMatrix
+from thunder.factorization.svd import SVD
+from thunder.rdds.series import Series
+from thunder.rdds.matrices import RowMatrix
 
 
 class ICA(object):
@@ -67,6 +66,9 @@ class ICA(object):
         ----------
         self : returns an instance of self.
         """
+
+        from numpy import random, sqrt, zeros, real, dot, outer, diag, transpose
+        from scipy.linalg import sqrtm, inv, orth
 
         if not (isinstance(data, Series)):
             raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')

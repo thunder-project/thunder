@@ -7,7 +7,7 @@ from test_utils import PySparkTestCase
 class TestConversions(PySparkTestCase):
 
     def test_to_row_matrix(self):
-        from thunder.rdds import RowMatrix
+        from thunder.rdds.matrices import RowMatrix
         rdd = self.sc.parallelize([(0, array([4, 5, 6, 7])), (1, array([8, 9, 10, 11]))])
         data = Series(rdd)
         mat = data.toRowMatrix()
@@ -16,7 +16,7 @@ class TestConversions(PySparkTestCase):
         assert(mat.ncols == 4)
 
     def test_to_time_series(self):
-        from thunder.rdds import TimeSeries
+        from thunder.rdds.timeseries import TimeSeries
         rdd = self.sc.parallelize([(0, array([4, 5, 6, 7])), (1, array([8, 9, 10, 11]))])
         data = Series(rdd)
         ts = data.toTimeSeries()

@@ -1,1 +1,0 @@
-from .colorize import Colorize

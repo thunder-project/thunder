@@ -2,12 +2,10 @@ import itertools
 from numpy import ndarray, arange, amax, amin, size, squeeze, dtype
 from io import BytesIO
 
-from matplotlib.pyplot import imsave
-
 from thunder.rdds.imageblocks import ImageBlocks, ImageBlockValue
-from thunder.rdds import Data
 from thunder.rdds.data import parseMemoryString
 from thunder.rdds.fileio.writers import getParallelWriterForPath, getCollectedFileWriterForPath
+from thunder.rdds.data import Data
 from thunder.rdds.series import writeSeriesConfig
 
 
@@ -349,6 +347,8 @@ class Images(Data):
         if not len(dims) == 2:
             raise ValueError("Only two-dimensional images can be exported as .png files; image is %d-dimensional." %
                              len(dims))
+
+        from matplotlib.pyplot import imsave
 
         def toFilenameAndPngBuf(kv):
             key, img = kv

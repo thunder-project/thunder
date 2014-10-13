@@ -2,7 +2,7 @@ import cStringIO as StringIO
 import itertools
 from numpy import zeros, reshape
 import struct
-from thunder.rdds import Data
+from thunder.rdds.data import Data
 from thunder.rdds.series import Series
 
 

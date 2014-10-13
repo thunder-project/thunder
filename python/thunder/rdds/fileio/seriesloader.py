@@ -13,7 +13,7 @@ from thunder.rdds.data import parseMemoryString
 from thunder.rdds.fileio.writers import getParallelWriterForPath
 from thunder.rdds.imageblocks import ImageBlocks
 from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError, selectByStartAndStopIndices
-from thunder import Series
+from thunder.rdds.series import Series
 
 
 class SeriesLoader(object):

@@ -2,10 +2,9 @@
 Classes for mass-unvariate regression
 """
 
-from scipy.io import loadmat
 from numpy import sum, outer, inner, mean, shape, dot, transpose, concatenate, ones
-from scipy.linalg import inv
-from thunder.rdds import Series
+from thunder.rdds.series import Series
+from thunder.utils.common import loadmatvar, pinv
 
 
 class RegressionModel(object):
@@ -75,7 +74,7 @@ class MeanRegressionModel(RegressionModel):
 
     def __init__(self, modelfile, var='X'):
         if type(modelfile) is str:
-            x = loadmat(modelfile)[var]
+            x = loadmatvar(modelfile, var)
         else:
             x = modelfile
         x = x.astype(float)
@@ -121,11 +120,11 @@ class LinearRegressionModel(RegressionModel):
 
     def __init__(self, modelfile, var='X'):
         if type(modelfile) is str:
-            x = loadmat(modelfile)[var]
+            x = loadmatvar(var)
         else:
             x = modelfile
         x = concatenate((ones((1, shape(x)[1])), x))
-        x_hat = dot(inv(dot(x, transpose(x))), x)
+        x_hat = pinv(x)
         self.x = x
         self.x_hat = x_hat
 
@@ -171,12 +170,12 @@ class BilinearRegressionModel(RegressionModel):
 
     def __init__(self, modelfile, var=('X1', 'X2')):
         if type(modelfile) is str:
-            x1 = loadmat(modelfile[0])[var[0]]
-            x2 = loadmat(modelfile[1])[var[1]]
+            x1 = loadmatvar(modelfile[0], var[0])
+            x2 = loadmatvar(modelfile[1], var[1])
         else:
             x1 = modelfile[0]
             x2 = modelfile[1]
-        x1_hat = dot(inv(dot(x1, transpose(x1))), x1)
+        x1_hat = pinv(x1)
         self.x1 = x1
         self.x2 = x2
         self.x1_hat = x1_hat
@@ -192,7 +191,7 @@ class BilinearRegressionModel(RegressionModel):
             b1_hat += 1E-06
         x3 = self.x2 * b1_hat
         x3 = concatenate((ones((1, shape(x3)[1])), x3))
-        x3_hat = dot(inv(dot(x3, transpose(x3))), x3)
+        x3_hat = pinv(x3)
         b2 = dot(x3_hat, y)
         predic = dot(b2, x3)
         resid = y - predic
