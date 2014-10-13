@@ -1,7 +1,7 @@
 import shutil
 import tempfile
 from numpy import array, allclose, mean, corrcoef
-from thunder.rdds import TimeSeries
+from thunder.rdds.timeseries import TimeSeries
 from test_utils import PySparkTestCase
 
 

@@ -3,8 +3,8 @@ Classes for KMeans clustering
 """
 
 from numpy import array, argmin, corrcoef, ndarray, asarray, std
-from scipy.spatial.distance import cdist
-from thunder.rdds import Series
+
+from thunder.rdds.series import Series
 
 
 class KMeansModel(object):
@@ -24,6 +24,7 @@ class KMeansModel(object):
     colors : array
         Unique color labels for each cluster
     """
+
     def __init__(self, centers):
 
         self.centers = centers
@@ -60,7 +61,7 @@ class KMeansModel(object):
         closest : Series, list of arrays, or a single array
             For each data point, ggives the closest center to that point
         """
-
+        from scipy.spatial.distance import cdist
         closestpoint = lambda centers, p: argmin(cdist(centers, array([p])))
         out = self.calc(data, closestpoint)
         if isinstance(data, Series):
@@ -81,7 +82,7 @@ class KMeansModel(object):
         similarities : Series, list of arrays, or a single array
             For each data point, gives the similarity to its nearest cluster
         """
-
+        from scipy.spatial.distance import cdist
         similarity = lambda centers, p: 0 if std(p) == 0 else \
             corrcoef(centers[argmin(cdist(centers, array([p])))], p)[0, 1]
         out = self.calc(data, similarity)

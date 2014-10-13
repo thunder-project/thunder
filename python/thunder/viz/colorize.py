@@ -1,8 +1,5 @@
 from numpy import arctan2, sqrt, pi, array, shape, abs, dstack, clip, transpose, inf, \
     random, zeros, ones, asarray, corrcoef, allclose
-import colorsys
-from matplotlib import colors, cm
-from matplotlib.colors import ListedColormap, Normalize
 
 
 class Colorize(object):
@@ -58,12 +55,13 @@ class Colorize(object):
             return abs(line) * self.scale
 
         if self.totype == 'polar':
+            import colorsys
             theta = ((arctan2(-line[0], -line[1]) + pi/2) % (pi*2)) / (2 * pi)
             rho = sqrt(line[0]**2 + line[1]**2)
             return colorsys.hsv_to_rgb(theta, 1, rho * self.scale)
 
         else:
-            return cm.get_cmap(self.totype, 256)(line[0] * self.scale)[0:3]
+            return get_cmap(self.totype, 256)(line[0] * self.scale)[0:3]
 
     def images(self, img, mask=None):
         """Colorize numerical image data.
@@ -89,6 +87,9 @@ class Colorize(object):
             Color assignments for images, either (x, y, z, 3) or (x, y, 3)
         """
 
+        from matplotlib.cm import get_cmap
+        from matplotlib.colors import ListedColormap, hsv_to_rgb, Normalize
+
         img = asarray(img)
         img_dims = img.shape
         self._check_image_args(img_dims)
@@ -113,10 +114,10 @@ class Colorize(object):
                 saturation = ones((img_dims[1], img_dims[2]))
                 out = zeros((img_dims[1], img_dims[2], img_dims[3], 3))
                 for i in range(0, img_dims[3]):
-                    out[:, :, i, :] = colors.hsv_to_rgb(dstack((theta[:, :, i], saturation, self.scale*rho[:, :, i])))
+                    out[:, :, i, :] = hsv_to_rgb(dstack((theta[:, :, i], saturation, self.scale*rho[:, :, i])))
             if img.ndim == 3:
                 saturation = ones((img_dims[1], img_dims[2]))
-                out = colors.hsv_to_rgb(dstack((theta, saturation, self.scale*rho)))
+                out = hsv_to_rgb(dstack((theta, saturation, self.scale*rho)))
 
         elif isinstance(self.totype, ListedColormap):
             norm = Normalize()
@@ -131,7 +132,7 @@ class Colorize(object):
                 out = out[:, :, 0:3]
 
         elif isinstance(self.totype, str):
-            func = lambda x: cm.get_cmap(self.totype, 256)(x)
+            func = lambda x: get_cmap(self.totype, 256)(x)
             if img.ndim == 4:
                 out = func(img[0])
                 out = out[:, :, :, 0:3]
@@ -155,6 +156,8 @@ class Colorize(object):
 
     def _check_image_args(self, dims):
 
+        from matplotlib.colors import ListedColormap
+
         if self.totype in ['rgb', 'hsv', 'polar']:
             if len(dims) not in [3, 4]:
                 raise Exception('Number of dimensions must be 3 or 4 for %s conversion' % self.totype)
@@ -170,6 +173,8 @@ class Colorize(object):
                 raise Exception('Number of dimensions must be 2 or 3 for %s conversion' % self.totype)
 
     def _check_image_mask_args(self, mask_dims, img_dims):
+
+        from matplotlib.colors import ListedColormap
 
         if self.totype in ['rgb', 'hsv', 'polar']:
             if not allclose(mask_dims[1:], img_dims):
@@ -200,8 +205,9 @@ class Colorize(object):
         res = minimize(optfun, init, bounds=bounds)
         newclrs = res.x.reshape(nclrs, 3).tolist()
 
+        from matplotlib.colors import ListedColormap
+
         if ascmap:
-            from matplotlib.colors import ListedColormap
             newclrs = ListedColormap(newclrs, name='from_list')
 
         return newclrs

@@ -1,5 +1,6 @@
 from numpy import corrcoef, clip
-from thunder.rdds import Series
+
+from thunder.rdds.series import Series
 
 
 class SpatialSeries(Series):

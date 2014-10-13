@@ -2,8 +2,9 @@
 Class for Principal Component Analysis
 """
 
-from thunder.factorization import SVD
-from thunder.rdds import Series, RowMatrix
+from thunder.factorization.svd import SVD
+from thunder.rdds.series import Series
+from thunder.rdds.matrices import RowMatrix
 
 
 class PCA(object):

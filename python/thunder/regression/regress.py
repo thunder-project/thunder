@@ -2,10 +2,9 @@
 Classes for mass-unvariate regression
 """
 
-from scipy.io import loadmat
 from numpy import sum, outer, inner, mean, shape, dot, transpose, concatenate, ones
-from scipy.linalg import inv
-from thunder.rdds import Series
+from thunder.rdds.series import Series
+from thunder.utils.common import loadmatvar, pinv
 
 
 class RegressionModel(object):

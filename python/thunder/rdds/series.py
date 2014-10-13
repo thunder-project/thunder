@@ -1,13 +1,7 @@
-import json
-import types
-import copy
 from numpy import ndarray, array, sum, mean, std, size, arange, \
     polyfit, polyval, percentile, float16, asarray, maximum, zeros, corrcoef
-from scipy.io import loadmat
 
-from thunder.rdds.fileio.writers import getFileWriterForPath
-from thunder.rdds import Data
-from thunder.rdds.keys import Dimensions
+from thunder.rdds.data import Data
 from thunder.utils.common import checkparams
 
 
@@ -56,6 +50,7 @@ class Series(Data):
 
     @property
     def dims(self):
+        from thunder.rdds.keys import Dimensions
         if self._dims is None:
             entry = self.rdd.first()[0]
             n = size(entry)
@@ -110,8 +105,10 @@ class Series(Data):
             Criterion function to apply to indices, specific index value,
             or list of indices
         """
+
         index = self.index
 
+        import types
         if not isinstance(crit, types.FunctionType):
             # set("foo") -> {"f", "o"}; wrap in list to prevent:
             critlist = set([crit]) if (isinstance(crit, basestring) or isinstance(crit, int)) else set(crit)
@@ -167,6 +164,23 @@ class Series(Data):
             p[-1] = 0
             yy = polyval(p, x)
             return y - yy
+
+        return self.apply(func)
+
+    def normalizeTest(self, baseline='percentile', **kwargs):
+        checkparams(baseline, ['mean', 'percentile'])
+
+        if baseline.lower() == 'mean':
+            basefunc = mean
+        if baseline.lower() == 'percentile':
+            if 'percentile' in kwargs:
+                perc = kwargs['percentile']
+            else:
+                perc = 20
+            basefunc = lambda x: percentile(x, perc)
+
+        def func(y):
+            return (y - basefunc(y)) / (basefunc(y) + 0.1)
 
         return self.apply(func)
 
@@ -263,6 +277,8 @@ class Series(Data):
             Variable name if loading from a MAT file
         """
 
+        from scipy.io import loadmat
+
         if type(signal) is str:
             s = loadmat(signal)[var]
         else:
@@ -341,6 +357,7 @@ class Series(Data):
         """
         Project along one of the keys
         """
+        import copy
         dims = copy.copy(self.dims)
         nkeys = len(self.first()[0])
         if axis > nkeys - 1:
@@ -505,26 +522,30 @@ class Series(Data):
         """
         Convert Series to RowMatrix
         """
-        from thunder.rdds import RowMatrix
+        from thunder.rdds.matrices import RowMatrix
         return RowMatrix(self.rdd).__finalize__(self)
 
     def toTimeSeries(self):
         """
         Convert Series to TimeSeries
         """
-        from thunder.rdds import TimeSeries
+        from thunder.rdds.timeseries import TimeSeries
         return TimeSeries(self.rdd).__finalize__(self)
 
     def toSpatialSeries(self):
         """
         Convert Series to SpatialSeries
         """
-        from thunder.rdds import SpatialSeries
+        from thunder.rdds.spatialseries import SpatialSeries
         return SpatialSeries(self.rdd).__finalize__(self)
 
 
 def writeSeriesConfig(outputdirname, nkeys, nvalues, dims=None, keytype='int16', valuetype='int16', confname="conf.json",
                       overwrite=True):
+
+    import json
+    from thunder.rdds.fileio.writers import getFileWriterForPath
+
     filewriterclass = getFileWriterForPath(outputdirname)
     # write configuration file
     conf = {'input': outputdirname,

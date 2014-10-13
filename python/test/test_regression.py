@@ -1,7 +1,8 @@
 import shutil
 import tempfile
 from numpy import array, allclose, pi
-from thunder.regression import RegressionModel, TuningModel
+from thunder.regression.regress import RegressionModel
+from thunder.regression.tuning import TuningModel
 from test_utils import PySparkTestCase
 from thunder.rdds.series import Series
 

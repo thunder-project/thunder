@@ -4,7 +4,7 @@ import shutil
 import tempfile
 from numpy import array, allclose
 from test_utils import PySparkTestCase
-from thunder.rdds import Series
+from thunder.rdds.series import Series
 from thunder.rdds.keys import _subtoind_converter, _indtosub_converter
 
 
