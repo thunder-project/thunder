@@ -1,7 +1,7 @@
 {
-  "format": "uint8", 
+  "valuetype": "uint8", 
   "nkeys": 3, 
-  "keyformat": "int16", 
+  "keytype": "int16", 
   "dims": [
     76, 
     87, 

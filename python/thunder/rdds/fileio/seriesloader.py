@@ -64,7 +64,7 @@ class SeriesLoader(object):
 
         return Series(data)
 
-    BinaryLoadParameters = namedtuple('BinaryLoadParameters', 'nkeys nvalues keyformat format')
+    BinaryLoadParameters = namedtuple('BinaryLoadParameters', 'nkeys nvalues keytype valuetype')
     BinaryLoadParameters.__new__.__defaults__ = (None, None, 'int16', 'int16')
 
     @staticmethod
@@ -87,7 +87,7 @@ class SeriesLoader(object):
         for k in params.keys():
             if not k in SeriesLoader.BinaryLoadParameters._fields:
                 del params[k]
-        keywordparams = {'nkeys': nkeys, 'nvalues': nvalues, 'keyformat': keytype, 'format': valuetype}
+        keywordparams = {'nkeys': nkeys, 'nvalues': nvalues, 'keytype': keytype, 'valuetype': valuetype}
         #keywordparams = {k: v for k, v in keywordparams.items() if v}
         for k, v in keywordparams.items():
             if not v:
@@ -131,8 +131,8 @@ class SeriesLoader(object):
 
         datafile = self.__normalizeDatafilePattern(datafile, ext)
 
-        keydtype = dtype(paramsObj.keyformat)
-        valdtype = dtype(paramsObj.format)
+        keydtype = dtype(paramsObj.keytype)
+        valdtype = dtype(paramsObj.valuetype)
 
         keysize = paramsObj.nkeys * keydtype.itemsize
         recordsize = keysize + paramsObj.nvalues * valdtype.itemsize
@@ -332,7 +332,15 @@ class SeriesLoader(object):
             jsonbuf = reader.read(datafile, filename=conffile)
         except FileNotFoundError:
             return {}
-        return json.loads(jsonbuf)
+
+        params = json.loads(jsonbuf)
+
+        if 'format' in params:
+            raise Exception("Numerical format of value should be specified as 'valuetype', not 'format'")
+        if 'keyformat' in params:
+            raise Exception("Numerical format of key should be specified as 'keytype', not 'keyformat'")
+
+        return params
 
 
 def writeSeriesConfig(outputdirname, nkeys, nvalues, dims=None, keytype='int16', valuetype='int16', confname="conf.json",
@@ -345,7 +353,7 @@ def writeSeriesConfig(outputdirname, nkeys, nvalues, dims=None, keytype='int16',
     # write configuration file
     conf = {'input': outputdirname,
             'nkeys': nkeys, 'nvalues': nvalues,
-            'format': str(valuetype), 'keyformat': str(keytype)}
+            'valuetype': str(valuetype), 'keytype': str(keytype)}
     if dims:
         conf["dims"] = dims
 

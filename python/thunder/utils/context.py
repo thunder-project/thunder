@@ -60,9 +60,10 @@ class ThunderContext():
             text data. Default is to use minParallelism attribute of Spark context object.
 
         conffile: string, optional, default 'conf.json'
-            Path to JSON file with configuration options including 'nkeys' and 'nvalues'. If a file is not found at the
-            given path, then the base directory given in 'datafile' will also be checked. Parameters specified as
-            explicit arguments to this method take priority over those found in conffile if both are present.
+            Path to JSON file with configuration options including 'nkeys', 'nvalues', 'keytype', and 'valuetype'.
+            If a file is not found at the given path, then the base directory given in 'datafile'
+            will also be checked. Parameters specified as explicit arguments to this method take priority
+            over those found in conffile if both are present.
         """
         checkparams(inputformat, ['text', 'binary'])
 
