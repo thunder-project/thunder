@@ -47,6 +47,7 @@ class TiffParser(object):
         if self._debug:
             self.nseeks = 0
             self.bytes_read = 0
+            self.nreads = 0
 
     def __seek(self, pos):
         cp = self._fp.tell()
@@ -56,12 +57,28 @@ class TiffParser(object):
                 self.nseeks += 1
 
     def __read(self, size=-1):
-        buf = self._fp.read(size)
-        if size >= 0 and len(buf) < size:
-            print "incomplete read: requested %d bytes, got %d" % (size, len(buf))
+        curbuf = self._fp.read(size)
         if self._debug:
-            self.bytes_read += len(buf)
-        return buf
+            self.nreads += 1
+        if size >= 0 and len(curbuf) < size:
+            # print "incomplete read: requested %d bytes, got %d; retrying" % (size, len(curbuf))
+            size -= len(curbuf)
+            buf = ' '  # init loop
+            while size > 0 and len(buf) > 0:
+                # keep reading while we're still getting data (no EOF) and still have data left to get
+                buf = self._fp.read(size)
+                # if len(buf) < size:
+                #     if len(buf) > 0:
+                #         print "incomplete read: requested %d bytes, got %d; retrying" % (size, len(curbuf))
+                #     else:
+                #         print "incomplete read: requested %d bytes, got 0 (EOF)" % size
+                if self._debug:
+                    self.nreads += 1
+                curbuf += buf  # costly concatenation here...
+                size -= len(buf)
+        if self._debug:
+            self.bytes_read += len(curbuf)
+        return curbuf
 
     @property
     def order(self):
