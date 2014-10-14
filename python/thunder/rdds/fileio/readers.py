@@ -328,7 +328,7 @@ class BotoS3FileReader(_BotoS3Client):
 
     def list(self, datapath, filename=None):
         keys = self.__getMatchingKeys(datapath, filename=filename)
-        keynames = [key.bucket.name + "/" + key.name for key in keys]
+        keynames = ["s3n:///" + key.bucket.name + "/" + key.name for key in keys]
         return sorted(keynames)
 
     def __getSingleMatchingKey(self, datapath, filename=None):
@@ -414,7 +414,7 @@ class BotoS3ReadFileHandle(object):
 
     @property
     def name(self):
-        return self._key.bucket.name + "/" + self._key.name
+        return "s3n:///" + self._key.bucket.name + "/" + self._key.name
 
     @property
     def mode(self):
