@@ -116,36 +116,67 @@ class ThunderContext():
 
         return data
 
-    def loadImagesStackAsSeries(self, datapath, dims, blockSize="150M", startidx=None, stopidx=None, shuffle=False):
+    def loadImagesAsSeries(self, datapath, dims=None, inputformat='stack', blockSize="150M",
+                           startidx=None, stopidx=None, shuffle=False):
         """
         Load Images data as Series data.
         """
-        from thunder.rdds.fileio.imagesloader import ImagesLoader
-        from thunder.rdds.fileio.seriesloader import SeriesLoader
+        checkparams(inputformat, ['stack', 'tif-stack'])
+
+        if inputformat.lower() == 'stack' and not dims:
+            raise ValueError("Dimensions ('dims' parameter) must be specified if loading from binary image stack" +
+                             " ('stack' value for 'inputformat' parameter)")
 
         if shuffle:
+            from thunder.rdds.fileio.imagesloader import ImagesLoader
             loader = ImagesLoader(self._sc)
-            return loader.fromStack(datapath, dims, startidx=startidx, stopidx=stopidx).toSeries(blockSize=blockSize)
-        else:
-            loader = SeriesLoader(self._sc)
-            return loader.fromStack(datapath, dims, blockSize=blockSize, startidx=startidx, stopidx=stopidx)
+            if inputformat.lower() == 'stack':
+                return loader.fromStack(datapath, dims, startidx=startidx, stopidx=stopidx)\
+                    .toSeries(blockSize=blockSize)
+            else:
+                # tif stack
+                return loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)\
+                    .toSeries(blockSize=blockSize)
 
-    def convertImagesStackToSeries(self, datapath, outputdirpath, dims, blockSize="150M", startidx=None, stopidx=None,
+        else:
+            from thunder.rdds.fileio.seriesloader import SeriesLoader
+            loader = SeriesLoader(self._sc)
+            if inputformat.lower() == 'stack':
+                return loader.fromStack(datapath, dims, blockSize=blockSize, startidx=startidx, stopidx=stopidx)
+            else:
+                # tif stack
+                return loader.fromMultipageTif(datapath, dims=dims, blockSize=blockSize,
+                                               startidx=startidx, stopidx=stopidx)
+
+    def convertImagesStackToSeries(self, datapath, outputdirpath, dims=None, inputformat='stack',
+                                   blockSize="150M", startidx=None, stopidx=None,
                                    shuffle=False, overwrite=False):
         """
         Convert images data to Series data in flat binary format.
         """
-        from thunder.rdds.fileio.imagesloader import ImagesLoader
-        from thunder.rdds.fileio.seriesloader import SeriesLoader
+        checkparams(inputformat, ['stack', 'tif-stack'])
+
+        if inputformat.lower() == 'stack' and not dims:
+            raise ValueError("Dimensions ('dims' parameter) must be specified if loading from binary image stack" +
+                             " ('stack' value for 'inputformat' parameter)")
 
         if shuffle:
+            from thunder.rdds.fileio.imagesloader import ImagesLoader
             loader = ImagesLoader(self._sc)
-            loader.fromStack(datapath, dims, startidx=startidx, stopidx=stopidx)\
-                .saveAsBinarySeries(outputdirpath, blockSize=blockSize, overwrite=overwrite)
+            if inputformat.lower() == 'stack':
+                loader.fromStack(datapath, dims, startidx=startidx, stopidx=stopidx)\
+                    .saveAsBinarySeries(outputdirpath, blockSize=blockSize, overwrite=overwrite)
+            else:
+                loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)
         else:
+            from thunder.rdds.fileio.seriesloader import SeriesLoader
             loader = SeriesLoader(self._sc)
-            loader.saveFromStack(datapath, outputdirpath, dims, blockSize=blockSize, overwrite=overwrite,
-                                 startidx=startidx, stopidx=stopidx)
+            if inputformat.lower() == 'stack':
+                loader.saveFromStack(datapath, outputdirpath, dims, blockSize=blockSize, overwrite=overwrite,
+                                     startidx=startidx, stopidx=stopidx)
+            else:
+                loader.saveFromMultipageTif(datapath, outputdirpath, blockSize=blockSize,
+                                            startidx=startidx, stopidx=stopidx, overwrite=overwrite)
 
     def makeExample(self, dataset, **opts):
         """

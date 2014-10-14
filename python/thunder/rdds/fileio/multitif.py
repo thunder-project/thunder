@@ -443,6 +443,40 @@ class TiffImageFileDirectory(object):
     def byteSize(self):
         return 6+12*self.num_entries
 
+    def getEntryValue(self, tag):
+        """
+        Returns value of the passed TIF tag, if present in the IFD.
+
+        Throws IndexError if the tag is not found in the IFD.
+        Throws TifFormatError if the tag is present, but the value is stored in an offset rather than in the IFD itself.
+        """
+        for entry in self.entries:
+            # could optimize this by exiting early if entry.tag > tag, because entries should be in sorted order
+            # according to the TIFF spec, but I'm not sure it's worth it.
+            if entry.tag == tag:
+                if entry.isoffset:
+                    raise TiffFormatError("Tag %d is present, but is stored at offset %d rather than within IFD" %
+                                          (tag, entry.val))
+                return entry.val
+        raise IndexError("Tag %d not found in IFD" % tag)
+
+    def getImageWidth(self):
+        return self.getEntryValue(IMAGE_WIDTH_TAG)
+
+    def getImageHeight(self):
+        return self.getEntryValue(IMAGE_HEIGHT_TAG)
+
+    def getBitsPerSample(self):
+        return self.getEntryValue(BITS_PER_SAMPLE_TAG)
+
+    def getSampleFormat(self):
+        try:
+            sample_format = self.getEntryValue(SAMPLE_FORMAT_TAG)
+        except KeyError:
+            # default according to tif spec is UINT
+            sample_format = SAMPLE_FORMAT_UINT
+        return sample_format
+
     def getOffsetStartsAndLengths(self):
         startlengths = [entry.getOffsetStartAndLength() for entry in self.entries]
         startlengths = filter(None, startlengths)
@@ -451,6 +485,24 @@ class TiffImageFileDirectory(object):
     def getTotalOffsetSize(self):
         startlengths = self.getOffsetStartsAndLengths()
         return sum(sl[1] for sl in startlengths)
+
+    def hasEntry(self, tag):
+        found = False
+        for entry in self.entries:
+            if entry.tag == tag:
+                found = True
+                break
+        return found
+
+    def isLuminanceImage(self):
+        try:
+            interp = self.getEntryValue(PHOTOMETRIC_INTERPRETATION_TAG)
+            interp_ok = interp == 0 or interp == 1  # min is white or min is black
+        except IndexError:
+            # if we are missing the photometric interpretation tag, even though technically it's required,
+            # check that samples per pixel is either absent or 1
+            interp_ok = (not self.hasEntry(SAMPLES_PER_PIXEL_TAG)) or (self.getEntryValue(SAMPLES_PER_PIXEL_TAG) == 1)
+        return interp_ok
 
     def __str__(self):
         entries = [str(entry) for entry in self.entries]
@@ -641,11 +693,24 @@ TAG_TO_NAME = {
     323: 'TileLength',
     324: 'TileOffsets',
     325: 'TileByteCounts',
-    338: 'ExtraSamples'
+    338: 'ExtraSamples',
+    339: 'SampleFormat'
 }
+
+IMAGE_WIDTH_TAG = 256
+IMAGE_HEIGHT_TAG = 257
+BITS_PER_SAMPLE_TAG = 258
+PHOTOMETRIC_INTERPRETATION_TAG = 262
+SAMPLES_PER_PIXEL_TAG = 277
+SAMPLE_FORMAT_TAG = 339
 
 IMAGE_DATA_OFFSET_TAGS = frozenset([273, 324])
 IMAGE_DATA_BYTECOUNT_TAGS = frozenset([279, 325])
+
+SAMPLE_FORMAT_UINT = 1
+SAMPLE_FORMAT_INT = 2
+SAMPLE_FORMAT_FLOAT = 3
+SAMPLE_FORMAT_UNKNOWN = 4
 
 UNKNOWN_TAGTYPE = TiffTagType(-1, 'UNK', 'L', 4)
 
