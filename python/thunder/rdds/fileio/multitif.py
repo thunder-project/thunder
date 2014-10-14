@@ -246,7 +246,7 @@ class TiffParser(object):
         return return_data
 
 
-def packSinglePage(parser, tiff_data=None, page_num=0):
+def packSinglePage(parser, tiff_data=None, page_idx=0):
     """Creates a string buffer with valid tif file data from a single page of a multipage tif.
 
     The resulting string buffer can be written to disk as a TIF file or loaded directly by PIL or similar.
@@ -263,7 +263,7 @@ def packSinglePage(parser, tiff_data=None, page_num=0):
         the functional call completes. Passing tiff_data basically amounts to an optimization, to prevent rereading
         data that presumably has already been parsed out from the file.
 
-    page_num: nonnegative integer page number
+    page_idx: nonnegative integer page number
         Specifies the zero-based page number to be read out and repacked from the multipage tif wrapped by the passed
         parser object.
 
@@ -275,10 +275,10 @@ def packSinglePage(parser, tiff_data=None, page_num=0):
         tiff_data = TiffData()
     if not tiff_data.file_header:
         parser.parseFileHeader(destination_tiff=tiff_data)
-    while len(tiff_data.ifds) < page_num:
+    while len(tiff_data.ifds) <= page_idx:
         parser.parseNextImageFileDirectory(destination_tiff=tiff_data)
 
-    tif_ifd_data = parser.getOffsetDataForIFD(tiff_data.ifds[page_num])
+    tif_ifd_data = parser.getOffsetDataForIFD(tiff_data.ifds[page_idx])
     order = parser.order
 
     preamble = TiffFileHeader.new(order, tiff_data.file_header.byteSize())
@@ -447,7 +447,7 @@ class TiffImageFileDirectory(object):
         """
         Returns value of the passed TIF tag, if present in the IFD.
 
-        Throws IndexError if the tag is not found in the IFD.
+        Throws KeyError if the tag is not found in the IFD.
         Throws TifFormatError if the tag is present, but the value is stored in an offset rather than in the IFD itself.
         """
         for entry in self.entries:
@@ -458,7 +458,7 @@ class TiffImageFileDirectory(object):
                     raise TiffFormatError("Tag %d is present, but is stored at offset %d rather than within IFD" %
                                           (tag, entry.val))
                 return entry.val
-        raise IndexError("Tag %d not found in IFD" % tag)
+        raise KeyError("Tag %d not found in IFD" % tag)
 
     def getImageWidth(self):
         return self.getEntryValue(IMAGE_WIDTH_TAG)

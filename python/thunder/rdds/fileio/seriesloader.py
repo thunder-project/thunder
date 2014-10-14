@@ -244,7 +244,48 @@ class SeriesLoader(object):
         # map over blocks
         return self.sc.parallelize(range(0, nblocks), nblocks).flatMap(lambda bn: readblock(bn)), len(filenames)
 
-    def _getSeriesBlocksFromMultiTif(self, datapath, dims=None, datatype=None, ext="tif", blockSize="150M",
+    @staticmethod
+    def __readMetadataFromFirstPageOfMultiTif(reader, filepath):
+        import thunder.rdds.fileio.multitif as multitif
+
+        # read first page of first file to get expected image size
+        tiffp = reader.open(filepath)
+        tiffparser = multitif.TiffParser(tiffp, debug=False)
+        tiffheaders = multitif.TiffData()
+        tiffparser.parseFileHeader(destination_tiff=tiffheaders)
+        firstifd = tiffparser.parseNextImageFileDirectory(destination_tiff=tiffheaders)
+        if not firstifd.isLuminanceImage():
+            raise ValueError(("File %s does not appear to be a luminance " % filepath) +
+                             "(greyscale or bilevel) TIF image, " +
+                             "which are the only types currently supported")
+
+        # keep reading pages until we reach the end of the file, in order to get number of planes:
+        while tiffparser.parseNextImageFileDirectory(destination_tiff=tiffheaders):
+            pass
+
+        # get dimensions
+        dims = (firstifd.getImageWidth(), firstifd.getImageHeight(), len(tiffheaders.ifds))
+
+        # get datatype
+        bitspersample = firstifd.getBitsPerSample()
+        if not (bitspersample in (8, 16, 32, 64)):
+            raise ValueError("Only 8, 16, 32, or 64 bit per pixel TIF images are supported, got %d" % bitspersample)
+
+        sampleformat = firstifd.getSampleFormat()
+        if sampleformat == multitif.SAMPLE_FORMAT_UINT:
+            dtstr = 'uint'
+        elif sampleformat == multitif.SAMPLE_FORMAT_INT:
+            dtstr = 'int'
+        elif sampleformat == multitif.SAMPLE_FORMAT_FLOAT:
+            dtstr = 'float'
+        else:
+            raise ValueError("Unknown TIF SampleFormat tag value %d, should be 1, 2, or 3 for uint, int, or float"
+                             % sampleformat)
+        datatype = dtstr+str(bitspersample)
+
+        return dims, datatype
+
+    def _getSeriesBlocksFromMultiTif(self, datapath, ext="tif", blockSize="150M",
                                      startidx=None, stopidx=None):
         import thunder.rdds.fileio.multitif as multitif
         import itertools
@@ -255,59 +296,18 @@ class SeriesLoader(object):
         datapath = self.__normalizeDatafilePattern(datapath, ext)
         blockSize = parseMemoryString(blockSize)
 
-        if dims:
-            if not len(dims) == 3:
-                raise ValueError("Only 3 dimensional multipage TIFs are supported. Got passed dimensions: %s" %
-                                 str(dims))
-
         reader = getFileReaderForPath(datapath)()
         filenames = reader.list(datapath)
         if not filenames:
             raise IOError("No files found for path '%s'" % datapath)
         filenames = selectByStartAndStopIndices(filenames, startidx, stopidx)
 
-        if (not dims) or (not datatype):
-            # read first page of first file to get expected image size
-            tiffp = reader.open(filenames[0])
-            tiffparser = multitif.TiffParser(tiffp, debug=False)
-            tiffheaders = multitif.TiffData()
-            tiffparser.parseFileHeader(destination_tiff=tiffheaders)
-            firstifd = tiffparser.parseNextImageFileDirectory(destination_tiff=tiffheaders)
-            if not firstifd.isLuminanceImage():
-                raise ValueError(("File %s does not appear to be a luminance " % filenames[0]) +
-                                 "(greyscale or bilevel) TIF image, " +
-                                 "which are the only types currently supported")
-
-        if not dims:
-            # keep reading pages until we reach the end of the file, in order to get number of planes:
-            while tiffparser.parseNextImageFileDirectory(destination_tiff=tiffheaders):
-                pass
-            dims = (firstifd.getImageWidth(), firstifd.getImageHeight(), len(tiffheaders.ifds))
-
-        if not datatype:
-            bitspersample = firstifd.getBitsPerSample()
-            if not (bitspersample in (8, 16, 32, 64)):
-                raise ValueError("Only 8, 16, 32, or 64 bit per pixel TIF images are supported, got %d" % bitspersample)
-            pixelbytesize = bitspersample / 8
-
-            sampleformat = firstifd.getSampleFormat()
-            if sampleformat == multitif.SAMPLE_FORMAT_UINT:
-                dtstr = 'uint'
-            elif sampleformat == multitif.SAMPLE_FORMAT_INT:
-                dtstr = 'int'
-            elif sampleformat == multitif.SAMPLE_FORMAT_FLOAT:
-                dtstr = 'float'
-            else:
-                raise ValueError("Unknown TIF SampleFormat tag value %d, should be 1, 2, or 3 for uint, int, or float"
-                                 % sampleformat)
-            datatype = dtstr+str(bitspersample)
-            del dtstr, sampleformat, bitspersample
-
-        else:
-            pixelbytesize = dtype(datatype).itemsize
+        dims, datatype = SeriesLoader.__readMetadataFromFirstPageOfMultiTif(reader, filenames[0])
+        pixelbytesize = dtype(datatype).itemsize
 
         # intialize at one block per plane
-        bytesperblock = dims[0] * dims[1] * pixelbytesize
+        bytesperplane = dims[0] * dims[1] * pixelbytesize
+        bytesperblock = bytesperplane
         blocksperplane = 1
         # keep dividing while cutting our size in half still leaves us bigger than the requested size
         # should end up no more than 2x blockSize.
@@ -317,8 +317,11 @@ class SeriesLoader(object):
 
         blocklen = max((dims[0] * dims[1]) / blocksperplane, 1)  # integer division
 
+        # print "blockSize: %g bytesperplane: %g bytesperblock: %g blocksperplane: %g blocklen: %g" %
+        # (blockSize, bytesperplane, bytesperblock, blocksperplane, blocklen)
+
         # keys will be planeidx, blockidx:
-        keys = list(itertools.product([xrange(dims[2]), xrange(blocksperplane)]))
+        keys = list(itertools.product(xrange(dims[2]), xrange(blocksperplane)))
 
         def readblockfromtif(pidxbidx_):
             planeidx, blockidx = pidxbidx_
@@ -331,7 +334,7 @@ class SeriesLoader(object):
                 fp = reader_.open(fname)
                 try:
                     tiffparser_ = multitif.TiffParser(fp, debug=False)
-                    tiffilebuffer = multitif.packSinglePage(tiffparser, page_num=planeidx)
+                    tiffilebuffer = multitif.packSinglePage(tiffparser_, page_idx=planeidx)
                     pilimg = Image.open(io.BytesIO(tiffilebuffer))
                     ary = pil_to_array(pilimg)
                     del tiffilebuffer, tiffparser_, pilimg
@@ -352,10 +355,12 @@ class SeriesLoader(object):
 
             # TODO: check order here
             serieskeys = zip(*map(tuple, unravel_index(linindx, planeshape, order='F')))
+            # add plane index to end of keys
+            serieskeys = [tuple(list(keys_)+[planeidx]) for keys_ in serieskeys]
             return zip(serieskeys, buf)
 
         # map over blocks
-        rdd = self.sc.parallelize(keys, len(keys)).flatMap(lambda pidxbidx: readblockfromtif(pidxbidx))
+        rdd = self.sc.parallelize(keys, len(keys)).flatMap(readblockfromtif)
         metadata = (dims, len(filenames), datatype)
         return rdd, metadata
 
@@ -376,13 +381,15 @@ class SeriesLoader(object):
                                                                        stopidx=stopidx)
         # TODO: initialize index here using npointsinseries?
         return Series(seriesblocks, dims=dims)
+        #return Series(seriesblocks)
 
-    def fromMultipageTif(self, datapath, dims=None, ext="tif", blockSize="150M", datatype=None,
+    def fromMultipageTif(self, datapath, ext="tif", blockSize="150M",
                          startidx=None, stopidx=None):
-        seriesblocks, metadata = self._getSeriesBlocksFromMultiTif(datapath, dims=dims, datatype=datatype, ext=ext,
-                                                         blockSize=blockSize, startidx=startidx, stopidx=stopidx)
+        seriesblocks, metadata = self._getSeriesBlocksFromMultiTif(datapath, ext=ext, blockSize=blockSize,
+                                                                   startidx=startidx, stopidx=stopidx)
         dims, npointsinseries, datatype = metadata
         return Series(seriesblocks, dims=dims)
+        #return Series(seriesblocks)
 
     def __saveSeriesRdd(self, seriesblocks, outputdirname, dims, npointsinseries, datatype, overwrite=False):
         writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
@@ -412,10 +419,10 @@ class SeriesLoader(object):
                                                                        stopidx=stopidx)
         self.__saveSeriesRdd(seriesblocks, outputdirname, dims, npointsinseries, datatype, overwrite=overwrite)
 
-    def saveFromMultipageTif(self, datapath, outputdirname, dims=None, ext="tif", blockSize="150M", datatype=None,
+    def saveFromMultipageTif(self, datapath, outputdirname, ext="tif", blockSize="150M",
                              startidx=None, stopidx=None, overwrite=False):
-        seriesblocks, metadata = self._getSeriesBlocksFromMultiTif(datapath, dims=dims, datatype=datatype, ext=ext,
-                                                         blockSize=blockSize, startidx=startidx, stopidx=stopidx)
+        seriesblocks, metadata = self._getSeriesBlocksFromMultiTif(datapath, ext=ext, blockSize=blockSize,
+                                                                   startidx=startidx, stopidx=stopidx)
         dims, npointsinseries, datatype = metadata
         self.__saveSeriesRdd(seriesblocks, outputdirname, dims, npointsinseries, datatype, overwrite=overwrite)
 
