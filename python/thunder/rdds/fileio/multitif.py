@@ -1,3 +1,9 @@
+"""Classes for efficient reading of multipage tif files.
+
+PIL/pillow will parse a tif file by making a large number of very small reads. While this is in general perfectly fine
+when reading from the local filesystem, in the case where a single read is turned into an http GET request (for
+instance, reading from AWS S3), this can get pretty inefficient.
+"""
 from collections import namedtuple
 import ctypes
 import os
@@ -7,13 +13,31 @@ import sys
 
 
 class TiffFormatError(ValueError):
+    """Exception thrown when the file being read does not appear to conform to the TIF spec.
+    """
     pass
 
 
 class TiffParser(object):
+    """Encapsulates file access in parsing a tiff file.
+
+    Two main uses:
+    1.  Populates TiffData object while first reading through pages of a multipage tif. Primary methods here are
+        parseFileHeader() and parseNextImageFileDirectory().
+    2.  Generates TiffIFDData object corresponding to the desired page of a multipage tif, via getOffsetDataForIFD().
+    """
     INIT_IFD_SIZE = 6 + 12 * 24  # 2b num entries, N*12b entries, 4b offset to next IFD
 
     def __init__(self, fp, debug=True):
+        """
+        Parameters
+        ----------
+        fp: file or file-like object, open for reading
+            The parser will interpret this handle as pointing to a TIFF file.
+        debug: boolean, default true
+            If true, the parser will keep track of the number of seeks and total bytes read in the attributes
+            self.nseeks and self.bytes_read.
+        """
         self._fp = fp
         self._debug = debug
         self.max_ifd_size = TiffParser.INIT_IFD_SIZE
@@ -41,9 +65,24 @@ class TiffParser(object):
 
     @property
     def order(self):
+        """Byte order used to interpret wrapped tif file, either '<' (little-endian) or '>' (big-endian)
+        """
         return self._order
 
     def parseFileHeader(self, destination_tiff=None):
+        """
+        Reads the initial 8-byte file header from the wrapped file pointer.
+
+        Parameters:
+        -----------
+        destination_tiff: TiffData object, or None
+            If destination_tiff is not None, then the parsed file header will be attached to the passed destination_tiff
+            object as its file_header attribute, in addition to being returned from the method call.
+
+        Returns:
+        --------
+        TiffFileHeader object
+        """
         self.__seek(0)
         header_buf = self.__read(8)
         file_header = TiffFileHeader.fromBytes(header_buf)
@@ -53,6 +92,27 @@ class TiffParser(object):
         return file_header
 
     def parseNextImageFileDirectory(self, destination_tiff=None, ifd_offset=None):
+        """
+        Reads the next Image File Directory in the wrapped file.
+
+        The offset of the next IFD within the file is determined either from the passed destination_tiff, or is passed
+        explicitly in ifd_offset. One or the other must be passed.
+
+        Parameters:
+        -----------
+        destination_tiff: TiffData object with a valid file_header attribute, or None
+            If passed, the offset of the next IFD will be found either from the previous IFDs stored within
+            destination_tiff if any, or from destination_tiff.file_header if not. The parsed IFD will be added to
+            the destination_tiff.ifds sequence.
+
+        ifd_offset: positive integer offset within the wrapped file, or None
+            If destination_tiff is None and ifd_offset is passed, then ifd_offset will be used as the file offset
+            at which to look for the next IFD.
+
+        Returns:
+        --------
+        TiffImageFileDirectory object
+        """
         if (not destination_tiff) and (ifd_offset is None):
             raise ValueError("Either destination_tiff or ifd_offset must be specified")
         if destination_tiff:
@@ -83,8 +143,28 @@ class TiffParser(object):
         return ifd
 
     def getOffsetDataForIFD(self, ifd, max_buf=10**6, max_gap=1024):
-        """
+        """Loads TIF tag offset and image data for the page described in the passed IFD.
 
+        This method will typically be called from packSinglePage() rather than being used directly by clients.
+
+        Parameters:
+        -----------
+        ifd: TiffImageFileDirectory
+
+        max_buf: positive integer, default 10^6 (1MB)
+            Requests a largest size to use for file reads. Multiple contiguous image strips (or other data) of less
+            than max_buf in size will be read in a single read() call. If a single strip is larger than max_buf, then
+            it will still be read, in a single read call requesting exactly the strip size.
+
+        max_gap: positive integer, default 1024 (1KB)
+            Specifies the largest gap in meaningful data to tolerate within a single read() call. If two items of offset
+            data for a single IFD are separated by more than max_gap of data not within the IFD, then they will be read
+            in multiple read() calls. If they are separated by max_gap or less, then a single read() will be used and
+            the irrelevant data in between simply ignored.
+
+        Returns:
+        --------
+        TiffIFDData
         """
         return_data = TiffIFDData()
         return_data.ifd = ifd
@@ -167,9 +247,29 @@ class TiffParser(object):
 
 
 def packSinglePage(parser, tiff_data=None, page_num=0):
-    """
-    Returns string object with binary data for a single page of a multipage tif, repacked
-    as a one-page tif file
+    """Creates a string buffer with valid tif file data from a single page of a multipage tif.
+
+    The resulting string buffer can be written to disk as a TIF file or loaded directly by PIL or similar.
+
+    Parameters:
+    -----------
+    parser: TifParser object.
+        The parser should be initialized with a file handle of the multipage tif from which a page is to be extracted.
+
+    tiff_data: TiffData object, or none.
+        If tiff_data is passed, the tif file header and IFDs will be read out from it. If an empty tiff_data object or
+        one without all IFDs in place is passed, then the file header and remaining required IFDs will be placed into
+        it. If tiff_data is None, a new TiffData object will be generated internally to the function and discarded when
+        the functional call completes. Passing tiff_data basically amounts to an optimization, to prevent rereading
+        data that presumably has already been parsed out from the file.
+
+    page_num: nonnegative integer page number
+        Specifies the zero-based page number to be read out and repacked from the multipage tif wrapped by the passed
+        parser object.
+
+    Returns:
+    --------
+    string of bytes, making up a valid single-page TIF file.
     """
     if not tiff_data:
         tiff_data = TiffData()
@@ -211,6 +311,8 @@ def packSinglePage(parser, tiff_data=None, page_num=0):
 
 
 class TiffBuffer(object):
+    """Utility object to hold results of file read() calls.
+    """
     def __init__(self, orig_offset, buffer):
         self.orig_offset = orig_offset
         self.buffer = buffer
@@ -224,9 +326,10 @@ class TiffBuffer(object):
         #return offset >= self.orig_offset and length <= len(self.buffer)
 
     def unpackFrom(self, fmt, orig_offset):
-        """
+        """Deserializes data within this buffer according to the passed format, which will be interpreted by the
+        python struct package.
 
-        Returns tuple
+        Returns tuple of values. (May be a one-tuple.)
         """
         return struct.unpack_from(fmt, self.buffer, offset=orig_offset-self.orig_offset)
 
@@ -238,16 +341,18 @@ class TiffBuffer(object):
 
 
 class TiffData(object):
+    """Minimal data structure holding a TiffFileHeader and a sequence of TiffImageFileDirectories.
+
+    This object represents data read on an initial pass through a multipage tif's set of directories. It does not
+    hold tag offset data or image data.
+    """
     def __init__(self):
         self.file_header = None
         self.ifds = []
 
 
 class TiffIFDData(object):
-    """
-    entries_and_offsetdata:
-        list of (entry, tuple(offset data)) pairs
-        If IFD entry doesn't have offset data values, corresponding list element will be (entry, None)
+    """Data structure holding tag offset data and image data for a single tiff IFD.
     """
     def __init__(self):
         self.ifd = None
@@ -260,6 +365,8 @@ class TiffIFDData(object):
 
 
 class TiffFileHeader(namedtuple('_TiffFileHeader', 'byte_order magic ifd_offset')):
+    """Data structure representing the 8-byte header found at the beginning of a tiff file.
+    """
     @classmethod
     def fromBytes(cls, buf):
         order = buf[:2]
@@ -300,6 +407,13 @@ class TiffFileHeader(namedtuple('_TiffFileHeader', 'byte_order magic ifd_offset'
 
 
 class TiffImageFileDirectory(object):
+    """Data structure representing a single Image File Directory within a tif file.
+
+    This object does not hold data stored in an offset from the IFD or image data.
+
+    Individual IFD entries are represented within the 'entries' sequence attribute, which holds multiple
+    TiffIFDEntry objects.
+    """
     __slots__ = ('num_entries', 'entries', 'ifd_offset', 'order')
 
     @classmethod
@@ -361,6 +475,11 @@ class TiffImageFileDirectory(object):
 
 
 class TiffIFDEntry(namedtuple('_TiffIFDEntry', 'tag type count val isoffset')):
+    """Data structure representing a single entry within a tif IFD.
+
+    Data stored in an offset from the IFD table will not be explicitly represented in this object; only the file offset
+    itself will be stored.
+    """
     @classmethod
     def fromBytes(cls, buf, order, offset=0):
         tag, type, count = struct.unpack_from(order+'HHI', buf, offset)
@@ -435,6 +554,11 @@ class TiffIFDEntry(namedtuple('_TiffIFDEntry', 'tag type count val isoffset')):
 
 
 class TiffIFDEntryAndOffsetData(namedtuple("_TiffIFDEntryAndOffsetData", "entry offset_data")):
+    """Simple pair structure to hold a TiffIFDEntry and its associated offset data, if any.
+
+    If offset data is present (entry.isoffset is True), then it will be stored in offset_data as a tuple. If no
+    offset data is present, then offset_data will be None.
+    """
     pass
 
 
@@ -443,6 +567,29 @@ def lookup_tagtype(typecode):
 
 
 def calcReadsForOffsets(startLengthPairs, max_buf=10**6, max_gap=1024):
+    """Plans a sequence of file reads and seeks to cover all the spans of data in startLengthPairs.
+
+    Parameters:
+    -----------
+    startLengthPairs: sequence of (int start, int length) pairs
+        start is the offset position of an item of data, length is its size in bytes.
+
+    max_buf: positive integer, default 10^6 (1MB)
+            Requests a largest size to use for file reads. Multiple contiguous image strips (or other data) of less
+            than max_buf in size will be read in a single read() call. If a single strip is larger than max_buf, then
+            it will still be read, in a single read call requesting exactly the strip size.
+
+    max_gap: positive integer, default 1024 (1KB)
+            Specifies the largest gap in meaningful data to tolerate within a single read() call. If two items of offset
+            data for a single IFD are separated by more than max_gap of data not within the IFD, then they will be read
+            in multiple read() calls. If they are separated by max_gap or less, then a single read() will be used and
+            the irrelevant data in between simply ignored.
+
+    Returns:
+    --------
+    sequence of (start, length) pairs, each representing a planned file read
+
+    """
     # sort by starting position
     # we assume here that starts and offsets and generally sane - meaning (roughly) nonoverlapping
     startlengths = sorted(startLengthPairs, key=operator.itemgetter(0))
