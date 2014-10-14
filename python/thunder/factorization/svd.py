@@ -2,6 +2,8 @@
 Class for performing Singular Value Decomposition
 """
 
+from numpy import zeros, shape
+
 from thunder.rdds.series import Series
 from thunder.rdds.matrices import RowMatrix
 
@@ -90,20 +92,48 @@ class SVD(object):
             iter = 0
             error = 100
 
+            # define an accumulator
+            from pyspark.accumulators import AccumulatorParam
+
+            class MatrixAccumulatorParam(AccumulatorParam):
+                def zero(self, value):
+                    return zeros(shape(value))
+
+                def addInPlace(self, val1, val2):
+                    val1 += val2
+                    return val1
+
+            # define an accumulator function
+            global runsum
+
+            def outerSumOther(x, y):
+                global runsum
+                runsum += outer(x, dot(x, y))
+
             # iterative update subspace using expectation maximization
             # e-step: x = (c'c)^-1 c' y
             # m-step: c = y x' (xx')^-1
             while (iter < self.maxiter) & (error > self.tol):
+
                 c_old = c
+
                 # pre compute (c'c)^-1 c'
                 c_inv = dot(c.T, inv(dot(c, c.T)))
+
                 # compute (xx')^-1 through a map reduce
                 xx = mat.times(c_inv).gramian()
                 xx_inv = inv(xx)
+
                 # pre compute (c'c)^-1 c' (xx')^-1
                 premult2 = mat.rdd.context.broadcast(dot(c_inv, xx_inv))
-                # compute the new c through a map reduce
-                c = mat.rows().map(lambda x: outer(x, dot(x, premult2.value))).sum()
+
+                # compute the new c using an accumulator
+                # direct approach: c = mat.rows().map(lambda x: outer(x, dot(x, premult2.value))).sum()
+                runsum = mat.rdd.context.accumulator(zeros((mat.ncols, self.k)), MatrixAccumulatorParam())
+                mat.rows().foreach(lambda x: outerSumOther(x, premult2.value))
+                c = runsum.value
+
+                # transpose result
                 c = c.T
 
                 error = sum(sum((c - c_old) ** 2))
