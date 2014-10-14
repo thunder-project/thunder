@@ -1,5 +1,5 @@
 from numpy import ndarray, array, sum, mean, std, size, arange, \
-    polyfit, polyval, percentile, float16, asarray, maximum, zeros, corrcoef
+    polyfit, polyval, percentile, float16, asarray, maximum, zeros, corrcoef, where
 
 from thunder.rdds.data import Data
 from thunder.utils.common import checkparams, loadmatvar
@@ -106,29 +106,34 @@ class Series(Data):
             or list of indices
         """
 
-        index = self.index
-
         import types
+
+        # handle lists, strings, and ints
         if not isinstance(crit, types.FunctionType):
             # set("foo") -> {"f", "o"}; wrap in list to prevent:
             critlist = set([crit]) if (isinstance(crit, basestring) or isinstance(crit, int)) else set(crit)
             crit = lambda x: x in critlist
 
+        # if only one index, return it directly or throw an error
+        index = self.index
         if size(index) == 1:
             if crit(index):
                 return self
             else:
                 raise Exception("No indices found matching criterion")
 
+        # determine new index and check the result
         newindex = [i for i in index if crit(i)]
-
         if len(newindex) == 0:
             raise Exception("No indices found matching criterion")
         if array(newindex == index).all():
             return self
 
-        rdd = self.rdd.mapValues(lambda x: [y[0] for y in zip(x, index) if crit(y[1])])
+        # use fast logical indexing to get the new values
+        subinds = where(map(lambda x: crit(x), index))
+        rdd = self.rdd.mapValues(lambda x: x[subinds])
 
+        # convert an array with one value to a scalar/int
         if len(newindex) == 1:
             newindex = newindex[0]
             rdd = rdd.mapValues(lambda x: x[0])
