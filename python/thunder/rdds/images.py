@@ -3,7 +3,6 @@ from numpy import ndarray, arange, amax, amin, size, squeeze, dtype
 
 from thunder.rdds.data import parseMemoryString
 from thunder.rdds.data import Data
-from thunder.rdds.fileio.seriesloader import writeSeriesConfig
 
 
 class Images(Data):
@@ -306,6 +305,7 @@ class Images(Data):
 
         """
         from thunder.rdds.fileio.writers import getParallelWriterForPath
+        from thunder.rdds.fileio.seriesloader import writeSeriesConfig
 
         writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
 
