@@ -39,7 +39,11 @@ class Series(Data):
     def __init__(self, rdd, index=None, dims=None):
         super(Series, self).__init__(rdd)
         self._index = index
-        self._dims = dims
+        if isinstance(dims, (tuple, list)):
+            from thunder.rdds.keys import Dimensions
+            self._dims = Dimensions.fromNumpyDimsTuple(dims)
+        else:
+            self._dims = dims
 
     @property
     def index(self):
@@ -111,7 +115,14 @@ class Series(Data):
         # handle lists, strings, and ints
         if not isinstance(crit, types.FunctionType):
             # set("foo") -> {"f", "o"}; wrap in list to prevent:
-            critlist = set([crit]) if (isinstance(crit, basestring) or isinstance(crit, int)) else set(crit)
+            if isinstance(crit, basestring):
+                critlist = set([crit])
+            else:
+                try:
+                    critlist = set(crit)
+                except TypeError:
+                    # typically means crit is not an iterable type; for instance, crit is an int
+                    critlist = set([crit])
             crit = lambda x: x in critlist
 
         # if only one index, return it directly or throw an error
