@@ -2,7 +2,7 @@
 Classes for mass-unvariate regression
 """
 
-from numpy import sum, outer, inner, mean, shape, dot, transpose, concatenate, ones
+from numpy import sum, outer, inner, mean, shape, dot, transpose, concatenate, ones, asarray
 
 from thunder.rdds.series import Series
 from thunder.utils.common import loadmatvar, pinv
@@ -95,7 +95,7 @@ class MeanRegressionModel(RegressionModel):
             r2 = 0
         else:
             r2 = 1 - sse / sst
-        return b, r2, resid
+        return asarray([b, r2, resid])
 
 
 class LinearRegressionModel(RegressionModel):
@@ -141,7 +141,7 @@ class LinearRegressionModel(RegressionModel):
             r2 = 0
         else:
             r2 = 1 - sse / sst
-        return b[1:], r2, resid
+        return asarray([b[1:], r2, resid])
 
 
 class BilinearRegressionModel(RegressionModel):
@@ -203,7 +203,7 @@ class BilinearRegressionModel(RegressionModel):
         else:
             r2 = 1 - sse / sst
 
-        return b2[1:], r2, resid
+        return asarray([b2[1:], r2, resid])
 
 REGRESSION_MODELS = {
     'linear': LinearRegressionModel,
