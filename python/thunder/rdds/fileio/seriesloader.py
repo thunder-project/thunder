@@ -337,12 +337,14 @@ class SeriesLoader(object):
                     tiffilebuffer = multitif.packSinglePage(tiffparser_, page_idx=planeidx)
                     pilimg = Image.open(io.BytesIO(tiffilebuffer))
                     ary = pil_to_array(pilimg)
+                    #ary = pil_to_array(pilimg).T
                     del tiffilebuffer, tiffparser_, pilimg
                     if not planeshape:
                         planeshape = ary.shape[:]
                         blockstart = blockidx * blocklen
                         blockend = min(blockstart+blocklen, planeshape[0]*planeshape[1])
-                    blocks.append(ary.flatten()[blockstart:blockend])
+                    blocks.append(ary.flatten(order='C')[blockstart:blockend])
+                    # blocks.append(ary.flatten(order='F')[blockstart:blockend])
                     del ary
                 finally:
                     fp.close()
@@ -354,9 +356,11 @@ class SeriesLoader(object):
             linindx = arange(blockstart, blockend)  # zero-based
 
             # TODO: check order here
-            serieskeys = zip(*map(tuple, unravel_index(linindx, planeshape, order='F')))
+            serieskeys = zip(*map(tuple, unravel_index(linindx, planeshape, order='C')))
+            # serieskeys = zip(*map(tuple, unravel_index(linindx, planeshape, order='F')))
             # add plane index to end of keys
-            serieskeys = [tuple(list(keys_)+[planeidx]) for keys_ in serieskeys]
+            # serieskeys = [tuple(list(keys_)+[planeidx]) for keys_ in serieskeys]
+            serieskeys = [tuple(list(keys_)[::-1]+[planeidx]) for keys_ in serieskeys]
             return zip(serieskeys, buf)
 
         # map over blocks
