@@ -145,12 +145,12 @@ class ThunderContext():
                 return loader.fromStack(datapath, dims, blockSize=blockSize, startidx=startidx, stopidx=stopidx)
             else:
                 # tif stack
-                return loader.fromMultipageTif(datapath, dims=dims, blockSize=blockSize,
+                return loader.fromMultipageTif(datapath, blockSize=blockSize,
                                                startidx=startidx, stopidx=stopidx)
 
-    def convertImagesStackToSeries(self, datapath, outputdirpath, dims=None, inputformat='stack',
-                                   blockSize="150M", startidx=None, stopidx=None,
-                                   shuffle=False, overwrite=False):
+    def convertImagesToSeries(self, datapath, outputdirpath, dims=None, inputformat='stack',
+                              blockSize="150M", startidx=None, stopidx=None,
+                              shuffle=False, overwrite=False):
         """
         Convert images data to Series data in flat binary format.
         """
