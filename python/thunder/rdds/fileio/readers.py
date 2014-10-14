@@ -391,7 +391,9 @@ class BotoS3ReadFileHandle(object):
             hdrs = {"Range": "bytes=%d-%s" % (self._offset, sizestr)}
         else:
             hdrs = {}
-        return self._key.get_contents_as_string(headers=hdrs)
+        buf = self._key.get_contents_as_string(headers=hdrs)
+        self._offset += len(buf)
+        return buf
 
     def seek(self, offset, whence=0):
         if whence == 0:
