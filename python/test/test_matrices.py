@@ -42,8 +42,10 @@ class TestTimes(MatrixRDDTestCase):
         mat1 = RowMatrix(self.sc.parallelize([(1, array([1, 2, 3])), (2, array([4, 5, 6]))]))
         mat2 = array([[7, 8], [9, 10], [11, 12]])
         truth = [array([58, 64]), array([139, 154])]
-        result = mat1.times(mat2).rows().collect()
+        rdd = mat1.times(mat2)
+        result = rdd.rows().collect()
         assert array_equal(result, truth)
+        assert array_equal(rdd.index, range(0, 2))
 
 
 class TestOuter(MatrixRDDTestCase):

@@ -1,7 +1,7 @@
 """
 Class with utilities for representing and working with matrices
 """
-from numpy import dot, outer, shape, ndarray, add, subtract, multiply, zeros, divide
+from numpy import dot, outer, shape, ndarray, add, subtract, multiply, zeros, divide, arange
 
 from thunder.rdds.series import Series
 
@@ -164,18 +164,18 @@ class RowMatrix(Series):
             else:
                 return self.rdd.zip(other.rdd).map(lambda ((k1, x), (k2, y)): (x, y)).mapPartitions(matrixsum_iterator_other).sum()
         else:
-            if dtype == ndarray:
-                dims = shape(other)
-                if dims[0] != self.ncols:
-                    raise Exception(
-                        "cannot multiply shapes ("+str(self.nrows)+","+str(self.ncols)+") and " + str(dims))
-                if len(dims) == 0:
-                    new_d = 1
-                else:
-                    new_d = dims[1]
+            dims = shape(other)
+            if dims[0] != self.ncols:
+                raise Exception(
+                    "cannot multiply shapes ("+str(self.nrows)+","+str(self.ncols)+") and " + str(dims))
+            if len(dims) == 0:
+                new_d = 1
+            else:
+                new_d = dims[1]
             other_b = self.rdd.context.broadcast(other)
+            newindex = arange(0, new_d)
             return self._constructor(self.rdd.mapValues(lambda x: dot(x, other_b.value)),
-                                     nrows=self._nrows, ncols=new_d).__finalize__(self)
+                                     nrows=self._nrows, ncols=new_d, index=newindex).__finalize__(self)
 
     def elementwise(self, other, op):
         """
