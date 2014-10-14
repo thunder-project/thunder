@@ -3,9 +3,8 @@ Class for mass-univariate classification
 """
 
 from numpy import in1d, zeros, array, size, float64
-from scipy.io import loadmat
-from scipy.stats import ttest_ind
-from thunder.rdds import Series
+
+from thunder.rdds.series import Series
 
 
 class MassUnivariateClassifier(object):
@@ -49,6 +48,7 @@ class MassUnivariateClassifier(object):
     """
 
     def __init__(self, paramfile):
+        from scipy.io import loadmat
         if type(paramfile) is str:
             params = loadmat(paramfile, squeeze_me=True)
         elif type(paramfile) is dict:
@@ -178,7 +178,7 @@ class TTestClassifier(MassUnivariateClassifier):
 
     def __init__(self, paramfile):
         MassUnivariateClassifier.__init__(self, paramfile)
-
+        from scipy.stats import ttest_ind
         self.func = ttest_ind
         unique = list(set(list(self.labels)))
         if len(unique) != 2:

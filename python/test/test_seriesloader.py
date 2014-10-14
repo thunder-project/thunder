@@ -117,13 +117,14 @@ class TestSeriesBinaryLoader(PySparkTestCaseWithOutputDir):
         DATA = []
         # data will be a sequence of test data
         # all keys and all values in a test data item must be of the same length
+        # keys get converted to ints regardless of raw input format
         DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11, 12, 13]], 'int16', 'int16'))
         DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3], [5, 6, 7]], [[11], [12]], 'int16', 'int16'))
         DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11, 12, 13]], 'int16', 'int32'))
         DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11, 12, 13]], 'int32', 'int16'))
         DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11.0, 12.0, 13.0]], 'int16', 'float32'))
-        DATA.append(SeriesBinaryTestData.fromArrays([[1.0, 2.0, 3.0]], [[11.0, 12.0, 13.0]], 'float32', 'float32'))
-        DATA.append(SeriesBinaryTestData.fromArrays([[1.5, 2.5, 3.5]], [[11.0, 12.0, 13.0]], 'float32', 'float32'))
+        DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11.0, 12.0, 13.0]], 'float32', 'float32'))
+        DATA.append(SeriesBinaryTestData.fromArrays([[2, 3, 4]], [[11.0, 12.0, 13.0]], 'float32', 'float32'))
 
         for itemidx, item in enumerate(DATA):
             outsubdir = os.path.join(self.outputdir, 'input%d' % itemidx)
@@ -141,7 +142,7 @@ class TestSeriesBinaryLoader(PySparkTestCaseWithOutputDir):
                 # write configuration file
                 conf = {'input': outsubdir,
                         'nkeys': item.nkeys, 'nvalues': item.nvals,
-                        'format': str(item.valDType), 'keyformat': str(item.keyDType)}
+                        'valuetype': str(item.valDType), 'keytype': str(item.keyDType)}
                 with open(os.path.join(outsubdir, "conf.json"), 'wb') as f:
                     json.dump(conf, f, indent=2)
                 series = loader.fromBinary(outsubdir)

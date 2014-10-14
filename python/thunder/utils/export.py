@@ -3,11 +3,9 @@ Utilities for saving data
 """
 
 import os
-from scipy.io import savemat
 from math import isnan
 from numpy import sum, shape, maximum, minimum, uint8, savetxt, size, save
-from matplotlib.pyplot import imsave
-from matplotlib import cm
+
 from thunder.utils.common import checkparams
 
 
@@ -28,6 +26,9 @@ def arraytoim(mat, filename, format="png"):
     format : str, optional, default = "png"
         Image format to write (see matplotlib's imsave for options)
     """
+    from matplotlib.pyplot import imsave
+    from matplotlib import cm
+
     dims = shape(mat)
     if len(dims) > 2:
         for z in range(0, dims[2]):
@@ -86,6 +87,9 @@ def export(data, outputdir, outputfile, outputformat, sorting=False):
 
     """
 
+    from thunder.rdds.series import Series
+    from scipy.io import savemat
+
     checkparams(outputformat, ['matlab', 'npy', 'text'])
 
     if not os.path.exists(outputdir):
@@ -100,8 +104,6 @@ def export(data, outputdir, outputfile, outputformat, sorting=False):
             save(file, array)
         if format == 'text':
             savetxt(file+".txt", array, fmt="%.6f")
-
-    from thunder.rdds import Series
 
     if isinstance(data, Series):
         if size(data.index) > 1:

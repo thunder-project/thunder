@@ -1,14 +1,8 @@
-import itertools
+
 from numpy import ndarray, arange, amax, amin, size, squeeze, dtype
-from io import BytesIO
 
-from matplotlib.pyplot import imsave
-
-from thunder.rdds.imageblocks import ImageBlocks, ImageBlockValue
-from thunder.rdds import Data
 from thunder.rdds.data import parseMemoryString
-from thunder.rdds.fileio.writers import getParallelWriterForPath, getCollectedFileWriterForPath
-from thunder.rdds.series import writeSeriesConfig
+from thunder.rdds.data import Data
 
 
 class Images(Data):
@@ -104,6 +98,10 @@ class Images(Data):
             of an xy plane, divided in the middle of the y dimension
 
         """
+
+        import itertools
+        from thunder.rdds.imageblocks import ImageBlocks, ImageBlockValue
+
         dims = self.dims
         ndim = len(dims)
         totnumimages = self.nimages
@@ -306,6 +304,9 @@ class Images(Data):
             of this call.
 
         """
+        from thunder.rdds.fileio.writers import getParallelWriterForPath
+        from thunder.rdds.fileio.seriesloader import writeSeriesConfig
+
         writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
 
         blocksdata = self._scatterToBlocks(blockSize=blockSize, blocksPerDim=splitsPerDim, groupingDim=groupingDim)
@@ -349,6 +350,10 @@ class Images(Data):
         if not len(dims) == 2:
             raise ValueError("Only two-dimensional images can be exported as .png files; image is %d-dimensional." %
                              len(dims))
+
+        from matplotlib.pyplot import imsave
+        from io import BytesIO
+        from thunder.rdds.fileio.writers import getParallelWriterForPath, getCollectedFileWriterForPath
 
         def toFilenameAndPngBuf(kv):
             key, img = kv
@@ -425,11 +430,8 @@ class Images(Data):
         sampleslices = [slice(0, dims[i], samplefactor[i]) for i in xrange(ndims)]
         newdims = [dims[i] / samplefactor[i] for i in xrange(ndims)]  # integer division
 
-        def samplefunc(v, sampleslices_):
-            return v[sampleslices_]
-
         return self._constructor(
-            self.rdd.mapValues(lambda v: samplefunc(v, sampleslices)), dims=newdims).__finalize__(self)
+            self.rdd.mapValues(lambda v: v[sampleslices]), dims=newdims).__finalize__(self)
 
     def planes(self, bottom, top, inclusive=True):
         """

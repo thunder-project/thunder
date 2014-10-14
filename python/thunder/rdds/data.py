@@ -34,6 +34,10 @@ class Data(object):
                     object.__setattr__(self, name, getattr(other, name, None))
         return self
 
+    @property
+    def _constructor(self):
+        raise NotImplementedError
+
     def first(self):
         return self.rdd.first()
 
@@ -69,6 +73,12 @@ class Data(object):
 
     def cache(self):
         self.rdd.cache()
+
+    def filterOnKeys(self, func):
+        return self._constructor(self.rdd.filter(lambda (k, v): func(k))).__finalize__(self)
+
+    def filterOnValues(self, func):
+        return self._constructor(self.rdd.filter(lambda (k, v): func(v))).__finalize__(self)
 
 
 def parseMemoryString(memstr):

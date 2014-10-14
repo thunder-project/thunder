@@ -8,12 +8,11 @@ import struct
 import urlparse
 import math
 
-from thunder.rdds.series import writeSeriesConfig
 from thunder.rdds.data import parseMemoryString
 from thunder.rdds.fileio.writers import getParallelWriterForPath
 from thunder.rdds.imageblocks import ImageBlocks
 from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError, selectByStartAndStopIndices
-from thunder import Series
+from thunder.rdds.series import Series
 
 
 class SeriesLoader(object):
@@ -65,7 +64,7 @@ class SeriesLoader(object):
 
         return Series(data)
 
-    BinaryLoadParameters = namedtuple('BinaryLoadParameters', 'nkeys nvalues keyformat format')
+    BinaryLoadParameters = namedtuple('BinaryLoadParameters', 'nkeys nvalues keytype valuetype')
     BinaryLoadParameters.__new__.__defaults__ = (None, None, 'int16', 'int16')
 
     @staticmethod
@@ -88,7 +87,7 @@ class SeriesLoader(object):
         for k in params.keys():
             if not k in SeriesLoader.BinaryLoadParameters._fields:
                 del params[k]
-        keywordparams = {'nkeys': nkeys, 'nvalues': nvalues, 'keyformat': keytype, 'format': valuetype}
+        keywordparams = {'nkeys': nkeys, 'nvalues': nvalues, 'keytype': keytype, 'valuetype': valuetype}
         #keywordparams = {k: v for k, v in keywordparams.items() if v}
         for k, v in keywordparams.items():
             if not v:
@@ -132,8 +131,8 @@ class SeriesLoader(object):
 
         datafile = self.__normalizeDatafilePattern(datafile, ext)
 
-        keydtype = dtype(paramsObj.keyformat)
-        valdtype = dtype(paramsObj.format)
+        keydtype = dtype(paramsObj.keytype)
+        valdtype = dtype(paramsObj.valuetype)
 
         keysize = paramsObj.nkeys * keydtype.itemsize
         recordsize = keysize + paramsObj.nvalues * valdtype.itemsize
@@ -144,7 +143,7 @@ class SeriesLoader(object):
                                               conf={'recordLength': str(recordsize)})
 
         data = lines.map(lambda (_, v):
-                         (tuple(frombuffer(buffer(v, 0, keysize), dtype=keydtype)),
+                         (tuple(int(x) for x in frombuffer(buffer(v, 0, keysize), dtype=keydtype)),
                           frombuffer(buffer(v, keysize), dtype=valdtype)))
 
         return Series(data)
@@ -333,4 +332,34 @@ class SeriesLoader(object):
             jsonbuf = reader.read(datafile, filename=conffile)
         except FileNotFoundError:
             return {}
-        return json.loads(jsonbuf)
+
+        params = json.loads(jsonbuf)
+
+        if 'format' in params:
+            raise Exception("Numerical format of value should be specified as 'valuetype', not 'format'")
+        if 'keyformat' in params:
+            raise Exception("Numerical format of key should be specified as 'keytype', not 'keyformat'")
+
+        return params
+
+
+def writeSeriesConfig(outputdirname, nkeys, nvalues, dims=None, keytype='int16', valuetype='int16', confname="conf.json",
+                      overwrite=True):
+
+    import json
+    from thunder.rdds.fileio.writers import getFileWriterForPath
+
+    filewriterclass = getFileWriterForPath(outputdirname)
+    # write configuration file
+    conf = {'input': outputdirname,
+            'nkeys': nkeys, 'nvalues': nvalues,
+            'valuetype': str(valuetype), 'keytype': str(keytype)}
+    if dims:
+        conf["dims"] = dims
+
+    confwriter = filewriterclass(outputdirname, confname, overwrite=overwrite)
+    confwriter.writeFile(json.dumps(conf, indent=2))
+
+    # touch "SUCCESS" file as final action
+    successwriter = filewriterclass(outputdirname, "SUCCESS", overwrite=overwrite)
+    successwriter.writeFile('')

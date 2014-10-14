@@ -1,6 +1,6 @@
 from numpy import array, allclose, mean, corrcoef
 from test_utils import PySparkTestCase
-from thunder.rdds import SpatialSeries
+from thunder.rdds.spatialseries import SpatialSeries
 
 
 class TestLocalCorr(PySparkTestCase):

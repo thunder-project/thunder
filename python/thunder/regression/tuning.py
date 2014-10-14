@@ -2,9 +2,10 @@
 Classes for mass-unvariate tuning analyses
 """
 
-from scipy.io import loadmat
-from numpy import array, sum, inner, dot, angle, abs, exp
-from thunder.rdds import Series
+from numpy import array, sum, inner, dot, angle, abs, exp, asarray
+
+from thunder.rdds.series import Series
+from thunder.utils.common import loadmatvar
 
 
 class TuningModel(object):
@@ -29,7 +30,7 @@ class TuningModel(object):
 
     def __init__(self, modelfile, var='s'):
         if type(modelfile) is str:
-            self.s = loadmat(modelfile)[var]
+            self.s = loadmatvar(modelfile, var)
         else:
             self.s = modelfile
 
@@ -60,7 +61,7 @@ class TuningModel(object):
         if not (isinstance(data, Series)):
             raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')
 
-        return Series(data.rdd.mapValues(lambda x: self.get(x)), index=['center', 'spread'], dims=data._dims)
+        return Series(data.rdd.mapValues(lambda x: self.get(x)), index=['center', 'spread']).__finalize__(data)
 
 
 class CircularTuningModel(TuningModel):
@@ -90,7 +91,7 @@ class CircularTuningModel(TuningModel):
             k = 1 / (v ** 3 - 4 * (v ** 2) + 3 * v)
         if k > 1E8:
             k = array([0.0])
-        return mu, k
+        return asarray([mu, k])
 
 
 class GaussianTuningModel(TuningModel):
@@ -110,7 +111,7 @@ class GaussianTuningModel(TuningModel):
         y = y / sum(y)
         mu = dot(self.s, y)
         sigma = dot((self.s - mu) ** 2, y)
-        return mu, sigma
+        return asarray([mu, sigma])
 
 
 TUNING_MODELS = {

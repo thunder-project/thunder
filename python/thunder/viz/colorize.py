@@ -1,6 +1,5 @@
-from numpy import arctan2, sqrt, pi, array, size, shape, ones, abs, dstack, clip, transpose, zeros
-import colorsys
-from matplotlib import colors, cm
+from numpy import arctan2, sqrt, pi, array, shape, abs, dstack, clip, transpose, inf, \
+    random, zeros, ones, asarray, corrcoef, allclose
 
 
 class Colorize(object):
@@ -50,15 +49,39 @@ class Colorize(object):
 
         return out
 
-    def image(self, img):
-        """Colorize an image. Input can either be a single image or a stack of images.
-        In either case, the first dimension must be the quantity to be used for colorizing.
+    def get(self, line):
+
+        from matplotlib.cm import get_cmap
+
+        if (self.totype == 'rgb') or (self.totype == 'hsv'):
+            return abs(line) * self.scale
+
+        if self.totype == 'polar':
+            import colorsys
+            theta = ((arctan2(-line[0], -line[1]) + pi/2) % (pi*2)) / (2 * pi)
+            rho = sqrt(line[0]**2 + line[1]**2)
+            return colorsys.hsv_to_rgb(theta, 1, rho * self.scale)
+
+        else:
+            return get_cmap(self.totype, 256)(line[0] * self.scale)[0:3]
+
+    def images(self, img, mask=None):
+        """Colorize numerical image data.
+
+        Input can either be a single image or a stack of images.
+        Depending on the colorization option, input must either be
 
         Parameters
         ----------
         img : array
-            The image to colorize. Must be of shape (c, x, y, z) or (c, x, y), where
+            The image(s) to colorize. For rgb, hsv, and polar conversions,
+            must be of shape (c, x, y, z) or (c, x, y), where
             c is the dimension containing the information for colorizing.
+            For colormap conversions, must be of shape (x, y, z) or (x, y)
+
+        mask : array
+            A second image to mask the luminance channel of the first one.
+            Must be of shape (x, y, z) or (x, y), and must match dimensions of images.
 
         Returns
         -------
@@ -66,14 +89,21 @@ class Colorize(object):
             Color assignments for images, either (x, y, z, 3) or (x, y, 3)
         """
 
-        d = shape(img)
-        self.checkargs(d[0])
+        from matplotlib.cm import get_cmap
+        from matplotlib.colors import ListedColormap, hsv_to_rgb, Normalize
 
-        if img.ndim > 4 or img.ndim < 3:
-            raise Exception("image data must have 3 or 4 dimensions, first is for coloring, remainder are xy(z)")
+        img = asarray(img)
+        img_dims = img.shape
+        self._check_image_args(img_dims)
+
+        if mask is not None:
+            mask = asarray(mask)
+            mask = clip(mask, 0, inf)
+            mask_dims = mask.shape
+            self._check_image_mask_args(mask_dims, img_dims)
 
         if (self.totype == 'rgb') or (self.totype == 'hsv'):
-            out = abs(img) * self.scale
+            out = clip(img, 0, inf)
             if img.ndim == 4:
                 out = transpose(out, (1, 2, 3, 0))
             if img.ndim == 3:
@@ -83,39 +113,103 @@ class Colorize(object):
             theta = ((arctan2(-img[0], -img[1]) + pi/2) % (pi*2)) / (2 * pi)
             rho = sqrt(img[0]**2 + img[1]**2)
             if img.ndim == 4:
-                saturation = ones((d[1],d[2]))
-                out = zeros((d[1], d[2], d[3], 3))
-                for i in range(0, d[3]):
-                    out[:, :, i, :] = colors.hsv_to_rgb(dstack((theta[:, :, i], saturation, self.scale*rho[:, :, i])))
+                saturation = ones((img_dims[1], img_dims[2]))
+                out = zeros((img_dims[1], img_dims[2], img_dims[3], 3))
+                for i in range(0, img_dims[3]):
+                    out[:, :, i, :] = hsv_to_rgb(dstack((theta[:, :, i], saturation, self.scale*rho[:, :, i])))
             if img.ndim == 3:
-                saturation = ones((d[1], d[2]))
-                out = colors.hsv_to_rgb(dstack((theta, saturation, self.scale*rho)))
+                saturation = ones((img_dims[1], img_dims[2]))
+                out = hsv_to_rgb(dstack((theta, saturation, self.scale*rho)))
 
-        else:
-            out = cm.get_cmap(self.totype, 256)(img[0] * self.scale)
+        elif isinstance(self.totype, ListedColormap):
+            norm = Normalize()
+            func = lambda x: asarray(norm(x))
             if img.ndim == 4:
+                base = func(img[0])
+                out = self.totype(base)
                 out = out[:, :, :, 0:3]
-            if img.ndim == 3:
+            else:
+                base = func(img)
+                out = self.totype(base)
                 out = out[:, :, 0:3]
 
-        return clip(out, 0, 1)
-
-    def get(self, line):
-        
-        if (self.totype == 'rgb') or (self.totype == 'hsv'):
-            return abs(line) * self.scale
-
-        if self.totype == 'polar':
-            theta = ((arctan2(-line[0], -line[1]) + pi/2) % (pi*2)) / (2 * pi)
-            rho = sqrt(line[0]**2 + line[1]**2)
-            return colorsys.hsv_to_rgb(theta, 1, rho * self.scale)
-
+        elif isinstance(self.totype, str):
+            func = lambda x: get_cmap(self.totype, 256)(x)
+            if img.ndim == 4:
+                out = func(img[0])
+                out = out[:, :, :, 0:3]
+            if img.ndim == 3:
+                out = func(img)
+                out = out[:, :, 0:3]
         else:
-            return cm.get_cmap(self.totype, 256)(line[0] * self.scale)[0:3]
+            raise Exception('Colorization method not understood')
 
-    def checkargs(self, n):
+        out = clip(out, 0, 1)
 
-        if (self.totype == 'rgb' or self.totype == 'hsv') and n < 3:
-            raise Exception("must have 3 values per record for rgb or hsv")
-        elif self.totype == 'polar' and n < 1:
-            raise Exception("must have at least 2 values per record for polar")
+        if mask is not None:
+            if mask.ndim == 3:
+                for i in range(0, 3):
+                    out[:, :, :, i] = out[:, :, :, i] * mask
+            else:
+                for i in range(0, 3):
+                    out[:, :, i] = out[:, :, i] * mask
+
+        return clip(out * self.scale, 0, 1)
+
+    def _check_image_args(self, dims):
+
+        from matplotlib.colors import ListedColormap
+
+        if self.totype in ['rgb', 'hsv', 'polar']:
+            if len(dims) not in [3, 4]:
+                raise Exception('Number of dimensions must be 3 or 4 for %s conversion' % self.totype)
+            if self.totype in ['rgb', 'hsv']:
+                if dims[0] != 3:
+                    raise Exception('Must have 3 values per pixel for %s conversion' % self.totype)
+            if self.totype in ['polar']:
+                if dims[0] != 2:
+                    raise Exception('Must have 2 values per pixel for %s conversion' % self.totype)
+
+        elif isinstance(self.totype, ListedColormap) or isinstance(self.totype, str):
+            if len(dims) not in [2, 3]:
+                raise Exception('Number of dimensions must be 2 or 3 for %s conversion' % self.totype)
+
+    def _check_image_mask_args(self, mask_dims, img_dims):
+
+        from matplotlib.colors import ListedColormap
+
+        if self.totype in ['rgb', 'hsv', 'polar']:
+            if not allclose(mask_dims[1:], img_dims):
+                raise Exception
+
+        if isinstance(self.totype, ListedColormap) or isinstance(self.totype, str):
+            if not allclose(mask_dims, img_dims):
+                raise Exception
+
+    @classmethod
+    def optimize(cls, mat, ascmap=False):
+
+        mat = asarray(mat)
+
+        if mat.ndim < 2:
+            raise Exception('Input array must be two-dimensional')
+
+        nclrs = mat.shape[0]
+
+        from scipy.spatial.distance import pdist, squareform
+        from scipy.optimize import minimize
+
+        distmat = squareform(pdist(mat, metric='cosine')).flatten()
+
+        optfun = lambda x: 1 - corrcoef(distmat, squareform(pdist(x.reshape(nclrs, 3), 'cosine')).flatten())[0, 1]
+        init = random.rand(nclrs*3)
+        bounds = [(0, 1) for _ in range(0, nclrs * 3)]
+        res = minimize(optfun, init, bounds=bounds)
+        newclrs = res.x.reshape(nclrs, 3).tolist()
+
+        from matplotlib.colors import ListedColormap
+
+        if ascmap:
+            newclrs = ListedColormap(newclrs, name='from_list')
+
+        return newclrs

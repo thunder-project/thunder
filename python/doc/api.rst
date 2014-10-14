@@ -87,6 +87,17 @@ Clustering
 	KMeans
 	KMeansModel
 
+Visualization
+-------------
+
+.. currentmodule:: thunder
+
+.. autosummary::
+	:toctree: generated/
+	:template: class.rst
+
+	Colorize
+
 Utilities
 -------------
 

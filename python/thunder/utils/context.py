@@ -1,10 +1,7 @@
 """ Simple wrapper for a Spark Context to provide loading functionality """
 
-import os
-import json
 from numpy import asarray, floor, ceil
-from thunder.rdds.fileio.imagesloader import ImagesLoader
-from thunder.rdds.fileio.seriesloader import SeriesLoader
+
 from thunder.utils.datasets import DataSets
 from thunder.utils.common import checkparams
 
@@ -32,7 +29,7 @@ class ThunderContext():
         return ThunderContext(SparkContext(*args, **kwargs))
 
     def loadSeries(self, datafile, nkeys=None, nvalues=None, inputformat='binary', minPartitions=None,
-                   conffile='conf.json'):
+                   conffile='conf.json', keytype=None, valuetype=None):
         """
         Loads a Series object from data stored as text or binary files.
 
@@ -63,19 +60,22 @@ class ThunderContext():
             text data. Default is to use minParallelism attribute of Spark context object.
 
         conffile: string, optional, default 'conf.json'
-            Path to JSON file with configuration options including 'nkeys' and 'nvalues'. If a file is not found at the
-            given path, then the base directory given in 'datafile' will also be checked. Parameters specified as
-            explicit arguments to this method take priority over those found in conffile if both are present.
+            Path to JSON file with configuration options including 'nkeys', 'nvalues', 'keytype', and 'valuetype'.
+            If a file is not found at the given path, then the base directory given in 'datafile'
+            will also be checked. Parameters specified as explicit arguments to this method take priority
+            over those found in conffile if both are present.
         """
         checkparams(inputformat, ['text', 'binary'])
 
+        from thunder.rdds.fileio.seriesloader import SeriesLoader
         loader = SeriesLoader(self._sc, minPartitions=minPartitions)
 
         if inputformat.lower() == 'text':
             data = loader.fromText(datafile, nkeys=nkeys)
         else:
             # must be either 'text' or 'binary'
-            data = loader.fromBinary(datafile, conffilename=conffile, nkeys=nkeys, nvalues=nvalues)
+            data = loader.fromBinary(datafile, conffilename=conffile, nkeys=nkeys, nvalues=nvalues,
+                                     keytype=keytype, valuetype=valuetype)
 
         return data
 
@@ -101,6 +101,8 @@ class ThunderContext():
             Format of data to be read. Must be either 'stack', 'tif', or 'png'.
         """
         checkparams(inputformat, ['stack', 'png', 'tif', 'tif-stack'])
+
+        from thunder.rdds.fileio.imagesloader import ImagesLoader
         loader = ImagesLoader(self._sc)
 
         if inputformat.lower() == 'stack':
@@ -115,6 +117,12 @@ class ThunderContext():
         return data
 
     def loadImagesStackAsSeries(self, datapath, dims, blockSize="150M", startidx=None, stopidx=None, shuffle=False):
+        """
+        Load Images data as Series data.
+        """
+        from thunder.rdds.fileio.imagesloader import ImagesLoader
+        from thunder.rdds.fileio.seriesloader import SeriesLoader
+
         if shuffle:
             loader = ImagesLoader(self._sc)
             return loader.fromStack(datapath, dims, startidx=startidx, stopidx=stopidx).toSeries(blockSize=blockSize)
@@ -124,6 +132,12 @@ class ThunderContext():
 
     def convertImagesStackToSeries(self, datapath, outputdirpath, dims, blockSize="150M", startidx=None, stopidx=None,
                                    shuffle=False, overwrite=False):
+        """
+        Convert images data to Series data in flat binary format.
+        """
+        from thunder.rdds.fileio.imagesloader import ImagesLoader
+        from thunder.rdds.fileio.seriesloader import SeriesLoader
+
         if shuffle:
             loader = ImagesLoader(self._sc)
             loader.fromStack(datapath, dims, startidx=startidx, stopidx=stopidx)\
@@ -170,12 +184,16 @@ class ThunderContext():
             Generated dataset
         """
 
+        import os
+
         path = os.path.dirname(os.path.realpath(__file__))
 
         if dataset == "iris":
-            return self.loadSeries(os.path.join(path, 'data/iris.txt'), inputformat="text", minPartitions=1, nkeys=3)
-        elif dataset == "fish":
-            return self.loadSeries(os.path.join(path, 'data/fish.txt'), inputformat="text", minPartitions=1, nkeys=3)
+            return self.loadSeries(os.path.join(path, 'data/iris/iris.bin'))
+        elif dataset == "fish-series":
+            return self.loadSeries(os.path.join(path, 'data/fish/bin/'))
+        elif dataset == "fish-images":
+            return self.loadImages(os.path.join(path, 'data/fish/tif-stack'), inputformat="tif-stack")
         else:
             raise NotImplementedError("Dataset '%s' not found" % dataset)
 
@@ -196,6 +214,8 @@ class ThunderContext():
         params : Tuple or numpy array
             Parameters or metadata for dataset
         """
+
+        import json
 
         if 'ec' not in self._sc.master:
             raise Exception("must be running on EC2 to load this example data sets")
@@ -235,6 +255,8 @@ class ThunderContext():
         """
 
         checkparams(inputformat, ['mat', 'npy'])
+
+        from thunder.rdds.fileio.seriesloader import SeriesLoader
         loader = SeriesLoader(self._sc, minPartitions=minPartitions)
 
         if inputformat.lower() == 'mat':

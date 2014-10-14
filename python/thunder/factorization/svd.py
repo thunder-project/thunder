@@ -2,10 +2,8 @@
 Class for performing Singular Value Decomposition
 """
 
-from numpy import random, sum, argsort, dot, outer, sqrt
-from scipy.linalg import inv, orth
-from numpy.linalg import eigh
-from thunder.rdds import Series, RowMatrix
+from thunder.rdds.series import Series
+from thunder.rdds.matrices import RowMatrix
 
 
 class SVD(object):
@@ -56,6 +54,10 @@ class SVD(object):
         ----------
         self : returns an instance of self.
         """
+
+        from numpy import random, sum, argsort, dot, outer, sqrt
+        from scipy.linalg import inv, orth
+        from numpy.linalg import eigh
 
         if not (isinstance(mat, Series)):
             raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')
