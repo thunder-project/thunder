@@ -11,6 +11,12 @@ from thunder.utils.common import loadmatvar, pinv
 class RegressionModel(object):
     """
     Base class for loading and fitting regression models.
+
+    See also
+    --------
+    MeanRegressionModel : simple averaging via regression
+    LinearRegressionModel : linear regression
+    BilinearRegressionModel : bilinear regression
     """
 
     @staticmethod
