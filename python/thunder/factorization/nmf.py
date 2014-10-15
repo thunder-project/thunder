@@ -200,7 +200,7 @@ class NMF(object):
 
             # report results
             self.h = h
-            self.w = w
+            self.w = Series(w)
 
         else:
             print "Error: %s is not a supported algorithm." % self.method
