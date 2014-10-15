@@ -124,21 +124,21 @@ class Colorize(object):
         elif isinstance(self.totype, ListedColormap):
             norm = Normalize()
             func = lambda x: asarray(norm(x))
-            if img.ndim == 4:
-                base = func(img[0])
+            if img.ndim == 3:
+                base = func(img)
                 out = self.totype(base)
                 out = out[:, :, :, 0:3]
-            else:
+            if img.ndim == 2:
                 base = func(img)
                 out = self.totype(base)
                 out = out[:, :, 0:3]
 
         elif isinstance(self.totype, str):
             func = lambda x: get_cmap(self.totype, 256)(x)
-            if img.ndim == 4:
-                out = func(img[0])
-                out = out[:, :, :, 0:3]
             if img.ndim == 3:
+                out = func(img)
+                out = out[:, :, :, 0:3]
+            if img.ndim == 2:
                 out = func(img)
                 out = out[:, :, 0:3]
         else:
