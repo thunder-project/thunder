@@ -83,7 +83,7 @@ class Data(object):
         return self.rdd.values().stats()
 
     def cache(self):
-        """ Call cache on """
+        """ Call cache on the backing RDD """
         self.rdd.cache()
 
     def filterOnKeys(self, func):

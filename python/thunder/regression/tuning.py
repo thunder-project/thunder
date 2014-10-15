@@ -26,6 +26,11 @@ class TuningModel(object):
     s : array
         Input values along which tuning will be estimated,
         i.e. s if we are fitting a function y = f(s)
+
+    See also
+    --------
+    CircularTuningModel : circular tuning parameter estimation
+    GaussianTuningModel : gaussian tuning parameter estimation
     """
 
     def __init__(self, modelfile, var='s'):
