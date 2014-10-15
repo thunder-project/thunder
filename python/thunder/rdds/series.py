@@ -470,7 +470,7 @@ class Series(Data):
 
         return out.squeeze()
 
-    def subset(self, nsamples=100, thresh=None):
+    def subset(self, nsamples=100, thresh=None, stat='std'):
         """Extract random subset of records from a Series,
         filtering on the standard deviation
 
@@ -482,13 +482,22 @@ class Series(Data):
         thresh : float, optional, default = None
             A threshold on standard deviation to use when picking points
 
+        stat : str, optional, default = 'std
+            Statistic to use for thresholding
+
         Returns
         -------
         result : array
             A local numpy array with the subset of points
         """
+        from numpy.linalg import norm
+
+        stat_dict = {'std': std,
+                     'norm': norm}
+
         if thresh is not None:
-            result = array(self.rdd.values().filter(lambda x: std(x) > thresh).takeSample(False, nsamples))
+            func = stat_dict[stat]
+            result = array(self.rdd.values().filter(lambda x: func(x) > thresh).takeSample(False, nsamples))
         else:
             result = array(self.rdd.values().takeSample(False, nsamples))
         return result
