@@ -423,13 +423,27 @@ class Series(Data):
         """
         Pack a Series into a local array (e.g. for saving)
 
+        This operation constructs a multidimensional numpy array from the values in this Series object,
+        with indexing into the returned array as implied by the Series RDD keys. The returned numpy
+        array will be local to the Spark driver; the data set should be filtered down to a reasonable
+        size (such as by seriesMean(), select(), or the `selection` parameter) before attempting to
+        pack() a large data set.
+
         Parameters
         ----------
-        selection : function, list, str, or int, opt, default = None
+        selection : function, list, str, or int, optional, default None
             Criterion for selecting a subset, list, or index value
 
-        sorting : boolean, opt, default = None
-            Where to sort the local array based on the keys
+        sorting : boolean, optional, default False
+            Whether to sort the local array based on the keys. In most cases the returned array will
+            already be ordered correctly, and so an explicit sorting=True is typically not necessary.
+
+        Returns
+        -------
+        result: numpy array
+            An array with dimensionality inferred from the RDD keys. Data in an individual Series
+            value will be placed into this returned array by interpreting the Series keys as indicies
+            into the returned array.
         """
 
         if selection:

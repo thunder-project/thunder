@@ -9,7 +9,15 @@ class Data(object):
     where the key is a tuple identifier and the value is an array
 
     This base class mainly provides convienience functions for accessing
-    properties of the object using the appropriate RDD methods
+    properties of the object using the appropriate RDD methods.
+
+    Attributes
+    ----------
+
+    rdd: Spark RDD
+        The Spark Resilient Distributed Dataset wrapped by this Data object.
+        Standard pyspark RDD methods on a data instance `obj` that are not already
+        directly exposed by the Data object can be accessed via `obj.rdd`.
     """
 
     _metadata = []
@@ -39,51 +47,88 @@ class Data(object):
         raise NotImplementedError
 
     def first(self):
-        """ Return first record """
+        """ Return first record
+
+        This calls the Spark first() method on the underlying RDD.
+        """
         return self.rdd.first()
 
     def take(self, *args, **kwargs):
-        """ Take samples """
+        """ Take samples
+
+        This calls the Spark take() method on the underlying RDD.
+        """
         return self.rdd.take(*args, **kwargs)
 
     def values(self):
-        """ Return values, ignoring keys """
+        """ Return values, ignoring keys
+
+        This calls the Spark values() method on the underlying RDD.
+        """
         return self.rdd.values()
 
     def keys(self):
-        """ Return keys, ignoring keys """
+        """ Return keys, ignoring values
+
+        This calls the Spark keys() method on the underlying RDD.
+        """
         return self.rdd.keys()
 
     def collect(self):
-        """ Return all records, will be slow for large datasets """
+        """ Return all records to the driver
+
+        This will be slow for large datasets, and may exhaust the available memory on the driver.
+
+        This calls the Spark collect() method on the underlying RDD.
+        """
         return self.rdd.collect()
 
     def count(self):
-        """ Mean of values, ignoring keys """
+        """ Mean of values, ignoring keys
+
+        This calls the Spark count() method on the underlying RDD.
+        """
         return self.rdd.count()
 
     def mean(self):
-        """ Mean of values, ignoring keys """
+        """ Mean of values, ignoring keys
+
+        obj.mean() is equivalent to obj.rdd.values().mean().
+        """
         return self.rdd.values().mean()
 
     def sum(self):
-        """ Sum of values, ignoring keys """
+        """ Sum of values, ignoring keys
+
+        obj.sum() is equivalent to obj.rdd.values().sum().
+        """
         return self.rdd.values().sum()
 
     def variance(self):
-        """ Variance of values, ignoring keys """
+        """ Variance of values, ignoring keys
+
+        obj.variance() is equivalent to obj.rdd.values().variance()."""
         return self.rdd.values().variance()
 
     def stdev(self):
-        """ Standard deviation of values, ignoring keys """
+        """ Standard deviation of values, ignoring keys
+
+        obj.stdev() is equivalent to obj.rdd.values().stdev().
+        """
         return self.rdd.values().stdev()
 
     def stats(self):
-        """ Stats of values, ignoring keys """
+        """ Stats of values, ignoring keys
+
+        obj.stats() is equivalent to obj.rdd.values().stats().
+        """
         return self.rdd.values().stats()
 
     def cache(self):
-        """ Call cache on """
+        """ Enable in-memory caching
+
+        This calls the Spark cache() method on the underlying RDD.
+        """
         self.rdd.cache()
 
     def filterOnKeys(self, func):
