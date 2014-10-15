@@ -289,7 +289,7 @@ class SeriesLoader(object):
                                      startidx=None, stopidx=None):
         import thunder.rdds.fileio.multitif as multitif
         import itertools
-        import Image
+        from PIL import Image
         from matplotlib.image import pil_to_array
         import io
 
