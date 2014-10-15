@@ -105,6 +105,9 @@ def export(data, outputdir, outputfile, outputformat, sorting=False):
         if format == 'text':
             savetxt(file+".txt", array, fmt="%.6f")
 
+    # force calculation of dimensions
+    _tmp = data.dims
+
     if isinstance(data, Series):
         if size(data.index) > 1:
             for ix in data.index:
