@@ -78,6 +78,10 @@ class Series(Data):
             if value.ndim != 1:
                 raise Exception('Values must be 1d arrays')
 
+    def _resetCounts(self):
+        self._dims = None
+        return self
+
     def between(self, left, right, inclusive=True):
         """
         Select subset of values within the given index range

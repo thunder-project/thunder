@@ -75,10 +75,12 @@ class Data(object):
         self.rdd.cache()
 
     def filterOnKeys(self, func):
-        return self._constructor(self.rdd.filter(lambda (k, v): func(k))).__finalize__(self)
+        """ Filter records by applying a function to keys """
+        return self._constructor(self.rdd.filter(lambda (k, v): func(k))).__finalize__(self)._resetCounts()
 
     def filterOnValues(self, func):
-        return self._constructor(self.rdd.filter(lambda (k, v): func(v))).__finalize__(self)
+        """ Filter records by applying a function to values """
+        return self._constructor(self.rdd.filter(lambda (k, v): func(v))).__finalize__(self)._resetCounts()
 
 
 def parseMemoryString(memstr):

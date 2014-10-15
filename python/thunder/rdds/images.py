@@ -49,6 +49,10 @@ class Images(Data):
         self._dims = record[1].shape
         self._dtype = str(record[1].dtype)
 
+    def _resetCounts(self):
+        self._nimages = None
+        return self
+
     @staticmethod
     def _check_type(record):
         if not isinstance(record[0], tuple):
