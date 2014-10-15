@@ -1,6 +1,6 @@
 {
-  "format": "float", 
+  "valuetype": "float", 
   "nvalues": 4, 
-  "keyformat": "float", 
+  "keytype": "float", 
   "nkeys": 1
 }
