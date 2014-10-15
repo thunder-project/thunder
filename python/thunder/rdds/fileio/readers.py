@@ -1,3 +1,27 @@
+"""Classes that abstract reading from various types of filesystems.
+
+Currently two types of 'filesystem' are supported:
+
+* the local file system, via python's native file() objects
+
+* Amazon's S3, using the boto library (only if boto is installed; boto is not a requirement)
+
+For each filesystem, two types of reader classes are provided:
+
+* parallel readers are intended to serve as the entry point to a Spark workflow. They provide a read() method
+that itself calls the spark context's parallelize() method, setting up a workflow with one partition per file. This
+method returns a Spark RDD of <string filename, string binary data>.
+
+* file readers are intended to abstract across the supported filesystems, providing a consistent interface to several
+common file and filesystem operations. These include listing files in a directory, reading the contents of a file,
+and providing a file handle or handle-like object that itself supports read(), seek(), and tell() operations.
+
+The reader classes also all support a common syntax for path specifications, including both "standard" file paths
+and "URI-like" syntax with an explicitly specified scheme (for instance, "file://" or "s3n://"). This path specification
+syntax allows a single wildcard "*" character in the filename, making possible paths like
+"s3n:///my-bucket/key-one/foo*.bar", referring to "every object in the S3 bucket my-bucket whose key starts with
+'key-one/foo' and ends with '.bar'".
+"""
 import glob
 import os
 import urllib
@@ -10,7 +34,7 @@ try:
     import boto
     _have_boto = True
 except ImportError:
-    pass
+    boto = None
 
 
 class FileNotFoundError(IOError):
@@ -25,6 +49,14 @@ class FileNotFoundError(IOError):
 
 
 def appendExtensionToPathSpec(datapath, ext=None):
+    """Helper function for consistent handling of paths given with separately passed file extensions
+
+    Returns
+    -------
+    result: string datapath
+        datapath string formed by concatenating passed `datapath` with "*" and passed `ext`, with some
+        normalization as appropriate
+    """
     if ext:
         if '*' in datapath:
             if datapath[-1] == '*':
@@ -43,6 +75,8 @@ def appendExtensionToPathSpec(datapath, ext=None):
 
 
 def selectByStartAndStopIndices(files, startidx, stopidx):
+    """Helper function for consistent handling of start and stop indices
+    """
     if startidx or stopidx:
         if startidx is None:
             startidx = 0
@@ -57,7 +91,6 @@ def _localRead(filepath, startOffset=None, size=-1):
 
     Will rethrow FileNotFoundError if it receives an IOError with error number indicating that the file isn't found.
     """
-    buf = None
     try:
         with open(filepath, 'rb') as f:
             if startOffset:
@@ -72,6 +105,8 @@ def _localRead(filepath, startOffset=None, size=-1):
 
 
 class LocalFSParallelReader(object):
+    """Parallel reader backed by python's native file() objects.
+    """
     def __init__(self, sparkcontext):
         self.sc = sparkcontext
         self.lastnrecs = None
@@ -85,12 +120,14 @@ class LocalFSParallelReader(object):
             # passed a nonempty uri, got an empty path back
             # this happens when given a file uri that starts with "file://" instead of "file:///"
             # error here to prevent unexpected behavior of looking at current working directory
-            raise ValueError("Could not interpret %s as URI. Note absolute paths in URIs should start with 'file:///', not 'file://'")
+            raise ValueError("Could not interpret %s as URI. " +
+                             "Note absolute paths in URIs should start with 'file:///', not 'file://'")
         return path
 
     @staticmethod
     def listFiles(abspath, ext=None, startidx=None, stopidx=None):
-
+        """Get sorted list of file paths matching passed `abspath` path and `ext` filename extension
+        """
         if os.path.isdir(abspath):
             if ext:
                 files = sorted(glob.glob(os.path.join(abspath, '*.' + ext)))
@@ -107,7 +144,9 @@ class LocalFSParallelReader(object):
         return files
 
     def read(self, datapath, ext=None, startidx=None, stopidx=None):
-        """Returns RDD of int, buffer k/v pairs
+        """Sets up Spark RDD across files specified by datapath on local filesystem.
+
+        Returns RDD of <string filepath, string buffer> k/v pairs.
         """
         abspath = self.uriToPath(datapath)
         filepaths = self.listFiles(abspath, ext=ext, startidx=startidx, stopidx=stopidx)
@@ -118,7 +157,8 @@ class LocalFSParallelReader(object):
 
 
 class _BotoS3Client(object):
-    # todo: boto s3 readers should throw FileNotFoundError as appropriate
+    """Superclass for boto-based S3 readers.
+    """
     @staticmethod
     def parseS3Query(query, delim='/'):
         keyname = ''
@@ -200,10 +240,16 @@ class _BotoS3Client(object):
             return results
 
     def __init__(self):
+        """Initialization; validates that AWS keys are available as environment variables.
+
+        Expects to find "AWS_ACCESS_KEY_ID" and "AWS_SECRET_ACCESS_KEY" in os.environ dict. Will throw
+        ValueError if either environment variable is missing.
+        """
         if not _have_boto:
             raise ValueError("The boto package does not appear to be available; boto is required for BotoS3Reader")
         if (not 'AWS_ACCESS_KEY_ID' in os.environ) or (not 'AWS_SECRET_ACCESS_KEY' in os.environ):
-            raise ValueError("The environment variables 'AWS_ACCESS_KEY_ID' and 'AWS_SECRET_ACCESS_KEY' must be set in order to read from s3")
+            raise ValueError("The environment variables 'AWS_ACCESS_KEY_ID' and 'AWS_SECRET_ACCESS_KEY' " +
+                             "must be set in order to read from s3")
 
         # save keys in this object and serialize out to workers to prevent having to set env vars separately on all
         # nodes in the cluster
@@ -220,6 +266,8 @@ class _BotoS3Client(object):
 
 
 class BotoS3ParallelReader(_BotoS3Client):
+    """Parallel reader backed by boto AWS client library.
+    """
     def __init__(self, sparkcontext):
         super(BotoS3ParallelReader, self).__init__()
         self.sc = sparkcontext
@@ -239,6 +287,10 @@ class BotoS3ParallelReader(_BotoS3Client):
         return bucket.name, keynamelist
 
     def read(self, datapath, ext=None, startidx=None, stopidx=None):
+        """Sets up Spark RDD across S3 objects specified by datapath.
+
+        Returns RDD of <string s3 keyname, string buffer> k/v pairs.
+        """
         datapath = appendExtensionToPathSpec(datapath, ext)
         bucketname, keynamelist = self._listFiles(datapath, startidx=startidx, stopidx=stopidx)
 
@@ -265,8 +317,13 @@ class BotoS3ParallelReader(_BotoS3Client):
 
 
 class LocalFSFileReader(object):
-
+    """File reader backed by python's native file() objects.
+    """
     def list(self, datapath, filename=None):
+        """List files specified by datapath.
+
+        Returns sorted list of absolute path strings.
+        """
         abspath = LocalFSParallelReader.uriToPath(datapath)
 
         if filename:
@@ -299,7 +356,8 @@ class LocalFSFileReader(object):
 
 
 class BotoS3FileReader(_BotoS3Client):
-
+    """File reader backed by the boto AWS client library.
+    """
     def __getMatchingKeys(self, datapath, filename=None):
         parse = _BotoS3Client.parseS3Query(datapath)
         conn = boto.connect_s3(aws_access_key_id=self.accessKey, aws_secret_access_key=self.secretKey)
@@ -327,6 +385,10 @@ class BotoS3FileReader(_BotoS3Client):
         return _BotoS3Client.retrieveKeys(bucket, keyname)
 
     def list(self, datapath, filename=None):
+        """List s3 objects specified by datapath.
+
+        Returns sorted list of 's3n://' URIs.
+        """
         keys = self.__getMatchingKeys(datapath, filename=filename)
         keynames = ["s3n:///" + key.bucket.name + "/" + key.name for key in keys]
         return sorted(keynames)
@@ -373,6 +435,10 @@ class BotoS3FileReader(_BotoS3Client):
 
 
 class BotoS3ReadFileHandle(object):
+    """Read-only file handle-like object exposing a subset of file methods.
+
+    Returned by BotoS3FileReader's open() method.
+    """
     def __init__(self, key):
         self._key = key
         self._closed = False
@@ -421,7 +487,6 @@ class BotoS3ReadFileHandle(object):
         return "rb"
 
 
-
 SCHEMAS_TO_PARALLELREADERS = {
     '': LocalFSParallelReader,
     'file': LocalFSParallelReader,
@@ -446,6 +511,8 @@ SCHEMAS_TO_FILEREADERS = {
 
 
 def getByScheme(datapath, lookup, default):
+    """Helper function used by get*ForPath().
+    """
     parseresult = urlparse.urlparse(datapath)
     clazz = lookup.get(parseresult.scheme, default)
     if clazz is None:
@@ -454,8 +521,22 @@ def getByScheme(datapath, lookup, default):
 
 
 def getParallelReaderForPath(datapath):
+    """Returns the class of a parallel reader suitable for the scheme used by `datapath`.
+
+    The resulting class object must still be instantiated in order to get a usable instance of the class.
+
+    Throws NotImplementedError if the requested scheme is explicitly not supported (e.g. "ftp://").
+    Returns LocalFSParallelReader if scheme is absent or not recognized.
+    """
     return getByScheme(datapath, SCHEMAS_TO_PARALLELREADERS, LocalFSParallelReader)
 
 
 def getFileReaderForPath(datapath):
+    """Returns the class of a file reader suitable for the scheme used by `datapath`.
+
+    The resulting class object must still be instantiated in order to get a usable instance of the class.
+
+    Throws NotImplementedError if the requested scheme is explicitly not supported (e.g. "ftp://").
+    Returns LocalFSFileReader if scheme is absent or not recognized.
+    """
     return getByScheme(datapath, SCHEMAS_TO_FILEREADERS, LocalFSFileReader)
