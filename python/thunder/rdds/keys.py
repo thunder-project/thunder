@@ -28,6 +28,20 @@ class Dimensions(object):
     def count(self):
         return tuple(map(lambda x: x + 1, map(subtract, self.max, self.min)))
 
+    @classmethod
+    def fromNumpyDimsTuple(cls, tup):
+        """Generates a Dimensions object equivalent to the passed numpy-style array.dims tuple
+        """
+        mx = [v-1 for v in tup]
+        mn = [0] * len(tup)
+        return cls(values=[mx, mn], n=len(tup))
+
+    def __str__(self):
+        return "Dimensions: min=%s, max=%s, count=%s" % (str(self.min), str(self.max), str(self.count))
+
+    def __repr__(self):
+        return "Dimensions(values=[%s, %s], n=%d)" %(str(self.min), str(self.max), len(self.min))
+
 
 def _indtosub_converter(dims, order='F', onebased=True):
     """Converter for changing linear indexing to subscript indexing

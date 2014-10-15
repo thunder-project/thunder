@@ -287,6 +287,16 @@ class LocalFSFileReader(object):
 
         return _localRead(filenames[0], startOffset=startOffset, size=size)
 
+    def open(self, datapath, filename=None):
+        filenames = self.list(datapath, filename=filename)
+
+        if not filenames:
+            raise FileNotFoundError("No file found matching: '%s'" % datapath)
+        if len(filenames) > 1:
+            raise ValueError("Found multiple files matching: '%s'" % datapath)
+
+        return open(filenames[0], 'rb')
+
 
 class BotoS3FileReader(_BotoS3Client):
 
@@ -318,11 +328,10 @@ class BotoS3FileReader(_BotoS3Client):
 
     def list(self, datapath, filename=None):
         keys = self.__getMatchingKeys(datapath, filename=filename)
-        keynames = [key.bucket.name + "/" + key.name for key in keys]
+        keynames = ["s3n:///" + key.bucket.name + "/" + key.name for key in keys]
         return sorted(keynames)
 
-    def read(self, datapath, filename=None, startOffset=None, size=-1):
-
+    def __getSingleMatchingKey(self, datapath, filename=None):
         keys = self.__getMatchingKeys(datapath, filename=filename)
         # keys is probably a lazy-loading ifilter iterable
         try:
@@ -338,6 +347,10 @@ class BotoS3FileReader(_BotoS3Client):
             pass
         if nextkey:
             raise ValueError("Found multiple S3 keys for: '%s'" % datapath)
+        return key
+
+    def read(self, datapath, filename=None, startOffset=None, size=-1):
+        key = self.__getSingleMatchingKey(datapath, filename=filename)
 
         if startOffset or (size > -1):
             # specify Range header in S3 request
@@ -353,6 +366,60 @@ class BotoS3FileReader(_BotoS3Client):
             return key.get_contents_as_string(headers=hdrs)
         else:
             return key.get_contents_as_string()
+
+    def open(self, datapath, filename=None):
+        key = self.__getSingleMatchingKey(datapath, filename=filename)
+        return BotoS3ReadFileHandle(key)
+
+
+class BotoS3ReadFileHandle(object):
+    def __init__(self, key):
+        self._key = key
+        self._closed = False
+        self._offset = 0
+
+    def close(self):
+        self._key.close(fast=True)
+        self._closed = True
+
+    def read(self, size=-1):
+        if self._offset or (size > -1):
+            if size > -1:
+                sizestr = str(self._offset + size - 1)  # range header is inclusive
+            else:
+                sizestr = ""
+            hdrs = {"Range": "bytes=%d-%s" % (self._offset, sizestr)}
+        else:
+            hdrs = {}
+        buf = self._key.get_contents_as_string(headers=hdrs)
+        self._offset += len(buf)
+        return buf
+
+    def seek(self, offset, whence=0):
+        if whence == 0:
+            self._offset = offset
+        elif whence == 1:
+            self._offset += offset
+        elif whence == 2:
+            self._offset = self._key.size + offset
+        else:
+            raise IOError("Invalid 'whence' argument, must be 0, 1, or 2. See file().seek.")
+
+    def tell(self):
+        return self._offset
+
+    @property
+    def closed(self):
+        return self._closed
+
+    @property
+    def name(self):
+        return "s3n:///" + self._key.bucket.name + "/" + self._key.name
+
+    @property
+    def mode(self):
+        return "rb"
+
 
 
 SCHEMAS_TO_PARALLELREADERS = {
