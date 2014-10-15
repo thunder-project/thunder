@@ -118,6 +118,7 @@ class ICA(object):
             b_old = b
             errvec[iter-1] = (1 - minabscos)
 
+
         # get un-mixing matrix
         w = dot(b.T, whtmat)
 
