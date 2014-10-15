@@ -1,3 +1,27 @@
+"""Classes that abstract writing to various types of filesystems.
+
+Currently two types of 'filesystem' are supported:
+
+* the local file system, via python's native file() objects
+
+* Amazon's S3, using the boto library (only if boto is installed; boto is not a requirement)
+
+For each filesystem, three types of writer classes are provided:
+
+* parallel writers are intended to serve as a data sink at the end of a Spark workflow. They provide a `writerFcn(kv)`
+method, which is intended to be used inside a Spark foreach() call (for instance: myrdd.foreach(writer.writerFcn)).
+They expect to be given key, value pairs where the key is a filename (not including a directory component in the path),
+and the value is a string buffer.
+
+* file writers abstract across the supported filesystems, providing a common writeFile(buf) interface that writes
+the contents of buf to a file object specified at writer initialization.
+
+* collected file writers are intended to be used after a Spark collect() call. They provide similar functionality
+to the parallel writers, but operate only on the driver rather than distributed across all nodes. This is intended
+to make it easier to write the results of an analysis to the local filesystem, without requiring NFS or a similar
+distributed file system available on all worker nodes.
+
+"""
 import os
 import shutil
 import urllib
@@ -11,7 +35,7 @@ try:
     import boto
     _have_boto = True
 except ImportError:
-    pass
+    boto = None
 
 
 class LocalFSParallelWriter(object):
@@ -224,12 +248,33 @@ SCHEMAS_TO_COLLECTEDFILEWRITERS = {
 
 
 def getParallelWriterForPath(datapath):
+    """Returns the class of a parallel file writer suitable for the scheme used by `datapath`.
+
+    The resulting class object must still be instantiated in order to get a usable instance of the class.
+
+    Throws NotImplementedError if the requested scheme is explicitly not supported (e.g. "ftp://").
+    Returns LocalFSParallelWriter if scheme is absent or not recognized.
+    """
     return getByScheme(datapath, SCHEMAS_TO_PARALLELWRITERS, LocalFSParallelWriter)
 
 
 def getFileWriterForPath(datapath):
+    """Returns the class of a file writer suitable for the scheme used by `datapath`.
+
+    The resulting class object must still be instantiated in order to get a usable instance of the class.
+
+    Throws NotImplementedError if the requested scheme is explicitly not supported (e.g. "ftp://").
+    Returns LocalFSFileWriter if scheme is absent or not recognized.
+    """
     return getByScheme(datapath, SCHEMAS_TO_FILEWRITERS, LocalFSFileWriter)
 
 
 def getCollectedFileWriterForPath(datapath):
+    """Returns the class of a collected file writer suitable for the scheme used by `datapath`.
+
+    The resulting class object must still be instantiated in order to get a usable instance of the class.
+
+    Throws NotImplementedError if the requested scheme is explicitly not supported (e.g. "ftp://").
+    Returns LocalFSCollectedFileWriter if scheme is absent or not recognized.
+    """
     return getByScheme(datapath, SCHEMAS_TO_COLLECTEDFILEWRITERS, LocalFSCollectedFileWriter)
