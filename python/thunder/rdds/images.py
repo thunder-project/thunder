@@ -1,8 +1,7 @@
-
 from numpy import ndarray, arange, amax, amin, size, squeeze, dtype
 
-from thunder.rdds.data import parseMemoryString
 from thunder.rdds.data import Data
+from thunder.utils.common import parseMemoryString
 
 
 class Images(Data):
@@ -250,7 +249,7 @@ class Images(Data):
         ----------
         blockSize : positive int or string
             Requests an average size for the intermediate blocks in bytes. A passed string should
-            be in a format like "256k" or "150M" (see data.parseMemoryString). If blocksPerDim
+            be in a format like "256k" or "150M" (see util.common.parseMemoryString). If blocksPerDim
             or groupingDim are passed, they will take precedence over this argument. See
             images._BlockMemoryAsSequence for a description of the partitioning strategy used.
 
