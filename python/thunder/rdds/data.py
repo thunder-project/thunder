@@ -39,39 +39,51 @@ class Data(object):
         raise NotImplementedError
 
     def first(self):
+        """ Return first record """
         return self.rdd.first()
 
     def take(self, *args, **kwargs):
+        """ Take samples """
         return self.rdd.take(*args, **kwargs)
 
     def values(self):
+        """ Return values, ignoring keys """
         return self.rdd.values()
 
     def keys(self):
+        """ Return keys, ignoring keys """
         return self.rdd.keys()
 
     def collect(self):
+        """ Return all records, will be slow for large datasets """
         return self.rdd.collect()
 
     def count(self):
+        """ Mean of values, ignoring keys """
         return self.rdd.count()
 
     def mean(self):
+        """ Mean of values, ignoring keys """
         return self.rdd.values().mean()
 
     def sum(self):
+        """ Sum of values, ignoring keys """
         return self.rdd.values().sum()
 
     def variance(self):
+        """ Variance of values, ignoring keys """
         return self.rdd.values().variance()
 
     def stdev(self):
+        """ Standard deviation of values, ignoring keys """
         return self.rdd.values().stdev()
 
     def stats(self):
+        """ Stats of values, ignoring keys """
         return self.rdd.values().stats()
 
     def cache(self):
+        """ Call cache on """
         self.rdd.cache()
 
     def filterOnKeys(self, func):
