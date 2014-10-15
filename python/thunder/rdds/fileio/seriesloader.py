@@ -1,4 +1,5 @@
-
+"""Provides SeriesLoader object and helpers, used to read Series data from disk or other filesystems.
+"""
 from collections import namedtuple
 import json
 from numpy import array, dtype, frombuffer, arange, load, vstack, unravel_index
@@ -16,8 +17,19 @@ from thunder.utils.common import parseMemoryString
 
 
 class SeriesLoader(object):
-
+    """Loader object used to instantiate Series data stored in a variety of formats.
+    """
     def __init__(self, sparkcontext, minPartitions=None):
+        """Initialize a new SeriesLoader object.
+
+        Parameters
+        ----------
+        sparkcontext: SparkContext
+            The pyspark SparkContext object used by the current Thunder environment.
+
+        minPartitions: int
+            minimum number of partitions to use when loading data. (Used by fromText, fromMatLocal, and fromNpyLocal)
+        """
         self.sc = sparkcontext
         self.minPartitions = minPartitions
 
@@ -83,12 +95,10 @@ class SeriesLoader(object):
         params = SeriesLoader.loadConf(datafile, conffile=conffilename)
 
         # filter dict to include only recognized field names:
-        #params = {k: v for k, v in params.items() if k in SeriesLoader.BinaryLoadParameters._fields}
         for k in params.keys():
             if not k in SeriesLoader.BinaryLoadParameters._fields:
                 del params[k]
         keywordparams = {'nkeys': nkeys, 'nvalues': nvalues, 'keytype': keytype, 'valuetype': valuetype}
-        #keywordparams = {k: v for k, v in keywordparams.items() if v}
         for k, v in keywordparams.items():
             if not v:
                 del keywordparams[k]
@@ -138,9 +148,9 @@ class SeriesLoader(object):
         recordsize = keysize + paramsObj.nvalues * valdtype.itemsize
 
         lines = self.sc.newAPIHadoopFile(datafile, 'thunder.util.io.hadoop.FixedLengthBinaryInputFormat',
-                                              'org.apache.hadoop.io.LongWritable',
-                                              'org.apache.hadoop.io.BytesWritable',
-                                              conf={'recordLength': str(recordsize)})
+                                         'org.apache.hadoop.io.LongWritable',
+                                         'org.apache.hadoop.io.BytesWritable',
+                                         conf={'recordLength': str(recordsize)})
 
         data = lines.map(lambda (_, v):
                          (tuple(int(x) for x in frombuffer(buffer(v, 0, keysize), dtype=keydtype)),
@@ -150,7 +160,7 @@ class SeriesLoader(object):
 
     def _getSeriesBlocksFromStack(self, datapath, dims, ext="stack", blockSize="150M", datatype='int16',
                                   startidx=None, stopidx=None):
-        """Create an RDD of <string blocklabel, (int k-tuple indices,
+        """Create an RDD of <string blocklabel, (int k-tuple indices, array of datatype values)>
 
         Parameters
         ----------
@@ -182,7 +192,7 @@ class SeriesLoader(object):
 
         datapath = self.__normalizeDatafilePattern(datapath, ext)
         blockSize = parseMemoryString(blockSize)
-        totaldim = reduce(lambda x, y: x*y, dims)
+        totaldim = reduce(lambda x_, y_: x_*y_, dims)
         datatype = dtype(datatype)
 
         reader = getFileReaderForPath(datapath)()
@@ -199,7 +209,7 @@ class SeriesLoader(object):
             # different planes appear in distinct files
             blocksperplane = max(nblocks / dims[-1], 1)
 
-            pixperplane = reduce(lambda x, y: x*y, dims[:-1])
+            pixperplane = reduce(lambda x_, y_: x_*y_, dims[:-1])
 
             # get the greatest number of blocks in a plane (up to as many as requested) that still divide the plane
             # evenly. This will always be at least one.
@@ -318,9 +328,6 @@ class SeriesLoader(object):
 
         blocklen = max((dims[0] * dims[1]) / blocksperplane, 1)  # integer division
 
-        # print "blockSize: %g bytesperplane: %g bytesperblock: %g blocksperplane: %g blocklen: %g" %
-        # (blockSize, bytesperplane, bytesperblock, blocksperplane, blocklen)
-
         # keys will be planeidx, blockidx:
         keys = list(itertools.product(xrange(dims[2]), xrange(blocksperplane)))
 
@@ -338,14 +345,12 @@ class SeriesLoader(object):
                     tiffilebuffer = multitif.packSinglePage(tiffparser_, page_idx=planeidx)
                     pilimg = Image.open(io.BytesIO(tiffilebuffer))
                     ary = pil_to_array(pilimg)
-                    #ary = pil_to_array(pilimg).T
                     del tiffilebuffer, tiffparser_, pilimg
                     if not planeshape:
                         planeshape = ary.shape[:]
                         blockstart = blockidx * blocklen
                         blockend = min(blockstart+blocklen, planeshape[0]*planeshape[1])
                     blocks.append(ary.flatten(order='C')[blockstart:blockend])
-                    # blocks.append(ary.flatten(order='F')[blockstart:blockend])
                     del ary
                 finally:
                     fp.close()
@@ -356,11 +361,8 @@ class SeriesLoader(object):
             # append subscript keys based on dimensions
             linindx = arange(blockstart, blockend)  # zero-based
 
-            # TODO: check order here
             serieskeys = zip(*map(tuple, unravel_index(linindx, planeshape, order='C')))
-            # serieskeys = zip(*map(tuple, unravel_index(linindx, planeshape, order='F')))
             # add plane index to end of keys
-            # serieskeys = [tuple(list(keys_)+[planeidx]) for keys_ in serieskeys]
             serieskeys = [tuple(list(keys_)[::-1]+[planeidx]) for keys_ in serieskeys]
             return zip(serieskeys, buf)
 
@@ -375,28 +377,60 @@ class SeriesLoader(object):
         Parameters
         ----------
 
-        datafile: string URI or local filesystem path
-            Specifies the directory or files to be loaded. May be formatted as a URI string with scheme (e.g. "file://",
-            "s3n://". If no scheme is present, will be interpreted as a path on the local filesystem. This path
-            must be valid on all workers. Datafile may also refer to a single file, or to a range of files specified
-            by a glob-style expression using a single wildcard character '*'.
+        datapath: string
+            Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
+            including scheme. A datapath argument may include a single '*' wildcard character in the filename.
+
+        dims: tuple of positive int
+            Dimensions of input image data, similar to a numpy 'shape' parameter.
+
+        ext: string, optional, default "stack"
+            Extension required on data files to be loaded.
+
+        blocksize: string formatted as e.g. "64M", "512k", "2G", or positive int. optional, default "150M"
+            Requested size of Series partitions in bytes (or kilobytes, megabytes, gigabytes).
+
+        datatype: string or numpy dtype. optional, default 'int16'
+            Data type of binary stack data to load. datatype should be interpretable as a numpy dtype.
+
+        startidx, stopidx: nonnegative int. optional.
+            Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
+            `datapath` and `ext`. Interpreted according to python slice indexing conventions.
         """
         seriesblocks, npointsinseries = self._getSeriesBlocksFromStack(datapath, dims, ext=ext, blockSize=blockSize,
                                                                        datatype=datatype, startidx=startidx,
                                                                        stopidx=stopidx)
         # TODO: initialize index here using npointsinseries?
         return Series(seriesblocks, dims=dims)
-        #return Series(seriesblocks)
 
     def fromMultipageTif(self, datapath, ext="tif", blockSize="150M",
                          startidx=None, stopidx=None):
+        """Load a Series object from multipage tiff files.
+
+        Parameters
+        ----------
+
+        datapath: string
+            Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
+            including scheme. A datapath argument may include a single '*' wildcard character in the filename.
+
+        ext: string, optional, default "tif"
+            Extension required on data files to be loaded.
+
+        blocksize: string formatted as e.g. "64M", "512k", "2G", or positive int. optional, default "150M"
+            Requested size of Series partitions in bytes (or kilobytes, megabytes, gigabytes).
+
+        startidx, stopidx: nonnegative int. optional.
+            Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
+            `datapath` and `ext`. Interpreted according to python slice indexing conventions.
+        """
         seriesblocks, metadata = self._getSeriesBlocksFromMultiTif(datapath, ext=ext, blockSize=blockSize,
                                                                    startidx=startidx, stopidx=stopidx)
         dims, npointsinseries, datatype = metadata
         return Series(seriesblocks, dims=dims)
-        #return Series(seriesblocks)
 
-    def __saveSeriesRdd(self, seriesblocks, outputdirname, dims, npointsinseries, datatype, overwrite=False):
+    @staticmethod
+    def __saveSeriesRdd(seriesblocks, outputdirname, dims, npointsinseries, datatype, overwrite=False):
         writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
 
         def blockToBinarySeries(kviter):
@@ -417,22 +451,85 @@ class SeriesLoader(object):
         writeSeriesConfig(outputdirname, len(dims), npointsinseries, dims=dims, valuetype=datatype,
                           overwrite=overwrite)
 
-    def saveFromStack(self, datapath, outputdirname, dims, ext="stack", blockSize="150M", datatype='int16',
+    def saveFromStack(self, datapath, outputdirpath, dims, ext="stack", blockSize="150M", datatype='int16',
                       startidx=None, stopidx=None, overwrite=False):
+        """Write out data from binary image stack files in the Series data flat binary format.
+
+        Parameters
+        ----------
+        datapath: string
+            Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
+            including scheme. A datapath argument may include a single '*' wildcard character in the filename.
+
+        outputdirpath: string
+            Path to a directory into which to write Series file output. An outputdir argument may be either a path
+            on the local file system or a URI-like format, as in datapath.
+
+        dims: tuple of positive int
+            Dimensions of input image data, similar to a numpy 'shape' parameter.
+
+        ext: string, optional, default "stack"
+            Extension required on data files to be loaded.
+
+        blocksize: string formatted as e.g. "64M", "512k", "2G", or positive int. optional, default "150M"
+            Requested size of Series partitions in bytes (or kilobytes, megabytes, gigabytes).
+
+        datatype: string or numpy dtype. optional, default 'int16'
+            Data type of binary stack data to load. datatype should be interpretable as a numpy dtype.
+
+        startidx, stopidx: nonnegative int. optional.
+            Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
+            `datapath` and `ext`. Interpreted according to python slice indexing conventions.
+
+        overwrite: boolean, optional, default False
+            If true, the directory specified by outputdirpath will first be deleted, along with all its contents, if it
+            already exists. If false, a ValueError will be thrown if outputdirpath is found to already exist.
+
+        """
         seriesblocks, npointsinseries = self._getSeriesBlocksFromStack(datapath, dims, ext=ext, blockSize=blockSize,
                                                                        datatype=datatype, startidx=startidx,
                                                                        stopidx=stopidx)
-        self.__saveSeriesRdd(seriesblocks, outputdirname, dims, npointsinseries, datatype, overwrite=overwrite)
+        SeriesLoader.__saveSeriesRdd(seriesblocks, outputdirpath, dims, npointsinseries, datatype, overwrite=overwrite)
 
-    def saveFromMultipageTif(self, datapath, outputdirname, ext="tif", blockSize="150M",
+    def saveFromMultipageTif(self, datapath, outputdirpath, ext="tif", blockSize="150M",
                              startidx=None, stopidx=None, overwrite=False):
+        """Write out data from multipage tif files in the Series data flat binary format.
+
+        Parameters
+        ----------
+        datapath: string
+            Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
+            including scheme. A datapath argument may include a single '*' wildcard character in the filename.
+
+        outputdirpath: string
+            Path to a directory into which to write Series file output. An outputdir argument may be either a path
+            on the local file system or a URI-like format, as in datapath.
+
+        ext: string, optional, default "stack"
+            Extension required on data files to be loaded.
+
+        blocksize: string formatted as e.g. "64M", "512k", "2G", or positive int. optional, default "150M"
+            Requested size of Series partitions in bytes (or kilobytes, megabytes, gigabytes).
+
+        startidx, stopidx: nonnegative int. optional.
+            Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
+            `datapath` and `ext`. Interpreted according to python slice indexing conventions.
+
+        overwrite: boolean, optional, default False
+            If true, the directory specified by outputdirpath will first be deleted, along with all its contents, if it
+            already exists. If false, a ValueError will be thrown if outputdirpath is found to already exist.
+
+        """
         seriesblocks, metadata = self._getSeriesBlocksFromMultiTif(datapath, ext=ext, blockSize=blockSize,
                                                                    startidx=startidx, stopidx=stopidx)
         dims, npointsinseries, datatype = metadata
-        self.__saveSeriesRdd(seriesblocks, outputdirname, dims, npointsinseries, datatype, overwrite=overwrite)
+        SeriesLoader.__saveSeriesRdd(seriesblocks, outputdirpath, dims, npointsinseries, datatype, overwrite=overwrite)
 
     def fromMatLocal(self, datafile, varname, keyfile=None):
+        """Loads Series data stored in a Matlab .mat file.
 
+        `datafile` must refer to a path visible to all workers, such as on NFS or similar mounted shared filesystem.
+        """
         data = loadmat(datafile)[varname]
         if data.ndim > 2:
             raise IOError('Input data must be one or two dimensional')
@@ -446,7 +543,10 @@ class SeriesLoader(object):
         return rdd
 
     def fromNpyLocal(self, datafile, keyfile=None):
+        """Loads Series data stored in the numpy save() .npy format.
 
+        `datafile` must refer to a path visible to all workers, such as on NFS or similar mounted shared filesystem.
+        """
         data = load(datafile)
         if data.ndim > 2:
             raise IOError('Input data must be one or two dimensional')
@@ -461,9 +561,9 @@ class SeriesLoader(object):
 
     @staticmethod
     def loadConf(datafile, conffile='conf.json'):
-        """Returns a dict loaded from a json file
+        """Returns a dict loaded from a json file.
 
-        Looks for file named _conffile_ in same directory as _datafile_.
+        Looks for file named `conffile` in same directory as `datafile`
 
         Returns {} if file not found
         """
@@ -486,9 +586,10 @@ class SeriesLoader(object):
         return params
 
 
-def writeSeriesConfig(outputdirname, nkeys, nvalues, dims=None, keytype='int16', valuetype='int16', confname="conf.json",
-                      overwrite=True):
-
+def writeSeriesConfig(outputdirname, nkeys, nvalues, dims=None, keytype='int16', valuetype='int16',
+                      confname="conf.json", overwrite=True):
+    """Helper function to write out a conf.json file with required information to load Series binary data.
+    """
     import json
     from thunder.rdds.fileio.writers import getFileWriterForPath
 
