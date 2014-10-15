@@ -397,8 +397,8 @@ class Series(Data):
 
         Parameters
         ----------
-        dims : array-like
-            Maximum dimensions
+        dims : array-like, optional
+            Maximum dimensions. If not provided, will use dims property.
 
         order : str, 'C' or 'F', default = 'F'
             Specifies row-major or column-major array indexing. See numpy.unravel_index.
@@ -475,9 +475,12 @@ class Series(Data):
             result = array(self.rdd.values().takeSample(False, nsamples))
         return result
 
-    def query(self, inds, var='inds'):
+    def query(self, inds, var='inds', order='F', onebased=True):
         """
         Extract records with indices matching those provided
+
+        Keys will be automatically linearized before matching to provided indices.
+        This will not affect
 
         Parameters
         ----------
@@ -487,6 +490,12 @@ class Series(Data):
 
         var : str, optional, default = 'inds'
             Variable name if loading from a MAT file
+
+        order : str, optional, default = 'F'
+            Specify ordering for linearizing indices (see subtoind)
+
+        onebased : boolean, optional, default = True
+            Specify zero or one based indexing for linearizing (see subtoind)
 
         Returns
         -------
@@ -505,12 +514,12 @@ class Series(Data):
         n = len(inds)
 
         from thunder.rdds.keys import _indtosub_converter
-        converter = _indtosub_converter(dims=self.dims.max)
+        converter = _indtosub_converter(dims=self.dims.max, order=order, onebased=onebased)
 
         keys = zeros((n, len(self.dims.count)))
         values = zeros((n, len(self.first()[1])))
 
-        data = self.subtoind()
+        data = self.subtoind(order=order, onebased=onebased)
 
         for idx, indlist in enumerate(inds):
             if len(indlist) > 0:
