@@ -68,7 +68,7 @@ def _indtosub_converter(dims, order='F', onebased=True):
             dimprod = zip(dims, append(1, cumprod(dims[::-1])[0:-1])[::-1])
         converter = lambda k: inline_fcn(k, dimprod)
     else:
-        converter = lambda k: k
+        converter = lambda k: (k,)
 
     return converter
 
