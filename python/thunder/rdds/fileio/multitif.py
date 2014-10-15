@@ -223,11 +223,11 @@ class TiffParser(object):
             if ifd_entry_and_data.entry.isImageDataOffsetEntry():
                 if image_offsets:
                     raise TiffFormatError("Found duplicate image data offset entries in single IFD")
-                image_offsets = ifd_entry_and_data.offset_data
+                image_offsets = ifd_entry_and_data.getData()
             elif ifd_entry_and_data.entry.isImageDataByteCountEntry():
                 if image_bytesizes:
                     raise TiffFormatError("Found duplicate image data byte size entries in single IFD")
-                image_bytesizes = ifd_entry_and_data.offset_data
+                image_bytesizes = ifd_entry_and_data.getData()
 
         if (not image_offsets) or (not image_bytesizes):
             raise TiffFormatError("Missing image offset or byte size data in IFD")
@@ -307,7 +307,8 @@ def packSinglePage(parser, tiff_data=None, page_idx=0):
     ifd_data_offset = offset + ifd_size
     img_data_offset = ifd_data_offset + tif_ifd_data.ifd.getTotalOffsetSize()
     # write IFD
-    offset += tif_ifd_data.ifd.toBytes(ifd_data_offset, out_buffer, dest_offset=offset, order=order)
+    offset += tif_ifd_data.ifd.toBytes(ifd_data_offset, img_data_offset, out_buffer,
+                                       dest_offset=offset, order=order)
     # write offset IFD values
     for entry, value in tif_ifd_data.entries_and_offsetdata:
         if entry.isoffset:
@@ -526,17 +527,20 @@ class TiffImageFileDirectory(object):
         return "Image File Directory\nnumber fields: %d\n%s\nnext IFD offset: %d" % \
                (self.num_entries, '\n'.join(entries), self.ifd_offset)
 
-    def toBytes(self, new_offset, dest_buf, dest_offset=0, order="="):
+    def toBytes(self, new_offset, img_data_offset, dest_buf, dest_offset=0, order="="):
         orig_dest_offset = dest_offset
         struct.pack_into(order+"H", dest_buf, dest_offset, self.num_entries)
         dest_offset += 2
         for entry in self.entries:
             if entry.isoffset:
                 st, l = entry.getOffsetStartAndLength()
-                dest_offset += entry.toBytes(dest_buf, new_offset=new_offset, dest_offset=dest_offset, order=order)
+                dest_offset += entry.toBytes(dest_buf, new_offset=new_offset,
+                                             img_data_offset=img_data_offset,
+                                             dest_offset=dest_offset, order=order)
                 new_offset += l
             else:
-                dest_offset += entry.toBytes(dest_buf, dest_offset=dest_offset, order=order)
+                dest_offset += entry.toBytes(dest_buf, img_data_offset=img_data_offset,
+                                             dest_offset=dest_offset, order=order)
         # write "last IFD" marker:
         struct.pack_into(order+"I", dest_buf, dest_offset, 0)
         dest_offset += 4
@@ -565,13 +569,18 @@ class TiffIFDEntry(namedtuple('_TiffIFDEntry', 'tag type count val isoffset')):
             val = struct.unpack(order+'I', rawval)[0]
         return cls(tag, type, count, val, isoffset)
 
-    def toBytes(self, dest_buf, new_offset=None, dest_offset=0, order="="):
+    def toBytes(self, dest_buf, new_offset=None, img_data_offset=None, dest_offset=0, order="="):
         if new_offset is None and self.isoffset:
             new_offset = self.val
 
         if self.isoffset:
             val_fmt = 'L'
             val = new_offset
+        elif self.isImageDataOffsetEntry() and img_data_offset:
+            # we are writing image data offsets within this entry; they are not themselves offset
+            # for this to not be offset, there must be only one, since it's a long
+            val_fmt = 'L'
+            val = img_data_offset
         else:
             val_fmt = lookup_tagtype(self.type).fmt * self.count
             val = self.val
@@ -590,9 +599,9 @@ class TiffIFDEntry(namedtuple('_TiffIFDEntry', 'tag type count val isoffset')):
         struct.pack_into(fmt, dest_buf, dest_offset, *packing)
         return 12
 
-    def asBytes(self, new_offset=None, order="="):
+    def asBytes(self, new_offset=None, img_data_offset=None, order="="):
         buf = ctypes.create_string_buffer(self.byteSize())
-        self.toBytes(buf, new_offset=new_offset, dest_offset=0, order=order)
+        self.toBytes(buf, new_offset=new_offset, img_data_offset=img_data_offset, dest_offset=0, order=order)
         return buf.raw
 
     def byteSize(self):
@@ -628,7 +637,18 @@ class TiffIFDEntryAndOffsetData(namedtuple("_TiffIFDEntryAndOffsetData", "entry 
     If offset data is present (entry.isoffset is True), then it will be stored in offset_data as a tuple. If no
     offset data is present, then offset_data will be None.
     """
-    pass
+    def getData(self):
+        """Returns tuple of data from offset if present, otherwise from entry
+        """
+        def tuplify(val):
+            if isinstance(val, (tuple, list)):
+                return tuple(val)
+            return (val,)
+
+        if self.entry.isoffset:
+            return tuplify(self.offset_data)
+        return tuplify(self.entry.val)
+
 
 
 def lookup_tagtype(typecode):

@@ -301,12 +301,13 @@ class SeriesLoader(object):
         if not filenames:
             raise IOError("No files found for path '%s'" % datapath)
         filenames = selectByStartAndStopIndices(filenames, startidx, stopidx)
+        ntimepoints = len(filenames)
 
         dims, datatype = SeriesLoader.__readMetadataFromFirstPageOfMultiTif(reader, filenames[0])
         pixelbytesize = dtype(datatype).itemsize
 
         # intialize at one block per plane
-        bytesperplane = dims[0] * dims[1] * pixelbytesize
+        bytesperplane = dims[0] * dims[1] * pixelbytesize * ntimepoints
         bytesperblock = bytesperplane
         blocksperplane = 1
         # keep dividing while cutting our size in half still leaves us bigger than the requested size
@@ -365,7 +366,7 @@ class SeriesLoader(object):
 
         # map over blocks
         rdd = self.sc.parallelize(keys, len(keys)).flatMap(readblockfromtif)
-        metadata = (dims, len(filenames), datatype)
+        metadata = (dims, ntimepoints, datatype)
         return rdd, metadata
 
     def fromStack(self, datapath, dims, ext="stack", blockSize="150M", datatype='int16', startidx=None, stopidx=None):
