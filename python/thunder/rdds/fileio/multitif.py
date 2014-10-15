@@ -3,6 +3,11 @@
 PIL/pillow will parse a tif file by making a large number of very small reads. While this is in general perfectly fine
 when reading from the local filesystem, in the case where a single read is turned into an http GET request (for
 instance, reading from AWS S3), this can get pretty inefficient.
+
+These classes, primarily accessed through TiffParser, attempt to optimize access to a single page of a multipage tif
+by batching read requests into a smaller number of larger reads. The resulting page data can then be repacked into a
+single-page tif file format using the packSinglePage() function. This data can then be handed off to PIL, etc
+to be (again...) parsed, decompressed, turned into arrays and so on.
 """
 from collections import namedtuple
 import ctypes
@@ -331,10 +336,10 @@ def packSinglePage(parser, tiff_data=None, page_idx=0):
 class TiffBuffer(object):
     """Utility object to hold results of file read() calls.
     """
-    def __init__(self, orig_offset, buffer):
+    def __init__(self, orig_offset, buffer_):
         self.orig_offset = orig_offset
-        self.buffer = buffer
-        self.buffer_len = len(buffer)
+        self.buffer = buffer_
+        self.buffer_len = len(buffer_)
 
     def contains(self, offset, length):
         lbuf = len(self.buffer)
@@ -555,10 +560,10 @@ class TiffIFDEntry(namedtuple('_TiffIFDEntry', 'tag type count val isoffset')):
     """
     @classmethod
     def fromBytes(cls, buf, order, offset=0):
-        tag, type, count = struct.unpack_from(order+'HHI', buf, offset)
+        tag, type_, count = struct.unpack_from(order+'HHI', buf, offset)
         rawval = buf[(offset+8):(offset+12)]
 
-        tagtype = IFD_ENTRY_TYPECODE_TO_TAGTYPE[type]
+        tagtype = IFD_ENTRY_TYPECODE_TO_TAGTYPE[type_]
         bytesize = count * tagtype.size
         isoffset = bytesize > 4 or tagtype.type == 'UNK'
         if not isoffset:
@@ -567,7 +572,7 @@ class TiffIFDEntry(namedtuple('_TiffIFDEntry', 'tag type count val isoffset')):
                 val = val[0]
         else:
             val = struct.unpack(order+'I', rawval)[0]
-        return cls(tag, type, count, val, isoffset)
+        return cls(tag, type_, count, val, isoffset)
 
     def toBytes(self, dest_buf, new_offset=None, img_data_offset=None, dest_offset=0, order="="):
         if new_offset is None and self.isoffset:
@@ -648,7 +653,6 @@ class TiffIFDEntryAndOffsetData(namedtuple("_TiffIFDEntryAndOffsetData", "entry 
         if self.entry.isoffset:
             return tuplify(self.offset_data)
         return tuplify(self.entry.val)
-
 
 
 def lookup_tagtype(typecode):
