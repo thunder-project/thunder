@@ -121,7 +121,7 @@ class LinearRegressionModel(RegressionModel):
 
     def __init__(self, modelfile, var='X'):
         if type(modelfile) is str:
-            x = loadmatvar(var)
+            x = loadmatvar(modelfile, var)
         else:
             x = modelfile
         x = concatenate((ones((1, shape(x)[1])), x))
