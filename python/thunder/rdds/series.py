@@ -511,7 +511,7 @@ class Series(Data):
 
         if size(result) == 0:
             raise Exception('No records found, try a different threshold?')
-        
+
         return result
 
     def query(self, inds, var='inds', order='F', onebased=True):
