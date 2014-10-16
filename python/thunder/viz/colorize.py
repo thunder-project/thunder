@@ -73,7 +73,7 @@ class Colorize(object):
             rho = sqrt(pt[0]**2 + pt[1]**2)
             return colorsys.hsv_to_rgb(theta, 1, rho * self.scale)
 
-    def images(self, img, mask=None, base=None):
+    def images(self, img, mask=None, background=None):
         """Colorize numerical image data.
 
         Input can either be a single image or a stack of images.
@@ -92,7 +92,7 @@ class Colorize(object):
             A second image to mask the luminance channel of the first one.
             Must be of shape (x, y, z) or (x, y), and must match dimensions of images.
 
-        base : array
+        background : array
             An additional image to display as a grayscale background.
             Must be of shape (x, y, z) or (x, y), and must match dimensions of images.
 
@@ -115,8 +115,8 @@ class Colorize(object):
             mask_dims = mask.shape
             self._check_image_mask_args(mask_dims, img_dims)
 
-        if base is not None:
-            background = asarray(base)
+        if background is not None:
+            background = asarray(background)
             background = clip(background, 0, inf)
             background = 0.3 * background/amax(background)
             background_dims = background.shape
@@ -201,13 +201,13 @@ class Colorize(object):
                 for i in range(0, 3):
                     out[:, :, i] = out[:, :, i] * mask
 
-        if base is not None:
-            if base.ndim == 3:
+        if background is not None:
+            if background.ndim == 3:
                 for i in range(0, 3):
-                    out[:, :, :, i] = out[:, :, :, i] + base
+                    out[:, :, :, i] = out[:, :, :, i] + background
             else:
                 for i in range(0, 3):
-                    out[:, :, i] = out[:, :, i] + base
+                    out[:, :, i] = out[:, :, i] + background
 
         return clip(out, 0, 1)
 
