@@ -9,13 +9,13 @@ To follow along with the instructions below, you'll just need a command line (e.
 
 Installing Spark 
 ~~~~~~~~~~~~~~~~
-First you need a working installation of Spark. You can `download <http://spark.apache.org/downloads.html>`_ one of the pre-built versions (pick the one labeled Hadoop 2), or you can download the sources, and follow `these instructions <http://spark.apache.org/docs/latest/building-with-maven.html>`_ to build from source.
+First you need a working installation of Spark. You can `download <http://spark.apache.org/downloads.html>`_ one of the pre-built versions (pick the one labeled Hadoop 1.X), or you can download the sources, and follow `these instructions <http://spark.apache.org/docs/latest/building-with-maven.html>`_ to build from source.
 
 Once you have downloaded Spark, set an environmental variable by typing the following into the terminal (here we assume you downloaded a pre-built version and put it in your downloads folder)
 
 .. code-block:: bash
 
-	export SPARK_HOME=~/downloads/spark-1.0.2-bin-hadoop2
+	export SPARK_HOME=~/downloads/spark-1.1.0-bin-hadoop1
 
 To make this setting permanent, add the above line to your bash profile (usually located in ``~/.bash_profile`` on Mac OS X), and open a new terminal so the change takes effect. Otherwise, you'll need to enter this line during each terminal session.
 
