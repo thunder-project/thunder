@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Input formats &mdash; Thunder 0.3.2 documentation</title>
+    <title>Input formats &mdash; Thunder 0.4.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.3.2',
+        VERSION:     '0.4.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,7 +31,9 @@
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.3.2 documentation" href="../index.html" />
+    <link rel="top" title="Thunder 0.4.0 documentation" href="../index.html" />
+    <link rel="next" title="Images" href="images.html" />
+    <link rel="prev" title="Thunder context" href="thunder_context.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -51,12 +53,15 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.3.2</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.4.0</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
           <ul class="nav navbar-nav">
             <li class="divider-vertical"></li>
+            
+                <li><a href="../tutorials.html">Tutorials</a></li>
+                <li><a href="../api.html">API</a></li>
             
             
               <li class="dropdown globaltoc-container">
@@ -68,10 +73,19 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction to Thunder</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install_local.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install_ec2.html">Running on EC2</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../basic_usage.html">Basic usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="basic_usage.html">Basic usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="thunder_context.html">Thunder context</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Input formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="images.html">Images</a></li>
+<li class="toctree-l1"><a class="reference internal" href="series.html">Series</a></li>
+<li class="toctree-l1"><a class="reference internal" href="clustering.html">Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="factorization.html">Factorization</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
@@ -136,7 +150,8 @@ Two-dimensional images can be loaded from <tt class="docutils literal"><span cla
 three-dimensional volumes can be loaded from multi-page <tt class="docutils literal"><span class="pre">tif-stack</span></tt>
 volumes, or binary <tt class="docutils literal"><span class="pre">stack</span></tt> volumes. For an example, we&#8217;ll load a set
 of <tt class="docutils literal"><span class="pre">tif</span></tt> images by specifying a folder (note: these are small, highly
-downsampled images included with thunder purely for testing the API):</p>
+downsampled images included with Thunder purely for demonstration and
+testing):</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="c"># find the location relative to the thunder installation</span>
 <span class="kn">import</span> <span class="nn">os.path</span> <span class="kn">as</span> <span class="nn">pth</span>
 <span class="n">imagepath</span> <span class="o">=</span> <span class="n">pth</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pth</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">pth</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">thunder</span><span class="o">.</span><span class="n">__file__</span><span class="p">)),</span> <span class="s">&#39;utils/data/fish/tif-stack&#39;</span><span class="p">)</span>
@@ -174,7 +189,11 @@ downsampled images included with thunder purely for testing the API):</p>
 </div>
 <p>For any of these image formats, the raw data can be stored on a local
 file system, a networked file system (accessible to all nodes of a
-cluster), or Amazon S3.</p>
+cluster), or Amazon S3. To load images from S3, the location of the data
+must be specified as a URI, with &#8220;s3://&#8221; or &#8220;s3n://&#8221; given as the
+scheme. For instance, data stored in an S3 bucket named &#8220;my-bucket&#8221;
+under keys named &#8220;my-data/fileN.stack&#8221; could be retrieved by passing
+&#8216;<tt class="docutils literal"><span class="pre">s3n://my-bucket/file*.stack</span></tt>&#8216; to <tt class="docutils literal"><span class="pre">loadImages</span></tt>.</p>
 <p>It&#8217;s easy to load only a subset of images:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadImages</span><span class="p">(</span><span class="n">imagepath</span><span class="p">,</span> <span class="n">inputformat</span><span class="o">=</span><span class="s">&#39;tif-stack&#39;</span><span class="p">,</span> <span class="n">startidx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stopidx</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
@@ -189,13 +208,14 @@ cluster), or Amazon S3.</p>
 <div class="section" id="loading-series">
 <h2>Loading Series<a class="headerlink" href="#loading-series" title="Permalink to this headline">¶</a></h2>
 <p>A <tt class="docutils literal"><span class="pre">Series</span></tt> object is a distributed collection of one-dimensional
-arrays that share a common index, and have simple integer key
-identifiers. They can be loaded from flat text or binary files.</p>
+arrays with simple integer key identifiers. All arrays in a <tt class="docutils literal"><span class="pre">Series</span></tt>
+must have the same length. They can be loaded from flat text or binary
+files.</p>
 <p>Text files must contain a line for each record, with numbers separated
 by spaces. The first numbers of each line will be interpreted as keys,
-and subsequent numbers will be interperted as values. The number of keys
+and subsequent numbers will be interpreted as values. The number of keys
 is user-specified. As before, we&#8217;ll load example series data from a
-small file included with thunder purely for testing purposes (this is
+small file included with Thunder purely for testing purposes (this is
 the <tt class="docutils literal"><span class="pre">iris</span></tt> dataset).</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="c"># find the location relative to the thunder installation</span>
 <span class="n">seriespath</span> <span class="o">=</span> <span class="n">pth</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pth</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">pth</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">thunder</span><span class="o">.</span><span class="n">__file__</span><span class="p">)),</span> <span class="s">&#39;utils/data/iris/&#39;</span><span class="p">)</span>
@@ -206,14 +226,15 @@ the <tt class="docutils literal"><span class="pre">iris</span></tt> dataset).</p
 </div>
 <p>We could have also provided the folder name, rather than the file, and
 all file(s) of the given format would be loaded. Let&#8217;s look at the first
-entry of the <tt class="docutils literal"><span class="pre">Series</span></tt></p>
+entry of the <tt class="docutils literal"><span class="pre">Series</span></tt>:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
 </div>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,),</span> <span class="n">array</span><span class="p">([</span> <span class="mf">5.1</span><span class="p">,</span>  <span class="mf">3.5</span><span class="p">,</span>  <span class="mf">1.4</span><span class="p">,</span>  <span class="mf">0.2</span><span class="p">]))</span>
 </pre></div>
 </div>
-<p>The index is automatically provided based on the range of the values</p>
+<p>The index is automatically calculated based on the length of the values
+array:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">index</span>
 </pre></div>
 </div>
@@ -242,6 +263,12 @@ previously.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,),</span> <span class="n">array</span><span class="p">([</span> <span class="mf">5.1</span><span class="p">,</span>  <span class="mf">3.5</span><span class="p">,</span>  <span class="mf">1.4</span><span class="p">,</span>  <span class="mf">0.2</span><span class="p">]))</span>
 </pre></div>
 </div>
+<p>In this case, the number of keys and number of values in each record,
+along with the data types of the keys and values, are automatically read
+out from a <tt class="docutils literal"><span class="pre">conf.json</span></tt> file located in the same directory as
+<tt class="docutils literal"><span class="pre">iris.bin</span></tt>. This file has a simple JSON format. But when a
+<tt class="docutils literal"><span class="pre">conf.json</span></tt> file is unavailable, these parameters can also be passed
+as arguments to the <tt class="docutils literal"><span class="pre">loadSeries</span></tt> method:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeries</span><span class="p">(</span><span class="n">seriespath</span> <span class="o">+</span> <span class="s">&#39;iris.bin&#39;</span><span class="p">,</span> <span class="n">inputformat</span><span class="o">=</span><span class="s">&#39;binary&#39;</span><span class="p">,</span> <span class="n">nkeys</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nvalues</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">keytype</span><span class="o">=</span><span class="s">&#39;float&#39;</span><span class="p">,</span> <span class="n">valuetype</span><span class="o">=</span><span class="s">&#39;float&#39;</span><span class="p">)</span>
 <span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
@@ -250,8 +277,9 @@ previously.</p>
 </pre></div>
 </div>
 <p>Flat binary files are a particularly convienient format when exporting
-large data sets from other environments, e.g. Matlab. For example, the
-data loaded above was written out from within Matlab using</p>
+large data sets from other scientific computing environments, e.g.
+Matlab. For example, the data loaded above was written out from within
+Matlab using</p>
 <blockquote>
 <div><p>f = fopen(&#8216;iris.bin&#8217;,&#8217;w&#8217;)</p>
 <p>fwrite(f, [[0:149]&#8217; data]&#8217;,&#8217;double&#8217;)</p>
@@ -264,13 +292,13 @@ files, stored on a local file system, a networked file system, Amazon
 S3, or HDFS. To load multiple files at once, specify a directory as the
 filename, or a wildcard pattern.</p>
 <p>There is also a method for easily loading <tt class="docutils literal"><span class="pre">Series</span></tt> data from local
-arrays with either <tt class="docutils literal"><span class="pre">npy</span></tt> or <tt class="docutils literal"><span class="pre">MAT</span></tt> format. This is not advised when
-working with large data sets, but may be convienient for local testing,
-or for distributing a smaller data set for performing intensive
-comutations. In the latter case, the number of partitions should be set
-to approximately 2-3 times the number of cores avaialble on your
-cluster, so that different cores can work on different portions of the
-data.</p>
+arrays saved in either numpy <tt class="docutils literal"><span class="pre">npy</span></tt> or Matlab <tt class="docutils literal"><span class="pre">MAT</span></tt> format. This is
+not advised when working with large data sets, but may be convenient for
+local testing, or for distributing a smaller data set for performing
+intensive computations. In the latter case, the number of partitions
+should be set to approximately 2-3 times the number of cores avaialble
+on your cluster, so that different cores can work on different portions
+of the data.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeriesLocal</span><span class="p">(</span><span class="n">seriespath</span> <span class="o">+</span> <span class="s">&#39;/iris.mat&#39;</span><span class="p">,</span> <span class="n">inputformat</span><span class="o">=</span><span class="s">&#39;mat&#39;</span><span class="p">,</span> <span class="n">varname</span><span class="o">=</span><span class="s">&#39;data&#39;</span><span class="p">,</span> <span class="n">minPartitions</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>

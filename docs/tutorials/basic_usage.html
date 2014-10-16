@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Basic usage &mdash; Thunder 0.3.2 documentation</title>
+    <title>Basic usage &mdash; Thunder 0.4.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.3.2',
+        VERSION:     '0.4.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,7 +31,9 @@
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.3.2 documentation" href="../index.html" />
+    <link rel="top" title="Thunder 0.4.0 documentation" href="../index.html" />
+    <link rel="next" title="Thunder context" href="thunder_context.html" />
+    <link rel="prev" title="Contributing" href="../contributing.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -51,12 +53,15 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.3.2</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.4.0</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
           <ul class="nav navbar-nav">
             <li class="divider-vertical"></li>
+            
+                <li><a href="../tutorials.html">Tutorials</a></li>
+                <li><a href="../api.html">API</a></li>
             
             
               <li class="dropdown globaltoc-container">
@@ -68,10 +73,19 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction to Thunder</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install_local.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install_ec2.html">Running on EC2</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../basic_usage.html">Basic usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">Basic usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="thunder_context.html">Thunder context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="input_formats.html">Input formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="images.html">Images</a></li>
+<li class="toctree-l1"><a class="reference internal" href="series.html">Series</a></li>
+<li class="toctree-l1"><a class="reference internal" href="clustering.html">Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="factorization.html">Factorization</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
@@ -123,22 +137,23 @@
       
   <div class="section" id="basic-usage">
 <h1>Basic usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h1>
-<p>thunder offers a variety of analyses and workflows for spatial and
+<p>Thunder offers a variety of analyses and workflows for spatial and
 temporal data. We&#8217;ll walk through a very simple example here as an
 introduction. The entry point for most workflows is the
 <tt class="docutils literal"><span class="pre">ThunderContext</span></tt>. If you type <tt class="docutils literal"><span class="pre">thunder</span></tt> to start the interactive
 shell, this context is automatically provided as <tt class="docutils literal"><span class="pre">tsc</span></tt>, which is a
 thin wrapper for the <tt class="docutils literal"><span class="pre">SparkContext</span></tt> that provides functionality for
 loading data.</p>
-<p>We&#8217;ll start by loading some example data</p>
+<p>We&#8217;ll start by loading some example data:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;fish-series&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><tt class="docutils literal"><span class="pre">data</span></tt> is a distributed collection of key-value records, each
 containing a coordinate identifier and the time series of a single
 voxel. We can look at the first record by using <tt class="docutils literal"><span class="pre">first()</span></tt>. It&#8217;s a
-tuple, where the first entry is a key (the coordinate) and the value is
-an one-dimensional array.</p>
+key-value pair, where the key is a tuple of int (representing a spatial
+coordinate within the imaging volume) and the value is an
+one-dimensional array:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -148,12 +163,17 @@ an one-dimensional array.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>We see that the <tt class="docutils literal"><span class="pre">first</span></tt> key in the fish <tt class="docutils literal"><span class="pre">Series</span></tt> data is the tuple
+(0,0,0), corresponding to an x, y, z coordinate at an outer corner of
+the volume.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">value</span><span class="o">.</span><span class="n">shape</span>
 </pre></div>
 </div>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">240</span><span class="p">,)</span>
 </pre></div>
 </div>
+<p>The value in this case is a time series of 240 observations, represented
+as a 1d numpy array.</p>
 <p>We can extract a random subset of voxels and plot their time series,
 after applying a simple baseline normalization. Here and elsewhere,
 we&#8217;ll use the excellent <tt class="docutils literal"><span class="pre">seaborn</span></tt> package for styling figures, but
@@ -171,9 +191,9 @@ this is entirely optional.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">examples</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/basic_usage_12_0.png" src="../_images/basic_usage_12_0.png" />
+<img alt="../_images/basic_usage_13_0.png" src="../_images/basic_usage_13_0.png" />
 <p>We can also compute the mean value for each pixel using the
-<tt class="docutils literal"><span class="pre">seriesMean</span></tt> method</p>
+<tt class="docutils literal"><span class="pre">seriesMean</span></tt> method:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">means</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">seriesMean</span><span class="p">()</span>
 <span class="n">means</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
@@ -181,10 +201,13 @@ this is entirely optional.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mf">25.824999999999999</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><tt class="docutils literal"><span class="pre">means</span></tt> contains the mean of each pixel. For this <tt class="docutils literal"><span class="pre">Series</span></tt>, the keys
-correspond to spatial coordinates, which means we can <tt class="docutils literal"><span class="pre">pack</span></tt> the
-results into a local array. In this case, the result is 3d, with two
-planes.</p>
+<p><tt class="docutils literal"><span class="pre">means</span></tt> is now itself a <tt class="docutils literal"><span class="pre">Series</span></tt>, where the value of each record is
+the mean across the time series for that voxel.</p>
+<p>For this <tt class="docutils literal"><span class="pre">Series</span></tt>, since the keys correspond to spatial coordinates,
+we can <tt class="docutils literal"><span class="pre">pack</span></tt> the results back into a local array. <tt class="docutils literal"><span class="pre">pack</span></tt> is an
+operation that converts <tt class="docutils literal"><span class="pre">Series</span></tt> data, with spatial coordinates as
+keys, into an n-dimensional numpy array on the driver node of a Spark
+cluster. In this case, the result is 3d, with two planes:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">img</span> <span class="o">=</span> <span class="n">means</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
 <span class="n">img</span><span class="o">.</span><span class="n">shape</span>
 </pre></div>
@@ -192,12 +215,19 @@ planes.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">87</span><span class="p">,</span> <span class="mi">76</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>It&#8217;s easy to look at the result directly using <tt class="docutils literal"><span class="pre">matplotlib</span></tt>.</p>
+<p><tt class="docutils literal"><span class="pre">pack</span></tt> is an example of a local operation, meaning that all the data
+involved will be sent to the Spark driver node. For larger data sets,
+this can be very problematic - it&#8217;s a good idea to downsample,
+subselect, or otherwise reduce the size of your data before attempting
+to <tt class="docutils literal"><span class="pre">pack</span></tt> large image data sets! (See the <tt class="docutils literal"><span class="pre">Series</span></tt> tutorial for more
+on how to do this.) In this case, after taking the <tt class="docutils literal"><span class="pre">mean</span></tt> the example
+data set is quite small, so <tt class="docutils literal"><span class="pre">pack</span></tt>ing it is no problem.</p>
+<p>It&#8217;s easy to look at the result directly using <tt class="docutils literal"><span class="pre">matplotlib</span></tt>:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&quot;white&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&quot;gray&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/basic_usage_18_0.png" src="../_images/basic_usage_18_0.png" />
+<img alt="../_images/basic_usage_19_0.png" src="../_images/basic_usage_19_0.png" />
 <p>It&#8217;s also easy to save the result to a <tt class="docutils literal"><span class="pre">numpy</span></tt> file, or to a <tt class="docutils literal"><span class="pre">MAT</span></tt>
 file if you do the rest of your analysis in Matlab.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">thunder.utils</span> <span class="kn">import</span> <span class="n">export</span>

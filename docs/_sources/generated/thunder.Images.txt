@@ -1,0 +1,39 @@
+:mod:`thunder`.Images
+============================
+
+.. currentmodule:: thunder
+
+.. autoclass:: Images
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~Images.__init__
+      ~Images.apply
+      ~Images.cache
+      ~Images.collect
+      ~Images.count
+      ~Images.exportAsPngs
+      ~Images.filterOnKeys
+      ~Images.filterOnValues
+      ~Images.first
+      ~Images.keys
+      ~Images.max
+      ~Images.maxProjection
+      ~Images.maxminProjection
+      ~Images.mean
+      ~Images.min
+      ~Images.planes
+      ~Images.saveAsBinarySeries
+      ~Images.stats
+      ~Images.stdev
+      ~Images.subsample
+      ~Images.subtract
+      ~Images.sum
+      ~Images.take
+      ~Images.toSeries
+      ~Images.values
+      ~Images.variance
+   
+

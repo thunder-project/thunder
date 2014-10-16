@@ -1,0 +1,268 @@
+
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>thunder.GaussNaiveBayesClassifier &mdash; Thunder 0.4.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootswatch-3.1.0/simplex/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/styles.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.4.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="Thunder 0.4.0 documentation" href="../index.html" />
+    <link rel="up" title="API Reference" href="../api.html" />
+    <link rel="next" title="thunder.TTestClassifier" href="thunder.TTestClassifier.html" />
+    <link rel="prev" title="thunder.MassUnivariateClassifier" href="thunder.MassUnivariateClassifier.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
+           </a>
+        <span class="navbar-text navbar-version pull-left"><b>0.4.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            <li class="divider-vertical"></li>
+            
+                <li><a href="../tutorials.html">Tutorials</a></li>
+                <li><a href="../api.html">API</a></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction to Thunder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install_local.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install_ec2.html">Running on EC2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/basic_usage.html">Basic usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/thunder_context.html">Thunder context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/input_formats.html">Input formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/images.html">Images</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/series.html">Series</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/clustering.html">Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/factorization.html">Factorization</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://groups.google.com/forum/?hl=en#!forum/thunder-user">Mailing list</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/freeman-lab/thunder">Github repo</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://thefreemanlab.com/thunder/">Project page</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">thunder</span></tt>.GaussNaiveBayesClassifier</a></li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+            
+            
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <div class="section" id="thunder-gaussnaivebayesclassifier">
+<h1><tt class="xref py py-mod docutils literal"><span class="pre">thunder</span></tt>.GaussNaiveBayesClassifier<a class="headerlink" href="#thunder-gaussnaivebayesclassifier" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="thunder.GaussNaiveBayesClassifier">
+<em class="property">class </em><tt class="descclassname">thunder.</tt><tt class="descname">GaussNaiveBayesClassifier</tt><big>(</big><em>paramfile</em>, <em>cv=0</em><big>)</big><a class="headerlink" href="#thunder.GaussNaiveBayesClassifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Classifier for Gaussian Naive Bayes classification.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>paramfile</strong> : str or dict</p>
+<blockquote>
+<div><p>Parameters for classification, see MassUnivariateClassifier</p>
+</div></blockquote>
+<p><strong>cv</strong> : int</p>
+<blockquote class="last">
+<div><p>Folds of cross-validation, none if 0</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>(paramfile[,&nbsp;cv])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.GaussNaiveBayesClassifier.fit" title="thunder.GaussNaiveBayesClassifier.fit"><tt class="xref py py-obj docutils literal"><span class="pre">fit</span></tt></a>(data[,&nbsp;featureset])</td>
+<td>Run classification on each record in a data set</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.GaussNaiveBayesClassifier.get" title="thunder.GaussNaiveBayesClassifier.get"><tt class="xref py py-obj docutils literal"><span class="pre">get</span></tt></a>(x[,&nbsp;featureset])</td>
+<td>Compute classification performance</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">load</span></tt>(paramfile,&nbsp;classifymode,&nbsp;**opts)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="thunder.GaussNaiveBayesClassifier.fit">
+<tt class="descname">fit</tt><big>(</big><em>data</em>, <em>featureset=None</em><big>)</big><a class="headerlink" href="#thunder.GaussNaiveBayesClassifier.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run classification on each record in a data set</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data: Series or a subclass (e.g. RowMatrix)</strong></p>
+<blockquote>
+<div><p>Data to perform classification on, must be a collection of
+key-value pairs where the keys are identifiers and the values are
+one-dimensional arrays</p>
+</div></blockquote>
+<p><strong>featureset</strong> : array, optional, default = None</p>
+<blockquote>
+<div><p>Which features to use</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>perf</strong> : Series</p>
+<blockquote class="last">
+<div><p>The performance of the classifer for each record</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.GaussNaiveBayesClassifier.get">
+<tt class="descname">get</tt><big>(</big><em>x</em>, <em>featureset=None</em><big>)</big><a class="headerlink" href="#thunder.GaussNaiveBayesClassifier.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute classification performance</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x</strong> : array</p>
+<blockquote>
+<div><p>Data for a single record</p>
+</div></blockquote>
+<p><strong>featureset</strong> : array, optional, default = None</p>
+<blockquote>
+<div><p>Which features to use</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>perf</strong> : scalar</p>
+<blockquote class="last">
+<div><p>Performance of the classifier on this record</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+        <br/>
+        
+<div id="sourcelink">
+  <a href="../_sources/generated/thunder.GaussNaiveBayesClassifier.txt"
+     rel="nofollow">Source</a>
+</div>
+      
+    </p>
+    <p>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

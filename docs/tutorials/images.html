@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Images &mdash; Thunder 0.3.2 documentation</title>
+    <title>Images &mdash; Thunder 0.4.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.3.2',
+        VERSION:     '0.4.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,7 +31,9 @@
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.3.2 documentation" href="../index.html" />
+    <link rel="top" title="Thunder 0.4.0 documentation" href="../index.html" />
+    <link rel="next" title="Series" href="series.html" />
+    <link rel="prev" title="Input formats" href="input_formats.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -51,12 +53,15 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.3.2</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.4.0</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
           <ul class="nav navbar-nav">
             <li class="divider-vertical"></li>
+            
+                <li><a href="../tutorials.html">Tutorials</a></li>
+                <li><a href="../api.html">API</a></li>
             
             
               <li class="dropdown globaltoc-container">
@@ -68,10 +73,19 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction to Thunder</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install_local.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install_ec2.html">Running on EC2</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../basic_usage.html">Basic usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="basic_usage.html">Basic usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="thunder_context.html">Thunder context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="input_formats.html">Input formats</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Images</a></li>
+<li class="toctree-l1"><a class="reference internal" href="series.html">Series</a></li>
+<li class="toctree-l1"><a class="reference internal" href="clustering.html">Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="factorization.html">Factorization</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
@@ -139,7 +153,7 @@ just load example image data.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;fish-images&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>We can check the dimensions, and the number of volumes</p>
+<p>We can check the dimensions, and the number of volumes:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">nimages</span>
 </pre></div>
 </div>
@@ -153,15 +167,25 @@ just load example image data.</p>
 </pre></div>
 </div>
 <p>We can also look at the first record, which is a key-value pair. The
-first entry, the key, is an identifier (this is the first image, so it
-is 0).</p>
+first entry, the key, is an integer identifier (this is the first image,
+so it is 0).</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
 </pre></div>
 </div>
 <div class="highlight-python"><div class="highlight"><pre><span class="mi">0</span>
 </pre></div>
 </div>
-<p>The value is the volume.</p>
+<p>In Images data, a single record usually corresponds to a single input
+file. The ordering of keys comes from sorting the names of the input
+files alphabetically. In the common case where a single image file
+represents a single time point in an imaging experiment, ordering file
+names so that alphabetically later names correspond to later time points
+(for instance, by appending a postfix &#8216;_tp000&#8217;, &#8216;_tp001&#8217;, etc to a
+common file name) will cause the resulting Images data to be sorted in
+temporal order. This will greatly ease conversion into
+temporally-oriented <tt class="docutils literal"><span class="pre">Series</span></tt> data and other analyses.</p>
+<p>The value of an Images record is the image volume, as an n-dimensional
+numpy array:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">img</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
 <span class="n">img</span><span class="o">.</span><span class="n">shape</span>
 </pre></div>
@@ -169,8 +193,8 @@ is 0).</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">76</span><span class="p">,</span> <span class="mi">87</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>We can look at it as an image. It&#8217;s two-dimensional, so there are two
-planes to look at.</p>
+<p>We can look at it as an image. It&#8217;s three-dimensional, with two z-planes
+to look at:</p>
 <div class="code python highlight-python"><div class="highlight"><pre>%matplotlib inline
 </pre></div>
 </div>
@@ -182,7 +206,7 @@ planes to look at.</p>
 </pre></div>
 </div>
 <img alt="../_images/images_14_0.png" src="../_images/images_14_0.png" />
-<p>Here&#8217;s the second plane</p>
+<p>Here&#8217;s the second plane:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
@@ -197,7 +221,6 @@ across all volumes. Here, we compute the projections, and then show the
 first one.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">projs</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">maxProjection</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">img</span> <span class="o">=</span> <span class="n">projs</span><span class="o">.</span><span class="n">first</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
-<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">amax</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
@@ -247,7 +270,7 @@ method <tt class="docutils literal"><span class="pre">loadImagesAsSeries</span><
 and convert it to a <tt class="docutils literal"><span class="pre">Series</span></tt>.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;fish-images&#39;</span><span class="p">)</span>
 <span class="n">ts</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">toSeries</span><span class="p">()</span>
-<span class="n">ts</span><span class="o">.</span><span class="n">cache</span><span class="p">()</span>
+<span class="n">ts</span><span class="o">.</span><span class="n">cache</span><span class="p">();</span>
 </pre></div>
 </div>
 <p>Let&#8217;s check some properties of the resulting <tt class="docutils literal"><span class="pre">Series</span></tt> to make sure the
@@ -287,11 +310,12 @@ dimensions of the original images.</p>
 </div>
 <img alt="../_images/images_37_0.png" src="../_images/images_37_0.png" />
 <p>For a large data set that will be analyzed repeatedly as a <tt class="docutils literal"><span class="pre">Series</span></tt>,
-it is faster and more convienient to save <tt class="docutils literal"><span class="pre">Images</span></tt> data to a
-collection of flat binary files on a distributed file system, which can
-in turn be read back in as a <tt class="docutils literal"><span class="pre">Series</span></tt>. This can again be performed
-using a <tt class="docutils literal"><span class="pre">ThunderContext</span></tt> method, <tt class="docutils literal"><span class="pre">convertImagesToSeries</span></tt>, or can be
-performed directly on an <tt class="docutils literal"><span class="pre">Images</span></tt> object:</p>
+it will ultimately be faster and more convienient to save <tt class="docutils literal"><span class="pre">Images</span></tt>
+data to a collection of flat binary files on a distributed file system,
+which can in turn be read back in directly as a <tt class="docutils literal"><span class="pre">Series</span></tt>, rather than
+repeatedly converting the images to a <tt class="docutils literal"><span class="pre">Series</span></tt> object. This can be
+performed either through a <tt class="docutils literal"><span class="pre">ThunderContext</span></tt> method,
+<tt class="docutils literal"><span class="pre">convertImagesToSeries</span></tt>, or directly on an <tt class="docutils literal"><span class="pre">Images</span></tt> object, as in:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadImages</span><span class="p">(</span><span class="s">&#39;/Users/freemanj11/fish/tif/&#39;</span><span class="p">,</span> <span class="n">inputformat</span><span class="o">=</span><span class="s">&#39;tif-stack&#39;</span><span class="p">,</span> <span class="n">startidx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stopidx</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
 <span class="n">data</span><span class="o">.</span><span class="n">saveAsBinarySeries</span><span class="p">(</span><span class="s">&#39;directory&#39;</span><span class="p">)</span>
 <span class="n">ts</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeries</span><span class="p">(</span><span class="s">&#39;directory&#39;</span><span class="p">)</span>

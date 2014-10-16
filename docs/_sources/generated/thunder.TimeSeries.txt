@@ -1,0 +1,59 @@
+:mod:`thunder`.TimeSeries
+================================
+
+.. currentmodule:: thunder
+
+.. autoclass:: TimeSeries
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~TimeSeries.__init__
+      ~TimeSeries.apply
+      ~TimeSeries.between
+      ~TimeSeries.blockedAverage
+      ~TimeSeries.cache
+      ~TimeSeries.center
+      ~TimeSeries.collect
+      ~TimeSeries.correlate
+      ~TimeSeries.count
+      ~TimeSeries.crossCorr
+      ~TimeSeries.detrend
+      ~TimeSeries.filterOnKeys
+      ~TimeSeries.filterOnValues
+      ~TimeSeries.first
+      ~TimeSeries.fourier
+      ~TimeSeries.indtosub
+      ~TimeSeries.keys
+      ~TimeSeries.max
+      ~TimeSeries.maxProject
+      ~TimeSeries.mean
+      ~TimeSeries.min
+      ~TimeSeries.normalize
+      ~TimeSeries.pack
+      ~TimeSeries.query
+      ~TimeSeries.select
+      ~TimeSeries.seriesMax
+      ~TimeSeries.seriesMean
+      ~TimeSeries.seriesMin
+      ~TimeSeries.seriesStat
+      ~TimeSeries.seriesStats
+      ~TimeSeries.seriesStdev
+      ~TimeSeries.seriesSum
+      ~TimeSeries.standardize
+      ~TimeSeries.stats
+      ~TimeSeries.stdev
+      ~TimeSeries.subset
+      ~TimeSeries.subtoind
+      ~TimeSeries.sum
+      ~TimeSeries.take
+      ~TimeSeries.toRowMatrix
+      ~TimeSeries.toSpatialSeries
+      ~TimeSeries.toTimeSeries
+      ~TimeSeries.triggeredAverage
+      ~TimeSeries.values
+      ~TimeSeries.variance
+      ~TimeSeries.zscore
+   
+

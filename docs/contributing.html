@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Contributing &mdash; Thunder 0.3.2 documentation</title>
+    <title>Contributing &mdash; Thunder 0.4.0 documentation</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.3.2',
+        VERSION:     '0.4.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,9 +31,9 @@
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.3.2 documentation" href="index.html" />
-    <link rel="next" title="API Reference" href="api.html" />
-    <link rel="prev" title="Basic usage" href="basic_usage.html" />
+    <link rel="top" title="Thunder 0.4.0 documentation" href="index.html" />
+    <link rel="next" title="Basic usage" href="tutorials/basic_usage.html" />
+    <link rel="prev" title="Running on EC2" href="install_ec2.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -53,12 +53,15 @@
         </button>
         <a class="navbar-brand" href="index.html"><img src="_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.3.2</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.4.0</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
           <ul class="nav navbar-nav">
             <li class="divider-vertical"></li>
+            
+                <li><a href="tutorials.html">Tutorials</a></li>
+                <li><a href="api.html">API</a></li>
             
             
               <li class="dropdown globaltoc-container">
@@ -70,10 +73,19 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction to Thunder</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install_local.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install_ec2.html">Running on EC2</a></li>
-<li class="toctree-l1"><a class="reference internal" href="basic_usage.html">Basic usage</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">Contributing</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/basic_usage.html">Basic usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/thunder_context.html">Thunder context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/input_formats.html">Input formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/images.html">Images</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/series.html">Series</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/clustering.html">Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/factorization.html">Factorization</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
@@ -96,6 +108,7 @@
 <li><a class="reference internal" href="#">Contributing</a><ul>
 <li><a class="reference internal" href="#setting-up">Setting up</a></li>
 <li><a class="reference internal" href="#running-the-tests">Running the tests</a></li>
+<li><a class="reference internal" href="#ideas-for-contributions">Ideas for contributions</a></li>
 </ul>
 </li>
 </ul>
@@ -129,7 +142,7 @@
       
   <div class="section" id="contributing">
 <span id="id1"></span><h1>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h1>
-<p>With thunder we want to provide a centralized library to develop and vet analyses. If you want to contribute, follow these steps to download and use the source code. If you have a contribution, submit a <a class="reference external" href="https://github.com/freeman-lab/thunder/pulls">pull request</a>. If you find a problem, submit an <a class="reference external" href="https://github.com/freeman-lab/thunder/issues">issue</a>!</p>
+<p>With Thunder we want to provide a centralized library to develop and vet analyses. If you want to contribute, follow these steps to download and use the source code. If you have a contribution, submit a <a class="reference external" href="https://github.com/freeman-lab/thunder/pulls">pull request</a>. If you find a problem, submit an <a class="reference external" href="https://github.com/freeman-lab/thunder/issues">issue</a>!</p>
 <div class="section" id="setting-up">
 <h2>Setting up<a class="headerlink" href="#setting-up" title="Permalink to this headline">¶</a></h2>
 <p>For development, you&#8217;ll want to clone the repository from github (or fork your own branch):</p>
@@ -141,7 +154,7 @@
 <span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span>~/code/thunder/python/bin:<span class="nv">$PATH</span>
 </pre></div>
 </div>
-<p>To avoid confusion, if you had already installed thunder previously using <tt class="docutils literal"><span class="pre">pip</span></tt>, we recommend uninstalling it first using <tt class="docutils literal"><span class="pre">pip</span> <span class="pre">uninstall</span> <span class="pre">thunder-python</span></tt>.</p>
+<p>To avoid confusion, if you had already installed Thunder previously using <tt class="docutils literal"><span class="pre">pip</span></tt>, we recommend uninstalling it first using <tt class="docutils literal"><span class="pre">pip</span> <span class="pre">uninstall</span> <span class="pre">thunder-python</span></tt>.</p>
 <p>Using an IDE for development is highly recommended, we use <a class="reference external" href="http://www.jetbrains.com/pycharm/">PyCharm</a> for Python and <a class="reference external" href="http://www.jetbrains.com/idea/">IntelliJ</a> for Scala. And here&#8217;s a good <a class="reference external" href="https://gun.io/blog/how-to-github-fork-branch-and-pull-request/">article</a> on how to contribute a pull request to a project using github.</p>
 </div>
 <div class="section" id="running-the-tests">
@@ -152,11 +165,29 @@
 </pre></div>
 </div>
 <p>You must run the tests from within this folder. You can run just one set of tests, or a single test within a suite, like this</p>
-<div class="highlight-bash"><div class="highlight"><pre>./run_tests.sh <span class="s2">&quot;test_timeseries.py&quot;</span>
-./run_tests.sh <span class="s2">&quot;test_timeseries.py:TestStats&quot;</span>
+<div class="highlight-bash"><div class="highlight"><pre>./run_tests.sh test_timeseries.py
+./run_tests.sh test_timeseries.py:TestStats
 </pre></div>
 </div>
-<p>If you develop a new analysis or component, you should write a unit test for it! See the existing tests for examples.</p>
+<p>You should write a test for anything new that you develop, as well as make sure the existing tests still pass (automated testing will be performed on any pull request using Travis). If you&#8217;re unsure how to write a new test, see the existing ones for examples.</p>
+</div>
+<div class="section" id="ideas-for-contributions">
+<h2>Ideas for contributions<a class="headerlink" href="#ideas-for-contributions" title="Permalink to this headline">¶</a></h2>
+<p>The following are fairly simple extensions that would make for a great initial contribution:</p>
+<ul class="simple">
+<li>Add new temopral filtering methods to <a class="reference internal" href="generated/thunder.TimeSeries.html#thunder.TimeSeries" title="thunder.TimeSeries"><tt class="xref py py-class docutils literal"><span class="pre">TimeSeries</span></tt></a>, like moving average or savistky golay</li>
+<li>Add more time series calculations to <a class="reference internal" href="generated/thunder.TimeSeries.html#thunder.TimeSeries" title="thunder.TimeSeries"><tt class="xref py py-class docutils literal"><span class="pre">TimeSeries</span></tt></a>, like autocorrelation</li>
+<li>Implement shuffle / permutation tests for <a class="reference internal" href="generated/thunder.RegressionModel.html#thunder.RegressionModel" title="thunder.RegressionModel"><tt class="xref py py-class docutils literal"><span class="pre">RegressionModel</span></tt></a> analyses</li>
+<li>Add more basic image processing routines to <a class="reference internal" href="generated/thunder.Images.html#thunder.Images" title="thunder.Images"><tt class="xref py py-class docutils literal"><span class="pre">Images</span></tt></a>, like blurring or blob detection</li>
+</ul>
+<p>These are more involved. It would be worth posting to the <a class="reference external" href="https://groups.google.com/forum/?hl=en#!forum/thunder-user">mailing list</a> before starting work on them to avoid duplcating other efforts.</p>
+<ul class="simple">
+<li>A new EventSeries class and associated methods for working with event data</li>
+<li>A basic image alignment routine</li>
+<li>Add a linear discriminant analysis (including LDA for dimensionality reduction)</li>
+<li>Methods for computing and working with arbitrary distance matrices</li>
+</ul>
+<p>You can also check the <a class="reference external" href="https://github.com/freeman-lab/thunder/issues">issue</a> page for contribution ideas.</p>
 </div>
 </div>
 

@@ -1,0 +1,620 @@
+
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>thunder.Images &mdash; Thunder 0.4.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootswatch-3.1.0/simplex/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/styles.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.4.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="Thunder 0.4.0 documentation" href="../index.html" />
+    <link rel="up" title="API Reference" href="../api.html" />
+    <link rel="next" title="thunder.TimeSeries" href="thunder.TimeSeries.html" />
+    <link rel="prev" title="thunder.Series" href="thunder.Series.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
+           </a>
+        <span class="navbar-text navbar-version pull-left"><b>0.4.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            <li class="divider-vertical"></li>
+            
+                <li><a href="../tutorials.html">Tutorials</a></li>
+                <li><a href="../api.html">API</a></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction to Thunder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install_local.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install_ec2.html">Running on EC2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/basic_usage.html">Basic usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/thunder_context.html">Thunder context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/input_formats.html">Input formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/images.html">Images</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/series.html">Series</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/clustering.html">Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/factorization.html">Factorization</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://groups.google.com/forum/?hl=en#!forum/thunder-user">Mailing list</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/freeman-lab/thunder">Github repo</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://thefreemanlab.com/thunder/">Project page</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">thunder</span></tt>.Images</a></li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+            
+            
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <div class="section" id="thunder-images">
+<h1><tt class="xref py py-mod docutils literal"><span class="pre">thunder</span></tt>.Images<a class="headerlink" href="#thunder-images" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="thunder.Images">
+<em class="property">class </em><tt class="descclassname">thunder.</tt><tt class="descname">Images</tt><big>(</big><em>rdd</em>, <em>dims=None</em>, <em>nimages=None</em>, <em>dtype=None</em><big>)</big><a class="headerlink" href="#thunder.Images" title="Permalink to this definition">¶</a></dt>
+<dd><p>Distributed collection of images or volumes.</p>
+<p>Backed by an RDD of key-value pairs, where the key
+is an identifier and the value is a two or three-dimensional array.</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>(rdd[,&nbsp;dims,&nbsp;nimages,&nbsp;dtype])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.apply" title="thunder.Images.apply"><tt class="xref py py-obj docutils literal"><span class="pre">apply</span></tt></a>(func)</td>
+<td>Apply a function to all images / volumes,</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.cache" title="thunder.Images.cache"><tt class="xref py py-obj docutils literal"><span class="pre">cache</span></tt></a>()</td>
+<td>Enable in-memory caching</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.collect" title="thunder.Images.collect"><tt class="xref py py-obj docutils literal"><span class="pre">collect</span></tt></a>()</td>
+<td>Return all records to the driver</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.count" title="thunder.Images.count"><tt class="xref py py-obj docutils literal"><span class="pre">count</span></tt></a>()</td>
+<td>Mean of values, ignoring keys</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.exportAsPngs" title="thunder.Images.exportAsPngs"><tt class="xref py py-obj docutils literal"><span class="pre">exportAsPngs</span></tt></a>(outputdirname[,&nbsp;fileprefix,&nbsp;...])</td>
+<td>Write out basic png files for two-dimensional image data.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.filterOnKeys" title="thunder.Images.filterOnKeys"><tt class="xref py py-obj docutils literal"><span class="pre">filterOnKeys</span></tt></a>(func)</td>
+<td>Filter records by applying a function to keys</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.filterOnValues" title="thunder.Images.filterOnValues"><tt class="xref py py-obj docutils literal"><span class="pre">filterOnValues</span></tt></a>(func)</td>
+<td>Filter records by applying a function to values</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.first" title="thunder.Images.first"><tt class="xref py py-obj docutils literal"><span class="pre">first</span></tt></a>()</td>
+<td>Return first record</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.keys" title="thunder.Images.keys"><tt class="xref py py-obj docutils literal"><span class="pre">keys</span></tt></a>()</td>
+<td>Return keys, ignoring values</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.max" title="thunder.Images.max"><tt class="xref py py-obj docutils literal"><span class="pre">max</span></tt></a>()</td>
+<td>Maximum of values, ignoring keys</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.maxProjection" title="thunder.Images.maxProjection"><tt class="xref py py-obj docutils literal"><span class="pre">maxProjection</span></tt></a>([axis])</td>
+<td>Compute maximum projections of images / volumes along the specified dimension.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.maxminProjection" title="thunder.Images.maxminProjection"><tt class="xref py py-obj docutils literal"><span class="pre">maxminProjection</span></tt></a>([axis])</td>
+<td>Compute maximum-minimum projections of images / volumes along the specified dimension.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.mean" title="thunder.Images.mean"><tt class="xref py py-obj docutils literal"><span class="pre">mean</span></tt></a>()</td>
+<td>Mean of values, ignoring keys</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.min" title="thunder.Images.min"><tt class="xref py py-obj docutils literal"><span class="pre">min</span></tt></a>()</td>
+<td>Minimum of values, ignoring keys</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.planes" title="thunder.Images.planes"><tt class="xref py py-obj docutils literal"><span class="pre">planes</span></tt></a>(bottom,&nbsp;top[,&nbsp;inclusive])</td>
+<td>Subselect planes for three-dimensional image data.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.saveAsBinarySeries" title="thunder.Images.saveAsBinarySeries"><tt class="xref py py-obj docutils literal"><span class="pre">saveAsBinarySeries</span></tt></a>(outputdirname[,&nbsp;...])</td>
+<td>Writes Image into files on a local filesystem, suitable for loading by SeriesLoader.fromBinary()</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.stats" title="thunder.Images.stats"><tt class="xref py py-obj docutils literal"><span class="pre">stats</span></tt></a>()</td>
+<td>Stats of values, ignoring keys</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.stdev" title="thunder.Images.stdev"><tt class="xref py py-obj docutils literal"><span class="pre">stdev</span></tt></a>()</td>
+<td>Standard deviation of values, ignoring keys</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.subsample" title="thunder.Images.subsample"><tt class="xref py py-obj docutils literal"><span class="pre">subsample</span></tt></a>(samplefactor)</td>
+<td>Downsample an image volume by an integer factor</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.subtract" title="thunder.Images.subtract"><tt class="xref py py-obj docutils literal"><span class="pre">subtract</span></tt></a>(val)</td>
+<td>Subtract a constant value or an image / volume from all images / volumes in the data set.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.sum" title="thunder.Images.sum"><tt class="xref py py-obj docutils literal"><span class="pre">sum</span></tt></a>()</td>
+<td>Sum of values, ignoring keys</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.take" title="thunder.Images.take"><tt class="xref py py-obj docutils literal"><span class="pre">take</span></tt></a>(*args,&nbsp;**kwargs)</td>
+<td>Take samples</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.toSeries" title="thunder.Images.toSeries"><tt class="xref py py-obj docutils literal"><span class="pre">toSeries</span></tt></a>([blockSize,&nbsp;splitsPerDim,&nbsp;groupingDim])</td>
+<td>Converts this Images object to a Series object.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.values" title="thunder.Images.values"><tt class="xref py py-obj docutils literal"><span class="pre">values</span></tt></a>()</td>
+<td>Return values, ignoring keys</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.variance" title="thunder.Images.variance"><tt class="xref py py-obj docutils literal"><span class="pre">variance</span></tt></a>()</td>
+<td>Variance of values, ignoring keys</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="thunder.Images.apply">
+<tt class="descname">apply</tt><big>(</big><em>func</em><big>)</big><a class="headerlink" href="#thunder.Images.apply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a function to all images / volumes,
+otherwise perserving attributes</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>func</strong> : function</p>
+<blockquote class="last">
+<div><p>Function to apply</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.cache">
+<tt class="descname">cache</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.cache" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable in-memory caching</p>
+<p>This calls the Spark cache() method on the underlying RDD.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.collect">
+<tt class="descname">collect</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.collect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return all records to the driver</p>
+<p>This will be slow for large datasets, and may exhaust the available memory on the driver.</p>
+<p>This calls the Spark collect() method on the underlying RDD.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.count">
+<tt class="descname">count</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mean of values, ignoring keys</p>
+<p>This calls the Spark count() method on the underlying RDD.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.exportAsPngs">
+<tt class="descname">exportAsPngs</tt><big>(</big><em>outputdirname</em>, <em>fileprefix='export'</em>, <em>overwrite=False</em>, <em>collectToDriver=True</em><big>)</big><a class="headerlink" href="#thunder.Images.exportAsPngs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write out basic png files for two-dimensional image data.</p>
+<p>Files will be written into a newly-created directory on the local file system given by outputdirname.</p>
+<p>All workers must be able to see the output directory via an NFS share or similar.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>outputdirname</strong> : string</p>
+<blockquote>
+<div><p>Path to output directory to be created. Exception will be thrown if this directory already
+exists, unless overwrite is True. Directory must be one level below an existing directory.</p>
+</div></blockquote>
+<p><strong>fileprefix</strong> : string</p>
+<blockquote>
+<div><p>String to prepend to all filenames. Files will be named &lt;fileprefix&gt;00000.png, &lt;fileprefix&gt;00001.png, etc</p>
+</div></blockquote>
+<p><strong>overwrite</strong> : bool</p>
+<blockquote>
+<div><p>If true, the directory given by outputdirname will first be deleted if it already exists.</p>
+</div></blockquote>
+<p><strong>collectToDriver</strong> : bool, default True</p>
+<blockquote class="last">
+<div><p>If true, images will be collect()&#8217;ed at the driver first before being written out, allowing
+for use of a local filesystem at the expense of network overhead. If false, images will be written
+in parallel by each executor, presumably to a distributed or networked filesystem.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.filterOnKeys">
+<tt class="descname">filterOnKeys</tt><big>(</big><em>func</em><big>)</big><a class="headerlink" href="#thunder.Images.filterOnKeys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter records by applying a function to keys</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.filterOnValues">
+<tt class="descname">filterOnValues</tt><big>(</big><em>func</em><big>)</big><a class="headerlink" href="#thunder.Images.filterOnValues" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter records by applying a function to values</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.first">
+<tt class="descname">first</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.first" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return first record</p>
+<p>This calls the Spark first() method on the underlying RDD.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.keys">
+<tt class="descname">keys</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return keys, ignoring values</p>
+<p>This calls the Spark keys() method on the underlying RDD.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.max">
+<tt class="descname">max</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.max" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum of values, ignoring keys</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.maxProjection">
+<tt class="descname">maxProjection</tt><big>(</big><em>axis=2</em><big>)</big><a class="headerlink" href="#thunder.Images.maxProjection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute maximum projections of images / volumes
+along the specified dimension.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>axis</strong> : int, optional, default = 2</p>
+<blockquote class="last">
+<div><p>Which axis to compute projection along</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.maxminProjection">
+<tt class="descname">maxminProjection</tt><big>(</big><em>axis=2</em><big>)</big><a class="headerlink" href="#thunder.Images.maxminProjection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute maximum-minimum projections of images / volumes
+along the specified dimension. This computes the sum
+of the maximum and minimum values along the given dimension.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>axis</strong> : int, optional, default = 2</p>
+<blockquote class="last">
+<div><p>Which axis to compute projection along</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.mean">
+<tt class="descname">mean</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.mean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mean of values, ignoring keys</p>
+<p>obj.mean() is equivalent to obj.rdd.values().mean().</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.min">
+<tt class="descname">min</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.min" title="Permalink to this definition">¶</a></dt>
+<dd><p>Minimum of values, ignoring keys</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.planes">
+<tt class="descname">planes</tt><big>(</big><em>bottom</em>, <em>top</em>, <em>inclusive=True</em><big>)</big><a class="headerlink" href="#thunder.Images.planes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subselect planes for three-dimensional image data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>bottom</strong> : int</p>
+<blockquote>
+<div><p>Bottom plane in desired selection</p>
+</div></blockquote>
+<p><strong>top</strong> : int</p>
+<blockquote>
+<div><p>Top plane in desired selection</p>
+</div></blockquote>
+<p><strong>inclusive</strong> : boolean, optional, default = True</p>
+<blockquote class="last">
+<div><p>Whether returned subset of planes should include bounds</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.saveAsBinarySeries">
+<tt class="descname">saveAsBinarySeries</tt><big>(</big><em>outputdirname</em>, <em>blockSize='150M'</em>, <em>splitsPerDim=None</em>, <em>groupingDim=None</em>, <em>overwrite=False</em><big>)</big><a class="headerlink" href="#thunder.Images.saveAsBinarySeries" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes Image into files on a local filesystem, suitable for loading by SeriesLoader.fromBinary()</p>
+<p>The mount point specified by outputdirname must be visible to all workers; thus this method is
+primarily useful either when Spark is being run locally or in the presence of an NFS mount or
+similar shared filesystem.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>outputdirname</strong> : string path or URI to directory to be created</p>
+<blockquote>
+<div><p>Output files will be written underneath outputdirname. This directory must not yet exist
+(unless overwrite is True), and must be no more than one level beneath an existing directory.
+It will be created as a result of this call.</p>
+</div></blockquote>
+<p><strong>blockSize</strong> : positive int or string</p>
+<blockquote>
+<div><p>Requests a particular size for individual output files; see toSeries()</p>
+</div></blockquote>
+<p><strong>splitsPerDim</strong> : n-tuple of positive int</p>
+<blockquote>
+<div><p>Specifies that output files are to be generated by splitting the i-th dimension
+of the image into splitsPerDim[i] roughly equally-sized partitions; see toSeries()</p>
+</div></blockquote>
+<p><strong>groupingDim</strong> : nonnegative int, 0 &lt;= groupingDim &lt;= len(self.dims)</p>
+<blockquote>
+<div><p>Specifies that intermediate blocks are to be generated by splitting the image
+into &#8220;planes&#8221; of dimensionality len(self.dims) - 1, along the dimension given by
+self.dims[groupingDim]; see toSeries()</p>
+</div></blockquote>
+<p><strong>overwrite</strong> : bool</p>
+<blockquote class="last">
+<div><p>If true, outputdirname and all its contents will be deleted and recreated as part
+of this call.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.stats">
+<tt class="descname">stats</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stats of values, ignoring keys</p>
+<p>obj.stats() is equivalent to obj.rdd.values().stats().</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.stdev">
+<tt class="descname">stdev</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.stdev" title="Permalink to this definition">¶</a></dt>
+<dd><p>Standard deviation of values, ignoring keys</p>
+<p>obj.stdev() is equivalent to obj.rdd.values().stdev().</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.subsample">
+<tt class="descname">subsample</tt><big>(</big><em>samplefactor</em><big>)</big><a class="headerlink" href="#thunder.Images.subsample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Downsample an image volume by an integer factor</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>samplefactor</strong> : positive int or tuple of positive ints</p>
+<blockquote class="last">
+<div><p>Stride to use in subsampling. If a single int is passed, each dimension of the image
+will be downsampled by this same factor. If a tuple is passed, it must have the same
+dimensionality of the image. The strides given in a passed tuple will be applied to
+each image dimension.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.subtract">
+<tt class="descname">subtract</tt><big>(</big><em>val</em><big>)</big><a class="headerlink" href="#thunder.Images.subtract" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subtract a constant value or an image / volume from
+all images / volumes in the data set.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>val</strong> : int, float, or ndarray</p>
+<blockquote class="last">
+<div><p>Value to subtract</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.sum">
+<tt class="descname">sum</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.sum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sum of values, ignoring keys</p>
+<p>obj.sum() is equivalent to obj.rdd.values().sum().</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.take">
+<tt class="descname">take</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#thunder.Images.take" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take samples</p>
+<p>This calls the Spark take() method on the underlying RDD.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.toSeries">
+<tt class="descname">toSeries</tt><big>(</big><em>blockSize='150M'</em>, <em>splitsPerDim=None</em>, <em>groupingDim=None</em><big>)</big><a class="headerlink" href="#thunder.Images.toSeries" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts this Images object to a Series object.</p>
+<p>Conversion will be performed by grouping the constituent image time points into
+smaller blocks, shuffling the blocks so that the same part of the image across time is
+processed by the same machine, and finally grouping the pixels of the image blocks
+together into a time series.</p>
+<p>The parameters to this method control the size of the intermediate block representation,
+which can impact performance; however results should be logically equivalent regardless of
+intermediate block size.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>blockSize</strong> : positive int or string</p>
+<blockquote>
+<div><p>Requests an average size for the intermediate blocks in bytes. A passed string should
+be in a format like &#8220;256k&#8221; or &#8220;150M&#8221; (see util.common.parseMemoryString). If blocksPerDim
+or groupingDim are passed, they will take precedence over this argument. See
+images._BlockMemoryAsSequence for a description of the partitioning strategy used.</p>
+</div></blockquote>
+<p><strong>splitsPerDim</strong> : n-tuple of positive int, where n = dimensionality of image</p>
+<blockquote>
+<div><p>Specifies that intermediate blocks are to be generated by splitting the i-th dimension
+of the image into splitsPerDim[i] roughly equally-sized partitions.
+1 &lt;= splitsPerDim[i] &lt;= self.dims[i]
+groupingDim will take precedence over this argument if both are passed.</p>
+</div></blockquote>
+<p><strong>groupingDim</strong> : nonnegative int, 0 &lt;= groupingDim &lt;= len(self.dims)</p>
+<blockquote>
+<div><p>Specifies that intermediate blocks are to be generated by splitting the image
+into &#8220;planes&#8221; of dimensionality len(self.dims) - 1, along the dimension given by
+self.dims[groupingDim]. For instance, if self.dims == (x, y, z), then
+self.toSeries(groupingDim=2) would cause the images to be partioned into z intermediate
+blocks, each of size x*y and dimensionality (x, y, 1). (This is equivalent to
+self.toSeries(splitsPerDim=(1, 1, z))).</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">new Series object</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.values">
+<tt class="descname">values</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return values, ignoring keys</p>
+<p>This calls the Spark values() method on the underlying RDD.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.variance">
+<tt class="descname">variance</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.variance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Variance of values, ignoring keys</p>
+<p>obj.variance() is equivalent to obj.rdd.values().variance().</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+        <br/>
+        
+<div id="sourcelink">
+  <a href="../_sources/generated/thunder.Images.txt"
+     rel="nofollow">Source</a>
+</div>
+      
+    </p>
+    <p>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

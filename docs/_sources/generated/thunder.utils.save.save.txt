@@ -1,7 +1,0 @@
-:mod:`thunder.utils.save`.save
-===========================================
-
-.. currentmodule:: thunder.utils.save
-
-.. autofunction:: save
-

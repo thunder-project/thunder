@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Installation &mdash; Thunder 0.3.2 documentation</title>
+    <title>Installation &mdash; Thunder 0.4.0 documentation</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.3.2',
+        VERSION:     '0.4.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,9 +31,9 @@
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.3.2 documentation" href="index.html" />
+    <link rel="top" title="Thunder 0.4.0 documentation" href="index.html" />
     <link rel="next" title="Running on EC2" href="install_ec2.html" />
-    <link rel="prev" title="&lt;no title&gt;" href="index.html" />
+    <link rel="prev" title="Introduction to Thunder" href="introduction.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -53,12 +53,15 @@
         </button>
         <a class="navbar-brand" href="index.html"><img src="_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.3.2</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.4.0</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
           <ul class="nav navbar-nav">
             <li class="divider-vertical"></li>
+            
+                <li><a href="tutorials.html">Tutorials</a></li>
+                <li><a href="api.html">API</a></li>
             
             
               <li class="dropdown globaltoc-container">
@@ -70,10 +73,19 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction to Thunder</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install_ec2.html">Running on EC2</a></li>
-<li class="toctree-l1"><a class="reference internal" href="basic_usage.html">Basic usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/basic_usage.html">Basic usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/thunder_context.html">Thunder context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/input_formats.html">Input formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/images.html">Images</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/series.html">Series</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/clustering.html">Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/factorization.html">Factorization</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
@@ -95,7 +107,7 @@
       aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">Installation</a><ul>
 <li><a class="reference internal" href="#installing-spark">Installing Spark</a></li>
-<li><a class="reference internal" href="#installing-thunder">Installing thunder</a></li>
+<li><a class="reference internal" href="#installing-thunder">Installing Thunder</a></li>
 <li><a class="reference internal" href="#dependencies">Dependencies</a></li>
 <li><a class="reference internal" href="#ipython">iPython</a></li>
 </ul>
@@ -131,19 +143,19 @@
       
   <div class="section" id="installation">
 <span id="install-local-ref"></span><h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
-<p>thunder can be installed on most modern computers running Python 2.7. It has only been tested on Mac OS X, but should also work on Windows and Linux. If you aren&#8217;t already using scientific Python, we recommend getting the <a class="reference external" href="https://store.continuum.io/cshop/anaconda/">Anaconda distribution</a>.</p>
-<p>To follow along with the instructions below, you&#8217;ll just need a command line (e.g. the Terminal app in Mac OS X), a web browser, and the <tt class="docutils literal"><span class="pre">pip</span></tt> Python package manager (which is included with Anaconda). These instructions get Spark and thunder running on a local machine. That&#8217;s great for learning the library and developing analyses. But thunder is meant to run on a cluster. Once you install, the command <tt class="docutils literal"><span class="pre">thunder-ec2</span></tt> lets you launch a cluster on Amazon&#8217;s EC2, see <a class="reference internal" href="install_ec2.html#install-ec2-ref"><em>Running on EC2</em></a>.</p>
+<p>Thunder can be installed on most modern computers running Python 2, version 2.6 or higher. It has primarily been tested on Mac OS X, but should also work on Windows and Linux. If you aren&#8217;t already using scientific Python, we recommend getting the <a class="reference external" href="https://store.continuum.io/cshop/anaconda/">Anaconda distribution</a>.</p>
+<p>To follow along with the instructions below, you&#8217;ll just need a command line (e.g. the Terminal app in Mac OS X), a web browser, and the <tt class="docutils literal"><span class="pre">pip</span></tt> Python package manager (which is included with Anaconda). These instructions get Spark and Thunder running on a local machine. That&#8217;s great for learning the library and developing analyses. But Thunder is meant to run on a cluster. Once you install, the command <tt class="docutils literal"><span class="pre">thunder-ec2</span></tt> lets you launch a cluster on Amazon&#8217;s EC2, see <a class="reference internal" href="install_ec2.html#install-ec2-ref"><em>Running on EC2</em></a>.</p>
 <div class="section" id="installing-spark">
 <h2>Installing Spark<a class="headerlink" href="#installing-spark" title="Permalink to this headline">¶</a></h2>
-<p>First you need a working installation of Spark. You can <a class="reference external" href="http://spark.apache.org/downloads.html">download</a> one of the pre-built versions (pick the one labeled Hadoop 2), or you can download the sources, and follow <a class="reference external" href="http://spark.apache.org/docs/latest/building-with-maven.html">these instructions</a> to build from source.</p>
+<p>First you need a working installation of Spark. You can <a class="reference external" href="http://spark.apache.org/downloads.html">download</a> one of the pre-built versions (pick the one labeled Hadoop 1.X), or you can download the sources, and follow <a class="reference external" href="http://spark.apache.org/docs/latest/building-with-maven.html">these instructions</a> to build from source.</p>
 <p>Once you have downloaded Spark, set an environmental variable by typing the following into the terminal (here we assume you downloaded a pre-built version and put it in your downloads folder)</p>
-<div class="highlight-bash"><div class="highlight"><pre><span class="nb">export </span><span class="nv">SPARK_HOME</span><span class="o">=</span>~/downloads/spark-1.0.2-bin-hadoop2
+<div class="highlight-bash"><div class="highlight"><pre><span class="nb">export </span><span class="nv">SPARK_HOME</span><span class="o">=</span>~/downloads/spark-1.1.0-bin-hadoop1
 </pre></div>
 </div>
 <p>To make this setting permanent, add the above line to your bash profile (usually located in <tt class="docutils literal"><span class="pre">~/.bash_profile</span></tt> on Mac OS X), and open a new terminal so the change takes effect. Otherwise, you&#8217;ll need to enter this line during each terminal session.</p>
 </div>
 <div class="section" id="installing-thunder">
-<h2>Installing thunder<a class="headerlink" href="#installing-thunder" title="Permalink to this headline">¶</a></h2>
+<h2>Installing Thunder<a class="headerlink" href="#installing-thunder" title="Permalink to this headline">¶</a></h2>
 <p>Type the following line into the terminal</p>
 <div class="highlight-bash"><div class="highlight"><pre>pip install thunder-python
 </pre></div>
@@ -165,18 +177,18 @@
 </div>
 <div class="section" id="dependencies">
 <h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
-<p>Along with Spark, thunder depends on these Python libraries (by installing using <tt class="docutils literal"><span class="pre">pip</span></tt> these will be added automatically).</p>
-<p><a class="reference external" href="http://www.numpy.org/">numpy</a>, <a class="reference external" href="http://www.scipy.org/">scipy</a>, <a class="reference external" href="http://scikit-learn.org/stable/">scikit-learn</a>, <a class="reference external" href="matplotlib.sourceforge.net">matplotlib</a></p>
+<p>Along with Spark, Thunder depends on these Python libraries (by installing using <tt class="docutils literal"><span class="pre">pip</span></tt> these will be added automatically).</p>
+<p><a class="reference external" href="http://www.numpy.org/">numpy</a>, <a class="reference external" href="http://www.scipy.org/">scipy</a>, <a class="reference external" href="matplotlib.sourceforge.net">matplotlib</a>, <a class="reference external" href="http://scikit-learn.org/stable/">scikit-learn</a></p>
 <p>We recommend using the <a class="reference external" href="https://store.continuum.io/cshop/anaconda/">Anaconda distribution</a>, which includes these dependencies (and many other useful packages). Especially if you aren&#8217;t already using Python for scientific computing, it&#8217;s a great way to start.</p>
 </div>
 <div class="section" id="ipython">
 <h2>iPython<a class="headerlink" href="#ipython" title="Permalink to this headline">¶</a></h2>
-<p>Spark and thunder work well alongside iPython and the iPython notebook. To use iPython, just set an environmental variable</p>
+<p>Spark and Thunder work well alongside iPython and the iPython notebook. To use iPython, just set an environmental variable</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nb">export </span><span class="nv">IPYTHON</span><span class="o">=</span>1
 </pre></div>
 </div>
 <p>When you type <tt class="docutils literal"><span class="pre">thunder</span></tt> it will start in iPython. If you additionally set</p>
-<div class="highlight-bash"><div class="highlight"><pre><span class="nb">export </span><span class="nv">IPYTHON_OPTS</span><span class="o">=</span><span class="s2">&quot;notebook --pylab inline&quot;</span>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nb">export </span><span class="nv">IPYTHON_OPTS</span><span class="o">=</span><span class="s2">&quot;notebook&quot;</span>
 </pre></div>
 </div>
 <p>it will use the iPython notebook. As before, you should add these lines to your bash profile.</p>

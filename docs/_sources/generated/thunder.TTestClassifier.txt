@@ -1,0 +1,17 @@
+:mod:`thunder`.TTestClassifier
+=====================================
+
+.. currentmodule:: thunder
+
+.. autoclass:: TTestClassifier
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~TTestClassifier.__init__
+      ~TTestClassifier.fit
+      ~TTestClassifier.get
+      ~TTestClassifier.load
+   
+
