@@ -546,7 +546,7 @@ class Series(Data):
         """
 
         if isinstance(inds, str):
-            inds = loadmatvar(inds, var)
+            inds = loadmatvar(inds, var)[0]
         else:
             inds = asarray(inds)
 
@@ -562,7 +562,7 @@ class Series(Data):
 
         for idx, indlist in enumerate(inds):
             if len(indlist) > 0:
-                inds_set = set(indlist)
+                inds_set = set(indlist.flat)
                 inds_bc = self.rdd.context.broadcast(inds_set)
                 values[idx, :] = data.filterOnKeys(lambda k: k in inds_bc.value).values().sum() / len(indlist)
                 keys[idx, :] = mean(map(lambda k: converter(k), indlist), axis=0)
