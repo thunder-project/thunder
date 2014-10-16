@@ -59,12 +59,12 @@ We also include a script for launching an Amazon EC2 cluster with Thunder preins
 Analyses
 --------
 
-Thunder currently includes two primary data types for distributed spatial and temporal data, and four main analysis packages: classification (decoding), clustering, factorization, and regression. It also provides an entry point for loading and converting a variety of raw data formats, and utilities for exporting or inspecting results. Scripts can be used to run standalone analyses, but the underlying classes and functions can be used from within the PySpark shell for easy interactive analysis.
+Thunder currently includes two primary data types for distributed spatial and temporal data, and four main analysis packages: classification (decoding), clustering, factorization, and regression. It also provides an entry point for loading and converting a variety of raw data formats, and utilities for exporting or inspecting results. Scripts can be used to run standalone analyses, but the underlying classes and functions can be used from within the PySpark shell or an iPython notebook for easy interactive analysis.
 
 Input and output
 ----------------
 
-The primary data types in Thunder -- Images and Series -- can each be loaded from a variety of raw input formats, including text or flat binary files (for Series) and tif or pngs (for Images). Files can be stored locally, on a networked file system, on Amazon's S3, or in HDFS. Where needed, metadata (e.g. model parameters) can be provided as numpy arrays or loaded from MAT files. Results can be visualized directly from the python shell or in iPython notebook, or saved to external formats.
+The primary data types in Thunder — Images and Series — can each be loaded from a variety of raw input formats, including text or flat binary files (for Series) and tif or pngs (for Images). Files can be stored locally, on a networked file system, on Amazon's S3, or in HDFS. Where needed, metadata (e.g. model parameters) can be provided as numpy arrays or loaded from MAT files. Results can be visualized directly from the python shell or in iPython notebook, or saved to external formats.
 
 Contributions
 -------------
