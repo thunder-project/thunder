@@ -263,6 +263,23 @@ class Colorize(object):
 
     @classmethod
     def optimize(cls, mat, ascmap=False):
+        """ Optimal colors based on array data similarity.
+
+        Given an (n, m) data array with n m-dimensional data points,
+        tries to find an optimal set of n colors such that the similarity
+        between colors in 3-dimensional space is well-matched to the similarity
+        between the data points in m-dimensional space.
+
+        Parameters
+        ----------
+        mat : array-like
+            Array of data points to use for estimating similarity.
+
+        ascmap : boolean, optional, default = False
+            Whether to return a matplotlib colormap, if False will
+            return a list of colors.
+
+        """
 
         mat = asarray(mat)
 
