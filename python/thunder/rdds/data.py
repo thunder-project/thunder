@@ -127,6 +127,7 @@ class Data(object):
         This calls the Spark cache() method on the underlying RDD.
         """
         self.rdd.cache()
+        return self
 
     def filterOnKeys(self, func):
         """ Filter records by applying a function to keys """

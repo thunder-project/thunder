@@ -7,8 +7,6 @@ from thunder.rdds.series import Series
 
 
 # TODO: right divide and left divide
-
-
 class RowMatrix(Series):
     """
     Distributed matrix data.
