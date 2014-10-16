@@ -24,4 +24,4 @@ from thunder.utils.datasets import DataSets
 from thunder.utils.export import export
 from thunder.utils.context import ThunderContext
 
-__version__ = "0.3.2"
+__version__ = "0.4.0"
