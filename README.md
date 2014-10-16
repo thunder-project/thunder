@@ -1,4 +1,4 @@
-thunder
+Thunder
 =======
 
 <div class="row">
@@ -14,9 +14,9 @@ Large-scale neural data analysis with Spark - [project page](http://freeman-lab.
 About
 -----
 
-thunder is a library for analyzing large-scale neural data. It's fast to run, easy to develop for, and can be used interactively. It is built on Spark, a new framework for cluster computing.
+Thunder is a library for analyzing large-scale neural data. It's fast to run, easy to develop for, and can be used interactively. It is built on Spark, a new framework for cluster computing.
 
-thunder includes utilties for loading and saving different formats, classes for working with distributed spatial and temporal data, and modular functions for time series analysis, factorization, and model fitting. Analyses can easily be scripted or combined. It is written in Spark's Python API (Pyspark), making use of scipy, numpy, and scikit-learn.
+Thunder includes utilties for loading and saving different formats, classes for working with distributed spatial and temporal data, and modular functions for time series analysis, factorization, and model fitting. Analyses can easily be scripted or combined. It is written in Spark's Python API (Pyspark), making use of scipy, numpy, and scikit-learn.
 
 Documentation
 -------------
@@ -25,17 +25,17 @@ This README contains basic information for installation and usage. See the [docu
 Quick start
 -----------
 
-thunder is designed to run on a cluster, but local testing is a great way to learn and develop. Many computers can install it with just a few simple steps. If you aren't currently using Python for scientific computing, [Anaconda](https://store.continuum.io/cshop/anaconda/) is highly recommended.
+Thunder is designed to run on a cluster, but local testing is a great way to learn and develop. Many computers can install it with just a few simple steps. If you aren't currently using Python for scientific computing, [Anaconda](https://store.continuum.io/cshop/anaconda/) is highly recommended.
 
 1) Download the latest, pre-built version of [Spark](http://spark.apache.org/downloads.html), and set one environmental variable
 
 	export SPARK_HOME=/your/path/to/spark
 
-2) Install thunder
+2) Install Thunder
 
 	pip install thunder-python
 
-3) Start thunder from the terminal
+3) Start Thunder from the terminal
 
 	thunder
 	>> from thunder import ICA
