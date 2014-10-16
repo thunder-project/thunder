@@ -3,10 +3,7 @@ Example standalone app for mass-unvariate regression combined with PCA
 """
 
 import argparse
-from thunder.regression import RegressionModel
-from thunder.factorization import PCA
-from thunder.utils.context import ThunderContext
-from thunder.utils.save import save
+from thunder import ThunderContext, RegressionModel, PCA, export
 
 
 if __name__ == "__main__":
@@ -16,21 +13,19 @@ if __name__ == "__main__":
     parser.add_argument("outputdir", type=str)
     parser.add_argument("regressmode", choices=("mean", "linear", "bilinear"), help="form of regression")
     parser.add_argument("--k", type=int, default=2)
-    parser.add_argument("--preprocess", choices=("raw", "dff", "sub", "dff-highpass", "dff-percentile"
-                        "dff-detrendnonlin", "dff-detrend-percentile"), default="raw", required=False)
 
     args = parser.parse_args()
 
     tsc = ThunderContext.start(appName="regresswithpca")
 
-    data = tsc.loadText(args.datafile, args.preprocess)
+    data = tsc.loadSeries(args.datafile)
     model = RegressionModel.load(args.modelfile, args.regressmode)  # do regression
     betas, stats, resid = model.fit(data)
     pca = PCA(args.k).fit(betas)  # do PCA
     traj = model.fit(data, pca.comps)  # get trajectories
 
     outputdir = args.outputdir + "-regress"
-    save(pca.comps, outputdir, "comps", "matlab")
-    save(pca.latent, outputdir, "latent", "matlab")
-    save(pca.scores, outputdir, "scores", "matlab")
-    save(traj, outputdir, "traj", "matlab")
+    export(pca.comps, outputdir, "comps", "matlab")
+    export(pca.latent, outputdir, "latent", "matlab")
+    export(pca.scores, outputdir, "scores", "matlab")
+    export(traj, outputdir, "traj", "matlab")

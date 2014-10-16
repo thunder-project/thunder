@@ -3,9 +3,7 @@ Example standalone app for independent component analysis
 """
 
 import argparse
-from thunder.factorization import ICA
-from thunder.utils.context import ThunderContext
-from thunder.utils.save import save
+from thunder import ThunderContext, ICA, export
 
 
 if __name__ == "__main__":
@@ -18,16 +16,15 @@ if __name__ == "__main__":
     parser.add_argument("--maxiter", type=float, default=100, required=False)
     parser.add_argument("--tol", type=float, default=0.000001, required=False)
     parser.add_argument("--seed", type=int, default=0, required=False)
-    parser.add_argument("--preprocess", choices=("raw", "dff", "sub", "dff-highpass", "dff-percentile"
-                        "dff-detrendnonlin", "dff-detrend-percentile"), default="raw", required=False)
 
     args = parser.parse_args()
 
     tsc = ThunderContext.start(appName="ica")
 
-    data = tsc.loadText(args.datafile, args.preprocess).cache()
-    result = ICA(args.k, args.c, args.svdmethod, args.maxiter, args.tol, args.seed).fit(data)
+    data = tsc.loadSeries(args.datafile).cache()
+    model = ICA(k=args.k, c=args.c, svdmethod=args.svdmethod, maxiter=args.maxiter, tol=args.tol, seed=args.seed)
+    result = model.fit(data)
 
     outputdir = args.outputdir + "-ica"
-    save(result.w, outputdir, "w", "matlab")
-    save(result.sigs, outputdir, "sigs", "matlab")
+    export(result.a, outputdir, "a", "matlab")
+    export(result.sigs, outputdir, "sigs", "matlab")
