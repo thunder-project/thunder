@@ -5,3 +5,5 @@ notebooks:
 	tools/nb_to_doc.py input_formats
 	tools/nb_to_doc.py images
 	tools/nb_to_doc.py series
+	tools/nb_to_doc.py clustering
+	tools/nb_to_doc.py factorization
