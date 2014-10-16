@@ -13,13 +13,15 @@ Large-scale neural data analysis with Spark - [project page](http://freeman-lab.
 
 About
 -----
+
 Thunder is a library for analyzing large-scale neural data. It's fast to run, easy to develop for, and can be used interactively. It is built on Spark, a new framework for cluster computing.
 
 Thunder includes utilties for loading and saving different formats, classes for working with distributed spatial and temporal data, and modular functions for time series analysis, factorization, and model fitting. Analyses can easily be scripted or combined. It is written against Spark's Python API (Pyspark), making use of scipy, numpy, and scikit-learn.
 
 Documentation
 -------------
-This README contains basic information for installation and usage. See the [documentation](http://thefreemanlab.com/thunder/docs/) for more details, example usage, and API references. If you have a problem, question, or idea, post to the [mailing list](https://groups.google.com/forum/?hl=en#!forum/thunder-user). If you find a bug, submit an [issue](https://github.com/freeman-lab/thunder/issues). If posting an issue, please provide information about your environment (e.g. local usage or EC2, operating system) and instructions for reproducing the error.
+
+This README contains basic information for installation and usage. See the [documentation](http://thefreemanlab.com/thunder/docs/) for more details, tutorials, and API references. If you have a problem, question, or idea, post to the [mailing list](https://groups.google.com/forum/?hl=en#!forum/thunder-user). If you find a bug, submit an [issue](https://github.com/freeman-lab/thunder/issues). If posting an issue, please provide information about your environment (e.g. local usage or EC2, operating system) and instructions for reproducing the error.
 
 Quick start
 -----------
@@ -47,7 +49,7 @@ To run in iPython, just set this environmental variable before staring:
 
 To run analyses as standalone jobs, use the submit script
 
-	thunder-submit <package/analysis> <datadirectory> <outputdirectory> <opts>
+	thunder-submit <analysis name or script file> <datadirectory> <outputdirectory> <opts>
 
 We also include a script for launching an Amazon EC2 cluster with Thunder preinstalled
 
