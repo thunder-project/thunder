@@ -22,3 +22,11 @@ Data types
    tutorials/images
    tutorials/series
 
+Analayses
+---------
+.. toctree::
+   :maxdepth: 2
+
+   tutorials/clustering
+   tutorials/factorization
+
