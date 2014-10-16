@@ -55,11 +55,11 @@
       <div class="row">
          <div class="col-md-4">
           <h2 id="subtitle1"><i class="glyphicon glyphicon-flash"></i>&nbsp;&nbsp;Fast</h2>
-          <h3 id="subcontent">Lightning-fast analysis through the Spark cluster computing framework. Simple to run on a cluster using Amazon EC2.</h3>
+          <h3 id="subcontent">Lightning-fast analysis through the Spark cluster computing framework. Simple to run on a cluster with Amazon EC2.</h3>
         </div>
         <div class="col-md-4">
           <h2 id="subtitle2"><i class="glyphicon glyphicon-play-circle"></i>&nbsp;&nbsp;Easy</h2>
-          <h3 id="subcontent">Run existing analyses or develop new ones. Test locally before deploying on a cluster. All in Python.</h3>
+          <h3 id="subcontent">Run existing analyses or develop new ones. Try locally before deploying on a cluster. All in Python.</h3>
         </div>
          <div class="col-md-4">
           <h2 id="subtitle3"><i class="glyphicon glyphicon-stats"></i>&nbsp;&nbsp;&nbsp;Interactive</h2>
@@ -88,7 +88,7 @@
             <div class="col-md-4">
               <p><b>3.</b> Start <b>thunder</b> and try an analysis!</p>
               <pre><code class="bash">thunder
->> from thunder.factorization import ICA
+>> from thunder import ICA
 >> data = tsc.makeExample("ica")
 >> model = ICA(c=2).fit(data)
 </pre></code>
