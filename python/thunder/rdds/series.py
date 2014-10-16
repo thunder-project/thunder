@@ -321,6 +321,14 @@ class Series(Data):
         rdd = self.rdd.mapValues(func)
         return self._constructor(rdd, index=self._index).__finalize__(self)
 
+    def seriesMax(self):
+        """ Compute the value maximum of each record in a Series """
+        return self.seriesStat('max')
+
+    def seriesMin(self):
+        """ Compute the value minimum of each record in a Series """
+        return self.seriesStat('min')
+
     def seriesSum(self):
         """ Compute the value sum of each record in a Series """
         return self.seriesStat('sum')
@@ -500,6 +508,10 @@ class Series(Data):
             result = array(self.rdd.values().filter(lambda x: func(x) > thresh).takeSample(False, nsamples))
         else:
             result = array(self.rdd.values().takeSample(False, nsamples))
+
+        if size(result) == 0:
+            raise Exception('No records found, try a different threshold?')
+        
         return result
 
     def query(self, inds, var='inds', order='F', onebased=True):
