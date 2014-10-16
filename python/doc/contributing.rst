@@ -5,7 +5,7 @@
 Contributing
 ============
 
-With thunder we want to provide a centralized library to develop and vet analyses. If you want to contribute, follow these steps to download and use the source code. If you have a contribution, submit a `pull request <https://github.com/freeman-lab/thunder/pulls>`_. If you find a problem, submit an `issue <https://github.com/freeman-lab/thunder/issues>`_!
+With Thunder we want to provide a centralized library to develop and vet analyses. If you want to contribute, follow these steps to download and use the source code. If you have a contribution, submit a `pull request <https://github.com/freeman-lab/thunder/pulls>`_. If you find a problem, submit an `issue <https://github.com/freeman-lab/thunder/issues>`_!
 
 Setting up
 ~~~~~~~~~~
@@ -22,7 +22,7 @@ Then set two additional environmental variables to make sure the code and execut
 	export PYTHONPATH=~/code/thunder/python/:$PYTHONPATH
 	export PATH=~/code/thunder/python/bin:$PATH
 
-To avoid confusion, if you had already installed thunder previously using ``pip``, we recommend uninstalling it first using ``pip uninstall thunder-python``. 
+To avoid confusion, if you had already installed Thunder previously using ``pip``, we recommend uninstalling it first using ``pip uninstall thunder-python``. 
 
 Using an IDE for development is highly recommended, we use `PyCharm <http://www.jetbrains.com/pycharm/>`_ for Python and `IntelliJ <http://www.jetbrains.com/idea/>`_ for Scala. And here's a good `article <https://gun.io/blog/how-to-github-fork-branch-and-pull-request/>`_ on how to contribute a pull request to a project using github.
 
