@@ -35,13 +35,19 @@ class SeriesLoader(object):
 
     @staticmethod
     def __normalizeDatafilePattern(datapath, ext):
-        if ext and (not datapath.endswith(ext)):
-            if datapath.endswith("*"):
-                datapath += ext
-            elif datapath.endswith("/"):
-                datapath += "*" + ext
-            else:
-                datapath += "/*" + ext
+        if ext:
+            if not ext.startswith("."):
+                # protect (partly) against case where ext happens to *also* be the name
+                # of a directory. If your directory is named "something.bin", well, you
+                # get what you deserve, I guess.
+                ext = "." + ext
+            if not datapath.endswith(ext):
+                if datapath.endswith("*"):
+                    datapath += ext
+                elif datapath.endswith("/"):
+                    datapath += "*" + ext
+                else:
+                    datapath += "/*" + ext
 
         parseresult = urlparse.urlparse(datapath)
         if parseresult.scheme:
