@@ -121,6 +121,16 @@ class Data(object):
         """
         return self.rdd.values().stats()
 
+    def max(self):
+        """ Maximum of values, ignoring keys """
+        from numpy import maximum
+        return self.rdd.values().reduce(maximum)
+
+    def min(self):
+        """ Minimum of values, ignoring keys """
+        from numpy import minimum
+        return self.rdd.values().reduce(minimum)
+
     def cache(self):
         """ Enable in-memory caching
 
