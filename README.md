@@ -28,7 +28,7 @@ Quick start
 
 Thunder is designed to run on a cluster, but local testing is a great way to learn and develop. Many computers can install it with just a few simple steps. If you aren't currently using Python for scientific computing, [Anaconda](https://store.continuum.io/cshop/anaconda/) is highly recommended.
 
-1) Download the latest, "pre-built for Hadoop 1.x" version of [Spark](http://spark.apache.org/downloads.html), and set one environmental variable
+1) Download the latest "pre-built for Hadoop 1.x" version of [Spark](http://spark.apache.org/downloads.html) and set an environmental variable
 
 	export SPARK_HOME=/your/path/to/spark
 
