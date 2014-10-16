@@ -1,34 +1,41 @@
 """
-Classes and standalone app for mass-unvariate tuning analyses
+Classes for mass-unvariate tuning analyses
 """
 
-import argparse
-from scipy.io import loadmat
-from numpy import array, sum, inner, dot, angle, abs, exp
-from thunder.regression import RegressionModel
-from thunder.utils import ThunderContext
-from thunder.utils import save
+from numpy import array, sum, inner, dot, angle, abs, exp, asarray
+
+from thunder.rdds.series import Series
+from thunder.utils.common import loadmatvar
 
 
 class TuningModel(object):
-    """Base class for loading and fitting tuning models
+    """
+    Base class for loading and fitting tuning models.
 
     Parameters
     ----------
     modelfile : str, or array
-        Array of input values or location of a MAT file with name
-        modelfile_s.mat containing a variable s with input values
+        Array of input values or specification of a MAT file
+        containing a variable s with input values
+
+    var : str, default = 's'
+        Variable name if loading from a MAT file
 
     Attributes
     ----------
     s : array
         Input values along which tuning will be estimated,
         i.e. s if we are fitting a function y = f(s)
+
+    See also
+    --------
+    CircularTuningModel : circular tuning parameter estimation
+    GaussianTuningModel : gaussian tuning parameter estimation
     """
 
-    def __init__(self, modelfile):
+    def __init__(self, modelfile, var='s'):
         if type(modelfile) is str:
-            self.s = loadmat(modelfile + "_s.mat")['s']
+            self.s = loadmatvar(modelfile, var)
         else:
             self.s = modelfile
 
@@ -40,23 +47,32 @@ class TuningModel(object):
         pass
 
     def fit(self, data):
-        """Fit a mass univariate tuning model
+        """
+        Fit a mass univariate tuning model.
 
         Parameters
         ----------
-        data : RDD of (tuple, array) pairs
-            The data to fit
+        data : Series or a subclass (e.g. RowMatrix)
+            The data to fit tuning models to, a collection of
+            key-value pairs where the keys are identifiers and the values are
+            one-dimensional arrays
 
         Returns
         -------
         params : RDD of (tuple, array) pairs
             Fitted tuning parameters for each record
         """
-        return data.mapValues(lambda x: self.get(x))
+
+        if not (isinstance(data, Series)):
+            raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')
+
+        return Series(data.rdd.mapValues(lambda x: self.get(x)), index=['center', 'spread']).__finalize__(data)
 
 
 class CircularTuningModel(TuningModel):
-    """Class for circular tuning"""
+    """
+    Circular tuning model fitting.
+    """
 
     def get(self, y):
         """Estimate the circular mean and variance ("kappa"),
@@ -80,11 +96,13 @@ class CircularTuningModel(TuningModel):
             k = 1 / (v ** 3 - 4 * (v ** 2) + 3 * v)
         if k > 1E8:
             k = array([0.0])
-        return mu, k
+        return asarray([mu, k])
 
 
 class GaussianTuningModel(TuningModel):
-    """Class for gaussian tuning"""
+    """
+    Gaussian tuning model fitting.
+    """
 
     def get(self, y):
         """Estimate the mean and variance,
@@ -98,40 +116,10 @@ class GaussianTuningModel(TuningModel):
         y = y / sum(y)
         mu = dot(self.s, y)
         sigma = dot((self.s - mu) ** 2, y)
-        return mu, sigma
+        return asarray([mu, sigma])
 
 
 TUNING_MODELS = {
     'circular': CircularTuningModel,
     'gaussian': GaussianTuningModel
 }
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="fit a parametric tuning curve to regression results")
-    parser.add_argument("datafile", type=str)
-    parser.add_argument("tuningmodelfile", type=str)
-    parser.add_argument("outputdir", type=str)
-    parser.add_argument("tuningmode", choices=("circular", "gaussian"), help="form of tuning curve")
-    parser.add_argument("--regressmodelfile", type=str)
-    parser.add_argument("--regressmode", choices=("linear", "bilinear"), help="form of regression")
-    parser.add_argument("--preprocess", choices=("raw", "dff", "sub", "dff-highpass", "dff-percentile"
-                        "dff-detrendnonlin", "dff-detrend-percentile"), default="raw", required=False)
-
-    args = parser.parse_args()
-    
-    tsc = ThunderContext.start(appName="tuning")
-
-    data = tsc.loadText(args.datafile, args.preprocess)
-    tuningmodel = TuningModel.load(args.tuningmodelfile, args.tuningmode)
-    if args.regressmodelfile is not None:
-        # use regression results
-        regressmodel = RegressionModel.load(args.regressmodelfile, args.regressmode)
-        betas, stats, resid = regressmodel.fit(data)
-        params = tuningmodel.fit(betas)
-    else:
-        # use data
-        params = tuningmodel.fit(data)
-
-    outputdir = args.outputdir + "-tuning"
-    save(params, outputdir, "params", "matlab")

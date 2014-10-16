@@ -1,19 +1,17 @@
 """ Simple wrapper for a Spark Context to provide loading functionality """
 
-import glob
-import os
-from numpy import int16, float, dtype, frombuffer, zeros, fromfile, \
-    asarray, mod, floor, ceil, shape, concatenate, prod, arange
-from scipy.io import loadmat
-from pyspark import SparkContext
-import json
-from thunder.utils.load import PreProcessor, Parser, indtosub
-from thunder.utils import DataSets
+from numpy import asarray, floor, ceil
+
+from thunder.utils.datasets import DataSets
+from thunder.utils.common import checkparams
 
 
 class ThunderContext():
     """
-    Wrapper for a Spark Context
+    Wrapper for a SparkContext that provides functionality for loading data.
+
+    Also supports creation of example datasets, and loading example
+    data both locally and from EC2.
 
     Attributes
     ----------
@@ -27,116 +25,329 @@ class ThunderContext():
     @classmethod
     def start(cls, *args, **kwargs):
         """Starts a ThunderContext using the same arguments as SparkContext"""
+        from pyspark import SparkContext
         return ThunderContext(SparkContext(*args, **kwargs))
 
-    def loadText(self, datafile, nkeys=3, filter=None, minPartitions=None):
+    def loadSeries(self, datapath, nkeys=None, nvalues=None, inputformat='binary', minPartitions=None,
+                   conffile='conf.json', keytype=None, valuetype=None):
         """
-        Load data from text file (or a directory of files) with rows as
-        <k1> <k2> ... <v1> <v2> ...
-        where <k1> <k2> ... are keys and <v1> <v2> ... are the data values
-        and rows are separated by line breaks
-        Files can be local or stored on HDFS / S3
-        If passed a directory, will automatically sort files by name
+        Loads a Series object from data stored as text or binary files.
+
+        Supports single files or multiple files stored on a local file system, a networked file system (mounted
+        and available on all cluster nodes), Amazon S3, or HDFS.
 
         Parameters
         ----------
-        datafile : str
-            Location of file(s)
+        datapath: string
+            Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
+            including scheme. A datapath argument may include a single '*' wildcard character in the filename. Examples
+            of valid datapaths include 'a/local/relative/directory/*.stack", "s3n:///my-s3-bucket/data/mydatafile.tif",
+            "/mnt/my/absolute/data/directory/", or "file:///mnt/another/data/directory/".
 
-        nkeys : int, optional, default = 3
-            Number of keys per data point
+        nkeys: int, optional (but required if `inputformat` is 'text')
+            dimensionality of data keys. (For instance, (x,y,z) keyed data for 3-dimensional image timeseries data.)
+            For text data, number of keys must be specified in this parameter; for binary data, number of keys must be
+            specified either in this parameter or in a configuration file named by the 'conffile' argument if this
+            parameter is not set.
 
-        filter : str, optional, default = None (no preprocessing)
-            Which preprocessing to perform
+        nvalues: int, optional (but required if `inputformat` is 'text')
+            Number of values expected to be read. For binary data, nvalues must be specified either in this parameter
+            or in a configuration file named by the 'conffile' argument if this parameter is not set.
 
-        npartitions : int, optional, default = None
-            Number of partitions
+        inputformat: {'text', 'binary'}. optional, default 'binary'
+            Format of data to be read.
 
-        Returns
-        -------
-        data : RDD of (tuple, array) pairs
-            The parsed and preprocessed data as an RDD
-        """
+        minPartitions: int, optional
+            Explicitly specify minimum number of Spark partitions to be generated from this data. Used only for
+            text data. Default is to use minParallelism attribute of Spark context object.
 
-        if os.path.isdir(datafile):
-            files = sorted(glob.glob(os.path.join(datafile, '*.txt')))
-            datafile = ''.join([files[x] + ',' for x in range(0, len(files))])[0:-1]
-
-        lines = self._sc.textFile(datafile, minPartitions)
-        parser = Parser(nkeys)
-        data = lines.map(parser.get)
-
-        return preprocess(data, method=filter)
-
-    def loadBinary(self, datafile, nvalues=None, format='int16', nkeys=3, filter=None):
-        """
-        Load data from flat binary file (or a directory of files) with format
-        <k1> <k2> ... <v1> <v2> ... <k1> <k2> ... <v1> <v2> ...
-        where <k1> <k2> ... are keys and <v1> <v2> ... are data values
-        Each record must contain the same total number of keys and values
-        If nkeys is 0, a single index key will be added to each record
-        Files can be local or stored on HDFS / S3
-        Data parameters (number of values, number of keys, and format) can be
-        given as keyword arguments, or provided in a JSON configuration file.
-        Without a configuration file, must provide at least the number of values.
-
-        Parameters
-        ----------
-        datafile : str
-            Location of file(s)
-
-        nvalues : int, optional, default = None
-            Number of values per record
-
-        nkeys : int, optional, default = 3
-            Number of keys per record
-
-        format : string, optional, default = 'int16'
-            Format to use when parsing binary data, string specification
-            of a numpy.dtype
-
-        filter : str, optional, default = None (no preprocessing)
-            Which preprocessing to perform
+        conffile: string, optional, default 'conf.json'
+            Path to JSON file with configuration options including 'nkeys', 'nvalues', 'keytype', and 'valuetype'.
+            If a file is not found at the given path, then the base directory given in 'datafile'
+            will also be checked. Parameters `nkeys` or `nvalues` that are specified as explicit arguments to this
+            method will take priority over those found in conffile if both are present.
 
         Returns
         -------
-        data : RDD of (tuple, array) pairs
-            The parsed and preprocessed data as an RDD
+        data: thunder.rdds.Series
+            A newly-created Series object, wrapping an RDD of series data. This RDD will have as keys an n-tuple
+            of int, with n given by `nkeys` or the configuration passed in `conffile`. RDD values will be a numpy
+            array of length `nvalues` (or as specified in the passed configuration file).
         """
+        checkparams(inputformat, ['text', 'binary'])
 
-        if os.path.isdir(datafile):
-            basepath = datafile
-            datafile = os.path.join(basepath, '*.bin')
+        from thunder.rdds.fileio.seriesloader import SeriesLoader
+        loader = SeriesLoader(self._sc, minPartitions=minPartitions)
+
+        if inputformat.lower() == 'text':
+            data = loader.fromText(datapath, nkeys=nkeys)
         else:
-            basepath = os.path.dirname(datafile)
+            # must be either 'text' or 'binary'
+            data = loader.fromBinary(datapath, conffilename=conffile, nkeys=nkeys, nvalues=nvalues,
+                                     keytype=keytype, valuetype=valuetype)
 
-        try:
-            f = open(os.path.join(basepath, 'conf.json'), 'r')
-            params = json.load(f)
-            nvalues = params['nvalues']
-            nkeys = params['nkeys']
-            format = params['format']
-        except IOError:
-            if nvalues is None:
-                raise StandardError('must specify nvalues if there is no configuration file')
+        return data
 
-        recordsize = nvalues + nkeys
-        recordsize *= dtype(FORMATS[format]).itemsize
+    def loadImages(self, datapath, dims=None, inputformat='stack', startidx=None, stopidx=None):
+        """
+        Loads an Images object from data stored as a binary image stack, tif, tif-stack, or png files.
 
-        lines = self._sc.newAPIHadoopFile(datafile, 'thunder.util.io.hadoop.FixedLengthBinaryInputFormat',
-                                          'org.apache.hadoop.io.LongWritable',
-                                          'org.apache.hadoop.io.BytesWritable',
-                                          conf={'recordLength': str(recordsize)})
+        Supports single files or multiple files, stored on a local file system, a networked file sytem
+        (mounted and available on all nodes), or Amazon S3. HDFS is not currently supported for image file data.
 
-        parsed = lines.map(lambda (k, v): (k, frombuffer(v, format)))
-        data = parsed.map(lambda (k, v): (tuple(v[0:nkeys].astype(int)), v[nkeys:].astype(float)))
+        Parameters
+        ----------
+        datapath: string
+            Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
+            including scheme. A datapath argument may include a single '*' wildcard character in the filename. Examples
+            of valid datapaths include 'a/local/relative/directory/*.stack", "s3n:///my-s3-bucket/data/mydatafile.tif",
+            "/mnt/my/absolute/data/directory/", or "file:///mnt/another/data/directory/".
 
-        return preprocess(data, method=filter)
+        dims: tuple of positive int, optional (but required if inputformat is 'stack')
+            Dimensions of input image data, similar to a numpy 'shape' parameter, for instance (1024, 1024, 48). Binary
+            stack data will be interpreted as coming from a multidimensional array of the specified dimensions. Stack
+            data should be stored in row-major order (Fortran or Matlab convention) rather than column-major order (C
+            or python/numpy convention), where the first dimension corresponds to that which is changing most rapidly
+            on disk. So for instance given dims of (x, y, z), the coordinates of the data in a binary stack file
+            should be ordered as [(x0, y0, z0), (x1, y0, zo), ..., (xN, y0, z0), (x0, y1, z0), (x1, y1, z0), ...,
+            (xN, yM, z0), (x0, y0, z1), ..., (xN, yM, zP)].
+            If inputformat is 'png', 'tif', or'tif-stack', the dims parameter (if any) will be ignored; data dimensions
+            will instead be read out from the image file headers.
+
+        inputformat: {'stack', 'png', 'tif', 'tif-stack'}. optional, default 'stack'
+            Expected format of the input data. 'stack' indicates flat files of raw binary data. 'png' or 'tif' indicate
+            two-dimensional image files of the corresponding formats. 'tif-stack' indicates a sequence of multipage tif
+            files, with each page of the tif corresponding to a separate z-plane.
+            For all formats, separate files are interpreted as distinct time points, with ordering given by
+            lexicographic sorting of file names.
+            This method assumes that stack data consists of signed 16-bit integers in native byte order. Data types of
+            image file data will be as specified in the file headers.
+
+        startidx: nonnegative int, optional
+            startidx and stopidx are convenience parameters to allow only a subset of input files to be read in. These
+            parameters give the starting index (inclusive) and final index (exclusive) of the data files to be used
+            after lexicographically sorting all input data files matching the datapath argument. For example,
+            startidx=None (the default) and stopidx=10 will cause only the first 10 data files in datapath to be read
+            in; startidx=2 and stopidx=3 will cause only the third file (zero-based index of 2) to be read in. startidx
+            and stopidx use the python slice indexing convention (zero-based indexing with an exclusive final position).
+
+        stopidx: nonnegative int, optional
+            See startidx.
+
+        Returns
+        -------
+        data: thunder.rdds.Images
+            A newly-created Images object, wrapping an RDD of <int index, numpy array> key-value pairs.
+
+        """
+        checkparams(inputformat, ['stack', 'png', 'tif', 'tif-stack'])
+
+        from thunder.rdds.fileio.imagesloader import ImagesLoader
+        loader = ImagesLoader(self._sc)
+
+        if inputformat.lower() == 'stack':
+            data = loader.fromStack(datapath, dims, startidx=startidx, stopidx=stopidx)
+        elif inputformat.lower() == 'tif':
+            data = loader.fromTif(datapath, startidx=startidx, stopidx=stopidx)
+        elif inputformat.lower() == 'tif-stack':
+            data = loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)
+        else:
+            data = loader.fromPng(datapath)
+
+        return data
+
+    def loadImagesAsSeries(self, datapath, dims=None, inputformat='stack', blockSize="150M",
+                           startidx=None, stopidx=None, shuffle=False):
+        """
+        Load Images data as Series data.
+
+        Parameters
+        ----------
+        datapath: string
+            Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
+            including scheme. A datapath argument may include a single '*' wildcard character in the filename. Examples
+            of valid datapaths include 'a/local/relative/directory/*.stack", "s3n:///my-s3-bucket/data/mydatafile.tif",
+            "/mnt/my/absolute/data/directory/", or "file:///mnt/another/data/directory/".
+
+        dims: tuple of positive int, optional (but required if inputformat is 'stack')
+            Dimensions of input image data, similar to a numpy 'shape' parameter, for instance (1024, 1024, 48). Binary
+            stack data will be interpreted as coming from a multidimensional array of the specified dimensions. Stack
+            data should be stored in row-major order (Fortran or Matlab convention) rather than column-major order (C
+            or python/numpy convention), where the first dimension corresponds to that which is changing most rapidly
+            on disk. So for instance given dims of (x, y, z), the coordinates of the data in a binary stack file
+            should be ordered as [(x0, y0, z0), (x1, y0, zo), ..., (xN, y0, z0), (x0, y1, z0), (x1, y1, z0), ...,
+            (xN, yM, z0), (x0, y0, z1), ..., (xN, yM, zP)].
+            If inputformat is 'tif-stack', the dims parameter (if any) will be ignored; data dimensions will instead
+            be read out from the tif file headers.
+
+        inputformat: {'stack', 'tif-stack'}. optional, default 'stack'
+            Expected format of the input data. 'stack' indicates flat files of raw binary data, while 'tif-stack'
+            indicates a sequence of multipage tif files, with each page of the tif corresponding to a separate z-plane.
+            For both stacks and tif stacks, separate files are interpreted as distinct time points, with ordering
+            given by lexicographic sorting of file names.
+            This method assumes that stack data consists of signed 16-bit integers in native byte order.
+
+        blocksize: string formatted as e.g. "64M", "512k", "2G", or positive int. optional, default "150M"
+            Requested size of individual output files in bytes (or kilobytes, megabytes, gigabytes). This parameter
+            also indirectly controls the number of Spark partitions to be used, with one partition used per block
+            created.
+
+        startidx: nonnegative int, optional
+            startidx and stopidx are convenience parameters to allow only a subset of input files to be read in. These
+            parameters give the starting index (inclusive) and final index (exclusive) of the data files to be used
+            after lexicographically sorting all input data files matching the datapath argument. For example,
+            startidx=None (the default) and stopidx=10 will cause only the first 10 data files in datapath to be read
+            in; startidx=2 and stopidx=3 will cause only the third file (zero-based index of 2) to be read in. startidx
+            and stopidx use the python slice indexing convention (zero-based indexing with an exclusive final position).
+
+        stopidx: nonnegative int, optional
+            See startidx.
+
+        shuffle: boolean, optional, default False
+            Controls whether the conversion from Images to Series formats will make use of a Spark shuffle-based method.
+            The default at present is not to use a shuffle. The shuffle-based method may lead to higher performance in
+            some cases, but the default method appears to be more stable with larger data set sizes. This default may
+            change in future releases.
+
+        Returns
+        -------
+        data: thunder.rdds.Series
+            A newly-created Series object, wrapping an RDD of timeseries data generated from the images in datapath.
+            This RDD will have as keys an n-tuple of int, with n given by the dimensionality of the original images. The
+            keys will be the zero-based spatial index of the timeseries data in the RDD value. The value will be
+            a numpy array of length equal to the number of image files loaded. Each loaded image file will contribute
+            one point to this value array, with ordering as implied by the lexicographic ordering of image file names.
+        """
+        checkparams(inputformat, ['stack', 'tif-stack'])
+
+        if inputformat.lower() == 'stack' and not dims:
+            raise ValueError("Dimensions ('dims' parameter) must be specified if loading from binary image stack" +
+                             " ('stack' value for 'inputformat' parameter)")
+
+        if shuffle:
+            from thunder.rdds.fileio.imagesloader import ImagesLoader
+            loader = ImagesLoader(self._sc)
+            if inputformat.lower() == 'stack':
+                return loader.fromStack(datapath, dims, startidx=startidx, stopidx=stopidx)\
+                    .toSeries(blockSize=blockSize)
+            else:
+                # tif stack
+                return loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)\
+                    .toSeries(blockSize=blockSize)
+
+        else:
+            from thunder.rdds.fileio.seriesloader import SeriesLoader
+            loader = SeriesLoader(self._sc)
+            if inputformat.lower() == 'stack':
+                return loader.fromStack(datapath, dims, blockSize=blockSize, startidx=startidx, stopidx=stopidx)
+            else:
+                # tif stack
+                return loader.fromMultipageTif(datapath, blockSize=blockSize,
+                                               startidx=startidx, stopidx=stopidx)
+
+    def convertImagesToSeries(self, datapath, outputdirpath, dims=None, inputformat='stack',
+                              blocksize="150M", startidx=None, stopidx=None,
+                              shuffle=False, overwrite=False):
+        """
+        Write out Images data as Series data, saved in a flat binary format.
+
+        The resulting Series data files may subsequently be read in using the loadSeries() method. The Series data
+        object that results will be equivalent to that which would be generated by loadImagesAsSeries(). It is expected
+        that loading Series data directly from the series flat binary format, using loadSeries(), will be faster than
+        converting image data to a Series object through loadImagesAsSeries().
+
+        Parameters
+        ----------
+        datapath: string
+            Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
+            including scheme. A datapath argument may include a single '*' wildcard character in the filename. Examples
+            of valid datapaths include 'a/local/relative/directory/*.stack", "s3n:///my-s3-bucket/data/mydatafile.tif",
+            "/mnt/my/absolute/data/directory/", or "file:///mnt/another/data/directory/".
+
+        outputdirpath: string
+            Path to a directory into which to write Series file output. An outputdir argument may be either a path
+            on the local file system or a URI-like format, as in datapath. Examples of valid outputdirpaths include
+            "a/relative/directory/", "s3n:///my-s3-bucket/data/myoutput/", or "file:///mnt/a/new/directory/". If the
+            directory specified by outputdirpath already exists and the 'overwrite' parameter is False, this method
+            will throw a ValueError. If the directory exists and 'overwrite' is True, the existing directory and all
+            its contents will be deleted and overwritten.
+
+        dims: tuple of positive int, optional (but required if inputformat is 'stack')
+            Dimensions of input image data, similar to a numpy 'shape' parameter, for instance (1024, 1024, 48). Binary
+            stack data will be interpreted as coming from a multidimensional array of the specified dimensions. Stack
+            data should be stored in row-major order (Fortran or Matlab convention) rather than column-major order (C
+            or python/numpy convention), where the first dimension corresponds to that which is changing most rapidly
+            on disk. So for instance given dims of (x, y, z), the coordinates of the data in a binary stack file
+            should be ordered as [(x0, y0, z0), (x1, y0, zo), ..., (xN, y0, z0), (x0, y1, z0), (x1, y1, z0), ...,
+            (xN, yM, z0), (x0, y0, z1), ..., (xN, yM, zP)].
+            If inputformat is 'tif-stack', the dims parameter (if any) will be ignored; data dimensions will instead
+            be read out from the tif file headers.
+
+        inputformat: {'stack', 'tif-stack'}. optional, default 'stack'
+            Expected format of the input data. 'stack' indicates flat files of raw binary data, while 'tif-stack'
+            indicates a sequence of multipage tif files, with each page of the tif corresponding to a separate z-plane.
+            For both stacks and tif stacks, separate files are interpreted as distinct time points, with ordering
+            given by lexicographic sorting of file names.
+            This method assumes that stack data consists of signed 16-bit integers in native byte order. The lower-level
+            API method SeriesLoader.saveFromStack() allows alternative data types to be read in.
+
+        blocksize: string formatted as e.g. "64M", "512k", "2G", or positive int. optional, default "150M"
+            Requested size of individual output files in bytes (or kilobytes, megabytes, gigabytes). This parameter
+            also indirectly controls the number of Spark partitions to be used, with one partition used per block
+            created.
+
+        startidx: nonnegative int, optional
+            startidx and stopidx are convenience parameters to allow only a subset of input files to be read in. These
+            parameters give the starting index (inclusive) and final index (exclusive) of the data files to be used
+            after lexicographically sorting all input data files matching the datapath argument. For example,
+            startidx=None (the default) and stopidx=10 will cause only the first 10 data files in datapath to be read
+            in; startidx=2 and stopidx=3 will cause only the third file (zero-based index of 2) to be read in. startidx
+            and stopidx use the python slice indexing convention (zero-based indexing with an exclusive final position).
+
+        stopidx: nonnegative int, optional
+            See startidx.
+
+        shuffle: boolean, optional, default False
+            Controls whether the conversion from Images to Series formats will make use of a Spark shuffle-based method.
+            The default at present is not to use a shuffle. The shuffle-based method may lead to higher performance in
+            some cases, but the default method appears to be more stable with larger data set sizes. This default may
+            change in future releases.
+
+        overwrite: boolean, optional, default False
+            If true, the directory specified by outputdirpath will first be deleted, along with all its contents, if it
+            already exists. (Use with caution.) If false, a ValueError will be thrown if outputdirpath is found to
+            already exist.
+        """
+        checkparams(inputformat, ['stack', 'tif-stack'])
+
+        if inputformat.lower() == 'stack' and not dims:
+            raise ValueError("Dimensions ('dims' parameter) must be specified if loading from binary image stack" +
+                             " ('stack' value for 'inputformat' parameter)")
+
+        if shuffle:
+            from thunder.rdds.fileio.imagesloader import ImagesLoader
+            loader = ImagesLoader(self._sc)
+            if inputformat.lower() == 'stack':
+                loader.fromStack(datapath, dims, startidx=startidx, stopidx=stopidx)\
+                    .saveAsBinarySeries(outputdirpath, blockSize=blocksize, overwrite=overwrite)
+            else:
+                loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)
+        else:
+            from thunder.rdds.fileio.seriesloader import SeriesLoader
+            loader = SeriesLoader(self._sc)
+            if inputformat.lower() == 'stack':
+                loader.saveFromStack(datapath, outputdirpath, dims, blockSize=blocksize, overwrite=overwrite,
+                                     startidx=startidx, stopidx=stopidx)
+            else:
+                loader.saveFromMultipageTif(datapath, outputdirpath, blockSize=blocksize,
+                                            startidx=startidx, stopidx=stopidx, overwrite=overwrite)
 
     def makeExample(self, dataset, **opts):
         """
-        Make an example data set for testing analyses
-        see DataSets
+        Make an example data set for testing analyses.
+
+        Options include 'pca', 'kmeans', and 'ica'.
+        See thunder.utils.datasets for detailed options.
 
         Parameters
         ----------
@@ -147,13 +358,15 @@ class ThunderContext():
         -------
         data : RDD of (tuple, array) pairs
             Generated dataset
+
         """
+        checkparams(dataset, ['kmeans', 'pca', 'ica'])
 
         return DataSets.make(self._sc, dataset, **opts)
 
     def loadExample(self, dataset):
         """
-        Load a local example data set for testing analyses
+        Load a local example data set for testing analyses.
 
         Parameters
         ----------
@@ -166,18 +379,22 @@ class ThunderContext():
             Generated dataset
         """
 
+        import os
+
         path = os.path.dirname(os.path.realpath(__file__))
 
         if dataset == "iris":
-            return self.loadText(os.path.join(path, 'data/iris.txt'), minPartitions=1)
-        elif dataset == "fish":
-            return self.loadText(os.path.join(path, 'data/fish.txt'), minPartitions=1)
+            return self.loadSeries(os.path.join(path, 'data/iris/iris.bin'))
+        elif dataset == "fish-series":
+            return self.loadSeries(os.path.join(path, 'data/fish/bin/'))
+        elif dataset == "fish-images":
+            return self.loadImages(os.path.join(path, 'data/fish/tif-stack'), inputformat="tif-stack")
         else:
-            raise NotImplementedError("dataset '%s' not found" % dataset)
+            raise NotImplementedError("Dataset '%s' not found" % dataset)
 
     def loadExampleEC2(self, dataset):
         """
-        Load an example data set from EC2
+        Load an example data set from EC2.
 
         Parameters
         ----------
@@ -193,11 +410,13 @@ class ThunderContext():
             Parameters or metadata for dataset
         """
 
+        import json
+
         if 'ec' not in self._sc.master:
             raise Exception("must be running on EC2 to load this example data sets")
         elif dataset == "zebrafish-optomotor-response":
             path = 'zebrafish.datasets/optomotor-response/1/'
-            data = self.loadText("s3n://" + path + 'data/dat_plane*.txt', filter='dff', minPartitions=1000)
+            data = self.loadSeries("s3n://" + path + 'data/dat_plane*.txt', inputformat='text', minPartitions=1000)
             paramfile = self._sc.textFile("s3n://" + path + "params.json")
             params = json.loads(paramfile.first())
             modelfile = asarray(params['trials'])
@@ -205,243 +424,41 @@ class ThunderContext():
         else:
             raise NotImplementedError("dataset '%s' not availiable" % dataset)
 
-    def convertStacks(self, datafile, dims, savefile, nblocks=None, filerange=None):
+    def loadSeriesLocal(self, datafile, inputformat='npy', minPartitions=None, keyfile=None, varname=None):
         """
-        Convert data from binary stack files to reformatted flat binary files,
-        see also convertStack
+        Load a Series object from a local file (either npy or MAT format).
 
-        Currently only supported on a local or networked file system
+        File should contain a 1d or 2d matrix, where each row
+        of the input matrix is a record.
+
+        Keys can be provided in a separate file (with variable name 'keys', for MAT files).
+        If not provided, linear indices will be used for keys.
 
         Parameters
         ----------
         datafile : str
-            File(s) or directory to convert
+            File to import
 
-        dims : list
-            Stack dimensions
+        varname : str, optional, default = None
+            Variable name to load (for MAT files only)
 
-        savefile : str
-            Location to save the converted data
-
-        nblocks : int, optional, default = None (automatically set)
-            Number of blocks to split data into
-
-        filerange : list, optional, default = None (all files)
-            Indices of first and last file to include
-
-        """
-        rdd = self.importStacksAsBlocks(datafile, dims, nblocks=nblocks, filerange=filerange)
-
-        # save blocks of data to flat binary files
-        def writeblock(part, mat, path):
-            filename = os.path.join(path, "part-" + str(part) + ".bin")
-            mat.tofile(filename)
-
-        if os.path.isdir(savefile):
-            raise IOError('path %s already exists' % savefile)
-        else:
-            os.mkdir(savefile)
-
-        rdd.foreach(lambda (ip, mat): writeblock(ip, mat, savefile))
-
-        # write configuration file
-        if not filerange:
-            if os.path.isdir(datafile):
-                files = glob.glob(os.path.join(datafile, '*.stack'))
-            else:
-                files = glob.glob(datafile)
-            filerange = [0, len(files)-1]
-        logout = {'input': datafile, 'filerange': filerange, 'dims': dims,
-                  'nkeys': len(dims), 'nvalues': filerange[1]-filerange[0]+1, 'format': 'int16'}
-        f = open(os.path.join(savefile, 'conf.json'), 'w')
-        json.dump(logout, f, indent=2)
-        f.close()
-
-        # write SUCCESS file
-        f = open(os.path.join(savefile, 'SUCCESS'), 'w')
-        f.write(' ')
-        f.close()
-
-    def importStacks(self, datafile, dims, nblocks=None, filerange=None, filter=None):
-        """
-        Import data from binary stack files as an RDD,
-        see also convertStack
-
-        Currently only supported on a local or networked file system
-
-        Parameters
-        ----------
-        datafile : str
-            File(s) or directory to import
-
-        dims : list
-            Stack dimensions
-
-        nblocks : int, optional, default = None (automatically set)
-            Number of blocks to split data into
-
-        filerange : list, optional, default = None (all files)
-            Indices of first and last file to include
-
-        filter : str, optional, default = None (no preprocessing)
-            Which preprocessing to perform
-
-        Returns
-        -------
-        data : RDD of (tuple, array) pairs
-            Parsed and preprocessed data
-        """
-        rdd = self.importStacksAsBlocks(datafile, dims, nblocks=nblocks, filerange=filerange)
-        nkeys = len(dims)
-        data = rdd.values().flatMap(lambda x: list(x)).map(lambda x: (tuple(x[0:nkeys].astype(int)), x[nkeys:]))
-        return preprocess(data, method=filter)
-
-    def importStacksAsBlocks(self, datafile, dims, nblocks=None, filerange=None):
-        """
-        Convert data from binary stack files to blocks of an RDD,
-        which can either be saved to flat binary files,
-        or returned as an flattened RDD (see convertStack and importStack)
-
-        Stacks are typically flat binary files containing
-        2-dimensional or 3-dimensional image data
-
-        We assume there are multiple files:
-
-        file0.stack, file1.stack, file2.stack, ...
-
-        This function loads the same contiguous block from all files,
-        and rewrites the result to flat binary files of the form:
-
-        block0.bin, block1.bin, block2.bin, ...
-
-        Currently only supported on a local or networked file system
-
-        TODO: Add support for EC2 loading
-        TODO: assumes int16, add support for other formats
-
-        """
-
-        # get the paths to the data
-        if os.path.isdir(datafile):
-            files = sorted(glob.glob(os.path.join(datafile, '*.stack')))
-        else:
-            files = sorted(glob.glob(datafile))
-        if len(files) < 1:
-            raise IOError('cannot find any stack files in %s' % datafile)
-        if filerange:
-            files = files[filerange[0]:filerange[1]+1]
-
-        # get the total stack dimensions
-        totaldim = float(prod(dims))
-
-        # if number of blocks not provided, start by setting it
-        # so that each block is approximately 200 MB
-        if not nblocks:
-            nblocks = int(max(floor((totaldim * len(files) * 2) / (200 * 10**6)), 1))
-
-        if len(dims) == 3:
-            # for 3D stacks, do calculations to ensure that
-            # different planes appear in distinct files
-            k = max(int(floor(float(nblocks) / dims[2])), 1)
-            n = dims[0] * dims[1]
-            kupdated = [x for x in range(1, k+1) if mod(n, x) == 0][-1]
-            nblocks = kupdated * dims[2]
-            blocksize = int(totaldim / nblocks)
-        else:
-            # otherwise just round to make contents divide into nearly even blocks
-            blocksize = int(ceil(totaldim / float(nblocks)))
-            nblocks = int(ceil(totaldim / float(blocksize)))
-
-        def readblock(block, files, blocksize):
-            # get start position for this block
-            position = block * blocksize
-
-            # adjust if at end of file
-            if (position + blocksize) > totaldim:
-                blocksize = int(totaldim - position)
-
-            # loop over files, loading one block from each
-            mat = zeros((blocksize, len(files)))
-
-            for i, f in enumerate(files):
-                fid = open(f, "rb")
-                fid.seek(position * dtype(int16).itemsize)
-                mat[:, i] = fromfile(fid, dtype=int16, count=blocksize)
-
-            # append subscript keys based on dimensions
-            lininds = range(position + 1, position + shape(mat)[0] + 1)
-            keys = asarray(map(lambda (k, v): k, indtosub(zip(lininds, zeros(blocksize)), dims)))
-            partlabel = "%05g-" % block + (('%05g-' * len(dims)) % tuple(keys[0]))[:-1]
-            return partlabel, concatenate((keys, mat), axis=1).astype(int16)
-
-        # map over blocks
-        blocks = range(0, nblocks)
-        return self._sc.parallelize(blocks, len(blocks)).map(lambda b: readblock(b, files, blocksize))
-
-    def loadBinaryLocal(self, datafile, nvalues, nkeys, format, keyfile=None, method=None):
-        """
-        Load data from a local binary file
-        """
-
-        raise NotImplementedError
-
-    def loadArrayLocal(self, values, keys=None, method=None):
-        """
-        Load data from local arrays
-        """
-
-        raise NotImplementedError
-
-    def loadMatLocal(self, datafile, varname, keyfile=None, filter=None, minPartitions=1):
-        """
-        Load data from a local MAT file, from a variable containing
-        either a 1d or 2d matrix, into an RDD of (key,value) pairs.
-        Each row of the input matrix will become the value of each record.
-
-        Keys can be provided in an extra MAT file containing a variable 'keys'.
-        If not provided, linear indices will be used as keys.
-
-        Parameters
-        ----------
-        datafile : str
-            MAT file to import
-
-        varname : str
-            Variable name to load from MAT file
-
-        keyfile : str
-            MAT file to import with keys (must contain a variable 'keys')
-
-        filter : str, optional, default = None (no preprocessing)
-            Which preprocessing to perform
+        keyfile : str, optional, default = None
+            File containing the keys for each record as another 1d or 2d array
 
         minPartitions : Int, optional, default = 1
-            Number of partitions for data
-
+            Number of partitions for RDD
         """
 
-        data = loadmat(datafile)[varname]
-        if data.ndim > 2:
-            raise IOError('input data must be one or two dimensional')
-        if keyfile:
-            keys = map(lambda x: tuple(x), loadmat(keyfile)['keys'])
+        checkparams(inputformat, ['mat', 'npy'])
+
+        from thunder.rdds.fileio.seriesloader import SeriesLoader
+        loader = SeriesLoader(self._sc, minPartitions=minPartitions)
+
+        if inputformat.lower() == 'mat':
+            if varname is None:
+                raise Exception('Must provide variable name for loading MAT files')
+            data = loader.fromMatLocal(datafile, varname, keyfile)
         else:
-            keys = arange(1, shape(data)[0]+1)
+            data = loader.fromNpyLocal(datafile, keyfile)
 
-        rdd = self._sc.parallelize(zip(keys, data), minPartitions)
-
-        return preprocess(rdd, method=filter)
-
-
-def preprocess(data, method=None):
-
-    if method:
-        preprocessor = PreProcessor(method)
-        return data.mapValues(preprocessor.get)
-    else:
         return data
-
-FORMATS = {
-    'int16': int16,
-    'float': float
-}

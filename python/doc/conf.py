@@ -13,6 +13,8 @@
 
 import sys, os
 import sphinx_bootstrap_theme
+import matplotlib as mpl
+mpl.use("Agg")
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -26,13 +28,16 @@ import sphinx_bootstrap_theme
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
+sys.path.insert(0, os.path.abspath('sphinxext'))
 extensions = ['sphinx.ext.autodoc', 
 							'sphinx.ext.coverage', 
 							'sphinx.ext.pngmath', 
 							'sphinx.ext.mathjax', 
 							'sphinx.ext.viewcode',
 							'sphinx.ext.autosummary',
-							'numpydoc']
+							'numpydoc',
+              'ipython_directive',
+              'ipython_console_highlighting']
 
 # Generate the API documentation when building
 autosummary_generate = True
@@ -122,7 +127,8 @@ html_theme_options = {
   'source_link_position': "footer",
   'bootstrap_version': "3",
   'bootswatch_theme': "simplex",
-  'navbar_sidebarrel': False
+  'navbar_sidebarrel': False,
+  'navbar_links': [("Tutorials", "tutorials"),("API", "api")]
 }
 
 

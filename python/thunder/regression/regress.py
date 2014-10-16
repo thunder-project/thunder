@@ -1,69 +1,74 @@
 """
-Classes and standalone app for mass-unvariate regression
+Classes for mass-unvariate regression
 """
 
-import argparse
-from scipy.io import loadmat
-from numpy import sum, outer, inner, mean, shape, dot, transpose, concatenate, ones
-from scipy.linalg import inv
-from thunder.utils import ThunderContext
-from thunder.utils import save
+from numpy import sum, outer, inner, mean, shape, dot, transpose, concatenate, ones, asarray
+
+from thunder.rdds.series import Series
+from thunder.utils.common import loadmatvar, pinv
 
 
 class RegressionModel(object):
-    """Base class for loading and fitting regression models"""
+    """
+    Base class for loading and fitting regression models.
+
+    See also
+    --------
+    MeanRegressionModel : simple averaging via regression
+    LinearRegressionModel : linear regression
+    BilinearRegressionModel : bilinear regression
+    """
 
     @staticmethod
     def load(modelfile, regressmode, **opts):
         return REGRESSION_MODELS[regressmode](modelfile, **opts)
 
-    #TODO add a make method to construct regressors from parameters
-
     def get(self, y):
         pass
 
     def fit(self, data, comps=None):
-        """Fit mass univariate regression models
+        """
+        Fit mass univariate regression models
 
         Parameters
         ----------
-        data : RDD of (tuple, array) pairs
-            The data to fit
+        data : Series or a subclass (e.g. RowMatrix)
+            The data to fit regression models to, a collection of
+            key-value pairs where the keys are identifiers and the values are
+            one-dimensional arrays
 
         Returns
         -------
-        betas : RDD of (tuple, array) pairs
-            Fitted model parameters for each record
-
-        stats : RDD of (tuple, float) pairs
-            Model fit statistic for each record
-
-        resid : RDD of (tuple, array) pairs
-            Residuals for each record
+        result : Series
+            Fitted model parameters: betas, summary statistic, and residuals
         """
 
+        if not (isinstance(data, Series)):
+            raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')
+
         if comps is not None:
-            traj = data.map(lambda (_, v): v).map(
-                lambda x: outer(x, inner(self.get(x)[0] - mean(self.get(x)[0]), comps))).reduce(
-                    lambda x, y: x + y) / data.count()
+            traj = data.rdd.map(lambda (_, v): v).map(
+                lambda x: outer(x, inner(self.get(x)[0] - mean(self.get(x)[0]), comps))).sum() / data.count()
             return traj
         else:
-            result = data.mapValues(lambda x: self.get(x))
-            betas = result.mapValues(lambda x: x[0])
-            stats = result.mapValues(lambda x: x[1])
-            resid = result.mapValues(lambda x: x[2])
-            return betas, stats, resid
+            result = Series(data.rdd.mapValues(lambda x: self.get(x)),
+                            index=['betas', 'stats', 'resid']).__finalize__(data)
+            return result
 
 
 class MeanRegressionModel(RegressionModel):
-    """Class for regression in the form of simple averaging
-    via multiplication by a design matrix
+    """
+    Regression in the form of simple averaging.
+
+    Multiplies data by a binary design matrix.
 
     Parameters
     ----------
     modelfile : array, or string
         Array contaiing design matrix, or location of a MAT file
-        with name modelfile_X.mat containing a variable X
+
+    var : string, default = 'X'
+        Variable name if loading from a MAT file
 
     Attributes
     ----------
@@ -74,9 +79,9 @@ class MeanRegressionModel(RegressionModel):
         Pseudoinverse of the design matrix
     """
 
-    def __init__(self, modelfile):
+    def __init__(self, modelfile, var='X'):
         if type(modelfile) is str:
-            x = loadmat(modelfile + "_X.mat")['X']
+            x = loadmatvar(modelfile, var)
         else:
             x = modelfile
         x = x.astype(float)
@@ -96,17 +101,20 @@ class MeanRegressionModel(RegressionModel):
             r2 = 0
         else:
             r2 = 1 - sse / sst
-        return b, r2, resid
+        return asarray([b, r2, resid])
 
 
 class LinearRegressionModel(RegressionModel):
-    """Class for ordinary least squares linear regression
+    """
+    Ordinary least squares linear regression.
 
     Parameters
     ----------
     modelfile : array, or string
         Array contaiing design matrix, or location of a MAT file
-        with name modelfile_X.mat containing a variable X
+
+    var : string, default = 'X'
+        Variable name if loading from a MAT file
 
     Attributes
     ----------
@@ -117,13 +125,13 @@ class LinearRegressionModel(RegressionModel):
         Pseudoinverse of the design matrix
     """
 
-    def __init__(self, modelfile):
+    def __init__(self, modelfile, var='X'):
         if type(modelfile) is str:
-            x = loadmat(modelfile + "_X.mat")['X']
+            x = loadmatvar(modelfile, var)
         else:
             x = modelfile
         x = concatenate((ones((1, shape(x)[1])), x))
-        x_hat = dot(inv(dot(x, transpose(x))), x)
+        x_hat = pinv(x)
         self.x = x
         self.x_hat = x_hat
 
@@ -139,18 +147,21 @@ class LinearRegressionModel(RegressionModel):
             r2 = 0
         else:
             r2 = 1 - sse / sst
-        return b[1:], r2, resid
+        return asarray([b[1:], r2, resid])
 
 
 class BilinearRegressionModel(RegressionModel):
-    """Class for bilinear regression with two design matrices
+    """
+    Bilinear regression with two design matrices.
 
     Parameters
     ----------
-    modelfile : tuple(array), or string
-        Tuple of arrays each contaiing a design matrix,
-        or location of MAT files with names modelfile_X1.mat and
-        modelfile_X2.mat containing variables X1 and X2
+    modelfile : tuple(array), or tuple(string)
+        Tuple of arrays contaiing design matrices,
+        or locations of MAT files
+
+    var : list(string), default = ('X1','X2')
+        Variable names if loading from MAT files
 
     Attributes
     ----------
@@ -164,14 +175,14 @@ class BilinearRegressionModel(RegressionModel):
         Pseudoinverse of the first design matrix
     """
 
-    def __init__(self, modelfile):
+    def __init__(self, modelfile, var=('X1', 'X2')):
         if type(modelfile) is str:
-            x1 = loadmat(modelfile + "_X1.mat")['X1']
-            x2 = loadmat(modelfile + "_X2.mat")['X2']
+            x1 = loadmatvar(modelfile[0], var[0])
+            x2 = loadmatvar(modelfile[1], var[1])
         else:
             x1 = modelfile[0]
             x2 = modelfile[1]
-        x1_hat = dot(inv(dot(x1, transpose(x1))), x1)
+        x1_hat = pinv(x1)
         self.x1 = x1
         self.x2 = x2
         self.x1_hat = x1_hat
@@ -187,7 +198,7 @@ class BilinearRegressionModel(RegressionModel):
             b1_hat += 1E-06
         x3 = self.x2 * b1_hat
         x3 = concatenate((ones((1, shape(x3)[1])), x3))
-        x3_hat = dot(inv(dot(x3, transpose(x3))), x3)
+        x3_hat = pinv(x3)
         b2 = dot(x3_hat, y)
         predic = dot(b2, x3)
         resid = y - predic
@@ -198,30 +209,10 @@ class BilinearRegressionModel(RegressionModel):
         else:
             r2 = 1 - sse / sst
 
-        return b2[1:], r2, resid
+        return asarray([b2[1:], r2, resid])
 
 REGRESSION_MODELS = {
     'linear': LinearRegressionModel,
     'bilinear': BilinearRegressionModel,
     'mean': MeanRegressionModel
 }
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="fit a regression model")
-    parser.add_argument("datafile", type=str)
-    parser.add_argument("modelfile", type=str)
-    parser.add_argument("outputdir", type=str)
-    parser.add_argument("regressmode", choices=("mean", "linear", "bilinear"), help="form of regression")
-    parser.add_argument("--preprocess", choices=("raw", "dff", "sub", "dff-highpass", "dff-percentile"
-                        "dff-detrendnonlin", "dff-detrend-percentile"), default="raw", required=False)
-
-    args = parser.parse_args()
-
-    tsc = ThunderContext.start(appName="regress")
-
-    data = tsc.loadText(args.datafile, args.preprocess)
-    stats, betas, resid = RegressionModel.load(args.modelfile, args.regressmode).fit(data)
-
-    outputdir = args.outputdir + "-regress"
-    save(stats, outputdir, "stats", "matlab")
-    save(betas, outputdir, "betas", "matlab")

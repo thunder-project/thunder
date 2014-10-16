@@ -4,6 +4,9 @@ Utilities for generating example datasets
 
 from numpy import array, random, shape, floor, dot, linspace, sin, sign, c_
 
+from thunder.rdds.matrices import RowMatrix
+from thunder.rdds.series import Series
+
 
 class DataSets(object):
 
@@ -19,6 +22,7 @@ class DataSets(object):
             raise NotImplementedError("no dataset generator for '%s'" % name)
 
 
+# eliminate this
 def appendkeys(data):
 
     data = array(data)
@@ -37,7 +41,7 @@ class KMeansData(DataSets):
         centers = random.randn(k, ndims)
         gen_func = lambda i: centers[int(floor(random.rand(1, 1) * k))] + noise*random.rand(ndims)
         data_local = map(gen_func, range(0, nrecords))
-        data = self.sc.parallelize(appendkeys(data_local), npartitions)
+        data = Series(self.sc.parallelize(appendkeys(data_local), npartitions))
         if self.returnparams is True:
             return data, centers
         else:
@@ -52,7 +56,7 @@ class PCAData(DataSets):
         v = random.randn(k, ncols)
         a = dot(u, v)
         a += random.randn(shape(a)[0], shape(a)[1])
-        data = self.sc.parallelize(appendkeys(a), npartitions)
+        data = RowMatrix(self.sc.parallelize(appendkeys(a), npartitions))
         if self.returnparams is True:
             return data, u, v
         else:
@@ -71,7 +75,7 @@ class ICAData(DataSets):
         s /= s.std(axis=0)
         a = array([[1, 1], [0.5, 2]])
         x = dot(s, a.T)
-        data = self.sc.parallelize(appendkeys(x), npartitions)
+        data = RowMatrix(self.sc.parallelize(appendkeys(x), npartitions))
         if self.returnparams is True:
             return data, s, a
         else:

@@ -1,0 +1,12 @@
+{
+  "valuetype": "uint8", 
+  "nkeys": 3, 
+  "keytype": "int16", 
+  "dims": [
+    76, 
+    87, 
+    2
+  ], 
+  "nvalues": 240, 
+  "input": "/Users/freemanj11/Desktop/bin"
+}
