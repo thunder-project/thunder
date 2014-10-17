@@ -445,7 +445,11 @@ class BotoS3ReadFileHandle(object):
         self._offset = 0
 
     def close(self):
-        self._key.close(fast=True)
+        try:
+            self._key.close(fast=True)
+        except TypeError:
+            # workaround for early versions of boto that don't have the 'fast' keyword
+            self._key.close()
         self._closed = True
 
     def read(self, size=-1):
