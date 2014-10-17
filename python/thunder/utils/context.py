@@ -416,7 +416,7 @@ class ThunderContext():
             raise Exception("must be running on EC2 to load this example data sets")
         elif dataset == "zebrafish-optomotor-response":
             path = 'zebrafish.datasets/optomotor-response/1/'
-            data = self.loadSeries("s3n://" + path + 'data/dat_plane*.txt', inputformat='text', minPartitions=1000)
+            data = self.loadSeries("s3n://" + path + 'data/dat_plane*.txt', inputformat='text', minPartitions=1000, nkeys=3)
             paramfile = self._sc.textFile("s3n://" + path + "params.json")
             params = json.loads(paramfile.first())
             modelfile = asarray(params['trials'])
