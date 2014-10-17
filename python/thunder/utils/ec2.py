@@ -36,6 +36,10 @@ def install_thunder(master, opts):
     ssh(master, opts, "rm -rf thunder && git clone https://github.com/freeman-lab/thunder.git")
     ssh(master, opts, "chmod u+x thunder/python/bin/build")
     ssh(master, opts, "thunder/python/bin/build")
+    # copy local data examples to all workers
+    ssh(master, opts, "yum install -y pssh")
+    ssh(master, opts, "pssh -h /root/spark-ec2/slaves mkdir -p /root/thunder/python/thunder/utils/data/")
+    ssh(master, opts, "~/spark-ec2/copy-dir /root/thunder/python/thunder/utils/data/")
     # install pip
     ssh(master, opts, "wget http://pypi.python.org/packages/source/p/pip/pip-1.1.tar.gz"
                       "#md5=62a9f08dd5dc69d76734568a6c040508")
