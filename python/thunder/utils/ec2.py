@@ -7,7 +7,6 @@ loads an example data set
 from boto import ec2
 import sys
 import os
-import time
 import random
 import subprocess
 from sys import stderr
@@ -78,7 +77,8 @@ def install_thunder(master, opts):
 
 def setup_cluster(conn, master_nodes, slave_nodes, opts, deploy_ssh_key):
     """Modified version of the setup_cluster function (borrowed from spark-ec.py)
-    in order to manually set the folder with the deploy code"""
+    in order to manually set the folder with the deploy code
+    """
     master = master_nodes[0].public_dns_name
     if deploy_ssh_key:
         print "Generating cluster's SSH key on master..."
@@ -95,7 +95,7 @@ def setup_cluster(conn, master_nodes, slave_nodes, opts, deploy_ssh_key):
             ssh_write(slave.public_dns_name, opts, ['tar', 'x'], dot_ssh_tar)
 
     modules = ['spark', 'shark', 'ephemeral-hdfs', 'persistent-hdfs',
-             'mapreduce', 'spark-standalone', 'tachyon']
+               'mapreduce', 'spark-standalone', 'tachyon']
 
     if opts.hadoop_major_version == "1":
         modules = filter(lambda x: x != "mapreduce", modules)
@@ -122,21 +122,20 @@ if __name__ == "__main__":
     parser.add_option("-i", "--identity-file", help="SSH private key file to use for logging into instances")
     parser.add_option("-r", "--region", default="us-east-1", help="EC2 region zone to launch instances "
                                                                   "in (default: us-east-1)")
-    parser.add_option("-t", "--instance-type", default="m3.2xlarge", help="Type of instance to launch (default: m3.2xlarge)."
-                                                                        " WARNING: must be 64-bit; small instances "
-                                                                        "won't work")
+    parser.add_option("-t", "--instance-type", default="m3.2xlarge",
+                      help="Type of instance to launch (default: m3.2xlarge)." +
+                           " WARNING: must be 64-bit; small instances won't work")
     parser.add_option("-u", "--user", default="root", help="User name for cluster (default: root)")
-    parser.add_option(
-        "-w", "--wait", type="int", default=160,
-        help="Seconds to wait for nodes to start (default: 160)")
+    parser.add_option("-w", "--wait", type="int", default=160,
+                      help="Seconds to wait for nodes to start (default: 160)")
     parser.add_option("-z", "--zone", default="", help="Availability zone to launch instances in, or 'all' to spread "
                                                        "slaves across multiple (an additional $0.01/Gb for "
                                                        "bandwidth between zones applies)")
     parser.add_option("--spot-price", metavar="PRICE", type="float",
                       help="If specified, launch slaves as spot instances with the given " +
                            "maximum price (in dollars)")
-    parser.add_option("--resume", default=False, action="store_true", help="Resume installation on a previously "
-                                                        "launched cluster (for debugging)")
+    parser.add_option("--resume", default=False, action="store_true",
+                      help="Resume installation on a previously launched cluster (for debugging)")
 
     (opts, args) = parser.parse_args()
     if len(args) != 2:
@@ -156,7 +155,7 @@ if __name__ == "__main__":
         if opts.zone == "":
             opts.zone = random.choice(conn.get_all_zones()).name
 
-        opts.ami = get_spark_ami(opts) #"ami-3ecd0c56"
+        opts.ami = get_spark_ami(opts)  # "ami-3ecd0c56"
         opts.ebs_vol_size = 0
         opts.master_instance_type = ""
         opts.hadoop_major_version = "1"
@@ -214,5 +213,3 @@ if __name__ == "__main__":
 
         else:
             raise NotImplementedError("action: " + action + "not recognized")
-
-
