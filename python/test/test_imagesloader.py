@@ -74,8 +74,9 @@ class TestImagesFileLoaders(PySparkTestCase):
         tifimages = ImagesLoader(self.sc).fromMultipageTif(imagepath, self.sc).collect()
 
         expectednum = 1
-        expectedshape = (70, 75, 4*3)  # 4 channel tifs of RGBalpha times 3 concatenated pages
-        expectedsums = [1282192, 1261328, 1241520]  # 3 images have increasing #s of black dots, so lower luminance overall
+        expectedshape = (70, 75, 3)  # 3 concatenated pages, each with single luminance channel
+        # 3 images have increasing #s of black dots, so lower luminance overall
+        expectedsums = [1140006, 1119161, 1098917]
         expectedkey = 0
         #self._evaluateMultipleImages(tifimages, expectednum, expectedshape, expectedkeys, expectedsums)
 
@@ -84,6 +85,7 @@ class TestImagesFileLoaders(PySparkTestCase):
         assert_equals(expectedkey, tifimage[0], "Expected key %s, got %s" % (str(expectedkey), str(tifimage[0])))
         assert_true(isinstance(tifimage[1], ndarray),
                     "Value type error; expected image value to be numpy ndarray, was " + str(type(tifimage[1])))
+        assert_equals('uint8', str(tifimage[1].dtype))
         assert_equals(expectedshape, tifimage[1].shape)
-        for channelidx in xrange(0, expectedshape[2], 4):
-            assert_equals(expectedsums[channelidx/4], tifimage[1][:, :, channelidx].flatten().sum())
+        for channelidx in xrange(0, expectedshape[2]):
+            assert_equals(expectedsums[channelidx], tifimage[1][:, :, channelidx].flatten().sum())
