@@ -30,6 +30,73 @@ def checkparams(param, opts):
         raise ValueError("Option must be one of %s, got %s" % (str(opts)[1:-1], param))
 
 
+def pil_to_array(pilImage):
+    """
+    Load a PIL image and return it as a numpy array.  Only supports greyscale images;
+    the return value will be an M x N array.
+
+    Adapted from matplotlib's pil_to_array, copyright 2009-2012 by John D Hunter.
+    """
+    def toarray(im_, dtype):
+        """Return a 1D array of dtype."""
+        from numpy import fromstring
+        # Pillow wants us to use "tobytes"
+        if hasattr(im_, 'tobytes'):
+            x_str = im_.tobytes('raw', im_.mode)
+        else:
+            x_str = im_.tostring('raw', im_.mode)
+        x_ = fromstring(x_str, dtype)
+        return x_
+
+    if pilImage.mode in ('RGBA', 'RGBX', 'RGB'):
+        raise ValueError("Thunder only supports luminance / greyscale images; got image mode: '%s'" % pilImage.mode)
+    if pilImage.mode == 'L':
+        im = pilImage  # no need to luminance images
+        # return MxN luminance array
+        x = toarray(im, 'uint8')
+        x.shape = im.size[1], im.size[0]
+        return x
+    elif pilImage.mode.startswith('I;16'):
+        # return MxN luminance array of uint16
+        im = pilImage
+        if im.mode.endswith('B'):
+            x = toarray(im, '>u2')
+        else:
+            x = toarray(im, '<u2')
+        x.shape = im.size[1], im.size[0]
+        return x.astype('=u2')
+    elif pilImage.mode.startswith('I;32'):
+        # return MxN luminance array of uint32
+        im = pilImage
+        if im.mode.endswith('B'):
+            x = toarray(im, '>u4')
+        else:
+            x = toarray(im, '<u4')
+        x.shape = im.size[1], im.size[0]
+        return x.astype('=u4')
+    elif pilImage.mode.startswith('F;16'):
+        # return MxN luminance array of float16
+        im = pilImage
+        if im.mode.endswith('B'):
+            x = toarray(im, '>f2')
+        else:
+            x = toarray(im, '<f2')
+        x.shape = im.size[1], im.size[0]
+        return x.astype('=f2')
+    elif pilImage.mode.startswith('F;32'):
+        # return MxN luminance array of float32
+        im = pilImage
+        if im.mode.endswith('B'):
+            x = toarray(im, '>f4')
+        else:
+            x = toarray(im, '<f4')
+        x.shape = im.size[1], im.size[0]
+        return x.astype('=f4')
+    else:  # try to convert to an rgba image
+        raise ValueError("Thunder only supports luminance / greyscale images; got unknown image mode: '%s'"
+                         % pilImage.mode)
+
+
 def parseMemoryString(memstr):
     """Returns the size in bytes of memory represented by a Java-style 'memory string'
 

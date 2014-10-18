@@ -129,7 +129,7 @@ class ImagesLoader(object):
             Image = None
             raise ImportError("fromMultipageTif requires a successful 'from PIL import Image'; " +
                               "the PIL/pillow library appears to be missing or broken.", e)
-        from matplotlib.image import pil_to_array
+        from thunder.utils.common import pil_to_array
 
         def multitifReader(buf):
             fbuf = BytesIO(buf)

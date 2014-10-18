@@ -306,7 +306,7 @@ class SeriesLoader(object):
         import thunder.rdds.fileio.multitif as multitif
         import itertools
         from PIL import Image
-        from matplotlib.image import pil_to_array
+        from thunder.utils.common import pil_to_array
         import io
 
         datapath = self.__normalizeDatafilePattern(datapath, ext)
