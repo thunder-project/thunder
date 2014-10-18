@@ -67,6 +67,11 @@ def install_thunder(master, opts):
     access, secret = get_s3_keys()
     filled = configstring.replace('ACCESS', access).replace('SECRET', secret)
     ssh(master, opts, "sed -i'f' 's,.*</configuration>.*,"+filled+"&,' /root/ephemeral-hdfs/conf/core-site.xml")
+    # add AWS credentials to ~/.boto
+    credentialstring = "[Credentials]\naws_access_key_id = ACCESS\naws_secret_access_key = SECRET\n"
+    credentialsfilled = credentialstring.replace('ACCESS', access).replace('SECRET', secret)
+    ssh(master, opts, "printf '"+credentialsfilled+"' > /root/.boto")
+    ssh(master, opts, "pscp.pssh -h /root/spark-ec2/slaves /root/.boto /root/.boto")
     # configure requester pays
     ssh(master, opts, "touch /root/spark/conf/jets3t.properties")
     ssh(master, opts, "echo 'httpclient.requester-pays-buckets-enabled = true' >> /root/spark/conf/jets3t.properties")
