@@ -499,18 +499,19 @@ class Series(Data):
             A local numpy array with the subset of points
         """
         from numpy.linalg import norm
+        from numpy.random import randint
 
-        stat_dict = {'std': std,
-                     'norm': norm}
+        stat_dict = {'std': std, 'norm': norm}
+        seed = randint(0, 2 ** 32 - 1)
 
         if thresh is not None:
             func = stat_dict[stat]
-            result = array(self.rdd.values().filter(lambda x: func(x) > thresh).takeSample(False, nsamples))
+            result = array(self.rdd.values().filter(lambda x: func(x) > thresh).takeSample(False, nsamples, seed=seed))
         else:
-            result = array(self.rdd.values().takeSample(False, nsamples))
+            result = array(self.rdd.values().takeSample(False, nsamples, seed=seed))
 
         if size(result) == 0:
-            raise Exception('No records found, try a different threshold?')
+            raise Exception('No records found, maybe threshold of %g is too high, try changing it?' % thresh)
 
         return result
 
