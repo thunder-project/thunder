@@ -331,7 +331,8 @@ class ThunderContext():
                 loader.fromStack(datapath, dims, startidx=startidx, stopidx=stopidx)\
                     .saveAsBinarySeries(outputdirpath, blockSize=blocksize, overwrite=overwrite)
             else:
-                loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)
+                loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)\
+                    .saveAsBinarySeries(outputdirpath, blockSize=blocksize, overwrite=overwrite)
         else:
             from thunder.rdds.fileio.seriesloader import SeriesLoader
             loader = SeriesLoader(self._sc)
