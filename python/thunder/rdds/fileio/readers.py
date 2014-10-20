@@ -249,22 +249,6 @@ class _BotoS3Client(object):
         """
         if not _have_boto:
             raise ValueError("The boto package does not appear to be available; boto is required for BotoS3Reader")
-    #     if (not 'AWS_ACCESS_KEY_ID' in os.environ) or (not 'AWS_SECRET_ACCESS_KEY' in os.environ):
-    #         raise ValueError("The environment variables 'AWS_ACCESS_KEY_ID' and 'AWS_SECRET_ACCESS_KEY' " +
-    #                          "must be set in order to read from s3")
-    #
-    #     # save keys in this object and serialize out to workers to prevent having to set env vars separately on all
-    #     # nodes in the cluster
-    #     self._access_key = os.environ['AWS_ACCESS_KEY_ID']
-    #     self._secret_key = os.environ['AWS_SECRET_ACCESS_KEY']
-    #
-    # @property
-    # def accessKey(self):
-    #     return self._access_key
-    #
-    # @property
-    # def secretKey(self):
-    #     return self._secret_key
 
 
 class BotoS3ParallelReader(_BotoS3Client):
@@ -278,7 +262,6 @@ class BotoS3ParallelReader(_BotoS3Client):
     def _listFiles(self, datapath, startidx=None, stopidx=None):
         parse = _BotoS3Client.parseS3Query(datapath)
 
-        #conn = boto.connect_s3(aws_access_key_id=self.accessKey, aws_secret_access_key=self.secretKey)
         conn = boto.connect_s3()
         bucket = conn.get_bucket(parse[0])
         keys = _BotoS3Client.retrieveKeys(bucket, parse[1], prefix=parse[2], postfix=parse[3])
@@ -300,16 +283,12 @@ class BotoS3ParallelReader(_BotoS3Client):
         if not keynamelist:
             raise FileNotFoundError("No S3 objects found for '%s'" % datapath)
 
-        # access_key = self.accessKey
-        # secret_key = self.secretKey
 
         def readSplitFromS3(kvIter):
-            # conn = boto.connect_s3(aws_access_key_id=access_key, aws_secret_access_key=secret_key)
             conn = boto.connect_s3()
             bucket = conn.get_bucket(bucketname)
             for kv in kvIter:
                 idx, keyname = kv
-                #key = bucket.get_key(keyname, validate=False)
                 key = bucket.get_key(keyname)
                 buf = key.get_contents_as_string()
                 yield idx, buf
@@ -363,7 +342,6 @@ class BotoS3FileReader(_BotoS3Client):
     """
     def __getMatchingKeys(self, datapath, filename=None):
         parse = _BotoS3Client.parseS3Query(datapath)
-        # conn = boto.connect_s3(aws_access_key_id=self.accessKey, aws_secret_access_key=self.secretKey)
         conn = boto.connect_s3()
         bucketname = parse[0]
         keyname = parse[1]

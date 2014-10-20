@@ -82,7 +82,6 @@ class _BotoS3Writer(_BotoS3Client):
 
         This is expected to end up being called once for each spark worker.
         """
-        # conn = boto.connect_s3(self.accessKey, self.secretKey)
         conn = boto.connect_s3()
         parsed = _BotoS3Client.parseS3Query(datapath)
         bucketname = parsed[0]
