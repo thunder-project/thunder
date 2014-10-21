@@ -459,7 +459,7 @@ class Series(Data):
         else:
             out = self
 
-        result = out.rdd.map(lambda (_, v): float16(v)).collect()
+        result = out.rdd.map(lambda (_, v): v).collect()
         nout = size(result[0])
 
         if sorting is True:
