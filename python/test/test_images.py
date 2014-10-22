@@ -56,6 +56,7 @@ class TestImages(PySparkTestCase):
 
         seriesvals = series.collect()
         seriesary = series.pack()
+        seriesary_noxpose = series.pack(transpose=False)
 
         # check ordering of keys
         assert_equals((0, 0), seriesvals[0][0])  # first key
@@ -76,6 +77,7 @@ class TestImages(PySparkTestCase):
 
         # check that packing returns original array
         assert_true(array_equal(ary, seriesary))
+        assert_true(array_equal(ary.T, seriesary_noxpose))
 
     def test_threeDArrayToSeriesWithPack(self):
         ary = arange(24, dtype=dtype('int16')).reshape((2, 4, 3))
