@@ -77,7 +77,10 @@ class ImageBlocks(Data):
         # key will be x, y, z for start of block
         # val will be single blockvalue array data with origshape and origslices in dimensions (t, x, y, z)
         # val array data will be t by (spatial block size)
-        return self.rdd.groupByKey().mapValues(lambda v: ImageBlockValue.fromPlanarBlocks(v, 0))
+
+        # block keys are in numpy convention (fastest changing last) so a straight ascending sort should
+        # do the right thing here. sort must come after group, b/c group will mess with ordering.
+        return self.rdd.groupByKey().sortByKey(ascending=True).mapValues(lambda v: ImageBlockValue.fromPlanarBlocks(v, 0))
 
 
 class ImageBlockValue(object):

@@ -34,7 +34,8 @@ class TestImages(PySparkTestCase):
     def evaluate_series(self, arys, series, sz):
         assert_equals(sz, len(series))
         for serieskey, seriesval in series:
-            expectedval = array([ary[serieskey] for ary in arys], dtype='int16')
+            numpykey = serieskey[::-1]
+            expectedval = array([ary[numpykey] for ary in arys], dtype='int16')
             assert_true(array_equal(expectedval, seriesval))
 
     def test_toSeries(self):
@@ -80,7 +81,7 @@ class TestImages(PySparkTestCase):
         ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        series = image.toSeries(splitsPerDim=(2, 2))
+        series = image.toSeries(splitsPerDim=(2, 1))
 
         seriesvals = series.collect()
         seriesary = series.pack()
@@ -104,6 +105,52 @@ class TestImages(PySparkTestCase):
 
         # check that packing returns original array
         assert_true(array_equal(ary, seriesary))
+
+    def test_toSeriesWithInefficientSplitAndSortedPack(self):
+        ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
+
+        image = ImagesLoader(self.sc).fromArrays(ary)
+        series = image.toSeries(splitsPerDim=(1, 2))
+
+        seriesvals = series.collect()
+        seriesary = series.pack(sorting=True)
+
+        # check ordering of keys
+        assert_equals((0, 0), seriesvals[0][0])  # first key
+        assert_equals((1, 0), seriesvals[1][0])  # second key
+        assert_equals((0, 1), seriesvals[2][0])
+        assert_equals((1, 1), seriesvals[3][0])
+        # end of first block
+        # beginning of second block
+        assert_equals((2, 0), seriesvals[4][0])
+        assert_equals((3, 0), seriesvals[5][0])
+        assert_equals((2, 1), seriesvals[6][0])
+        assert_equals((3, 1), seriesvals[7][0])
+
+        # check dimensions tuple is reversed from numpy shape
+        assert_equals(ary.shape[::-1], series.dims.count)
+
+        # check that values are in expected order
+        collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()
+        assert_true(array_equal(ary[:, :2].ravel(), collectedvals[:4]))  # first block
+        assert_true(array_equal(ary[:, 2:4].ravel(), collectedvals[4:]))  # second block
+
+        # check that packing returns original array (after sort)
+        assert_true(array_equal(ary, seriesary))
+
+    def test_toBlocksWithSplit(self):
+        ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
+
+        image = ImagesLoader(self.sc).fromArrays(ary)
+        blocks = image._scatterToBlocks(blocksPerDim=(2, 1))
+        groupedblocks = blocks._groupIntoSeriesBlocks()
+
+        # collectedblocks = blocks.collect()
+        collectedgroupedblocks = groupedblocks.collect()
+        assert_equals((0, 0), collectedgroupedblocks[0][0])
+        assert_true(array_equal(arange(0, 4, dtype=dtype('int16')), collectedgroupedblocks[0][1].values.ravel()))
+        assert_equals((1, 0), collectedgroupedblocks[1][0])
+        assert_true(array_equal(arange(4, 8, dtype=dtype('int16')), collectedgroupedblocks[1][1].values.ravel()))
 
     def test_toSeriesBySlices(self):
         narys = 3
@@ -221,8 +268,9 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
                     nkeys += 1
                     assert_equals(narys_, len(vals))
                     for validx, val in enumerate(vals):
-                        assert_equals(arys[validx][keys], val, "Expected %g, got %g, for test %d %s" %
-                                      (arys[validx][keys], val, testidx, paramstr))
+                        numpykeys = keys[::-1]
+                        assert_equals(arys[validx][numpykeys], val, "Expected %g, got %g, for test %d %s" %
+                                      (arys[validx][numpykeys], val, testidx, paramstr))
                 assert_equals(expectednkeys, nkeys)
 
         confname = os.path.join(outdir, "conf.json")
