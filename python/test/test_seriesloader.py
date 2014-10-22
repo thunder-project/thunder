@@ -2,10 +2,20 @@ import json
 from numpy import allclose, arange, array, array_equal, dtype
 import os
 import struct
+import unittest
 from nose.tools import assert_equals, assert_true, assert_almost_equal
 
 from thunder.rdds.fileio.seriesloader import SeriesLoader
+from thunder.utils.common import pil_to_array
 from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
+
+_have_image = False
+try:
+    from PIL import Image
+    _have_image = True
+except ImportError:
+    # PIL not available; skip tests that require it
+    Image = None
 
 
 class SeriesBinaryTestData(object):
@@ -111,6 +121,13 @@ class SeriesBinaryTestData(object):
 
 
 class TestSeriesLoader(PySparkTestCase):
+    @staticmethod
+    def _findTestResourcesDir(resourcesdirname="resources"):
+        testdirpath = os.path.dirname(os.path.realpath(__file__))
+        testresourcesdirpath = os.path.join(testdirpath, resourcesdirname)
+        if not os.path.isdir(testresourcesdirpath):
+            raise IOError("Test resources directory "+testresourcesdirpath+" not found")
+        return testresourcesdirpath
 
     def test_fromArrays(self):
         ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
@@ -167,6 +184,32 @@ class TestSeriesLoader(PySparkTestCase):
         # check that packing returns concatenation of input arrays, with time as first dimension
         assert_true(array_equal(ary, seriesary[0]))
         assert_true(array_equal(ary2, seriesary[1]))
+
+    @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
+    def test_fromMultipageTif(self):
+        testresourcesdir = TestSeriesLoader._findTestResourcesDir()
+        imagepath = os.path.join(testresourcesdir, "multilayer_tif", "dotdotdot_lzw.tif")
+
+        testimg_pil = Image.open(imagepath)
+        testimg_arys = list()
+        testimg_arys.append(pil_to_array(testimg_pil))
+        testimg_pil.seek(1)
+        testimg_arys.append(pil_to_array(testimg_pil))
+        testimg_pil.seek(2)
+        testimg_arys.append(pil_to_array(testimg_pil))
+
+        series = SeriesLoader(self.sc).fromMultipageTif(imagepath)
+        series_ary = series.pack()
+
+        assert_equals((75, 70, 3), series.dims.count)
+        #assert_equals((70, 75, 3), series_ary.shape)
+        assert_equals((3, 70, 75), series_ary.shape)
+        # assert_true(np.array_equal(testimg_arys[0], range_series_noshuffle_ary[:, :, 0]))
+        # assert_true(np.array_equal(testimg_arys[1], range_series_noshuffle_ary[:, :, 1]))
+        # assert_true(np.array_equal(testimg_arys[2], range_series_noshuffle_ary[:, :, 2]))
+        assert_true(array_equal(testimg_arys[0], series_ary[0]))
+        assert_true(array_equal(testimg_arys[1], series_ary[1]))
+        assert_true(array_equal(testimg_arys[2], series_ary[2]))
 
 
 class TestSeriesBinaryLoader(PySparkTestCaseWithOutputDir):

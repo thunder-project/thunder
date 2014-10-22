@@ -313,7 +313,11 @@ class SeriesLoader(object):
             pass
 
         # get dimensions
-        dims = (firstifd.getImageWidth(), firstifd.getImageHeight(), len(tiffheaders.ifds))
+        #dims = (firstifd.getImageHeight(), firstifd.getImageWidth(), len(tiffheaders.ifds))
+
+        npages = len(tiffheaders.ifds)
+        height = firstifd.getImageHeight()
+        width = firstifd.getImageWidth()
 
         # get datatype
         bitspersample = firstifd.getBitsPerSample()
@@ -332,7 +336,7 @@ class SeriesLoader(object):
                              % sampleformat)
         datatype = dtstr+str(bitspersample)
 
-        return dims, datatype
+        return height, width, npages, datatype
 
     def _getSeriesBlocksFromMultiTif(self, datapath, ext="tif", blockSize="150M",
                                      startidx=None, stopidx=None):
@@ -352,11 +356,11 @@ class SeriesLoader(object):
         filenames = selectByStartAndStopIndices(filenames, startidx, stopidx)
         ntimepoints = len(filenames)
 
-        dims, datatype = SeriesLoader.__readMetadataFromFirstPageOfMultiTif(reader, filenames[0])
+        height, width, npages, datatype = SeriesLoader.__readMetadataFromFirstPageOfMultiTif(reader, filenames[0])
         pixelbytesize = dtype(datatype).itemsize
 
         # intialize at one block per plane
-        bytesperplane = dims[0] * dims[1] * pixelbytesize * ntimepoints
+        bytesperplane = height * width * pixelbytesize * ntimepoints
         bytesperblock = bytesperplane
         blocksperplane = 1
         # keep dividing while cutting our size in half still leaves us bigger than the requested size
@@ -365,10 +369,10 @@ class SeriesLoader(object):
             bytesperblock /= 2
             blocksperplane *= 2
 
-        blocklen = max((dims[0] * dims[1]) / blocksperplane, 1)  # integer division
+        blocklen = max((height * width) / blocksperplane, 1)  # integer division
 
         # keys will be planeidx, blockidx:
-        keys = list(itertools.product(xrange(dims[2]), xrange(blocksperplane)))
+        keys = list(itertools.product(xrange(npages), xrange(blocksperplane)))
 
         def readblockfromtif(pidxbidx_):
             planeidx, blockidx = pidxbidx_
@@ -407,6 +411,12 @@ class SeriesLoader(object):
 
         # map over blocks
         rdd = self.sc.parallelize(keys, len(keys)).flatMap(readblockfromtif)
+        # hack for returned dimensions:
+        if npages == 1:
+            dims = (height, width, npages)
+        else:
+            dims = (npages, height, width)
+
         metadata = (dims, ntimepoints, datatype)
         return rdd, metadata
 
