@@ -29,10 +29,14 @@ class Dimensions(object):
         return tuple(map(lambda x: x + 1, map(subtract, self.max, self.min)))
 
     @classmethod
-    def fromNumpyDimsTuple(cls, tup):
-        """Generates a Dimensions object equivalent to the passed numpy-style array.dims tuple
+    def fromNumpyShapeTuple(cls, tup):
+        """Generates a Dimensions object equivalent to the passed numpy-style array.shape tuple.
+
+        The resulting dims.count will be reversed from the order of the numpy shape tuple, reflecting the
+        "fastest-first" (Matlab/Fortran, row-major) indexing convention used in Thunder. Numpy arrays internally
+        use C-style column-major indexing.
         """
-        mx = [v-1 for v in tup]
+        mx = [v-1 for v in reversed(tup)]
         mn = [0] * len(tup)
         return cls(values=[mx, mn], n=len(tup))
 

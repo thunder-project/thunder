@@ -1,7 +1,8 @@
 from numpy import ndarray, array, sum, mean, std, size, arange, \
-    polyfit, polyval, percentile, float16, asarray, maximum, zeros, corrcoef, where
+    polyfit, polyval, percentile, asarray, maximum, zeros, corrcoef, where
 
 from thunder.rdds.data import Data
+from thunder.rdds.keys import Dimensions
 from thunder.utils.common import checkparams, loadmatvar
 
 
@@ -39,9 +40,8 @@ class Series(Data):
     def __init__(self, rdd, index=None, dims=None):
         super(Series, self).__init__(rdd)
         self._index = index
-        if isinstance(dims, (tuple, list)):
-            from thunder.rdds.keys import Dimensions
-            self._dims = Dimensions.fromNumpyDimsTuple(dims)
+        if dims and not isinstance(dims, Dimensions):
+            raise TypeError("Series dims parameter must be Dimensions object, got: %s" % type(dims))
         else:
             self._dims = dims
 
