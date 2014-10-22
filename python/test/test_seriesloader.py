@@ -1,11 +1,11 @@
 import json
-from numpy import dtype, array, allclose, arange
+from numpy import allclose, arange, array, array_equal, dtype
 import os
 import struct
 from nose.tools import assert_equals, assert_true, assert_almost_equal
 
 from thunder.rdds.fileio.seriesloader import SeriesLoader
-from test_utils import PySparkTestCaseWithOutputDir
+from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
 
 
 class SeriesBinaryTestData(object):
@@ -108,6 +108,65 @@ class SeriesBinaryTestData(object):
         cls._validateLengths(keys)
         cls._validateLengths(vals)
         return cls(keys, vals, keydtype, valdtype)
+
+
+class TestSeriesLoader(PySparkTestCase):
+
+    def test_fromArrays(self):
+        ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
+
+        series = SeriesLoader(self.sc).fromArrays(ary)
+
+        seriesvals = series.collect()
+        seriesary = series.pack()
+
+        # check ordering of keys
+        assert_equals((0, 0), seriesvals[0][0])  # first key
+        assert_equals((1, 0), seriesvals[1][0])  # second key
+        assert_equals((2, 0), seriesvals[2][0])
+        assert_equals((3, 0), seriesvals[3][0])
+        assert_equals((0, 1), seriesvals[4][0])
+        assert_equals((1, 1), seriesvals[5][0])
+        assert_equals((2, 1), seriesvals[6][0])
+        assert_equals((3, 1), seriesvals[7][0])
+
+        # check dimensions tuple is reversed from numpy shape
+        assert_equals(ary.shape[::-1], series.dims.count)
+
+        # check that values are in original order
+        collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()
+        assert_true(array_equal(ary.ravel(), collectedvals))
+
+        # check that packing returns original array
+        assert_true(array_equal(ary, seriesary))
+
+    def test_fromMultipleArrays(self):
+        ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
+        ary2 = arange(8, 16, dtype=dtype('int16')).reshape((2, 4))
+
+        series = SeriesLoader(self.sc).fromArrays([ary, ary2])
+
+        seriesvals = series.collect()
+        seriesary = series.pack()
+
+        # check ordering of keys
+        assert_equals((0, 0), seriesvals[0][0])  # first key
+        assert_equals((1, 0), seriesvals[1][0])  # second key
+        assert_equals((3, 0), seriesvals[3][0])
+        assert_equals((0, 1), seriesvals[4][0])
+        assert_equals((3, 1), seriesvals[7][0])
+
+        # check dimensions tuple is reversed from numpy shape
+        assert_equals(ary.shape[::-1], series.dims.count)
+
+        # check that values are in original order, with subsequent point concatenated in values
+        collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16'))
+        assert_true(array_equal(ary.ravel(), collectedvals[:, 0]))
+        assert_true(array_equal(ary2.ravel(), collectedvals[:, 1]))
+
+        # check that packing returns concatenation of input arrays, with time as first dimension
+        assert_true(array_equal(ary, seriesary[0]))
+        assert_true(array_equal(ary2, seriesary[1]))
 
 
 class TestSeriesBinaryLoader(PySparkTestCaseWithOutputDir):

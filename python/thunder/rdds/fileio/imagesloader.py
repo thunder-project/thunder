@@ -2,7 +2,7 @@
 """
 from matplotlib.pyplot import imread
 from io import BytesIO
-from numpy import frombuffer, prod, dstack
+from numpy import dstack, frombuffer, ndarray, prod
 from thunder.rdds.fileio.readers import getParallelReaderForPath
 from thunder.rdds.images import Images
 
@@ -26,6 +26,10 @@ class ImagesLoader(object):
         Expected usage is mainly in testing - having a full dataset loaded in memory
         on the driver is likely prohibitive in the use cases for which Thunder is intended.
         """
+        # if passed a single array, cast it to a sequence of length 1
+        if isinstance(arrays, ndarray):
+            arrays = [arrays]
+
         dims = None
         dtype = None
         for ary in arrays:

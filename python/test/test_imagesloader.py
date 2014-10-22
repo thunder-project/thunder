@@ -1,4 +1,4 @@
-from numpy import ndarray
+from numpy import arange, array_equal, dtype, ndarray
 import os
 import unittest
 from nose.tools import assert_equals, assert_true, assert_almost_equal
@@ -20,6 +20,16 @@ class TestImagesFileLoaders(PySparkTestCase):
     def setUp(self):
         super(TestImagesFileLoaders, self).setUp()
         self.testresourcesdir = self._findTestResourcesDir()
+
+    def test_fromArrays(self):
+        ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
+
+        image = ImagesLoader(self.sc).fromArrays(ary)
+
+        collectedimage = image.collect()
+        assert_equals(1, len(collectedimage))
+        assert_equals(0, collectedimage[0][0])  # check key
+        assert_true(array_equal(ary, collectedimage[0][1]))  # check value
 
     def test_fromPng(self):
         imagepath = os.path.join(self.testresourcesdir, "singlelayer_png", "dot1.png")

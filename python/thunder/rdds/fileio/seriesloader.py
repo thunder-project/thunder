@@ -2,15 +2,17 @@
 """
 from collections import namedtuple
 import json
-from numpy import array, dtype, frombuffer, arange, load, vstack, unravel_index
+from numpy import array, arange, dtype, frombuffer, load, ndarray, unravel_index, vstack
 from scipy.io import loadmat
 from cStringIO import StringIO
+import itertools
 import struct
 import urlparse
 import math
 
 from thunder.rdds.fileio.writers import getParallelWriterForPath
 from thunder.rdds.imageblocks import ImageBlocks
+from thunder.rdds.keys import Dimensions
 from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError, selectByStartAndStopIndices
 from thunder.rdds.series import Series
 from thunder.utils.common import parseMemoryString
@@ -32,6 +34,37 @@ class SeriesLoader(object):
         """
         self.sc = sparkcontext
         self.minPartitions = minPartitions
+
+    def fromArrays(self, arrays):
+        """Create a Series object from a sequence of numpy ndarrays resident in memory on the driver.
+
+        The arrays will be interpreted as though each represents a single time point - effectively the same
+        as if converting Images to a Series, with each array representing a volume image at a particular
+        point in time. Thus in the resulting Series, the value of the record with key (0,0,0) will be
+        array([arrays[0][0,0,0], arrays[1][0,0,0],... arrays[n][0,0,0]).
+
+
+        """
+        # if passed a single array, cast it to a sequence of length 1
+        if isinstance(arrays, ndarray):
+            arrays = [arrays]
+
+        # check that shapes of passed arrays are consistent
+        shape = arrays[0].shape
+        for ary in arrays:
+            if not ary.shape == shape:
+                raise ValueError("Inconsistent array shapes: first array had shape %s, but other array has shape %s" %
+                                 (str(shape), str(ary.shape)))
+
+        # get indices so that fastest index changes first
+        shapeiters = (xrange(n) for n in shape)
+        keys = [idx[::-1] for idx in itertools.product(*shapeiters)]
+
+        values = vstack([ary.ravel() for ary in arrays]).T
+
+        dims = Dimensions.fromNumpyShapeTuple(shape)
+
+        return Series(self.sc.parallelize(zip(keys, values), self.minPartitions), dims=dims)
 
     @staticmethod
     def __normalizeDatafilePattern(datapath, ext):
