@@ -440,7 +440,7 @@ class SeriesLoader(object):
                                                                        datatype=datatype, startidx=startidx,
                                                                        stopidx=stopidx)
         # TODO: initialize index here using npointsinseries?
-        return Series(seriesblocks, dims=dims)
+        return Series(seriesblocks, dims=Dimensions.fromNumpyShapeTuple(dims))
 
     def fromMultipageTif(self, datapath, ext="tif", blockSize="150M",
                          startidx=None, stopidx=None):
@@ -466,7 +466,7 @@ class SeriesLoader(object):
         seriesblocks, metadata = self._getSeriesBlocksFromMultiTif(datapath, ext=ext, blockSize=blockSize,
                                                                    startidx=startidx, stopidx=stopidx)
         dims, npointsinseries, datatype = metadata
-        return Series(seriesblocks, dims=dims)
+        return Series(seriesblocks, dims=Dimensions.fromNumpyShapeTuple(dims))
 
     @staticmethod
     def __saveSeriesRdd(seriesblocks, outputdirname, dims, npointsinseries, datatype, overwrite=False):
