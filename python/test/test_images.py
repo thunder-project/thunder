@@ -77,6 +77,51 @@ class TestImages(PySparkTestCase):
         # check that packing returns original array
         assert_true(array_equal(ary, seriesary))
 
+    def test_threeDArrayToSeriesWithPack(self):
+        ary = arange(24, dtype=dtype('int16')).reshape((2, 4, 3))
+
+        image = ImagesLoader(self.sc).fromArrays(ary)
+        series = image.toSeries()
+
+        seriesvals = series.collect()
+        seriesary = series.pack()
+
+        # check ordering of keys
+        assert_equals((0, 0, 0), seriesvals[0][0])  # first key
+        assert_equals((1, 0, 0), seriesvals[1][0])  # second key
+        assert_equals((2, 0, 0), seriesvals[2][0])
+        assert_equals((0, 1, 0), seriesvals[3][0])
+        assert_equals((1, 1, 0), seriesvals[4][0])
+        assert_equals((2, 1, 0), seriesvals[5][0])
+        assert_equals((0, 2, 0), seriesvals[6][0])
+        assert_equals((1, 2, 0), seriesvals[7][0])
+        assert_equals((2, 2, 0), seriesvals[8][0])
+        assert_equals((0, 3, 0), seriesvals[9][0])
+        assert_equals((1, 3, 0), seriesvals[10][0])
+        assert_equals((2, 3, 0), seriesvals[11][0])
+        assert_equals((0, 0, 1), seriesvals[12][0])
+        assert_equals((1, 0, 1), seriesvals[13][0])
+        assert_equals((2, 0, 1), seriesvals[14][0])
+        assert_equals((0, 1, 1), seriesvals[15][0])
+        assert_equals((1, 1, 1), seriesvals[16][0])
+        assert_equals((2, 1, 1), seriesvals[17][0])
+        assert_equals((0, 2, 1), seriesvals[18][0])
+        assert_equals((1, 2, 1), seriesvals[19][0])
+        assert_equals((2, 2, 1), seriesvals[20][0])
+        assert_equals((0, 3, 1), seriesvals[21][0])
+        assert_equals((1, 3, 1), seriesvals[22][0])
+        assert_equals((2, 3, 1), seriesvals[23][0])
+
+        # check dimensions tuple is reversed from numpy shape
+        assert_equals(ary.shape[::-1], series.dims.count)
+
+        # check that values are in original order
+        collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()
+        assert_true(array_equal(ary.ravel(), collectedvals))
+
+        # check that packing returns original array
+        assert_true(array_equal(ary, seriesary))
+
     def test_toSeriesWithSplitsAndPack(self):
         ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
 
