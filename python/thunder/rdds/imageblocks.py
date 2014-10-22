@@ -298,9 +298,9 @@ class ImageBlockValue(object):
         del rangeiters[seriesDim]
         # correct for original dimensionality if inserting at end of list
         insertDim = seriesDim if seriesDim >= 0 else len(self.origshape) + seriesDim
-        # reverse rangeiters twice to ensure that first dimension is most rapidly varying
-        for idxSeq in itertools.product(*reversed(rangeiters)):
-            idxSeq = tuple(reversed(idxSeq))
+        # reverse rangeiters indicies; first dimension is most rapidly varying, dimensions in opposite order
+        # from numpy / C-ordering convention
+        for idxSeq in itertools.product(*rangeiters):
             expandedIdxSeq = list(idxSeq)
             expandedIdxSeq.insert(insertDim, None)
             slices = []
@@ -314,7 +314,7 @@ class ImageBlockValue(object):
                 slices.append(newslice)
 
             series = self.values[slices].squeeze()
-            yield tuple(idxSeq), series
+            yield tuple(reversed(idxSeq)), series
 
     def _get_range_iterators(self):
         """Returns a sequence of iterators over the range of the slices in self.origslices
