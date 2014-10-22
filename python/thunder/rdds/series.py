@@ -399,7 +399,8 @@ class Series(Data):
         """
         from thunder.rdds.keys import _subtoind_converter
 
-        converter = _subtoind_converter(self.dims.max, order=order, onebased=onebased)
+        # converter = _subtoind_converter(self.dims.max, order=order, onebased=onebased)
+        converter = _subtoind_converter(self.dims.count, order=order, onebased=onebased)
         rdd = self.rdd.map(lambda (k, v): (converter(k), v))
         return self._constructor(rdd, index=self._index).__finalize__(self)
 
