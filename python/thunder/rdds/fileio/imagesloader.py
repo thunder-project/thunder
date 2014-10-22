@@ -77,7 +77,7 @@ class ImagesLoader(object):
 
         def toArray(buf):
             # previously we were casting to uint16 - still necessary?
-            return frombuffer(buf, dtype='int16', count=prod(dims)).reshape(dims, order='F')
+            return frombuffer(buf, dtype='int16', count=prod(dims)).reshape(dims, order='C')
 
         reader = getParallelReaderForPath(datapath)(self.sc)
         readerrdd = reader.read(datapath, ext=ext, startidx=startidx, stopidx=stopidx)

@@ -5,7 +5,7 @@ from nose.tools import assert_equals, assert_true, assert_almost_equal
 
 from thunder.rdds.fileio.imagesloader import ImagesLoader
 from test_images import _have_image
-from test_utils import PySparkTestCase
+from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
 
 
 class TestImagesFileLoaders(PySparkTestCase):
@@ -99,3 +99,34 @@ class TestImagesFileLoaders(PySparkTestCase):
         assert_equals(expectedshape, tifimage[1].shape)
         for channelidx in xrange(0, expectedshape[2]):
             assert_equals(expectedsums[channelidx], tifimage[1][:, :, channelidx].flatten().sum())
+
+
+class TestImagesLoaderUsingOutputDir(PySparkTestCaseWithOutputDir):
+    def test_fromStack(self):
+        ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
+        filename = os.path.join(self.outputdir, "test.stack")
+        ary.tofile(filename)
+
+        image = ImagesLoader(self.sc).fromStack(filename, dims=ary.shape)
+
+        collectedimage = image.collect()
+        assert_equals(1, len(collectedimage))
+        assert_equals(0, collectedimage[0][0])  # check key
+        assert_true(array_equal(ary, collectedimage[0][1]))  # check value
+
+    def test_fromStacks(self):
+        ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
+        ary2 = arange(8, 16, dtype=dtype('int16')).reshape((2, 4))
+        filename = os.path.join(self.outputdir, "test01.stack")
+        ary.tofile(filename)
+        filename = os.path.join(self.outputdir, "test02.stack")
+        ary2.tofile(filename)
+
+        image = ImagesLoader(self.sc).fromStack(self.outputdir, dims=ary.shape)
+
+        collectedimage = image.collect()
+        assert_equals(2, len(collectedimage))
+        assert_equals(0, collectedimage[0][0])  # check key
+        assert_true(array_equal(ary, collectedimage[0][1]))  # check value
+        assert_equals(1, collectedimage[1][0])  # check image 2
+        assert_true(array_equal(ary2, collectedimage[1][1]))
