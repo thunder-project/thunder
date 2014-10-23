@@ -29,80 +29,67 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
             raise IOError("Test resources directory "+testresourcesdirpath+" not found")
         return testresourcesdirpath
 
-    def test_loadStacksAsSeriesNoShuffle(self):
+    def __run_loadStacksAsSeries(self, shuffle):
         rangeary = np.arange(64*128, dtype=np.dtype('int16'))
         rangeary.shape = (64, 128)
         filepath = os.path.join(self.outputdir, "rangeary.stack")
         rangeary.tofile(filepath)
 
-        range_series_noshuffle = self.tsc.loadImagesAsSeries(filepath, dims=(128, 64))
-        range_series_noshuffle_ary = range_series_noshuffle.pack()
+        range_series = self.tsc.loadImagesAsSeries(filepath, dims=(128, 64), shuffle=shuffle)
+        range_series_ary = range_series.pack()
 
-        assert_equals((128, 64), range_series_noshuffle.dims.count)
-        assert_equals((64, 128), range_series_noshuffle_ary.shape)
-        assert_true(np.array_equal(rangeary, range_series_noshuffle_ary))
+        assert_equals((128, 64), range_series.dims.count)
+        assert_equals((64, 128), range_series_ary.shape)
+        assert_true(np.array_equal(rangeary, range_series_ary))
 
-    def test_load3dStackAsSeriesNoShuffle(self):
+    def test_loadStacksAsSeriesNoShuffle(self):
+        self.__run_loadStacksAsSeries(False)
+
+    def test_loadStacksAsSeriesWithShuffle(self):
+        self.__run_loadStacksAsSeries(True)
+
+    def __run_load3dStackAsSeries(self, shuffle):
         rangeary = np.arange(32*64*4, dtype=np.dtype('int16'))
         rangeary.shape = (4, 64, 32)
         filepath = os.path.join(self.outputdir, "rangeary.stack")
         rangeary.tofile(filepath)
 
-        range_series_noshuffle = self.tsc.loadImagesAsSeries(filepath, dims=(32, 64, 4))
+        range_series_noshuffle = self.tsc.loadImagesAsSeries(filepath, dims=(32, 64, 4), shuffle=shuffle)
         range_series_noshuffle_ary = range_series_noshuffle.pack()
 
         assert_equals((32, 64, 4), range_series_noshuffle.dims.count)
         assert_equals((4, 64, 32), range_series_noshuffle_ary.shape)
         assert_true(np.array_equal(rangeary, range_series_noshuffle_ary))
 
-    def test_loadStacksAsSeriesWithShuffle(self):
+    def test_load3dStackAsSeriesNoShuffle(self):
+        self.__run_load3dStackAsSeries(False)
+
+    def test_load3dStackAsSeriesWithShuffle(self):
+        self.__run_load3dStackAsSeries(True)
+
+    def __run_loadMultipleStacksAsSeries(self, shuffle):
         rangeary = np.arange(64*128, dtype=np.dtype('int16'))
         rangeary.shape = (64, 128)
-        filepath = os.path.join(self.outputdir, "rangeary.stack")
+        filepath = os.path.join(self.outputdir, "rangeary01.stack")
         rangeary.tofile(filepath)
-        range_series_withshuffle = self.tsc.loadImagesAsSeries(filepath, dims=(128, 64), shuffle=True)
-        range_series_withshuffle_ary = range_series_withshuffle.pack()
+        rangeary2 = np.arange(64*128, 2*64*128, dtype=np.dtype('int16'))
+        rangeary2.shape = (64, 128)
+        filepath = os.path.join(self.outputdir, "rangeary02.stack")
+        rangeary2.tofile(filepath)
 
-        assert_equals((128, 64), range_series_withshuffle.dims.count)
-        assert_equals((64, 128), range_series_withshuffle_ary.shape)
-        assert_true(np.array_equal(rangeary, range_series_withshuffle_ary))
+        range_series = self.tsc.loadImagesAsSeries(self.outputdir, dims=(128, 64), shuffle=shuffle)
+        range_series_ary = range_series.pack()
+
+        assert_equals((128, 64), range_series.dims.count)
+        assert_equals((2, 64, 128), range_series_ary.shape)
+        assert_true(np.array_equal(rangeary, range_series_ary[0]))
+        assert_true(np.array_equal(rangeary2, range_series_ary[1]))
 
     def test_loadMultipleStacksAsSeriesNoShuffle(self):
-        rangeary = np.arange(64*128, dtype=np.dtype('int16'))
-        rangeary.shape = (64, 128)
-        filepath = os.path.join(self.outputdir, "rangeary01.stack")
-        rangeary.tofile(filepath)
-        rangeary2 = np.arange(64*128, 2*64*128, dtype=np.dtype('int16'))
-        rangeary2.shape = (64, 128)
-        filepath = os.path.join(self.outputdir, "rangeary02.stack")
-        rangeary2.tofile(filepath)
-
-        range_series_noshuffle = self.tsc.loadImagesAsSeries(self.outputdir, dims=(128, 64))
-        range_series_noshuffle_ary = range_series_noshuffle.pack()
-
-        assert_equals((128, 64), range_series_noshuffle.dims.count)
-        assert_equals((2, 64, 128), range_series_noshuffle_ary.shape)
-        assert_true(np.array_equal(rangeary, range_series_noshuffle_ary[0]))
-        assert_true(np.array_equal(rangeary2, range_series_noshuffle_ary[1]))
+        self.__run_loadMultipleStacksAsSeries(False)
 
     def test_loadMultipleStacksAsSeriesWithShuffle(self):
-        rangeary = np.arange(64*128, dtype=np.dtype('int16'))
-        rangeary.shape = (64, 128)
-        filepath = os.path.join(self.outputdir, "rangeary01.stack")
-        rangeary.tofile(filepath)
-        rangeary2 = np.arange(64*128, 2*64*128, dtype=np.dtype('int16'))
-        rangeary2.shape = (64, 128)
-        filepath = os.path.join(self.outputdir, "rangeary02.stack")
-        rangeary2.tofile(filepath)
-
-        range_series_shuffle = self.tsc.loadImagesAsSeries(self.outputdir, dims=(128, 64), shuffle=True)
-        range_series_shuffle_ary = range_series_shuffle.pack()
-
-        assert_equals((128, 64), range_series_shuffle.dims.count)
-        assert_equals((2, 64, 128), range_series_shuffle_ary.shape)
-
-        assert_true(np.array_equal(rangeary, range_series_shuffle_ary[0]))
-        assert_true(np.array_equal(rangeary2, range_series_shuffle_ary[1]))
+        self.__run_loadMultipleStacksAsSeries(True)
 
     def __run_loadTifAsSeries(self, shuffle):
         tmpary = np.arange(60*120, dtype=np.dtype('uint16'))
@@ -134,7 +121,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
 
         testimg_pil = Image.open(imagepath)
         testimg_arys = list()
-        testimg_arys.append(pil_to_array(testimg_pil))
+        testimg_arys.append(pil_to_array(testimg_pil))  # original shape 70, 75
         testimg_pil.seek(1)
         testimg_arys.append(pil_to_array(testimg_pil))
         testimg_pil.seek(2)
