@@ -109,7 +109,7 @@ class ImagesLoader(object):
         """
         def readTifFromBuf(buf):
             fbuf = BytesIO(buf)
-            return imread(fbuf, format='tif')
+            return imread(fbuf, format='tif').T
 
         reader = getParallelReaderForPath(datapath)(self.sc)
         readerrdd = reader.read(datapath, ext=ext, startidx=startidx, stopidx=stopidx)
@@ -147,14 +147,13 @@ class ImagesLoader(object):
             while True:
                 try:
                     multipage.seek(pageidx)
-                    imgarys.append(pil_to_array(multipage).T)  # additional transpose here to set up later big transpose
+                    imgarys.append(pil_to_array(multipage))
                     pageidx += 1
                 except EOFError:
                     # past last page in tif
                     break
             # hack to get consistent behavior for single and multipage tifs
             if pageidx == 1:
-                # reverse earlier transpose and return
                 imgarys[0] = imgarys[0].T
                 return dstack(imgarys)
             else:
@@ -186,7 +185,7 @@ class ImagesLoader(object):
         """
         def readPngFromBuf(buf):
             fbuf = BytesIO(buf)
-            return imread(fbuf, format='png')
+            return imread(fbuf, format='png').T
 
         reader = getParallelReaderForPath(datafile)(self.sc)
         readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)

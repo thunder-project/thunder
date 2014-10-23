@@ -36,26 +36,26 @@ class TestImagesFileLoaders(PySparkTestCase):
         pngimage = ImagesLoader(self.sc).fromPng(imagepath, self.sc)
         firstpngimage = pngimage.first()
         assert_equals(0, firstpngimage[0], "Key error; expected first image key to be 0, was "+str(firstpngimage[0]))
-        expectedshape = (70, 75, 4)  # 4 channel png; RGBalpha
+        expectedshape = (4, 75, 70)  # 4 channel png; RGBalpha
         assert_true(isinstance(firstpngimage[1], ndarray),
                     "Value type error; expected first image value to be numpy ndarray, was " +
                     str(type(firstpngimage[1])))
         assert_equals(expectedshape, firstpngimage[1].shape)
-        assert_almost_equal(0.97, firstpngimage[1][:, :, 0].flatten().max(), places=2)
-        assert_almost_equal(0.03, firstpngimage[1][:, :, 0].flatten().min(), places=2)
+        assert_almost_equal(0.97, firstpngimage[1][0, :, :].flatten().max(), places=2)
+        assert_almost_equal(0.03, firstpngimage[1][0, :, :].flatten().min(), places=2)
 
     def test_fromTif(self):
         imagepath = os.path.join(self.testresourcesdir, "singlelayer_tif", "dot1_lzw.tif")
         tifimage = ImagesLoader(self.sc).fromTif(imagepath, self.sc)
         firsttifimage = tifimage.first()
         assert_equals(0, firsttifimage[0], "Key error; expected first image key to be 0, was "+str(firsttifimage[0]))
-        expectedshape = (70, 75, 4)  # 4 channel tif; RGBalpha
+        expectedshape = (4, 75, 70)  # 4 channel tif; RGBalpha
         assert_true(isinstance(firsttifimage[1], ndarray),
                     "Value type error; expected first image value to be numpy ndarray, was " +
                     str(type(firsttifimage[1])))
         assert_equals(expectedshape, firsttifimage[1].shape)
-        assert_equals(248, firsttifimage[1][:, :, 0].flatten().max())
-        assert_equals(8, firsttifimage[1][:, :, 0].flatten().min())
+        assert_equals(248, firsttifimage[1][0, :, :].flatten().max())
+        assert_equals(8, firsttifimage[1][0, :, :].flatten().min())
 
     @staticmethod
     def _evaluateMultipleImages(tifimages, expectednum, expectedshape, expectedkeys, expectedsums):
@@ -66,14 +66,14 @@ class TestImagesFileLoaders(PySparkTestCase):
             assert_true(isinstance(img[1], ndarray),
                         "Value type error; expected image value to be numpy ndarray, was " + str(type(img[1])))
             assert_equals(expectedshape, img[1].shape)
-            assert_equals(expectedsum, img[1][:, :, 0].sum())
+            assert_equals(expectedsum, img[1][0, :, :].sum())
 
     def test_fromTifWithMultipleFiles(self):
         imagepath = os.path.join(self.testresourcesdir, "singlelayer_tif", "dot*_lzw.tif")
         tifimages = ImagesLoader(self.sc).fromTif(imagepath, self.sc).collect()
 
         expectednum = 3
-        expectedshape = (70, 75, 4)  # 4 channel tif; RGBalpha
+        expectedshape = (4, 75, 70)  # 4 channel tif; RGBalpha
         expectedsums = [1282192, 1261328, 1241520]  # 3 images have increasing #s of black dots, so lower luminance overall
         expectedkeys = range(expectednum)
         self._evaluateMultipleImages(tifimages, expectednum, expectedshape, expectedkeys, expectedsums)
@@ -84,7 +84,7 @@ class TestImagesFileLoaders(PySparkTestCase):
         tifimages = ImagesLoader(self.sc).fromMultipageTif(imagepath, self.sc).collect()
 
         expectednum = 1
-        expectedshape = (3, 70, 75)  # 3 concatenated pages, each with single luminance channel
+        expectedshape = (3, 75, 70)  # 3 concatenated pages, each with single luminance channel
         # 3 images have increasing #s of black dots, so lower luminance overall
         expectedsums = [1140006, 1119161, 1098917]
         expectedkey = 0

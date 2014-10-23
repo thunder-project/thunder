@@ -106,9 +106,9 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         range_series = self.tsc.loadImagesAsSeries(self.outputdir, inputformat="tif-stack", shuffle=shuffle)
         range_series_ary = range_series.pack()
 
-        assert_equals((1, 120, 60), range_series.dims.count)
-        assert_equals((120, 60), range_series_ary.shape)
-        assert_true(np.array_equal(rangeary.T, range_series_ary))
+        assert_equals((1, 60, 120), range_series.dims.count)
+        assert_equals((60, 120), range_series_ary.shape)
+        assert_true(np.array_equal(rangeary, range_series_ary))
 
     @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
     def test_loadTifAsSeriesNoShuffle(self):
@@ -134,15 +134,15 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         range_series_noshuffle_ary = range_series_noshuffle.pack()
         range_series_noshuffle_ary_xpose = range_series_noshuffle.pack(transpose=True)
 
-        assert_equals((75, 70, 3), range_series_noshuffle.dims.count)
-        assert_equals((75, 70, 3), range_series_noshuffle_ary.shape)
-        assert_equals((3, 70, 75), range_series_noshuffle_ary_xpose.shape)
-        assert_true(np.array_equal(testimg_arys[0].T, range_series_noshuffle_ary[:, :, 0]))
-        assert_true(np.array_equal(testimg_arys[1].T, range_series_noshuffle_ary[:, :, 1]))
-        assert_true(np.array_equal(testimg_arys[2].T, range_series_noshuffle_ary[:, :, 2]))
-        assert_true(np.array_equal(testimg_arys[0], range_series_noshuffle_ary_xpose[0]))
-        assert_true(np.array_equal(testimg_arys[1], range_series_noshuffle_ary_xpose[1]))
-        assert_true(np.array_equal(testimg_arys[2], range_series_noshuffle_ary_xpose[2]))
+        assert_equals((70, 75, 3), range_series_noshuffle.dims.count)
+        assert_equals((70, 75, 3), range_series_noshuffle_ary.shape)
+        assert_equals((3, 75, 70), range_series_noshuffle_ary_xpose.shape)
+        assert_true(np.array_equal(testimg_arys[0], range_series_noshuffle_ary[:, :, 0]))
+        assert_true(np.array_equal(testimg_arys[1], range_series_noshuffle_ary[:, :, 1]))
+        assert_true(np.array_equal(testimg_arys[2], range_series_noshuffle_ary[:, :, 2]))
+        assert_true(np.array_equal(testimg_arys[0].T, range_series_noshuffle_ary_xpose[0]))
+        assert_true(np.array_equal(testimg_arys[1].T, range_series_noshuffle_ary_xpose[1]))
+        assert_true(np.array_equal(testimg_arys[2].T, range_series_noshuffle_ary_xpose[2]))
 
     @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
     def test_loadTestTifAsSeriesNoShuffle(self):
@@ -171,13 +171,13 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         range_series_ary = range_series.pack()
         range_series_ary_xpose = range_series.pack(transpose=True)
 
-        assert_equals((1, 120, 60), range_series.dims.count)
-        assert_equals((2, 120, 60), range_series_ary.shape)
-        assert_equals((2, 60, 120), range_series_ary_xpose.shape)
-        assert_true(np.array_equal(rangeary.T, range_series_ary[0]))
-        assert_true(np.array_equal(rangeary2.T, range_series_ary[1]))
-        assert_true(np.array_equal(rangeary, range_series_ary_xpose[0]))
-        assert_true(np.array_equal(rangeary2, range_series_ary_xpose[1]))
+        assert_equals((1, 60, 120), range_series.dims.count)
+        assert_equals((2, 60, 120), range_series_ary.shape)
+        assert_equals((2, 120, 60), range_series_ary_xpose.shape)
+        assert_true(np.array_equal(rangeary, range_series_ary[0]))
+        assert_true(np.array_equal(rangeary2, range_series_ary[1]))
+        assert_true(np.array_equal(rangeary.T, range_series_ary_xpose[0]))
+        assert_true(np.array_equal(rangeary2.T, range_series_ary_xpose[1]))
 
     @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
     def test_loadMultipleTifsAsSeriesNoShuffle(self):

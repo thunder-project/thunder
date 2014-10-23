@@ -315,8 +315,6 @@ class SeriesLoader(object):
             pass
 
         # get dimensions
-        #dims = (firstifd.getImageHeight(), firstifd.getImageWidth(), len(tiffheaders.ifds))
-
         npages = len(tiffheaders.ifds)
         height = firstifd.getImageHeight()
         width = firstifd.getImageWidth()
@@ -391,7 +389,7 @@ class SeriesLoader(object):
                     tiffparser_ = multitif.TiffParser(fp, debug=False)
                     tiffilebuffer = multitif.packSinglePage(tiffparser_, page_idx=planeidx)
                     pilimg = Image.open(io.BytesIO(tiffilebuffer))
-                    ary = pil_to_array(pilimg)
+                    ary = pil_to_array(pilimg).T
                     del tiffilebuffer, tiffparser_, pilimg
                     if not planeshape:
                         planeshape = ary.shape[:]
@@ -417,9 +415,9 @@ class SeriesLoader(object):
         rdd = self.sc.parallelize(keys, len(keys)).flatMap(readblockfromtif)
         # hack for returned dimensions:
         if npages == 1:
-            dims = (height, width, npages)
+            dims = (width, height, npages)
         else:
-            dims = (npages, height, width)
+            dims = (npages, width, height)
 
         metadata = (dims, ntimepoints, datatype)
         return rdd, metadata
