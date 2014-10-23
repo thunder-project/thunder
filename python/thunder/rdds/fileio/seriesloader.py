@@ -7,7 +7,6 @@ from scipy.io import loadmat
 from cStringIO import StringIO
 import itertools
 import struct
-import urlparse
 import math
 
 from thunder.rdds.fileio.writers import getParallelWriterForPath
@@ -81,13 +80,7 @@ class SeriesLoader(object):
                     datapath += "*" + ext
                 else:
                     datapath += "/*" + ext
-
-        parseresult = urlparse.urlparse(datapath)
-        if parseresult.scheme:
-            # this appears to already be a fully-qualified URI
-            return datapath
-        else:
-            return "file://" + datapath
+        return datapath
 
     def fromText(self, datafile, nkeys=None, ext="txt"):
         """
