@@ -388,9 +388,13 @@ class SeriesLoader(object):
                 try:
                     tiffparser_ = multitif.TiffParser(fp, debug=False)
                     tiffilebuffer = multitif.packSinglePage(tiffparser_, page_idx=planeidx)
-                    pilimg = Image.open(io.BytesIO(tiffilebuffer))
+                    bytebuf = io.BytesIO(tiffilebuffer)
+                    try:
+                        pilimg = Image.open(bytebuf)
+                    finally:
+                        bytebuf.close()
                     ary = pil_to_array(pilimg).T
-                    del tiffilebuffer, tiffparser_, pilimg
+                    del tiffilebuffer, tiffparser_, pilimg, bytebuf
                     if not planeshape:
                         planeshape = ary.shape[:]
                         blockstart = blockidx * blocklenPixels
