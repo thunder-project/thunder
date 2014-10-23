@@ -84,7 +84,7 @@ class TestImagesFileLoaders(PySparkTestCase):
         tifimages = ImagesLoader(self.sc).fromMultipageTif(imagepath, self.sc).collect()
 
         expectednum = 1
-        expectedshape = (70, 75, 3)  # 3 concatenated pages, each with single luminance channel
+        expectedshape = (3, 70, 75)  # 3 concatenated pages, each with single luminance channel
         # 3 images have increasing #s of black dots, so lower luminance overall
         expectedsums = [1140006, 1119161, 1098917]
         expectedkey = 0
@@ -97,8 +97,8 @@ class TestImagesFileLoaders(PySparkTestCase):
                     "Value type error; expected image value to be numpy ndarray, was " + str(type(tifimage[1])))
         assert_equals('uint8', str(tifimage[1].dtype))
         assert_equals(expectedshape, tifimage[1].shape)
-        for channelidx in xrange(0, expectedshape[2]):
-            assert_equals(expectedsums[channelidx], tifimage[1][:, :, channelidx].flatten().sum())
+        for channelidx in xrange(0, expectedshape[0]):
+            assert_equals(expectedsums[channelidx], tifimage[1][channelidx].flatten().sum())
 
 
 class TestImagesLoaderUsingOutputDir(PySparkTestCaseWithOutputDir):

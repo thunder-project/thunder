@@ -114,8 +114,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
     def test_loadTifAsSeriesWithShuffle(self):
         self.__run_loadTifAsSeries(True)
 
-    @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
-    def test_loadTestTifAsSeriesNoShuffle(self):
+    def __run_loadTestTifAsSeries(self, shuffle):
         testresourcesdir = TestContextLoading._findTestResourcesDir()
         imagepath = os.path.join(testresourcesdir, "multilayer_tif", "dotdotdot_lzw.tif")
 
@@ -127,40 +126,22 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         testimg_pil.seek(2)
         testimg_arys.append(pil_to_array(testimg_pil))
 
-        range_series_noshuffle = self.tsc.loadImagesAsSeries(imagepath, inputformat="tif-stack")
+        range_series_noshuffle = self.tsc.loadImagesAsSeries(imagepath, inputformat="tif-stack", shuffle=shuffle)
         range_series_noshuffle_ary = range_series_noshuffle.pack()
 
         assert_equals((75, 70, 3), range_series_noshuffle.dims.count)
-        #assert_equals((70, 75, 3), range_series_noshuffle_ary.shape)
         assert_equals((3, 70, 75), range_series_noshuffle_ary.shape)
-        # assert_true(np.array_equal(testimg_arys[0], range_series_noshuffle_ary[:, :, 0]))
-        # assert_true(np.array_equal(testimg_arys[1], range_series_noshuffle_ary[:, :, 1]))
-        # assert_true(np.array_equal(testimg_arys[2], range_series_noshuffle_ary[:, :, 2]))
         assert_true(np.array_equal(testimg_arys[0], range_series_noshuffle_ary[0]))
         assert_true(np.array_equal(testimg_arys[1], range_series_noshuffle_ary[1]))
         assert_true(np.array_equal(testimg_arys[2], range_series_noshuffle_ary[2]))
 
     @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
+    def test_loadTestTifAsSeriesNoShuffle(self):
+        self.__run_loadTestTifAsSeries(False)
+
+    @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
     def test_loadTestTifAsSeriesWithShuffle(self):
-        testresourcesdir = TestContextLoading._findTestResourcesDir()
-        imagepath = os.path.join(testresourcesdir, "multilayer_tif", "dotdotdot_lzw.tif")
-
-        testimg_pil = Image.open(imagepath)
-        testimg_arys = list()
-        testimg_arys.append(pil_to_array(testimg_pil))
-        testimg_pil.seek(1)
-        testimg_arys.append(pil_to_array(testimg_pil))
-        testimg_pil.seek(2)
-        testimg_arys.append(pil_to_array(testimg_pil))
-
-        range_series_shuffle = self.tsc.loadImagesAsSeries(imagepath, inputformat="tif-stack", shuffle=True)
-        range_series_shuffle_ary = range_series_shuffle.pack()
-
-        assert_equals((3, 75, 70), range_series_shuffle.dims.count)
-        assert_equals((70, 75, 3), range_series_shuffle_ary.shape)
-        assert_true(np.array_equal(testimg_arys[0], range_series_shuffle_ary[:, :, 0]))
-        assert_true(np.array_equal(testimg_arys[1], range_series_shuffle_ary[:, :, 1]))
-        assert_true(np.array_equal(testimg_arys[2], range_series_shuffle_ary[:, :, 2]))
+        self.__run_loadTestTifAsSeries(True)
 
     def __run_loadMultipleTifsAsSeries(self, shuffle):
         tmpary = np.arange(60*120, dtype=np.dtype('uint16'))

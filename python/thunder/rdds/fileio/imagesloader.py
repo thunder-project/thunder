@@ -147,12 +147,18 @@ class ImagesLoader(object):
             while True:
                 try:
                     multipage.seek(pageidx)
-                    imgarys.append(pil_to_array(multipage))
+                    imgarys.append(pil_to_array(multipage).T)  # additional transpose here to set up later big transpose
                     pageidx += 1
                 except EOFError:
                     # past last page in tif
                     break
-            return dstack(imgarys)
+            # hack to get consistent behavior for single and multipage tifs
+            if pageidx == 1:
+                # reverse earlier transpose and return
+                imgarys[0] = imgarys[0].T
+                return dstack(imgarys)
+            else:
+                return dstack(imgarys).T  # transpose everything to get shape of z by y by x
 
         reader = getParallelReaderForPath(datafile)(self.sc)
         readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)
