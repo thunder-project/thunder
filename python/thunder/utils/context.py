@@ -170,13 +170,16 @@ class ThunderContext():
             "/mnt/my/absolute/data/directory/", or "file:///mnt/another/data/directory/".
 
         dims: tuple of positive int, optional (but required if inputformat is 'stack')
-            Dimensions of input image data, similar to a numpy 'shape' parameter, for instance (1024, 1024, 48). Binary
-            stack data will be interpreted as coming from a multidimensional array of the specified dimensions. Stack
-            data should be stored in row-major order (Fortran or Matlab convention) rather than column-major order (C
-            or python/numpy convention), where the first dimension corresponds to that which is changing most rapidly
+            Dimensions of input image data, for instance (1024, 1024, 48). Binary stack data will be interpreted as
+            coming from a multidimensional array of the specified dimensions.
+
+            The first dimension of the passed dims tuple should be the one that is changing most rapidly
             on disk. So for instance given dims of (x, y, z), the coordinates of the data in a binary stack file
-            should be ordered as [(x0, y0, z0), (x1, y0, zo), ..., (xN, y0, z0), (x0, y1, z0), (x1, y1, z0), ...,
-            (xN, yM, z0), (x0, y0, z1), ..., (xN, yM, zP)].
+            should be ordered as [(x0, y0, z0), (x1, y0, z0), ..., (xN, y0, z0), (x0, y1, z0), (x1, y1, z0), ...,
+            (xN, yM, z0), (x0, y0, z1), ..., (xN, yM, zP)]. This is the opposite convention from that used by numpy,
+            which by default has the fastest-changing dimension listed last (column-major convention). Thus, if loading
+            a numpy array `ary`, where `ary.shape == (z, y, x)`, written to disk by `ary.tofile("myarray.stack")`, the
+            corresponding dims parameter should be (x, y, z).
             If inputformat is 'tif-stack', the dims parameter (if any) will be ignored; data dimensions will instead
             be read out from the tif file headers.
 
@@ -273,13 +276,16 @@ class ThunderContext():
             its contents will be deleted and overwritten.
 
         dims: tuple of positive int, optional (but required if inputformat is 'stack')
-            Dimensions of input image data, similar to a numpy 'shape' parameter, for instance (1024, 1024, 48). Binary
-            stack data will be interpreted as coming from a multidimensional array of the specified dimensions. Stack
-            data should be stored in row-major order (Fortran or Matlab convention) rather than column-major order (C
-            or python/numpy convention), where the first dimension corresponds to that which is changing most rapidly
+            Dimensions of input image data, for instance (1024, 1024, 48). Binary stack data will be interpreted as
+            coming from a multidimensional array of the specified dimensions.
+
+            The first dimension of the passed dims tuple should be the one that is changing most rapidly
             on disk. So for instance given dims of (x, y, z), the coordinates of the data in a binary stack file
-            should be ordered as [(x0, y0, z0), (x1, y0, zo), ..., (xN, y0, z0), (x0, y1, z0), (x1, y1, z0), ...,
-            (xN, yM, z0), (x0, y0, z1), ..., (xN, yM, zP)].
+            should be ordered as [(x0, y0, z0), (x1, y0, z0), ..., (xN, y0, z0), (x0, y1, z0), (x1, y1, z0), ...,
+            (xN, yM, z0), (x0, y0, z1), ..., (xN, yM, zP)]. This is the opposite convention from that used by numpy,
+            which by default has the fastest-changing dimension listed last (column-major convention). Thus, if loading
+            a numpy array `ary`, where `ary.shape == (z, y, x)`, written to disk by `ary.tofile("myarray.stack")`, the
+            corresponding dims parameter should be (x, y, z).
             If inputformat is 'tif-stack', the dims parameter (if any) will be ignored; data dimensions will instead
             be read out from the tif file headers.
 

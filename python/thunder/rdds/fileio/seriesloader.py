@@ -248,7 +248,7 @@ class SeriesLoader(object):
             # different planes appear in distinct files
             blocksperplane = max(nblocks / dims[-1], 1)
 
-            pixperplane = reduce(lambda x_, y_: x_*y_, dims[:-1])
+            pixperplane = reduce(lambda x_, y_: x_*y_, dims[:-1])  # all but last dimension
 
             # get the greatest number of blocks in a plane (up to as many as requested) that still divide the plane
             # evenly. This will always be at least one.
@@ -431,7 +431,7 @@ class SeriesLoader(object):
             including scheme. A datapath argument may include a single '*' wildcard character in the filename.
 
         dims: tuple of positive int
-            Dimensions of input image data, similar to a numpy 'shape' parameter.
+            Dimensions of input image data, ordered with the fastest-changing dimension first.
 
         ext: string, optional, default "stack"
             Extension required on data files to be loaded.

@@ -34,6 +34,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         rangeary.shape = (64, 128)
         filepath = os.path.join(self.outputdir, "rangeary.stack")
         rangeary.tofile(filepath)
+        # TODO: make these dimensions consistent with shuffle version
         range_series_noshuffle = self.tsc.loadImagesAsSeries(filepath, dims=(64, 128))
         range_series_noshuffle_ary = range_series_noshuffle.pack()
 
@@ -46,6 +47,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         rangeary.shape = (32, 64, 4)
         filepath = os.path.join(self.outputdir, "rangeary.stack")
         rangeary.tofile(filepath)
+        # TODO: make these dimensions consistent with shuffle version
         range_series_noshuffle = self.tsc.loadImagesAsSeries(filepath, dims=(32, 64, 4))
         range_series_noshuffle_ary = range_series_noshuffle.pack()
 
@@ -58,7 +60,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         rangeary.shape = (64, 128)
         filepath = os.path.join(self.outputdir, "rangeary.stack")
         rangeary.tofile(filepath)
-        range_series_withshuffle = self.tsc.loadImagesAsSeries(filepath, dims=(64, 128), shuffle=True)
+        range_series_withshuffle = self.tsc.loadImagesAsSeries(filepath, dims=(128, 64), shuffle=True)
         range_series_withshuffle_ary = range_series_withshuffle.pack()
 
         assert_equals((128, 64), range_series_withshuffle.dims.count)
@@ -74,7 +76,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         rangeary2.shape = (64, 128)
         filepath = os.path.join(self.outputdir, "rangeary02.stack")
         rangeary2.tofile(filepath)
-
+        # TODO: make these dimensions consistent with shuffle version
         range_series_noshuffle = self.tsc.loadImagesAsSeries(self.outputdir, dims=(64, 128))
         range_series_noshuffle_ary = range_series_noshuffle.pack()
 
@@ -93,7 +95,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         filepath = os.path.join(self.outputdir, "rangeary02.stack")
         rangeary2.tofile(filepath)
 
-        range_series_shuffle = self.tsc.loadImagesAsSeries(self.outputdir, dims=(64, 128), shuffle=True)
+        range_series_shuffle = self.tsc.loadImagesAsSeries(self.outputdir, dims=(128, 64), shuffle=True)
         range_series_shuffle_ary = range_series_shuffle.pack()
 
         assert_equals((128, 64), range_series_shuffle.dims.count)

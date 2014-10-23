@@ -22,10 +22,10 @@ except ImportError:
     pass
 
 
-def _generate_test_arrays(narys, dtype='int16'):
+def _generate_test_arrays(narys, dtype_='int16'):
     sh = 4, 3, 3
     sz = prod(sh)
-    arys = [arange(i, i+sz, dtype=dtype).reshape(sh) for i in xrange(0, sz * narys, sz)]
+    arys = [arange(i, i+sz, dtype=dtype(dtype_)).reshape(sh) for i in xrange(0, sz * narys, sz)]
     return arys, sh, sz
 
 
@@ -128,7 +128,7 @@ class TestImages(PySparkTestCase):
         ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        series = image.toSeries(splitsPerDim=(2, 1))
+        series = image.toSeries(splitsPerDim=(1, 2))
 
         seriesvals = series.collect()
         seriesary = series.pack()
@@ -157,7 +157,7 @@ class TestImages(PySparkTestCase):
         ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        series = image.toSeries(splitsPerDim=(1, 2))
+        series = image.toSeries(splitsPerDim=(2, 1))
 
         seriesvals = series.collect()
         seriesary = series.pack(sorting=True)
@@ -189,7 +189,7 @@ class TestImages(PySparkTestCase):
         ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        blocks = image._scatterToBlocks(blocksPerDim=(2, 1))
+        blocks = image._scatterToBlocks(blocksPerDim=(1, 2))
         groupedblocks = blocks._groupIntoSeriesBlocks()
 
         # collectedblocks = blocks.collect()
@@ -217,20 +217,22 @@ class TestImages(PySparkTestCase):
             self.evaluate_series(arys, series, sz)
 
     def test_toBlocksByPlanes(self):
+        # TODO - this is a wildly confusing test. let's get rid of it.
         # create 3 arrays of 4x3x3 images (C-order), containing sequential integers
         narys = 3
         arys, sh, sz = _generate_test_arrays(narys)
+        dimstuple = sh[::-1]
 
         grpdim = 0
         blocks = ImagesLoader(self.sc).fromArrays(arys) \
             ._toBlocksByImagePlanes(groupingDim=grpdim).collect()
 
-        assert_equals(sh[grpdim]*narys, len(blocks))
+        assert_equals(dimstuple[grpdim]*narys, len(blocks))
 
         keystocounts = Counter([kv[0] for kv in blocks])
-        # expected keys are (index, 0, 0) (or (z, y, x)) for index in grouping dimension
-        expectedkeys = set((idx, 0, 0) for idx in xrange(sh[grpdim]))
-        expectednkeys = sh[grpdim]
+        # expected keys are (0, 0, index) (or (x, y, z)) for index in grouping dimension
+        expectedkeys = set((0, 0, idx) for idx in xrange(dimstuple[grpdim]))
+        expectednkeys = dimstuple[grpdim]
         assert_equals(expectednkeys, len(keystocounts))
         # check all expected keys are present:
         assert_true(expectedkeys == set(keystocounts.iterkeys()))
@@ -240,8 +242,8 @@ class TestImages(PySparkTestCase):
         # check that we can get back the expected planes over time:
         for blockkey, blockplane in blocks:
             tpidx = blockplane.origslices[grpdim].start
-            planeidx = blockkey[grpdim]
-            expectedplane = arys[tpidx][planeidx, :, :]
+            planeidx = blockkey[::-1][grpdim]
+            expectedplane = arys[tpidx][:, :, planeidx]
             assert_true(array_equal(expectedplane, blockplane.values.squeeze()))
 
     def test_toBlocksBySlices(self):
@@ -281,7 +283,8 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
         """Pseudo-parameterized test fixture, allows reusing existing spark context
         """
         paramstr = "(groupingdim=%d, valuedtype='%s')" % (groupingdim_, valdtype)
-        arys, aryshape, arysize = _generate_test_arrays(narys_, dtype=valdtype)
+        arys, aryshape, arysize = _generate_test_arrays(narys_, dtype_=valdtype)
+        dims = aryshape[::-1]
         outdir = os.path.join(self.outputdir, "anotherdir%02d" % testidx)
 
         images = ImagesLoader(self.sc).fromArrays(arys)
@@ -292,11 +295,11 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
         # prevent padding to 4-byte boundaries: "=" specifies no alignment
         unpacker = struct.Struct('=' + 'h'*ndims + dtype(valdtype).char*narys_)
 
-        def calcExpectedNKeys(aryshape__, groupingdim__):
-            tmpshape = list(aryshape__[:])
-            del tmpshape[groupingdim__]
+        def calcExpectedNKeys():
+            tmpshape = list(dims[:])
+            del tmpshape[groupingdim_]
             return prod(tmpshape)
-        expectednkeys = calcExpectedNKeys(aryshape, groupingdim_)
+        expectednkeys = calcExpectedNKeys()
 
         def byrec(f_, unpacker_, nkeys_):
             rec = True
@@ -307,7 +310,7 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
                     yield allrecvals[:nkeys_], allrecvals[nkeys_:]
 
         outfilenames = glob.glob(os.path.join(outdir, "*.bin"))
-        assert_equals(aryshape[groupingdim_], len(outfilenames))
+        assert_equals(dims[groupingdim_], len(outfilenames))
         for outfilename in outfilenames:
             with open(outfilename, 'rb') as f:
                 nkeys = 0
@@ -326,7 +329,7 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
             import json
             conf = json.load(fconf)
             assert_equals(outdir, conf['input'])
-            assert_equals(tuple(aryshape), tuple(conf['dims']))
+            assert_equals(tuple(dims), tuple(conf['dims']))
             assert_equals(len(aryshape), conf['nkeys'])
             assert_equals(narys_, conf['nvalues'])
             assert_equals(valdtype, conf['valuetype'])
@@ -355,7 +358,7 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
         filename = os.path.join(self.outputdir, "test.stack")
         ary.tofile(filename)
 
-        image = ImagesLoader(self.sc).fromStack(filename, dims=ary.shape)
+        image = ImagesLoader(self.sc).fromStack(filename, dims=(4, 2))
         series = image.toSeries()
 
         seriesvals = series.collect()

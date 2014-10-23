@@ -107,7 +107,7 @@ class TestImagesLoaderUsingOutputDir(PySparkTestCaseWithOutputDir):
         filename = os.path.join(self.outputdir, "test.stack")
         ary.tofile(filename)
 
-        image = ImagesLoader(self.sc).fromStack(filename, dims=ary.shape)
+        image = ImagesLoader(self.sc).fromStack(filename, dims=(4, 2))
 
         collectedimage = image.collect()
         assert_equals(1, len(collectedimage))
@@ -122,7 +122,7 @@ class TestImagesLoaderUsingOutputDir(PySparkTestCaseWithOutputDir):
         filename = os.path.join(self.outputdir, "test02.stack")
         ary2.tofile(filename)
 
-        image = ImagesLoader(self.sc).fromStack(self.outputdir, dims=ary.shape)
+        image = ImagesLoader(self.sc).fromStack(self.outputdir, dims=(4, 2))
 
         collectedimage = image.collect()
         assert_equals(2, len(collectedimage))
