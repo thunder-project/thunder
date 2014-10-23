@@ -384,9 +384,9 @@ class SeriesLoader(object):
                     bytebuf = io.BytesIO(tiffilebuffer)
                     try:
                         pilimg = Image.open(bytebuf)
+                        ary = pil_to_array(pilimg).T
                     finally:
                         bytebuf.close()
-                    ary = pil_to_array(pilimg).T
                     del tiffilebuffer, tiffparser_, pilimg, bytebuf
                     if not planeshape:
                         planeshape = ary.shape[:]
