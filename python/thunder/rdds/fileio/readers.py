@@ -436,6 +436,10 @@ class BotoS3ReadFileHandle(object):
 
     def read(self, size=-1):
         if self._offset or (size > -1):
+            # return empty string to indicate EOF if we are offset past the end of the file
+            # else boto will throw an error at us
+            if self._offset >= self._key.size:
+                return ""
             if size > -1:
                 sizestr = str(self._offset + size - 1)  # range header is inclusive
             else:
