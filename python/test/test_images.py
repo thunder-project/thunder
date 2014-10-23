@@ -56,7 +56,7 @@ class TestImages(PySparkTestCase):
 
         seriesvals = series.collect()
         seriesary = series.pack()
-        seriesary_noxpose = series.pack(transpose=False)
+        seriesary_xpose = series.pack(transpose=True)
 
         # check ordering of keys
         assert_equals((0, 0), seriesvals[0][0])  # first key
@@ -75,9 +75,9 @@ class TestImages(PySparkTestCase):
         collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()
         assert_true(array_equal(ary.ravel(), collectedvals))
 
-        # check that packing returns original array
-        assert_true(array_equal(ary, seriesary))
-        assert_true(array_equal(ary.T, seriesary_noxpose))
+        # check that packing returns transpose of original array
+        assert_true(array_equal(ary.T, seriesary))
+        assert_true(array_equal(ary, seriesary_xpose))
 
     def test_threeDArrayToSeriesWithPack(self):
         ary = arange(24, dtype=dtype('int16')).reshape((2, 4, 3))
@@ -87,6 +87,7 @@ class TestImages(PySparkTestCase):
 
         seriesvals = series.collect()
         seriesary = series.pack()
+        seriesary_xpose = series.pack(transpose=True)
 
         # check ordering of keys
         assert_equals((0, 0, 0), seriesvals[0][0])  # first key
@@ -121,8 +122,9 @@ class TestImages(PySparkTestCase):
         collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()
         assert_true(array_equal(ary.ravel(), collectedvals))
 
-        # check that packing returns original array
-        assert_true(array_equal(ary, seriesary))
+        # check that packing returns transpose of original array
+        assert_true(array_equal(ary.T, seriesary))
+        assert_true(array_equal(ary, seriesary_xpose))
 
     def test_toSeriesWithSplitsAndPack(self):
         ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
@@ -150,8 +152,8 @@ class TestImages(PySparkTestCase):
         collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()
         assert_true(array_equal(ary.ravel(), collectedvals))
 
-        # check that packing returns original array
-        assert_true(array_equal(ary, seriesary))
+        # check that packing returns transpose of original array
+        assert_true(array_equal(ary.T, seriesary))
 
     def test_toSeriesWithInefficientSplitAndSortedPack(self):
         ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
@@ -182,8 +184,8 @@ class TestImages(PySparkTestCase):
         assert_true(array_equal(ary[:, :2].ravel(), collectedvals[:4]))  # first block
         assert_true(array_equal(ary[:, 2:4].ravel(), collectedvals[4:]))  # second block
 
-        # check that packing returns original array (after sort)
-        assert_true(array_equal(ary, seriesary))
+        # check that packing returns transpose of original array (after sort)
+        assert_true(array_equal(ary.T, seriesary))
 
     def test_toBlocksWithSplit(self):
         ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
@@ -381,8 +383,8 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
         collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()
         assert_true(array_equal(ary.ravel(), collectedvals))
 
-        # check that packing returns original array
-        assert_true(array_equal(ary, seriesary))
+        # check that packing returns transpose of original array
+        assert_true(array_equal(ary.T, seriesary))
 
 
 class TestBlockMemoryAsSequence(unittest.TestCase):

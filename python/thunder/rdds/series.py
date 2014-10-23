@@ -428,7 +428,7 @@ class Series(Data):
         rdd = self.rdd.map(lambda (k, v): (converter(k), v))
         return self._constructor(rdd, index=self._index).__finalize__(self)
 
-    def pack(self, selection=None, sorting=False, transpose=True):
+    def pack(self, selection=None, sorting=False, transpose=False):
         """
         Pack a Series into a local array (e.g. for saving)
 
@@ -447,12 +447,18 @@ class Series(Data):
             Whether to sort the local array based on the keys. In most cases the returned array will
             already be ordered correctly, and so an explicit sorting=True is typically not necessary.
 
+        transpose : boolean, optional, default False
+            Transpose the spatial dimensions of the returned array.
+
         Returns
         -------
         result: numpy array
             An array with dimensionality inferred from the RDD keys. Data in an individual Series
             value will be placed into this returned array by interpreting the Series keys as indicies
-            into the returned array.
+            into the returned array. The shape of the returned array will be (num time points x spatial shape).
+            For instance, a series derived from 4 2d images, each 64 x 128, will have dims.count==(64, 128)
+            and will pack into an array with shape (4, 64, 128). If transpose is true, the spatial dimensions
+            will be reversed, so that in this example the shape of the returned array will be (4, 128, 64).
         """
 
         if selection:
@@ -472,9 +478,9 @@ class Series(Data):
         out = asarray(result).reshape(((nout,) + self.dims.count)[::-1]).T
 
         if transpose:
-            # flip xy for spatial data
-            #if size(self.dims.count) == 3:  # (b, x, y, z) -> (b, y, x, z)
-            #    out = out.transpose([0, 2, 1, 3])
+            # swap arrays so that in-memory representation matches that
+            # of original input. default is to return array whose shape matches
+            # that of the series dims object.
             if size(self.dims.count) == 3:
                 out = out.transpose([0, 3, 2, 1])
             if size(self.dims.count) == 2:  # (b, x, y) -> (b, y, x)

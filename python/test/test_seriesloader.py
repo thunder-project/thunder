@@ -162,8 +162,8 @@ class TestSeriesLoader(PySparkTestCase):
         collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()
         assert_true(array_equal(ary.ravel(), collectedvals))
 
-        # check that packing returns original array
-        assert_true(array_equal(ary, seriesary))
+        # check that packing returns transpose of original array
+        assert_true(array_equal(ary.T, seriesary))
 
     def test_fromMultipleArrays(self):
         ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
@@ -190,8 +190,8 @@ class TestSeriesLoader(PySparkTestCase):
         assert_true(array_equal(ary2.ravel(), collectedvals[:, 1]))
 
         # check that packing returns concatenation of input arrays, with time as first dimension
-        assert_true(array_equal(ary, seriesary[0]))
-        assert_true(array_equal(ary2, seriesary[1]))
+        assert_true(array_equal(ary.T, seriesary[0]))
+        assert_true(array_equal(ary2.T, seriesary[1]))
 
     @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
     def test_fromMultipageTif(self):
@@ -210,21 +210,19 @@ class TestSeriesLoader(PySparkTestCase):
         series_ary = series.pack()
 
         assert_equals((75, 70, 3), series.dims.count)
-        #assert_equals((70, 75, 3), series_ary.shape)
-        assert_equals((3, 70, 75), series_ary.shape)
-        # assert_true(np.array_equal(testimg_arys[0], range_series_noshuffle_ary[:, :, 0]))
-        # assert_true(np.array_equal(testimg_arys[1], range_series_noshuffle_ary[:, :, 1]))
-        # assert_true(np.array_equal(testimg_arys[2], range_series_noshuffle_ary[:, :, 2]))
-        assert_true(array_equal(testimg_arys[0], series_ary[0]))
-        assert_true(array_equal(testimg_arys[1], series_ary[1]))
-        assert_true(array_equal(testimg_arys[2], series_ary[2]))
+        assert_equals((75, 70, 3), series_ary.shape)
+        assert_true(array_equal(testimg_arys[0].T, series_ary[:, :, 0]))
+        assert_true(array_equal(testimg_arys[1].T, series_ary[:, :, 1]))
+        assert_true(array_equal(testimg_arys[2].T, series_ary[:, :, 2]))
 
     def _run_fromFishTif(self, blocksize="150M"):
         imagepath = TestSeriesLoader._findSourceTreeDir("utils/data/fish/tif-stack")
-        series = SeriesLoader(self.sc).fromMultipageTif(imagepath,blockSize=blocksize)
+        series = SeriesLoader(self.sc).fromMultipageTif(imagepath, blockSize=blocksize)
         series_ary = series.pack()
-        assert_equals((20, 2, 76, 87), series_ary.shape)
-        assert_true(True)
+        series_ary_xpose = series.pack(transpose=True)
+        assert_equals((87, 76, 2), series.dims.count)
+        assert_equals((20, 87, 76, 2), series_ary.shape)
+        assert_equals((20, 2, 76, 87), series_ary_xpose.shape)
 
     @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
     def test_fromFishTif(self):
@@ -246,8 +244,8 @@ class TestSeriesLoaderFromStacks(PySparkTestCaseWithOutputDir):
         series_ary = series.pack()
 
         assert_equals((128, 64), series.dims.count)
-        assert_equals((64, 128), series_ary.shape)
-        assert_true(array_equal(rangeary, series_ary))
+        assert_equals((128, 64), series_ary.shape)
+        assert_true(array_equal(rangeary.T, series_ary))
 
 
 class TestSeriesBinaryLoader(PySparkTestCaseWithOutputDir):
