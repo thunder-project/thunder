@@ -371,7 +371,9 @@ class SeriesLoader(object):
             bytesperblock /= 2
             blocksperplane *= 2
 
-        blocklen = max((height * width) / blocksperplane, 1)  # integer division
+        blocklenPixels = max((height * width) / blocksperplane, 1)  # integer division
+        while ((blocksperplane * blocklenPixels) < (height * width)):  # make sure we're reading the plane fully
+            blocksperplane += 1
 
         # keys will be planeidx, blockidx:
         keys = list(itertools.product(xrange(npages), xrange(blocksperplane)))
@@ -393,8 +395,8 @@ class SeriesLoader(object):
                     del tiffilebuffer, tiffparser_, pilimg
                     if not planeshape:
                         planeshape = ary.shape[:]
-                        blockstart = blockidx * blocklen
-                        blockend = min(blockstart+blocklen, planeshape[0]*planeshape[1])
+                        blockstart = blockidx * blocklenPixels
+                        blockend = min(blockstart+blocklenPixels, planeshape[0]*planeshape[1])
                     blocks.append(ary.flatten(order='C')[blockstart:blockend])
                     del ary
                 finally:

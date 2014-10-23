@@ -129,6 +129,14 @@ class TestSeriesLoader(PySparkTestCase):
             raise IOError("Test resources directory "+testresourcesdirpath+" not found")
         return testresourcesdirpath
 
+    @staticmethod
+    def _findSourceTreeDir(dirname="utils/data"):
+        testdirpath = os.path.dirname(os.path.realpath(__file__))
+        testresourcesdirpath = os.path.join(testdirpath, "..", "thunder", dirname)
+        if not os.path.isdir(testresourcesdirpath):
+            raise IOError("Directory "+testresourcesdirpath+" not found")
+        return testresourcesdirpath
+
     def test_fromArrays(self):
         ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
 
@@ -210,6 +218,21 @@ class TestSeriesLoader(PySparkTestCase):
         assert_true(array_equal(testimg_arys[0], series_ary[0]))
         assert_true(array_equal(testimg_arys[1], series_ary[1]))
         assert_true(array_equal(testimg_arys[2], series_ary[2]))
+
+    def _run_fromFishTif(self, blocksize="150M"):
+        imagepath = TestSeriesLoader._findSourceTreeDir("utils/data/fish/tif-stack")
+        series = SeriesLoader(self.sc).fromMultipageTif(imagepath,blockSize=blocksize)
+        series_ary = series.pack()
+        assert_equals((20, 2, 76, 87), series_ary.shape)
+        assert_true(True)
+
+    @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
+    def test_fromFishTif(self):
+        self._run_fromFishTif()
+
+    @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
+    def test_fromFishTifWithTinyBlocks(self):
+        self._run_fromFishTif(blocksize=76*20)
 
 
 class TestSeriesLoaderFromStacks(PySparkTestCaseWithOutputDir):
