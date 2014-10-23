@@ -34,8 +34,8 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         rangeary.shape = (64, 128)
         filepath = os.path.join(self.outputdir, "rangeary.stack")
         rangeary.tofile(filepath)
-        # TODO: make these dimensions consistent with shuffle version
-        range_series_noshuffle = self.tsc.loadImagesAsSeries(filepath, dims=(64, 128))
+
+        range_series_noshuffle = self.tsc.loadImagesAsSeries(filepath, dims=(128, 64))
         range_series_noshuffle_ary = range_series_noshuffle.pack()
 
         assert_equals((128, 64), range_series_noshuffle.dims.count)
@@ -44,15 +44,15 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
 
     def test_load3dStackAsSeriesNoShuffle(self):
         rangeary = np.arange(32*64*4, dtype=np.dtype('int16'))
-        rangeary.shape = (32, 64, 4)
+        rangeary.shape = (4, 64, 32)
         filepath = os.path.join(self.outputdir, "rangeary.stack")
         rangeary.tofile(filepath)
-        # TODO: make these dimensions consistent with shuffle version
+
         range_series_noshuffle = self.tsc.loadImagesAsSeries(filepath, dims=(32, 64, 4))
         range_series_noshuffle_ary = range_series_noshuffle.pack()
 
-        assert_equals((4, 64, 32), range_series_noshuffle.dims.count)
-        assert_equals((32, 64, 4), range_series_noshuffle_ary.shape)
+        assert_equals((32, 64, 4), range_series_noshuffle.dims.count)
+        assert_equals((4, 64, 32), range_series_noshuffle_ary.shape)
         assert_true(np.array_equal(rangeary, range_series_noshuffle_ary))
 
     def test_loadStacksAsSeriesWithShuffle(self):
@@ -76,8 +76,8 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         rangeary2.shape = (64, 128)
         filepath = os.path.join(self.outputdir, "rangeary02.stack")
         rangeary2.tofile(filepath)
-        # TODO: make these dimensions consistent with shuffle version
-        range_series_noshuffle = self.tsc.loadImagesAsSeries(self.outputdir, dims=(64, 128))
+
+        range_series_noshuffle = self.tsc.loadImagesAsSeries(self.outputdir, dims=(128, 64))
         range_series_noshuffle_ary = range_series_noshuffle.pack()
 
         assert_equals((128, 64), range_series_noshuffle.dims.count)

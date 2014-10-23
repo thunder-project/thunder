@@ -212,6 +212,21 @@ class TestSeriesLoader(PySparkTestCase):
         assert_true(array_equal(testimg_arys[2], series_ary[2]))
 
 
+class TestSeriesLoaderFromStacks(PySparkTestCaseWithOutputDir):
+    def test_loadStacksAsSeries(self):
+        rangeary = arange(64*128, dtype=dtype('int16'))
+        rangeary.shape = (64, 128)
+        filepath = os.path.join(self.outputdir, "rangeary.stack")
+        rangeary.tofile(filepath)
+
+        series = SeriesLoader(self.sc).fromStack(filepath, dims=(128, 64))
+        series_ary = series.pack()
+
+        assert_equals((128, 64), series.dims.count)
+        assert_equals((64, 128), series_ary.shape)
+        assert_true(array_equal(rangeary, series_ary))
+
+
 class TestSeriesBinaryLoader(PySparkTestCaseWithOutputDir):
 
     def _run_tst_fromBinary(self, useConfJson=False):
@@ -297,10 +312,15 @@ class TestSeriesBinaryWriteFromStack(PySparkTestCaseWithOutputDir):
         underTest = SeriesLoader(self.sc)
 
         underTest.saveFromStack(insubdir, outsubdir, dims, blockSize=blockSize, datatype=str(arrays[0].dtype))
+        series = underTest.fromStack(insubdir, dims, datatype=str(arrays[0].dtype))
 
         roundtripped = underTest.fromBinary(outsubdir).collect()
+        direct = series.collect()
 
-        for serieskeys, seriesvalues in roundtripped:
+        for ((serieskeys, seriesvalues), (directkeys, directvalues)) in zip(roundtripped, direct):
+            assert_equals(directkeys, serieskeys)
+            assert_equals(directvalues, seriesvalues)
+
             for seriesidx, seriesval in enumerate(seriesvalues):
                 #print "seriesidx: %d; serieskeys: %s; seriesval: %g" % (seriesidx, serieskeys, seriesval)
                 # flip indices again for row vs col-major insanity

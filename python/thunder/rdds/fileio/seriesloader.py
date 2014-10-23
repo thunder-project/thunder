@@ -210,6 +210,8 @@ class SeriesLoader(object):
             must be valid on all workers. Datafile may also refer to a single file, or to a range of files specified
             by a glob-style expression using a single wildcard character '*'.
 
+        dims: tuple of positive int
+            Dimensions of input image data, ordered with the fastest-changing dimension first.
 
         Returns
         ---------
@@ -450,7 +452,7 @@ class SeriesLoader(object):
                                                                        datatype=datatype, startidx=startidx,
                                                                        stopidx=stopidx)
         # TODO: initialize index here using npointsinseries?
-        return Series(seriesblocks, dims=Dimensions.fromNumpyShapeTuple(dims))
+        return Series(seriesblocks, dims=Dimensions.fromTuple(dims))
 
     def fromMultipageTif(self, datapath, ext="tif", blockSize="150M",
                          startidx=None, stopidx=None):
@@ -515,7 +517,7 @@ class SeriesLoader(object):
             on the local file system or a URI-like format, as in datapath.
 
         dims: tuple of positive int
-            Dimensions of input image data, similar to a numpy 'shape' parameter.
+            Dimensions of input image data, ordered with the fastest-changing dimension first.
 
         ext: string, optional, default "stack"
             Extension required on data files to be loaded.
