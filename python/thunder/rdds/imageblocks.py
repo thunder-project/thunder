@@ -47,7 +47,10 @@ class ImageBlocks(Data):
 
         def blockToBinarySeries(kv):
             blockKey, blockVal = kv
-            label = ImageBlocks.getBinarySeriesNameForKey(blockKey)
+            # blockKey here is in numpy order (reversed from series convention)
+            # reverse again to get correct filename, for correct sorting of files downstream
+            label = ImageBlocks.getBinarySeriesNameForKey(reversed(blockKey))
+            # label = ImageBlocks.getBinarySeriesNameForKey(blockKey)
             keypacker = None
             buf = StringIO.StringIO()
             for seriesKey, series in ImageBlocks._blockToSeries(blockVal, seriesDim):

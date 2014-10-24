@@ -9,6 +9,7 @@ import itertools
 from nose.tools import assert_equals, assert_true, assert_almost_equal, assert_raises
 
 from thunder.rdds.fileio.imagesloader import ImagesLoader
+from thunder.rdds.fileio.seriesloader import SeriesLoader
 from thunder.rdds.images import _BlockMemoryAsReversedSequence
 from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
 
@@ -281,6 +282,14 @@ class TestImages(PySparkTestCase):
 
 class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
+    @staticmethod
+    def _findSourceTreeDir(dirname="utils/data"):
+        testdirpath = os.path.dirname(os.path.realpath(__file__))
+        testresourcesdirpath = os.path.join(testdirpath, "..", "thunder", dirname)
+        if not os.path.isdir(testresourcesdirpath):
+            raise IOError("Directory "+testresourcesdirpath+" not found")
+        return testresourcesdirpath
+
     def _run_tstSaveAsBinarySeries(self, testidx, narys_, valdtype, groupingdim_):
         """Pseudo-parameterized test fixture, allows reusing existing spark context
         """
@@ -354,6 +363,22 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
         for idx, params in enumerate(paramiters):
             gd, dt = params
             self._run_tstSaveAsBinarySeries(idx, narys, dt, gd)
+
+    def test_roundtripConvertToSeries(self):
+        imagepath = TestImagesUsingOutputDir._findSourceTreeDir("utils/data/fish/tif-stack")
+        outdir = os.path.join(self.outputdir, "fish-series-dir")
+
+        images = ImagesLoader(self.sc).fromMultipageTif(imagepath)
+        series = images.toSeries(blockSize=76*20)
+        series_ary = series.pack()
+
+        images.saveAsBinarySeries(outdir, blockSize=76*20)
+        converted_series = SeriesLoader(self.sc).fromBinary(outdir)
+        converted_series_ary = converted_series.pack()
+
+        assert_equals((76, 87, 2), series.dims.count)
+        assert_equals((20, 76, 87, 2), series_ary.shape)
+        assert_true(array_equal(series_ary, converted_series_ary))
 
     def test_fromStackToSeriesWithPack(self):
         ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
