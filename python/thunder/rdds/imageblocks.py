@@ -47,10 +47,10 @@ class ImageBlocks(Data):
 
         def blockToBinarySeries(kv):
             blockKey, blockVal = kv
-            # blockKey here is in numpy order (reversed from series convention)
-            # reverse again to get correct filename, for correct sorting of files downstream
-            label = ImageBlocks.getBinarySeriesNameForKey(reversed(blockKey))
-            # label = ImageBlocks.getBinarySeriesNameForKey(blockKey)
+            # # blockKey here is in numpy order (reversed from series convention)
+            # # reverse again to get correct filename, for correct sorting of files downstream
+            # label = ImageBlocks.getBinarySeriesNameForKey(reversed(blockKey))
+            label = ImageBlocks.getBinarySeriesNameForKey(blockKey)
             keypacker = None
             buf = StringIO.StringIO()
             for seriesKey, series in ImageBlocks._blockToSeries(blockVal, seriesDim):
@@ -82,8 +82,12 @@ class ImageBlocks(Data):
         # val array data will be t by (spatial block size)
 
         # block keys are in numpy convention (fastest changing last) so a straight ascending sort should
-        # do the right thing here. sort must come after group, b/c group will mess with ordering.
-        return self.rdd.groupByKey().sortByKey(ascending=True).mapValues(lambda v: ImageBlockValue.fromPlanarBlocks(v, 0))
+        # do the right thing here.
+        # ^^^ no longer valid; now fastest changing (e.g. x) is first
+        # sort must come after group, b/c group will mess with ordering.
+        # return self.rdd.groupByKey().sortByKey(ascending=True).mapValues(lambda v: ImageBlockValue.fromPlanarBlocks(v, 0))
+        sortedRdd = self.rdd.groupByKey().sortBy(lambda (k, _): k[::-1])
+        return sortedRdd.mapValues(lambda v: ImageBlockValue.fromPlanarBlocks(v, 0))
 
 
 class ImageBlockValue(object):
@@ -304,10 +308,9 @@ class ImageBlockValue(object):
         del rangeiters[seriesDim]
         # correct for original dimensionality if inserting at end of list
         insertDim = seriesDim if seriesDim >= 0 else len(self.origshape) + seriesDim
-        # reverse rangeiters indicies; first dimension is most rapidly varying, dimensions in opposite order
-        # from numpy / C-ordering convention
-        for idxSeq in itertools.product(*rangeiters):
-            expandedIdxSeq = list(idxSeq)
+
+        for idxSeq in itertools.product(*reversed(rangeiters)):
+            expandedIdxSeq = list(reversed(idxSeq))
             expandedIdxSeq.insert(insertDim, None)
             slices = []
             for d, (idx, origslice) in enumerate(zip(expandedIdxSeq, self.origslices)):

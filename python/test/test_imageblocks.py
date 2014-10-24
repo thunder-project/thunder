@@ -108,13 +108,13 @@ class TestImageBlockValue(unittest.TestCase):
         # check ordering of keys
         assert_equals((0, 0), seriesvals[0][0])  # first key
         assert_equals((1, 0), seriesvals[1][0])  # second key
-        assert_equals((2, 0), seriesvals[2][0])
-        assert_equals((3, 0), seriesvals[3][0])
-        assert_equals((0, 1), seriesvals[4][0])
-        assert_equals((1, 1), seriesvals[5][0])
-        assert_equals((2, 1), seriesvals[6][0])
-        assert_equals((3, 1), seriesvals[7][0])
+        assert_equals((0, 1), seriesvals[2][0])
+        assert_equals((1, 1), seriesvals[3][0])
+        assert_equals((0, 2), seriesvals[4][0])
+        assert_equals((1, 2), seriesvals[5][0])
+        assert_equals((0, 3), seriesvals[6][0])
+        assert_equals((1, 3), seriesvals[7][0])
 
         # check that values are in original order
         collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()
-        assert_true(array_equal(ary.ravel(), collectedvals))
+        assert_true(array_equal(ary.ravel(order='F'), collectedvals))

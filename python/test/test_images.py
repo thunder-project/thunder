@@ -35,8 +35,7 @@ class TestImages(PySparkTestCase):
     def evaluate_series(self, arys, series, sz):
         assert_equals(sz, len(series))
         for serieskey, seriesval in series:
-            numpykey = serieskey[::-1]
-            expectedval = array([ary[numpykey] for ary in arys], dtype='int16')
+            expectedval = array([ary[serieskey] for ary in arys], dtype='int16')
             assert_true(array_equal(expectedval, seriesval))
 
     def test_toSeries(self):
@@ -62,23 +61,24 @@ class TestImages(PySparkTestCase):
         # check ordering of keys
         assert_equals((0, 0), seriesvals[0][0])  # first key
         assert_equals((1, 0), seriesvals[1][0])  # second key
-        assert_equals((2, 0), seriesvals[2][0])
-        assert_equals((3, 0), seriesvals[3][0])
-        assert_equals((0, 1), seriesvals[4][0])
-        assert_equals((1, 1), seriesvals[5][0])
-        assert_equals((2, 1), seriesvals[6][0])
-        assert_equals((3, 1), seriesvals[7][0])
+        assert_equals((0, 1), seriesvals[2][0])
+        assert_equals((1, 1), seriesvals[3][0])
+        assert_equals((0, 2), seriesvals[4][0])
+        assert_equals((1, 2), seriesvals[5][0])
+        assert_equals((0, 3), seriesvals[6][0])
+        assert_equals((1, 3), seriesvals[7][0])
 
-        # check dimensions tuple is reversed from numpy shape
-        assert_equals(ary.shape[::-1], series.dims.count)
+        # check dimensions tuple matches numpy shape
+        assert_equals(image.dims.count, series.dims.count)
+        assert_equals(ary.shape, series.dims.count)
 
         # check that values are in original order
         collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()
-        assert_true(array_equal(ary.ravel(), collectedvals))
+        assert_true(array_equal(ary.ravel(order='F'), collectedvals))
 
-        # check that packing returns transpose of original array
-        assert_true(array_equal(ary.T, seriesary))
-        assert_true(array_equal(ary, seriesary_xpose))
+        # check that packing returns original array
+        assert_true(array_equal(ary, seriesary))
+        assert_true(array_equal(ary.T, seriesary_xpose))
 
     def test_threeDArrayToSeriesWithPack(self):
         ary = arange(24, dtype=dtype('int16')).reshape((2, 4, 3))
@@ -116,8 +116,8 @@ class TestImages(PySparkTestCase):
         assert_equals((1, 3, 1), seriesvals[22][0])
         assert_equals((2, 3, 1), seriesvals[23][0])
 
-        # check dimensions tuple is reversed from numpy shape
-        assert_equals(ary.shape[::-1], series.dims.count)
+        # check dimensions tuple matches numpy shape
+        assert_equals(ary.shape, series.dims.count)
 
         # check that values are in original order
         collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()
@@ -146,8 +146,8 @@ class TestImages(PySparkTestCase):
         assert_equals((2, 1), seriesvals[6][0])
         assert_equals((3, 1), seriesvals[7][0])
 
-        # check dimensions tuple is reversed from numpy shape
-        assert_equals(ary.shape[::-1], series.dims.count)
+        # check dimensions tuple matches numpy shape
+        assert_equals(ary.shape, series.dims.count)
 
         # check that values are in original order
         collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()
@@ -177,8 +177,8 @@ class TestImages(PySparkTestCase):
         assert_equals((2, 1), seriesvals[6][0])
         assert_equals((3, 1), seriesvals[7][0])
 
-        # check dimensions tuple is reversed from numpy shape
-        assert_equals(ary.shape[::-1], series.dims.count)
+        # check dimensions tuple matches numpy shape
+        assert_equals(ary.shape, series.dims.count)
 
         # check that values are in expected order
         collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()

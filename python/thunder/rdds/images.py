@@ -49,7 +49,7 @@ class Images(Data):
 
     def _populateParamsFromFirstRecord(self):
         record = self.rdd.first()
-        self._dims = Dimensions.fromNumpyShapeTuple(record[1].shape)
+        self._dims = Dimensions.fromTuple(record[1].shape)
         self._dtype = str(record[1].dtype)
 
     def _resetCounts(self):
@@ -105,7 +105,7 @@ class Images(Data):
             of an xy plane, divided in the middle of the y dimension
 
         """
-        # splitsPerDim is expected to be in the dimensions ordering convention, opposite that of numpy shapes
+        # splitsPerDim is expected to be in the dimensions ordering convention
         import itertools
         from thunder.rdds.imageblocks import ImageBlocks, ImageBlockValue
 
@@ -138,7 +138,7 @@ class Images(Data):
             slices.append(dimslices)
 
         # reverse slices to be in numpy shape ordering convention:
-        slices = slices[::-1]
+        # slices = slices[::-1]
 
         def _groupBySlices(imagearyval, slices_, tp_, numtp_):
             ret_vals = []

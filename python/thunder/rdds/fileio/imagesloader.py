@@ -43,7 +43,7 @@ class ImagesLoader(object):
             if not ary.dtype == dtype:
                 raise ValueError("Arrays must all be of same data type; got both %s and %s" %
                                  (str(dtype), str(ary.dtype)))
-        dims = Dimensions.fromNumpyShapeTuple(shape)
+        dims = Dimensions.fromTuple(shape)
         return Images(self.sc.parallelize(enumerate(arrays), len(arrays)),
                       dims=dims, dtype=str(dtype), nimages=len(arrays))
 
@@ -65,7 +65,6 @@ class ImagesLoader(object):
 
         dims: tuple of positive int
             Dimensions of input image data, ordered with fastest-changing dimension first
-            (opposite from numpy shape tuple)
 
         ext: string, optional, default "stack"
             Extension required on data files to be loaded.
@@ -77,10 +76,8 @@ class ImagesLoader(object):
         if not dims:
             raise ValueError("Image dimensions must be specified if loading from binary stack data")
 
-        shape = dims[::-1]
-
         def toArray(buf):
-            return frombuffer(buf, dtype=dtype, count=int(prod(shape))).reshape(shape)
+            return frombuffer(buf, dtype=dtype, count=int(prod(dims))).reshape(dims, order='F')
 
         reader = getParallelReaderForPath(datapath)(self.sc)
         readerrdd = reader.read(datapath, ext=ext, startidx=startidx, stopidx=stopidx)
@@ -109,7 +106,7 @@ class ImagesLoader(object):
         """
         def readTifFromBuf(buf):
             fbuf = BytesIO(buf)
-            return imread(fbuf, format='tif').T
+            return imread(fbuf, format='tif')
 
         reader = getParallelReaderForPath(datapath)(self.sc)
         readerrdd = reader.read(datapath, ext=ext, startidx=startidx, stopidx=stopidx)
@@ -152,12 +149,7 @@ class ImagesLoader(object):
                 except EOFError:
                     # past last page in tif
                     break
-            # hack to get consistent behavior for single and multipage tifs
-            if pageidx == 1:
-                imgarys[0] = imgarys[0].T
-                return dstack(imgarys)
-            else:
-                return dstack(imgarys).T  # transpose everything to get shape of z by y by x
+            return dstack(imgarys)
 
         reader = getParallelReaderForPath(datafile)(self.sc)
         readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)
@@ -185,7 +177,7 @@ class ImagesLoader(object):
         """
         def readPngFromBuf(buf):
             fbuf = BytesIO(buf)
-            return imread(fbuf, format='png').T
+            return imread(fbuf, format='png')
 
         reader = getParallelReaderForPath(datafile)(self.sc)
         readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)

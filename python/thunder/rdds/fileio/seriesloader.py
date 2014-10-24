@@ -44,7 +44,7 @@ class SeriesLoader(object):
         point in time. Thus in the resulting Series, the value of the record with key (0,0,0) will be
         array([arrays[0][0,0,0], arrays[1][0,0,0],... arrays[n][0,0,0]).
 
-
+        The dimensions of the resulting Series will be *opposite* that of the passed numpy array.
         """
         # if passed a single array, cast it to a sequence of length 1
         if isinstance(arrays, ndarray):
@@ -63,7 +63,7 @@ class SeriesLoader(object):
 
         values = vstack([ary.ravel() for ary in arrays]).T
 
-        dims = Dimensions.fromNumpyShapeTuple(shape)
+        dims = Dimensions.fromTuple(shape[::-1])
 
         return Series(self.sc.parallelize(zip(keys, values), self.minPartitions), dims=dims)
 
@@ -368,7 +368,7 @@ class SeriesLoader(object):
             blocksperplane *= 2
 
         blocklenPixels = max((height * width) / blocksperplane, 1)  # integer division
-        while ((blocksperplane * blocklenPixels) < (height * width)):  # make sure we're reading the plane fully
+        while blocksperplane * blocklenPixels < height * width:  # make sure we're reading the plane fully
             blocksperplane += 1
 
         # keys will be planeidx, blockidx:
@@ -480,7 +480,7 @@ class SeriesLoader(object):
         seriesblocks, metadata = self._getSeriesBlocksFromMultiTif(datapath, ext=ext, blockSize=blockSize,
                                                                    startidx=startidx, stopidx=stopidx)
         dims, npointsinseries, datatype = metadata
-        return Series(seriesblocks, dims=Dimensions.fromNumpyShapeTuple(dims))
+        return Series(seriesblocks, dims=Dimensions.fromTuple(dims[::-1]))
 
     @staticmethod
     def __saveSeriesRdd(seriesblocks, outputdirname, dims, npointsinseries, datatype, overwrite=False):
