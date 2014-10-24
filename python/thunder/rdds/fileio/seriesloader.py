@@ -7,12 +7,14 @@ from scipy.io import loadmat
 from cStringIO import StringIO
 import itertools
 import struct
+import urlparse
 import math
 
 from thunder.rdds.fileio.writers import getParallelWriterForPath
 from thunder.rdds.imageblocks import ImageBlocks
 from thunder.rdds.keys import Dimensions
-from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError, selectByStartAndStopIndices
+from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError, selectByStartAndStopIndices, \
+    appendExtensionToPathSpec
 from thunder.rdds.series import Series
 from thunder.utils.common import parseMemoryString
 
@@ -67,20 +69,24 @@ class SeriesLoader(object):
 
     @staticmethod
     def __normalizeDatafilePattern(datapath, ext):
-        if ext:
-            if not ext.startswith("."):
-                # protect (partly) against case where ext happens to *also* be the name
-                # of a directory. If your directory is named "something.bin", well, you
-                # get what you deserve, I guess.
-                ext = "." + ext
-            if not datapath.endswith(ext):
-                if datapath.endswith("*"):
-                    datapath += ext
-                elif datapath.endswith("/"):
-                    datapath += "*" + ext
-                else:
-                    datapath += "/*" + ext
-        return datapath
+        datapath = appendExtensionToPathSpec(datapath, ext)
+        # we do need to prepend a scheme here, b/c otherwise the Hadoop based readers
+        # will adopt their default behavior and start looking on hdfs://.
+
+        parseresult = urlparse.urlparse(datapath)
+        if parseresult.scheme:
+            # this appears to already be a fully-qualified URI
+            return datapath
+        else:
+            # this looks like a local path spec
+            # check whether we look like an absolute or a relative path
+            import os
+            dircomponent, filecomponent = os.path.split(datapath)
+            if not os.path.isabs(dircomponent):
+                # need to make relative local paths absolute; our file scheme parsing isn't all that it could be.
+                dircomponent = os.path.abspath(dircomponent)
+                datapath = os.path.join(dircomponent, filecomponent)
+            return "file://" + datapath
 
     def fromText(self, datafile, nkeys=None, ext="txt"):
         """
@@ -223,7 +229,6 @@ class SeriesLoader(object):
             number of time points in returned series, determined from number of stack files found at datapath
 
         """
-
         datapath = self.__normalizeDatafilePattern(datapath, ext)
         blockSize = parseMemoryString(blockSize)
         totaldim = reduce(lambda x_, y_: x_*y_, dims)

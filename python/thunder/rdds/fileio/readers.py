@@ -59,14 +59,7 @@ def appendExtensionToPathSpec(datapath, ext=None):
     """
     if ext:
         if '*' in datapath:
-            if datapath[-1] == '*':
-                # path ends in wildcard but without postfix
-                # use ext as postfix
-                return datapath + ext
-            else:
-                # ext specified, but datapath apparently already has a postfix
-                # drop ext and use existing postfix
-                return datapath
+            return datapath
         else:
             # no wildcard in path yet
             return datapath+'*'+ext
@@ -282,7 +275,6 @@ class BotoS3ParallelReader(_BotoS3Client):
 
         if not keynamelist:
             raise FileNotFoundError("No S3 objects found for '%s'" % datapath)
-
 
         def readSplitFromS3(kvIter):
             conn = boto.connect_s3()
