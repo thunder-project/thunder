@@ -62,6 +62,10 @@ def appendExtensionToPathSpec(datapath, ext=None):
             # we already have a literal wildcard, which we take as a sign that the user knows
             # what they're doing and don't want us overriding their path by appending extensions to it
             return datapath
+        elif os.path.splitext(datapath)[1]:
+            # looks like we already have a literal extension specified at the end of datapath.
+            # go with that.
+            return datapath
         else:
             # no wildcard in path yet
             # check whether we already end in `ext`, which suggests we've been passed a literal filename.
