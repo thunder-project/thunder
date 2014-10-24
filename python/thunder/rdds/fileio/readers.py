@@ -59,10 +59,27 @@ def appendExtensionToPathSpec(datapath, ext=None):
     """
     if ext:
         if '*' in datapath:
+            # we already have a literal wildcard, which we take as a sign that the user knows
+            # what they're doing and don't want us overriding their path by appending extensions to it
             return datapath
         else:
             # no wildcard in path yet
-            return datapath+'*'+ext
+            # check whether we already end in `ext`, which suggests we've been passed a literal filename.
+            # prepend '.' to ext, as mild protection against the case where we have a directory 'bin' and
+            # are looking in it for files named '*.bin'.
+            if not ext.startswith('.'):
+                ext = '.'+ext
+            if not datapath.endswith(ext):
+                # we have an extension and we'd like to append it.
+                # we assume that datapath should be pointing to a directory at this point, but we might
+                # or might not have a directory separator at the end of it. add it if we don't.
+                if not datapath.endswith(os.path.sep):
+                    datapath += os.path.sep
+                # return a path with "/*."+`ext` added to it.
+                return datapath+'*'+ext
+            else:
+                # we are asking to append `ext`, but it looks like datapath already ends with '.'+`ext`
+                return datapath
     else:
         return datapath
 
