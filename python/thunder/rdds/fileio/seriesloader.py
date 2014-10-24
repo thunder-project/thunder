@@ -416,10 +416,11 @@ class SeriesLoader(object):
         # map over blocks
         rdd = self.sc.parallelize(keys, len(keys)).flatMap(readblockfromtif)
         # hack for returned dimensions:
-        if npages == 1:
-            dims = (width, height, npages)
-        else:
-            dims = (npages, width, height)
+        # if npages == 1:
+        #     dims = (width, height, npages)
+        # else:
+        #     dims = (npages, width, height)
+        dims = (npages, width, height)
 
         metadata = (dims, ntimepoints, datatype)
         return rdd, metadata

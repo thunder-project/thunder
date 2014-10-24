@@ -31,16 +31,16 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
 
     def __run_loadStacksAsSeries(self, shuffle):
         rangeary = np.arange(64*128, dtype=np.dtype('int16'))
-        rangeary.shape = (64, 128)
         filepath = os.path.join(self.outputdir, "rangeary.stack")
         rangeary.tofile(filepath)
+        expectedary = rangeary.reshape((128, 64), order='F')
 
         range_series = self.tsc.loadImagesAsSeries(filepath, dims=(128, 64), shuffle=shuffle)
         range_series_ary = range_series.pack()
 
         assert_equals((128, 64), range_series.dims.count)
         assert_equals((128, 64), range_series_ary.shape)
-        assert_true(np.array_equal(rangeary.T, range_series_ary))
+        assert_true(np.array_equal(expectedary, range_series_ary))
 
     def test_loadStacksAsSeriesNoShuffle(self):
         self.__run_loadStacksAsSeries(False)
@@ -50,16 +50,16 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
 
     def __run_load3dStackAsSeries(self, shuffle):
         rangeary = np.arange(32*64*4, dtype=np.dtype('int16'))
-        rangeary.shape = (4, 64, 32)
         filepath = os.path.join(self.outputdir, "rangeary.stack")
         rangeary.tofile(filepath)
+        expectedary = rangeary.reshape((32, 64, 4), order='F')
 
         range_series_noshuffle = self.tsc.loadImagesAsSeries(filepath, dims=(32, 64, 4), shuffle=shuffle)
         range_series_noshuffle_ary = range_series_noshuffle.pack()
 
         assert_equals((32, 64, 4), range_series_noshuffle.dims.count)
         assert_equals((32, 64, 4), range_series_noshuffle_ary.shape)
-        assert_true(np.array_equal(rangeary.T, range_series_noshuffle_ary))
+        assert_true(np.array_equal(expectedary, range_series_noshuffle_ary))
 
     def test_load3dStackAsSeriesNoShuffle(self):
         self.__run_load3dStackAsSeries(False)
@@ -69,13 +69,13 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
 
     def __run_loadMultipleStacksAsSeries(self, shuffle):
         rangeary = np.arange(64*128, dtype=np.dtype('int16'))
-        rangeary.shape = (64, 128)
         filepath = os.path.join(self.outputdir, "rangeary01.stack")
         rangeary.tofile(filepath)
+        expectedary = rangeary.reshape((128, 64), order='F')
         rangeary2 = np.arange(64*128, 2*64*128, dtype=np.dtype('int16'))
-        rangeary2.shape = (64, 128)
         filepath = os.path.join(self.outputdir, "rangeary02.stack")
         rangeary2.tofile(filepath)
+        expectedary2 = rangeary2.reshape((128, 64), order='F')
 
         range_series = self.tsc.loadImagesAsSeries(self.outputdir, dims=(128, 64), shuffle=shuffle)
         range_series_ary = range_series.pack()
@@ -84,10 +84,10 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         assert_equals((128, 64), range_series.dims.count)
         assert_equals((2, 128, 64), range_series_ary.shape)
         assert_equals((2, 64, 128), range_series_ary_xpose.shape)
-        assert_true(np.array_equal(rangeary.T, range_series_ary[0]))
-        assert_true(np.array_equal(rangeary2.T, range_series_ary[1]))
-        assert_true(np.array_equal(rangeary, range_series_ary_xpose[0]))
-        assert_true(np.array_equal(rangeary2, range_series_ary_xpose[1]))
+        assert_true(np.array_equal(expectedary, range_series_ary[0]))
+        assert_true(np.array_equal(expectedary2, range_series_ary[1]))
+        assert_true(np.array_equal(expectedary.T, range_series_ary_xpose[0]))
+        assert_true(np.array_equal(expectedary2.T, range_series_ary_xpose[1]))
 
     def test_loadMultipleStacksAsSeriesNoShuffle(self):
         self.__run_loadMultipleStacksAsSeries(False)
@@ -106,7 +106,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         range_series = self.tsc.loadImagesAsSeries(self.outputdir, inputformat="tif-stack", shuffle=shuffle)
         range_series_ary = range_series.pack()
 
-        assert_equals((1, 60, 120), range_series.dims.count)
+        assert_equals((60, 120, 1), range_series.dims.count)
         assert_equals((60, 120), range_series_ary.shape)
         assert_true(np.array_equal(rangeary, range_series_ary))
 
@@ -171,7 +171,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         range_series_ary = range_series.pack()
         range_series_ary_xpose = range_series.pack(transpose=True)
 
-        assert_equals((1, 60, 120), range_series.dims.count)
+        assert_equals((60, 120, 1), range_series.dims.count)
         assert_equals((2, 60, 120), range_series_ary.shape)
         assert_equals((2, 120, 60), range_series_ary_xpose.shape)
         assert_true(np.array_equal(rangeary, range_series_ary[0]))

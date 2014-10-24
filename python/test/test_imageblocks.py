@@ -82,13 +82,15 @@ class TestImageBlockValue(unittest.TestCase):
 
         series = list(imageblock.toSeriesIter(-1))
 
+        # this was less confusing when a series could be created by
+        # a straight linear read of a binary array...
         expectedseries = [
             ((0, 0), array([0, 1, 2, 3], dtype='int16')),
-            ((1, 0), array([4, 5, 6, 7], dtype='int16')),
-            ((2, 0), array([8, 9, 10, 11], dtype='int16')),
-            ((0, 1), array([12, 13, 14, 15], dtype='int16')),
+            ((1, 0), array([12, 13, 14, 15], dtype='int16')),
+            ((0, 1), array([4, 5, 6, 7], dtype='int16')),
             ((1, 1), array([16, 17, 18, 19], dtype='int16')),
-            ((2, 1), array([20, 21, 22, 23], dtype='int16')),
+            ((0, 2), array([8, 9, 10, 11], dtype='int16')),
+            ((1, 2), array([20, 21, 22, 23], dtype='int16')),
         ]
 
         for actual, expected in zip(series, expectedseries):
