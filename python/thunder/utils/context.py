@@ -88,7 +88,7 @@ class ThunderContext():
 
         return data
 
-    def loadImages(self, datapath, dims=None, inputformat='stack', startidx=None, stopidx=None):
+    def loadImages(self, datapath, dims=None, inputformat='stack', datatype='int16', startidx=None, stopidx=None):
         """
         Loads an Images object from data stored as a binary image stack, tif, tif-stack, or png files.
 
@@ -123,6 +123,11 @@ class ThunderContext():
             This method assumes that stack data consists of signed 16-bit integers in native byte order. Data types of
             image file data will be as specified in the file headers.
 
+        datatype: string or numpy dtype. optional, default 'int16'
+            Data type of the image files to be loaded, specified as a numpy "dtype" string. If inputformat is
+            'tif-stack', the datatype parameter (if any) will be ignored; data type will instead be read out from the
+            tif headers.
+
         startidx: nonnegative int, optional
             startidx and stopidx are convenience parameters to allow only a subset of input files to be read in. These
             parameters give the starting index (inclusive) and final index (exclusive) of the data files to be used
@@ -146,7 +151,7 @@ class ThunderContext():
         loader = ImagesLoader(self._sc)
 
         if inputformat.lower() == 'stack':
-            data = loader.fromStack(datapath, dims, startidx=startidx, stopidx=stopidx)
+            data = loader.fromStack(datapath, dims, dtype=datatype, startidx=startidx, stopidx=stopidx)
         elif inputformat.lower() == 'tif':
             data = loader.fromTif(datapath, startidx=startidx, stopidx=stopidx)
         elif inputformat.lower() == 'tif-stack':
@@ -156,8 +161,8 @@ class ThunderContext():
 
         return data
 
-    def loadImagesAsSeries(self, datapath, dims=None, inputformat='stack', blockSize="150M",
-                           startidx=None, stopidx=None, shuffle=False):
+    def loadImagesAsSeries(self, datapath, dims=None, inputformat='stack', datatype='int16',
+                           blockSize="150M", startidx=None, stopidx=None, shuffle=False):
         """
         Load Images data as Series data.
 
@@ -170,13 +175,16 @@ class ThunderContext():
             "/mnt/my/absolute/data/directory/", or "file:///mnt/another/data/directory/".
 
         dims: tuple of positive int, optional (but required if inputformat is 'stack')
-            Dimensions of input image data, similar to a numpy 'shape' parameter, for instance (1024, 1024, 48). Binary
-            stack data will be interpreted as coming from a multidimensional array of the specified dimensions. Stack
-            data should be stored in row-major order (Fortran or Matlab convention) rather than column-major order (C
-            or python/numpy convention), where the first dimension corresponds to that which is changing most rapidly
+            Dimensions of input image data, for instance (1024, 1024, 48). Binary stack data will be interpreted as
+            coming from a multidimensional array of the specified dimensions.
+
+            The first dimension of the passed dims tuple should be the one that is changing most rapidly
             on disk. So for instance given dims of (x, y, z), the coordinates of the data in a binary stack file
-            should be ordered as [(x0, y0, z0), (x1, y0, zo), ..., (xN, y0, z0), (x0, y1, z0), (x1, y1, z0), ...,
-            (xN, yM, z0), (x0, y0, z1), ..., (xN, yM, zP)].
+            should be ordered as [(x0, y0, z0), (x1, y0, z0), ..., (xN, y0, z0), (x0, y1, z0), (x1, y1, z0), ...,
+            (xN, yM, z0), (x0, y0, z1), ..., (xN, yM, zP)]. This is the opposite convention from that used by numpy,
+            which by default has the fastest-changing dimension listed last (column-major convention). Thus, if loading
+            a numpy array `ary`, where `ary.shape == (z, y, x)`, written to disk by `ary.tofile("myarray.stack")`, the
+            corresponding dims parameter should be (x, y, z).
             If inputformat is 'tif-stack', the dims parameter (if any) will be ignored; data dimensions will instead
             be read out from the tif file headers.
 
@@ -186,6 +194,11 @@ class ThunderContext():
             For both stacks and tif stacks, separate files are interpreted as distinct time points, with ordering
             given by lexicographic sorting of file names.
             This method assumes that stack data consists of signed 16-bit integers in native byte order.
+
+        datatype: string or numpy dtype. optional, default 'int16'
+            Data type of the image files to be loaded, specified as a numpy "dtype" string. If inputformat is
+            'tif-stack', the datatype parameter (if any) will be ignored; data type will instead be read out from the
+            tif headers.
 
         blocksize: string formatted as e.g. "64M", "512k", "2G", or positive int. optional, default "150M"
             Requested size of individual output files in bytes (or kilobytes, megabytes, gigabytes). This parameter
@@ -228,7 +241,7 @@ class ThunderContext():
             from thunder.rdds.fileio.imagesloader import ImagesLoader
             loader = ImagesLoader(self._sc)
             if inputformat.lower() == 'stack':
-                return loader.fromStack(datapath, dims, startidx=startidx, stopidx=stopidx)\
+                return loader.fromStack(datapath, dims, dtype=datatype, startidx=startidx, stopidx=stopidx)\
                     .toSeries(blockSize=blockSize)
             else:
                 # tif stack
@@ -239,14 +252,15 @@ class ThunderContext():
             from thunder.rdds.fileio.seriesloader import SeriesLoader
             loader = SeriesLoader(self._sc)
             if inputformat.lower() == 'stack':
-                return loader.fromStack(datapath, dims, blockSize=blockSize, startidx=startidx, stopidx=stopidx)
+                return loader.fromStack(datapath, dims, datatype=datatype, blockSize=blockSize,
+                                        startidx=startidx, stopidx=stopidx)
             else:
                 # tif stack
                 return loader.fromMultipageTif(datapath, blockSize=blockSize,
                                                startidx=startidx, stopidx=stopidx)
 
     def convertImagesToSeries(self, datapath, outputdirpath, dims=None, inputformat='stack',
-                              blocksize="150M", startidx=None, stopidx=None,
+                              datatype='int16', blocksize="150M", startidx=None, stopidx=None,
                               shuffle=False, overwrite=False):
         """
         Write out Images data as Series data, saved in a flat binary format.
@@ -273,13 +287,16 @@ class ThunderContext():
             its contents will be deleted and overwritten.
 
         dims: tuple of positive int, optional (but required if inputformat is 'stack')
-            Dimensions of input image data, similar to a numpy 'shape' parameter, for instance (1024, 1024, 48). Binary
-            stack data will be interpreted as coming from a multidimensional array of the specified dimensions. Stack
-            data should be stored in row-major order (Fortran or Matlab convention) rather than column-major order (C
-            or python/numpy convention), where the first dimension corresponds to that which is changing most rapidly
+            Dimensions of input image data, for instance (1024, 1024, 48). Binary stack data will be interpreted as
+            coming from a multidimensional array of the specified dimensions.
+
+            The first dimension of the passed dims tuple should be the one that is changing most rapidly
             on disk. So for instance given dims of (x, y, z), the coordinates of the data in a binary stack file
-            should be ordered as [(x0, y0, z0), (x1, y0, zo), ..., (xN, y0, z0), (x0, y1, z0), (x1, y1, z0), ...,
-            (xN, yM, z0), (x0, y0, z1), ..., (xN, yM, zP)].
+            should be ordered as [(x0, y0, z0), (x1, y0, z0), ..., (xN, y0, z0), (x0, y1, z0), (x1, y1, z0), ...,
+            (xN, yM, z0), (x0, y0, z1), ..., (xN, yM, zP)]. This is the opposite convention from that used by numpy,
+            which by default has the fastest-changing dimension listed last (column-major convention). Thus, if loading
+            a numpy array `ary`, where `ary.shape == (z, y, x)`, written to disk by `ary.tofile("myarray.stack")`, the
+            corresponding dims parameter should be (x, y, z).
             If inputformat is 'tif-stack', the dims parameter (if any) will be ignored; data dimensions will instead
             be read out from the tif file headers.
 
@@ -290,6 +307,11 @@ class ThunderContext():
             given by lexicographic sorting of file names.
             This method assumes that stack data consists of signed 16-bit integers in native byte order. The lower-level
             API method SeriesLoader.saveFromStack() allows alternative data types to be read in.
+
+        datatype: string or numpy dtype. optional, default 'int16'
+            Data type of the image files to be loaded, specified as a numpy "dtype" string. If inputformat is
+            'tif-stack', the datatype parameter (if any) will be ignored; data type will instead be read out from the
+            tif headers.
 
         blocksize: string formatted as e.g. "64M", "512k", "2G", or positive int. optional, default "150M"
             Requested size of individual output files in bytes (or kilobytes, megabytes, gigabytes). This parameter
@@ -328,7 +350,7 @@ class ThunderContext():
             from thunder.rdds.fileio.imagesloader import ImagesLoader
             loader = ImagesLoader(self._sc)
             if inputformat.lower() == 'stack':
-                loader.fromStack(datapath, dims, startidx=startidx, stopidx=stopidx)\
+                loader.fromStack(datapath, dims, dtype=datatype, startidx=startidx, stopidx=stopidx)\
                     .saveAsBinarySeries(outputdirpath, blockSize=blocksize, overwrite=overwrite)
             else:
                 loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)\
@@ -337,8 +359,8 @@ class ThunderContext():
             from thunder.rdds.fileio.seriesloader import SeriesLoader
             loader = SeriesLoader(self._sc)
             if inputformat.lower() == 'stack':
-                loader.saveFromStack(datapath, outputdirpath, dims, blockSize=blocksize, overwrite=overwrite,
-                                     startidx=startidx, stopidx=stopidx)
+                loader.saveFromStack(datapath, outputdirpath, dims, datatype=datatype,
+                                     blockSize=blocksize, overwrite=overwrite, startidx=startidx, stopidx=stopidx)
             else:
                 loader.saveFromMultipageTif(datapath, outputdirpath, blockSize=blocksize,
                                             startidx=startidx, stopidx=stopidx, overwrite=overwrite)

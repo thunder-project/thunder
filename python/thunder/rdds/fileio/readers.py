@@ -59,17 +59,31 @@ def appendExtensionToPathSpec(datapath, ext=None):
     """
     if ext:
         if '*' in datapath:
-            if datapath[-1] == '*':
-                # path ends in wildcard but without postfix
-                # use ext as postfix
-                return datapath + ext
-            else:
-                # ext specified, but datapath apparently already has a postfix
-                # drop ext and use existing postfix
-                return datapath
+            # we already have a literal wildcard, which we take as a sign that the user knows
+            # what they're doing and don't want us overriding their path by appending extensions to it
+            return datapath
+        elif os.path.splitext(datapath)[1]:
+            # looks like we already have a literal extension specified at the end of datapath.
+            # go with that.
+            return datapath
         else:
             # no wildcard in path yet
-            return datapath+'*'+ext
+            # check whether we already end in `ext`, which suggests we've been passed a literal filename.
+            # prepend '.' to ext, as mild protection against the case where we have a directory 'bin' and
+            # are looking in it for files named '*.bin'.
+            if not ext.startswith('.'):
+                ext = '.'+ext
+            if not datapath.endswith(ext):
+                # we have an extension and we'd like to append it.
+                # we assume that datapath should be pointing to a directory at this point, but we might
+                # or might not have a directory separator at the end of it. add it if we don't.
+                if not datapath.endswith(os.path.sep):
+                    datapath += os.path.sep
+                # return a path with "/*."+`ext` added to it.
+                return datapath+'*'+ext
+            else:
+                # we are asking to append `ext`, but it looks like datapath already ends with '.'+`ext`
+                return datapath
     else:
         return datapath
 
@@ -283,7 +297,6 @@ class BotoS3ParallelReader(_BotoS3Client):
         if not keynamelist:
             raise FileNotFoundError("No S3 objects found for '%s'" % datapath)
 
-
         def readSplitFromS3(kvIter):
             conn = boto.connect_s3()
             bucket = conn.get_bucket(bucketname)
@@ -436,6 +449,10 @@ class BotoS3ReadFileHandle(object):
 
     def read(self, size=-1):
         if self._offset or (size > -1):
+            # return empty string to indicate EOF if we are offset past the end of the file
+            # else boto will throw an error at us
+            if self._offset >= self._key.size:
+                return ""
             if size > -1:
                 sizestr = str(self._offset + size - 1)  # range header is inclusive
             else:

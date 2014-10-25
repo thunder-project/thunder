@@ -685,6 +685,8 @@ def calcReadsForOffsets(startLengthPairs, max_buf=10**6, max_gap=1024):
     """
     # sort by starting position
     # we assume here that starts and offsets and generally sane - meaning (roughly) nonoverlapping
+    if not startLengthPairs:
+        return []
     startlengths = sorted(startLengthPairs, key=operator.itemgetter(0))
 
     bufstarts = []

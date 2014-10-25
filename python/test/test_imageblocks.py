@@ -1,5 +1,5 @@
 import itertools
-from numpy import arange, array_equal, concatenate, prod
+from numpy import arange, array, array_equal, concatenate, dtype, prod
 import unittest
 from nose.tools import assert_equals, assert_true, assert_almost_equal, assert_raises
 from thunder.rdds.imageblocks import ImageBlockValue
@@ -75,22 +75,48 @@ class TestImageBlockValue(unittest.TestCase):
         assert_true(array_equal(expectedcatvals, actualcatvals))
 
     def test_toSeriesIter(self):
-        sh = 3, 3, 4
+        sh = 2, 3, 4
         sz = prod(sh)
-        imageblock = ImageBlockValue.fromArray(arange(sz, dtype='int16').reshape(sh, order='C'))
+        ary = arange(sz, dtype=dtype('int16')).reshape(sh)
+        imageblock = ImageBlockValue.fromArray(ary)
 
         series = list(imageblock.toSeriesIter(-1))
 
-        expectedseries = []
-        for n, ij in zip(xrange(0, sz, 4), itertools.product(xrange(3), xrange(3))):
-            expectedkv = (ij[0], ij[1]), arange(n, n+4, dtype='int16')
-            expectedseries.append(expectedkv)
-
-        # reverse order of expectedseries so that first dim is changing most rapidly
-        expectedseries.sort(key=lambda kv: tuple(reversed(kv[0])))
+        # this was less confusing when a series could be created by
+        # a straight linear read of a binary array...
+        expectedseries = [
+            ((0, 0), array([0, 1, 2, 3], dtype='int16')),
+            ((1, 0), array([12, 13, 14, 15], dtype='int16')),
+            ((0, 1), array([4, 5, 6, 7], dtype='int16')),
+            ((1, 1), array([16, 17, 18, 19], dtype='int16')),
+            ((0, 2), array([8, 9, 10, 11], dtype='int16')),
+            ((1, 2), array([20, 21, 22, 23], dtype='int16')),
+        ]
 
         for actual, expected in zip(series, expectedseries):
             # check key equality
             assert_equals(expected[0], actual[0])
             # check value equality
             assert_true(array_equal(expected[1], actual[1]))
+
+    def test_toSeriesIter2(self):
+        # add singleton dimension on end of (2, 4) shape to be "time":
+        ary = arange(8, dtype=dtype('int16')).reshape((2, 4, 1))
+
+        imageblock = ImageBlockValue.fromArray(ary)
+
+        seriesvals = list(imageblock.toSeriesIter(-1))
+
+        # check ordering of keys
+        assert_equals((0, 0), seriesvals[0][0])  # first key
+        assert_equals((1, 0), seriesvals[1][0])  # second key
+        assert_equals((0, 1), seriesvals[2][0])
+        assert_equals((1, 1), seriesvals[3][0])
+        assert_equals((0, 2), seriesvals[4][0])
+        assert_equals((1, 2), seriesvals[5][0])
+        assert_equals((0, 3), seriesvals[6][0])
+        assert_equals((1, 3), seriesvals[7][0])
+
+        # check that values are in original order
+        collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()
+        assert_true(array_equal(ary.ravel(order='F'), collectedvals))

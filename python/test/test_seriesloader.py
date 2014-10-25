@@ -1,11 +1,21 @@
 import json
-from numpy import dtype, array, allclose, arange
+from numpy import allclose, arange, array, array_equal, dtype
 import os
 import struct
+import unittest
 from nose.tools import assert_equals, assert_true, assert_almost_equal
 
 from thunder.rdds.fileio.seriesloader import SeriesLoader
-from test_utils import PySparkTestCaseWithOutputDir
+from thunder.utils.common import pil_to_array
+from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
+
+_have_image = False
+try:
+    from PIL import Image
+    _have_image = True
+except ImportError:
+    # PIL not available; skip tests that require it
+    Image = None
 
 
 class SeriesBinaryTestData(object):
@@ -110,6 +120,134 @@ class SeriesBinaryTestData(object):
         return cls(keys, vals, keydtype, valdtype)
 
 
+class TestSeriesLoader(PySparkTestCase):
+    @staticmethod
+    def _findTestResourcesDir(resourcesdirname="resources"):
+        testdirpath = os.path.dirname(os.path.realpath(__file__))
+        testresourcesdirpath = os.path.join(testdirpath, resourcesdirname)
+        if not os.path.isdir(testresourcesdirpath):
+            raise IOError("Test resources directory "+testresourcesdirpath+" not found")
+        return testresourcesdirpath
+
+    @staticmethod
+    def _findSourceTreeDir(dirname="utils/data"):
+        testdirpath = os.path.dirname(os.path.realpath(__file__))
+        testresourcesdirpath = os.path.join(testdirpath, "..", "thunder", dirname)
+        if not os.path.isdir(testresourcesdirpath):
+            raise IOError("Directory "+testresourcesdirpath+" not found")
+        return testresourcesdirpath
+
+    def test_fromArrays(self):
+        ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
+
+        series = SeriesLoader(self.sc).fromArrays(ary)
+
+        seriesvals = series.collect()
+        seriesary = series.pack()
+
+        # check ordering of keys
+        assert_equals((0, 0), seriesvals[0][0])  # first key
+        assert_equals((1, 0), seriesvals[1][0])  # second key
+        assert_equals((2, 0), seriesvals[2][0])
+        assert_equals((3, 0), seriesvals[3][0])
+        assert_equals((0, 1), seriesvals[4][0])
+        assert_equals((1, 1), seriesvals[5][0])
+        assert_equals((2, 1), seriesvals[6][0])
+        assert_equals((3, 1), seriesvals[7][0])
+
+        # check dimensions tuple is reversed from numpy shape
+        assert_equals(ary.shape[::-1], series.dims.count)
+
+        # check that values are in original order
+        collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()
+        assert_true(array_equal(ary.ravel(), collectedvals))
+
+        # check that packing returns transpose of original array
+        assert_true(array_equal(ary.T, seriesary))
+
+    def test_fromMultipleArrays(self):
+        ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
+        ary2 = arange(8, 16, dtype=dtype('int16')).reshape((2, 4))
+
+        series = SeriesLoader(self.sc).fromArrays([ary, ary2])
+
+        seriesvals = series.collect()
+        seriesary = series.pack()
+
+        # check ordering of keys
+        assert_equals((0, 0), seriesvals[0][0])  # first key
+        assert_equals((1, 0), seriesvals[1][0])  # second key
+        assert_equals((3, 0), seriesvals[3][0])
+        assert_equals((0, 1), seriesvals[4][0])
+        assert_equals((3, 1), seriesvals[7][0])
+
+        # check dimensions tuple is reversed from numpy shape
+        assert_equals(ary.shape[::-1], series.dims.count)
+
+        # check that values are in original order, with subsequent point concatenated in values
+        collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16'))
+        assert_true(array_equal(ary.ravel(), collectedvals[:, 0]))
+        assert_true(array_equal(ary2.ravel(), collectedvals[:, 1]))
+
+        # check that packing returns concatenation of input arrays, with time as first dimension
+        assert_true(array_equal(ary.T, seriesary[0]))
+        assert_true(array_equal(ary2.T, seriesary[1]))
+
+    @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
+    def test_fromMultipageTif(self):
+        testresourcesdir = TestSeriesLoader._findTestResourcesDir()
+        imagepath = os.path.join(testresourcesdir, "multilayer_tif", "dotdotdot_lzw.tif")
+
+        testimg_pil = Image.open(imagepath)
+        testimg_arys = list()
+        testimg_arys.append(pil_to_array(testimg_pil))
+        testimg_pil.seek(1)
+        testimg_arys.append(pil_to_array(testimg_pil))
+        testimg_pil.seek(2)
+        testimg_arys.append(pil_to_array(testimg_pil))
+
+        series = SeriesLoader(self.sc).fromMultipageTif(imagepath)
+        series_ary = series.pack()
+
+        assert_equals((70, 75, 3), series.dims.count)
+        assert_equals((70, 75, 3), series_ary.shape)
+        assert_true(array_equal(testimg_arys[0], series_ary[:, :, 0]))
+        assert_true(array_equal(testimg_arys[1], series_ary[:, :, 1]))
+        assert_true(array_equal(testimg_arys[2], series_ary[:, :, 2]))
+
+    def _run_fromFishTif(self, blocksize="150M"):
+        imagepath = TestSeriesLoader._findSourceTreeDir("utils/data/fish/tif-stack")
+        series = SeriesLoader(self.sc).fromMultipageTif(imagepath, blockSize=blocksize)
+        series_ary = series.pack()
+        series_ary_xpose = series.pack(transpose=True)
+        assert_equals((76, 87, 2), series.dims.count)
+        assert_equals((20, 76, 87, 2), series_ary.shape)
+        assert_equals((20, 2, 87, 76), series_ary_xpose.shape)
+
+    @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
+    def test_fromFishTif(self):
+        self._run_fromFishTif()
+
+    @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
+    def test_fromFishTifWithTinyBlocks(self):
+        self._run_fromFishTif(blocksize=76*20)
+
+
+class TestSeriesLoaderFromStacks(PySparkTestCaseWithOutputDir):
+    def test_loadStacksAsSeries(self):
+        rangeary = arange(64*128, dtype=dtype('int16'))
+        rangeary.shape = (64, 128)
+        filepath = os.path.join(self.outputdir, "rangeary.stack")
+        rangeary.tofile(filepath)
+
+        series = SeriesLoader(self.sc).fromStack(filepath, dims=(128, 64))
+        series_ary = series.pack()
+
+        assert_equals((128, 64), series.dims.count)
+        assert_equals((128, 64), series_ary.shape)
+        assert_true(array_equal(rangeary.T, series_ary))
+
+
 class TestSeriesBinaryLoader(PySparkTestCaseWithOutputDir):
 
     def _run_tst_fromBinary(self, useConfJson=False):
@@ -195,10 +333,15 @@ class TestSeriesBinaryWriteFromStack(PySparkTestCaseWithOutputDir):
         underTest = SeriesLoader(self.sc)
 
         underTest.saveFromStack(insubdir, outsubdir, dims, blockSize=blockSize, datatype=str(arrays[0].dtype))
+        series = underTest.fromStack(insubdir, dims, datatype=str(arrays[0].dtype))
 
         roundtripped = underTest.fromBinary(outsubdir).collect()
+        direct = series.collect()
 
-        for serieskeys, seriesvalues in roundtripped:
+        for ((serieskeys, seriesvalues), (directkeys, directvalues)) in zip(roundtripped, direct):
+            assert_equals(directkeys, serieskeys)
+            assert_equals(directvalues, seriesvalues)
+
             for seriesidx, seriesval in enumerate(seriesvalues):
                 #print "seriesidx: %d; serieskeys: %s; seriesval: %g" % (seriesidx, serieskeys, seriesval)
                 # flip indices again for row vs col-major insanity

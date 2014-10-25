@@ -1,7 +1,8 @@
 from numpy import ndarray, array, sum, mean, std, size, arange, \
-    polyfit, polyval, percentile, float16, asarray, maximum, zeros, corrcoef, where
+    polyfit, polyval, percentile, asarray, maximum, zeros, corrcoef, where
 
 from thunder.rdds.data import Data
+from thunder.rdds.keys import Dimensions
 from thunder.utils.common import checkparams, loadmatvar
 
 
@@ -39,9 +40,8 @@ class Series(Data):
     def __init__(self, rdd, index=None, dims=None):
         super(Series, self).__init__(rdd)
         self._index = index
-        if isinstance(dims, (tuple, list)):
-            from thunder.rdds.keys import Dimensions
-            self._dims = Dimensions.fromNumpyDimsTuple(dims)
+        if dims and not isinstance(dims, Dimensions):
+            raise TypeError("Series dims parameter must be Dimensions object, got: %s" % type(dims))
         else:
             self._dims = dims
 
@@ -399,7 +399,8 @@ class Series(Data):
         """
         from thunder.rdds.keys import _subtoind_converter
 
-        converter = _subtoind_converter(self.dims.max, order=order, onebased=onebased)
+        # converter = _subtoind_converter(self.dims.max, order=order, onebased=onebased)
+        converter = _subtoind_converter(self.dims.count, order=order, onebased=onebased)
         rdd = self.rdd.map(lambda (k, v): (converter(k), v))
         return self._constructor(rdd, index=self._index).__finalize__(self)
 
@@ -427,7 +428,7 @@ class Series(Data):
         rdd = self.rdd.map(lambda (k, v): (converter(k), v))
         return self._constructor(rdd, index=self._index).__finalize__(self)
 
-    def pack(self, selection=None, sorting=False):
+    def pack(self, selection=None, sorting=False, transpose=False):
         """
         Pack a Series into a local array (e.g. for saving)
 
@@ -446,12 +447,18 @@ class Series(Data):
             Whether to sort the local array based on the keys. In most cases the returned array will
             already be ordered correctly, and so an explicit sorting=True is typically not necessary.
 
+        transpose : boolean, optional, default False
+            Transpose the spatial dimensions of the returned array.
+
         Returns
         -------
         result: numpy array
             An array with dimensionality inferred from the RDD keys. Data in an individual Series
             value will be placed into this returned array by interpreting the Series keys as indicies
-            into the returned array.
+            into the returned array. The shape of the returned array will be (num time points x spatial shape).
+            For instance, a series derived from 4 2d images, each 64 x 128, will have dims.count==(64, 128)
+            and will pack into an array with shape (4, 64, 128). If transpose is true, the spatial dimensions
+            will be reversed, so that in this example the shape of the returned array will be (4, 128, 64).
         """
 
         if selection:
@@ -459,7 +466,7 @@ class Series(Data):
         else:
             out = self
 
-        result = out.rdd.map(lambda (_, v): float16(v)).collect()
+        result = out.rdd.map(lambda (_, v): v).collect()
         nout = size(result[0])
 
         if sorting is True:
@@ -470,11 +477,14 @@ class Series(Data):
         # where b is the number of outputs per record
         out = asarray(result).reshape(((nout,) + self.dims.count)[::-1]).T
 
-        # flip xy for spatial data
-        if size(self.dims.count) == 3:  # (b, x, y, z) -> (b, y, x, z)
-            out = out.transpose([0, 2, 1, 3])
-        if size(self.dims.count) == 2:  # (b, x, y) -> (b, y, x)
-            out = out.transpose([0, 2, 1])
+        if transpose:
+            # swap arrays so that in-memory representation matches that
+            # of original input. default is to return array whose shape matches
+            # that of the series dims object.
+            if size(self.dims.count) == 3:
+                out = out.transpose([0, 3, 2, 1])
+            if size(self.dims.count) == 2:  # (b, x, y) -> (b, y, x)
+                out = out.transpose([0, 2, 1])
 
         return out.squeeze()
 

@@ -47,6 +47,9 @@ class ImageBlocks(Data):
 
         def blockToBinarySeries(kv):
             blockKey, blockVal = kv
+            # # blockKey here is in numpy order (reversed from series convention)
+            # # reverse again to get correct filename, for correct sorting of files downstream
+            # label = ImageBlocks.getBinarySeriesNameForKey(reversed(blockKey))
             label = ImageBlocks.getBinarySeriesNameForKey(blockKey)
             keypacker = None
             buf = StringIO.StringIO()
@@ -77,7 +80,14 @@ class ImageBlocks(Data):
         # key will be x, y, z for start of block
         # val will be single blockvalue array data with origshape and origslices in dimensions (t, x, y, z)
         # val array data will be t by (spatial block size)
-        return self.rdd.groupByKey().mapValues(lambda v: ImageBlockValue.fromPlanarBlocks(v, 0))
+
+        # block keys are in numpy convention (fastest changing last) so a straight ascending sort should
+        # do the right thing here.
+        # ^^^ no longer valid; now fastest changing (e.g. x) is first
+        # sort must come after group, b/c group will mess with ordering.
+        # return self.rdd.groupByKey().sortByKey(ascending=True).mapValues(lambda v: ImageBlockValue.fromPlanarBlocks(v, 0))
+        sortedRdd = self.rdd.groupByKey().sortBy(lambda (k, _): k[::-1])
+        return sortedRdd.mapValues(lambda v: ImageBlockValue.fromPlanarBlocks(v, 0))
 
 
 class ImageBlockValue(object):
@@ -298,10 +308,9 @@ class ImageBlockValue(object):
         del rangeiters[seriesDim]
         # correct for original dimensionality if inserting at end of list
         insertDim = seriesDim if seriesDim >= 0 else len(self.origshape) + seriesDim
-        # reverse rangeiters twice to ensure that first dimension is most rapidly varying
+
         for idxSeq in itertools.product(*reversed(rangeiters)):
-            idxSeq = tuple(reversed(idxSeq))
-            expandedIdxSeq = list(idxSeq)
+            expandedIdxSeq = list(reversed(idxSeq))
             expandedIdxSeq.insert(insertDim, None)
             slices = []
             for d, (idx, origslice) in enumerate(zip(expandedIdxSeq, self.origslices)):
@@ -314,7 +323,7 @@ class ImageBlockValue(object):
                 slices.append(newslice)
 
             series = self.values[slices].squeeze()
-            yield tuple(idxSeq), series
+            yield tuple(reversed(idxSeq)), series
 
     def _get_range_iterators(self):
         """Returns a sequence of iterators over the range of the slices in self.origslices

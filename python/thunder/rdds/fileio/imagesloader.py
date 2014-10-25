@@ -2,8 +2,9 @@
 """
 from matplotlib.pyplot import imread
 from io import BytesIO
-from numpy import frombuffer, prod, dstack
+from numpy import dstack, frombuffer, ndarray, prod
 from thunder.rdds.fileio.readers import getParallelReaderForPath
+from thunder.rdds.keys import Dimensions
 from thunder.rdds.images import Images
 
 
@@ -26,23 +27,27 @@ class ImagesLoader(object):
         Expected usage is mainly in testing - having a full dataset loaded in memory
         on the driver is likely prohibitive in the use cases for which Thunder is intended.
         """
-        dims = None
+        # if passed a single array, cast it to a sequence of length 1
+        if isinstance(arrays, ndarray):
+            arrays = [arrays]
+
+        shape = None
         dtype = None
         for ary in arrays:
-            if dims is None:
-                dims = ary.shape
+            if shape is None:
+                shape = ary.shape
                 dtype = ary.dtype
-            if not ary.shape == dims:
+            if not ary.shape == shape:
                 raise ValueError("Arrays must all be of same shape; got both %s and %s" %
-                                 (str(dims), str(ary.shape)))
+                                 (str(shape), str(ary.shape)))
             if not ary.dtype == dtype:
                 raise ValueError("Arrays must all be of same data type; got both %s and %s" %
                                  (str(dtype), str(ary.dtype)))
-
+        dims = Dimensions.fromTuple(shape)
         return Images(self.sc.parallelize(enumerate(arrays), len(arrays)),
                       dims=dims, dtype=str(dtype), nimages=len(arrays))
 
-    def fromStack(self, datapath, dims, ext='stack', startidx=None, stopidx=None):
+    def fromStack(self, datapath, dims, dtype='int16', ext='stack', startidx=None, stopidx=None):
         """Load an Images object stored in a directory of flat binary files
 
         The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
@@ -59,7 +64,7 @@ class ImagesLoader(object):
             including scheme. A datapath argument may include a single '*' wildcard character in the filename.
 
         dims: tuple of positive int
-            Dimensions of input image data, similar to a numpy 'shape' parameter.
+            Dimensions of input image data, ordered with fastest-changing dimension first
 
         ext: string, optional, default "stack"
             Extension required on data files to be loaded.
@@ -72,12 +77,12 @@ class ImagesLoader(object):
             raise ValueError("Image dimensions must be specified if loading from binary stack data")
 
         def toArray(buf):
-            # previously we were casting to uint16 - still necessary?
-            return frombuffer(buf, dtype='int16', count=prod(dims)).reshape(dims, order='F')
+            return frombuffer(buf, dtype=dtype, count=int(prod(dims))).reshape(dims, order='F')
 
         reader = getParallelReaderForPath(datapath)(self.sc)
         readerrdd = reader.read(datapath, ext=ext, startidx=startidx, stopidx=stopidx)
-        return Images(readerrdd.mapValues(toArray), nimages=reader.lastnrecs, dims=dims, dtype='int16')
+        return Images(readerrdd.mapValues(toArray), nimages=reader.lastnrecs, dims=Dimensions.fromTuple(dims),
+                      dtype=dtype)
 
     def fromTif(self, datapath, ext='tif', startidx=None, stopidx=None):
         """Load an Images object stored in a directory of (single-page) tif files

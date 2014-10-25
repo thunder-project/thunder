@@ -1,11 +1,11 @@
-from numpy import ndarray
+from numpy import arange, array_equal, dtype, ndarray
 import os
 import unittest
 from nose.tools import assert_equals, assert_true, assert_almost_equal
 
 from thunder.rdds.fileio.imagesloader import ImagesLoader
 from test_images import _have_image
-from test_utils import PySparkTestCase
+from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
 
 
 class TestImagesFileLoaders(PySparkTestCase):
@@ -21,6 +21,17 @@ class TestImagesFileLoaders(PySparkTestCase):
         super(TestImagesFileLoaders, self).setUp()
         self.testresourcesdir = self._findTestResourcesDir()
 
+    def test_fromArrays(self):
+        ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
+
+        image = ImagesLoader(self.sc).fromArrays(ary)
+
+        collectedimage = image.collect()
+        assert_equals(1, len(collectedimage))
+        assert_equals(ary.shape, image.dims.count)
+        assert_equals(0, collectedimage[0][0])  # check key
+        assert_true(array_equal(ary, collectedimage[0][1]))  # check value
+
     def test_fromPng(self):
         imagepath = os.path.join(self.testresourcesdir, "singlelayer_png", "dot1.png")
         pngimage = ImagesLoader(self.sc).fromPng(imagepath, self.sc)
@@ -31,6 +42,7 @@ class TestImagesFileLoaders(PySparkTestCase):
                     "Value type error; expected first image value to be numpy ndarray, was " +
                     str(type(firstpngimage[1])))
         assert_equals(expectedshape, firstpngimage[1].shape)
+        assert_equals(expectedshape, pngimage.dims.count)
         assert_almost_equal(0.97, firstpngimage[1][:, :, 0].flatten().max(), places=2)
         assert_almost_equal(0.03, firstpngimage[1][:, :, 0].flatten().min(), places=2)
 
@@ -44,6 +56,7 @@ class TestImagesFileLoaders(PySparkTestCase):
                     "Value type error; expected first image value to be numpy ndarray, was " +
                     str(type(firsttifimage[1])))
         assert_equals(expectedshape, firsttifimage[1].shape)
+        assert_equals(expectedshape, tifimage.dims.count)
         assert_equals(248, firsttifimage[1][:, :, 0].flatten().max())
         assert_equals(8, firsttifimage[1][:, :, 0].flatten().min())
 
@@ -89,3 +102,37 @@ class TestImagesFileLoaders(PySparkTestCase):
         assert_equals(expectedshape, tifimage[1].shape)
         for channelidx in xrange(0, expectedshape[2]):
             assert_equals(expectedsums[channelidx], tifimage[1][:, :, channelidx].flatten().sum())
+
+
+class TestImagesLoaderUsingOutputDir(PySparkTestCaseWithOutputDir):
+    def test_fromStack(self):
+        ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
+        filename = os.path.join(self.outputdir, "test.stack")
+        ary.tofile(filename)
+
+        image = ImagesLoader(self.sc).fromStack(filename, dims=(4, 2))
+
+        collectedimage = image.collect()
+        assert_equals(1, len(collectedimage))
+        assert_equals(0, collectedimage[0][0])  # check key
+        # assert that image shape *matches* that in image dimensions:
+        assert_equals(image.dims.count, collectedimage[0][1].shape)
+        assert_true(array_equal(ary.T, collectedimage[0][1]))  # check value
+
+    def test_fromStacks(self):
+        ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
+        ary2 = arange(8, 16, dtype=dtype('int16')).reshape((2, 4))
+        filename = os.path.join(self.outputdir, "test01.stack")
+        ary.tofile(filename)
+        filename = os.path.join(self.outputdir, "test02.stack")
+        ary2.tofile(filename)
+
+        image = ImagesLoader(self.sc).fromStack(self.outputdir, dims=(4, 2))
+
+        collectedimage = image.collect()
+        assert_equals(2, len(collectedimage))
+        assert_equals(0, collectedimage[0][0])  # check key
+        assert_equals(image.dims.count, collectedimage[0][1].shape)
+        assert_true(array_equal(ary.T, collectedimage[0][1]))  # check value
+        assert_equals(1, collectedimage[1][0])  # check image 2
+        assert_true(array_equal(ary2.T, collectedimage[1][1]))

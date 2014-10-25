@@ -1,6 +1,7 @@
 from numpy import ndarray, arange, amax, amin, size, squeeze, dtype
 
 from thunder.rdds.data import Data
+from thunder.rdds.keys import Dimensions
 from thunder.utils.common import parseMemoryString
 
 
@@ -17,7 +18,10 @@ class Images(Data):
     def __init__(self, rdd, dims=None, nimages=None, dtype=None):
         super(Images, self).__init__(rdd)
         # todo: add parameter checking here?
-        self._dims = dims
+        if dims and not isinstance(dims, Dimensions):
+            raise TypeError("Series dims parameter must be Dimensions object, got: %s" % type(dims))
+        else:
+            self._dims = dims
         self._nimages = nimages
         self._dtype = str(dtype) if dtype else None
 
@@ -45,7 +49,7 @@ class Images(Data):
 
     def _populateParamsFromFirstRecord(self):
         record = self.rdd.first()
-        self._dims = record[1].shape
+        self._dims = Dimensions.fromTuple(record[1].shape)
         self._dtype = str(record[1].dtype)
 
     def _resetCounts(self):
@@ -101,11 +105,11 @@ class Images(Data):
             of an xy plane, divided in the middle of the y dimension
 
         """
-
+        # splitsPerDim is expected to be in the dimensions ordering convention
         import itertools
         from thunder.rdds.imageblocks import ImageBlocks, ImageBlockValue
 
-        dims = self.dims
+        dims = self.dims.count[:]  # currently in Dimensions-convention
         ndim = len(dims)
         totnumimages = self.nimages
 
@@ -132,6 +136,9 @@ class Images(Data):
                 dimslices.append(slice(st, min(en, dimsize), 1))
                 st = en
             slices.append(dimslices)
+
+        # reverse slices to be in numpy shape ordering convention:
+        # slices = slices[::-1]
 
         def _groupBySlices(imagearyval, slices_, tp_, numtp_):
             ret_vals = []
@@ -321,7 +328,7 @@ class Images(Data):
             return binlabel+'.bin', binvals
 
         binseriesrdd.map(appendBin).foreach(writer.writerFcn)
-        writeSeriesConfig(outputdirname, len(self.dims), self.nimages, dims=self.dims,
+        writeSeriesConfig(outputdirname, len(self.dims), self.nimages, dims=self.dims.count,
                           keytype='int16', valuetype=self.dtype, overwrite=overwrite)
 
     def exportAsPngs(self, outputdirname, fileprefix="export", overwrite=False,

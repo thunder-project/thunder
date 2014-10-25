@@ -2,16 +2,19 @@
 """
 from collections import namedtuple
 import json
-from numpy import array, dtype, frombuffer, arange, load, vstack, unravel_index
+from numpy import array, arange, dtype, frombuffer, load, ndarray, unravel_index, vstack
 from scipy.io import loadmat
 from cStringIO import StringIO
+import itertools
 import struct
 import urlparse
 import math
 
 from thunder.rdds.fileio.writers import getParallelWriterForPath
 from thunder.rdds.imageblocks import ImageBlocks
-from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError, selectByStartAndStopIndices
+from thunder.rdds.keys import Dimensions
+from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError, selectByStartAndStopIndices, \
+    appendExtensionToPathSpec
 from thunder.rdds.series import Series
 from thunder.utils.common import parseMemoryString
 
@@ -33,27 +36,56 @@ class SeriesLoader(object):
         self.sc = sparkcontext
         self.minPartitions = minPartitions
 
+    def fromArrays(self, arrays):
+        """Create a Series object from a sequence of numpy ndarrays resident in memory on the driver.
+
+        The arrays will be interpreted as though each represents a single time point - effectively the same
+        as if converting Images to a Series, with each array representing a volume image at a particular
+        point in time. Thus in the resulting Series, the value of the record with key (0,0,0) will be
+        array([arrays[0][0,0,0], arrays[1][0,0,0],... arrays[n][0,0,0]).
+
+        The dimensions of the resulting Series will be *opposite* that of the passed numpy array.
+        """
+        # if passed a single array, cast it to a sequence of length 1
+        if isinstance(arrays, ndarray):
+            arrays = [arrays]
+
+        # check that shapes of passed arrays are consistent
+        shape = arrays[0].shape
+        for ary in arrays:
+            if not ary.shape == shape:
+                raise ValueError("Inconsistent array shapes: first array had shape %s, but other array has shape %s" %
+                                 (str(shape), str(ary.shape)))
+
+        # get indices so that fastest index changes first
+        shapeiters = (xrange(n) for n in shape)
+        keys = [idx[::-1] for idx in itertools.product(*shapeiters)]
+
+        values = vstack([ary.ravel() for ary in arrays]).T
+
+        dims = Dimensions.fromTuple(shape[::-1])
+
+        return Series(self.sc.parallelize(zip(keys, values), self.minPartitions), dims=dims)
+
     @staticmethod
     def __normalizeDatafilePattern(datapath, ext):
-        if ext:
-            if not ext.startswith("."):
-                # protect (partly) against case where ext happens to *also* be the name
-                # of a directory. If your directory is named "something.bin", well, you
-                # get what you deserve, I guess.
-                ext = "." + ext
-            if not datapath.endswith(ext):
-                if datapath.endswith("*"):
-                    datapath += ext
-                elif datapath.endswith("/"):
-                    datapath += "*" + ext
-                else:
-                    datapath += "/*" + ext
+        datapath = appendExtensionToPathSpec(datapath, ext)
+        # we do need to prepend a scheme here, b/c otherwise the Hadoop based readers
+        # will adopt their default behavior and start looking on hdfs://.
 
         parseresult = urlparse.urlparse(datapath)
         if parseresult.scheme:
             # this appears to already be a fully-qualified URI
             return datapath
         else:
+            # this looks like a local path spec
+            # check whether we look like an absolute or a relative path
+            import os
+            dircomponent, filecomponent = os.path.split(datapath)
+            if not os.path.isabs(dircomponent):
+                # need to make relative local paths absolute; our file scheme parsing isn't all that it could be.
+                dircomponent = os.path.abspath(dircomponent)
+                datapath = os.path.join(dircomponent, filecomponent)
             return "file://" + datapath
 
     def fromText(self, datafile, nkeys=None, ext="txt"):
@@ -177,6 +209,8 @@ class SeriesLoader(object):
             must be valid on all workers. Datafile may also refer to a single file, or to a range of files specified
             by a glob-style expression using a single wildcard character '*'.
 
+        dims: tuple of positive int
+            Dimensions of input image data, ordered with the fastest-changing dimension first.
 
         Returns
         ---------
@@ -195,7 +229,6 @@ class SeriesLoader(object):
             number of time points in returned series, determined from number of stack files found at datapath
 
         """
-
         datapath = self.__normalizeDatafilePattern(datapath, ext)
         blockSize = parseMemoryString(blockSize)
         totaldim = reduce(lambda x_, y_: x_*y_, dims)
@@ -215,7 +248,7 @@ class SeriesLoader(object):
             # different planes appear in distinct files
             blocksperplane = max(nblocks / dims[-1], 1)
 
-            pixperplane = reduce(lambda x_, y_: x_*y_, dims[:-1])
+            pixperplane = reduce(lambda x_, y_: x_*y_, dims[:-1])  # all but last dimension
 
             # get the greatest number of blocks in a plane (up to as many as requested) that still divide the plane
             # evenly. This will always be at least one.
@@ -280,7 +313,9 @@ class SeriesLoader(object):
             pass
 
         # get dimensions
-        dims = (firstifd.getImageWidth(), firstifd.getImageHeight(), len(tiffheaders.ifds))
+        npages = len(tiffheaders.ifds)
+        height = firstifd.getImageHeight()
+        width = firstifd.getImageWidth()
 
         # get datatype
         bitspersample = firstifd.getBitsPerSample()
@@ -299,7 +334,7 @@ class SeriesLoader(object):
                              % sampleformat)
         datatype = dtstr+str(bitspersample)
 
-        return dims, datatype
+        return height, width, npages, datatype
 
     def _getSeriesBlocksFromMultiTif(self, datapath, ext="tif", blockSize="150M",
                                      startidx=None, stopidx=None):
@@ -319,11 +354,11 @@ class SeriesLoader(object):
         filenames = selectByStartAndStopIndices(filenames, startidx, stopidx)
         ntimepoints = len(filenames)
 
-        dims, datatype = SeriesLoader.__readMetadataFromFirstPageOfMultiTif(reader, filenames[0])
+        height, width, npages, datatype = SeriesLoader.__readMetadataFromFirstPageOfMultiTif(reader, filenames[0])
         pixelbytesize = dtype(datatype).itemsize
 
         # intialize at one block per plane
-        bytesperplane = dims[0] * dims[1] * pixelbytesize * ntimepoints
+        bytesperplane = height * width * pixelbytesize * ntimepoints
         bytesperblock = bytesperplane
         blocksperplane = 1
         # keep dividing while cutting our size in half still leaves us bigger than the requested size
@@ -332,10 +367,12 @@ class SeriesLoader(object):
             bytesperblock /= 2
             blocksperplane *= 2
 
-        blocklen = max((dims[0] * dims[1]) / blocksperplane, 1)  # integer division
+        blocklenPixels = max((height * width) / blocksperplane, 1)  # integer division
+        while blocksperplane * blocklenPixels < height * width:  # make sure we're reading the plane fully
+            blocksperplane += 1
 
         # keys will be planeidx, blockidx:
-        keys = list(itertools.product(xrange(dims[2]), xrange(blocksperplane)))
+        keys = list(itertools.product(xrange(npages), xrange(blocksperplane)))
 
         def readblockfromtif(pidxbidx_):
             planeidx, blockidx = pidxbidx_
@@ -349,13 +386,17 @@ class SeriesLoader(object):
                 try:
                     tiffparser_ = multitif.TiffParser(fp, debug=False)
                     tiffilebuffer = multitif.packSinglePage(tiffparser_, page_idx=planeidx)
-                    pilimg = Image.open(io.BytesIO(tiffilebuffer))
-                    ary = pil_to_array(pilimg)
-                    del tiffilebuffer, tiffparser_, pilimg
+                    bytebuf = io.BytesIO(tiffilebuffer)
+                    try:
+                        pilimg = Image.open(bytebuf)
+                        ary = pil_to_array(pilimg).T
+                    finally:
+                        bytebuf.close()
+                    del tiffilebuffer, tiffparser_, pilimg, bytebuf
                     if not planeshape:
                         planeshape = ary.shape[:]
-                        blockstart = blockidx * blocklen
-                        blockend = min(blockstart+blocklen, planeshape[0]*planeshape[1])
+                        blockstart = blockidx * blocklenPixels
+                        blockend = min(blockstart+blocklenPixels, planeshape[0]*planeshape[1])
                     blocks.append(ary.flatten(order='C')[blockstart:blockend])
                     del ary
                 finally:
@@ -374,6 +415,13 @@ class SeriesLoader(object):
 
         # map over blocks
         rdd = self.sc.parallelize(keys, len(keys)).flatMap(readblockfromtif)
+        # hack for returned dimensions:
+        # if npages == 1:
+        #     dims = (width, height, npages)
+        # else:
+        #     dims = (npages, width, height)
+        dims = (npages, width, height)
+
         metadata = (dims, ntimepoints, datatype)
         return rdd, metadata
 
@@ -388,7 +436,7 @@ class SeriesLoader(object):
             including scheme. A datapath argument may include a single '*' wildcard character in the filename.
 
         dims: tuple of positive int
-            Dimensions of input image data, similar to a numpy 'shape' parameter.
+            Dimensions of input image data, ordered with the fastest-changing dimension first.
 
         ext: string, optional, default "stack"
             Extension required on data files to be loaded.
@@ -407,7 +455,7 @@ class SeriesLoader(object):
                                                                        datatype=datatype, startidx=startidx,
                                                                        stopidx=stopidx)
         # TODO: initialize index here using npointsinseries?
-        return Series(seriesblocks, dims=dims)
+        return Series(seriesblocks, dims=Dimensions.fromTuple(dims))
 
     def fromMultipageTif(self, datapath, ext="tif", blockSize="150M",
                          startidx=None, stopidx=None):
@@ -433,7 +481,7 @@ class SeriesLoader(object):
         seriesblocks, metadata = self._getSeriesBlocksFromMultiTif(datapath, ext=ext, blockSize=blockSize,
                                                                    startidx=startidx, stopidx=stopidx)
         dims, npointsinseries, datatype = metadata
-        return Series(seriesblocks, dims=dims)
+        return Series(seriesblocks, dims=Dimensions.fromTuple(dims[::-1]))
 
     @staticmethod
     def __saveSeriesRdd(seriesblocks, outputdirname, dims, npointsinseries, datatype, overwrite=False):
@@ -472,7 +520,7 @@ class SeriesLoader(object):
             on the local file system or a URI-like format, as in datapath.
 
         dims: tuple of positive int
-            Dimensions of input image data, similar to a numpy 'shape' parameter.
+            Dimensions of input image data, ordered with the fastest-changing dimension first.
 
         ext: string, optional, default "stack"
             Extension required on data files to be loaded.
