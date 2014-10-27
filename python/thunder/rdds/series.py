@@ -575,7 +575,7 @@ class Series(Data):
             if len(indlist) > 0:
                 inds_set = set(indlist.flat)
                 inds_bc = self.rdd.context.broadcast(inds_set)
-                values[idx, :] = data.filterOnKeys(lambda k: k in inds_bc.value).values().sum() / len(indlist)
+                values[idx, :] = data.filterOnKeys(lambda k: k in inds_bc.value).values().mean()
                 keys[idx, :] = mean(map(lambda k: converter(k), indlist), axis=0)
 
         return keys, values
