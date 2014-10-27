@@ -354,6 +354,8 @@ class SeriesLoader(object):
         filenames = selectByStartAndStopIndices(filenames, startidx, stopidx)
         ntimepoints = len(filenames)
 
+        minimize_reads = datapath.lower().startswith("s3")
+
         height, width, npages, datatype = SeriesLoader.__readMetadataFromFirstPageOfMultiTif(reader, filenames[0])
         pixelbytesize = dtype(datatype).itemsize
 
@@ -384,20 +386,31 @@ class SeriesLoader(object):
                 reader_ = getFileReaderForPath(fname)()
                 fp = reader_.open(fname)
                 try:
-                    tiffparser_ = multitif.TiffParser(fp, debug=False)
-                    tiffilebuffer = multitif.packSinglePage(tiffparser_, page_idx=planeidx)
-                    bytebuf = io.BytesIO(tiffilebuffer)
-                    try:
-                        pilimg = Image.open(bytebuf)
+                    if minimize_reads:
+                        # use multitif module to generate a fake, in-memory one-page tif file
+                        # the advantage of this is that it cuts way down on the many small reads
+                        # that PIL/pillow will make otherwise, which would be a problem for s3
+                        tiffparser_ = multitif.TiffParser(fp, debug=False)
+                        tiffilebuffer = multitif.packSinglePage(tiffparser_, page_idx=planeidx)
+                        bytebuf = io.BytesIO(tiffilebuffer)
+                        try:
+                            pilimg = Image.open(bytebuf)
+                            ary = pil_to_array(pilimg).T
+                        finally:
+                            bytebuf.close()
+                        del tiffilebuffer, tiffparser_, pilimg, bytebuf
+                    else:
+                        # read tif using PIL directly
+                        pilimg = Image.open(fp)
+                        pilimg.seek(planeidx)
                         ary = pil_to_array(pilimg).T
-                    finally:
-                        bytebuf.close()
-                    del tiffilebuffer, tiffparser_, pilimg, bytebuf
+                        del pilimg
+
                     if not planeshape:
                         planeshape = ary.shape[:]
                         blockstart = blockidx * blocklenPixels
                         blockend = min(blockstart+blocklenPixels, planeshape[0]*planeshape[1])
-                    blocks.append(ary.flatten(order='C')[blockstart:blockend])
+                    blocks.append(ary.ravel(order='C')[blockstart:blockend])
                     del ary
                 finally:
                     fp.close()
