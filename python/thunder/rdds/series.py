@@ -35,10 +35,10 @@ class Series(Data):
     SpatialSeries : a Series where the keys represent spatial coordinates
     """
 
-    _metadata = ['_index', '_dims']
+    _metadata = ['_index', '_dims', '_dtype']
 
-    def __init__(self, rdd, index=None, dims=None):
-        super(Series, self).__init__(rdd)
+    def __init__(self, rdd, index=None, dims=None, dtype=None):
+        super(Series, self).__init__(rdd, dtype=dtype)
         self._index = index
         if dims and not isinstance(dims, Dimensions):
             raise TypeError("Series dims parameter must be Dimensions object, got: %s" % type(dims))
@@ -48,19 +48,40 @@ class Series(Data):
     @property
     def index(self):
         if self._index is None:
-            record = self.rdd.first()
-            self._index = arange(0, len(record[1]))
+            self.populateParamsFromFirstRecord()
         return self._index
 
     @property
     def dims(self):
         from thunder.rdds.keys import Dimensions
         if self._dims is None:
-            entry = self.rdd.first()[0]
+            entry = self.populateParamsFromFirstRecord()[0]
             n = size(entry)
             d = self.rdd.keys().mapPartitions(lambda i: [Dimensions(i, n)]).reduce(lambda x, y: x.mergedims(y))
             self._dims = d
         return self._dims
+
+    @property
+    def dtype(self):
+        # override just calls superclass; here for explicitness
+        return super(Series, self).dtype
+
+    def populateParamsFromFirstRecord(self):
+        """Calls first() on the underlying rdd, using the returned record to determine appropriate attribute settings
+        for this object (for instance, setting self.dtype to match the dtype of the underlying rdd records).
+
+        Returns the result of calling self.rdd.first().
+        """
+        record = super(Series, self).populateParamsFromFirstRecord()
+        if self._index is None:
+            val = record[1]
+            try:
+                l = len(val)
+            except TypeError:
+                # TypeError thrown after calling len() on object with no __len__ method
+                l = 1
+            self._index = arange(0, l)
+        return record
 
     @property
     def _constructor(self):

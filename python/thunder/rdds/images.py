@@ -16,19 +16,18 @@ class Images(Data):
     _metadata = ['_dims', '_nimages', '_dtype']
 
     def __init__(self, rdd, dims=None, nimages=None, dtype=None):
-        super(Images, self).__init__(rdd)
+        super(Images, self).__init__(rdd, dtype=dtype)
         # todo: add parameter checking here?
         if dims and not isinstance(dims, Dimensions):
             raise TypeError("Series dims parameter must be Dimensions object, got: %s" % type(dims))
         else:
             self._dims = dims
         self._nimages = nimages
-        self._dtype = str(dtype) if dtype else None
 
     @property
     def dims(self):
         if self._dims is None:
-            self._populateParamsFromFirstRecord()
+            self.populateParamsFromFirstRecord()
         return self._dims
 
     @property
@@ -39,18 +38,17 @@ class Images(Data):
 
     @property
     def dtype(self):
-        if not self._dtype:
-            self._populateParamsFromFirstRecord()
-        return self._dtype
+        # override just calls superclass; here for explicitness
+        return super(Images, self).dtype
 
     @property
     def _constructor(self):
         return Images
 
-    def _populateParamsFromFirstRecord(self):
-        record = self.rdd.first()
+    def populateParamsFromFirstRecord(self):
+        record = super(Images, self).populateParamsFromFirstRecord()
         self._dims = Dimensions.fromTuple(record[1].shape)
-        self._dtype = str(record[1].dtype)
+        return record
 
     def _resetCounts(self):
         self._nimages = None

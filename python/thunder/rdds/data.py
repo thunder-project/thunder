@@ -19,8 +19,28 @@ class Data(object):
 
     _metadata = []
 
-    def __init__(self, rdd):
+    def __init__(self, rdd, dtype=None):
         self.rdd = rdd
+        self._dtype = str(dtype) if dtype else None
+
+    @property
+    def dtype(self):
+        if not self._dtype:
+            self.populateParamsFromFirstRecord()
+        return self._dtype
+
+    def populateParamsFromFirstRecord(self):
+        """Calls first() on the underlying rdd, using the returned record to determine appropriate attribute settings
+        for this object (for instance, setting self.dtype to match the dtype of the underlying rdd records).
+
+        This method is expected to be overridden by subclasses. Subclasses should first call
+        super(cls, self).populateParamsFromFirstRecord(), then use the returned record to set any additional attributes.
+
+        Returns the result of calling self.rdd.first().
+        """
+        record = self.rdd.first()
+        self._dtype = str(record[1].dtype)
+        return record
 
     def __finalize__(self, other):
         """
@@ -44,11 +64,12 @@ class Data(object):
         raise NotImplementedError
 
     def first(self):
-        """ Return first record
+        """ Return first record.
 
-        This calls the Spark first() method on the underlying RDD.
+        This calls the Spark first() method on the underlying RDD. As a side effect, any attributes on this object that
+        can be set based on the values of the first record will be set (see populateParamsFromFirstRecord).
         """
-        return self.rdd.first()
+        return self.populateParamsFromFirstRecord()
 
     def take(self, *args, **kwargs):
         """ Take samples
@@ -70,6 +91,12 @@ class Data(object):
         This calls the Spark keys() method on the underlying RDD.
         """
         return self.rdd.keys()
+
+    def astype(self, dtype, casting='safe'):
+        if dtype == 'smallfloat':
+            from thunder.utils.common import smallest_float_type
+            dtype = smallest_float_type
+
 
     def collect(self):
         """ Return all records to the driver

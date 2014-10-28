@@ -52,10 +52,14 @@ class SeriesLoader(object):
 
         # check that shapes of passed arrays are consistent
         shape = arrays[0].shape
+        dtype = arrays[0].dtype
         for ary in arrays:
             if not ary.shape == shape:
                 raise ValueError("Inconsistent array shapes: first array had shape %s, but other array has shape %s" %
                                  (str(shape), str(ary.shape)))
+            if not ary.dtype == dtype:
+                raise ValueError("Inconsistent array dtypes: first array had dtype %s, but other array has dtype %s" %
+                                 (str(dtype), str(ary.dtype)))
 
         # get indices so that fastest index changes first
         shapeiters = (xrange(n) for n in shape)
@@ -65,7 +69,7 @@ class SeriesLoader(object):
 
         dims = Dimensions.fromTuple(shape[::-1])
 
-        return Series(self.sc.parallelize(zip(keys, values), self.minPartitions), dims=dims)
+        return Series(self.sc.parallelize(zip(keys, values), self.minPartitions), dims=dims, dtype=dtype)
 
     @staticmethod
     def __normalizeDatafilePattern(datapath, ext):
@@ -111,7 +115,7 @@ class SeriesLoader(object):
 
         lines = self.sc.textFile(datafile, self.minPartitions)
         data = lines.map(lambda x: parse(x, nkeys))
-
+        # TODO: allow a dtype to be specified in function args?
         return Series(data)
 
     BinaryLoadParameters = namedtuple('BinaryLoadParameters', 'nkeys nvalues keytype valuetype')
@@ -194,7 +198,7 @@ class SeriesLoader(object):
                          (tuple(int(x) for x in frombuffer(buffer(v, 0, keysize), dtype=keydtype)),
                           frombuffer(buffer(v, keysize), dtype=valdtype)))
 
-        return Series(data)
+        return Series(data, dtype=valdtype, index=arange(paramsObj.nvalues))
 
     def _getSeriesBlocksFromStack(self, datapath, dims, ext="stack", blockSize="150M", datatype='int16',
                                   startidx=None, stopidx=None):
@@ -467,8 +471,8 @@ class SeriesLoader(object):
         seriesblocks, npointsinseries = self._getSeriesBlocksFromStack(datapath, dims, ext=ext, blockSize=blockSize,
                                                                        datatype=datatype, startidx=startidx,
                                                                        stopidx=stopidx)
-        # TODO: initialize index here using npointsinseries?
-        return Series(seriesblocks, dims=Dimensions.fromTuple(dims))
+
+        return Series(seriesblocks, dims=Dimensions.fromTuple(dims), dtype=datatype, index=arange(npointsinseries))
 
     def fromMultipageTif(self, datapath, ext="tif", blockSize="150M",
                          startidx=None, stopidx=None):
@@ -494,7 +498,7 @@ class SeriesLoader(object):
         seriesblocks, metadata = self._getSeriesBlocksFromMultiTif(datapath, ext=ext, blockSize=blockSize,
                                                                    startidx=startidx, stopidx=stopidx)
         dims, npointsinseries, datatype = metadata
-        return Series(seriesblocks, dims=Dimensions.fromTuple(dims[::-1]))
+        return Series(seriesblocks, dims=Dimensions.fromTuple(dims[::-1]), dtype=datatype, index=arange(npointsinseries))
 
     @staticmethod
     def __saveSeriesRdd(seriesblocks, outputdirname, dims, npointsinseries, datatype, overwrite=False):
@@ -605,7 +609,7 @@ class SeriesLoader(object):
         else:
             keys = arange(0, data.shape[0])
 
-        rdd = Series(self.sc.parallelize(zip(keys, data), self.minPartitions))
+        rdd = Series(self.sc.parallelize(zip(keys, data), self.minPartitions), dtype=data.dtype)
 
         return rdd
 
@@ -622,7 +626,7 @@ class SeriesLoader(object):
         else:
             keys = arange(0, data.shape[0])
 
-        rdd = Series(self.sc.parallelize(zip(keys, data), self.minPartitions))
+        rdd = Series(self.sc.parallelize(zip(keys, data), self.minPartitions), dtype=data.dtype)
 
         return rdd
 
