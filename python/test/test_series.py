@@ -1,10 +1,11 @@
 from numpy import array, allclose
+from nose.tools import assert_equals
 
 from thunder.rdds.series import Series
 from test_utils import PySparkTestCase
 
 
-class TestConversions(PySparkTestCase):
+class TestSeriesConversions(PySparkTestCase):
 
     def test_to_row_matrix(self):
         from thunder.rdds.matrices import RowMatrix
@@ -21,6 +22,20 @@ class TestConversions(PySparkTestCase):
         data = Series(rdd)
         ts = data.toTimeSeries()
         assert(isinstance(ts, TimeSeries))
+
+    def test_cast_to_float(self):
+        from numpy import arange
+        shape = (3, 2, 2)
+        size = 3*2*2
+        ary = arange(size, dtype='uint8').reshape(shape)
+        ary2 = ary + size
+        from thunder.rdds.fileio.seriesloader import SeriesLoader
+        series = SeriesLoader(self.sc).fromArrays([ary, ary2])
+
+        castseries = series.astype("smallfloat")
+
+        assert_equals('float16', str(castseries.dtype))
+        assert_equals('float16', str(castseries.first()[1].dtype))
 
 
 class TestSeriesMethods(PySparkTestCase):

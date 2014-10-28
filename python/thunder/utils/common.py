@@ -30,6 +30,23 @@ def checkparams(param, opts):
         raise ValueError("Option must be one of %s, got %s" % (str(opts)[1:-1], param))
 
 
+def smallest_float_type(dtype):
+    """Returns the smallest floating point dtype to which the passed dtype can be safely cast.
+
+    For integers and unsigned ints, this will generally be next floating point type larger than the integer type. So
+    for instance, smallest_float_type('uint8') -> dtype('float16'), smallest_float_type('int16') -> dtype('float32'),
+    smallest_float_type('uint32') -> dtype('float64').
+
+    This function relies on numpy's promote_types function.
+    """
+    from numpy import dtype as dtype_func
+    from numpy import promote_types
+    intype = dtype_func(dtype)
+    compsize = max(2, intype.itemsize)  # smallest float is at least 16 bits
+    comptype = dtype_func('=f'+str(compsize))  # compare to a float of the same size
+    return promote_types(intype, comptype)
+
+
 def pil_to_array(pilImage):
     """
     Load a PIL image and return it as a numpy array.  Only supports greyscale images;

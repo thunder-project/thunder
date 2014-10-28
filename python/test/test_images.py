@@ -4,7 +4,7 @@ import struct
 import unittest
 import os
 from operator import mul
-from numpy import arange, array, array_equal, dtype, prod, zeros
+from numpy import allclose, arange, array, array_equal, dtype, prod, vstack, zeros
 import itertools
 from nose.tools import assert_equals, assert_true, assert_almost_equal, assert_raises
 
@@ -37,6 +37,30 @@ class TestImages(PySparkTestCase):
         for serieskey, seriesval in series:
             expectedval = array([ary[serieskey] for ary in arys], dtype='int16')
             assert_true(array_equal(expectedval, seriesval))
+
+    def test_castToFloat(self):
+        arys, shape, size = _generate_test_arrays(2, 'uint8')
+        imagedata = ImagesLoader(self.sc).fromArrays(arys)
+        castdata = imagedata.astype("smallfloat")
+
+        assert_equals('float16', str(castdata.dtype))
+        assert_equals('float16', str(castdata.first()[1].dtype))
+
+    def test_mean(self):
+        from numpy import mean
+        arys, shape, size = _generate_test_arrays(2, 'uint8')
+        imagedata = ImagesLoader(self.sc).fromArrays(arys)
+        meanval = imagedata.mean()
+
+        def elementwise_mean(arys):
+            # surprising that numpy doesn't have this built in?
+            combined = vstack([ary.ravel() for ary in arys])
+            meanary = mean(combined, axis=0)
+            return meanary.reshape(arys[0].shape)
+
+        expected = elementwise_mean(arys).astype('float16')
+        assert_true(allclose(expected, meanval))
+        assert_equals('float16', str(meanval.dtype))
 
     def test_toSeries(self):
         # create 3 arrays of 4x3x3 images (C-order), containing sequential integers

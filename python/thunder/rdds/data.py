@@ -5,7 +5,7 @@ class Data(object):
     All data types are backed by an RDD of key-value pairs
     where the key is a tuple identifier and the value is an array
 
-    This base class mainly provides convienience functions for accessing
+    This base class mainly provides convenience functions for accessing
     properties of the object using the appropriate RDD methods.
 
     Attributes
@@ -17,11 +17,12 @@ class Data(object):
         directly exposed by the Data object can be accessed via `obj.rdd`.
     """
 
-    _metadata = []
+    _metadata = ['_dtype']
 
     def __init__(self, rdd, dtype=None):
         self.rdd = rdd
-        self._dtype = str(dtype) if dtype else None
+        # 'if dtype' is False here when passed a numpy dtype object.
+        self._dtype = dtype
 
     @property
     def dtype(self):
@@ -93,10 +94,40 @@ class Data(object):
         return self.rdd.keys()
 
     def astype(self, dtype, casting='safe'):
-        if dtype == 'smallfloat':
-            from thunder.utils.common import smallest_float_type
-            dtype = smallest_float_type
+        """Cast values to specified numpy dtype
 
+        Calls numpy's astype() method.
+
+        If the string 'smallfloat' is passed, then the values will be cast to the smallest floating point representation
+        to which they can be cast safely, as determined by the thunder.utils.common smallest_float_type function.
+        Typically this will be a float type larger than a passed integer type (for instance, float16 for int8 or uint8).
+
+        If the passed dtype is the same as the current dtype, or if 'smallfloat' is passed when values are already
+        in floating point, then this method will return immediately, returning self.
+
+        Parameters
+        ----------
+        dtype: numpy dtype or dtype specifier, or string 'smallfloat', or None
+            Data type to which RDD values are to be cast. Will return immediately, performing no cast, if None is passed.
+
+        casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
+            Casting method to pass on to numpy's astype() method; see numpy documentation for details.
+
+        Returns
+        -------
+        New Data object, of same type as self, with values cast to the requested dtype; or self if no cast is performed.
+        """
+        if dtype is None:
+            return self
+        if dtype == 'smallfloat':
+            # get the smallest floating point type that can be safely cast to from our current type
+            from thunder.utils.common import smallest_float_type
+            dtype = smallest_float_type(self.dtype)
+        if str(dtype) == str(self.dtype):
+            # no cast required
+            return self
+        nextrdd = self.rdd.mapValues(lambda v: v.astype(dtype, casting=casting))
+        return self._constructor(nextrdd, dtype=dtype).__finalize__(self)
 
     def collect(self):
         """ Return all records to the driver
@@ -114,39 +145,59 @@ class Data(object):
         """
         return self.rdd.count()
 
-    def mean(self):
+    def mean(self, dtype='smallfloat', casting='safe'):
         """ Mean of values, ignoring keys
 
-        obj.mean() is equivalent to obj.rdd.values().mean().
-        """
-        return self.rdd.values().mean()
+        If dtype is not None, then the values will first be cast to the requested type before the operation is
+        performed. See Data.astype() for details.
 
-    def sum(self):
+        obj.mean() is equivalent to obj.astype(dtype, casting).rdd.values().mean().
+        """
+        out = self.astype(dtype, casting)
+        return out.rdd.values().mean()
+
+    def sum(self, dtype=None, casting='safe'):
         """ Sum of values, ignoring keys
 
-        obj.sum() is equivalent to obj.rdd.values().sum().
-        """
-        return self.rdd.values().sum()
+        If dtype is not None, then the values will first be cast to the requested type before the operation is
+        performed. See Data.astype() for details.
 
-    def variance(self):
+        obj.sum() is equivalent to obj.astype(dtype, casting).rdd.values().sum().
+        """
+        out = self.astype(dtype, casting)
+        return out.rdd.values().sum()
+
+    def variance(self, dtype='smallfloat', casting='safe'):
         """ Variance of values, ignoring keys
 
-        obj.variance() is equivalent to obj.rdd.values().variance()."""
-        return self.rdd.values().variance()
+        If dtype is not None, then the values will first be cast to the requested type before the operation is
+        performed. See Data.astype() for details.
 
-    def stdev(self):
+        obj.variance() is equivalent to obj.astype(dtype, casting).rdd.values().variance()."""
+        out = self.astype(dtype, casting)
+        return out.rdd.values().variance()
+
+    def stdev(self, dtype='smallfloat', casting='safe'):
         """ Standard deviation of values, ignoring keys
 
-        obj.stdev() is equivalent to obj.rdd.values().stdev().
-        """
-        return self.rdd.values().stdev()
+        If dtype is not None, then the values will first be cast to the requested type before the operation is
+        performed. See Data.astype() for details.
 
-    def stats(self):
+        obj.stdev() is equivalent to obj.astype(dtype, casting).rdd.values().stdev().
+        """
+        out = self.astype(dtype, casting)
+        return out.rdd.values().stdev()
+
+    def stats(self, dtype='smallfloat', casting='safe'):
         """ Stats of values, ignoring keys
 
-        obj.stats() is equivalent to obj.rdd.values().stats().
+        If dtype is not None, then the values will first be cast to the requested type before the operation is
+        performed. See Data.astype() for details.
+
+        obj.stats() is equivalent to obj.astype(dtype, casting).rdd.values().stats().
         """
-        return self.rdd.values().stats()
+        out = self.astype(dtype, casting)
+        return out.rdd.values().stats()
 
     def max(self):
         """ Maximum of values, ignoring keys """

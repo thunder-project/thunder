@@ -35,7 +35,7 @@ class Series(Data):
     SpatialSeries : a Series where the keys represent spatial coordinates
     """
 
-    _metadata = ['_index', '_dims', '_dtype']
+    _metadata = Data._metadata + ['_index', '_dims']
 
     def __init__(self, rdd, index=None, dims=None, dtype=None):
         super(Series, self).__init__(rdd, dtype=dtype)
@@ -449,7 +449,7 @@ class Series(Data):
         rdd = self.rdd.map(lambda (k, v): (converter(k), v))
         return self._constructor(rdd, index=self._index).__finalize__(self)
 
-    def pack(self, selection=None, sorting=False, transpose=False):
+    def pack(self, selection=None, sorting=False, transpose=False, dtype=None, casting='safe'):
         """
         Pack a Series into a local array (e.g. for saving)
 
@@ -471,6 +471,13 @@ class Series(Data):
         transpose : boolean, optional, default False
             Transpose the spatial dimensions of the returned array.
 
+        dtype: numpy dtype, dtype specifier, or string 'smallfloat'. optional, default None.
+            If present, will cast the values to the requested dtype before collecting on the driver. See Data.astype()
+            and numpy's astype() function for details.
+
+        casting: casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
+            Casting method to pass on to numpy's astype() method if dtype is given; see numpy documentation for details.
+
         Returns
         -------
         result: numpy array
@@ -486,6 +493,9 @@ class Series(Data):
             out = self.select(selection)
         else:
             out = self
+
+        if not (dtype is None):
+            out = out.astype(dtype, casting)
 
         result = out.rdd.map(lambda (_, v): v).collect()
         nout = size(result[0])

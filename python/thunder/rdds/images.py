@@ -13,7 +13,7 @@ class Images(Data):
     is an identifier and the value is a two or three-dimensional array.
     """
 
-    _metadata = ['_dims', '_nimages', '_dtype']
+    _metadata = Data._metadata + ['_dims', '_nimages']
 
     def __init__(self, rdd, dims=None, nimages=None, dtype=None):
         super(Images, self).__init__(rdd, dtype=dtype)
