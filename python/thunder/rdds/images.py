@@ -17,11 +17,12 @@ class Images(Data):
 
     def __init__(self, rdd, dims=None, nimages=None, dtype=None):
         super(Images, self).__init__(rdd, dtype=dtype)
-        # todo: add parameter checking here?
         if dims and not isinstance(dims, Dimensions):
-            raise TypeError("Series dims parameter must be Dimensions object, got: %s" % type(dims))
-        else:
-            self._dims = dims
+            try:
+                dims = Dimensions.fromTuple(dims)
+            except:
+                raise TypeError("Images dims parameter must be castable to Dimensions object, got: %s" % str(dims))
+        self._dims = dims
         self._nimages = nimages
 
     @property
@@ -396,7 +397,7 @@ class Images(Data):
         # update dimensions to remove axis of projection
         newdims = list(self.dims)
         del newdims[axis]
-        return self._constructor(proj, dims=Dimensions.fromTuple(newdims)).__finalize__(self)
+        return self._constructor(proj, dims=newdims).__finalize__(self)
 
     def maxminProjection(self, axis=2):
         """
@@ -413,7 +414,7 @@ class Images(Data):
         # update dimensions to remove axis of projection
         newdims = list(self.dims)
         del newdims[axis]
-        return self._constructor(proj, dims=Dimensions.fromTuple(newdims)).__finalize__(self)
+        return self._constructor(proj, dims=newdims).__finalize__(self)
 
     def subsample(self, samplefactor):
         """Downsample an image volume by an integer factor
@@ -439,7 +440,7 @@ class Images(Data):
         newdims = [dims[i] / samplefactor[i] for i in xrange(ndims)]  # integer division
 
         return self._constructor(
-            self.rdd.mapValues(lambda v: v[sampleslices]), dims=Dimensions.fromTuple(newdims)).__finalize__(self)
+            self.rdd.mapValues(lambda v: v[sampleslices]), dims=newdims).__finalize__(self)
 
     def planes(self, bottom, top, inclusive=True):
         """
@@ -466,7 +467,7 @@ class Images(Data):
         newdims = [self.dims[0], self.dims[1], size(zrange)]
 
         return self._constructor(self.rdd.mapValues(lambda v: squeeze(v[:, :, zrange])),
-                                 dims=Dimensions.fromTuple(newdims)).__finalize__(self)
+                                 dims=newdims).__finalize__(self)
 
     def subtract(self, val):
         """

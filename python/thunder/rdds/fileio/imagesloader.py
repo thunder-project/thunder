@@ -43,9 +43,8 @@ class ImagesLoader(object):
             if not ary.dtype == dtype:
                 raise ValueError("Arrays must all be of same data type; got both %s and %s" %
                                  (str(dtype), str(ary.dtype)))
-        dims = Dimensions.fromTuple(shape)
         return Images(self.sc.parallelize(enumerate(arrays), len(arrays)),
-                      dims=dims, dtype=str(dtype), nimages=len(arrays))
+                      dims=shape, dtype=str(dtype), nimages=len(arrays))
 
     def fromStack(self, datapath, dims, dtype='int16', ext='stack', startidx=None, stopidx=None):
         """Load an Images object stored in a directory of flat binary files
@@ -81,7 +80,7 @@ class ImagesLoader(object):
 
         reader = getParallelReaderForPath(datapath)(self.sc)
         readerrdd = reader.read(datapath, ext=ext, startidx=startidx, stopidx=stopidx)
-        return Images(readerrdd.mapValues(toArray), nimages=reader.lastnrecs, dims=Dimensions.fromTuple(dims),
+        return Images(readerrdd.mapValues(toArray), nimages=reader.lastnrecs, dims=dims,
                       dtype=dtype)
 
     def fromTif(self, datapath, ext='tif', startidx=None, stopidx=None):

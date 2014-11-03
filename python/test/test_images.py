@@ -20,7 +20,7 @@ try:
     _have_image = True
 except ImportError:
     # PIL not available; skip tests that require it
-    pass
+    Image = None
 
 
 def _generate_test_arrays(narys, dtype_='int16'):

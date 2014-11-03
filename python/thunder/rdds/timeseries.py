@@ -30,12 +30,7 @@ class TimeSeries(Series):
     --------
     Series : base class for Series data
     """
-
-    def __init__(self, rdd, index=None, dims=None):
-        super(TimeSeries, self).__init__(rdd, index, dims)
-        # todo add type checking for index
-        self._index = index
-        self._dims = dims
+    # use superclass __init__
 
     @property
     def _constructor(self):

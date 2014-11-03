@@ -4,9 +4,15 @@ import unittest
 from nose.tools import assert_equals, assert_true, assert_almost_equal
 
 from thunder.rdds.fileio.imagesloader import ImagesLoader
-from test_images import _have_image
 from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
 
+_have_image = False
+try:
+    from PIL import Image
+    _have_image = True
+except ImportError:
+    # PIL not available; skip tests that require it
+    Image = None
 
 class TestImagesFileLoaders(PySparkTestCase):
     @staticmethod

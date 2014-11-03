@@ -41,9 +41,11 @@ class Series(Data):
         super(Series, self).__init__(rdd, dtype=dtype)
         self._index = index
         if dims and not isinstance(dims, Dimensions):
-            raise TypeError("Series dims parameter must be Dimensions object, got: %s" % type(dims))
-        else:
-            self._dims = dims
+            try:
+                dims = Dimensions.fromTuple(dims)
+            except:
+                raise TypeError("Series dims parameter must be castable to Dimensions object, got: %s" % str(dims))
+        self._dims = dims
 
     @property
     def index(self):

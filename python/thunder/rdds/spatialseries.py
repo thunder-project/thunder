@@ -28,11 +28,7 @@ class SpatialSeries(Series):
     --------
     Series : base class for Series data
     """
-
-    def __init__(self, rdd, index=None, dims=None):
-        super(SpatialSeries, self).__init__(rdd, index, dims)
-        self._index = index
-        self._dims = dims
+    # use superclass __init__
 
     @property
     def _constructor(self):

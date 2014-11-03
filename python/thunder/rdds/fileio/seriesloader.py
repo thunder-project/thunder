@@ -472,7 +472,7 @@ class SeriesLoader(object):
                                                                        datatype=datatype, startidx=startidx,
                                                                        stopidx=stopidx)
 
-        return Series(seriesblocks, dims=Dimensions.fromTuple(dims), dtype=datatype, index=arange(npointsinseries))
+        return Series(seriesblocks, dims=dims, dtype=datatype, index=arange(npointsinseries))
 
     def fromMultipageTif(self, datapath, ext="tif", blockSize="150M",
                          startidx=None, stopidx=None):
