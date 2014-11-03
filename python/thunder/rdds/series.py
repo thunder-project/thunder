@@ -604,7 +604,7 @@ class Series(Data):
 
         for idx, indlist in enumerate(inds):
             if len(indlist) > 0:
-                inds_set = set(indlist.flat)
+                inds_set = set(asarray(indlist).flat)
                 inds_bc = self.rdd.context.broadcast(inds_set)
                 values[idx, :] = data.filterOnKeys(lambda k: k in inds_bc.value).values().mean()
                 keys[idx, :] = mean(map(lambda k: converter(k), indlist), axis=0)
