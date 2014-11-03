@@ -396,7 +396,7 @@ class Images(Data):
         # update dimensions to remove axis of projection
         newdims = list(self.dims)
         del newdims[axis]
-        return self._constructor(proj, dims=newdims).__finalize__(self)
+        return self._constructor(proj, dims=Dimensions.fromTuple(newdims)).__finalize__(self)
 
     def maxminProjection(self, axis=2):
         """
@@ -413,7 +413,7 @@ class Images(Data):
         # update dimensions to remove axis of projection
         newdims = list(self.dims)
         del newdims[axis]
-        return self._constructor(proj, dims=newdims).__finalize__(self)
+        return self._constructor(proj, dims=Dimensions.fromTuple(newdims)).__finalize__(self)
 
     def subsample(self, samplefactor):
         """Downsample an image volume by an integer factor
@@ -439,7 +439,7 @@ class Images(Data):
         newdims = [dims[i] / samplefactor[i] for i in xrange(ndims)]  # integer division
 
         return self._constructor(
-            self.rdd.mapValues(lambda v: v[sampleslices]), dims=newdims).__finalize__(self)
+            self.rdd.mapValues(lambda v: v[sampleslices]), dims=Dimensions.fromTuple(newdims)).__finalize__(self)
 
     def planes(self, bottom, top, inclusive=True):
         """
@@ -465,8 +465,8 @@ class Images(Data):
             zrange = arange(bottom+1, top)
         newdims = [self.dims[0], self.dims[1], size(zrange)]
 
-        return self._constructor(
-            self.rdd.mapValues(lambda v: squeeze(v[:, :, zrange])), dims=newdims).__finalize__(self)
+        return self._constructor(self.rdd.mapValues(lambda v: squeeze(v[:, :, zrange])),
+                                 dims=Dimensions.fromTuple(newdims)).__finalize__(self)
 
     def subtract(self, val):
         """
