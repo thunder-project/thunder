@@ -243,7 +243,8 @@ class Colorize(object):
                     raise Exception('Must have 2 values per pixel for %s conversion' % self.totype)
             if self.totype in ['indexed']:
                 if dims[0] != len(self.colors):
-                    raise Exception('Must have %g values per pixel for %s conversion with given list' % self.totype)
+                    raise Exception('Must have %g values per pixel for %s conversion with given list'
+                                    % (len(self.colors), self.totype))
 
         elif isinstance(self.totype, ListedColormap) or isinstance(self.totype, str):
             if len(dims) not in [2, 3]:
