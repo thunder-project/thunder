@@ -35,10 +35,10 @@ class Series(Data):
     SpatialSeries : a Series where the keys represent spatial coordinates
     """
 
-    _metadata = ['_index', '_dims']
+    _metadata = Data._metadata + ['_index', '_dims']
 
-    def __init__(self, rdd, index=None, dims=None):
-        super(Series, self).__init__(rdd)
+    def __init__(self, rdd, index=None, dims=None, dtype=None):
+        super(Series, self).__init__(rdd, dtype=dtype)
         self._index = index
         if dims and not isinstance(dims, Dimensions):
             raise TypeError("Series dims parameter must be Dimensions object, got: %s" % type(dims))
@@ -48,19 +48,40 @@ class Series(Data):
     @property
     def index(self):
         if self._index is None:
-            record = self.rdd.first()
-            self._index = arange(0, len(record[1]))
+            self.populateParamsFromFirstRecord()
         return self._index
 
     @property
     def dims(self):
         from thunder.rdds.keys import Dimensions
         if self._dims is None:
-            entry = self.rdd.first()[0]
+            entry = self.populateParamsFromFirstRecord()[0]
             n = size(entry)
             d = self.rdd.keys().mapPartitions(lambda i: [Dimensions(i, n)]).reduce(lambda x, y: x.mergedims(y))
             self._dims = d
         return self._dims
+
+    @property
+    def dtype(self):
+        # override just calls superclass; here for explicitness
+        return super(Series, self).dtype
+
+    def populateParamsFromFirstRecord(self):
+        """Calls first() on the underlying rdd, using the returned record to determine appropriate attribute settings
+        for this object (for instance, setting self.dtype to match the dtype of the underlying rdd records).
+
+        Returns the result of calling self.rdd.first().
+        """
+        record = super(Series, self).populateParamsFromFirstRecord()
+        if self._index is None:
+            val = record[1]
+            try:
+                l = len(val)
+            except TypeError:
+                # TypeError thrown after calling len() on object with no __len__ method
+                l = 1
+            self._index = arange(0, l)
+        return record
 
     @property
     def _constructor(self):
@@ -428,7 +449,7 @@ class Series(Data):
         rdd = self.rdd.map(lambda (k, v): (converter(k), v))
         return self._constructor(rdd, index=self._index).__finalize__(self)
 
-    def pack(self, selection=None, sorting=False, transpose=False):
+    def pack(self, selection=None, sorting=False, transpose=False, dtype=None, casting='safe'):
         """
         Pack a Series into a local array (e.g. for saving)
 
@@ -450,6 +471,13 @@ class Series(Data):
         transpose : boolean, optional, default False
             Transpose the spatial dimensions of the returned array.
 
+        dtype: numpy dtype, dtype specifier, or string 'smallfloat'. optional, default None.
+            If present, will cast the values to the requested dtype before collecting on the driver. See Data.astype()
+            and numpy's astype() function for details.
+
+        casting: casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
+            Casting method to pass on to numpy's astype() method if dtype is given; see numpy documentation for details.
+
         Returns
         -------
         result: numpy array
@@ -465,6 +493,9 @@ class Series(Data):
             out = self.select(selection)
         else:
             out = self
+
+        if not (dtype is None):
+            out = out.astype(dtype, casting)
 
         result = out.rdd.map(lambda (_, v): v).collect()
         nout = size(result[0])
