@@ -155,7 +155,7 @@ class Colorize(object):
             if img.ndim == 4:
                 out = zeros((img_dims[1], img_dims[2], img_dims[3], 3))
             if img.ndim == 3:
-                out = zeros((img_dims[1], img_dims[2]))
+                out = zeros((img_dims[1], img_dims[2], 3))
             for ix, clr in enumerate(self.colors):
                 cmap = LinearSegmentedColormap.from_list('blend', [[0, 0, 0], clr])
                 tmp = cmap(self.scale * base[ix]/amax(base[ix]))
