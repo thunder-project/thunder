@@ -105,20 +105,10 @@ class FixedLengthBinaryRecordReader extends RecordReader[LongWritable, BytesWrit
 
       // setup a buffer to store the record
       val buffer = recordValue.getBytes
+      fileInputStream.readFully(buffer)
 
-      breakable {
-        var bytestoread: Int = recordLength
-        while (bytestoread > 0) {
-          val bytesread = fileInputStream.read(buffer, recordLength - bytestoread, bytestoread)
-          if (bytesread == -1) {
-            // EOF
-            break() 
-          }
-          // update our current position
-          currentPosition += bytesread
-          bytestoread -= bytesread
-        }
-      }
+      // update our current position
+      currentPosition += recordLength
 
       // return true
       return true
