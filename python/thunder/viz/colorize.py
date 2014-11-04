@@ -297,7 +297,7 @@ class Colorize(object):
         optfun = lambda x: 1 - corrcoef(distmat, squareform(pdist(x.reshape(nclrs, 3), 'cosine')).flatten())[0, 1]
         init = random.rand(nclrs*3)
         bounds = [(0, 1) for _ in range(0, nclrs * 3)]
-        res = minimize(optfun, init, bounds=bounds)
+        res = minimize(optfun, init, bounds=bounds, method='L-BFGS-B')
         newclrs = res.x.reshape(nclrs, 3).tolist()
 
         from matplotlib.colors import ListedColormap
