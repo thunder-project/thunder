@@ -11,6 +11,7 @@
    
       ~Images.__init__
       ~Images.apply
+      ~Images.astype
       ~Images.cache
       ~Images.collect
       ~Images.count
@@ -25,6 +26,7 @@
       ~Images.mean
       ~Images.min
       ~Images.planes
+      ~Images.populateParamsFromFirstRecord
       ~Images.saveAsBinarySeries
       ~Images.stats
       ~Images.stdev

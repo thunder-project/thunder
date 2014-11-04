@@ -11,6 +11,7 @@
    
       ~Series.__init__
       ~Series.apply
+      ~Series.astype
       ~Series.between
       ~Series.cache
       ~Series.center
@@ -29,6 +30,7 @@
       ~Series.min
       ~Series.normalize
       ~Series.pack
+      ~Series.populateParamsFromFirstRecord
       ~Series.query
       ~Series.select
       ~Series.seriesMax

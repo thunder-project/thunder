@@ -68,14 +68,14 @@ array and look at them as images one by one.
 
 .. parsed-literal::
 
-    (2, 87, 76, 2)
+    (2, 76, 87, 2)
 
 
 
 .. code:: python
 
     sns.set_style('white')
-    plt.imshow(imgs[0,:,:,0].T, clim=(-0.05,0.05));
+    plt.imshow(imgs[0,:,:,0], clim=(-0.05,0.05));
 
 
 .. image:: factorization_files/factorization_13_0.png
@@ -83,7 +83,7 @@ array and look at them as images one by one.
 
 .. code:: python
 
-    plt.imshow(imgs[1,:,:,0].T, clim=(-0.05,0.05));
+    plt.imshow(imgs[1,:,:,0], clim=(-0.05,0.05));
 
 
 .. image:: factorization_files/factorization_14_0.png
@@ -103,7 +103,7 @@ components, and the brightness shows the total amplitude.
 
     from numpy import amax
     sns.set_style('white')
-    plt.imshow(amax(maps,2).transpose(1,0,2));
+    plt.imshow(amax(maps,2));
 
 
 .. image:: factorization_files/factorization_17_0.png
@@ -180,7 +180,7 @@ containsthe spatial basis functions. Let's look at both.
 .. code:: python
 
     sns.set_style('white')
-    plt.imshow(imgs[0][:,:,0].T, cmap='gray');
+    plt.imshow(imgs[0][:,:,0], cmap='gray');
 
 
 .. image:: factorization_files/factorization_28_0.png
@@ -188,7 +188,7 @@ containsthe spatial basis functions. Let's look at both.
 
 .. code:: python
 
-    plt.imshow(imgs[1][:,:,0].T, cmap='gray');
+    plt.imshow(imgs[1][:,:,0], cmap='gray');
 
 
 .. image:: factorization_files/factorization_29_0.png
@@ -196,7 +196,7 @@ containsthe spatial basis functions. Let's look at both.
 
 .. code:: python
 
-    plt.imshow(imgs[2][:,:,0].T, cmap='gray');
+    plt.imshow(imgs[2][:,:,0], cmap='gray');
 
 
 .. image:: factorization_files/factorization_30_0.png
@@ -211,7 +211,7 @@ factor which controls overall brightness.
 .. code:: python
 
     maps = Colorize(totype='rgb', scale=0.5).images(imgs)
-    plt.imshow(maps[:,:,0,:].transpose(1,0,2));
+    plt.imshow(maps[:,:,0,:]);
 
 
 .. image:: factorization_files/factorization_32_0.png
@@ -226,7 +226,7 @@ automatically normalizes the amplitude of each one.
 .. code:: python
 
     maps = Colorize(totype='indexed', colors=[ "hotpink", "cornflowerblue", "mediumseagreen"], scale=2).images(imgs)
-    plt.imshow(maps[:,:,0,:].transpose(1,0,2));
+    plt.imshow(maps[:,:,0,:]);
 
 
 .. image:: factorization_files/factorization_34_0.png
@@ -242,7 +242,7 @@ how to select and colorize just two of the three image channels.
 .. code:: python
 
     maps = Colorize(totype='indexed', colors=['red', 'blue'], scale=1).images(imgs[[0,2]], background=reference)
-    plt.imshow(maps[:,:,0,:].transpose(1,0,2));
+    plt.imshow(maps[:,:,0,:]);
 
 
 .. image:: factorization_files/factorization_37_0.png
@@ -282,7 +282,7 @@ value when making maps.
 
     maps = Colorize(totype='indexed', colors=['red','green', 'blue'], scale=3).images(abs(imgs))
     sns.set_style('white')
-    plt.imshow(maps[:,:,0,:].transpose(1,0,2));
+    plt.imshow(maps[:,:,0,:]);
 
 
 .. image:: factorization_files/factorization_43_0.png

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Thunder context &mdash; Thunder 0.4.0 documentation</title>
+    <title>Thunder context &mdash; Thunder 0.4.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.4.0',
+        VERSION:     '0.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,7 +31,7 @@
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.4.0 documentation" href="../index.html" />
+    <link rel="top" title="Thunder 0.4.1 documentation" href="../index.html" />
     <link rel="next" title="Input formats" href="input_formats.html" />
     <link rel="prev" title="Basic usage" href="basic_usage.html" />
 <meta charset='utf-8'>
@@ -53,7 +53,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.4.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.4.1</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -281,14 +281,14 @@ represent anything meaningful about the data itself.</p>
 </div>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;white&#39;</span><span class="p">)</span>
 <span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&quot;gray&quot;</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&quot;gray&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
 <img alt="../_images/thunder_context_27_0.png" src="../_images/thunder_context_27_0.png" />
 <p>Example data stored on S3 can be loaded using the <tt class="docutils literal"><span class="pre">loadExampleEC2</span></tt>
 method. You must be running Thunder on an Amazon EC2 cluster in order to
 use these methods. Some of the available data sets include parameters
-that are returnded alongside the data.</p>
+that are returned alongside the data.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExampleEC2</span><span class="p">(</span><span class="s">&#39;zebrafish-optomotor-response&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -314,7 +314,7 @@ that are returnded alongside the data.</p>
       
     </p>
     <p>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.<br/>
     </p>
   </div>
 </footer>

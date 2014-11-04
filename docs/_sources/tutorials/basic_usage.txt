@@ -117,7 +117,7 @@ cluster. In this case, the result is 3d, with two planes:
 
 .. parsed-literal::
 
-    (87, 76, 2)
+    (76, 87, 2)
 
 
 
@@ -134,7 +134,7 @@ It's easy to look at the result directly using ``matplotlib``:
 .. code:: python
 
     sns.set_style("white")
-    plt.imshow(img[:,:,0].T, cmap="gray");
+    plt.imshow(img[:,:,0], cmap="gray");
 
 
 .. image:: basic_usage_files/basic_usage_19_0.png

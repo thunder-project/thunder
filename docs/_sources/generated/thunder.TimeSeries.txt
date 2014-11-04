@@ -11,6 +11,7 @@
    
       ~TimeSeries.__init__
       ~TimeSeries.apply
+      ~TimeSeries.astype
       ~TimeSeries.between
       ~TimeSeries.blockedAverage
       ~TimeSeries.cache
@@ -32,6 +33,7 @@
       ~TimeSeries.min
       ~TimeSeries.normalize
       ~TimeSeries.pack
+      ~TimeSeries.populateParamsFromFirstRecord
       ~TimeSeries.query
       ~TimeSeries.select
       ~TimeSeries.seriesMax

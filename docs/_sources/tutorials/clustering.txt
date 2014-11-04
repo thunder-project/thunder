@@ -79,7 +79,7 @@ for plotting the cluster centers above:
 .. code:: python
 
     sns.set_style('white')
-    plt.imshow(img_labels[:,:,0].T, cmap=cmap_cat);
+    plt.imshow(img_labels[:,:,0], cmap=cmap_cat);
 
 
 .. image:: clustering_files/clustering_16_0.png
@@ -93,7 +93,7 @@ complex operations.
 .. code:: python
 
     from thunder import Colorize
-    brainmap = Colorize(totype=cmap_cat).images(img_labels[:,:,0].T)
+    brainmap = Colorize(totype=cmap_cat).images(img_labels[:,:,0])
     plt.imshow(brainmap);
 
 
@@ -135,7 +135,7 @@ more clear.
 .. code:: python
 
     sns.set_style('white')
-    brainmap = Colorize(totype=newclrs).images(img_labels[:,:,0].T)
+    brainmap = Colorize(totype=newclrs).images(img_labels[:,:,0])
     plt.imshow(brainmap);
 
 
@@ -159,7 +159,7 @@ ignores the noise.
     std_map = data.seriesStdev().pack()
     sns.set_style('white')
     # try different values of the threshold
-    plt.imshow(std_map[:,:,0].T > 0.05);
+    plt.imshow(std_map[:,:,0] > 0.05);
 
 
 .. image:: clustering_files/clustering_26_0.png
@@ -187,7 +187,7 @@ deviation
 .. code:: python
 
     img_labels = model.predict(data).pack()
-    brainmap = Colorize(totype=newclrs).images(img_labels[:,:,0].T)
+    brainmap = Colorize(totype=newclrs).images(img_labels[:,:,0])
     sns.set_style('white')
     plt.imshow(brainmap);
 
@@ -209,7 +209,7 @@ can compute this using the ``similarity`` method of ``KMeansModel``.
     img_sim = sim.pack()
 .. code:: python
 
-    plt.imshow(img_sim[:,:,0].T, cmap='gray',clim=(0,1));
+    plt.imshow(img_sim[:,:,0], cmap='gray',clim=(0,1));
 
 
 .. image:: clustering_files/clustering_33_0.png
@@ -219,7 +219,7 @@ We can then use this as a linear mask on the colorization output
 
 .. code:: python
 
-    brainmap = Colorize(totype=newclrs).images(img_labels[:,:,0].T, mask=img_sim[:,:,0].T)
+    brainmap = Colorize(totype=newclrs).images(img_labels[:,:,0], mask=img_sim[:,:,0])
     plt.imshow(brainmap);
 
 
@@ -236,7 +236,7 @@ planes), and then look at a maximum projection.
 .. code:: python
 
     from numpy import amax
-    plt.imshow(amax(brainmap,2).transpose(1,0,2));
+    plt.imshow(amax(brainmap,2));
 
 
 .. image:: clustering_files/clustering_38_0.png

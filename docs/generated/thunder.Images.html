@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>thunder.Images &mdash; Thunder 0.4.0 documentation</title>
+    <title>thunder.Images &mdash; Thunder 0.4.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.4.0',
+        VERSION:     '0.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,7 +31,7 @@
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.4.0 documentation" href="../index.html" />
+    <link rel="top" title="Thunder 0.4.1 documentation" href="../index.html" />
     <link rel="up" title="API Reference" href="../api.html" />
     <link rel="next" title="thunder.TimeSeries" href="thunder.TimeSeries.html" />
     <link rel="prev" title="thunder.Series" href="thunder.Series.html" />
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.4.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.4.1</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -158,55 +158,61 @@ is an identifier and the value is a two or three-dimensional array.</p>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.Images.apply" title="thunder.Images.apply"><tt class="xref py py-obj docutils literal"><span class="pre">apply</span></tt></a>(func)</td>
 <td>Apply a function to all images / volumes,</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.cache" title="thunder.Images.cache"><tt class="xref py py-obj docutils literal"><span class="pre">cache</span></tt></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.astype" title="thunder.Images.astype"><tt class="xref py py-obj docutils literal"><span class="pre">astype</span></tt></a>(dtype[,&nbsp;casting])</td>
+<td>Cast values to specified numpy dtype</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.cache" title="thunder.Images.cache"><tt class="xref py py-obj docutils literal"><span class="pre">cache</span></tt></a>()</td>
 <td>Enable in-memory caching</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.collect" title="thunder.Images.collect"><tt class="xref py py-obj docutils literal"><span class="pre">collect</span></tt></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.collect" title="thunder.Images.collect"><tt class="xref py py-obj docutils literal"><span class="pre">collect</span></tt></a>()</td>
 <td>Return all records to the driver</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.count" title="thunder.Images.count"><tt class="xref py py-obj docutils literal"><span class="pre">count</span></tt></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.count" title="thunder.Images.count"><tt class="xref py py-obj docutils literal"><span class="pre">count</span></tt></a>()</td>
 <td>Mean of values, ignoring keys</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.exportAsPngs" title="thunder.Images.exportAsPngs"><tt class="xref py py-obj docutils literal"><span class="pre">exportAsPngs</span></tt></a>(outputdirname[,&nbsp;fileprefix,&nbsp;...])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.exportAsPngs" title="thunder.Images.exportAsPngs"><tt class="xref py py-obj docutils literal"><span class="pre">exportAsPngs</span></tt></a>(outputdirname[,&nbsp;fileprefix,&nbsp;...])</td>
 <td>Write out basic png files for two-dimensional image data.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.filterOnKeys" title="thunder.Images.filterOnKeys"><tt class="xref py py-obj docutils literal"><span class="pre">filterOnKeys</span></tt></a>(func)</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.filterOnKeys" title="thunder.Images.filterOnKeys"><tt class="xref py py-obj docutils literal"><span class="pre">filterOnKeys</span></tt></a>(func)</td>
 <td>Filter records by applying a function to keys</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.filterOnValues" title="thunder.Images.filterOnValues"><tt class="xref py py-obj docutils literal"><span class="pre">filterOnValues</span></tt></a>(func)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.filterOnValues" title="thunder.Images.filterOnValues"><tt class="xref py py-obj docutils literal"><span class="pre">filterOnValues</span></tt></a>(func)</td>
 <td>Filter records by applying a function to values</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.first" title="thunder.Images.first"><tt class="xref py py-obj docutils literal"><span class="pre">first</span></tt></a>()</td>
-<td>Return first record</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.first" title="thunder.Images.first"><tt class="xref py py-obj docutils literal"><span class="pre">first</span></tt></a>()</td>
+<td>Return first record.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.keys" title="thunder.Images.keys"><tt class="xref py py-obj docutils literal"><span class="pre">keys</span></tt></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.keys" title="thunder.Images.keys"><tt class="xref py py-obj docutils literal"><span class="pre">keys</span></tt></a>()</td>
 <td>Return keys, ignoring values</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.max" title="thunder.Images.max"><tt class="xref py py-obj docutils literal"><span class="pre">max</span></tt></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.max" title="thunder.Images.max"><tt class="xref py py-obj docutils literal"><span class="pre">max</span></tt></a>()</td>
 <td>Maximum of values, ignoring keys</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.maxProjection" title="thunder.Images.maxProjection"><tt class="xref py py-obj docutils literal"><span class="pre">maxProjection</span></tt></a>([axis])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.maxProjection" title="thunder.Images.maxProjection"><tt class="xref py py-obj docutils literal"><span class="pre">maxProjection</span></tt></a>([axis])</td>
 <td>Compute maximum projections of images / volumes along the specified dimension.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.maxminProjection" title="thunder.Images.maxminProjection"><tt class="xref py py-obj docutils literal"><span class="pre">maxminProjection</span></tt></a>([axis])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.maxminProjection" title="thunder.Images.maxminProjection"><tt class="xref py py-obj docutils literal"><span class="pre">maxminProjection</span></tt></a>([axis])</td>
 <td>Compute maximum-minimum projections of images / volumes along the specified dimension.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.mean" title="thunder.Images.mean"><tt class="xref py py-obj docutils literal"><span class="pre">mean</span></tt></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.mean" title="thunder.Images.mean"><tt class="xref py py-obj docutils literal"><span class="pre">mean</span></tt></a>([dtype,&nbsp;casting])</td>
 <td>Mean of values, ignoring keys</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.min" title="thunder.Images.min"><tt class="xref py py-obj docutils literal"><span class="pre">min</span></tt></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.min" title="thunder.Images.min"><tt class="xref py py-obj docutils literal"><span class="pre">min</span></tt></a>()</td>
 <td>Minimum of values, ignoring keys</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.planes" title="thunder.Images.planes"><tt class="xref py py-obj docutils literal"><span class="pre">planes</span></tt></a>(bottom,&nbsp;top[,&nbsp;inclusive])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.planes" title="thunder.Images.planes"><tt class="xref py py-obj docutils literal"><span class="pre">planes</span></tt></a>(bottom,&nbsp;top[,&nbsp;inclusive])</td>
 <td>Subselect planes for three-dimensional image data.</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">populateParamsFromFirstRecord</span></tt>()</td>
+<td></td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.saveAsBinarySeries" title="thunder.Images.saveAsBinarySeries"><tt class="xref py py-obj docutils literal"><span class="pre">saveAsBinarySeries</span></tt></a>(outputdirname[,&nbsp;...])</td>
 <td>Writes Image into files on a local filesystem, suitable for loading by SeriesLoader.fromBinary()</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.stats" title="thunder.Images.stats"><tt class="xref py py-obj docutils literal"><span class="pre">stats</span></tt></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.stats" title="thunder.Images.stats"><tt class="xref py py-obj docutils literal"><span class="pre">stats</span></tt></a>([dtype,&nbsp;casting])</td>
 <td>Stats of values, ignoring keys</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.stdev" title="thunder.Images.stdev"><tt class="xref py py-obj docutils literal"><span class="pre">stdev</span></tt></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.stdev" title="thunder.Images.stdev"><tt class="xref py py-obj docutils literal"><span class="pre">stdev</span></tt></a>([dtype,&nbsp;casting])</td>
 <td>Standard deviation of values, ignoring keys</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.Images.subsample" title="thunder.Images.subsample"><tt class="xref py py-obj docutils literal"><span class="pre">subsample</span></tt></a>(samplefactor)</td>
@@ -215,7 +221,7 @@ is an identifier and the value is a two or three-dimensional array.</p>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.subtract" title="thunder.Images.subtract"><tt class="xref py py-obj docutils literal"><span class="pre">subtract</span></tt></a>(val)</td>
 <td>Subtract a constant value or an image / volume from all images / volumes in the data set.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.sum" title="thunder.Images.sum"><tt class="xref py py-obj docutils literal"><span class="pre">sum</span></tt></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.sum" title="thunder.Images.sum"><tt class="xref py py-obj docutils literal"><span class="pre">sum</span></tt></a>([dtype,&nbsp;casting])</td>
 <td>Sum of values, ignoring keys</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.take" title="thunder.Images.take"><tt class="xref py py-obj docutils literal"><span class="pre">take</span></tt></a>(*args,&nbsp;**kwargs)</td>
@@ -227,7 +233,7 @@ is an identifier and the value is a two or three-dimensional array.</p>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.values" title="thunder.Images.values"><tt class="xref py py-obj docutils literal"><span class="pre">values</span></tt></a>()</td>
 <td>Return values, ignoring keys</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.variance" title="thunder.Images.variance"><tt class="xref py py-obj docutils literal"><span class="pre">variance</span></tt></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.variance" title="thunder.Images.variance"><tt class="xref py py-obj docutils literal"><span class="pre">variance</span></tt></a>([dtype,&nbsp;casting])</td>
 <td>Variance of values, ignoring keys</td>
 </tr>
 </tbody>
@@ -245,6 +251,37 @@ otherwise perserving attributes</p>
 <blockquote class="last">
 <div><p>Function to apply</p>
 </div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Images.astype">
+<tt class="descname">astype</tt><big>(</big><em>dtype</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.Images.astype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cast values to specified numpy dtype</p>
+<p>Calls numpy&#8217;s astype() method.</p>
+<p>If the string &#8216;smallfloat&#8217; is passed, then the values will be cast to the smallest floating point representation
+to which they can be cast safely, as determined by the thunder.utils.common smallest_float_type function.
+Typically this will be a float type larger than a passed integer type (for instance, float16 for int8 or uint8).</p>
+<p>If the passed dtype is the same as the current dtype, or if &#8216;smallfloat&#8217; is passed when values are already
+in floating point, then this method will return immediately, returning self.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>dtype: numpy dtype or dtype specifier, or string &#8216;smallfloat&#8217;, or None</strong></p>
+<blockquote>
+<div><p>Data type to which RDD values are to be cast. Will return immediately, performing no cast, if None is passed.</p>
+</div></blockquote>
+<p><strong>casting: &#8216;no&#8217;|&#8217;equiv&#8217;|&#8217;safe&#8217;|&#8217;same_kind&#8217;|&#8217;unsafe&#8217;, optional, default &#8216;safe&#8217;</strong></p>
+<blockquote>
+<div><p>Casting method to pass on to numpy&#8217;s astype() method; see numpy documentation for details.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">New Data object, of same type as self, with values cast to the requested dtype; or self if no cast is performed.</p>
 </td>
 </tr>
 </tbody>
@@ -323,8 +360,9 @@ in parallel by each executor, presumably to a distributed or networked filesyste
 <dl class="method">
 <dt id="thunder.Images.first">
 <tt class="descname">first</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.first" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return first record</p>
-<p>This calls the Spark first() method on the underlying RDD.</p>
+<dd><p>Return first record.</p>
+<p>This calls the Spark first() method on the underlying RDD. As a side effect, any attributes on this object that
+can be set based on the values of the first record will be set (see populateParamsFromFirstRecord).</p>
 </dd></dl>
 
 <dl class="method">
@@ -381,9 +419,11 @@ of the maximum and minimum values along the given dimension.</p>
 
 <dl class="method">
 <dt id="thunder.Images.mean">
-<tt class="descname">mean</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.mean" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">mean</tt><big>(</big><em>dtype='smallfloat'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.Images.mean" title="Permalink to this definition">¶</a></dt>
 <dd><p>Mean of values, ignoring keys</p>
-<p>obj.mean() is equivalent to obj.rdd.values().mean().</p>
+<p>If dtype is not None, then the values will first be cast to the requested type before the operation is
+performed. See Data.astype() for details.</p>
+<p>obj.mean() is equivalent to obj.astype(dtype, casting).rdd.values().mean().</p>
 </dd></dl>
 
 <dl class="method">
@@ -463,16 +503,20 @@ of this call.</p>
 
 <dl class="method">
 <dt id="thunder.Images.stats">
-<tt class="descname">stats</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.stats" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">stats</tt><big>(</big><em>dtype='smallfloat'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.Images.stats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stats of values, ignoring keys</p>
-<p>obj.stats() is equivalent to obj.rdd.values().stats().</p>
+<p>If dtype is not None, then the values will first be cast to the requested type before the operation is
+performed. See Data.astype() for details.</p>
+<p>obj.stats() is equivalent to obj.astype(dtype, casting).rdd.values().stats().</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="thunder.Images.stdev">
-<tt class="descname">stdev</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.stdev" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">stdev</tt><big>(</big><em>dtype='smallfloat'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.Images.stdev" title="Permalink to this definition">¶</a></dt>
 <dd><p>Standard deviation of values, ignoring keys</p>
-<p>obj.stdev() is equivalent to obj.rdd.values().stdev().</p>
+<p>If dtype is not None, then the values will first be cast to the requested type before the operation is
+performed. See Data.astype() for details.</p>
+<p>obj.stdev() is equivalent to obj.astype(dtype, casting).rdd.values().stdev().</p>
 </dd></dl>
 
 <dl class="method">
@@ -517,9 +561,11 @@ all images / volumes in the data set.</p>
 
 <dl class="method">
 <dt id="thunder.Images.sum">
-<tt class="descname">sum</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.sum" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">sum</tt><big>(</big><em>dtype=None</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.Images.sum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sum of values, ignoring keys</p>
-<p>obj.sum() is equivalent to obj.rdd.values().sum().</p>
+<p>If dtype is not None, then the values will first be cast to the requested type before the operation is
+performed. See Data.astype() for details.</p>
+<p>obj.sum() is equivalent to obj.astype(dtype, casting).rdd.values().sum().</p>
 </dd></dl>
 
 <dl class="method">
@@ -585,9 +631,11 @@ self.toSeries(splitsPerDim=(1, 1, z))).</p>
 
 <dl class="method">
 <dt id="thunder.Images.variance">
-<tt class="descname">variance</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.variance" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">variance</tt><big>(</big><em>dtype='smallfloat'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.Images.variance" title="Permalink to this definition">¶</a></dt>
 <dd><p>Variance of values, ignoring keys</p>
-<p>obj.variance() is equivalent to obj.rdd.values().variance().</p>
+<p>If dtype is not None, then the values will first be cast to the requested type before the operation is
+performed. See Data.astype() for details.</p>
+<p>obj.variance() is equivalent to obj.astype(dtype, casting).rdd.values().variance().</p>
 </dd></dl>
 
 </dd></dl>
@@ -613,7 +661,7 @@ self.toSeries(splitsPerDim=(1, 1, z))).</p>
       
     </p>
     <p>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.<br/>
     </p>
   </div>
 </footer>

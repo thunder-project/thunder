@@ -50,13 +50,13 @@ To check the dimensions of the images:
 
 .. code:: python
 
-    data.dims
+    data.dims.max
 
 
 
 .. parsed-literal::
 
-    (76, 87, 2)
+    (75, 86, 1)
 
 
 

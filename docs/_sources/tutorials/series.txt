@@ -194,7 +194,7 @@ To summarize within records:
 
 .. parsed-literal::
 
-    ((0, 0, 0), 0.37996710383926691)
+    ((0, 0, 0), 0.37996710383926657)
 
 
 
@@ -211,7 +211,7 @@ expected, for a random signal, the correlation should be low.
 
 .. parsed-literal::
 
-    ((0, 0, 0), 0.14074389925993047)
+    ((0, 0, 0), -0.0067443567595778164)
 
 
 
@@ -256,7 +256,7 @@ For keys that correspond to subscripts (e.g. indices of the rows and
 columns of a matrix, coordinates in space), we can convert between
 subscript and linear indexing. The default for these conversions is
 currently onebased subscript indexing, so we need to set ``onebased`` to
-``False``.
+``False`` (this will likely change in a future release).
 
 .. code:: python
 
@@ -359,7 +359,7 @@ with data.
 
 .. parsed-literal::
 
-    (87, 76, 2)
+    (76, 87, 2)
 
 
 
@@ -372,7 +372,7 @@ with data.
 
 .. parsed-literal::
 
-    (3, 87, 76, 2)
+    (3, 76, 87, 2)
 
 
 

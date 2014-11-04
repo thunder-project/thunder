@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Series &mdash; Thunder 0.4.0 documentation</title>
+    <title>Series &mdash; Thunder 0.4.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.4.0',
+        VERSION:     '0.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,7 +31,7 @@
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.4.0 documentation" href="../index.html" />
+    <link rel="top" title="Thunder 0.4.1 documentation" href="../index.html" />
     <link rel="next" title="Clustering" href="clustering.html" />
     <link rel="prev" title="Images" href="images.html" />
 <meta charset='utf-8'>
@@ -53,7 +53,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.4.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.4.1</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -268,7 +268,7 @@ records. To summarize across records:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">seriesStdev</span><span class="p">()</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mf">0.37996710383926691</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mf">0.37996710383926657</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>We can also correlate each record with a signal of interest. As
@@ -278,7 +278,7 @@ expected, for a random signal, the correlation should be low.</p>
 <span class="n">data</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mf">0.14074389925993047</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="o">-</span><span class="mf">0.0067443567595778164</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -308,7 +308,7 @@ recomputation.</p>
 columns of a matrix, coordinates in space), we can convert between
 subscript and linear indexing. The default for these conversions is
 currently onebased subscript indexing, so we need to set <tt class="docutils literal"><span class="pre">onebased</span></tt> to
-<tt class="docutils literal"><span class="pre">False</span></tt>.</p>
+<tt class="docutils literal"><span class="pre">False</span></tt> (this will likely change in a future release).</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -373,14 +373,14 @@ with data.</p>
 <span class="n">out</span><span class="o">.</span><span class="n">shape</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">87</span><span class="p">,</span> <span class="mi">76</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">76</span><span class="p">,</span> <span class="mi">87</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">out</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
 <span class="n">out</span><span class="o">.</span><span class="n">shape</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">87</span><span class="p">,</span> <span class="mi">76</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">76</span><span class="p">,</span> <span class="mi">87</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -437,7 +437,7 @@ distributed matrices and matrix operations:</p>
       
     </p>
     <p>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.<br/>
     </p>
   </div>
 </footer>

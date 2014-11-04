@@ -184,7 +184,7 @@ represent anything meaningful about the data itself.
 
     sns.set_style('white')
     sns.set_context('notebook')
-    plt.imshow(img[:,:,0].T, cmap="gray");
+    plt.imshow(img[:,:,0], cmap="gray");
 
 
 .. image:: thunder_context_files/thunder_context_27_0.png
@@ -193,7 +193,7 @@ represent anything meaningful about the data itself.
 Example data stored on S3 can be loaded using the ``loadExampleEC2``
 method. You must be running Thunder on an Amazon EC2 cluster in order to
 use these methods. Some of the available data sets include parameters
-that are returnded alongside the data.
+that are returned alongside the data.
 
 .. code:: python
 

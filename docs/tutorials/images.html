@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Images &mdash; Thunder 0.4.0 documentation</title>
+    <title>Images &mdash; Thunder 0.4.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.4.0',
+        VERSION:     '0.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,7 +31,7 @@
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.4.0 documentation" href="../index.html" />
+    <link rel="top" title="Thunder 0.4.1 documentation" href="../index.html" />
     <link rel="next" title="Series" href="series.html" />
     <link rel="prev" title="Input formats" href="input_formats.html" />
 <meta charset='utf-8'>
@@ -53,7 +53,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.4.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.4.1</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -154,14 +154,26 @@ just load example image data.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;fish-images&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>We can check the dimensions, and the number of volumes:</p>
+<p>We can check the number of volumes, and the dimensions:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">nimages</span>
 </pre></div>
 </div>
 <div class="highlight-python"><div class="highlight"><pre><span class="mi">20</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">dims</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">dims</span><span class="o">.</span><span class="n">max</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">75</span><span class="p">,</span> <span class="mi">86</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">dims</span><span class="o">.</span><span class="n">min</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">dims</span><span class="o">.</span><span class="n">count</span>
 </pre></div>
 </div>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">76</span><span class="p">,</span> <span class="mi">87</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
@@ -206,12 +218,12 @@ to look at:</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/images_14_0.png" src="../_images/images_14_0.png" />
+<img alt="../_images/images_16_0.png" src="../_images/images_16_0.png" />
 <p>Here&#8217;s the second plane:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/images_16_0.png" src="../_images/images_16_0.png" />
+<img alt="../_images/images_18_0.png" src="../_images/images_18_0.png" />
 </div>
 <div class="section" id="image-manipulations">
 <h2>Image manipulations<a class="headerlink" href="#image-manipulations" title="Permalink to this headline">¶</a></h2>
@@ -225,7 +237,7 @@ first one.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/images_19_0.png" src="../_images/images_19_0.png" />
+<img alt="../_images/images_21_0.png" src="../_images/images_21_0.png" />
 <p>We can also subselect a set of planes, specifying the top and bottom of
 the desired range:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">sub</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">planes</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
@@ -233,21 +245,21 @@ the desired range:</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/images_21_0.png" src="../_images/images_21_0.png" />
+<img alt="../_images/images_23_0.png" src="../_images/images_23_0.png" />
 <p>And we can subsample in space:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">sub</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">subsample</span><span class="p">([</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
 <span class="n">img</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">first</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/images_23_0.png" src="../_images/images_23_0.png" />
+<img alt="../_images/images_25_0.png" src="../_images/images_25_0.png" />
 <p>Finally, we can perform operations that aggregate across images. For
 example, computing the standard deviation:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">img</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">stdev</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/images_25_0.png" src="../_images/images_25_0.png" />
+<img alt="../_images/images_27_0.png" src="../_images/images_27_0.png" />
 <p>The result of distributed image operations can be saved by exporting
 each image to a <tt class="docutils literal"><span class="pre">png</span></tt> file. (NOTE: This support is currently limited
 to saving 2d image data.)</p>
@@ -309,7 +321,7 @@ dimensions of the original images.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/images_37_0.png" src="../_images/images_37_0.png" />
+<img alt="../_images/images_39_0.png" src="../_images/images_39_0.png" />
 <p>For a large data set that will be analyzed repeatedly as a <tt class="docutils literal"><span class="pre">Series</span></tt>,
 it will ultimately be faster and more convienient to save <tt class="docutils literal"><span class="pre">Images</span></tt>
 data to a collection of flat binary files on a distributed file system,
@@ -317,9 +329,9 @@ which can in turn be read back in directly as a <tt class="docutils literal"><sp
 repeatedly converting the images to a <tt class="docutils literal"><span class="pre">Series</span></tt> object. This can be
 performed either through a <tt class="docutils literal"><span class="pre">ThunderContext</span></tt> method,
 <tt class="docutils literal"><span class="pre">convertImagesToSeries</span></tt>, or directly on an <tt class="docutils literal"><span class="pre">Images</span></tt> object, as in:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadImages</span><span class="p">(</span><span class="s">&#39;/Users/freemanj11/fish/tif/&#39;</span><span class="p">,</span> <span class="n">inputformat</span><span class="o">=</span><span class="s">&#39;tif-stack&#39;</span><span class="p">,</span> <span class="n">startidx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stopidx</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
-<span class="n">data</span><span class="o">.</span><span class="n">saveAsBinarySeries</span><span class="p">(</span><span class="s">&#39;directory&#39;</span><span class="p">)</span>
-<span class="n">ts</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeries</span><span class="p">(</span><span class="s">&#39;directory&#39;</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadImages</span><span class="p">(</span><span class="s">&#39;my-image-directory&#39;</span><span class="p">,</span> <span class="n">inputformat</span><span class="o">=</span><span class="s">&#39;tif-stack&#39;</span><span class="p">,</span> <span class="n">startidx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stopidx</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">data</span><span class="o">.</span><span class="n">saveAsBinarySeries</span><span class="p">(</span><span class="s">&#39;my-binary-directory&#39;</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="p">)</span>
+<span class="n">ts</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeries</span><span class="p">(</span><span class="s">&#39;my-binary-directory&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -344,7 +356,7 @@ performed either through a <tt class="docutils literal"><span class="pre">Thunde
       
     </p>
     <p>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.<br/>
     </p>
   </div>
 </footer>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>thunder.TimeSeries &mdash; Thunder 0.4.0 documentation</title>
+    <title>thunder.TimeSeries &mdash; Thunder 0.4.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.4.0',
+        VERSION:     '0.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,7 +31,7 @@
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.4.0 documentation" href="../index.html" />
+    <link rel="top" title="Thunder 0.4.1 documentation" href="../index.html" />
     <link rel="up" title="API Reference" href="../api.html" />
     <link rel="next" title="thunder.SpatialSeries" href="thunder.SpatialSeries.html" />
     <link rel="prev" title="thunder.Images" href="thunder.Images.html" />
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.4.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.4.1</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -141,7 +141,7 @@
 <h1><tt class="xref py py-mod docutils literal"><span class="pre">thunder</span></tt>.TimeSeries<a class="headerlink" href="#thunder-timeseries" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="thunder.TimeSeries">
-<em class="property">class </em><tt class="descclassname">thunder.</tt><tt class="descname">TimeSeries</tt><big>(</big><em>rdd</em>, <em>index=None</em>, <em>dims=None</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">thunder.</tt><tt class="descname">TimeSeries</tt><big>(</big><em>rdd</em>, <em>index=None</em>, <em>dims=None</em>, <em>dtype=None</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries" title="Permalink to this definition">¶</a></dt>
 <dd><p>Distributed collection of time series data.</p>
 <p>Backed by an RDD of key-value pairs where the key is an identifier
 and the value is a one-dimensional array. The common index
@@ -182,74 +182,80 @@ avoid computation if known in advance.</p>
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>(rdd[,&nbsp;index,&nbsp;dims])</td>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>(rdd[,&nbsp;index,&nbsp;dims,&nbsp;dtype])</td>
 <td></td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.apply" title="thunder.TimeSeries.apply"><tt class="xref py py-obj docutils literal"><span class="pre">apply</span></tt></a>(func)</td>
 <td>Apply arbitrary function to values of a Series,</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.between" title="thunder.TimeSeries.between"><tt class="xref py py-obj docutils literal"><span class="pre">between</span></tt></a>(left,&nbsp;right[,&nbsp;inclusive])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.astype" title="thunder.TimeSeries.astype"><tt class="xref py py-obj docutils literal"><span class="pre">astype</span></tt></a>(dtype[,&nbsp;casting])</td>
+<td>Cast values to specified numpy dtype</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.between" title="thunder.TimeSeries.between"><tt class="xref py py-obj docutils literal"><span class="pre">between</span></tt></a>(left,&nbsp;right[,&nbsp;inclusive])</td>
 <td>Select subset of values within the given index range</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.blockedAverage" title="thunder.TimeSeries.blockedAverage"><tt class="xref py py-obj docutils literal"><span class="pre">blockedAverage</span></tt></a>(blocklength)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.blockedAverage" title="thunder.TimeSeries.blockedAverage"><tt class="xref py py-obj docutils literal"><span class="pre">blockedAverage</span></tt></a>(blocklength)</td>
 <td>Average blocks of a time series together, e.g.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.cache" title="thunder.TimeSeries.cache"><tt class="xref py py-obj docutils literal"><span class="pre">cache</span></tt></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.cache" title="thunder.TimeSeries.cache"><tt class="xref py py-obj docutils literal"><span class="pre">cache</span></tt></a>()</td>
 <td>Enable in-memory caching</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.center" title="thunder.TimeSeries.center"><tt class="xref py py-obj docutils literal"><span class="pre">center</span></tt></a>([axis])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.center" title="thunder.TimeSeries.center"><tt class="xref py py-obj docutils literal"><span class="pre">center</span></tt></a>([axis])</td>
 <td>Center series data by subtracting the mean</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.collect" title="thunder.TimeSeries.collect"><tt class="xref py py-obj docutils literal"><span class="pre">collect</span></tt></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.collect" title="thunder.TimeSeries.collect"><tt class="xref py py-obj docutils literal"><span class="pre">collect</span></tt></a>()</td>
 <td>Return all records to the driver</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.correlate" title="thunder.TimeSeries.correlate"><tt class="xref py py-obj docutils literal"><span class="pre">correlate</span></tt></a>(signal[,&nbsp;var])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.correlate" title="thunder.TimeSeries.correlate"><tt class="xref py py-obj docutils literal"><span class="pre">correlate</span></tt></a>(signal[,&nbsp;var])</td>
 <td>Correlate series data against one or many one-dimensional arrays</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.count" title="thunder.TimeSeries.count"><tt class="xref py py-obj docutils literal"><span class="pre">count</span></tt></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.count" title="thunder.TimeSeries.count"><tt class="xref py py-obj docutils literal"><span class="pre">count</span></tt></a>()</td>
 <td>Mean of values, ignoring keys</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.crossCorr" title="thunder.TimeSeries.crossCorr"><tt class="xref py py-obj docutils literal"><span class="pre">crossCorr</span></tt></a>(signal[,&nbsp;lag,&nbsp;var])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.crossCorr" title="thunder.TimeSeries.crossCorr"><tt class="xref py py-obj docutils literal"><span class="pre">crossCorr</span></tt></a>(signal[,&nbsp;lag,&nbsp;var])</td>
 <td>Cross correlate time series data against another signal</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.detrend" title="thunder.TimeSeries.detrend"><tt class="xref py py-obj docutils literal"><span class="pre">detrend</span></tt></a>([method])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.detrend" title="thunder.TimeSeries.detrend"><tt class="xref py py-obj docutils literal"><span class="pre">detrend</span></tt></a>([method])</td>
 <td>Detrend series data with linear or nonlinear detrending</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.filterOnKeys" title="thunder.TimeSeries.filterOnKeys"><tt class="xref py py-obj docutils literal"><span class="pre">filterOnKeys</span></tt></a>(func)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.filterOnKeys" title="thunder.TimeSeries.filterOnKeys"><tt class="xref py py-obj docutils literal"><span class="pre">filterOnKeys</span></tt></a>(func)</td>
 <td>Filter records by applying a function to keys</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.filterOnValues" title="thunder.TimeSeries.filterOnValues"><tt class="xref py py-obj docutils literal"><span class="pre">filterOnValues</span></tt></a>(func)</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.filterOnValues" title="thunder.TimeSeries.filterOnValues"><tt class="xref py py-obj docutils literal"><span class="pre">filterOnValues</span></tt></a>(func)</td>
 <td>Filter records by applying a function to values</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.first" title="thunder.TimeSeries.first"><tt class="xref py py-obj docutils literal"><span class="pre">first</span></tt></a>()</td>
-<td>Return first record</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.first" title="thunder.TimeSeries.first"><tt class="xref py py-obj docutils literal"><span class="pre">first</span></tt></a>()</td>
+<td>Return first record.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.fourier" title="thunder.TimeSeries.fourier"><tt class="xref py py-obj docutils literal"><span class="pre">fourier</span></tt></a>([freq])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.fourier" title="thunder.TimeSeries.fourier"><tt class="xref py py-obj docutils literal"><span class="pre">fourier</span></tt></a>([freq])</td>
 <td>Compute statistics of a Fourier decomposition on time series data</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.indtosub" title="thunder.TimeSeries.indtosub"><tt class="xref py py-obj docutils literal"><span class="pre">indtosub</span></tt></a>([order,&nbsp;onebased,&nbsp;dims])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.indtosub" title="thunder.TimeSeries.indtosub"><tt class="xref py py-obj docutils literal"><span class="pre">indtosub</span></tt></a>([order,&nbsp;onebased,&nbsp;dims])</td>
 <td>Convert linear indexing to subscript indexing</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.keys" title="thunder.TimeSeries.keys"><tt class="xref py py-obj docutils literal"><span class="pre">keys</span></tt></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.keys" title="thunder.TimeSeries.keys"><tt class="xref py py-obj docutils literal"><span class="pre">keys</span></tt></a>()</td>
 <td>Return keys, ignoring values</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.max" title="thunder.TimeSeries.max"><tt class="xref py py-obj docutils literal"><span class="pre">max</span></tt></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.max" title="thunder.TimeSeries.max"><tt class="xref py py-obj docutils literal"><span class="pre">max</span></tt></a>()</td>
 <td>Maximum of values, ignoring keys</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.maxProject" title="thunder.TimeSeries.maxProject"><tt class="xref py py-obj docutils literal"><span class="pre">maxProject</span></tt></a>([axis])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.maxProject" title="thunder.TimeSeries.maxProject"><tt class="xref py py-obj docutils literal"><span class="pre">maxProject</span></tt></a>([axis])</td>
 <td>Project along one of the keys</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.mean" title="thunder.TimeSeries.mean"><tt class="xref py py-obj docutils literal"><span class="pre">mean</span></tt></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.mean" title="thunder.TimeSeries.mean"><tt class="xref py py-obj docutils literal"><span class="pre">mean</span></tt></a>([dtype,&nbsp;casting])</td>
 <td>Mean of values, ignoring keys</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.min" title="thunder.TimeSeries.min"><tt class="xref py py-obj docutils literal"><span class="pre">min</span></tt></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.min" title="thunder.TimeSeries.min"><tt class="xref py py-obj docutils literal"><span class="pre">min</span></tt></a>()</td>
 <td>Minimum of values, ignoring keys</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.normalize" title="thunder.TimeSeries.normalize"><tt class="xref py py-obj docutils literal"><span class="pre">normalize</span></tt></a>([baseline])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.normalize" title="thunder.TimeSeries.normalize"><tt class="xref py py-obj docutils literal"><span class="pre">normalize</span></tt></a>([baseline])</td>
 <td>Normalize each record in series data by</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.pack" title="thunder.TimeSeries.pack"><tt class="xref py py-obj docutils literal"><span class="pre">pack</span></tt></a>([selection,&nbsp;sorting])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.pack" title="thunder.TimeSeries.pack"><tt class="xref py py-obj docutils literal"><span class="pre">pack</span></tt></a>([selection,&nbsp;sorting,&nbsp;transpose,&nbsp;dtype,&nbsp;...])</td>
 <td>Pack a Series into a local array (e.g.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.populateParamsFromFirstRecord" title="thunder.TimeSeries.populateParamsFromFirstRecord"><tt class="xref py py-obj docutils literal"><span class="pre">populateParamsFromFirstRecord</span></tt></a>()</td>
+<td>Calls first() on the underlying rdd, using the returned record to determine appropriate attribute settings for this object (for instance, setting self.dtype to match the dtype of the underlying rdd records).</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.query" title="thunder.TimeSeries.query"><tt class="xref py py-obj docutils literal"><span class="pre">query</span></tt></a>(inds[,&nbsp;var,&nbsp;order,&nbsp;onebased])</td>
 <td>Extract records with indices matching those provided</td>
@@ -281,10 +287,10 @@ avoid computation if known in advance.</p>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.standardize" title="thunder.TimeSeries.standardize"><tt class="xref py py-obj docutils literal"><span class="pre">standardize</span></tt></a>([axis])</td>
 <td>Standardize series data by dividing by the standard deviation</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.stats" title="thunder.TimeSeries.stats"><tt class="xref py py-obj docutils literal"><span class="pre">stats</span></tt></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.stats" title="thunder.TimeSeries.stats"><tt class="xref py py-obj docutils literal"><span class="pre">stats</span></tt></a>([dtype,&nbsp;casting])</td>
 <td>Stats of values, ignoring keys</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.stdev" title="thunder.TimeSeries.stdev"><tt class="xref py py-obj docutils literal"><span class="pre">stdev</span></tt></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.stdev" title="thunder.TimeSeries.stdev"><tt class="xref py py-obj docutils literal"><span class="pre">stdev</span></tt></a>([dtype,&nbsp;casting])</td>
 <td>Standard deviation of values, ignoring keys</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.subset" title="thunder.TimeSeries.subset"><tt class="xref py py-obj docutils literal"><span class="pre">subset</span></tt></a>([nsamples,&nbsp;thresh,&nbsp;stat])</td>
@@ -293,7 +299,7 @@ avoid computation if known in advance.</p>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.subtoind" title="thunder.TimeSeries.subtoind"><tt class="xref py py-obj docutils literal"><span class="pre">subtoind</span></tt></a>([order,&nbsp;onebased])</td>
 <td>Convert subscript index keys to linear index keys</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.sum" title="thunder.TimeSeries.sum"><tt class="xref py py-obj docutils literal"><span class="pre">sum</span></tt></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.sum" title="thunder.TimeSeries.sum"><tt class="xref py py-obj docutils literal"><span class="pre">sum</span></tt></a>([dtype,&nbsp;casting])</td>
 <td>Sum of values, ignoring keys</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.take" title="thunder.TimeSeries.take"><tt class="xref py py-obj docutils literal"><span class="pre">take</span></tt></a>(*args,&nbsp;**kwargs)</td>
@@ -314,7 +320,7 @@ avoid computation if known in advance.</p>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.values" title="thunder.TimeSeries.values"><tt class="xref py py-obj docutils literal"><span class="pre">values</span></tt></a>()</td>
 <td>Return values, ignoring keys</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.variance" title="thunder.TimeSeries.variance"><tt class="xref py py-obj docutils literal"><span class="pre">variance</span></tt></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.variance" title="thunder.TimeSeries.variance"><tt class="xref py py-obj docutils literal"><span class="pre">variance</span></tt></a>([dtype,&nbsp;casting])</td>
 <td>Variance of values, ignoring keys</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.zscore" title="thunder.TimeSeries.zscore"><tt class="xref py py-obj docutils literal"><span class="pre">zscore</span></tt></a>([axis])</td>
@@ -335,6 +341,37 @@ preserving keys and indices</p>
 <blockquote class="last">
 <div><p>Function to apply</p>
 </div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.TimeSeries.astype">
+<tt class="descname">astype</tt><big>(</big><em>dtype</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.astype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cast values to specified numpy dtype</p>
+<p>Calls numpy&#8217;s astype() method.</p>
+<p>If the string &#8216;smallfloat&#8217; is passed, then the values will be cast to the smallest floating point representation
+to which they can be cast safely, as determined by the thunder.utils.common smallest_float_type function.
+Typically this will be a float type larger than a passed integer type (for instance, float16 for int8 or uint8).</p>
+<p>If the passed dtype is the same as the current dtype, or if &#8216;smallfloat&#8217; is passed when values are already
+in floating point, then this method will return immediately, returning self.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>dtype: numpy dtype or dtype specifier, or string &#8216;smallfloat&#8217;, or None</strong></p>
+<blockquote>
+<div><p>Data type to which RDD values are to be cast. Will return immediately, performing no cast, if None is passed.</p>
+</div></blockquote>
+<p><strong>casting: &#8216;no&#8217;|&#8217;equiv&#8217;|&#8217;safe&#8217;|&#8217;same_kind&#8217;|&#8217;unsafe&#8217;, optional, default &#8216;safe&#8217;</strong></p>
+<blockquote>
+<div><p>Casting method to pass on to numpy&#8217;s astype() method; see numpy documentation for details.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">New Data object, of same type as self, with values cast to the requested dtype; or self if no cast is performed.</p>
 </td>
 </tr>
 </tbody>
@@ -515,8 +552,9 @@ Preserve intercept so that subsequent steps can adjust the baseline</p>
 <dl class="method">
 <dt id="thunder.TimeSeries.first">
 <tt class="descname">first</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.TimeSeries.first" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return first record</p>
-<p>This calls the Spark first() method on the underlying RDD.</p>
+<dd><p>Return first record.</p>
+<p>This calls the Spark first() method on the underlying RDD. As a side effect, any attributes on this object that
+can be set based on the values of the first record will be set (see populateParamsFromFirstRecord).</p>
 </dd></dl>
 
 <dl class="method">
@@ -584,9 +622,11 @@ Preserve intercept so that subsequent steps can adjust the baseline</p>
 
 <dl class="method">
 <dt id="thunder.TimeSeries.mean">
-<tt class="descname">mean</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.TimeSeries.mean" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">mean</tt><big>(</big><em>dtype='smallfloat'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.mean" title="Permalink to this definition">¶</a></dt>
 <dd><p>Mean of values, ignoring keys</p>
-<p>obj.mean() is equivalent to obj.rdd.values().mean().</p>
+<p>If dtype is not None, then the values will first be cast to the requested type before the operation is
+performed. See Data.astype() for details.</p>
+<p>obj.mean() is equivalent to obj.astype(dtype, casting).rdd.values().mean().</p>
 </dd></dl>
 
 <dl class="method">
@@ -620,7 +660,7 @@ subtracting and dividing by a baseline</p>
 
 <dl class="method">
 <dt id="thunder.TimeSeries.pack">
-<tt class="descname">pack</tt><big>(</big><em>selection=None</em>, <em>sorting=False</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.pack" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">pack</tt><big>(</big><em>selection=None</em>, <em>sorting=False</em>, <em>transpose=False</em>, <em>dtype=None</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.pack" title="Permalink to this definition">¶</a></dt>
 <dd><p>Pack a Series into a local array (e.g. for saving)</p>
 <p>This operation constructs a multidimensional numpy array from the values in this Series object,
 with indexing into the returned array as implied by the Series RDD keys. The returned numpy
@@ -640,18 +680,42 @@ pack() a large data set.</p>
 <div><p>Whether to sort the local array based on the keys. In most cases the returned array will
 already be ordered correctly, and so an explicit sorting=True is typically not necessary.</p>
 </div></blockquote>
+<p><strong>transpose</strong> : boolean, optional, default False</p>
+<blockquote>
+<div><p>Transpose the spatial dimensions of the returned array.</p>
+</div></blockquote>
+<p><strong>dtype: numpy dtype, dtype specifier, or string &#8216;smallfloat&#8217;. optional, default None.</strong></p>
+<blockquote>
+<div><p>If present, will cast the values to the requested dtype before collecting on the driver. See Data.astype()
+and numpy&#8217;s astype() function for details.</p>
+</div></blockquote>
+<p><strong>casting: casting: &#8216;no&#8217;|&#8217;equiv&#8217;|&#8217;safe&#8217;|&#8217;same_kind&#8217;|&#8217;unsafe&#8217;, optional, default &#8216;safe&#8217;</strong></p>
+<blockquote>
+<div><p>Casting method to pass on to numpy&#8217;s astype() method if dtype is given; see numpy documentation for details.</p>
+</div></blockquote>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">result: numpy array</p>
 <blockquote class="last">
 <div><p>An array with dimensionality inferred from the RDD keys. Data in an individual Series
 value will be placed into this returned array by interpreting the Series keys as indicies
-into the returned array.</p>
+into the returned array. The shape of the returned array will be (num time points x spatial shape).
+For instance, a series derived from 4 2d images, each 64 x 128, will have dims.count==(64, 128)
+and will pack into an array with shape (4, 64, 128). If transpose is true, the spatial dimensions
+will be reversed, so that in this example the shape of the returned array will be (4, 128, 64).</p>
 </div></blockquote>
 </td>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.TimeSeries.populateParamsFromFirstRecord">
+<tt class="descname">populateParamsFromFirstRecord</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.TimeSeries.populateParamsFromFirstRecord" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calls first() on the underlying rdd, using the returned record to determine appropriate attribute settings
+for this object (for instance, setting self.dtype to match the dtype of the underlying rdd records).</p>
+<p>Returns the result of calling self.rdd.first().</p>
 </dd></dl>
 
 <dl class="method">
@@ -791,16 +855,20 @@ either within or across records</p>
 
 <dl class="method">
 <dt id="thunder.TimeSeries.stats">
-<tt class="descname">stats</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.TimeSeries.stats" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">stats</tt><big>(</big><em>dtype='smallfloat'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.stats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stats of values, ignoring keys</p>
-<p>obj.stats() is equivalent to obj.rdd.values().stats().</p>
+<p>If dtype is not None, then the values will first be cast to the requested type before the operation is
+performed. See Data.astype() for details.</p>
+<p>obj.stats() is equivalent to obj.astype(dtype, casting).rdd.values().stats().</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="thunder.TimeSeries.stdev">
-<tt class="descname">stdev</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.TimeSeries.stdev" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">stdev</tt><big>(</big><em>dtype='smallfloat'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.stdev" title="Permalink to this definition">¶</a></dt>
 <dd><p>Standard deviation of values, ignoring keys</p>
-<p>obj.stdev() is equivalent to obj.rdd.values().stdev().</p>
+<p>If dtype is not None, then the values will first be cast to the requested type before the operation is
+performed. See Data.astype() for details.</p>
+<p>obj.stdev() is equivalent to obj.astype(dtype, casting).rdd.values().stdev().</p>
 </dd></dl>
 
 <dl class="method">
@@ -864,9 +932,11 @@ filtering on the standard deviation</p>
 
 <dl class="method">
 <dt id="thunder.TimeSeries.sum">
-<tt class="descname">sum</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.TimeSeries.sum" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">sum</tt><big>(</big><em>dtype=None</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.sum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sum of values, ignoring keys</p>
-<p>obj.sum() is equivalent to obj.rdd.values().sum().</p>
+<p>If dtype is not None, then the values will first be cast to the requested type before the operation is
+performed. See Data.astype() for details.</p>
+<p>obj.sum() is equivalent to obj.astype(dtype, casting).rdd.values().sum().</p>
 </dd></dl>
 
 <dl class="method">
@@ -926,9 +996,11 @@ considering a range of lags before and after the event</p>
 
 <dl class="method">
 <dt id="thunder.TimeSeries.variance">
-<tt class="descname">variance</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.TimeSeries.variance" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">variance</tt><big>(</big><em>dtype='smallfloat'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.variance" title="Permalink to this definition">¶</a></dt>
 <dd><p>Variance of values, ignoring keys</p>
-<p>obj.variance() is equivalent to obj.rdd.values().variance().</p>
+<p>If dtype is not None, then the values will first be cast to the requested type before the operation is
+performed. See Data.astype() for details.</p>
+<p>obj.variance() is equivalent to obj.astype(dtype, casting).rdd.values().variance().</p>
 </dd></dl>
 
 <dl class="method">
@@ -974,7 +1046,7 @@ within or across records</p>
       
     </p>
     <p>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.<br/>
     </p>
   </div>
 </footer>

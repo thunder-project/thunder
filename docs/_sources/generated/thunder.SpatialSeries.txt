@@ -11,6 +11,7 @@
    
       ~SpatialSeries.__init__
       ~SpatialSeries.apply
+      ~SpatialSeries.astype
       ~SpatialSeries.between
       ~SpatialSeries.cache
       ~SpatialSeries.center
@@ -31,6 +32,7 @@
       ~SpatialSeries.min
       ~SpatialSeries.normalize
       ~SpatialSeries.pack
+      ~SpatialSeries.populateParamsFromFirstRecord
       ~SpatialSeries.query
       ~SpatialSeries.select
       ~SpatialSeries.seriesMax

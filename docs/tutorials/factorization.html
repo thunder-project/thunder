@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Factorization &mdash; Thunder 0.4.0 documentation</title>
+    <title>Factorization &mdash; Thunder 0.4.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.4.0',
+        VERSION:     '0.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,7 +31,7 @@
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Thunder 0.4.0 documentation" href="../index.html" />
+    <link rel="top" title="Thunder 0.4.1 documentation" href="../index.html" />
     <link rel="next" title="API Reference" href="../api.html" />
     <link rel="prev" title="Clustering" href="clustering.html" />
 <meta charset='utf-8'>
@@ -53,7 +53,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.4.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.4.1</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -190,15 +190,15 @@ array and look at them as images one by one.</p>
 <span class="n">imgs</span><span class="o">.</span><span class="n">shape</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">87</span><span class="p">,</span> <span class="mi">76</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">76</span><span class="p">,</span> <span class="mi">87</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;white&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imgs</span><span class="p">[</span><span class="mi">0</span><span class="p">,:,:,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">clim</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">0.05</span><span class="p">,</span><span class="mf">0.05</span><span class="p">));</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imgs</span><span class="p">[</span><span class="mi">0</span><span class="p">,:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">clim</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">0.05</span><span class="p">,</span><span class="mf">0.05</span><span class="p">));</span>
 </pre></div>
 </div>
 <img alt="../_images/factorization_13_0.png" src="../_images/factorization_13_0.png" />
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imgs</span><span class="p">[</span><span class="mi">1</span><span class="p">,:,:,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">clim</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">0.05</span><span class="p">,</span><span class="mf">0.05</span><span class="p">));</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imgs</span><span class="p">[</span><span class="mi">1</span><span class="p">,:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">clim</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">0.05</span><span class="p">,</span><span class="mf">0.05</span><span class="p">));</span>
 </pre></div>
 </div>
 <img alt="../_images/factorization_14_0.png" src="../_images/factorization_14_0.png" />
@@ -213,7 +213,7 @@ components, and the brightness shows the total amplitude.</p>
 </div>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">amax</span>
 <span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;white&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">amax</span><span class="p">(</span><span class="n">maps</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">));</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">amax</span><span class="p">(</span><span class="n">maps</span><span class="p">,</span><span class="mi">2</span><span class="p">));</span>
 </pre></div>
 </div>
 <img alt="../_images/factorization_17_0.png" src="../_images/factorization_17_0.png" />
@@ -270,15 +270,15 @@ containsthe spatial basis functions. Let&#8217;s look at both.</p>
 </pre></div>
 </div>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;white&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imgs</span><span class="p">[</span><span class="mi">0</span><span class="p">][:,:,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imgs</span><span class="p">[</span><span class="mi">0</span><span class="p">][:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
 <img alt="../_images/factorization_28_0.png" src="../_images/factorization_28_0.png" />
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imgs</span><span class="p">[</span><span class="mi">1</span><span class="p">][:,:,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">);</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imgs</span><span class="p">[</span><span class="mi">1</span><span class="p">][:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
 <img alt="../_images/factorization_29_0.png" src="../_images/factorization_29_0.png" />
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imgs</span><span class="p">[</span><span class="mi">2</span><span class="p">][:,:,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">);</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imgs</span><span class="p">[</span><span class="mi">2</span><span class="p">][:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
 <img alt="../_images/factorization_30_0.png" src="../_images/factorization_30_0.png" />
@@ -288,7 +288,7 @@ an <tt class="docutils literal"><span class="pre">rgb</span></tt> conversion, wh
 directly to red, green, and blue values, and applies a global scaling
 factor which controls overall brightness.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">maps</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">totype</span><span class="o">=</span><span class="s">&#39;rgb&#39;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">images</span><span class="p">(</span><span class="n">imgs</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">maps</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">,:]</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">));</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">maps</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">,:]);</span>
 </pre></div>
 </div>
 <img alt="../_images/factorization_32_0.png" src="../_images/factorization_32_0.png" />
@@ -298,7 +298,7 @@ might like more control over color assignments. The <tt class="docutils literal"
 colorization option lets you specify one color per channel, and
 automatically normalizes the amplitude of each one.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">maps</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">totype</span><span class="o">=</span><span class="s">&#39;indexed&#39;</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="p">[</span> <span class="s">&quot;hotpink&quot;</span><span class="p">,</span> <span class="s">&quot;cornflowerblue&quot;</span><span class="p">,</span> <span class="s">&quot;mediumseagreen&quot;</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">images</span><span class="p">(</span><span class="n">imgs</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">maps</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">,:]</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">));</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">maps</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">,:]);</span>
 </pre></div>
 </div>
 <img alt="../_images/factorization_34_0.png" src="../_images/factorization_34_0.png" />
@@ -309,7 +309,7 @@ how to select and colorize just two of the three image channels.</p>
 </pre></div>
 </div>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">maps</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">totype</span><span class="o">=</span><span class="s">&#39;indexed&#39;</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;red&#39;</span><span class="p">,</span> <span class="s">&#39;blue&#39;</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">images</span><span class="p">(</span><span class="n">imgs</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">]],</span> <span class="n">background</span><span class="o">=</span><span class="n">reference</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">maps</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">,:]</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">));</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">maps</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">,:]);</span>
 </pre></div>
 </div>
 <img alt="../_images/factorization_37_0.png" src="../_images/factorization_37_0.png" />
@@ -339,7 +339,7 @@ value when making maps.</p>
 </div>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">maps</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">totype</span><span class="o">=</span><span class="s">&#39;indexed&#39;</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;red&#39;</span><span class="p">,</span><span class="s">&#39;green&#39;</span><span class="p">,</span> <span class="s">&#39;blue&#39;</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">images</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">imgs</span><span class="p">))</span>
 <span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;white&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">maps</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">,:]</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">));</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">maps</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">,:]);</span>
 </pre></div>
 </div>
 <img alt="../_images/factorization_43_0.png" src="../_images/factorization_43_0.png" />
@@ -365,7 +365,7 @@ value when making maps.</p>
       
     </p>
     <p>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.<br/>
     </p>
   </div>
 </footer>

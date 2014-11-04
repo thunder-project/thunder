@@ -20,7 +20,7 @@ just load example image data.
 .. code:: python
 
     data = tsc.loadExample('fish-images')
-We can check the dimensions, and the number of volumes:
+We can check the number of volumes, and the dimensions:
 
 .. code:: python
 
@@ -36,7 +36,31 @@ We can check the dimensions, and the number of volumes:
 
 .. code:: python
 
-    data.dims
+    data.dims.max
+
+
+
+.. parsed-literal::
+
+    (75, 86, 1)
+
+
+
+.. code:: python
+
+    data.dims.min
+
+
+
+.. parsed-literal::
+
+    (0, 0, 0)
+
+
+
+.. code:: python
+
+    data.dims.count
 
 
 
@@ -103,7 +127,7 @@ to look at:
     plt.imshow(img[:,:,0], cmap='gray');
 
 
-.. image:: images_files/images_14_0.png
+.. image:: images_files/images_16_0.png
 
 
 Here's the second plane:
@@ -113,7 +137,7 @@ Here's the second plane:
     plt.imshow(img[:,:,1], cmap='gray');
 
 
-.. image:: images_files/images_16_0.png
+.. image:: images_files/images_18_0.png
 
 
 Image manipulations
@@ -133,7 +157,7 @@ first one.
     plt.imshow(img, cmap='gray');
 
 
-.. image:: images_files/images_19_0.png
+.. image:: images_files/images_21_0.png
 
 
 We can also subselect a set of planes, specifying the top and bottom of
@@ -146,7 +170,7 @@ the desired range:
     plt.imshow(img, cmap='gray');
 
 
-.. image:: images_files/images_21_0.png
+.. image:: images_files/images_23_0.png
 
 
 And we can subsample in space:
@@ -158,7 +182,7 @@ And we can subsample in space:
     plt.imshow(img[:,:,0], cmap='gray');
 
 
-.. image:: images_files/images_23_0.png
+.. image:: images_files/images_25_0.png
 
 
 Finally, we can perform operations that aggregate across images. For
@@ -170,7 +194,7 @@ example, computing the standard deviation:
     plt.imshow(img[:,:,0], cmap='gray');
 
 
-.. image:: images_files/images_25_0.png
+.. image:: images_files/images_27_0.png
 
 
 The result of distributed image operations can be saved by exporting
@@ -265,7 +289,7 @@ We can also quickly look at some example time series:
     plt.plot(samples.T);
 
 
-.. image:: images_files/images_37_0.png
+.. image:: images_files/images_39_0.png
 
 
 For a large data set that will be analyzed repeatedly as a ``Series``,
@@ -278,6 +302,6 @@ performed either through a ``ThunderContext`` method,
 
 .. code:: python
 
-    data = tsc.loadImages('/Users/freemanj11/fish/tif/', inputformat='tif-stack', startidx=0, stopidx=20)
-    data.saveAsBinarySeries('directory')
-    ts = tsc.loadSeries('directory')
+    data = tsc.loadImages('my-image-directory', inputformat='tif-stack', startidx=0, stopidx=20)
+    data.saveAsBinarySeries('my-binary-directory', overwrite=True, )
+    ts = tsc.loadSeries('my-binary-directory')

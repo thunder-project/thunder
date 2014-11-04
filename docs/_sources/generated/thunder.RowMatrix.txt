@@ -11,6 +11,7 @@
    
       ~RowMatrix.__init__
       ~RowMatrix.apply
+      ~RowMatrix.astype
       ~RowMatrix.between
       ~RowMatrix.cache
       ~RowMatrix.center
@@ -36,6 +37,7 @@
       ~RowMatrix.normalize
       ~RowMatrix.pack
       ~RowMatrix.plus
+      ~RowMatrix.populateParamsFromFirstRecord
       ~RowMatrix.query
       ~RowMatrix.rows
       ~RowMatrix.select
