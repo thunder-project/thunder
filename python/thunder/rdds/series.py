@@ -1,9 +1,10 @@
 from numpy import ndarray, array, sum, mean, std, size, arange, \
-    polyfit, polyval, percentile, asarray, maximum, zeros, corrcoef, where
+    polyfit, polyval, percentile, asarray, maximum, zeros, corrcoef, where, \
+    true_divide, empty_like
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
-from thunder.utils.common import checkparams, loadmatvar
+from thunder.utils.common import checkparams, loadmatvar, smallest_float_type
 
 
 class Series(Data):
@@ -208,7 +209,7 @@ class Series(Data):
             yy = polyval(p, x)
             return y - yy
 
-        return self.apply(func)
+        return self.apply(func, expectedDtype=None)
 
     def normalize(self, baseline='percentile', **kwargs):
         """ Normalize each record in series data by
@@ -223,9 +224,9 @@ class Series(Data):
             Percentile value to use, for 'percentile' baseline only
         """
         checkparams(baseline, ['mean', 'percentile'])
-
+        resdtype = smallest_float_type(self.dtype)
         if baseline.lower() == 'mean':
-            basefunc = mean
+            basefunc = lambda x: mean(x, dtype=resdtype)
         if baseline.lower() == 'percentile':
             if 'percentile' in kwargs:
                 perc = kwargs['percentile']
@@ -235,9 +236,11 @@ class Series(Data):
 
         def get(y):
             b = basefunc(y)
-            return (y - b) / (b + 0.1)
+            out = empty_like(y, dtype=resdtype)
+            true_divide((y - b), (b + 0.1), out)
+            return out
 
-        return self.apply(get)
+        return self.apply(get, expectedDtype=resdtype)
 
     def center(self, axis=0):
         """ Center series data by subtracting the mean
@@ -248,11 +251,12 @@ class Series(Data):
         axis : int, optional, default = 0
             Which axis to center along, rows (0) or columns (1)
         """
+        # TODO: use smaller dtype than float64 by default, and propagate through apply() call
         if axis == 0:
-            return self.apply(lambda x: x - mean(x))
+            return self.apply(lambda x: x - mean(x), expectedDtype=None)
         elif axis == 1:
             meanvec = self.mean()
-            return self.apply(lambda x: x - meanvec)
+            return self.apply(lambda x: x - meanvec, expectedDtype=None)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -265,11 +269,12 @@ class Series(Data):
         axis : int, optional, default = 0
             Which axis to standardize along, rows (0) or columns (1)
         """
+        # TODO: use smaller dtype than float64 by default, and propagate through apply() call
         if axis == 0:
-            return self.apply(lambda x: x / std(x))
+            return self.apply(lambda x: x / std(x), expectedDtype=None)
         elif axis == 1:
             stdvec = self.stdev()
-            return self.apply(lambda x: x / stdvec)
+            return self.apply(lambda x: x / stdvec, expectedDtype=None)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -283,13 +288,14 @@ class Series(Data):
         axis : int, optional, default = 0
             Which axis to zscore along, rows (0) or columns (1)
         """
+        # TODO: use smaller dtype than float64 by default, and propagate through apply() call
         if axis == 0:
-            return self.apply(lambda x: (x - mean(x)) / std(x))
+            return self.apply(lambda x: (x - mean(x)) / std(x), expectedDtype=None)
         elif axis == 1:
             stats = self.stats()
             meanvec = stats.mean()
             stdvec = stats.stdev()
-            return self.apply(lambda x: (x - meanvec) / stdvec)
+            return self.apply(lambda x: (x - meanvec) / stdvec, expectedDtype=None)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -306,7 +312,7 @@ class Series(Data):
         var : str
             Variable name if loading from a MAT file
         """
-
+        # TODO: how to handle dtype here?
         from scipy.io import loadmat
 
         if type(signal) is str:
@@ -330,9 +336,9 @@ class Series(Data):
             raise Exception('Signal to correlate with must have 1 or 2 dimensions')
 
         # return result
-        return self._constructor(rdd, index=newindex).__finalize__(self)
+        return self._constructor(rdd, index=newindex).__finalize__(self, nopropagate=('_dtype',))
 
-    def apply(self, func):
+    def apply(self, func, expectedDtype=None):
         """ Apply arbitrary function to values of a Series,
         preserving keys and indices
 
@@ -340,9 +346,21 @@ class Series(Data):
         ----------
         func : function
             Function to apply
+        expectedDtype : numpy dtype or dtype specifier, or None (default), or string 'unset' or 'same'
+            Numpy dtype expected from output of func. This will be set as the dtype attribute
+            of the output Data object. If 'same', then the resulting `dtype` will be the same as that of `self`. If
+            the string 'unset' or None is passed, the `dtype` of the output will be lazily determined as needed. Note
+            that this argument, if passed, does not *enforce* that the function output will actually be of the given
+            dtype. If in doubt, leaving this as None is the safest thing to do.
         """
         rdd = self.rdd.mapValues(func)
-        return self._constructor(rdd, index=self._index).__finalize__(self)
+        if isinstance(expectedDtype, basestring):
+            if expectedDtype == 'same':
+                expectedDtype = self._dtype
+            elif expectedDtype == 'unset':
+                expectedDtype = None
+        return self._constructor(rdd, index=self._index, dtype=expectedDtype)\
+            .__finalize__(self, nopropagate=('_dtype',))
 
     def seriesMax(self):
         """ Compute the value maximum of each record in a Series """
@@ -382,14 +400,15 @@ class Series(Data):
         }
         func = STATS[stat]
         rdd = self.rdd.mapValues(lambda x: func(x))
-        return self._constructor(rdd, index=stat).__finalize__(self)
+        return self._constructor(rdd, index=stat).__finalize__(self, nopropagate=('_dtype',))
 
     def seriesStats(self):
         """
         Compute a collection of statistics for each record in a Series
         """
         rdd = self.rdd.mapValues(lambda x: array([x.size, mean(x), std(x), max(x), min(x)]))
-        return self._constructor(rdd, index=['count', 'mean', 'std', 'max', 'min']).__finalize__(self)
+        return self._constructor(rdd, index=['count', 'mean', 'std', 'max', 'min'])\
+            .__finalize__(self, nopropagate=('_dtype',))
 
     def maxProject(self, axis=0):
         """

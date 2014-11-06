@@ -43,7 +43,7 @@ class Data(object):
         self._dtype = str(record[1].dtype)
         return record
 
-    def __finalize__(self, other):
+    def __finalize__(self, other, nopropagate=()):
         """
         Lazily propagate attributes from other to self, only if attributes
         are not already defined in self
@@ -53,11 +53,15 @@ class Data(object):
         other : the object from which to get the attributes that we are going
             to propagate
 
+        nopropagate : iterable of string attribute names (with underscores), default empty tuple
+            attributes found in nopropagate will *not* have their values propagated forward from self,
+            but will keep their existing values, even if these are None
         """
         if isinstance(other, Data):
             for name in self._metadata:
-                if (getattr(other, name, None) is not None) and (getattr(self, name, None) is None):
-                    object.__setattr__(self, name, getattr(other, name, None))
+                if not name in nopropagate:
+                    if (getattr(other, name, None) is not None) and (getattr(self, name, None) is None):
+                        object.__setattr__(self, name, getattr(other, name, None))
         return self
 
     @property
