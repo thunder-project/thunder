@@ -486,30 +486,6 @@ class Images(Data):
 
         return self.apply(lambda x: x - val)
 
-    def apply(self, func, expectedDtype=None):
-        """
-        Apply a function to all images / volumes,
-        otherwise perserving attributes
-
-        Parameters
-        ----------
-        func : function
-            Function to apply
-        expectedDtype : numpy dtype or dtype specifier, or None (default), or string 'unset' or 'same'
-            Numpy dtype expected from output of func. This will be set as the dtype attribute
-            of the output Data object. If 'same', then the resulting `dtype` will be the same as that of `self`. If
-            the string 'unset' or None is passed, the `dtype` of the output will be lazily determined as needed. Note
-            that this argument, if passed, does not *enforce* that the function output will actually be of the given
-            dtype. If in doubt, leaving this as None is the safest thing to do.
-        """
-        rdd = self.rdd.mapValues(func)
-        if isinstance(expectedDtype, basestring):
-            if expectedDtype == 'same':
-                expectedDtype = self._dtype
-            elif expectedDtype == 'unset':
-                expectedDtype = None
-        return self._constructor(rdd, dtype=expectedDtype).__finalize__(self, nopropagate=('_dtype',))
-
 
 class _BlockMemoryAsSequence(object):
     """Helper class used in calculation of slices for requested block partitions of a particular size.

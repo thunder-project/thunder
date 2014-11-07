@@ -53,9 +53,10 @@ class Data(object):
         other : the object from which to get the attributes that we are going
             to propagate
 
-        nopropagate : iterable of string attribute names (with underscores), default empty tuple
-            attributes found in nopropagate will *not* have their values propagated forward from self,
-            but will keep their existing values, even if these are None
+        nopropagate : iterable of string attribute names, default empty tuple
+            attributes found in nopropagate will *not* have their values propagated forward from the passed object,
+            but will keep their existing values, even if these are None. Attribute names should be specified
+            in their "private" versions (with underscores; e.g. "_dtype" and not "dtype") where applicable.
         """
         if isinstance(other, Data):
             for name in self._metadata:
@@ -132,6 +133,29 @@ class Data(object):
             return self
         nextrdd = self.rdd.mapValues(lambda v: v.astype(dtype, casting=casting))
         return self._constructor(nextrdd, dtype=dtype).__finalize__(self)
+
+    def apply(self, func, expectedDtype=None):
+        """ Apply arbitrary function to values of a Series,
+        preserving keys and indices
+
+        Parameters
+        ----------
+        func : function
+            Function to apply
+        expectedDtype : numpy dtype or dtype specifier, or None (default), or string 'unset' or 'same'
+            Numpy dtype expected from output of func. This will be set as the dtype attribute
+            of the output Data object. If 'same', then the resulting `dtype` will be the same as that of `self`. If
+            the string 'unset' or None is passed, the `dtype` of the output will be lazily determined as needed. Note
+            that this argument, if passed, does not *enforce* that the function output will actually be of the given
+            dtype. If in doubt, leaving this as None is the safest thing to do.
+        """
+        rdd = self.rdd.mapValues(func)
+        if isinstance(expectedDtype, basestring):
+            if expectedDtype == 'same':
+                expectedDtype = self._dtype
+            elif expectedDtype == 'unset':
+                expectedDtype = None
+        return self._constructor(rdd, dtype=expectedDtype).__finalize__(self, nopropagate=('_dtype',))
 
     def collect(self):
         """ Return all records to the driver
