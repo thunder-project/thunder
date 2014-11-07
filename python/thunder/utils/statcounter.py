@@ -20,6 +20,7 @@
 
 import copy
 import math
+from itertools import chain
 
 try:
     from numpy import maximum, minimum, sqrt
@@ -30,22 +31,29 @@ except ImportError:
 
 
 class StatCounter(object):
-    DEFAULT_STATS = frozenset(('mean', 'sum', 'min', 'max', 'variance', 'sampleVariance', 'stdev', 'sampleStdev'))
 
-    STATS_REQUIRING = {
-        'mu': ('mean', 'sum', 'variance', 'std', 'sampleVariance', 'sampleStdev'),
-        'm2': ('variance', 'std', 'sampleVariance', 'sampleStdev'),
+    REQUIRED_FOR = {
+        'mean': ('mu',),
+        'sum': ('mu',),
+        'min': ('minValue',),
         'max': ('maxValue',),
-        'min': ('minValue',)
+        'variance': ('mu', 'm2'),
+        'sampleVariance': ('mu', 'm2'),
+        'stdev': ('mu', 'm2'),
+        'sampleStdev': ('mu', 'm2'),
+        'all': ('mu', 'm2', 'minValue', 'maxValue')
     }
 
-    def __init__(self, values=(), stats=DEFAULT_STATS):
+    def __init__(self, values=(), stats='all'):
         self.n = 0L    # Running count of our values
         self.mu = 0.0  # Running mean of our values
         self.m2 = 0.0  # Running variance numerator (sum of (x - mean)^2)
         self.maxValue = float("-inf")
         self.minValue = float("inf")
-        self.requestedStats = stats
+
+        if isinstance(stats, basestring):
+            stats = [stats]
+        self.requiredAttrs = frozenset(chain().from_iterable([StatCounter.REQUIRED_FOR[stat] for stat in stats]))
 
         for v in values:
             self.merge(v)
@@ -59,14 +67,16 @@ class StatCounter(object):
             if self.__requires('m2'):
                 self.m2 += delta * (value - self.mu)
         if self.__requires('maxValue'):
-            self.maxValue = maximum(self.maxValue, value)
+            self.maxValue = maximum(self.maxValue, value) if not self.maxValue is None else value
         if self.__requires('minValue'):
             self.minValue = minimum(self.minValue, value)
 
         return self
 
-    def __requires(self, accumName):
-        return any([stat in StatCounter.STATS_REQUIRING[accumName] for stat in self.requestedStats])
+    # checks whether the passed attribute name is required to be updated in order to support the
+    # statistics requested in self.requestedStats.
+    def __requires(self, attrName):
+        return attrName in self.requiredAttrs
 
     # Merge another StatCounter into this one, adding up the internal statistics.
     def mergeStats(self, other):
@@ -77,7 +87,7 @@ class StatCounter(object):
             self.merge(copy.deepcopy(other))  # Avoid overwriting fields in a weird order
         else:
             # accumulator should only be updated if it's valid in both statcounters:
-            self.requestedStats = set(self.requestedStats).intersection(set(other.requestedStats))
+            self.requiredAttrs = set(self.requiredAttrs).intersection(set(other.requiredAttrs))
 
             if self.n == 0:
                 self.n = other.n
@@ -114,8 +124,8 @@ class StatCounter(object):
         return self.n
 
     def __checkAvail(self, statName):
-        if not statName in self.requestedStats:
-            raise ValueError("'%s' stat not available, only: %s" % str(tuple(self.requestedStats)))
+        if not all(attr in self.requiredAttrs for attr in StatCounter.REQUIRED_FOR[statName]):
+            raise ValueError("'%s' stat not available, must be requested at StatCounter instantiation" % statName)
 
     def mean(self):
         self.__checkAvail('mean')
@@ -166,5 +176,5 @@ class StatCounter(object):
         return sqrt(self.sampleVariance())
 
     def __repr__(self):
-        return ("(count: %s, mean: %s, stdev: %s, max: %s, min: %s, requested: %s)" %
-                (self.count(), self.mean(), self.stdev(), self.max(), self.min(), str(tuple(self.requestedStats))))
+        return ("(count: %s, mean: %s, stdev: %s, max: %s, min: %s, required: %s)" %
+                (self.count(), self.mean(), self.stdev(), self.max(), self.min(), str(tuple(self.requiredAttrs))))

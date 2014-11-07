@@ -178,11 +178,8 @@ class Data(object):
 
         If dtype is not None, then the values will first be cast to the requested type before the operation is
         performed. See Data.astype() for details.
-
-        obj.mean() is equivalent to obj.astype(dtype, casting).rdd.values().mean().
         """
-        out = self.astype(dtype, casting)
-        return out.rdd.values().mean()
+        return self.stats('mean', dtype=dtype, casting=casting).mean()
 
     def sum(self, dtype=None, casting='safe'):
         """ Sum of values, ignoring keys
@@ -200,10 +197,8 @@ class Data(object):
 
         If dtype is not None, then the values will first be cast to the requested type before the operation is
         performed. See Data.astype() for details.
-
-        obj.variance() is equivalent to obj.astype(dtype, casting).rdd.values().variance()."""
-        out = self.astype(dtype, casting)
-        return out.rdd.values().variance()
+        """
+        return self.stats('variance', dtype=dtype, casting=casting).variance()
 
     def stdev(self, dtype='smallfloat', casting='safe'):
         """ Standard deviation of values, ignoring keys
@@ -213,27 +208,56 @@ class Data(object):
 
         obj.stdev() is equivalent to obj.astype(dtype, casting).rdd.values().stdev().
         """
-        out = self.astype(dtype, casting)
-        return out.rdd.values().stdev()
+        return self.stats('stdev', dtype=dtype, casting=casting).stdev()
 
-    def stats(self, dtype='smallfloat', casting='safe'):
-        """ Stats of values, ignoring keys
+    # def stats(self, dtype='smallfloat', casting='safe'):
+    #     """ Stats of values, ignoring keys
+    #
+    #     If dtype is not None, then the values will first be cast to the requested type before the operation is
+    #     performed. See Data.astype() for details.
+    #
+    #     obj.stats() is equivalent to obj.astype(dtype, casting).rdd.values().stats().
+    #     """
+    #     out = self.astype(dtype, casting)
+    #     return out.rdd.values().stats()
 
-        If dtype is not None, then the values will first be cast to the requested type before the operation is
-        performed. See Data.astype() for details.
-
-        obj.stats() is equivalent to obj.astype(dtype, casting).rdd.values().stats().
+    def stats(self, requestedStats='all', dtype='smallfloat', casting='safe'):
         """
+        Return a L{StatCounter} object that captures all or some of the mean, variance, maximum, minimum,
+        and count of the RDD's elements in one operation.
+
+        If dtype is specified and not None, will first cast the data as described in Data.astype().
+
+        Parameters
+        ----------
+        requestedStats: sequence of one or more requested stats, or 'all'
+            Possible stats include 'mean', 'sum', 'min', 'max', 'variance', 'sampleVariance', 'stdev', 'sampleStdev'.
+
+        dtype: numpy dtype or dtype specifier, or string 'smallfloat', or None
+            Data type to which RDD values are to be cast before calculating stats. See Data.astype().
+
+        casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
+            Method of casting to use. See Data.astype() and numpy astype() function.
+        """
+        from thunder.utils.statcounter import StatCounter
+
+        def redFunc(left_counter, right_counter):
+            return left_counter.mergeStats(right_counter)
+
         out = self.astype(dtype, casting)
-        return out.rdd.values().stats()
+        return out.values().mapPartitions(lambda i: [StatCounter(i, stats=requestedStats)]).reduce(redFunc)
 
     def max(self):
         """ Maximum of values, ignoring keys """
+        # keep using reduce(maximum) at present rather than stats('max') - stats method results in inadvertent
+        # cast to float64
         from numpy import maximum
         return self.rdd.values().reduce(maximum)
 
     def min(self):
         """ Minimum of values, ignoring keys """
+        # keep using reduce(minimum) at present rather than stats('min') - stats method results in inadvertent
+        # cast to float64
         from numpy import minimum
         return self.rdd.values().reduce(minimum)
 
