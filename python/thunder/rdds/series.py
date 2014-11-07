@@ -312,7 +312,6 @@ class Series(Data):
         var : str
             Variable name if loading from a MAT file
         """
-        # TODO: how to handle dtype here?
         from scipy.io import loadmat
 
         if type(signal) is str:
@@ -336,7 +335,7 @@ class Series(Data):
             raise Exception('Signal to correlate with must have 1 or 2 dimensions')
 
         # return result
-        return self._constructor(rdd, index=newindex).__finalize__(self, nopropagate=('_dtype',))
+        return self._constructor(rdd, dtype='float64', index=newindex).__finalize__(self)
 
     def seriesMax(self):
         """ Compute the value maximum of each record in a Series """

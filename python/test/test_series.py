@@ -207,7 +207,7 @@ class TestSeriesMethods(PySparkTestCase):
         data = Series(rdd)
         sig1 = [4, 5, 6, 7, 8]
         corrdata = data.correlate(sig1)
-        assert_equals(None, corrdata._dtype)
+        assert_equals('float64', corrdata._dtype)
         corr = corrdata.values().collect()
         assert(allclose(corr[0], 1))
         sig12 = [[4, 5, 6, 7, 8], [8, 7, 6, 5, 4]]
