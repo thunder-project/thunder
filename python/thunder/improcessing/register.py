@@ -6,20 +6,16 @@ from thunder.utils.common import checkparams
 
 class Register(object):
 
-    from abc import abstractmethod
-
     def __new__(cls, method="crosscorr"):
         checkparams(method, ["crosscorr"])
         if method == "crosscorr":
             return super(Register, cls).__new__(CrossCorr)
 
     @staticmethod
-    @abstractmethod
     def get_transform(im, ref):
         pass
 
     @staticmethod
-    @abstractmethod
     def apply_transform(im, transform):
         pass
 
