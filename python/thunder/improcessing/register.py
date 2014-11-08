@@ -46,10 +46,10 @@ class Register(object):
 
         if method == 'mean':
             if startidx is not None and stopidx is not None:
-                ref = images.astype('uint16').filterOnKeys(lambda x: startidx < x < stopidx)
+                ref = images.filterOnKeys(lambda x: startidx < x < stopidx)
                 n = stopidx - startidx
             else:
-                ref = images.astype('uint16')
+                ref = images
                 n = images.nimages
             refval = ref.sum() / (1.0 * n)
             return refval.astype(images.dtype)
