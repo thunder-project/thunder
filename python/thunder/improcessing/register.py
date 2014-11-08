@@ -175,5 +175,4 @@ class CrossCorr(Register):
     def apply_transform(im, transform):
 
         from scipy.ndimage.interpolation import shift
-
-        return shift(im, map(lambda x: -x, transform), mode='constant')
+        return shift(im, map(lambda x: -x, transform), mode='nearest')
