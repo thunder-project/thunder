@@ -20,7 +20,7 @@ class Register(object):
         pass
 
     @staticmethod
-    def reference(images, method='mean', startidx=None, stopidx=None):
+    def reference(images, method='mean', startidx=None, stopidx=None, inclusive=True):
         """
         Compute a reference image for use in registration.
 
@@ -34,6 +34,10 @@ class Register(object):
 
         stopidx : int, optional, default = None
             Stopping index if computing a mean over a specified range
+
+        inclusive : boolean, optional, default = True
+            When specifying a range, whether boundaries should include
+            or not include the specified end points.
         """
 
         # TODO easy option for using the mean of the middle n images
@@ -42,8 +46,13 @@ class Register(object):
 
         if method == 'mean':
             if startidx is not None and stopidx is not None:
-                ref = images.filterOnKeys(lambda x: startidx < x < stopidx)
-                n = stopidx - startidx
+                if inclusive:
+                    range = lambda x: startidx <= x <= stopidx
+                    n = stopidx - startidx + 1
+                else:
+                    range = lambda x: startidx < x < stopidx
+                    n = stopidx - startidx - 1
+                ref = images.filterOnKeys(range)
             else:
                 ref = images
                 n = images.nimages

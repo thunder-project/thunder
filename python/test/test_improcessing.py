@@ -66,9 +66,16 @@ class TestRegistration(ImprocessingTestCase):
 
         im1 = random.randn(25, 25).astype('uint16')
         im2 = random.randn(25, 25).astype('uint16')
-        imin = ImagesLoader(self.sc).fromArrays([im1, im2])
+        im3 = random.randn(25, 25).astype('uint16')
+        imin = ImagesLoader(self.sc).fromArrays([im1, im2, im3])
         ref = Register.reference(imin)
+        assert(allclose(ref, (im1 + im2 + im3) / 3))
+
+        ref = Register.reference(imin, startidx=0, stopidx=1, inclusive=True)
         assert(allclose(ref, (im1 + im2) / 2))
+
+        ref = Register.reference(imin, startidx=0, stopidx=2, inclusive=False)
+        assert(allclose(ref, im2))
 
     def test_reference_3d(self):
 
