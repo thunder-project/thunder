@@ -108,6 +108,7 @@ class Register(object):
                     t.append(self.get_transform(im[:, :, z], ref.value[:, :, z]))
             return t
 
+        # TODO don't collect, maybe return as a Series?
         params = images.rdd.mapValues(lambda x: params(x, reference_bc)).collect()
         return params
 
@@ -135,6 +136,7 @@ class Register(object):
                 t = self.get_transform(im, ref.value)
                 return self.apply_transform(im, t)
             else:
+                im.setflags(write=True)
                 for z in arange(0, im.shape[2]):
                     t = self.get_transform(im[:, :, z], ref.value[:, :, z])
                     im[:, :, z] = self.apply_transform(im[:, :, z], t)
