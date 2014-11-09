@@ -344,7 +344,6 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
     def _run_tstSaveAsBinarySeries(self, testidx, narys_, valdtype, groupingdim_):
         """Pseudo-parameterized test fixture, allows reusing existing spark context
         """
-        from thunder.utils.common import smallest_float_type
         paramstr = "(groupingdim=%d, valuedtype='%s')" % (groupingdim_, valdtype)
         arys, aryshape, arysize = _generate_test_arrays(narys_, dtype_=valdtype)
         dims = aryshape[:]
@@ -354,12 +353,9 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
         images.saveAsBinarySeries(outdir, groupingDim=groupingdim_)
 
-        expecteddtype = smallest_float_type(valdtype)
-        castarys = [ary.astype(expecteddtype) for ary in arys]
-
         ndims = len(aryshape)
         # prevent padding to 4-byte boundaries: "=" specifies no alignment
-        unpacker = struct.Struct('=' + 'h'*ndims + dtype(expecteddtype).char*narys_)
+        unpacker = struct.Struct('=' + 'h'*ndims + dtype(valdtype).char*narys_)
 
         def calcExpectedNKeys():
             tmpshape = list(dims[:])
@@ -384,8 +380,8 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
                     nkeys += 1
                     assert_equals(narys_, len(vals))
                     for validx, val in enumerate(vals):
-                        assert_equals(castarys[validx][keys], val, "Expected %g, got %g, for test %d %s" %
-                                      (castarys[validx][keys], val, testidx, paramstr))
+                        assert_equals(arys[validx][keys], val, "Expected %g, got %g, for test %d %s" %
+                                      (arys[validx][keys], val, testidx, paramstr))
                 assert_equals(expectednkeys, nkeys)
 
         confname = os.path.join(outdir, "conf.json")
@@ -397,7 +393,7 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
             assert_equals(tuple(dims), tuple(conf['dims']))
             assert_equals(len(aryshape), conf['nkeys'])
             assert_equals(narys_, conf['nvalues'])
-            assert_equals(expecteddtype, conf['valuetype'])
+            assert_equals(valdtype, conf['valuetype'])
             assert_equals('int16', conf['keytype'])
 
         assert_true(os.path.isfile(os.path.join(outdir, 'SUCCESS')))

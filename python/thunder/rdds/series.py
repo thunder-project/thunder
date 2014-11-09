@@ -110,18 +110,6 @@ class Series(Data):
         self._dims = None
         return self
 
-    @staticmethod
-    def normalizeDtype(origdtype, newdtype):
-        if str(newdtype) == 'smallfloat':
-            newdtype = smallest_float_type(origdtype)
-        if not dtypefunc(newdtype).kind == "f":
-            raise ValueError("Series must have a floating-point data type; got: %s" % newdtype)
-        return str(newdtype)
-
-    def astype(self, dtype, casting='safe'):
-        newdtype = Series.normalizeDtype(self.dtype, dtype)
-        return super(Series, self).astype(newdtype, casting)
-
     def between(self, left, right, inclusive=True):
         """
         Select subset of values within the given index range

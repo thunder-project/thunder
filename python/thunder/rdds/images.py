@@ -320,7 +320,7 @@ class Images(Data):
 
         blocksdata = self._scatterToBlocks(blockSize=blockSize, blocksPerDim=splitsPerDim, groupingDim=groupingDim)
 
-        binseriesrdd, newdtype = blocksdata.toBinarySeries(seriesDim=0)
+        binseriesrdd = blocksdata.toBinarySeries(seriesDim=0)
 
         def appendBin(kv):
             binlabel, binvals = kv
@@ -328,7 +328,7 @@ class Images(Data):
 
         binseriesrdd.map(appendBin).foreach(writer.writerFcn)
         writeSeriesConfig(outputdirname, len(self.dims), self.nimages, dims=self.dims.count,
-                          keytype='int16', valuetype=newdtype, overwrite=overwrite)
+                          keytype='int16', valuetype=self.dtype, overwrite=overwrite)
 
     def exportAsPngs(self, outputdirname, fileprefix="export", overwrite=False,
                      collectToDriver=True):

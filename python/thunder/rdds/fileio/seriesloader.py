@@ -256,7 +256,8 @@ class SeriesLoader(object):
         blockSize = parseMemoryString(blockSize)
         totaldim = reduce(lambda x_, y_: x_*y_, dims)
         datatype = dtypefunc(datatype)
-        newdtype = Series.normalizeDtype(datatype, newdtype)
+        if str(newdtype) == 'smallfloat':
+            newdtype = smallest_float_type(datatype)
 
         reader = getFileReaderForPath(datapath)()
         filenames = reader.list(datapath)
