@@ -57,12 +57,12 @@ class TestSeriesDataStatsMethods(PySparkTestCase):
     def test_sum(self):
         from numpy import add
         series = self.generateTestSeries()
-        sumval = series.sum(dtype='uint32')
+        sumval = series.sum(dtype='float32')
 
         arys = series.values().collect()
         expected = reduce(add, arys)
         assert_true(array_equal(expected, sumval))
-        assert_equals('uint32', str(sumval.dtype))
+        assert_equals('float32', str(sumval.dtype))
 
     def test_variance(self):
         from test_utils import elementwise_var
@@ -146,65 +146,57 @@ class TestSeriesMethods(PySparkTestCase):
         assert(allclose(data.seriesStats().select('count').first()[1], 5))
 
     def test_normalization(self):
-        rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5], dtype='int16'))])
-        data = Series(rdd)
+        rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5], dtype='float16'))])
+        data = Series(rdd, dtype='float16')
         out = data.normalize('percentile')
         # check that _dtype has been set properly *before* calling first(), b/c first() will update this
         # value even if it hasn't been correctly set
-        assert_equals('float32', str(out._dtype))
+        assert_equals('float16', str(out._dtype))
         vals = out.first()[1]
-        assert_equals('float32', str(vals.dtype))
-        assert(allclose(vals, array([-0.42105,  0.10526,  0.63157,  1.15789,  1.68421]), atol=1e-4))
+        assert_equals('float16', str(vals.dtype))
+        assert(allclose(vals, array([-0.42105,  0.10526,  0.63157,  1.15789,  1.68421]), atol=1e-3))
 
     def test_normalization_bymean(self):
-        rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5], dtype='int16'))])
-        data = Series(rdd)
+        rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5], dtype='float16'))])
+        data = Series(rdd, dtype='float16')
         out = data.normalize('mean')
         # check that _dtype has been set properly *before* calling first(), b/c first() will update this
         # value even if it hasn't been correctly set
-        assert_equals('float32', str(out._dtype))
+        assert_equals('float16', str(out._dtype))
         vals = out.first()[1]
-        assert_equals('float32', str(vals.dtype))
+        assert_equals('float16', str(vals.dtype))
         assert(allclose(out.first()[1],
-                        array([-0.64516,  -0.32258,  0.0,  0.32258,  0.64516]), atol=1e-4))
+                        array([-0.64516,  -0.32258,  0.0,  0.32258,  0.64516]), atol=1e-3))
 
     def test_standardization_axis0(self):
-        rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5]))])
-        data = Series(rdd)
+        rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5], dtype='float16'))])
+        data = Series(rdd, dtype='float16')
         centered = data.center(0)
         standardized = data.standardize(0)
         zscored = data.zscore(0)
-        assert_equals(None, centered._dtype)
-        assert_equals(None, standardized._dtype)
-        assert_equals(None, zscored._dtype)
-        assert(allclose(centered.first()[1], array([-2, -1, 0, 1, 2])))
-        assert(allclose(standardized.first()[1], array([0.70710,  1.41421,  2.12132,  2.82842,  3.53553])))
-        assert(allclose(zscored.first()[1], array([-1.41421, -0.70710,  0,  0.70710,  1.41421])))
-        # TODO: use smaller dtype here by default, and propagate w/o requiring first() call
-        assert_equals('float64', str(centered._dtype))
-        assert_equals('float64', str(standardized._dtype))
-        assert_equals('float64', str(zscored._dtype))
+        assert_equals('float16', centered._dtype)
+        assert_equals('float16', standardized._dtype)
+        assert_equals('float16', zscored._dtype)
+        assert(allclose(centered.first()[1], array([-2, -1, 0, 1, 2]), atol=1e-3))
+        assert(allclose(standardized.first()[1], array([0.70710,  1.41421,  2.12132,  2.82842,  3.53553]), atol=1e-3))
+        assert(allclose(zscored.first()[1], array([-1.41421, -0.70710,  0,  0.70710,  1.41421]), atol=1e-3))
 
     def test_standardization_axis1(self):
-        rdd = self.sc.parallelize([(0, array([1, 2])), (0, array([3, 4]))])
-        data = Series(rdd)
+        rdd = self.sc.parallelize([(0, array([1, 2], dtype='float16')), (0, array([3, 4], dtype='float16'))])
+        data = Series(rdd, dtype='float16')
         centered = data.center(1)
         standardized = data.standardize(1)
         zscored = data.zscore(1)
-        assert_equals(None, centered._dtype)
-        assert_equals(None, standardized._dtype)
-        assert_equals(None, zscored._dtype)
-        assert(allclose(centered.first()[1], array([-1, -1])))
-        assert(allclose(standardized.first()[1], array([1, 2])))
-        assert(allclose(zscored.first()[1], array([-1, -1])))
-        # TODO: use smaller dtype here by default, and propagate w/o requiring first() call
-        assert_equals('float64', str(centered._dtype))
-        assert_equals('float64', str(standardized._dtype))
-        assert_equals('float64', str(zscored._dtype))
+        assert_equals('float16', centered._dtype)
+        assert_equals('float16', standardized._dtype)
+        assert_equals('float16', zscored._dtype)
+        assert(allclose(centered.first()[1], array([-1, -1]), atol=1e-3))
+        assert(allclose(standardized.first()[1], array([1, 2]), atol=1e-3))
+        assert(allclose(zscored.first()[1], array([-1, -1]), atol=1e-3))
 
     def test_correlate(self):
-        rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5]))])
-        data = Series(rdd)
+        rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5], dtype='float16'))])
+        data = Series(rdd, dtype='float16')
         sig1 = [4, 5, 6, 7, 8]
         corrdata = data.correlate(sig1)
         assert_equals('float64', corrdata._dtype)
