@@ -48,8 +48,8 @@ class StatCounter(object):
         self.n = 0L    # Running count of our values
         self.mu = 0.0  # Running mean of our values
         self.m2 = 0.0  # Running variance numerator (sum of (x - mean)^2)
-        self.maxValue = float("-inf")
-        self.minValue = float("inf")
+        self.maxValue = None
+        self.minValue = None
 
         if isinstance(stats, basestring):
             stats = [stats]
@@ -69,7 +69,7 @@ class StatCounter(object):
         if self.__requires('maxValue'):
             self.maxValue = maximum(self.maxValue, value) if not self.maxValue is None else value
         if self.__requires('minValue'):
-            self.minValue = minimum(self.minValue, value)
+            self.minValue = minimum(self.minValue, value) if not self.minValue is None else value
 
         return self
 
