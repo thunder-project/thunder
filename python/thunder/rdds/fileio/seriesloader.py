@@ -204,15 +204,7 @@ class SeriesLoader(object):
                          (tuple(int(x) for x in frombuffer(buffer(v, 0, keysize), dtype=keydtype)),
                           frombuffer(buffer(v, keysize), dtype=valdtype)))
 
-        return Series(data, dtype=valdtype, index=arange(paramsObj.nvalues))
-
-    @staticmethod
-    def __normalizeDtype(origdtype, newdtype):
-        if str(newdtype) == 'smallfloat':
-            newdtype = smallest_float_type(origdtype)
-        if not dtypefunc(newdtype).kind == "f":
-            raise ValueError("Series must have a floating-point data type; got: %s" % newdtype)
-        return str(newdtype)
+        return Series(data, dtype=valdtype, index=arange(paramsObj.nvalues)).astype("smallfloat", "safe")
 
     def _getSeriesBlocksFromStack(self, datapath, dims, ext="stack", blockSize="150M", datatype='int16',
                                   newdtype='smallfloat', casting='safe', startidx=None, stopidx=None):
@@ -264,7 +256,7 @@ class SeriesLoader(object):
         blockSize = parseMemoryString(blockSize)
         totaldim = reduce(lambda x_, y_: x_*y_, dims)
         datatype = dtypefunc(datatype)
-        newdtype = SeriesLoader.__normalizeDtype(datatype, newdtype)
+        newdtype = Series.normalizeDtype(datatype, newdtype)
 
         reader = getFileReaderForPath(datapath)()
         filenames = reader.list(datapath)

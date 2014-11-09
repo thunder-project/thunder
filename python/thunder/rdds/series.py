@@ -1,6 +1,7 @@
 from numpy import ndarray, array, sum, mean, std, size, arange, \
     polyfit, polyval, percentile, asarray, maximum, zeros, corrcoef, where, \
     true_divide, empty_like
+from numpy import dtype as dtypefunc
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
@@ -108,6 +109,18 @@ class Series(Data):
     def _resetCounts(self):
         self._dims = None
         return self
+
+    @staticmethod
+    def normalizeDtype(origdtype, newdtype):
+        if str(newdtype) == 'smallfloat':
+            newdtype = smallest_float_type(origdtype)
+        if not dtypefunc(newdtype).kind == "f":
+            raise ValueError("Series must have a floating-point data type; got: %s" % newdtype)
+        return str(newdtype)
+
+    def astype(self, dtype, casting='safe'):
+        newdtype = Series.normalizeDtype(self.dtype, dtype)
+        return super(Series, self).astype(newdtype, casting)
 
     def between(self, left, right, inclusive=True):
         """

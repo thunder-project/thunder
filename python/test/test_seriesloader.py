@@ -6,7 +6,7 @@ import unittest
 from nose.tools import assert_equals, assert_true, assert_almost_equal
 
 from thunder.rdds.fileio.seriesloader import SeriesLoader
-from thunder.utils.common import pil_to_array
+from thunder.utils.common import pil_to_array, smallest_float_type
 from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
 
 _have_image = False
@@ -294,16 +294,17 @@ class TestSeriesBinaryLoader(PySparkTestCaseWithOutputDir):
 
             for expected, actual in zip(expecteddata, seriesdata):
                 expectedkeys = tuple(expected[0])
-                expectedvals = array(expected[1], dtype=item.valDType)
+                expectedtype = smallest_float_type(item.valDType)
+                expectedvals = array(expected[1], dtype=expectedtype)
                 assert_equals(expectedkeys, actual[0],
                               "Key mismatch in item %d; expected %s, got %s" %
                               (itemidx, str(expectedkeys), str(actual[0])))
                 assert_true(allclose(expectedvals, actual[1]),
                             "Value mismatch in item %d; expected %s, got %s" %
                             (itemidx, str(expectedvals), str(actual[1])))
-                assert_equals(item.valDType, actual[1].dtype,
+                assert_equals(expectedtype, str(actual[1].dtype),
                               "Value type mismatch in item %d; expected %s, got %s" %
-                              (itemidx, str(item.valDType), str(actual[1].dtype)))
+                              (itemidx, expectedtype, str(actual[1].dtype)))
 
     def test_fromBinary(self):
         self._run_tst_fromBinary()
