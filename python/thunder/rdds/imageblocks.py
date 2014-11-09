@@ -17,17 +17,35 @@ class ImageBlocks(Data):
         for seriesKey, seriesVal in blockVal.toSeriesIter(seriesDim=seriesDim):
             yield tuple(seriesKey), seriesVal
 
-    def toSeries(self, seriesDim=0):
+    def toSeries(self, seriesDim=0, newdtype="smallfloat", casting="safe"):
 
         def blockToSeriesAdapter(kv):
             blockKey, blockVal = kv
             return ImageBlocks._blockToSeries(blockVal, seriesDim)
 
         blockedrdd = self._groupIntoSeriesBlocks()
+        castrdd, newdtype = ImageBlocks.castImageBlockValueRdd(blockedrdd, self.dtype, newdtype, casting)
 
         # returns generator of (z, y, x) array data for all z, y, x
-        seriesrdd = blockedrdd.flatMap(blockToSeriesAdapter)
-        return Series(seriesrdd)
+        seriesrdd = castrdd.flatMap(blockToSeriesAdapter)
+        return Series(seriesrdd, dtype=newdtype)
+
+    @staticmethod
+    def castImageBlockValueRdd(rdd, dtype, newdtype, casting='safe'):
+
+        if newdtype is None:
+            return rdd, dtype
+        if newdtype == 'smallfloat':
+            # get the smallest floating point type that can be safely cast to from our current type
+            from thunder.utils.common import smallest_float_type
+            newdtype = smallest_float_type(dtype)
+
+        def castfcn(v):
+            castvalues = v.values.astype(newdtype, casting=casting, copy=False)
+            return ImageBlockValue(v.origshape, v.origslices, castvalues)
+
+        nextrdd = rdd.mapValues(castfcn)
+        return nextrdd, newdtype
 
     @staticmethod
     def getBinarySeriesNameForKey(blockKey):
@@ -41,9 +59,10 @@ class ImageBlocks(Data):
         """
         return '-'.join(reversed(["key%02d_%05g" % (ki, k) for (ki, k) in enumerate(blockKey)]))
 
-    def toBinarySeries(self, seriesDim=0):
+    def toBinarySeries(self, seriesDim=0, newdtype="smallfloat", casting="safe"):
 
         blockedrdd = self._groupIntoSeriesBlocks()
+        castrdd, newdtype = ImageBlocks.castImageBlockValueRdd(blockedrdd, self.dtype, newdtype, casting)
 
         def blockToBinarySeries(kv):
             blockKey, blockVal = kv
@@ -63,7 +82,7 @@ class ImageBlocks(Data):
             buf.close()
             return label, val
 
-        return blockedrdd.map(blockToBinarySeries)
+        return castrdd.map(blockToBinarySeries), newdtype
 
     def _groupIntoSeriesBlocks(self):
         """Combine blocks representing individual image blocks into a single time-by-blocks volume

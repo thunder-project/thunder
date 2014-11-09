@@ -155,7 +155,7 @@ class Images(Data):
             tpkey, imgaryval = keyval
             return _groupBySlices(imgaryval, slices, tpkey, totnumimages)
 
-        return ImageBlocks(self.rdd.flatMap(_groupBySlicesAdapter, preservesPartitioning=False))
+        return ImageBlocks(self.rdd.flatMap(_groupBySlicesAdapter, preservesPartitioning=False), dtype=self.dtype)
 
     def __validateOrCalcGroupingDim(self, groupingDim=None):
         """Bounds-checks the passed grouping dimension, calculating it if None is passed.
@@ -320,7 +320,7 @@ class Images(Data):
 
         blocksdata = self._scatterToBlocks(blockSize=blockSize, blocksPerDim=splitsPerDim, groupingDim=groupingDim)
 
-        binseriesrdd = blocksdata.toBinarySeries(seriesDim=0)
+        binseriesrdd, newdtype = blocksdata.toBinarySeries(seriesDim=0)
 
         def appendBin(kv):
             binlabel, binvals = kv
@@ -328,7 +328,7 @@ class Images(Data):
 
         binseriesrdd.map(appendBin).foreach(writer.writerFcn)
         writeSeriesConfig(outputdirname, len(self.dims), self.nimages, dims=self.dims.count,
-                          keytype='int16', valuetype=self.dtype, overwrite=overwrite)
+                          keytype='int16', valuetype=newdtype, overwrite=overwrite)
 
     def exportAsPngs(self, outputdirname, fileprefix="export", overwrite=False,
                      collectToDriver=True):

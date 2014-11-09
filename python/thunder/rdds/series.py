@@ -12,9 +12,12 @@ class Series(Data):
     Distributed collection of 1d array data with axis labels.
 
     Backed by an RDD of key-value pairs, where the
-    key is a tuple identifier, and the value is a one-dimensional array.
+    key is a tuple identifier, and the value is a one-dimensional array of floating-point values.
     It also has a fixed index to represent a label for each value in the arrays.
     Can optionally store and use the dimensions of the keys (min, max, and count).
+
+    Series data will be automatically cast to a floating-point value on loading if its on-disk
+    representation is integer valued.
 
     Parameters
     ----------
@@ -209,24 +212,22 @@ class Series(Data):
             yy = polyval(p, x)
             return y - yy
 
-        return self.apply(func, expectedDtype=None)
+        return self.apply(func)
 
     def normalize(self, baseline='percentile', **kwargs):
         """ Normalize each record in series data by
         subtracting and dividing by a baseline
-
         Parameters
         ----------
         baseline : str, optional, default = 'percentile'
             Quantity to use as the baseline
-
         perc : int, optional, default = 20
             Percentile value to use, for 'percentile' baseline only
         """
         checkparams(baseline, ['mean', 'percentile'])
-        resdtype = smallest_float_type(self.dtype)
+
         if baseline.lower() == 'mean':
-            basefunc = lambda x: mean(x, dtype=resdtype)
+            basefunc = mean
         if baseline.lower() == 'percentile':
             if 'percentile' in kwargs:
                 perc = kwargs['percentile']
@@ -236,11 +237,9 @@ class Series(Data):
 
         def get(y):
             b = basefunc(y)
-            out = empty_like(y, dtype=resdtype)
-            true_divide((y - b), (b + 0.1), out)
-            return out
+            return (y - b) / (b + 0.1)
 
-        return self.apply(get, expectedDtype=resdtype)
+        return self.apply(get)
 
     def center(self, axis=0):
         """ Center series data by subtracting the mean
@@ -251,12 +250,11 @@ class Series(Data):
         axis : int, optional, default = 0
             Which axis to center along, rows (0) or columns (1)
         """
-        # TODO: use smaller dtype than float64 by default, and propagate through apply() call
         if axis == 0:
-            return self.apply(lambda x: x - mean(x), expectedDtype=None)
+            return self.apply(lambda x: x - mean(x))
         elif axis == 1:
             meanvec = self.mean()
-            return self.apply(lambda x: x - meanvec, expectedDtype=None)
+            return self.apply(lambda x: x - meanvec)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -269,12 +267,11 @@ class Series(Data):
         axis : int, optional, default = 0
             Which axis to standardize along, rows (0) or columns (1)
         """
-        # TODO: use smaller dtype than float64 by default, and propagate through apply() call
         if axis == 0:
-            return self.apply(lambda x: x / std(x), expectedDtype=None)
+            return self.apply(lambda x: x / std(x))
         elif axis == 1:
             stdvec = self.stdev()
-            return self.apply(lambda x: x / stdvec, expectedDtype=None)
+            return self.apply(lambda x: x / stdvec)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -288,14 +285,13 @@ class Series(Data):
         axis : int, optional, default = 0
             Which axis to zscore along, rows (0) or columns (1)
         """
-        # TODO: use smaller dtype than float64 by default, and propagate through apply() call
         if axis == 0:
-            return self.apply(lambda x: (x - mean(x)) / std(x), expectedDtype=None)
+            return self.apply(lambda x: (x - mean(x)) / std(x))
         elif axis == 1:
             stats = self.stats()
             meanvec = stats.mean()
             stdvec = stats.stdev()
-            return self.apply(lambda x: (x - meanvec) / stdvec, expectedDtype=None)
+            return self.apply(lambda x: (x - meanvec) / stdvec)
         else:
             raise Exception('Axis must be 0 or 1')
 

@@ -128,34 +128,31 @@ class Data(object):
             # get the smallest floating point type that can be safely cast to from our current type
             from thunder.utils.common import smallest_float_type
             dtype = smallest_float_type(self.dtype)
-        if str(dtype) == str(self.dtype):
-            # no cast required
-            return self
-        nextrdd = self.rdd.mapValues(lambda v: v.astype(dtype, casting=casting))
+
+        nextrdd = self.rdd.mapValues(lambda v: v.astype(dtype, casting=casting, copy=False))
         return self._constructor(nextrdd, dtype=dtype).__finalize__(self)
 
-    def apply(self, func, expectedDtype=None):
-        """ Apply arbitrary function to values of a Series,
-        preserving keys and indices
+    def apply(self, func, dtype=None, casting='safe'):
+        """ Apply arbitrary function to values of a Series, preserving keys and indices
+
+        If `dtype` is passed, output will be cast to specified datatype - see `astype()`. Otherwise output will
+        be assumed to be of same datatype as input.
 
         Parameters
         ----------
         func : function
             Function to apply
-        expectedDtype : numpy dtype or dtype specifier, or None (default), or string 'unset' or 'same'
-            Numpy dtype expected from output of func. This will be set as the dtype attribute
-            of the output Data object. If 'same', then the resulting `dtype` will be the same as that of `self`. If
-            the string 'unset' or None is passed, the `dtype` of the output will be lazily determined as needed. Note
-            that this argument, if passed, does not *enforce* that the function output will actually be of the given
-            dtype. If in doubt, leaving this as None is the safest thing to do.
+
+        dtype: numpy dtype or dtype specifier, or string 'smallfloat', or None
+            Data type to which RDD values are to be cast. Will return immediately, performing no cast, if None is passed.
+
+        casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
+            Casting method to pass on to numpy's astype() method; see numpy documentation for details.
         """
-        rdd = self.rdd.mapValues(func)
-        if isinstance(expectedDtype, basestring):
-            if expectedDtype == 'same':
-                expectedDtype = self._dtype
-            elif expectedDtype == 'unset':
-                expectedDtype = None
-        return self._constructor(rdd, dtype=expectedDtype).__finalize__(self, nopropagate=('_dtype',))
+        applied = self._constructor(self.rdd.mapValues(func)).__finalize__(self)
+        if dtype:
+            return applied.astype(dtype=dtype, casting=casting)
+        return applied
 
     def collect(self):
         """ Return all records to the driver
