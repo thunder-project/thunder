@@ -184,6 +184,27 @@ class ImageBlocksGroupingKey(PartitioningKey):
         return "ImageBlocksGroupingKey(origshape=%s, origslices=%s)" % (self.origshape, self.origslices)
 
 
+class ImageBlocksReconstructionKey(PartitioningKey):
+    def __init__(self, timeidx, origshape, origslices):
+        self.timeidx = timeidx
+        self.origshape = origshape
+        self.origslices = origslices
+
+    @property
+    def temporalKey(self):
+        return self.timeidx
+
+    @property
+    def spatialKey(self):
+        # should this be reversed?
+        return tuple(self.origslices)
+
+    def __repr__(self):
+        return "ImageBlocksReconstructionKey(timeidx=%d, origshape=%s, origslices=%s)" % (self.timeidx,
+                                                                                          self.origshape,
+                                                                                          self.origslices)
+
+
 class ImageBlocks(PartitionedImages):
     """Intermediate representation used in conversion from Images to Series.
 
@@ -232,6 +253,13 @@ class ImageBlocks(PartitionedImages):
             yield tuple(reversed(idxSeq)), series
 
     @staticmethod
+    def sliceToXRange(sl, stop):
+        start = sl.start if not sl.start is None else 0
+        stop = sl.stop if not sl.stop is None else stop
+        step = sl.step if not sl.step is None else 1
+        return xrange(start, stop, step)
+
+    @staticmethod
     def _get_range_iterators(slices, shape):
         """Returns a sequence of iterators over the range of the slices in self.origslices
 
@@ -240,12 +268,42 @@ class ImageBlocks(PartitionedImages):
         """
         iters = []
         for sliceidx, sl in enumerate(slices):
-            start = sl.start if not sl.start is None else 0
-            stop = sl.stop if not sl.stop is None else shape[sliceidx]
-            step = sl.step if not sl.step is None else 1
-            it = xrange(start, stop, step)
+            it = ImageBlocks.sliceToXRange(sl, shape[sliceidx])
             iters.append(it)
         return iters
+
+    @staticmethod
+    def toTimeSlicedBlocks(kv):
+        """Generator function that yields an iteration over (timepoint, ImageBlockValue)
+        pairs.
+
+        TODO: make fromPlanarBlocks a more precise inverse of this function.
+        """
+        blockkey, ary = kv
+
+        planarrange = ImageBlocks.sliceToXRange(blockkey.origslices[0], blockkey.origshape[0])
+        for tpidx in planarrange:
+            # set up new slices:
+            neworigslices = blockkey.origslices[1:]
+            neworigshape = blockkey.origshape[1:]
+            # new array value:
+            newval = ary[tpidx]
+            newkey = ImageBlocksReconstructionKey(tpidx, neworigshape, neworigslices)
+            yield newkey, newval
+
+    @staticmethod
+    def combineTimeSlicedBlocks(temporalIdxAndSlicedSequence):
+        temporalIdx, slicedSequence = temporalIdxAndSlicedSequence
+        # sequence will be of (partitioning key, np array) pairs
+        ary = None
+        for key, block in slicedSequence:
+            if ary is None:
+                # set up collection array:
+                ary = zeros(key.origshape, block.dtype)
+            # put values into collection array:
+            ary[key.origslices] = block
+
+        return temporalIdx, ary
 
     def toSeries(self):
         from thunder.rdds.series import Series
@@ -255,12 +313,11 @@ class ImageBlocks(PartitionedImages):
         idx = arange(self._nimages) if self._nimages else None
         return Series(seriesrdd, dims=self.dims, index=idx, dtype=self.dtype)
 
-    def toImages(self, seriesDim=0):
+    def toImages(self):
         from thunder.rdds.images import Images
-        timerdd = self.rdd.flatMap(lambda (k, v): v.toPlanarBlocks(planarDim=seriesDim))
-        squeezedrdd = timerdd.mapValues(lambda v: v.removeDimension(squeezeDim=seriesDim))
-        timesortedrdd = squeezedrdd.groupByKey().sortByKey()
-        imagesrdd = timesortedrdd.mapValues(self._valuetype.toArray)
+        timerdd = self.rdd.flatMap(ImageBlocks.toTimeSlicedBlocks)
+        timesortedrdd = timerdd.groupBy(lambda (k, _): k.temporalKey).sortByKey()
+        imagesrdd = timesortedrdd.map(ImageBlocks.combineTimeSlicedBlocks)
         return Images(imagesrdd, dims=self._dims, nimages=self._nimages, dtype=self._dtype)
 
     @staticmethod

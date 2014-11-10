@@ -257,6 +257,18 @@ class TestImages(PySparkTestCase):
 
             self.evaluate_series(arys, series, sz)
 
+    def test_roundtripThroughBlocks(self):
+        imagepath = findSourceTreeDir("utils/data/fish/tif-stack")
+        images = ImagesLoader(self.sc).fromMultipageTif(imagepath)
+        strategy = ImageBlocksPartitioningStrategy((2, 2, 2))
+        partitionedimages = images.partition(strategy)
+        recombinedimages = partitionedimages.toImages()
+
+        collectedimages = images.collect()
+        roundtrippedimages = recombinedimages.collect()
+        for orig, roundtripped in zip(collectedimages, roundtrippedimages):
+            assert_true(array_equal(orig[1], roundtripped[1]))
+
 
 class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
