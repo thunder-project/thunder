@@ -62,6 +62,18 @@ class Images(Data):
         if not isinstance(record[1], ndarray):
             raise Exception('Values must be ndarrays')
 
+    def partition(self, partitioningStrategy):
+        partitioningStrategy.setImages(self)
+        returntype = partitioningStrategy.getPartitionedImagesClass()
+        vals = self.rdd.flatMap(partitioningStrategy.partitionFunction, preservesPartitioning=False)
+        # fastest changing dimension (e.g. x) is first, so must sort reversed keys to get desired ordering
+        # sort must come after group, b/c group will mess with ordering.
+        #groupedvals = vals.groupByKey(numPartitions=partitioningStrategy.npartitions).sortBy(lambda (k, _): k[::-1])
+        groupedvals = vals.groupBy(lambda (k, _): k.spatialKey).sortBy(lambda (k, _): tuple(k[::-1]))
+        # groupedvals is now rdd of (z, y, x spatial key, [(partitioning key, numpy array)...]
+        blockedvals = groupedvals.mapValues(partitioningStrategy.blockingFunction)
+        return returntype(blockedvals, dims=self.dims, nimages=self.nimages, dtype=self.dtype)
+
     def _toBlocksByImagePlanes(self, groupingDim=-1):
         """Splits Images into ImageBlocks by extracting image planes along specified dimension
 
@@ -106,7 +118,7 @@ class Images(Data):
         """
         # splitsPerDim is expected to be in the dimensions ordering convention
         import itertools
-        from thunder.rdds.imageblocks import ImageBlocks, ImageBlockValue
+        from thunder.rdds.imageblocks import ImageBlocks
 
         dims = self.dims.count[:]  # currently in Dimensions-convention
         ndim = len(dims)
@@ -499,86 +511,151 @@ class Images(Data):
         return self._constructor(self.rdd.mapValues(func)).__finalize__(self)
 
 
-class _BlockMemoryAsSequence(object):
-    """Helper class used in calculation of slices for requested block partitions of a particular size.
-
-    The partitioning strategy represented by objects of this class is to split into N equally-sized
-    subdivisions along each dimension, starting with the rightmost dimension.
-
-    So for instance consider an Image with spatial dimensions 5, 10, 3 in x, y, z. The first nontrivial
-    partition would be to split into 2 blocks along the z axis:
-    splits: (1, 1, 2)
-    In this example, downstream this would turn into two blocks, one of size (5, 10, 2) and another
-    of size (5, 10, 1).
-
-    The next partition would be to split into 3 blocks along the z axis, which happens to
-    corresponding to having a single block per z-plane:
-    splits: (1, 1, 3)
-    Here these splits would yield 3 blocks, each of size (5, 10, 1).
-
-    After this the z-axis cannot be partitioned further, so the next partition starts splitting along
-    the y-axis:
-    splits: (1, 2, 3)
-    This yields 6 blocks, each of size (5, 5, 1).
-
-    Several other splits are possible along the y-axis, going from (1, 2, 3) up to (1, 10, 3).
-    Following this we move on to the x-axis, starting with splits (2, 10, 3) and going up to
-    (5, 10, 3), which is the finest subdivision possible for this data.
-
-    Instances of this class represent the average size of a block yielded by this partitioning
-    strategy in a linear order, moving from the most coarse subdivision (1, 1, 1) to the finest
-    (x, y, z), where (x, y, z) are the dimensions of the array being partitioned.
-
-    This representation is intended to support binary search for the partitioning strategy yielding
-    a block size closest to a requested amount.
+class PartitioningStrategy(object):
+    """Superclass for objects that define ways to split up images into smaller blocks.
     """
-    def __init__(self, dims):
+    def __init__(self):
+        self._dims = None
+        self._nimages = None
+        self._dtype = None
+
+    @property
+    def dims(self):
+        """Shape of the Images data to which this PartitioningStrategy is to be applied.
+
+        dims will be taken from the Images passed in the last call to setImages().
+
+        n-tuple of positive int, or None if setImages has not been called
+        """
+        return self._dims
+
+    @property
+    def nimages(self):
+        """Number of images (time points) in the Images data to which this PartitioningStrategy is to be applied.
+
+        nimages will be taken from the Images passed in the last call to setImages().
+
+        positive int, or None if setImages has not been called
+        """
+        return self._nimages
+
+    @property
+    def dtype(self):
+        """Numpy data type of the Images data to which this PartitioningStrategy is to be applied.
+
+        String or numpy dtype, or None if setImages has not been called
+        """
+        return self.dtype
+
+    def setImages(self, images):
+        """Readies the PartitioningStrategy to operate over the passed Images object.
+
+        dims, nimages, and dtype will be initialized by this call.
+
+        No return value.
+        """
+        self._dims = images.dims
+        self._nimages = images.nimages
+        self._dtype = images.dtype
+
+    def getPartitionedImagesClass(self):
+        """Get the subtype of PartitionedImages that instances of this strategy will produce.
+
+        Subclasses should override this method to return the appropriate PartitionedImages subclass.
+        """
+        return PartitionedImages
+
+    def partitionFunction(self, timePointIdxAndImageArray):
+        raise NotImplementedError("partitionFunction not implemented")
+
+    def blockingFunction(self, partitionedSequence):
+        raise NotImplementedError("blockingFunction not implemented")
+
+    @property
+    def npartitions(self):
+        """The number of Spark partitions across which the resulting RDD is to be distributed.
+        """
+        raise NotImplementedError("numPartitions not implemented")
+
+
+class PartitioningKey(object):
+    @property
+    def temporalKey(self):
+        raise NotImplementedError
+
+    @property
+    def spatialKey(self):
+        raise NotImplementedError
+
+
+class PartitionedImages(Data):
+    """Superclass for data returned by an Images.partition() call.
+    """
+    _metadata = Data._metadata + ['_dims', '_nimages']
+
+    def __init__(self, rdd, dims=None, nimages=None, dtype=None):
+        super(PartitionedImages, self).__init__(rdd, dtype=dtype)
         self._dims = dims
+        self._nimages = nimages
 
-    def indtosub(self, idx):
-        """Converts a linear index to a corresponding partition strategy, represented as
-        number of splits along each dimension.
+    @property
+    def dims(self):
+        """Shape of the original Images data from which this PartitionedImages was derived.
+
+        n-tuple of positive int
         """
-        dims = self._dims
-        ndims = len(dims)
-        sub = [1] * ndims
-        for didx, d in enumerate(dims[::-1]):
-            didx = ndims - (didx + 1)
-            delta = min(dims[didx]-1, idx)
-            if delta > 0:
-                sub[didx] += delta
-                idx -= delta
-            if idx <= 0:
-                break
-        return tuple(sub)
+        if not self._dims:
+            self.populateParamsFromFirstRecord()
+        return self._dims
 
-    def blockMemoryForSplits(self, sub):
-        """Returns the average number of cells in a block generated by the passed sequence of splits.
+    @property
+    def nimages(self):
+        """Number of images (time points) in the original Images data from which this PartitionedImages was derived.
+
+        positive int
         """
-        from operator import mul
-        sz = [d / float(s) for (d, s) in zip(self._dims, sub)]
-        return reduce(mul, sz)
+        return self._nimages
 
-    def __len__(self):
-        return sum([d-1 for d in self._dims]) + 1
+    def toSeries(self):
+        """Returns a Series Data object.
 
-    def __getitem__(self, item):
-        sub = self.indtosub(item)
-        return self.blockMemoryForSplits(sub)
+        Subclasses that can be converted to a Series object are expected to override this method.
+        """
+        raise NotImplementedError("toSeries not implemented")
 
+    def toBinarySeries(self):
+        """Returns an RDD of binary series data.
 
-class _BlockMemoryAsReversedSequence(_BlockMemoryAsSequence):
-    """A version of _BlockMemoryAsSequence that represents the linear ordering of splits in the
-    opposite order, starting with the finest partitioning allowable for the array dimensions.
+        The keys of a binary series RDD should be filenames ending in ".bin".
+        The values should be packed binary data.
 
-    This can yield a sequence of block sizes in increasing order, which is required for binary
-    search using python's 'bisect' library.
-    """
-    def _reverseIdx(self, idx):
-        l = len(self)
-        if idx < 0 or idx >= l:
-            raise IndexError("list index out of range")
-        return l - (idx + 1)
+        Subclasses that can be converted to a Series object are expected to override this method.
+        """
+        raise NotImplementedError
 
-    def indtosub(self, idx):
-        return super(_BlockMemoryAsReversedSequence, self).indtosub(self._reverseIdx(idx))
+    def saveAsBinarySeries(self, outputdirname, overwrite=False):
+        """Writes out Series-formatted data.
+
+        Subclasses are *not* expected to override this method.
+
+        Parameters
+        ----------
+        outputdirname : string path or URI to directory to be created
+            Output files will be written underneath outputdirname. This directory must not yet exist
+            (unless overwrite is True), and must be no more than one level beneath an existing directory.
+            It will be created as a result of this call.
+
+        overwrite : bool
+            If true, outputdirname and all its contents will be deleted and recreated as part
+            of this call.
+        """
+        from thunder.rdds.fileio.writers import getParallelWriterForPath
+        from thunder.rdds.fileio.seriesloader import writeSeriesConfig
+
+        writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
+
+        binseriesrdd = self.toBinarySeries()
+
+        binseriesrdd.foreach(writer.writerFcn)
+        writeSeriesConfig(outputdirname, len(self.dims), self.nimages, dims=self.dims.count,
+                          keytype='int16', valuetype=self.dtype, overwrite=overwrite)
