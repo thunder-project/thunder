@@ -155,7 +155,7 @@ class Images(Data):
             tpkey, imgaryval = keyval
             return _groupBySlices(imgaryval, slices, tpkey, totnumimages)
 
-        return ImageBlocks(self.rdd.flatMap(_groupBySlicesAdapter, preservesPartitioning=False))
+        return ImageBlocks(self.rdd.flatMap(_groupBySlicesAdapter, preservesPartitioning=False), dtype=self.dtype)
 
     def __validateOrCalcGroupingDim(self, groupingDim=None):
         """Bounds-checks the passed grouping dimension, calculating it if None is passed.
