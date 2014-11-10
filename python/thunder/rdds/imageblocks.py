@@ -144,7 +144,8 @@ class ImageBlocksPartitioningStrategy(PartitioningStrategy):
             ret_vals.append(ImageBlocksPartitioningStrategy.extractBlockFromImage(imgary, blockslices, tpidx, totnumimages))
         return ret_vals
 
-    def blockingFunction(self, partitionedSequence):
+    def blockingFunction(self, spatialIdxAndPartitionedSequence):
+        _, partitionedSequence = spatialIdxAndPartitionedSequence
         # sequence will be of (partitioning key, np array) pairs
         ary = None
         firstkey = None
@@ -196,23 +197,63 @@ class ImageBlocks(PartitionedImages):
 
     def populateParamsFromFirstRecord(self):
         record = super(ImageBlocks, self).populateParamsFromFirstRecord()
-        self._dims = Dimensions.fromTuple(record[1].origshape)
+        self._dims = Dimensions.fromTuple(record[0].origshape)
         return record
 
     @staticmethod
-    def _blockToSeries(blockVal, seriesDim):
-        for seriesKey, seriesVal in blockVal.toSeriesIter(seriesDim=seriesDim):
-            yield tuple(seriesKey), seriesVal
+    def toSeriesIter(partitioningkey, ary):
+        """Returns an iterator over key,array pairs suitable for casting into a Series object.
 
-    def toSeries(self, seriesDim=0):
+        Returns:
+        --------
+        iterator< key, series >
+        key: tuple of int
+        series: 1d array of self.values.dtype
+        """
+        rangeiters = ImageBlocks._get_range_iterators(partitioningkey.origslices, partitioningkey.origshape)
+        # remove iterator over temporal dimension where we are requesting series
+        del rangeiters[0]
+        insertDim = 0
+
+        for idxSeq in itertools.product(*reversed(rangeiters)):
+            expandedIdxSeq = list(reversed(idxSeq))
+            expandedIdxSeq.insert(insertDim, None)
+            slices = []
+            for d, (idx, origslice) in enumerate(zip(expandedIdxSeq, partitioningkey.origslices)):
+                if idx is None:
+                    newslice = slice(None)
+                else:
+                    # correct slice into our own value for any offset given by origslice:
+                    start = idx - origslice.start if not origslice == slice(None) else idx
+                    newslice = slice(start, start+1, 1)
+                slices.append(newslice)
+
+            series = ary[slices].squeeze()
+            yield tuple(reversed(idxSeq)), series
+
+    @staticmethod
+    def _get_range_iterators(slices, shape):
+        """Returns a sequence of iterators over the range of the slices in self.origslices
+
+        When passed to itertools.product, these iterators should cover the original image
+        volume represented by this block.
+        """
+        iters = []
+        for sliceidx, sl in enumerate(slices):
+            start = sl.start if not sl.start is None else 0
+            stop = sl.stop if not sl.stop is None else shape[sliceidx]
+            step = sl.step if not sl.step is None else 1
+            it = xrange(start, stop, step)
+            iters.append(it)
+        return iters
+
+    def toSeries(self):
         from thunder.rdds.series import Series
         # returns generator of (z, y, x) array data for all z, y, x
-        seriesrdd = self.rdd.flatMap(lambda kv: ImageBlocks._blockToSeries(kv[1], seriesDim))
+        seriesrdd = self.rdd.flatMap(lambda kv: ImageBlocks.toSeriesIter(kv[0], kv[1]))
 
         idx = arange(self._nimages) if self._nimages else None
-        # TODO: propagate dims here
-        # note that Series dims should not be equal to imageblocks dims; imageblocks include time
-        return Series(seriesrdd, index=idx, dtype=self.dtype)
+        return Series(seriesrdd, dims=self.dims, index=idx, dtype=self.dtype)
 
     def toImages(self, seriesDim=0):
         from thunder.rdds.images import Images
@@ -234,17 +275,17 @@ class ImageBlocks(PartitionedImages):
         """
         return '-'.join(reversed(["key%02d_%05g" % (ki, k) for (ki, k) in enumerate(blockKey)]))
 
-    def toBinarySeries(self, seriesDim=0):
+    def toBinarySeries(self):
 
         def blockToBinarySeries(kv):
             blockKey, blockVal = kv
             # # blockKey here is in numpy order (reversed from series convention)
             # # reverse again to get correct filename, for correct sorting of files downstream
             # label = ImageBlocks.getBinarySeriesNameForKey(reversed(blockKey))
-            label = ImageBlocks.getBinarySeriesNameForKey(blockKey)+".bin"
+            label = ImageBlocks.getBinarySeriesNameForKey(blockKey.spatialKey)+".bin"
             keypacker = None
             buf = StringIO.StringIO()
-            for seriesKey, series in ImageBlocks._blockToSeries(blockVal, seriesDim):
+            for seriesKey, series in ImageBlocks.toSeriesIter(blockKey, blockVal):
                 if keypacker is None:
                     keypacker = struct.Struct('h'*len(seriesKey))
                 # print >> sys.stderr, seriesKey, series, series.tostring().encode('hex')

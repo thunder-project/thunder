@@ -10,7 +10,7 @@ from nose.tools import assert_equals, assert_true, assert_almost_equal, assert_r
 
 from thunder.rdds.fileio.imagesloader import ImagesLoader
 from thunder.rdds.fileio.seriesloader import SeriesLoader
-from thunder.rdds.images import _BlockMemoryAsReversedSequence
+from thunder.rdds.imageblocks import ImageBlocksPartitioningStrategy
 from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
 
 
@@ -28,6 +28,14 @@ def _generate_test_arrays(narys, dtype_='int16'):
     sz = prod(sh)
     arys = [arange(i, i+sz, dtype=dtype(dtype_)).reshape(sh) for i in xrange(0, sz * narys, sz)]
     return arys, sh, sz
+
+
+def findSourceTreeDir(dirname="utils/data"):
+    testdirpath = os.path.dirname(os.path.realpath(__file__))
+    testresourcesdirpath = os.path.join(testdirpath, "..", "thunder", dirname)
+    if not os.path.isdir(testresourcesdirpath):
+        raise IOError("Directory "+testresourcesdirpath+" not found")
+    return testresourcesdirpath
 
 
 class TestImages(PySparkTestCase):
@@ -68,7 +76,8 @@ class TestImages(PySparkTestCase):
         arys, sh, sz = _generate_test_arrays(narys)
 
         imagedata = ImagesLoader(self.sc).fromArrays(arys)
-        series = imagedata.toSeries(groupingDim=0).collect()
+        strategy = ImageBlocksPartitioningStrategy(splitsPerDim=(4, 1, 1))
+        series = imagedata.partition(strategy).toSeries().collect()
 
         self.evaluate_series(arys, series, sz)
 
@@ -76,7 +85,8 @@ class TestImages(PySparkTestCase):
         ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        series = image.toSeries()
+        strategy = ImageBlocksPartitioningStrategy.generateFromBlockSize("150M", ary.shape, 1, ary.dtype)
+        series = image.partition(strategy).toSeries()
 
         seriesvals = series.collect()
         seriesary = series.pack()
@@ -108,7 +118,8 @@ class TestImages(PySparkTestCase):
         ary = arange(24, dtype=dtype('int16')).reshape((3, 4, 2))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        series = image.toSeries()
+        strategy = ImageBlocksPartitioningStrategy.generateFromBlockSize("150M", ary.shape, 1, ary.dtype)
+        series = image.partition(strategy).toSeries()
 
         seriesvals = series.collect()
         seriesary = series.pack()
@@ -155,7 +166,8 @@ class TestImages(PySparkTestCase):
         ary = arange(8, dtype=dtype('int16')).reshape((4, 2))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        series = image.toSeries(splitsPerDim=(1, 2))
+        strategy = ImageBlocksPartitioningStrategy(splitsPerDim=(1, 2))
+        series = image.partition(strategy).toSeries()
 
         seriesvals = series.collect()
         seriesary = series.pack()
@@ -184,7 +196,8 @@ class TestImages(PySparkTestCase):
         ary = arange(8, dtype=dtype('int16')).reshape((4, 2))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        series = image.toSeries(splitsPerDim=(2, 1))
+        strategy = ImageBlocksPartitioningStrategy(splitsPerDim=(2, 1))
+        series = image.partition(strategy).toSeries()
 
         seriesvals = series.collect()
         seriesary = series.pack(sorting=True)
@@ -216,15 +229,15 @@ class TestImages(PySparkTestCase):
         ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        blocks = image._scatterToBlocks(blocksPerDim=(1, 2))
-        groupedblocks = blocks._groupIntoSeriesBlocks()
+        strategy = ImageBlocksPartitioningStrategy(splitsPerDim=(1, 2))
+        groupedblocks = image.partition(strategy)
 
         # collectedblocks = blocks.collect()
         collectedgroupedblocks = groupedblocks.collect()
-        assert_equals((0, 0), collectedgroupedblocks[0][0])
-        assert_true(array_equal(ary[:, :2].ravel(), collectedgroupedblocks[0][1].values.ravel()))
-        assert_equals((0, 2), collectedgroupedblocks[1][0])
-        assert_true(array_equal(ary[:, 2:].ravel(), collectedgroupedblocks[1][1].values.ravel()))
+        assert_equals((0, 0), collectedgroupedblocks[0][0].spatialKey)
+        assert_true(array_equal(ary[:, :2].ravel(), collectedgroupedblocks[0][1].ravel()))
+        assert_equals((0, 2), collectedgroupedblocks[1][0].spatialKey)
+        assert_true(array_equal(ary[:, 2:].ravel(), collectedgroupedblocks[1][1].ravel()))
 
     def test_toSeriesBySlices(self):
         narys = 3
@@ -239,50 +252,13 @@ class TestImages(PySparkTestCase):
             (2, 1, 1), (2, 1, 2), (2, 1, 3), (2, 2, 1), (2, 2, 2), (2, 2, 3),
             (2, 3, 1), (2, 3, 2), (2, 3, 3)]
         for bpd in test_params:
-            series = imagedata.toSeries(splitsPerDim=bpd).collect()
+            strategy = ImageBlocksPartitioningStrategy(splitsPerDim=bpd)
+            series = imagedata.partition(strategy).toSeries().collect()
 
             self.evaluate_series(arys, series, sz)
 
-    def test_toBlocksBySlices(self):
-        narys = 3
-        arys, sh, sz = _generate_test_arrays(narys)
-
-        imagedata = ImagesLoader(self.sc).fromArrays(arys)
-
-        test_params = [
-            (1, 1, 1), (1, 1, 2), (1, 1, 3), (1, 2, 1), (1, 2, 2), (1, 2, 3),
-            (1, 3, 1), (1, 3, 2), (1, 3, 3),
-            (2, 1, 1), (2, 1, 2), (2, 1, 3), (2, 2, 1), (2, 2, 2), (2, 2, 3),
-            (2, 3, 1), (2, 3, 2), (2, 3, 3)]
-        for bpd in test_params:
-            blocks = imagedata._toBlocksBySplits(bpd).collect()
-
-            expectednuniquekeys = reduce(mul, bpd)
-            expectedvalsperkey = narys
-
-            keystocounts = Counter([kv[0] for kv in blocks])
-            assert_equals(expectednuniquekeys, len(keystocounts))
-            assert_equals([expectedvalsperkey] * expectednuniquekeys, keystocounts.values())
-
-            gatheredary = None
-            for _, block in blocks:
-                if gatheredary is None:
-                    gatheredary = zeros(block.origshape, dtype='int16')
-                gatheredary[block.origslices] = block.values
-
-            for i in xrange(narys):
-                assert_true(array_equal(arys[i], gatheredary[i]))
-
 
 class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
-
-    @staticmethod
-    def _findSourceTreeDir(dirname="utils/data"):
-        testdirpath = os.path.dirname(os.path.realpath(__file__))
-        testresourcesdirpath = os.path.join(testdirpath, "..", "thunder", dirname)
-        if not os.path.isdir(testresourcesdirpath):
-            raise IOError("Directory "+testresourcesdirpath+" not found")
-        return testresourcesdirpath
 
     def _run_tstSaveAsBinarySeries(self, testidx, narys_, valdtype, groupingdim_):
         """Pseudo-parameterized test fixture, allows reusing existing spark context
@@ -294,7 +270,10 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
         images = ImagesLoader(self.sc).fromArrays(arys)
 
-        images.saveAsBinarySeries(outdir, groupingDim=groupingdim_)
+        slicesPerDim = [1]*arys[0].ndim
+        slicesPerDim[groupingdim_] = arys[0].shape[groupingdim_]
+        strategy = ImageBlocksPartitioningStrategy(splitsPerDim=slicesPerDim)
+        images.partition(strategy).saveAsBinarySeries(outdir)
 
         ndims = len(aryshape)
         # prevent padding to 4-byte boundaries: "=" specifies no alignment
@@ -347,7 +326,9 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
         outdir = os.path.join(self.outputdir, "anotherdir")
         os.mkdir(outdir)
-        assert_raises(ValueError, ImagesLoader(self.sc).fromArrays(arys).saveAsBinarySeries, outdir, 0)
+        dummystrat = ImageBlocksPartitioningStrategy(splitsPerDim=(1, 1, 1))
+        assert_raises(ValueError, ImagesLoader(self.sc).fromArrays(arys).partition(dummystrat)
+                      .saveAsBinarySeries, outdir)
 
         groupingdims = xrange(len(aryshape))
         dtypes = ('int16', 'int32', 'float32')
@@ -357,29 +338,39 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
             gd, dt = params
             self._run_tstSaveAsBinarySeries(idx, narys, dt, gd)
 
-    def test_roundtripConvertToSeries(self):
-        imagepath = TestImagesUsingOutputDir._findSourceTreeDir("utils/data/fish/tif-stack")
+    def _run_tst_roundtripConvertToSeries(self, images, strategy):
         outdir = os.path.join(self.outputdir, "fish-series-dir")
 
-        images = ImagesLoader(self.sc).fromMultipageTif(imagepath)
-        series = images.toSeries(blockSize=76*20)
+        partitionedimages = images.partition(strategy)
+        series = partitionedimages.toSeries()
         series_ary = series.pack()
 
-        images.saveAsBinarySeries(outdir, blockSize=76*20)
+        partitionedimages.saveAsBinarySeries(outdir)
         converted_series = SeriesLoader(self.sc).fromBinary(outdir)
         converted_series_ary = converted_series.pack()
 
-        assert_equals((76, 87, 2), series.dims.count)
-        assert_equals((20, 76, 87, 2), series_ary.shape)
+        assert_equals(images.dims.count, series.dims.count)
+        expected_shape = tuple([images.nimages] + list(images.dims.count))
+        assert_equals(expected_shape, series_ary.shape)
         assert_true(array_equal(series_ary, converted_series_ary))
 
-    def test_fromStackToSeriesWithPack(self):
+    def test_roundtripConvertToSeries(self):
+        imagepath = findSourceTreeDir("utils/data/fish/tif-stack")
+
+        images = ImagesLoader(self.sc).fromMultipageTif(imagepath)
+        strategy = ImageBlocksPartitioningStrategy.generateFromBlockSize(blockSize=76*20,
+                                                                         dims=images.dims.count,
+                                                                         nimages=images.nimages,
+                                                                         datatype=images.dtype)
+        self._run_tst_roundtripConvertToSeries(images, strategy)
+
+    def _run_tst_fromStackToSeriesWithPack(self, strategy):
         ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
         filename = os.path.join(self.outputdir, "test.stack")
         ary.tofile(filename)
 
         image = ImagesLoader(self.sc).fromStack(filename, dims=(4, 2))
-        series = image.toSeries()
+        series = image.partition(strategy).toSeries()
 
         seriesvals = series.collect()
         seriesary = series.pack()
@@ -404,18 +395,9 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
         # check that packing returns transpose of original array
         assert_true(array_equal(ary.T, seriesary))
 
-
-class TestBlockMemoryAsSequence(unittest.TestCase):
-
-    def test_range(self):
-        dims = (2, 2)
-        undertest = _BlockMemoryAsReversedSequence(dims)
-
-        assert_equals(3, len(undertest))
-        assert_equals((2, 2), undertest.indtosub(0))
-        assert_equals((1, 2), undertest.indtosub(1))
-        assert_equals((1, 1), undertest.indtosub(2))
-        assert_raises(IndexError, undertest.indtosub, 3)
+    def test_fromStackToSeriesWithPack(self):
+        strategy = ImageBlocksPartitioningStrategy.generateFromBlockSize("150M", (4, 2), 1, dtype('int16'))
+        self._run_tst_fromStackToSeriesWithPack(strategy)
 
 
 if __name__ == "__main__":
