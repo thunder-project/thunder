@@ -14,7 +14,7 @@ setup(
               'thunder.clustering',
               'thunder.decoding',
               'thunder.factorization',
-              'thunder.improcessing',
+              'thunder.imgprocessing',
               'thunder.lib',
               'thunder.rdds',
               'thunder.rdds.fileio',
