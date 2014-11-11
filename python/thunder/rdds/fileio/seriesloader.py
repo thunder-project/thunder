@@ -45,7 +45,8 @@ class SeriesLoader(object):
         point in time. Thus in the resulting Series, the value of the record with key (0,0,0) will be
         array([arrays[0][0,0,0], arrays[1][0,0,0],... arrays[n][0,0,0]).
 
-        The dimensions of the resulting Series will be *opposite* that of the passed numpy array.
+        The dimensions of the resulting Series will be *opposite* that of the passed numpy array. Their dtype will not
+        be changed.
         """
         # if passed a single array, cast it to a sequence of length 1
         if isinstance(arrays, ndarray):
@@ -70,7 +71,7 @@ class SeriesLoader(object):
 
         dims = Dimensions.fromTuple(shape[::-1])
 
-        return Series(self.sc.parallelize(zip(keys, values), self.minPartitions), dims=dims, dtype=dtype).astype("smallfloat")
+        return Series(self.sc.parallelize(zip(keys, values), self.minPartitions), dims=dims, dtype=str(dtype))
 
     @staticmethod
     def __normalizeDatafilePattern(datapath, ext):
@@ -106,11 +107,9 @@ class SeriesLoader(object):
             and it is not already a wildcard expression and does not end in <ext>, then it will be converted into a
             wildcard pattern by appending '/*.ext'. This conversion can be avoided by passing a "file://" URI.
 
-        dtype: floating-point dtype or dtype specifier, default 'float64'
+        dtype: dtype or dtype specifier, default 'float64'
 
         """
-        if not dtypefunc(dtype).kind == "f":
-            raise ValueError("Must specify a floating-point dtype; got: %s" % str(dtype))
         datafile = self.__normalizeDatafilePattern(datafile, ext)
 
         def parse(line, nkeys_):
@@ -121,8 +120,7 @@ class SeriesLoader(object):
 
         lines = self.sc.textFile(datafile, self.minPartitions)
         data = lines.map(lambda x: parse(x, nkeys))
-        # TODO: allow a dtype to be specified in function args?
-        return Series(data, dtype=dtype)
+        return Series(data, dtype=str(dtype))
 
     BinaryLoadParameters = namedtuple('BinaryLoadParameters', 'nkeys nvalues keytype valuetype')
     BinaryLoadParameters.__new__.__defaults__ = (None, None, 'int16', 'int16')
@@ -169,7 +167,8 @@ class SeriesLoader(object):
                              str(tuple(missing)))
 
     def fromBinary(self, datafile, ext='bin', conffilename='conf.json',
-                   nkeys=None, nvalues=None, keytype=None, valuetype=None):
+                   nkeys=None, nvalues=None, keytype=None, valuetype=None,
+                   newdtype='smallfloat', casting='safe'):
         """
         Load a Series object from a directory of binary files.
 
@@ -181,6 +180,13 @@ class SeriesLoader(object):
             "s3n://". If no scheme is present, will be interpreted as a path on the local filesystem. This path
             must be valid on all workers. Datafile may also refer to a single file, or to a range of files specified
             by a glob-style expression using a single wildcard character '*'.
+
+        newdtype: dtype or dtype specifier or string 'smallfloat' or None, optional, default 'smallfloat'
+            Numpy dtype of output series data. Most methods expect Series data to be floating-point. Input data will be
+            cast to the requested `newdtype` if not None - see Data `astype()` method.
+
+        casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
+            Casting method to pass on to numpy's `astype()` method; see numpy documentation for details.
 
         """
 
@@ -204,7 +210,7 @@ class SeriesLoader(object):
                          (tuple(int(x) for x in frombuffer(buffer(v, 0, keysize), dtype=keydtype)),
                           frombuffer(buffer(v, keysize), dtype=valdtype)))
 
-        return Series(data, dtype=valdtype, index=arange(paramsObj.nvalues)).astype("smallfloat", "safe")
+        return Series(data, dtype=str(valdtype), index=arange(paramsObj.nvalues)).astype(newdtype, casting)
 
     def _getSeriesBlocksFromStack(self, datapath, dims, ext="stack", blockSize="150M", datatype='int16',
                                   newdtype='smallfloat', casting='safe', startidx=None, stopidx=None):
@@ -225,7 +231,7 @@ class SeriesLoader(object):
         datatype: dtype or dtype specifier, optional, default 'int16'
             Numpy dtype of input stack data
 
-        newdtype: floating-point dtype or dtype specifier or string 'smallfloat', optional, default 'smallfloat'
+        newdtype: floating-point dtype or dtype specifier or string 'smallfloat' or None, optional, default 'smallfloat'
             Numpy dtype of output series data. Series data must be floating-point. Input data will be cast to the
             requested `newdtype` - see numpy `astype()` method.
 
@@ -256,8 +262,12 @@ class SeriesLoader(object):
         blockSize = parseMemoryString(blockSize)
         totaldim = reduce(lambda x_, y_: x_*y_, dims)
         datatype = dtypefunc(datatype)
-        if str(newdtype) == 'smallfloat':
-            newdtype = smallest_float_type(datatype)
+        if newdtype is None or newdtype == '':
+            newdtype = str(datatype)
+        elif newdtype == 'smallfloat':
+            newdtype = str(smallest_float_type(datatype))
+        else:
+            newdtype = str(newdtype)
 
         reader = getFileReaderForPath(datapath)()
         filenames = reader.list(datapath)
@@ -305,8 +315,8 @@ class SeriesLoader(object):
                 bufs.append(frombuffer(buf, dtype=datatype))
 
             buf = vstack(bufs).T  # dimensions are now linindex x time (images)
-            buf = buf.astype(newdtype, casting=casting, copy=False)
             del bufs
+            buf = buf.astype(newdtype, casting=casting, copy=False)
 
             # append subscript keys based on dimensions
             itemposition = position / datatype.itemsize
@@ -364,7 +374,7 @@ class SeriesLoader(object):
         return height, width, npages, datatype
 
     def _getSeriesBlocksFromMultiTif(self, datapath, ext="tif", blockSize="150M",
-                                     startidx=None, stopidx=None):
+                                     newdtype='smallfloat', casting='safe', startidx=None, stopidx=None):
         import thunder.rdds.fileio.multitif as multitif
         import itertools
         from PIL import Image
@@ -385,7 +395,12 @@ class SeriesLoader(object):
 
         height, width, npages, datatype = SeriesLoader.__readMetadataFromFirstPageOfMultiTif(reader, filenames[0])
         pixelbytesize = dtypefunc(datatype).itemsize
-        newdtype = smallest_float_type(datatype)
+        if newdtype is None or str(newdtype) == '':
+            newdtype = str(datatype)
+        elif newdtype == 'smallfloat':
+            newdtype = str(smallest_float_type(datatype))
+        else:
+            newdtype = str(newdtype)
 
         # intialize at one block per plane
         bytesperplane = height * width * pixelbytesize * ntimepoints
@@ -445,7 +460,7 @@ class SeriesLoader(object):
 
             buf = vstack(blocks).T  # dimensions are now linindex x time (images)
             del blocks
-            buf = buf.astype(newdtype, casting='safe', copy=False)
+            buf = buf.astype(newdtype, casting=casting, copy=False)
 
             # append subscript keys based on dimensions
             linindx = arange(blockstart, blockend)  # zero-based
@@ -459,7 +474,7 @@ class SeriesLoader(object):
         rdd = self.sc.parallelize(keys, len(keys)).flatMap(readblockfromtif)
         dims = (npages, width, height)
 
-        metadata = (dims, ntimepoints, str(newdtype))
+        metadata = (dims, ntimepoints, newdtype)
         return rdd, metadata
 
     def fromStack(self, datapath, dims, ext="stack", blockSize="150M", datatype='int16',
@@ -485,9 +500,9 @@ class SeriesLoader(object):
         datatype: dtype or dtype specifier, optional, default 'int16'
             Numpy dtype of input stack data
 
-        newdtype: floating-point dtype or dtype specifier or string 'smallfloat', optional, default 'smallfloat'
-            Numpy dtype of output series data. Series data must be floating-point. Input data will be cast to the
-            requested `newdtype` - see Data `astype()` method.
+        newdtype: dtype or dtype specifier or string 'smallfloat' or None, optional, default 'smallfloat'
+            Numpy dtype of output series data. Most methods expect Series data to be floating-point. Input data will be
+            cast to the requested `newdtype` if not None - see Data `astype()` method.
 
         casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
             Casting method to pass on to numpy's `astype()` method; see numpy documentation for details.
@@ -503,6 +518,7 @@ class SeriesLoader(object):
         return Series(seriesblocks, dims=dims, dtype=newdtype, index=arange(npointsinseries))
 
     def fromMultipageTif(self, datapath, ext="tif", blockSize="150M",
+                         newdtype='smallfloat', casting='safe',
                          startidx=None, stopidx=None):
         """Load a Series object from multipage tiff files.
 
@@ -519,14 +535,23 @@ class SeriesLoader(object):
         blocksize: string formatted as e.g. "64M", "512k", "2G", or positive int. optional, default "150M"
             Requested size of Series partitions in bytes (or kilobytes, megabytes, gigabytes).
 
+        newdtype: dtype or dtype specifier or string 'smallfloat' or None, optional, default 'smallfloat'
+            Numpy dtype of output series data. Most methods expect Series data to be floating-point. Input data will be
+            cast to the requested `newdtype` if not None - see Data `astype()` method.
+
+        casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
+            Casting method to pass on to numpy's `astype()` method; see numpy documentation for details.
+
         startidx, stopidx: nonnegative int. optional.
             Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
             `datapath` and `ext`. Interpreted according to python slice indexing conventions.
         """
         seriesblocks, metadata = self._getSeriesBlocksFromMultiTif(datapath, ext=ext, blockSize=blockSize,
+                                                                   newdtype=newdtype, casting=casting,
                                                                    startidx=startidx, stopidx=stopidx)
         dims, npointsinseries, datatype = metadata
-        return Series(seriesblocks, dims=Dimensions.fromTuple(dims[::-1]), dtype=datatype, index=arange(npointsinseries))
+        return Series(seriesblocks, dims=Dimensions.fromTuple(dims[::-1]), dtype=datatype,
+                      index=arange(npointsinseries))
 
     @staticmethod
     def __saveSeriesRdd(seriesblocks, outputdirname, dims, npointsinseries, datatype, overwrite=False):
@@ -551,7 +576,7 @@ class SeriesLoader(object):
                           overwrite=overwrite)
 
     def saveFromStack(self, datapath, outputdirpath, dims, ext="stack", blockSize="150M", datatype='int16',
-                      newdtype='smallfloat', casting='safe', startidx=None, stopidx=None, overwrite=False):
+                      newdtype=None, casting='safe', startidx=None, stopidx=None, overwrite=False):
         """Write out data from binary image stack files in the Series data flat binary format.
 
         Parameters
@@ -576,9 +601,9 @@ class SeriesLoader(object):
         datatype: dtype or dtype specifier, optional, default 'int16'
             Numpy dtype of input stack data
 
-        newdtype: floating-point dtype or dtype specifier or string 'smallfloat', optional, default 'smallfloat'
-            Numpy dtype of output series data. Series data must be floating-point. Input data will be cast to the
-            requested `newdtype` - see Data `astype()` method.
+        newdtype: floating-point dtype or dtype specifier or string 'smallfloat' or None, optional, default None
+            Numpy dtype of output series binary data. Input data will be cast to the requested `newdtype` if not None
+            - see Data `astype()` method.
 
         casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
             Casting method to pass on to numpy's `astype()` method; see numpy documentation for details.
@@ -599,6 +624,7 @@ class SeriesLoader(object):
         SeriesLoader.__saveSeriesRdd(seriesblocks, outputdirpath, dims, npointsinseries, newdtype, overwrite=overwrite)
 
     def saveFromMultipageTif(self, datapath, outputdirpath, ext="tif", blockSize="150M",
+                             newdtype=None, casting='safe',
                              startidx=None, stopidx=None, overwrite=False):
         """Write out data from multipage tif files in the Series data flat binary format.
 
@@ -618,6 +644,13 @@ class SeriesLoader(object):
         blocksize: string formatted as e.g. "64M", "512k", "2G", or positive int. optional, default "150M"
             Requested size of Series partitions in bytes (or kilobytes, megabytes, gigabytes).
 
+        newdtype: floating-point dtype or dtype specifier or string 'smallfloat' or None, optional, default None
+            Numpy dtype of output series binary data. Input data will be cast to the requested `newdtype` if not None
+            - see Data `astype()` method.
+
+        casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
+            Casting method to pass on to numpy's `astype()` method; see numpy documentation for details.
+
         startidx, stopidx: nonnegative int. optional.
             Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
             `datapath` and `ext`. Interpreted according to python slice indexing conventions.
@@ -628,6 +661,7 @@ class SeriesLoader(object):
 
         """
         seriesblocks, metadata = self._getSeriesBlocksFromMultiTif(datapath, ext=ext, blockSize=blockSize,
+                                                                   newdtype=newdtype, casting=casting,
                                                                    startidx=startidx, stopidx=stopidx)
         dims, npointsinseries, datatype = metadata
         SeriesLoader.__saveSeriesRdd(seriesblocks, outputdirpath, dims, npointsinseries, datatype, overwrite=overwrite)
@@ -645,7 +679,7 @@ class SeriesLoader(object):
         else:
             keys = arange(0, data.shape[0])
 
-        rdd = Series(self.sc.parallelize(zip(keys, data), self.minPartitions), dtype=data.dtype)
+        rdd = Series(self.sc.parallelize(zip(keys, data), self.minPartitions), dtype=str(data.dtype))
 
         return rdd
 
@@ -662,7 +696,7 @@ class SeriesLoader(object):
         else:
             keys = arange(0, data.shape[0])
 
-        rdd = Series(self.sc.parallelize(zip(keys, data), self.minPartitions), dtype=data.dtype)
+        rdd = Series(self.sc.parallelize(zip(keys, data), self.minPartitions), dtype=str(data.dtype))
 
         return rdd
 

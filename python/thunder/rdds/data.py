@@ -122,7 +122,7 @@ class Data(object):
         -------
         New Data object, of same type as self, with values cast to the requested dtype; or self if no cast is performed.
         """
-        if dtype is None:
+        if dtype is None or dtype == '':
             return self
         if dtype == 'smallfloat':
             # get the smallest floating point type that can be safely cast to from our current type
@@ -130,7 +130,7 @@ class Data(object):
             dtype = smallest_float_type(self.dtype)
 
         nextrdd = self.rdd.mapValues(lambda v: v.astype(dtype, casting=casting, copy=False))
-        return self._constructor(nextrdd, dtype=dtype).__finalize__(self)
+        return self._constructor(nextrdd, dtype=str(dtype)).__finalize__(self)
 
     def apply(self, func, dtype=None, casting='safe'):
         """ Apply arbitrary function to values of a Series, preserving keys and indices
