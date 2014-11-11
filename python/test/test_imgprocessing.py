@@ -21,6 +21,7 @@ class TestRegistration(ImprocessingTestCase):
 
     def test_crosscorr_image(self):
 
+        random.seed(42)
         ref = random.randn(25, 25)
 
         im = shift(ref, [2, 0], mode='constant', order=0)
@@ -53,6 +54,7 @@ class TestRegistration(ImprocessingTestCase):
 
     def test_crosscorr_volume(self):
 
+        random.seed(42)
         ref = random.randn(25, 25, 3)
 
         im = shift(ref, [2, -2, 0], mode='constant', order=0)
@@ -64,6 +66,7 @@ class TestRegistration(ImprocessingTestCase):
 
     def test_reference_2d(self):
 
+        random.seed(42)
         im1 = random.randn(25, 25).astype('uint16')
         im2 = random.randn(25, 25).astype('uint16')
         im3 = random.randn(25, 25).astype('uint16')
@@ -79,6 +82,7 @@ class TestRegistration(ImprocessingTestCase):
 
     def test_reference_3d(self):
 
+        random.seed(42)
         im1 = random.randn(25, 25, 3).astype('uint16')
         im2 = random.randn(25, 25, 3).astype('uint16')
         imin = ImagesLoader(self.sc).fromArrays([im1, im2])
