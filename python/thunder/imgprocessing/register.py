@@ -18,7 +18,7 @@ class Register(object):
         raise NotImplementedError
 
     @staticmethod
-    def reference(images, method='mean', startidx=None, stopidx=None, inclusive=True):
+    def reference(images, method='mean', startidx=None, stopidx=None):
         """
         Compute a reference image for use in registration.
 
@@ -33,23 +33,17 @@ class Register(object):
         stopidx : int, optional, default = None
             Stopping index if computing a mean over a specified range
 
-        inclusive : boolean, optional, default = True
-            When specifying a range, whether boundaries should include
-            or not include the specified end points.
         """
 
         # TODO easy option for using the mean of the middle n images
+        # TODO fix inclusive behavior to match e.g. image loading
 
         checkparams(method, ['mean'])
 
         if method == 'mean':
             if startidx is not None and stopidx is not None:
-                if inclusive:
-                    range = lambda x: startidx <= x <= stopidx
-                    n = stopidx - startidx + 1
-                else:
-                    range = lambda x: startidx < x < stopidx
-                    n = stopidx - startidx - 1
+                range = lambda x: startidx <= x < stopidx
+                n = stopidx - startidx
                 ref = images.filterOnKeys(range)
             else:
                 ref = images
