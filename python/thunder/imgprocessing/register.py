@@ -166,8 +166,7 @@ class CrossCorr(Register):
     Perform affine (translation) registration using cross-correlation
     """
 
-    @staticmethod
-    def get_transform(im, ref):
+    def get_transform(self, im, ref):
 
         from numpy.fft import fft2, ifft2
 
@@ -182,8 +181,7 @@ class CrossCorr(Register):
 
         return [d0, d1]
 
-    @staticmethod
-    def apply_transform(im, transform):
+    def apply_transform(self, im, transform):
 
         from scipy.ndimage.interpolation import shift
         return shift(im, map(lambda x: -x, transform), mode='nearest')
