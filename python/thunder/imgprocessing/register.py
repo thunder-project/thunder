@@ -11,13 +11,11 @@ class Register(object):
         if method == "crosscorr":
             return super(Register, cls).__new__(CrossCorr)
 
-    @staticmethod
-    def get_transform(im, ref):
-        pass
+    def get_transform(self, im, ref):
+        raise NotImplementedError
 
-    @staticmethod
-    def apply_transform(im, transform):
-        pass
+    def apply_transform(self, im, transform):
+        raise NotImplementedError
 
     @staticmethod
     def reference(images, method='mean', startidx=None, stopidx=None, inclusive=True):
