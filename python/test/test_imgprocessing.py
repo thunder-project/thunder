@@ -3,7 +3,7 @@ import tempfile
 from test_utils import PySparkTestCase
 from numpy import random, allclose, arange
 from scipy.ndimage.interpolation import shift
-from thunder.improcessing.register import Register
+from thunder.imgprocessing.register import Register
 from thunder.rdds.fileio.imagesloader import ImagesLoader
 
 
