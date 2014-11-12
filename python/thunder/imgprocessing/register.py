@@ -77,7 +77,8 @@ class Register(object):
         """
         Estimate registration parameters on a collection of images / volumes.
 
-        Will return a list of
+        Will return a list of registration parameters to the driver, rather
+        than the registered images / volumes themselves.
 
         Parameters
         ----------
@@ -94,6 +95,10 @@ class Register(object):
             where the key is the same key used to identify each image / volume in the Images object,
             and the value is a list of registration parameters (in whatever format provided by
             the registration function; e.g. for CrossCorr will return a list of deltas in x and y)
+
+        See also
+        --------
+        Register.transform : apply transformations
         """
 
         if not (isinstance(images, Images)):
@@ -114,7 +119,7 @@ class Register(object):
                     t.append(self.get_transform(im[:, :, z], ref.value[:, :, z]))
             return t
 
-        # TODO don't collect, maybe return as a Series?
+        # TODO instead of collecting, maybe return as a Series?
         params = images.rdd.mapValues(lambda x: params(x, reference_bc)).collect()
         return params
 
