@@ -1,9 +1,11 @@
 from numpy import ndarray, array, sum, mean, std, size, arange, \
-    polyfit, polyval, percentile, asarray, maximum, zeros, corrcoef, where
+    polyfit, polyval, percentile, asarray, maximum, zeros, corrcoef, where, \
+    true_divide, empty_like
+from numpy import dtype as dtypefunc
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
-from thunder.utils.common import checkparams, loadmatvar
+from thunder.utils.common import checkparams, loadmatvar, smallest_float_type
 
 
 class Series(Data):
@@ -11,9 +13,12 @@ class Series(Data):
     Distributed collection of 1d array data with axis labels.
 
     Backed by an RDD of key-value pairs, where the
-    key is a tuple identifier, and the value is a one-dimensional array.
+    key is a tuple identifier, and the value is a one-dimensional array of floating-point values.
     It also has a fixed index to represent a label for each value in the arrays.
     Can optionally store and use the dimensions of the keys (min, max, and count).
+
+    Series data will be automatically cast to a floating-point value on loading if its on-disk
+    representation is integer valued.
 
     Parameters
     ----------
@@ -213,12 +218,10 @@ class Series(Data):
     def normalize(self, baseline='percentile', **kwargs):
         """ Normalize each record in series data by
         subtracting and dividing by a baseline
-
         Parameters
         ----------
         baseline : str, optional, default = 'percentile'
             Quantity to use as the baseline
-
         perc : int, optional, default = 20
             Percentile value to use, for 'percentile' baseline only
         """
@@ -306,7 +309,6 @@ class Series(Data):
         var : str
             Variable name if loading from a MAT file
         """
-
         from scipy.io import loadmat
 
         if type(signal) is str:
@@ -330,19 +332,7 @@ class Series(Data):
             raise Exception('Signal to correlate with must have 1 or 2 dimensions')
 
         # return result
-        return self._constructor(rdd, index=newindex).__finalize__(self)
-
-    def apply(self, func):
-        """ Apply arbitrary function to values of a Series,
-        preserving keys and indices
-
-        Parameters
-        ----------
-        func : function
-            Function to apply
-        """
-        rdd = self.rdd.mapValues(func)
-        return self._constructor(rdd, index=self._index).__finalize__(self)
+        return self._constructor(rdd, dtype='float64', index=newindex).__finalize__(self)
 
     def seriesMax(self):
         """ Compute the value maximum of each record in a Series """
@@ -382,14 +372,15 @@ class Series(Data):
         }
         func = STATS[stat]
         rdd = self.rdd.mapValues(lambda x: func(x))
-        return self._constructor(rdd, index=stat).__finalize__(self)
+        return self._constructor(rdd, index=stat).__finalize__(self, nopropagate=('_dtype',))
 
     def seriesStats(self):
         """
         Compute a collection of statistics for each record in a Series
         """
         rdd = self.rdd.mapValues(lambda x: array([x.size, mean(x), std(x), max(x), min(x)]))
-        return self._constructor(rdd, index=['count', 'mean', 'std', 'max', 'min']).__finalize__(self)
+        return self._constructor(rdd, index=['count', 'mean', 'std', 'max', 'min'])\
+            .__finalize__(self, nopropagate=('_dtype',))
 
     def maxProject(self, axis=0):
         """

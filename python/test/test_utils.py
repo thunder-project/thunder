@@ -2,6 +2,7 @@ import shutil
 import tempfile
 import unittest
 import logging
+from numpy import vstack
 from pyspark import SparkContext
 
 
@@ -29,3 +30,24 @@ class PySparkTestCaseWithOutputDir(PySparkTestCase):
     def tearDown(self):
         super(PySparkTestCaseWithOutputDir, self).tearDown()
         shutil.rmtree(self.outputdir)
+
+
+def elementwise_mean(arys):
+    from numpy import mean
+    combined = vstack([ary.ravel() for ary in arys])
+    meanary = mean(combined, axis=0)
+    return meanary.reshape(arys[0].shape)
+
+
+def elementwise_var(arys):
+    from numpy import var
+    combined = vstack([ary.ravel() for ary in arys])
+    meanary = var(combined, axis=0)
+    return meanary.reshape(arys[0].shape)
+
+
+def elementwise_stdev(arys):
+    from numpy import std
+    combined = vstack([ary.ravel() for ary in arys])
+    stdary = std(combined, axis=0)
+    return stdary.reshape(arys[0].shape)

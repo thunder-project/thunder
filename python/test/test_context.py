@@ -36,10 +36,12 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         expectedary = rangeary.reshape((128, 64), order='F')
 
         range_series = self.tsc.loadImagesAsSeries(filepath, dims=(128, 64), shuffle=shuffle)
+        assert_equals('float32', range_series._dtype)  # check before any potential first() calls update this val
         range_series_ary = range_series.pack()
 
         assert_equals((128, 64), range_series.dims.count)
         assert_equals((128, 64), range_series_ary.shape)
+        assert_equals('float32', str(range_series_ary.dtype))
         assert_true(np.array_equal(expectedary, range_series_ary))
 
     def test_loadStacksAsSeriesNoShuffle(self):
@@ -54,12 +56,14 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         rangeary.tofile(filepath)
         expectedary = rangeary.reshape((32, 64, 4), order='F')
 
-        range_series_noshuffle = self.tsc.loadImagesAsSeries(filepath, dims=(32, 64, 4), shuffle=shuffle)
-        range_series_noshuffle_ary = range_series_noshuffle.pack()
+        range_series = self.tsc.loadImagesAsSeries(filepath, dims=(32, 64, 4), shuffle=shuffle)
+        assert_equals('float32', range_series._dtype)
+        range_series_ary = range_series.pack()
 
-        assert_equals((32, 64, 4), range_series_noshuffle.dims.count)
-        assert_equals((32, 64, 4), range_series_noshuffle_ary.shape)
-        assert_true(np.array_equal(expectedary, range_series_noshuffle_ary))
+        assert_equals((32, 64, 4), range_series.dims.count)
+        assert_equals((32, 64, 4), range_series_ary.shape)
+        assert_equals('float32', str(range_series_ary.dtype))
+        assert_true(np.array_equal(expectedary, range_series_ary))
 
     def test_load3dStackAsSeriesNoShuffle(self):
         self.__run_load3dStackAsSeries(False)
@@ -78,12 +82,15 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         expectedary2 = rangeary2.reshape((128, 64), order='F')
 
         range_series = self.tsc.loadImagesAsSeries(self.outputdir, dims=(128, 64), shuffle=shuffle)
+        assert_equals('float32', range_series._dtype)
+
         range_series_ary = range_series.pack()
         range_series_ary_xpose = range_series.pack(transpose=True)
 
         assert_equals((128, 64), range_series.dims.count)
         assert_equals((2, 128, 64), range_series_ary.shape)
         assert_equals((2, 64, 128), range_series_ary_xpose.shape)
+        assert_equals('float32', str(range_series_ary.dtype))
         assert_true(np.array_equal(expectedary, range_series_ary[0]))
         assert_true(np.array_equal(expectedary2, range_series_ary[1]))
         assert_true(np.array_equal(expectedary.T, range_series_ary_xpose[0]))
@@ -104,10 +111,12 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         del pilimg, tmpary
 
         range_series = self.tsc.loadImagesAsSeries(self.outputdir, inputformat="tif-stack", shuffle=shuffle)
+        assert_equals('float16', range_series._dtype)  # check before any potential first() calls update this val
         range_series_ary = range_series.pack()
 
         assert_equals((60, 120, 1), range_series.dims.count)
         assert_equals((60, 120), range_series_ary.shape)
+        assert_equals('float16', str(range_series_ary.dtype))
         assert_true(np.array_equal(rangeary, range_series_ary))
 
     @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
@@ -130,19 +139,21 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         testimg_pil.seek(2)
         testimg_arys.append(pil_to_array(testimg_pil))
 
-        range_series_noshuffle = self.tsc.loadImagesAsSeries(imagepath, inputformat="tif-stack", shuffle=shuffle)
-        range_series_noshuffle_ary = range_series_noshuffle.pack()
-        range_series_noshuffle_ary_xpose = range_series_noshuffle.pack(transpose=True)
+        range_series = self.tsc.loadImagesAsSeries(imagepath, inputformat="tif-stack", shuffle=shuffle)
+        assert_true(range_series._dtype.startswith("float"))
+        range_series_ary = range_series.pack()
+        range_series_ary_xpose = range_series.pack(transpose=True)
 
-        assert_equals((70, 75, 3), range_series_noshuffle.dims.count)
-        assert_equals((70, 75, 3), range_series_noshuffle_ary.shape)
-        assert_equals((3, 75, 70), range_series_noshuffle_ary_xpose.shape)
-        assert_true(np.array_equal(testimg_arys[0], range_series_noshuffle_ary[:, :, 0]))
-        assert_true(np.array_equal(testimg_arys[1], range_series_noshuffle_ary[:, :, 1]))
-        assert_true(np.array_equal(testimg_arys[2], range_series_noshuffle_ary[:, :, 2]))
-        assert_true(np.array_equal(testimg_arys[0].T, range_series_noshuffle_ary_xpose[0]))
-        assert_true(np.array_equal(testimg_arys[1].T, range_series_noshuffle_ary_xpose[1]))
-        assert_true(np.array_equal(testimg_arys[2].T, range_series_noshuffle_ary_xpose[2]))
+        assert_equals((70, 75, 3), range_series.dims.count)
+        assert_equals((70, 75, 3), range_series_ary.shape)
+        assert_equals((3, 75, 70), range_series_ary_xpose.shape)
+        assert_true(range_series_ary.dtype.kind == "f")
+        assert_true(np.array_equal(testimg_arys[0], range_series_ary[:, :, 0]))
+        assert_true(np.array_equal(testimg_arys[1], range_series_ary[:, :, 1]))
+        assert_true(np.array_equal(testimg_arys[2], range_series_ary[:, :, 2]))
+        assert_true(np.array_equal(testimg_arys[0].T, range_series_ary_xpose[0]))
+        assert_true(np.array_equal(testimg_arys[1].T, range_series_ary_xpose[1]))
+        assert_true(np.array_equal(testimg_arys[2].T, range_series_ary_xpose[2]))
 
     @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
     def test_loadTestTifAsSeriesNoShuffle(self):
@@ -168,12 +179,14 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         del pilimg, tmpary
 
         range_series = self.tsc.loadImagesAsSeries(self.outputdir, inputformat="tif-stack", shuffle=shuffle)
+        assert_equals('float16', range_series._dtype)
         range_series_ary = range_series.pack()
         range_series_ary_xpose = range_series.pack(transpose=True)
 
         assert_equals((60, 120, 1), range_series.dims.count)
         assert_equals((2, 60, 120), range_series_ary.shape)
         assert_equals((2, 120, 60), range_series_ary_xpose.shape)
+        assert_equals('float16', str(range_series_ary.dtype))
         assert_true(np.array_equal(rangeary, range_series_ary[0]))
         assert_true(np.array_equal(rangeary2, range_series_ary[1]))
         assert_true(np.array_equal(rangeary.T, range_series_ary_xpose[0]))
