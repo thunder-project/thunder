@@ -8,6 +8,8 @@ ivyXML := <dependency org="org.eclipse.jetty.orbit" name="javax.servlet" rev="3.
 <artifact name="javax.servlet" type="orbit" ext="jar"/>
 </dependency>
 
+libraryDependencies += "org.apache.hadoop" %% "hadoop-client" % "1.0.4"
+
 libraryDependencies += "org.apache.spark" %% "spark-core" % "1.1.0"
 
 libraryDependencies += "org.apache.spark" %% "spark-streaming" % "1.1.0"
