@@ -210,11 +210,19 @@ class Data(object):
         return self.rdd.values().reduce(minimum)
 
     def cache(self):
-        """ Enable in-memory caching
+        """ Enable in-memory caching.
 
         This calls the Spark cache() method on the underlying RDD.
         """
         self.rdd.cache()
+        return self
+
+    def repartition(self, numPartitions):
+        """ Repartition data.
+
+        This calls the Spark repartition() method on the underlying RDD.
+        """
+        self.rdd = self.rdd.repartition(numPartitions)
         return self
 
     def filterOnKeys(self, func):
