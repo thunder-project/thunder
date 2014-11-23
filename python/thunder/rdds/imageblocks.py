@@ -17,7 +17,7 @@ class ImageBlocks(Data):
         for seriesKey, seriesVal in blockVal.toSeriesIter(seriesDim=seriesDim):
             yield tuple(seriesKey), seriesVal
 
-    def toSeries(self, seriesDim=0):
+    def toSeries(self, seriesDim=0, newdtype="smallfloat", casting="safe"):
 
         def blockToSeriesAdapter(kv):
             blockKey, blockVal = kv
@@ -27,7 +27,7 @@ class ImageBlocks(Data):
 
         # returns generator of (z, y, x) array data for all z, y, x
         seriesrdd = blockedrdd.flatMap(blockToSeriesAdapter)
-        return Series(seriesrdd)
+        return Series(seriesrdd, dtype=self.dtype).astype(newdtype, casting=casting)
 
     @staticmethod
     def getBinarySeriesNameForKey(blockKey):
@@ -47,9 +47,6 @@ class ImageBlocks(Data):
 
         def blockToBinarySeries(kv):
             blockKey, blockVal = kv
-            # # blockKey here is in numpy order (reversed from series convention)
-            # # reverse again to get correct filename, for correct sorting of files downstream
-            # label = ImageBlocks.getBinarySeriesNameForKey(reversed(blockKey))
             label = ImageBlocks.getBinarySeriesNameForKey(blockKey)
             keypacker = None
             buf = StringIO.StringIO()

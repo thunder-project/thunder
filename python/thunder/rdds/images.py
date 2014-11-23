@@ -155,7 +155,7 @@ class Images(Data):
             tpkey, imgaryval = keyval
             return _groupBySlices(imgaryval, slices, tpkey, totnumimages)
 
-        return ImageBlocks(self.rdd.flatMap(_groupBySlicesAdapter, preservesPartitioning=False))
+        return ImageBlocks(self.rdd.flatMap(_groupBySlicesAdapter, preservesPartitioning=False), dtype=self.dtype)
 
     def __validateOrCalcGroupingDim(self, groupingDim=None):
         """Bounds-checks the passed grouping dimension, calculating it if None is passed.
@@ -485,18 +485,6 @@ class Images(Data):
                                 'from images with dimension %s' % (str(val.shape), str(self.dims)))
 
         return self.apply(lambda x: x - val)
-
-    def apply(self, func):
-        """
-        Apply a function to all images / volumes,
-        otherwise perserving attributes
-
-        Parameters
-        ----------
-        func : function
-            Function to apply
-        """
-        return self._constructor(self.rdd.mapValues(func)).__finalize__(self)
 
 
 class _BlockMemoryAsSequence(object):

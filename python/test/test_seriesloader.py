@@ -6,7 +6,7 @@ import unittest
 from nose.tools import assert_equals, assert_true, assert_almost_equal
 
 from thunder.rdds.fileio.seriesloader import SeriesLoader
-from thunder.utils.common import pil_to_array
+from thunder.utils.common import pil_to_array, smallest_float_type
 from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
 
 _have_image = False
@@ -207,6 +207,7 @@ class TestSeriesLoader(PySparkTestCase):
         testimg_arys.append(pil_to_array(testimg_pil))
 
         series = SeriesLoader(self.sc).fromMultipageTif(imagepath)
+        assert_equals('float16', series._dtype)
         series_ary = series.pack()
 
         assert_equals((70, 75, 3), series.dims.count)
@@ -218,8 +219,10 @@ class TestSeriesLoader(PySparkTestCase):
     def _run_fromFishTif(self, blocksize="150M"):
         imagepath = TestSeriesLoader._findSourceTreeDir("utils/data/fish/tif-stack")
         series = SeriesLoader(self.sc).fromMultipageTif(imagepath, blockSize=blocksize)
+        assert_equals('float16', series._dtype)
         series_ary = series.pack()
         series_ary_xpose = series.pack(transpose=True)
+        assert_equals('float16', str(series_ary.dtype))
         assert_equals((76, 87, 2), series.dims.count)
         assert_equals((20, 76, 87, 2), series_ary.shape)
         assert_equals((20, 2, 87, 76), series_ary_xpose.shape)
@@ -294,16 +297,17 @@ class TestSeriesBinaryLoader(PySparkTestCaseWithOutputDir):
 
             for expected, actual in zip(expecteddata, seriesdata):
                 expectedkeys = tuple(expected[0])
-                expectedvals = array(expected[1], dtype=item.valDType)
+                expectedtype = smallest_float_type(item.valDType)
+                expectedvals = array(expected[1], dtype=expectedtype)
                 assert_equals(expectedkeys, actual[0],
                               "Key mismatch in item %d; expected %s, got %s" %
                               (itemidx, str(expectedkeys), str(actual[0])))
                 assert_true(allclose(expectedvals, actual[1]),
                             "Value mismatch in item %d; expected %s, got %s" %
                             (itemidx, str(expectedvals), str(actual[1])))
-                assert_equals(item.valDType, actual[1].dtype,
+                assert_equals(expectedtype, str(actual[1].dtype),
                               "Value type mismatch in item %d; expected %s, got %s" %
-                              (itemidx, str(item.valDType), str(actual[1].dtype)))
+                              (itemidx, expectedtype, str(actual[1].dtype)))
 
     def test_fromBinary(self):
         self._run_tst_fromBinary()
@@ -335,8 +339,21 @@ class TestSeriesBinaryWriteFromStack(PySparkTestCaseWithOutputDir):
         underTest.saveFromStack(insubdir, outsubdir, dims, blockSize=blockSize, datatype=str(arrays[0].dtype))
         series = underTest.fromStack(insubdir, dims, datatype=str(arrays[0].dtype))
 
-        roundtripped = underTest.fromBinary(outsubdir).collect()
+        roundtripped_series = underTest.fromBinary(outsubdir)
+        roundtripped = roundtripped_series.collect()
         direct = series.collect()
+
+        expecteddtype = str(smallest_float_type(arrays[0].dtype))
+        assert_equals(expecteddtype, roundtripped_series.dtype)
+        assert_equals(expecteddtype, series.dtype)
+        assert_equals(expecteddtype, str(roundtripped[0][1].dtype))
+        assert_equals(expecteddtype, str(direct[0][1].dtype))
+
+        with open(os.path.join(outsubdir, "conf.json"), 'r') as fp:
+            # check that binary series file data type *matches* input stack data type (not yet converted to float)
+            # at least according to conf.json
+            conf = json.load(fp)
+            assert_equals(str(arrays[0].dtype), conf["valuetype"])
 
         for ((serieskeys, seriesvalues), (directkeys, directvalues)) in zip(roundtripped, direct):
             assert_equals(directkeys, serieskeys)
