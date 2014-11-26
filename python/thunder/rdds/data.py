@@ -39,8 +39,11 @@ class Data(object):
 
         Returns the result of calling self.rdd.first().
         """
+
+        from numpy import asarray
+        
         record = self.rdd.first()
-        self._dtype = str(record[1].dtype)
+        self._dtype = str(asarray(record[1]).dtype)
         return record
 
     def __finalize__(self, other, nopropagate=()):
