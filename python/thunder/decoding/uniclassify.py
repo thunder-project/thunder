@@ -2,7 +2,7 @@
 Class for mass-univariate classification
 """
 
-from numpy import in1d, zeros, array, size, float64
+from numpy import in1d, zeros, array, size, float64, asarray
 
 from thunder.rdds.series import Series
 
@@ -105,7 +105,7 @@ class MassUnivariateClassifier(object):
                 featureset = [[self.features[0]]]
             for i in featureset:
                 assert array([item in i for item in self.features]).sum() != 0, "Feature set invalid"
-            perf = data.rdd.mapValues(lambda x: map(lambda i: self.get(x, i), featureset))
+            perf = data.rdd.mapValues(lambda x: asarray(map(lambda i: self.get(x, i), featureset)))
 
         return Series(perf, index='performance').__finalize__(data)
 
