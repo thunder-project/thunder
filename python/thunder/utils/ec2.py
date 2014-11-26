@@ -178,6 +178,11 @@ if __name__ == "__main__":
     parser.add_option("-z", "--zone", default="", help="Availability zone to launch instances in, or 'all' to spread "
                                                        "slaves across multiple (an additional $0.01/Gb for "
                                                        "bandwidth between zones applies)")
+    parser.add_option("--ssh-port-forwarding", default = None,
+                      help="Set up ssh port forwarding when you login to the cluster.  " +
+                           "This provides a convenient alternative to connecting to iPython " +
+                           "notebook over an open port using SSL.  You must supply an argument " +
+                           "of the form \"local_port:remote_port\".")
     parser.add_option("--spot-price", metavar="PRICE", type="float",
                       help="If specified, launch slaves as spot instances with the given " +
                            "maximum price (in dollars)")
@@ -240,7 +245,36 @@ if __name__ == "__main__":
         if action == "login":
             print "Logging into master " + master + "..."
             proxy_opt = []
-            subprocess.check_call(ssh_command(opts) + proxy_opt + ['-t', '-t', "%s@%s" % (opts.user, master)])
+
+            # SSH tunnels are a convenient, zero-configuration
+            # alternative to opening a port using the EC2 security
+            # group settings and using iPython notebook over SSL.
+            #
+            # If the user has requested ssh port forwarding, we set
+            # that up here.
+            if opts.ssh_port_forwarding is not None:
+                ssh_ports = opts.ssh_port_forwarding.split(":")
+                if len(ssh_ports) != 2:
+                    print "\nERROR: Could not parse arguments to \'--ssh-port-forwarding\'."
+                    print "       Be sure you use the syntax \'local_port:remote_port\'"
+                    sys.exit(1)
+                print ("\nSSH port forwarding requested.  Remote port " + ssh_ports[1] +
+                       " will be accessible at http://localhost:" + ssh_ports[0] + '\n')
+                try:
+                    subprocess.check_call(ssh_command(opts) + proxy_opt +
+                                          ['-L', ssh_ports[0] +
+                                           ':127.0.0.1:' + ssh_ports[1],
+                                           '-o', 'ExitOnForwardFailure=yes',
+                                           '-t', '-t', "%s@%s" % (opts.user, master)])
+                except subprocess.CalledProcessError:
+                    print "\nERROR: Could not establish ssh connection with port forwarding."
+                    print "       Check your Internet connection and make sure that the"
+                    print "       ports you have requested are not already in use."
+                    sys.exit(1)
+
+            else:
+                subprocess.check_call(ssh_command(opts) + proxy_opt +
+                                      ['-t', '-t', "%s@%s" % (opts.user, master)])
 
         elif action == "get-master":
             print master_nodes[0].public_dns_name
