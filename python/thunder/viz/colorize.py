@@ -215,7 +215,7 @@ class Colorize(object):
 
         from matplotlib.colors import ListedColormap
 
-        if self.totype in ['rgb', 'hsv', 'polar']:
+        if self.totype in ['rgb', 'hsv', 'polar', 'indexed']:
             if len(dims) != 2:
                 raise Exception('Number of dimensions must be 2 for %s conversion' % self.totype)
             if self.totype in ['rgb', 'hsv']:
@@ -224,6 +224,10 @@ class Colorize(object):
             if self.totype in ['polar']:
                 if dims[1] != 2:
                     raise Exception('Must have 2 values per point for %s conversion' % self.totype)
+            if self.totype in ['indexed']:
+                if dims[1] != len(self.colors):
+                    raise Exception('Must have %g values per point for %s conversion with given list'
+                                    % (len(self.colors), self.totype))
         elif isinstance(self.totype, ListedColormap) or isinstance(self.totype, str):
             if len(dims) != 1:
                 raise Exception('Number of dimensions must be 1 for %s conversion' % self.totype)
