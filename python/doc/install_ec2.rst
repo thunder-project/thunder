@@ -73,7 +73,7 @@ When you stop a cluster, any data stored on the root partition ('/') will be the
 Use the iPython notebook
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-The iPython notebook is an especially useful way to do analyses interactively and look at results.  In order to connect to the iPython notebook with your web browser, you will need to establish access to the iPython server running on your EC2 master node.  There are two methods for doing this, described below.  Both methods work equally well, but one may be better suited to your particular workflow so we leave it up to you to choose!
+The iPython notebook is an especially useful way to do analyses interactively and look at results.  In order to connect to the iPython notebook with your web browser, you will need to establish access to the iPython server running on your EC2 master node.  There are two methods for doing this, described below.  Both methods work equally well, but one or the other may be better suited to your particular workflow so we leave it up to you to choose!
 
 **Method 1: Connect directly over SSL**
 
@@ -103,7 +103,7 @@ and go to the URL from the previous step in a web browser.  It will ask for the 
 
 **Method 2: Connect through an SSH Tunnel:**
 
-This method uses the SSH protocol to establish a "tunnel" that routes network traffic from a port of your choosing on your local machine to and from the iPython notebook port on the remote machine.  In essence, it makes it looks as though the remote iPython notebook is running on 'localhost' (i.e. your local machine).
+This method uses the SSH protocol to establish a "tunnel" that routes network traffic from a port of your choosing on your local machine to and from the iPython notebook on the remote machine.  In essence, it makes it looks as though the remote iPython notebook is running on 'localhost' (i.e. the hostname of your local machine).
 
 To connect to iPython notebok over an SSH tunnel, login to your cluster with
 
@@ -111,7 +111,7 @@ To connect to iPython notebok over an SSH tunnel, login to your cluster with
 
 	thunder-ec2 -k mykey -i ~/mykey.pem login <cluster-name> --ssh-port-forwarding <local_port>:8888
 
-A typical choice for <local_port> is 8888 as well.  However, you may need to choose another port if, for example, port 8888 is already in use by another process.
+A typical choice for <local_port> is 8888.  However, you may need to choose another port if, for example, port 8888 is already in use by another process.
 
 If this is the first time you are logging in to your cluster, you must run a script that configures iPython notebook to run in SSH tunnel mode.  Type:
 
@@ -127,9 +127,9 @@ Once you have done this, you are ready to run thunder!
 
 Simply point your browser at http://localhost:<local_port> and you will connect (over the SSH tunnel) to your iPython notebook server. Click ``New Notebook`` to start a session.
 
-Note that although the SSH tunnel method requires less setup than the SSL method, it does require that you remain logged into your cluster whenever you wish to access the iPython notebook.  Once you log out, the SSH tunnel is disconnected. Of course, iPython is still running on your server, and you can access your running notebooks as soon as you log back in.  Just be sure to include the --ssh-port-forwarding option every time!
+Note that although the SSH tunnel method involves less setup than the SSL method, it does require that you remain logged into your cluster whenever you wish to access the iPython notebook.  Once you log out, the SSH tunnel is disconnected. Of course, iPython is still running on your server, and you can access your running notebooks as soon as you log back in.  Just be sure to include the --ssh-port-forwarding option every time!
 
-As a final word of caution, these two methods are mutually exclusive.  You can only choose one method for connecting to your iPython notebook server.  If you change your mind, you can always remove the '/root/.ipython' directory on your EC2 master node and then follow the instruction above to switch methods.
+As a final word of caution: for now these two methods are mutually exclusive.  You can only use one of the above methods at a time.  However, if you change your mind simply remove the '/root/.ipython' directory on your EC2 master node and then follow the instruction above to switch methods.
 
 
 
