@@ -11,8 +11,8 @@ import random
 import subprocess
 from sys import stderr
 from optparse import OptionParser
-from spark_ec2 import ssh, launch_cluster, get_existing_cluster, wait_for_cluster, deploy_files, setup_spark_cluster, \
-    get_spark_ami, ssh_command, ssh_read, ssh_write, get_or_make_group
+from spark_ec2 import launch_cluster, get_existing_cluster, wait_for_cluster, stringify_command, \
+    deploy_files, setup_spark_cluster, get_spark_ami, ssh_read, ssh_write, get_or_make_group
 
 
 def get_s3_keys():
@@ -84,6 +84,44 @@ def install_thunder(master, opts):
     print "\n"
 
 
+# This is a customized version of the spark_ec2 ssh() function that
+# adds additional options to squash ssh host key checking errors that
+# occur when the ip addresses of your ec2 nodes change when you
+# start/stop a cluster.  Lame to have to copy all this code over, but
+# this seemed the simplest way to add this necessary functionality.
+def ssh_args(opts):
+    parts = ['-o', 'StrictHostKeyChecking=no',
+             '-o', 'UserKnownHostsFile=/dev/null']  # Never store EC2 IPs in known hosts...
+    if opts.identity_file is not None:
+        parts += ['-i', opts.identity_file]
+    return parts
+
+def ssh_command(opts):
+    return ['ssh'] + ssh_args(opts)
+
+def ssh(host, opts, command):
+    tries = 0
+    while True:
+        try:
+            return subprocess.check_call(
+                ssh_command(opts) + ['-t', '-t', '%s@%s' % (opts.user, host),
+                                     stringify_command(command)])
+        except subprocess.CalledProcessError as e:
+            if (tries > 5):
+                # If this was an ssh failure, provide the user with hints.
+                if e.returncode == 255:
+                    raise UsageError(
+                        "Failed to SSH to remote host {0}.\n" +
+                        "Please check that you have provided the correct --identity-file and " +
+                        "--key-pair parameters and try again.".format(host))
+                else:
+                    raise e
+            print >> stderr, \
+                "Error executing remote command, retrying after 30 seconds: {0}".format(e)
+            time.sleep(30)
+            tries = tries + 1
+
+
 def setup_cluster(conn, master_nodes, slave_nodes, opts, deploy_ssh_key):
     """Modified version of the setup_cluster function (borrowed from spark-ec.py)
     in order to manually set the folder with the deploy code
@@ -140,6 +178,11 @@ if __name__ == "__main__":
     parser.add_option("-z", "--zone", default="", help="Availability zone to launch instances in, or 'all' to spread "
                                                        "slaves across multiple (an additional $0.01/Gb for "
                                                        "bandwidth between zones applies)")
+    parser.add_option("--ssh-port-forwarding", default = None,
+                      help="Set up ssh port forwarding when you login to the cluster.  " +
+                           "This provides a convenient alternative to connecting to iPython " +
+                           "notebook over an open port using SSL.  You must supply an argument " +
+                           "of the form \"local_port:remote_port\".")
     parser.add_option("--spot-price", metavar="PRICE", type="float",
                       help="If specified, launch slaves as spot instances with the given " +
                            "maximum price (in dollars)")
@@ -152,6 +195,19 @@ if __name__ == "__main__":
         sys.exit(1)
     (action, cluster_name) = args
 
+    # The Thunder ec2 scripts hardwire some of the settings that were
+    # broken out as command line options in the Spark ec2 scripts.
+    opts.ami = get_spark_ami(opts)  # "ami-3ecd0c56"
+    opts.ebs_vol_size = 0
+    opts.master_instance_type = ""
+    opts.hadoop_major_version = "1"
+    opts.ganglia = True
+    opts.spark_version = "1.1.0"
+    opts.swap = 1024
+    opts.worker_instances = 1
+    opts.master_opts = ""
+    opts.user_data = ""
+
     # Launch a cluster, setting several options to defaults
     # (use spark-ec2.py included with Spark for more control)
     if action == "launch":
@@ -163,17 +219,6 @@ if __name__ == "__main__":
 
         if opts.zone == "":
             opts.zone = random.choice(conn.get_all_zones()).name
-
-        opts.ami = get_spark_ami(opts)  # "ami-3ecd0c56"
-        opts.ebs_vol_size = 0
-        opts.master_instance_type = ""
-        opts.hadoop_major_version = "1"
-        opts.ganglia = True
-        opts.spark_version = "1.1.0"
-        opts.swap = 1024
-        opts.worker_instances = 1
-        opts.master_opts = ""
-        opts.user_data = ""
 
         if opts.resume:
             (master_nodes, slave_nodes) = get_existing_cluster(conn, opts, cluster_name)
@@ -200,11 +245,91 @@ if __name__ == "__main__":
         if action == "login":
             print "Logging into master " + master + "..."
             proxy_opt = []
-            subprocess.check_call(ssh_command(opts) + proxy_opt + ['-t', '-t', "%s@%s" % (opts.user, master)])
+
+            # SSH tunnels are a convenient, zero-configuration
+            # alternative to opening a port using the EC2 security
+            # group settings and using iPython notebook over SSL.
+            #
+            # If the user has requested ssh port forwarding, we set
+            # that up here.
+            if opts.ssh_port_forwarding is not None:
+                ssh_ports = opts.ssh_port_forwarding.split(":")
+                if len(ssh_ports) != 2:
+                    print "\nERROR: Could not parse arguments to \'--ssh-port-forwarding\'."
+                    print "       Be sure you use the syntax \'local_port:remote_port\'"
+                    sys.exit(1)
+                print ("\nSSH port forwarding requested.  Remote port " + ssh_ports[1] +
+                       " will be accessible at http://localhost:" + ssh_ports[0] + '\n')
+                try:
+                    subprocess.check_call(ssh_command(opts) + proxy_opt +
+                                          ['-L', ssh_ports[0] +
+                                           ':127.0.0.1:' + ssh_ports[1],
+                                           '-o', 'ExitOnForwardFailure=yes',
+                                           '-t', '-t', "%s@%s" % (opts.user, master)])
+                except subprocess.CalledProcessError:
+                    print "\nERROR: Could not establish ssh connection with port forwarding."
+                    print "       Check your Internet connection and make sure that the"
+                    print "       ports you have requested are not already in use."
+                    sys.exit(1)
+
+            else:
+                subprocess.check_call(ssh_command(opts) + proxy_opt +
+                                      ['-t', '-t', "%s@%s" % (opts.user, master)])
+
+        elif action == "get-master":
+            print master_nodes[0].public_dns_name
 
         # Install thunder on the cluster
         elif action == "install":
             install_thunder(master, opts)
+
+        # Stop a running cluster.  Storage on EBS volumes is
+        # preserved, so you can restart the cluster in the same state
+        # (though you do pay a modest fee for EBS storage in the
+        # meantime).
+        elif action == "stop":
+            response = raw_input(
+                "Are you sure you want to stop the cluster " +
+                cluster_name + "?\nDATA ON EPHEMERAL DISKS WILL BE LOST, " +
+                "BUT THE CLUSTER WILL KEEP USING SPACE ON\n" +
+                "AMAZON EBS IF IT IS EBS-BACKED!!\n" +
+                "All data on spot-instance slaves will be lost.\n" +
+                "Stop cluster " + cluster_name + " (y/N): ")
+            if response == "y":
+                (master_nodes, slave_nodes) = get_existing_cluster(
+                    conn, opts, cluster_name, die_on_error=False)
+                print "Stopping master..."
+                for inst in master_nodes:
+                    if inst.state not in ["shutting-down", "terminated"]:
+                        inst.stop()
+                print "Stopping slaves..."
+                for inst in slave_nodes:
+                    if inst.state not in ["shutting-down", "terminated"]:
+                        if inst.spot_instance_request_id:
+                            inst.terminate()
+                        else:
+                            inst.stop()
+
+        # Restart a stopped cluster
+        elif action == "start":
+            print "Starting slaves..."
+            for inst in slave_nodes:
+                if inst.state not in ["shutting-down", "terminated"]:
+                    inst.start()
+            print "Starting master..."
+            for inst in master_nodes:
+                if inst.state not in ["shutting-down", "terminated"]:
+                    inst.start()
+            wait_for_cluster(conn, opts.wait, master_nodes, slave_nodes)
+            setup_cluster(conn, master_nodes, slave_nodes, opts, False)
+            master = master_nodes[0].public_dns_name
+            print "\n\n"
+            print "-------------------------------"
+            print "Cluster successfully re-started!"
+            print "Go to http://%s:8080 to see the web UI for your cluster" % master
+            print "-------------------------------"
+            print "\n"
+
 
         # Destroy the cluster
         elif action == "destroy":
