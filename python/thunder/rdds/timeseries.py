@@ -62,8 +62,6 @@ class TimeSeries(Series):
         else:
             newindex = range(-lag, lag+1)
 
-        print(m)
-
         scale = m.sum(axis=1)
 
         rdd = self.rdd.mapValues(lambda x: dot(m, x) / scale)
