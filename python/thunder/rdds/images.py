@@ -443,15 +443,14 @@ class Images(Data):
             self.rdd.mapValues(lambda v: v[sampleslices]), dims=newdims).__finalize__(self)
             
     def gaussfilter(self, sigma=2):
-        """eliminate noise by spatial smoothing with a gaussian filter, this function will
-        be applied to every image in the data set and can be applied to both x,y images and x,y,z
-
+        """Eliminate noise by spatial smoothing eratically behaving voxels with a gaussian filter
+        this function will be applied to every image in the data set and can be applied to both x,y images and x,y,z
+        
         parameters
         ----------
         sigma: size of the filter neighbourhood specifying the number of neighbouring voxels, with the default set to 2
         """
-
-
+        
         dims = self.dims
         ndims = len(dims)
 
@@ -463,23 +462,23 @@ class Images(Data):
         if ndims == 3:
 
             def filter(im):
-
-                for z in arange(0, dims[2]):
-                   return gaussian_filter(im[:,:,z], sigma)
+                 for z in arange(0, dims[2]):
+                    im[:,:,z] = gaussian_filter(im[:,:,z], sigma)
+                return im
 
         return self._constructor(
             self.rdd.mapValues(lambda v: filter(v))).__finalize__(self)
 
     def medianfilter(self, size=2):
 
-        """eliminate noise by spatial smoothing with a median filter, this function will
-        be applied to every image in the data set and can be applied to both x,y and x,y,z image dimensions
+        """Eliminate noise by spatially smoothing voxels that are behaving eratically with a median filter
+        this function will be applied to every image in the data set and can be applied to both x,y and x,y,z images
 
         parameters
         ----------
         size: size of the filter neighbourhood specifying the number of neighbouring voxels, with the default set to 2
         """
-
+        
         dims = self.dims
         ndims = len(dims)
 
@@ -492,7 +491,8 @@ class Images(Data):
 
             def filter(im):
                 for z in arange(0, dims[2]):
-                   return median_filter(im[:,:,z], size)
+                    im[:,:,z] = median_filter(im[:,:,z], size)
+                return im
 
         return self._constructor(
             self.rdd.mapValues(lambda v: filter(v))).__finalize__(self)
