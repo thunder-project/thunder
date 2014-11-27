@@ -176,10 +176,15 @@ class Series(Data):
         subinds = where(map(lambda x: crit(x), index))
         rdd = self.rdd.mapValues(lambda x: x[subinds])
 
-        # convert an array with one value to a scalar/int
+        # if singleton, need to check whether it's an array or a scalar/int
+        # if array, recompute a new set of indices
         if len(newindex) == 1:
-            newindex = newindex[0]
             rdd = rdd.mapValues(lambda x: x[0])
+            val = rdd.first()[1]
+            if size(val) == 1:
+                newindex = newindex[0]
+            else:
+                newindex = arange(0, size(val))
 
         return self._constructor(rdd, index=newindex).__finalize__(self)
 
