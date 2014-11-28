@@ -441,6 +441,61 @@ class Images(Data):
 
         return self._constructor(
             self.rdd.mapValues(lambda v: v[sampleslices]), dims=newdims).__finalize__(self)
+            
+    def gaussfilter(self, sigma=2):
+        """Eliminate noise by spatially smoothing voxels that are behaving eratically with a gaussian filter
+        this function will be applied to every image in the data set and can be applied to both x,y and x,y,z images
+
+        parameters
+        ----------
+        size: size of the filter neighbourhood specifying the number of neighbouring voxels, with the default set to 2
+        """
+
+        dims = self.dims
+        ndims = len(dims)
+
+        if ndims == 2:
+
+            def filter(im):
+                return gaussian_filter(im, sigma)
+
+        if ndims == 3:
+
+            def filter(im):
+
+                for z in arange(0, dims[2]):
+                    im[:,:,z] = gaussian_filter(im[:,:,z], sigma)
+                return im
+
+        return self._constructor(
+            self.rdd.mapValues(lambda v: filter(v))).__finalize__(self)
+
+    def medianfilter(self, size=2):
+        """Eliminate noise by spatially smoothing voxels that are behaving eratically with a median filter
+        this function will be applied to every image in the data set and can be applied to both x,y and x,y,z images
+
+        parameters
+        ----------
+        size: size of the filter neighbourhood specifying the number of neighbouring voxels, with the default set to 2
+        """
+
+        dims = self.dims
+        ndims = len(dims)
+
+        if ndims == 2:
+
+            def filter(im):
+                return median_filter(im, size)
+
+        if ndims == 3:
+
+            def filter(im):
+                for z in arange(0, dims[2]):
+                   im[:,:,z] = median_filter(im[:,:,z], size)
+                return im
+
+        return self._constructor(
+            self.rdd.mapValues(lambda v: filter(v))).__finalize__(self)
 
     def planes(self, bottom, top, inclusive=True):
         """
