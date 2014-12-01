@@ -40,10 +40,20 @@ def install_thunder(master, opts):
     ssh(master, opts, "pssh -h /root/spark-ec2/slaves mkdir -p /root/thunder/python/thunder/utils/data/")
     ssh(master, opts, "~/spark-ec2/copy-dir /root/thunder/python/thunder/utils/data/")
     # install pip
-    ssh(master, opts, "wget http://pypi.python.org/packages/source/p/pip/pip-1.1.tar.gz"
-                      "#md5=62a9f08dd5dc69d76734568a6c040508")
-    ssh(master, opts, "tar -xvf pip*.gz")
-    ssh(master, opts, "cd pip* && sudo python setup.py install")
+    ssh(master, opts, "wget http://pypi.python.org/packages/source/p/pip/pip-1.1.tar.gz")
+    ssh(master, opts, "tar xzf pip-1.1.tar.gz")
+    ssh(master, opts, "cd pip-1.1 && sudo python setup.py install")
+    # install pip on workers
+    worker_pip_install = "wget http://pypi.python.org/packages/source/p/pip/pip-1.1.tar.gz && tar xzf pip-1.1.tar.gz && cd pip-1.1 && python setup.py install"
+    ssh(master, opts, "printf '"+worker_pip_install+"' > /root/workers_pip_install.sh")
+    ssh(master, opts, "pssh -h /root/spark-ec2/slaves -I < /root/workers_pip_install.sh")
+    # uninstall PIL, install Pillow on master and workers
+    ssh(master, opts, "rpm -e --nodeps python-imaging")
+    ssh(master, opts, "yum install -y libtiff libtiff-devel")
+    ssh(master, opts, "pip install Pillow")
+    worker_pillow_install = "rpm -e --nodeps python-imaging && yum install -y libtiff libtiff-devel && pip install Pillow"
+    ssh(master, opts, "printf '"+worker_pillow_install+"' > /root/workers_pillow_install.sh")
+    ssh(master, opts, "pssh -h /root/spark-ec2/slaves -I < /root/workers_pillow_install.sh")
     # install libraries
     ssh(master, opts, "source ~/.bash_profile && pip install mpld3 && pip install seaborn "
                       "&& pip install jinja2 && pip install -U scikit-learn")
