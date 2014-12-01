@@ -451,6 +451,8 @@ class Images(Data):
         size: size of the filter neighbourhood specifying the number of neighbouring voxels, with the default set to 2
         """
 
+        from scipy.ndimage.filters import gaussian_filter
+
         dims = self.dims
         ndims = len(dims)
 
@@ -478,6 +480,8 @@ class Images(Data):
         ----------
         size: size of the filter neighbourhood specifying the number of neighbouring voxels, with the default set to 2
         """
+
+        from scipy.ndimage.filters import median_filter
 
         dims = self.dims
         ndims = len(dims)
