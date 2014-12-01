@@ -82,7 +82,8 @@ def pil_to_array(pilImage):
             x = toarray(im, '<u2')
         x.shape = im.size[1], im.size[0]
         return x.astype('=u2')
-    elif pilImage.mode.startswith('I;32'):
+    elif pilImage.mode.startswith('I;32') or pilImage.mode == 'I':
+        # default 'I' mode is 32 bit; see http://svn.effbot.org/public/tags/pil-1.1.7/libImaging/Unpack.c (at bottom)
         # return MxN luminance array of uint32
         im = pilImage
         if im.mode.endswith('B'):
@@ -100,7 +101,8 @@ def pil_to_array(pilImage):
             x = toarray(im, '<f2')
         x.shape = im.size[1], im.size[0]
         return x.astype('=f2')
-    elif pilImage.mode.startswith('F;32'):
+    elif pilImage.mode.startswith('F;32') or pilImage.mode == 'F':
+        # default 'F' mode is 32 bit; see http://svn.effbot.org/public/tags/pil-1.1.7/libImaging/Unpack.c (at bottom)
         # return MxN luminance array of float32
         im = pilImage
         if im.mode.endswith('B'):
