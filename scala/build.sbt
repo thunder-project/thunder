@@ -1,4 +1,4 @@
-name := "Thunder"
+name := "thunder"
 
 version := "0.5.0_dev"
 
