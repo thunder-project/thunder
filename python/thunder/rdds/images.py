@@ -466,7 +466,7 @@ class Images(Data):
             def filter(im):
 
                 for z in arange(0, dims[2]):
-                    im[:,:,z] = gaussian_filter(im[:,:,z], sigma)
+                    im[:, :, z] = gaussian_filter(im[:, :, z], sigma)
                 return im
 
         return self._constructor(
@@ -495,7 +495,7 @@ class Images(Data):
 
             def filter(im):
                 for z in arange(0, dims[2]):
-                   im[:,:,z] = median_filter(im[:,:,z], size)
+                    im[:, :, z] = median_filter(im[:, :, z], size)
                 return im
 
         return self._constructor(
