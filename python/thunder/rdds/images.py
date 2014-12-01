@@ -443,12 +443,16 @@ class Images(Data):
             self.rdd.mapValues(lambda v: v[sampleslices]), dims=newdims).__finalize__(self)
             
     def gaussfilter(self, sigma=2):
-        """Eliminate noise by spatially smoothing voxels that are behaving eratically with a gaussian filter
-        this function will be applied to every image in the data set and can be applied to both x,y and x,y,z images
+        """Spatially smooth images using a gaussian filter.
+
+        This function will be applied to every image in the data set and can be applied
+        to either images or volumes. In the latter case, filtering will be applied separately
+        to each plane.
 
         parameters
         ----------
-        size: size of the filter neighbourhood specifying the number of neighbouring voxels, with the default set to 2
+        sigma : int, optional, default=2
+            Size of the filter neighbourhood in pixels
         """
 
         from scipy.ndimage.filters import gaussian_filter
@@ -473,12 +477,16 @@ class Images(Data):
             self.rdd.mapValues(lambda v: filter(v))).__finalize__(self)
 
     def medianfilter(self, size=2):
-        """Eliminate noise by spatially smoothing voxels that are behaving eratically with a median filter
-        this function will be applied to every image in the data set and can be applied to both x,y and x,y,z images
+        """Spatially smooth images using a median filter.
+
+        The filtering will be applied to every image in the collection and can be applied
+        to either images or volumes. In the latter case, filtering will be applied separately
+        to each plane.
 
         parameters
         ----------
-        size: size of the filter neighbourhood specifying the number of neighbouring voxels, with the default set to 2
+        size: int, optional, default=2
+            Size of the filter neighbourhood in pixels
         """
 
         from scipy.ndimage.filters import median_filter
