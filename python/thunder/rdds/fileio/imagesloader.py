@@ -2,7 +2,7 @@
 """
 from matplotlib.pyplot import imread
 from io import BytesIO
-from numpy import dstack, frombuffer, ndarray, prod
+from numpy import array, dstack, frombuffer, ndarray, prod
 from thunder.rdds.fileio.readers import getParallelReaderForPath
 from thunder.rdds.keys import Dimensions
 from thunder.rdds.images import Images
@@ -133,7 +133,6 @@ class ImagesLoader(object):
             Image = None
             raise ImportError("fromMultipageTif requires a successful 'from PIL import Image'; " +
                               "the PIL/pillow library appears to be missing or broken.", e)
-        from thunder.utils.common import pil_to_array
 
         def multitifReader(buf):
             fbuf = BytesIO(buf)
@@ -143,7 +142,7 @@ class ImagesLoader(object):
             while True:
                 try:
                     multipage.seek(pageidx)
-                    imgarys.append(pil_to_array(multipage))
+                    imgarys.append(array(multipage))
                     pageidx += 1
                 except EOFError:
                     # past last page in tif

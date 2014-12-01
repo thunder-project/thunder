@@ -6,7 +6,7 @@ import unittest
 from nose.tools import assert_equals, assert_true, assert_almost_equal
 
 from thunder.rdds.fileio.seriesloader import SeriesLoader
-from thunder.utils.common import pil_to_array, smallest_float_type
+from thunder.utils.common import smallest_float_type
 from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
 
 _have_image = False
@@ -200,11 +200,11 @@ class TestSeriesLoader(PySparkTestCase):
 
         testimg_pil = Image.open(imagepath)
         testimg_arys = list()
-        testimg_arys.append(pil_to_array(testimg_pil))
+        testimg_arys.append(array(testimg_pil))
         testimg_pil.seek(1)
-        testimg_arys.append(pil_to_array(testimg_pil))
+        testimg_arys.append(array(testimg_pil))
         testimg_pil.seek(2)
-        testimg_arys.append(pil_to_array(testimg_pil))
+        testimg_arys.append(array(testimg_pil))
 
         series = SeriesLoader(self.sc).fromMultipageTif(imagepath)
         assert_equals('float16', series._dtype)
