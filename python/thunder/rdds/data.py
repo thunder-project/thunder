@@ -237,6 +237,23 @@ class Data(object):
         from numpy import minimum
         return self.rdd.values().reduce(minimum)
 
+    def coalesce(self, numPartitions):
+        """ Coalesce data (used to reduce number of partitions).
+
+        This calls the Spark coalesce() method on the underlying RDD.
+
+        Parameters
+        ----------
+        numPartitions : int
+            Number of partitions in coalesced RDD
+        """
+        current = self.rdd.getNumPartitions()
+        if numPartitions > current:
+            raise Exception('Trying to increase number of partitions (from %g to %g), '
+                            'cannot use coalesce, try repartition' % (current, numPartitions))
+        self.rdd = self.rdd.coalesce(numPartitions)
+        return self
+
     def cache(self):
         """ Enable in-memory caching.
 
@@ -249,6 +266,11 @@ class Data(object):
         """ Repartition data.
 
         This calls the Spark repartition() method on the underlying RDD.
+
+        Parameters
+        ----------
+        numPartitions : int
+            Number of partitions in new RDD
         """
         self.rdd = self.rdd.repartition(numPartitions)
         return self
