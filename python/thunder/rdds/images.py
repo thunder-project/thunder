@@ -533,6 +533,9 @@ class Images(Data):
             zrange = arange(bottom+1, top)
         newdims = [self.dims[0], self.dims[1], size(zrange)]
 
+        if size(zrange) < 2:
+            newdims = newdims[0:2]
+
         return self._constructor(self.rdd.mapValues(lambda v: squeeze(v[:, :, zrange])),
                                  dims=newdims).__finalize__(self)
 
