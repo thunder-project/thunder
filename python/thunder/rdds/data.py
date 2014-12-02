@@ -207,17 +207,6 @@ class Data(object):
         """
         return self.stats('stdev', dtype=dtype, casting=casting).stdev()
 
-    # def stats(self, dtype='smallfloat', casting='safe'):
-    #     """ Stats of values, ignoring keys
-    #
-    #     If dtype is not None, then the values will first be cast to the requested type before the operation is
-    #     performed. See Data.astype() for details.
-    #
-    #     obj.stats() is equivalent to obj.astype(dtype, casting).rdd.values().stats().
-    #     """
-    #     out = self.astype(dtype, casting)
-    #     return out.rdd.values().stats()
-
     def stats(self, requestedStats='all', dtype='smallfloat', casting='safe'):
         """
         Return a L{StatCounter} object that captures all or some of the mean, variance, maximum, minimum,

@@ -16,7 +16,8 @@
 #
 
 # This file is ported from spark/util/StatCounter.scala
-# Modified from pyspark's statcounter.py.
+#
+# This code is based on pyspark's statcounter.py and used under the ASF 2.0 license.
 
 import copy
 import math
