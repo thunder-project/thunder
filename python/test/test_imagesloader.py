@@ -14,6 +14,7 @@ except ImportError:
     # PIL not available; skip tests that require it
     Image = None
 
+
 class TestImagesFileLoaders(PySparkTestCase):
     @staticmethod
     def _findTestResourcesDir(resourcesdirname="resources"):
@@ -87,9 +88,8 @@ class TestImagesFileLoaders(PySparkTestCase):
         expectedkeys = range(expectednum)
         self._evaluateMultipleImages(tifimages, expectednum, expectedshape, expectedkeys, expectedsums)
 
-    @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
-    def test_fromMultipageTif(self):
-        imagepath = os.path.join(self.testresourcesdir, "multilayer_tif", "dotdotdot_lzw.tif")
+    def _run_tst_multitif(self, filename, expectedDtype):
+        imagepath = os.path.join(self.testresourcesdir, "multilayer_tif", filename)
         tifimages = ImagesLoader(self.sc).fromMultipageTif(imagepath, self.sc).collect()
 
         expectednum = 1
@@ -104,10 +104,18 @@ class TestImagesFileLoaders(PySparkTestCase):
         assert_equals(expectedkey, tifimage[0], "Expected key %s, got %s" % (str(expectedkey), str(tifimage[0])))
         assert_true(isinstance(tifimage[1], ndarray),
                     "Value type error; expected image value to be numpy ndarray, was " + str(type(tifimage[1])))
-        assert_equals('uint8', str(tifimage[1].dtype))
+        assert_equals(expectedDtype, str(tifimage[1].dtype))
         assert_equals(expectedshape, tifimage[1].shape)
         for channelidx in xrange(0, expectedshape[2]):
             assert_equals(expectedsums[channelidx], tifimage[1][:, :, channelidx].flatten().sum())
+
+    @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
+    def test_fromMultipageTif(self):
+        self._run_tst_multitif("dotdotdot_lzw.tif", "uint8")
+
+    @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
+    def test_fromFloatingpointTif(self):
+        self._run_tst_multitif("dotdotdot_float32.tif", "float32")
 
 
 class TestImagesLoaderUsingOutputDir(PySparkTestCaseWithOutputDir):

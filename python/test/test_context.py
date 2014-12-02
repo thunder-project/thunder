@@ -5,7 +5,6 @@ from nose.tools import assert_equals, assert_true
 
 from test_utils import PySparkTestCaseWithOutputDir
 from thunder import ThunderContext
-from thunder.utils.common import pil_to_array
 
 _have_image = False
 try:
@@ -133,11 +132,11 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
 
         testimg_pil = Image.open(imagepath)
         testimg_arys = list()
-        testimg_arys.append(pil_to_array(testimg_pil))  # original shape 70, 75
+        testimg_arys.append(np.array(testimg_pil))  # original shape 70, 75
         testimg_pil.seek(1)
-        testimg_arys.append(pil_to_array(testimg_pil))
+        testimg_arys.append(np.array(testimg_pil))
         testimg_pil.seek(2)
-        testimg_arys.append(pil_to_array(testimg_pil))
+        testimg_arys.append(np.array(testimg_pil))
 
         range_series = self.tsc.loadImagesAsSeries(imagepath, inputformat="tif-stack", shuffle=shuffle)
         assert_true(range_series._dtype.startswith("float"))

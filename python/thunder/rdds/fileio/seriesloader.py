@@ -378,7 +378,6 @@ class SeriesLoader(object):
         import thunder.rdds.fileio.multitif as multitif
         import itertools
         from PIL import Image
-        from thunder.utils.common import pil_to_array, smallest_float_type
         import io
 
         datapath = self.__normalizeDatafilePattern(datapath, ext)
@@ -438,7 +437,7 @@ class SeriesLoader(object):
                         bytebuf = io.BytesIO(tiffilebuffer)
                         try:
                             pilimg = Image.open(bytebuf)
-                            ary = pil_to_array(pilimg).T
+                            ary = array(pilimg).T
                         finally:
                             bytebuf.close()
                         del tiffilebuffer, tiffparser_, pilimg, bytebuf
@@ -446,7 +445,7 @@ class SeriesLoader(object):
                         # read tif using PIL directly
                         pilimg = Image.open(fp)
                         pilimg.seek(planeidx)
-                        ary = pil_to_array(pilimg).T
+                        ary = array(pilimg).T
                         del pilimg
 
                     if not planeshape:
