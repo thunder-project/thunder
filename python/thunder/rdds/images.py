@@ -531,6 +531,17 @@ class Images(Data):
             zrange = arange(bottom, top+1)
         else:
             zrange = arange(bottom+1, top)
+
+        if len(zrange) == 0:
+            raise Exception("No planes selected with range (%g, %g) and inclusive=%s, "
+                            "try a different range" % (bottom, top, inclusive))
+
+        if zrange.min() < self.dims.min[2]:
+            raise Exception("Cannot include plane %g, first plane is %g" % (zrange.min(), self.dims.min[2]))
+
+        if zrange.max() > self.dims.max[2]:
+            raise Exception("Cannout include plane %g, last plane is %g" % (zrange.max(), self.dims.max[2]))
+
         newdims = [self.dims[0], self.dims[1], size(zrange)]
 
         if size(zrange) < 2:
