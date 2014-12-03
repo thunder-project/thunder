@@ -468,7 +468,7 @@ class Images(Data):
         if ndims == 3:
 
             def filter(im):
-
+                im.setflags(write=True)
                 for z in arange(0, dims[2]):
                     im[:, :, z] = gaussian_filter(im[:, :, z], sigma)
                 return im
@@ -502,6 +502,7 @@ class Images(Data):
         if ndims == 3:
 
             def filter(im):
+                im.setflags(write=True)
                 for z in arange(0, dims[2]):
                     im[:, :, z] = median_filter(im[:, :, z], size)
                 return im
