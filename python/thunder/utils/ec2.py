@@ -1,8 +1,27 @@
+#!/usr/bin/env python
 """
 Wrapper for the Spark EC2 launch script that additionally
 installs Thunder and its dependencies, and optionally
 loads an example data set
 """
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Modified from Spark's spark_ec2.py under the terms of the ASF 2.0 license.
 
 from boto import ec2
 import sys
@@ -11,8 +30,15 @@ import random
 import subprocess
 from sys import stderr
 from optparse import OptionParser
-from spark_ec2 import launch_cluster, get_existing_cluster, wait_for_cluster, stringify_command, \
+from spark_ec2 import launch_cluster, get_existing_cluster, stringify_command, \
     deploy_files, setup_spark_cluster, get_spark_ami, ssh_read, ssh_write, get_or_make_group
+
+try:
+    from spark_ec2 import wait_for_cluster
+    spark_110 = True
+except ImportError:
+    from spark_ec2 import wait_for_cluster_state
+    spark_110 = False
 
 
 def get_s3_keys():
@@ -66,10 +92,19 @@ def install_thunder(master, opts):
     ssh(master, opts, "echo 'export SPARK_HOME=/root/spark' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export PYTHONPATH=/root/thunder/python' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export IPYTHON=1' >> /root/.bash_profile")
+    # need to explicitly set PYSPARK_PYTHON with spark 1.2.0; otherwise fails with:
+    # "IPython requires Python 2.7+; please install python2.7 or set PYSPARK_PYTHON"
+    # should not do this with earlier versions, as it will lead to
+    # "java.lang.IllegalArgumentException: port out of range" [SPARK-3772]
+    if not spark_110:
+        ssh(master, opts, "echo 'export PYSPARK_PYTHON=/usr/bin/ipython' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export PATH=/root/thunder/python/bin:$PATH' >> /root/.bash_profile")
     # customize spark configuration parameters
     ssh(master, opts, "echo 'spark.akka.frameSize=10000' >> /root/spark/conf/spark-defaults.conf")
     ssh(master, opts, "echo 'spark.kryoserializer.buffer.max.mb=1024' >> /root/spark/conf/spark-defaults.conf")
+    # disable filtering collect() calls by max result size. (Only matters for spark >= 1.2.0, but no harm in
+    # specifying for earlier versions)
+    ssh(master, opts, "echo 'spark.driver.maxResultSize=0' >> /root/spark/conf/spark-defaults.conf")
     ssh(master, opts, "echo 'export SPARK_DRIVER_MEMORY=20g' >> /root/spark/conf/spark-env.sh")
     # add AWS credentials to core-site.xml
     configstring = "<property><name>fs.s3n.awsAccessKeyId</name><value>ACCESS</value></property><property>" \
@@ -198,6 +233,15 @@ if __name__ == "__main__":
                            "maximum price (in dollars)")
     parser.add_option("--resume", default=False, action="store_true",
                       help="Resume installation on a previously launched cluster (for debugging)")
+    if not spark_110:
+        parser.add_option("--authorized-address", type="string", default="0.0.0.0/0",
+                          help="Address to authorize on created security groups (default: %default)" +
+                               " (only with Spark >= 1.2.0)")
+        parser.add_option("--additional-security-group", type="string", default="",
+                          help="Additional security group to place the machines in (only with Spark >= 1.2.0)")
+        parser.add_option("--copy-aws-credentials", action="store_true", default=False,
+                          help="Add AWS credentials to hadoop configuration to allow Spark to access S3" +
+                               " (only with Spark >= 1.2.0)")
 
     (opts, args) = parser.parse_args()
     if len(args) != 2:
@@ -212,7 +256,11 @@ if __name__ == "__main__":
     opts.master_instance_type = ""
     opts.hadoop_major_version = "1"
     opts.ganglia = True
-    opts.spark_version = "1.1.0"
+    if spark_110:
+        opts.spark_version = "1.1.0"
+    else:
+        opts.spark_version = "1056e9ec13"  # spark 1.2.0 rc1, change to "1.2.0" once released and mesos/spark-ec2 is updated
+    opts.spark_git_repo = "https://github.com/apache/spark"
     opts.swap = 1024
     opts.worker_instances = 1
     opts.master_opts = ""
@@ -235,7 +283,14 @@ if __name__ == "__main__":
         else:
             (master_nodes, slave_nodes) = launch_cluster(conn, opts, cluster_name)
 
-        wait_for_cluster(conn, opts.wait, master_nodes, slave_nodes)
+        if spark_110:
+            wait_for_cluster(conn, opts.wait, master_nodes, slave_nodes)
+        else:
+            wait_for_cluster_state(
+                cluster_instances=(master_nodes + slave_nodes),
+                cluster_state='ssh-ready',
+                opts=opts
+            )
         setup_cluster(conn, master_nodes, slave_nodes, opts, True)
         master = master_nodes[0].public_dns_name
         install_thunder(master, opts)
