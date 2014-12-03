@@ -1,6 +1,6 @@
 from numpy import ndarray, array, sum, mean, std, size, arange, \
     polyfit, polyval, percentile, asarray, maximum, zeros, corrcoef, where, \
-    true_divide, empty_like
+    true_divide, empty_like, ceil
 from numpy import dtype as dtypefunc
 
 from thunder.rdds.data import Data
@@ -221,25 +221,52 @@ class Series(Data):
         return self.apply(func)
 
     def normalize(self, baseline='percentile', **kwargs):
-        """ Normalize each record in series data by
-        subtracting and dividing by a baseline
+        """ Normalize each record by subtracting and dividing by a baseline.
+
+        Baseline can be derived from a global mean or percentile,
+        or a smoothed percentile estimated within a rolling window.
+
         Parameters
         ----------
         baseline : str, optional, default = 'percentile'
-            Quantity to use as the baseline
-        perc : int, optional, default = 20
-            Percentile value to use, for 'percentile' baseline only
-        """
-        checkparams(baseline, ['mean', 'percentile'])
+            Quantity to use as the baseline, options are 'mean', 'percentile', or 'window'
 
-        if baseline.lower() == 'mean':
+        percentile : int, optional, default = 20
+            Percentile value to use, for 'percentile' or 'window' baseline only
+
+        window : int, optional, default = 6
+            Size of window for windowed baseline estimation
+        """
+        checkparams(baseline, ['mean', 'percentile', 'window'])
+        method = baseline.lower()
+
+        if method == 'mean':
             basefunc = mean
-        if baseline.lower() == 'percentile':
+
+        if method == 'percentile' or method == 'window':
             if 'percentile' in kwargs:
                 perc = kwargs['percentile']
             else:
                 perc = 20
+
+        if method == 'percentile':
             basefunc = lambda x: percentile(x, perc)
+
+        # TODO optimize implementation by doing a single initial sort
+        if method == 'window':
+            if 'window' in kwargs:
+                window = kwargs['window']
+            else:
+                window = 6
+
+            if window & 0x1:
+                left, right = (ceil(window/2), ceil(window/2) + 1)
+            else:
+                left, right = (window/2, window/2)
+
+            n = len(self.index)
+            basefunc = lambda x: asarray([percentile(x[max(ix-left, 0):min(ix+right+1, n)], perc)
+                                          for ix in arange(0, n)])
 
         def get(y):
             b = basefunc(y)
