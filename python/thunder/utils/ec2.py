@@ -9,6 +9,7 @@ import sys
 import os
 import random
 import subprocess
+import time
 from sys import stderr
 from optparse import OptionParser
 from spark_ec2 import launch_cluster, get_existing_cluster, wait_for_cluster, stringify_command, \
@@ -120,7 +121,7 @@ def ssh(host, opts, command):
             if (tries > 5):
                 # If this was an ssh failure, provide the user with hints.
                 if e.returncode == 255:
-                    raise UsageError(
+                    raise Exception(
                         "Failed to SSH to remote host {0}.\n" +
                         "Please check that you have provided the correct --identity-file and " +
                         "--key-pair parameters and try again.".format(host))
