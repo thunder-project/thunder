@@ -297,6 +297,12 @@ class BotoS3ParallelReader(_BotoS3Client):
         if not keynamelist:
             raise FileNotFoundError("No S3 objects found for '%s'" % datapath)
 
+        # originally this was set up so as to try to conserve boto connections, with one boto connection
+        # d/ling multiple images - hence this being structured as a mapPartitions() function rather than
+        # a straight map. but it is probably better to maintain one partition per image. all of which is
+        # to say, there is no longer any good reason for this to be a mapPartitions() call rather than
+        # just a map(), since now the parallelize call below is setting number partitions equal to number
+        # images, but it works so I'm not yet messing with it.
         def readSplitFromS3(kvIter):
             conn = boto.connect_s3()
             bucket = conn.get_bucket(bucketname)
@@ -308,7 +314,8 @@ class BotoS3ParallelReader(_BotoS3Client):
 
         # don't specify number of splits here - allow reuse of connections within partition
         self.lastnrecs = len(keynamelist)
-        return self.sc.parallelize(enumerate(keynamelist)).mapPartitions(readSplitFromS3)
+        # now set num partitions explicitly to num images - see comment on readSplitFromS3 above.
+        return self.sc.parallelize(enumerate(keynamelist), self.lastnrecs).mapPartitions(readSplitFromS3)
 
 
 class LocalFSFileReader(object):
