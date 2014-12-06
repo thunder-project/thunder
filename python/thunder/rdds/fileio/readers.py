@@ -384,7 +384,7 @@ class BotoS3FileReader(_BotoS3Client):
                         keyname = ""
             keyname += filename
 
-        return _BotoS3Client.retrieveKeys(bucket, keyname)
+        return _BotoS3Client.retrieveKeys(bucket, keyname, prefix=parse[2], postfix=parse[3])
 
     def list(self, datapath, filename=None):
         """List s3 objects specified by datapath.
