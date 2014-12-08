@@ -181,13 +181,13 @@ class SimpleBlocks(Blocks):
 
         return temporalIdx, ary
 
-    def toSeries(self):
+    def toSeries(self, newdtype="smallfloat", casting="safe"):
         from thunder.rdds.series import Series
         # returns generator of (z, y, x) array data for all z, y, x
         seriesrdd = self.rdd.flatMap(lambda kv: SimpleBlocks.toSeriesIter(kv[0], kv[1]))
 
         idx = arange(self._nimages) if self._nimages else None
-        return Series(seriesrdd, dims=self.dims, index=idx, dtype=self.dtype)
+        return Series(seriesrdd, dims=self.dims, index=idx, dtype=self.dtype).astype(newdtype, casting=casting)
 
     def toImages(self):
         from thunder.rdds.images import Images
