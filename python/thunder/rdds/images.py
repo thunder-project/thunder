@@ -442,7 +442,7 @@ class Images(Data):
         return self._constructor(
             self.rdd.mapValues(lambda v: v[sampleslices]), dims=newdims).__finalize__(self)
             
-    def gaussfilter(self, sigma=2):
+    def gaussianFilter(self, sigma=2):
         """Spatially smooth images using a gaussian filter.
 
         This function will be applied to every image in the data set and can be applied
@@ -476,7 +476,7 @@ class Images(Data):
         return self._constructor(
             self.rdd.mapValues(lambda v: filter(v))).__finalize__(self)
 
-    def medianfilter(self, size=2):
+    def medianFilter(self, size=2):
         """Spatially smooth images using a median filter.
 
         The filtering will be applied to every image in the collection and can be applied
