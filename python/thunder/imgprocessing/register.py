@@ -113,9 +113,8 @@ class Register(object):
                     t.append(self.get_transform(im[:, :, z], ref.value[:, :, z]))
             return t
 
-        # TODO instead of collecting, maybe return as a Series?
-        params = images.rdd.mapValues(lambda x: params(x, reference_bc)).collect()
-        return params
+        from thunder import Series
+        return Series(images.rdd.mapValues(lambda x: params(x, reference_bc)))
 
     def transform(self, images, reference):
         """

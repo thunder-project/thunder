@@ -24,31 +24,33 @@ class TestRegistration(ImprocessingTestCase):
         random.seed(42)
         ref = random.randn(25, 25)
 
+        reg = Register('crosscorr')
+
         im = shift(ref, [2, 0], mode='constant', order=0)
         imin = ImagesLoader(self.sc).fromArrays(im)
-        paramout = Register('crosscorr').estimate(imin, ref)[0][1]
-        imout = Register('crosscorr').transform(imin, ref).first()[1]
+        paramout = reg.estimate(imin, ref).collect()[0][1]
+        imout = reg.transform(imin, ref).first()[1]
         assert(allclose(ref[:-2, :], imout[:-2, :]))
         assert(allclose(paramout, [2, 0]))
 
         im = shift(ref, [0, 2], mode='constant', order=0)
         imin = ImagesLoader(self.sc).fromArrays(im)
-        paramout = Register('crosscorr').estimate(imin, ref)[0][1]
-        imout = Register('crosscorr').transform(imin, ref).first()[1]
+        paramout = reg.estimate(imin, ref).collect()[0][1]
+        imout = reg.transform(imin, ref).first()[1]
         assert(allclose(ref[:, :-2], imout[:, :-2]))
         assert(allclose(paramout, [0, 2]))
 
         im = shift(ref, [2, -2], mode='constant', order=0)
         imin = ImagesLoader(self.sc).fromArrays(im)
-        paramout = Register('crosscorr').estimate(imin, ref)[0][1]
-        imout = Register('crosscorr').transform(imin, ref).first()[1]
+        paramout = reg.estimate(imin, ref).collect()[0][1]
+        imout = reg.transform(imin, ref).first()[1]
         assert(allclose(ref[:-2, 2:], imout[:-2, 2:]))
         assert(allclose(paramout, [2, -2]))
 
         im = shift(ref, [-2, 2], mode='constant', order=0)
         imin = ImagesLoader(self.sc).fromArrays(im)
-        paramout = Register('crosscorr').estimate(imin, ref)[0][1]
-        imout = Register('crosscorr').transform(imin, ref).first()[1]
+        paramout = reg.estimate(imin, ref).collect()[0][1]
+        imout = reg.transform(imin, ref).first()[1]
         assert(allclose(ref[2:, :-2], imout[2:, :-2]))
         assert(allclose(paramout, [-2, 2]))
 
@@ -59,7 +61,7 @@ class TestRegistration(ImprocessingTestCase):
 
         im = shift(ref, [2, -2, 0], mode='constant', order=0)
         imin = ImagesLoader(self.sc).fromArrays(im)
-        paramout = Register('crosscorr').estimate(imin, ref)[0][1]
+        paramout = Register('crosscorr').estimate(imin, ref).collect()[0][1]
         imout = Register('crosscorr').transform(imin, ref).first()[1]
         assert(allclose(paramout, [[2, -2], [2, -2], [2, -2]]))
         assert(allclose(ref[:-2, 2:, :], imout[:-2, 2:, :]))
