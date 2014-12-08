@@ -1,1 +1,2 @@
-__author__ = 'jascha'
+"""Modules related to subdividing Images into smaller contiguous blocks
+"""
