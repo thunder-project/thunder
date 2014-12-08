@@ -1,4 +1,4 @@
-from numpy import arange, ndarray, argmax, unravel_index
+from numpy import arange, ndarray, argmax, unravel_index, asarray
 
 from thunder.rdds.images import Images
 from thunder.utils.common import checkparams
@@ -7,15 +7,65 @@ from thunder.utils.common import checkparams
 class Register(object):
 
     def __new__(cls, method="crosscorr"):
+
         checkparams(method, ["crosscorr"])
+
         if method == "crosscorr":
             return super(Register, cls).__new__(CrossCorr)
+        else:
+            raise Exception('Registration method not recognized')
 
     def get_transform(self, im, ref):
         raise NotImplementedError
 
     def apply_transform(self, im, transform):
         raise NotImplementedError
+
+    def setFilter(self, filter='median', param=2):
+        """
+        Set a filter to apply to images before registration.
+
+        The filtering will be applied to both the reference and
+        image to compute the transformation parameters, but the filtering
+        will not be applied to the images themselves.
+
+        Parameters
+        ----------
+
+        filter : str, optional, default = 'median'
+            Which filter to use (options are 'median' and 'gaussian')
+
+        param : int, optional, default = 2
+            Parameter to provide to filtering function (e.g. size for median filter)
+
+        See also
+        --------
+        Images.medianFilter : apply median filter to images
+        Images.gaussianFilter : apply gaussian filter to images
+
+        """
+
+        checkparams(filter, ['median', 'gaussian'])
+
+        if filter == 'median':
+            from scipy.ndimage.filters import median_filter
+            self._filter = lambda x: median_filter(x, param)
+
+        if filter == 'gaussian':
+            from scipy.ndimage.filters import gaussian_filter
+            self._filter = lambda x: gaussian_filter(x, param)
+
+        return self
+
+    def filter(self, im):
+        """
+        Apply filtering, and if not set, return image unchanged
+        """
+
+        if hasattr(self, '_filter'):
+            return self._filter(im)
+        else:
+            return im
 
     @staticmethod
     def reference(images, method='mean', startidx=None, stopidx=None):
@@ -50,6 +100,20 @@ class Register(object):
                 n = images.nimages
             refval = ref.sum() / (1.0 * n)
             return refval.astype(images.dtype)
+
+    @staticmethod
+    def _apply_vol(vol, func):
+        """
+        Apply a function to an image, or a volume (plane-by-plane).
+        """
+
+        if vol.ndim == 2:
+            return func(vol)
+        else:
+            vol.setflags(write=True)
+            for z in arange(0, vol.shape[2]):
+                vol[:, :, z] = func(vol[:, :, z])
+            return vol
 
     @staticmethod
     def _check_reference(images, reference):
@@ -100,22 +164,25 @@ class Register(object):
 
         self._check_reference(images, reference)
 
+        # apply filtering to reference if defined
+        if hasattr(self, '_filter'):
+            reference = self._apply_vol(reference.copy(), self.filter)
+
         # broadcast the reference (a potentially very large array)
         reference_bc = images.rdd.context.broadcast(reference)
 
         # estimate the transform parameters on an image / volume
         def params(im, ref):
             if im.ndim == 2:
-                return self.get_transform(im, ref.value)
+                return self.get_transform(self.filter(im), ref.value)
             else:
                 t = []
                 for z in arange(0, im.shape[2]):
-                    t.append(self.get_transform(im[:, :, z], ref.value[:, :, z]))
+                    t.append(self.get_transform(self.filter(im[:, :, z]), ref.value[:, :, z]))
             return t
 
-        # TODO instead of collecting, maybe return as a Series?
-        params = images.rdd.mapValues(lambda x: params(x, reference_bc)).collect()
-        return params
+        from thunder import Series
+        return Series(images.rdd.mapValues(lambda x: params(x, reference_bc)))
 
     def transform(self, images, reference):
         """
@@ -135,20 +202,24 @@ class Register(object):
 
         self._check_reference(images, reference)
 
+        # apply filtering to reference if defined
+        if hasattr(self, '_filter'):
+            reference = self._apply_vol(reference, self.filter)
+
+        # broadcast the reference (a potentially very large array)
+        reference_bc = images.rdd.context.broadcast(reference)
+
         # compute and apply transformation on an image / volume
         def register(im, ref):
             if im.ndim == 2:
-                t = self.get_transform(im, ref.value)
+                t = self.get_transform(self.filter(im), ref.value)
                 return self.apply_transform(im, t)
             else:
                 im.setflags(write=True)
                 for z in arange(0, im.shape[2]):
-                    t = self.get_transform(im[:, :, z], ref.value[:, :, z])
+                    t = self.get_transform(self.filter(im[:, :, z]), ref.value[:, :, z])
                     im[:, :, z] = self.apply_transform(im[:, :, z], t)
                 return im
-
-        # broadcast the reference (a potentially very large array)
-        reference_bc = images.rdd.context.broadcast(reference)
 
         # return the transformed volumes
         newrdd = images.rdd.mapValues(lambda x: register(x, reference_bc))
