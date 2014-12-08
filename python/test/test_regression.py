@@ -32,9 +32,14 @@ class TestRegress(RegressionTestCase):
         ])
         model = RegressionModel.load(x, "linear")
         result = model.fit(data)
+        # check accuracy of results
         assert(allclose(result.select('betas').values().collect()[0], array([-2.7, -1.9])))
         assert(allclose(result.select('stats').values().collect()[0], array([0.42785299])))
         assert(allclose(result.select('resid').values().collect()[0], array([0, 0, 2, 0.9, -0.8, -2.1])))
+        # check indexing of outputs
+        assert(allclose(result.select('betas').index, array([0, 1])))
+        assert(allclose(result.select('resid').index, array([0, 1, 2, 3, 4, 5])))
+        assert(result.select('stats').index == 'stats')
 
     def test_blinear_regress(self):
         data = Series(self.sc.parallelize([(1, array([1.5, 2.3, 6.2, 5.1, 3.4, 2.1]))]))

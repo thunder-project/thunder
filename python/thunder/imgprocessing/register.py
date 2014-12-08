@@ -62,7 +62,7 @@ class Register(object):
             if reference.shape != images.dims.count:
                 raise Exception('Dimensions of reference %s do not match dimensions of data %s' %
                                 (reference.shape, images.dims.count))
-            if len(images.dims.count) not in {2, 3}:
+            if len(images.dims.count) not in set([2, 3]):
                 raise Exception('Number of image dimensions %s must be 2 or 3' % (len(images.dims.count)))
         else:
             raise Exception('Reference must be an array')

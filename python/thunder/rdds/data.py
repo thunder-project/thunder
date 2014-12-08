@@ -39,11 +39,14 @@ class Data(object):
 
         Returns the result of calling self.rdd.first().
         """
+
+        from numpy import asarray
+        
         record = self.rdd.first()
-        self._dtype = str(record[1].dtype)
+        self._dtype = str(asarray(record[1]).dtype)
         return record
 
-    def __finalize__(self, other):
+    def __finalize__(self, other, nopropagate=()):
         """
         Lazily propagate attributes from other to self, only if attributes
         are not already defined in self
@@ -53,11 +56,16 @@ class Data(object):
         other : the object from which to get the attributes that we are going
             to propagate
 
+        nopropagate : iterable of string attribute names, default empty tuple
+            attributes found in nopropagate will *not* have their values propagated forward from the passed object,
+            but will keep their existing values, even if these are None. Attribute names should be specified
+            in their "private" versions (with underscores; e.g. "_dtype" and not "dtype") where applicable.
         """
         if isinstance(other, Data):
             for name in self._metadata:
-                if (getattr(other, name, None) is not None) and (getattr(self, name, None) is None):
-                    object.__setattr__(self, name, getattr(other, name, None))
+                if not name in nopropagate:
+                    if (getattr(other, name, None) is not None) and (getattr(self, name, None) is None):
+                        object.__setattr__(self, name, getattr(other, name, None))
         return self
 
     @property
@@ -117,17 +125,37 @@ class Data(object):
         -------
         New Data object, of same type as self, with values cast to the requested dtype; or self if no cast is performed.
         """
-        if dtype is None:
+        if dtype is None or dtype == '':
             return self
         if dtype == 'smallfloat':
             # get the smallest floating point type that can be safely cast to from our current type
             from thunder.utils.common import smallest_float_type
             dtype = smallest_float_type(self.dtype)
-        if str(dtype) == str(self.dtype):
-            # no cast required
-            return self
-        nextrdd = self.rdd.mapValues(lambda v: v.astype(dtype, casting=casting))
-        return self._constructor(nextrdd, dtype=dtype).__finalize__(self)
+
+        nextrdd = self.rdd.mapValues(lambda v: v.astype(dtype, casting=casting, copy=False))
+        return self._constructor(nextrdd, dtype=str(dtype)).__finalize__(self)
+
+    def apply(self, func, dtype=None, casting='safe'):
+        """ Apply arbitrary function to values of a Series, preserving keys and indices
+
+        If `dtype` is passed, output will be cast to specified datatype - see `astype()`. Otherwise output will
+        be assumed to be of same datatype as input.
+
+        Parameters
+        ----------
+        func : function
+            Function to apply
+
+        dtype: numpy dtype or dtype specifier, or string 'smallfloat', or None
+            Data type to which RDD values are to be cast. Will return immediately, performing no cast, if None is passed.
+
+        casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
+            Casting method to pass on to numpy's astype() method; see numpy documentation for details.
+        """
+        applied = self._constructor(self.rdd.mapValues(func)).__finalize__(self)
+        if dtype:
+            return applied.astype(dtype=dtype, casting=casting)
+        return applied
 
     def collect(self):
         """ Return all records to the driver
@@ -209,12 +237,42 @@ class Data(object):
         from numpy import minimum
         return self.rdd.values().reduce(minimum)
 
+    def coalesce(self, numPartitions):
+        """ Coalesce data (used to reduce number of partitions).
+
+        This calls the Spark coalesce() method on the underlying RDD.
+
+        Parameters
+        ----------
+        numPartitions : int
+            Number of partitions in coalesced RDD
+        """
+        current = self.rdd.getNumPartitions()
+        if numPartitions > current:
+            raise Exception('Trying to increase number of partitions (from %g to %g), '
+                            'cannot use coalesce, try repartition' % (current, numPartitions))
+        self.rdd = self.rdd.coalesce(numPartitions)
+        return self
+
     def cache(self):
-        """ Enable in-memory caching
+        """ Enable in-memory caching.
 
         This calls the Spark cache() method on the underlying RDD.
         """
         self.rdd.cache()
+        return self
+
+    def repartition(self, numPartitions):
+        """ Repartition data.
+
+        This calls the Spark repartition() method on the underlying RDD.
+
+        Parameters
+        ----------
+        numPartitions : int
+            Number of partitions in new RDD
+        """
+        self.rdd = self.rdd.repartition(numPartitions)
         return self
 
     def filterOnKeys(self, func):

@@ -1,9 +1,11 @@
 from numpy import ndarray, array, sum, mean, std, size, arange, \
-    polyfit, polyval, percentile, asarray, maximum, zeros, corrcoef, where
+    polyfit, polyval, percentile, asarray, maximum, zeros, corrcoef, where, \
+    true_divide, empty_like, ceil
+from numpy import dtype as dtypefunc
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
-from thunder.utils.common import checkparams, loadmatvar
+from thunder.utils.common import checkparams, loadmatvar, smallest_float_type
 
 
 class Series(Data):
@@ -11,9 +13,12 @@ class Series(Data):
     Distributed collection of 1d array data with axis labels.
 
     Backed by an RDD of key-value pairs, where the
-    key is a tuple identifier, and the value is a one-dimensional array.
+    key is a tuple identifier, and the value is a one-dimensional array of floating-point values.
     It also has a fixed index to represent a label for each value in the arrays.
     Can optionally store and use the dimensions of the keys (min, max, and count).
+
+    Series data will be automatically cast to a floating-point value on loading if its on-disk
+    representation is integer valued.
 
     Parameters
     ----------
@@ -171,10 +176,15 @@ class Series(Data):
         subinds = where(map(lambda x: crit(x), index))
         rdd = self.rdd.mapValues(lambda x: x[subinds])
 
-        # convert an array with one value to a scalar/int
+        # if singleton, need to check whether it's an array or a scalar/int
+        # if array, recompute a new set of indices
         if len(newindex) == 1:
-            newindex = newindex[0]
             rdd = rdd.mapValues(lambda x: x[0])
+            val = rdd.first()[1]
+            if size(val) == 1:
+                newindex = newindex[0]
+            else:
+                newindex = arange(0, size(val))
 
         return self._constructor(rdd, index=newindex).__finalize__(self)
 
@@ -211,27 +221,52 @@ class Series(Data):
         return self.apply(func)
 
     def normalize(self, baseline='percentile', **kwargs):
-        """ Normalize each record in series data by
-        subtracting and dividing by a baseline
+        """ Normalize each record by subtracting and dividing by a baseline.
+
+        Baseline can be derived from a global mean or percentile,
+        or a smoothed percentile estimated within a rolling window.
 
         Parameters
         ----------
         baseline : str, optional, default = 'percentile'
-            Quantity to use as the baseline
+            Quantity to use as the baseline, options are 'mean', 'percentile', or 'window'
 
-        perc : int, optional, default = 20
-            Percentile value to use, for 'percentile' baseline only
+        percentile : int, optional, default = 20
+            Percentile value to use, for 'percentile' or 'window' baseline only
+
+        window : int, optional, default = 6
+            Size of window for windowed baseline estimation
         """
-        checkparams(baseline, ['mean', 'percentile'])
+        checkparams(baseline, ['mean', 'percentile', 'window'])
+        method = baseline.lower()
 
-        if baseline.lower() == 'mean':
+        if method == 'mean':
             basefunc = mean
-        if baseline.lower() == 'percentile':
+
+        if method == 'percentile' or method == 'window':
             if 'percentile' in kwargs:
                 perc = kwargs['percentile']
             else:
                 perc = 20
+
+        if method == 'percentile':
             basefunc = lambda x: percentile(x, perc)
+
+        # TODO optimize implementation by doing a single initial sort
+        if method == 'window':
+            if 'window' in kwargs:
+                window = kwargs['window']
+            else:
+                window = 6
+
+            if window & 0x1:
+                left, right = (ceil(window/2), ceil(window/2) + 1)
+            else:
+                left, right = (window/2, window/2)
+
+            n = len(self.index)
+            basefunc = lambda x: asarray([percentile(x[max(ix-left, 0):min(ix+right+1, n)], perc)
+                                          for ix in arange(0, n)])
 
         def get(y):
             b = basefunc(y)
@@ -306,7 +341,6 @@ class Series(Data):
         var : str
             Variable name if loading from a MAT file
         """
-
         from scipy.io import loadmat
 
         if type(signal) is str:
@@ -330,19 +364,7 @@ class Series(Data):
             raise Exception('Signal to correlate with must have 1 or 2 dimensions')
 
         # return result
-        return self._constructor(rdd, index=newindex).__finalize__(self)
-
-    def apply(self, func):
-        """ Apply arbitrary function to values of a Series,
-        preserving keys and indices
-
-        Parameters
-        ----------
-        func : function
-            Function to apply
-        """
-        rdd = self.rdd.mapValues(func)
-        return self._constructor(rdd, index=self._index).__finalize__(self)
+        return self._constructor(rdd, dtype='float64', index=newindex).__finalize__(self)
 
     def seriesMax(self):
         """ Compute the value maximum of each record in a Series """
@@ -382,14 +404,15 @@ class Series(Data):
         }
         func = STATS[stat]
         rdd = self.rdd.mapValues(lambda x: func(x))
-        return self._constructor(rdd, index=stat).__finalize__(self)
+        return self._constructor(rdd, index=stat).__finalize__(self, nopropagate=('_dtype',))
 
     def seriesStats(self):
         """
         Compute a collection of statistics for each record in a Series
         """
         rdd = self.rdd.mapValues(lambda x: array([x.size, mean(x), std(x), max(x), min(x)]))
-        return self._constructor(rdd, index=['count', 'mean', 'std', 'max', 'min']).__finalize__(self)
+        return self._constructor(rdd, index=['count', 'mean', 'std', 'max', 'min'])\
+            .__finalize__(self, nopropagate=('_dtype',))
 
     def maxProject(self, axis=0):
         """

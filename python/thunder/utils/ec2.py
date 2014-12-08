@@ -1,18 +1,46 @@
+#!/usr/bin/env python
 """
 Wrapper for the Spark EC2 launch script that additionally
 installs Thunder and its dependencies, and optionally
 loads an example data set
 """
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Modified from Spark's spark_ec2.py under the terms of the ASF 2.0 license.
 
 from boto import ec2
 import sys
 import os
 import random
 import subprocess
+import time
+from distutils.version import LooseVersion
 from sys import stderr
 from optparse import OptionParser
-from spark_ec2 import ssh, launch_cluster, get_existing_cluster, wait_for_cluster, deploy_files, setup_spark_cluster, \
-    get_spark_ami, ssh_command, ssh_read, ssh_write, get_or_make_group
+from spark_ec2 import launch_cluster, get_existing_cluster, stringify_command, \
+    deploy_files, setup_spark_cluster, get_spark_ami, ssh_read, ssh_write, get_or_make_group
+
+try:
+    from spark_ec2 import wait_for_cluster
+except ImportError:
+    from spark_ec2 import wait_for_cluster_state
+
+MINIMUM_SPARK_VERSION = "1.1.0"
 
 
 def get_s3_keys():
@@ -28,7 +56,51 @@ def get_s3_keys():
     return s3_access_key, s3_secret_key
 
 
-def install_thunder(master, opts):
+def get_spark_version_string(default_version):
+    """ Parses out the Spark version string from $SPARK_HOME/RELEASE, if present, or from pom.xml if not
+
+    Returns version string from either of the above sources, or default_version if nothing else works
+    """
+    SPARK_HOME = os.getenv("SPARK_HOME")
+    if SPARK_HOME is None:
+        raise Exception('must assign the environmental variable SPARK_HOME with the location of Spark')
+    if os.path.isfile(os.path.join(SPARK_HOME, "RELEASE")):
+        with open(os.path.join(SPARK_HOME, "RELEASE")) as f:
+            line = f.read()
+        # some nasty ad-hoc parsing here. we expect a string of the form "Spark VERSION built for hadoop HADOOP_VERSION"
+        # where VERSION is a dotted version string.
+        # for now, simply check that there are at least two tokens and the second token contains a period.
+        tokens = line.split()
+        if len(tokens) >= 2 and '.' in tokens[1]:
+            return tokens[1]
+    # if we get to this point, we've failed to parse out a version string from the RELEASE file. note that
+    # there will not be a RELEASE file for versions of Spark built from source. in this case we'll try to
+    # get it out from the pom file.
+    import xml.etree.ElementTree as ET
+    try:
+        root = ET.parse(os.path.join(SPARK_HOME, "pom.xml"))
+        version_elt = root.find("/{http://maven.apache.org/POM/4.0.0}version")
+        if version_elt:
+            return version_elt.text
+    except IOError:
+        # no pom file; fall through and return default
+        pass
+    return default_version
+
+SPARK_VERSIONS_TO_HASHES = {
+    '1.2.0': "1056e9ec13"  # spark 1.2.0 rc1, remove once Spark is released and mesos/spark-ec2 is updated
+}
+
+
+def remap_spark_version_to_hash(user_version_string):
+    """Replaces a user-specified Spark version string with a github hash if needed.
+
+    Used to allow clusters to be deployed with Spark release candidates.
+    """
+    return SPARK_VERSIONS_TO_HASHES.get(user_version_string, user_version_string)
+
+
+def install_thunder(master, opts, spark_home_loose_version):
     """ Install Thunder and dependencies on a Spark EC2 cluster"""
     print "Installing Thunder on the cluster..."
     # download and build thunder
@@ -40,10 +112,20 @@ def install_thunder(master, opts):
     ssh(master, opts, "pssh -h /root/spark-ec2/slaves mkdir -p /root/thunder/python/thunder/utils/data/")
     ssh(master, opts, "~/spark-ec2/copy-dir /root/thunder/python/thunder/utils/data/")
     # install pip
-    ssh(master, opts, "wget http://pypi.python.org/packages/source/p/pip/pip-1.1.tar.gz"
-                      "#md5=62a9f08dd5dc69d76734568a6c040508")
-    ssh(master, opts, "tar -xvf pip*.gz")
-    ssh(master, opts, "cd pip* && sudo python setup.py install")
+    ssh(master, opts, "wget http://pypi.python.org/packages/source/p/pip/pip-1.1.tar.gz")
+    ssh(master, opts, "tar xzf pip-1.1.tar.gz")
+    ssh(master, opts, "cd pip-1.1 && sudo python setup.py install")
+    # install pip on workers
+    worker_pip_install = "wget http://pypi.python.org/packages/source/p/pip/pip-1.1.tar.gz && tar xzf pip-1.1.tar.gz && cd pip-1.1 && python setup.py install"
+    ssh(master, opts, "printf '"+worker_pip_install+"' > /root/workers_pip_install.sh")
+    ssh(master, opts, "pssh -h /root/spark-ec2/slaves -I < /root/workers_pip_install.sh")
+    # uninstall PIL, install Pillow on master and workers
+    ssh(master, opts, "rpm -e --nodeps python-imaging")
+    ssh(master, opts, "yum install -y libtiff libtiff-devel")
+    ssh(master, opts, "pip install Pillow")
+    worker_pillow_install = "rpm -e --nodeps python-imaging && yum install -y libtiff libtiff-devel && pip install Pillow"
+    ssh(master, opts, "printf '"+worker_pillow_install+"' > /root/workers_pillow_install.sh")
+    ssh(master, opts, "pssh -h /root/spark-ec2/slaves -I < /root/workers_pillow_install.sh")
     # install libraries
     ssh(master, opts, "source ~/.bash_profile && pip install mpld3 && pip install seaborn "
                       "&& pip install jinja2 && pip install -U scikit-learn")
@@ -56,10 +138,19 @@ def install_thunder(master, opts):
     ssh(master, opts, "echo 'export SPARK_HOME=/root/spark' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export PYTHONPATH=/root/thunder/python' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export IPYTHON=1' >> /root/.bash_profile")
+    # need to explicitly set PYSPARK_PYTHON with spark 1.2.0; otherwise fails with:
+    # "IPython requires Python 2.7+; please install python2.7 or set PYSPARK_PYTHON"
+    # should not do this with earlier versions, as it will lead to
+    # "java.lang.IllegalArgumentException: port out of range" [SPARK-3772]
+    if spark_home_loose_version >= LooseVersion("1.2.0"):
+        ssh(master, opts, "echo 'export PYSPARK_PYTHON=/usr/bin/ipython' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export PATH=/root/thunder/python/bin:$PATH' >> /root/.bash_profile")
     # customize spark configuration parameters
     ssh(master, opts, "echo 'spark.akka.frameSize=10000' >> /root/spark/conf/spark-defaults.conf")
     ssh(master, opts, "echo 'spark.kryoserializer.buffer.max.mb=1024' >> /root/spark/conf/spark-defaults.conf")
+    # disable filtering collect() calls by max result size. (Only matters for spark >= 1.2.0, but no harm in
+    # specifying for earlier versions)
+    ssh(master, opts, "echo 'spark.driver.maxResultSize=0' >> /root/spark/conf/spark-defaults.conf")
     ssh(master, opts, "echo 'export SPARK_DRIVER_MEMORY=20g' >> /root/spark/conf/spark-env.sh")
     # add AWS credentials to core-site.xml
     configstring = "<property><name>fs.s3n.awsAccessKeyId</name><value>ACCESS</value></property><property>" \
@@ -82,6 +173,46 @@ def install_thunder(master, opts):
     print "Thunder successfully installed!"
     print "-------------------------------"
     print "\n"
+
+
+# This is a customized version of the spark_ec2 ssh() function that
+# adds additional options to squash ssh host key checking errors that
+# occur when the ip addresses of your ec2 nodes change when you
+# start/stop a cluster.  Lame to have to copy all this code over, but
+# this seemed the simplest way to add this necessary functionality.
+def ssh_args(opts):
+    parts = ['-o', 'StrictHostKeyChecking=no',
+             '-o', 'UserKnownHostsFile=/dev/null']  # Never store EC2 IPs in known hosts...
+    if opts.identity_file is not None:
+        parts += ['-i', opts.identity_file]
+    return parts
+
+
+def ssh_command(opts):
+    return ['ssh'] + ssh_args(opts)
+
+
+def ssh(host, opts, command):
+    tries = 0
+    while True:
+        try:
+            return subprocess.check_call(
+                ssh_command(opts) + ['-t', '-t', '%s@%s' % (opts.user, host),
+                                     stringify_command(command)])
+        except subprocess.CalledProcessError as e:
+            if tries > 5:
+                # If this was an ssh failure, provide the user with hints.
+                if e.returncode == 255:
+                    raise IOError(
+                        "Failed to SSH to remote host {0}.\n" +
+                        "Please check that you have provided the correct --identity-file and " +
+                        "--key-pair parameters and try again.".format(host))
+                else:
+                    raise e
+            print >> stderr, \
+                "Error executing remote command, retrying after 30 seconds: {0}".format(e)
+            time.sleep(30)
+            tries = tries + 1
 
 
 def setup_cluster(conn, master_nodes, slave_nodes, opts, deploy_ssh_key):
@@ -124,6 +255,9 @@ def setup_cluster(conn, master_nodes, slave_nodes, opts, deploy_ssh_key):
 
 
 if __name__ == "__main__":
+    spark_home_version_string = get_spark_version_string(MINIMUM_SPARK_VERSION)
+    spark_home_loose_version = LooseVersion(spark_home_version_string)
+
     parser = OptionParser(usage="thunder-ec2 [options] <action> <clustername>",  add_help_option=False)
     parser.add_option("-h", "--help", action="help", help="Show this help message and exit")
     parser.add_option("-k", "--key-pair", help="Key pair to use on instances")
@@ -135,22 +269,66 @@ if __name__ == "__main__":
                       help="Type of instance to launch (default: m3.2xlarge)." +
                            " WARNING: must be 64-bit; small instances won't work")
     parser.add_option("-u", "--user", default="root", help="User name for cluster (default: root)")
+    parser.add_option("-v", "--spark-version", default=spark_home_version_string,
+                      help="Version of Spark to use: 'X.Y.Z' or a specific git hash. (default: %s)" %
+                           spark_home_version_string)
     parser.add_option("-w", "--wait", type="int", default=160,
                       help="Seconds to wait for nodes to start (default: 160)")
     parser.add_option("-z", "--zone", default="", help="Availability zone to launch instances in, or 'all' to spread "
                                                        "slaves across multiple (an additional $0.01/Gb for "
                                                        "bandwidth between zones applies)")
+    parser.add_option("--ssh-port-forwarding", default=None,
+                      help="Set up ssh port forwarding when you login to the cluster.  " +
+                           "This provides a convenient alternative to connecting to iPython " +
+                           "notebook over an open port using SSL.  You must supply an argument " +
+                           "of the form \"local_port:remote_port\".")
     parser.add_option("--spot-price", metavar="PRICE", type="float",
                       help="If specified, launch slaves as spot instances with the given " +
                            "maximum price (in dollars)")
     parser.add_option("--resume", default=False, action="store_true",
                       help="Resume installation on a previously launched cluster (for debugging)")
+    if spark_home_loose_version >= LooseVersion("1.2.0"):
+        parser.add_option("--authorized-address", type="string", default="0.0.0.0/0",
+                          help="Address to authorize on created security groups (default: %default)" +
+                               " (only with Spark >= 1.2.0)")
+        parser.add_option("--additional-security-group", type="string", default="",
+                          help="Additional security group to place the machines in (only with Spark >= 1.2.0)")
+        parser.add_option("--copy-aws-credentials", action="store_true", default=False,
+                          help="Add AWS credentials to hadoop configuration to allow Spark to access S3" +
+                               " (only with Spark >= 1.2.0)")
 
     (opts, args) = parser.parse_args()
     if len(args) != 2:
         parser.print_help()
         sys.exit(1)
     (action, cluster_name) = args
+
+    spark_version_string = opts.spark_version
+    # check that requested spark version is <= the $SPARK_HOME version, or is a github hash
+    if '.' in spark_version_string:
+        # version string is dotted, not a hash
+        spark_cluster_loose_version = LooseVersion(spark_version_string)
+        if spark_cluster_loose_version > spark_home_loose_version:
+            raise ValueError("Requested cluster Spark version '%s' is greater " % spark_version_string
+                             + "than the local version of Spark in $SPARK_HOME, '%s'" % spark_home_version_string)
+        if spark_cluster_loose_version < LooseVersion(MINIMUM_SPARK_VERSION):
+            raise ValueError("Requested cluster Spark version '%s' is less " % spark_version_string
+                             + "than the minimum version required for Thunder, '%s'" % MINIMUM_SPARK_VERSION)
+
+    # The Thunder ec2 scripts hardwire some of the settings that were
+    # broken out as command line options in the Spark ec2 scripts.
+    opts.ami = get_spark_ami(opts)  # "ami-3ecd0c56"
+    opts.ebs_vol_size = 0
+    opts.master_instance_type = ""
+    opts.hadoop_major_version = "1"
+    opts.ganglia = True
+    # get version string as github commit hash if needed (mainly to support Spark release candidates)
+    opts.spark_version = remap_spark_version_to_hash(spark_version_string)
+    opts.spark_git_repo = "https://github.com/apache/spark"
+    opts.swap = 1024
+    opts.worker_instances = 1
+    opts.master_opts = ""
+    opts.user_data = ""
 
     # Launch a cluster, setting several options to defaults
     # (use spark-ec2.py included with Spark for more control)
@@ -164,26 +342,22 @@ if __name__ == "__main__":
         if opts.zone == "":
             opts.zone = random.choice(conn.get_all_zones()).name
 
-        opts.ami = get_spark_ami(opts)  # "ami-3ecd0c56"
-        opts.ebs_vol_size = 0
-        opts.master_instance_type = ""
-        opts.hadoop_major_version = "1"
-        opts.ganglia = True
-        opts.spark_version = "1.1.0"
-        opts.swap = 1024
-        opts.worker_instances = 1
-        opts.master_opts = ""
-        opts.user_data = ""
-
         if opts.resume:
             (master_nodes, slave_nodes) = get_existing_cluster(conn, opts, cluster_name)
         else:
             (master_nodes, slave_nodes) = launch_cluster(conn, opts, cluster_name)
 
-        wait_for_cluster(conn, opts.wait, master_nodes, slave_nodes)
+        try:
+            wait_for_cluster(conn, opts.wait, master_nodes, slave_nodes)
+        except NameError:
+            wait_for_cluster_state(
+                cluster_instances=(master_nodes + slave_nodes),
+                cluster_state='ssh-ready',
+                opts=opts
+            )
         setup_cluster(conn, master_nodes, slave_nodes, opts, True)
         master = master_nodes[0].public_dns_name
-        install_thunder(master, opts)
+        install_thunder(master, opts, spark_home_loose_version)
         print "\n\n"
         print "-------------------------------"
         print "Cluster successfully launched!"
@@ -200,11 +374,90 @@ if __name__ == "__main__":
         if action == "login":
             print "Logging into master " + master + "..."
             proxy_opt = []
-            subprocess.check_call(ssh_command(opts) + proxy_opt + ['-t', '-t', "%s@%s" % (opts.user, master)])
+
+            # SSH tunnels are a convenient, zero-configuration
+            # alternative to opening a port using the EC2 security
+            # group settings and using iPython notebook over SSL.
+            #
+            # If the user has requested ssh port forwarding, we set
+            # that up here.
+            if opts.ssh_port_forwarding is not None:
+                ssh_ports = opts.ssh_port_forwarding.split(":")
+                if len(ssh_ports) != 2:
+                    print "\nERROR: Could not parse arguments to \'--ssh-port-forwarding\'."
+                    print "       Be sure you use the syntax \'local_port:remote_port\'"
+                    sys.exit(1)
+                print ("\nSSH port forwarding requested.  Remote port " + ssh_ports[1] +
+                       " will be accessible at http://localhost:" + ssh_ports[0] + '\n')
+                try:
+                    subprocess.check_call(ssh_command(opts) + proxy_opt +
+                                          ['-L', ssh_ports[0] +
+                                           ':127.0.0.1:' + ssh_ports[1],
+                                           '-o', 'ExitOnForwardFailure=yes',
+                                           '-t', '-t', "%s@%s" % (opts.user, master)])
+                except subprocess.CalledProcessError:
+                    print "\nERROR: Could not establish ssh connection with port forwarding."
+                    print "       Check your Internet connection and make sure that the"
+                    print "       ports you have requested are not already in use."
+                    sys.exit(1)
+
+            else:
+                subprocess.check_call(ssh_command(opts) + proxy_opt +
+                                      ['-t', '-t', "%s@%s" % (opts.user, master)])
+
+        elif action == "get-master":
+            print master_nodes[0].public_dns_name
 
         # Install thunder on the cluster
         elif action == "install":
-            install_thunder(master, opts)
+            install_thunder(master, opts, spark_home_loose_version)
+
+        # Stop a running cluster.  Storage on EBS volumes is
+        # preserved, so you can restart the cluster in the same state
+        # (though you do pay a modest fee for EBS storage in the
+        # meantime).
+        elif action == "stop":
+            response = raw_input(
+                "Are you sure you want to stop the cluster " +
+                cluster_name + "?\nDATA ON EPHEMERAL DISKS WILL BE LOST, " +
+                "BUT THE CLUSTER WILL KEEP USING SPACE ON\n" +
+                "AMAZON EBS IF IT IS EBS-BACKED!!\n" +
+                "All data on spot-instance slaves will be lost.\n" +
+                "Stop cluster " + cluster_name + " (y/N): ")
+            if response == "y":
+                (master_nodes, slave_nodes) = get_existing_cluster(
+                    conn, opts, cluster_name, die_on_error=False)
+                print "Stopping master..."
+                for inst in master_nodes:
+                    if inst.state not in ["shutting-down", "terminated"]:
+                        inst.stop()
+                print "Stopping slaves..."
+                for inst in slave_nodes:
+                    if inst.state not in ["shutting-down", "terminated"]:
+                        if inst.spot_instance_request_id:
+                            inst.terminate()
+                        else:
+                            inst.stop()
+
+        # Restart a stopped cluster
+        elif action == "start":
+            print "Starting slaves..."
+            for inst in slave_nodes:
+                if inst.state not in ["shutting-down", "terminated"]:
+                    inst.start()
+            print "Starting master..."
+            for inst in master_nodes:
+                if inst.state not in ["shutting-down", "terminated"]:
+                    inst.start()
+            wait_for_cluster(conn, opts.wait, master_nodes, slave_nodes)
+            setup_cluster(conn, master_nodes, slave_nodes, opts, False)
+            master = master_nodes[0].public_dns_name
+            print "\n\n"
+            print "-------------------------------"
+            print "Cluster successfully re-started!"
+            print "Go to http://%s:8080 to see the web UI for your cluster" % master
+            print "-------------------------------"
+            print "\n"
 
         # Destroy the cluster
         elif action == "destroy":

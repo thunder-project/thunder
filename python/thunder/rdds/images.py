@@ -183,6 +183,74 @@ class Images(Data):
 
         return self._constructor(
             self.rdd.mapValues(lambda v: v[sampleslices]), dims=newdims).__finalize__(self)
+            
+    def gaussfilter(self, sigma=2):
+        """Spatially smooth images using a gaussian filter.
+
+        This function will be applied to every image in the data set and can be applied
+        to either images or volumes. In the latter case, filtering will be applied separately
+        to each plane.
+
+        parameters
+        ----------
+        sigma : int, optional, default=2
+            Size of the filter neighbourhood in pixels
+        """
+
+        from scipy.ndimage.filters import gaussian_filter
+
+        dims = self.dims
+        ndims = len(dims)
+
+        if ndims == 2:
+
+            def filter(im):
+                return gaussian_filter(im, sigma)
+
+        if ndims == 3:
+
+            def filter(im):
+                im.setflags(write=True)
+                for z in arange(0, dims[2]):
+                    im[:, :, z] = gaussian_filter(im[:, :, z], sigma)
+                return im
+
+        return self._constructor(
+            self.rdd.mapValues(lambda v: filter(v))).__finalize__(self)
+
+    def medianfilter(self, size=2):
+        """Spatially smooth images using a median filter.
+
+        The filtering will be applied to every image in the collection and can be applied
+        to either images or volumes. In the latter case, filtering will be applied separately
+        to each plane.
+
+        parameters
+        ----------
+        size: int, optional, default=2
+            Size of the filter neighbourhood in pixels
+        """
+
+        from scipy.ndimage.filters import median_filter
+
+        dims = self.dims
+        ndims = len(dims)
+
+        if ndims == 2:
+
+            def filter(im):
+                return median_filter(im, size)
+
+        if ndims == 3:
+
+            def filter(im):
+                im.setflags(write=True)
+                for z in arange(0, dims[2]):
+                    im[:, :, z] = median_filter(im[:, :, z], size)
+                return im
+
+        return self._constructor(
+            self.rdd.mapValues(lambda v: filter(v))).__finalize__(self)
 
     def planes(self, bottom, top, inclusive=True):
         """
@@ -206,7 +274,21 @@ class Images(Data):
             zrange = arange(bottom, top+1)
         else:
             zrange = arange(bottom+1, top)
+
+        if len(zrange) == 0:
+            raise Exception("No planes selected with range (%g, %g) and inclusive=%s, "
+                            "try a different range" % (bottom, top, inclusive))
+
+        if zrange.min() < self.dims.min[2]:
+            raise Exception("Cannot include plane %g, first plane is %g" % (zrange.min(), self.dims.min[2]))
+
+        if zrange.max() > self.dims.max[2]:
+            raise Exception("Cannout include plane %g, last plane is %g" % (zrange.max(), self.dims.max[2]))
+
         newdims = [self.dims[0], self.dims[1], size(zrange)]
+
+        if size(zrange) < 2:
+            newdims = newdims[0:2]
 
         return self._constructor(self.rdd.mapValues(lambda v: squeeze(v[:, :, zrange])),
                                  dims=newdims).__finalize__(self)
@@ -228,14 +310,3 @@ class Images(Data):
 
         return self.apply(lambda x: x - val)
 
-    def apply(self, func):
-        """
-        Apply a function to all images / volumes,
-        otherwise perserving attributes
-
-        Parameters
-        ----------
-        func : function
-            Function to apply
-        """
-        return self._constructor(self.rdd.mapValues(func)).__finalize__(self)
