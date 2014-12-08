@@ -11,10 +11,10 @@ import urlparse
 import math
 
 from thunder.rdds.fileio.writers import getParallelWriterForPath
-from thunder.rdds.imageblocks import ImageBlocks
 from thunder.rdds.keys import Dimensions
 from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError, selectByStartAndStopIndices, \
     appendExtensionToPathSpec
+from thunder.rdds.imgblocks.blocks import SimpleBlocks
 from thunder.rdds.series import Series
 from thunder.utils.common import parseMemoryString
 
@@ -511,7 +511,7 @@ class SeriesLoader(object):
             for seriesKey, series in kviter:
                 if keypacker is None:
                     keypacker = struct.Struct('h'*len(seriesKey))
-                    label = ImageBlocks.getBinarySeriesNameForKey(seriesKey) + ".bin"
+                    label = SimpleBlocks.getBinarySeriesNameForKey(seriesKey) + ".bin"
                 buf.write(keypacker.pack(*seriesKey))
                 buf.write(series.tostring())
             val = buf.getvalue()

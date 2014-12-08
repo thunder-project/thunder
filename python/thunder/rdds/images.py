@@ -61,16 +61,15 @@ class Images(Data):
         if not isinstance(record[1], ndarray):
             raise Exception('Values must be ndarrays')
 
-    def partition(self, partitioningStrategy):
-        partitioningStrategy.setImages(self)
-        returntype = partitioningStrategy.getPartitionedImagesClass()
-        vals = self.rdd.flatMap(partitioningStrategy.partitionFunction, preservesPartitioning=False)
+    def toBlocks(self, blockingStrategy):
+        blockingStrategy.setImages(self)
+        returntype = blockingStrategy.getBlocksClass()
+        vals = self.rdd.flatMap(blockingStrategy.blockingFunction, preservesPartitioning=False)
         # fastest changing dimension (e.g. x) is first, so must sort reversed keys to get desired ordering
         # sort must come after group, b/c group will mess with ordering.
-        #groupedvals = vals.groupByKey(numPartitions=partitioningStrategy.npartitions).sortBy(lambda (k, _): k[::-1])
         groupedvals = vals.groupBy(lambda (k, _): k.spatialKey).sortBy(lambda (k, _): tuple(k[::-1]))
         # groupedvals is now rdd of (z, y, x spatial key, [(partitioning key, numpy array)...]
-        blockedvals = groupedvals.map(partitioningStrategy.blockingFunction)
+        blockedvals = groupedvals.map(blockingStrategy.combiningFunction)
         return returntype(blockedvals, dims=self.dims, nimages=self.nimages, dtype=self.dtype)
 
     def exportAsPngs(self, outputdirname, fileprefix="export", overwrite=False,
@@ -240,153 +239,3 @@ class Images(Data):
             Function to apply
         """
         return self._constructor(self.rdd.mapValues(func)).__finalize__(self)
-
-
-class PartitioningStrategy(object):
-    """Superclass for objects that define ways to split up images into smaller blocks.
-    """
-    def __init__(self):
-        self._dims = None
-        self._nimages = None
-        self._dtype = None
-
-    @property
-    def dims(self):
-        """Shape of the Images data to which this PartitioningStrategy is to be applied.
-
-        dims will be taken from the Images passed in the last call to setImages().
-
-        n-tuple of positive int, or None if setImages has not been called
-        """
-        return self._dims
-
-    @property
-    def nimages(self):
-        """Number of images (time points) in the Images data to which this PartitioningStrategy is to be applied.
-
-        nimages will be taken from the Images passed in the last call to setImages().
-
-        positive int, or None if setImages has not been called
-        """
-        return self._nimages
-
-    @property
-    def dtype(self):
-        """Numpy data type of the Images data to which this PartitioningStrategy is to be applied.
-
-        String or numpy dtype, or None if setImages has not been called
-        """
-        return self.dtype
-
-    def setImages(self, images):
-        """Readies the PartitioningStrategy to operate over the passed Images object.
-
-        dims, nimages, and dtype will be initialized by this call.
-
-        No return value.
-        """
-        self._dims = images.dims
-        self._nimages = images.nimages
-        self._dtype = images.dtype
-
-    def getPartitionedImagesClass(self):
-        """Get the subtype of PartitionedImages that instances of this strategy will produce.
-
-        Subclasses should override this method to return the appropriate PartitionedImages subclass.
-        """
-        return PartitionedImages
-
-    def partitionFunction(self, timePointIdxAndImageArray):
-        raise NotImplementedError("partitionFunction not implemented")
-
-    def blockingFunction(self, spatialIdxAndPartitionedSequence):
-        raise NotImplementedError("blockingFunction not implemented")
-
-    @property
-    def npartitions(self):
-        """The number of Spark partitions across which the resulting RDD is to be distributed.
-        """
-        raise NotImplementedError("numPartitions not implemented")
-
-
-class PartitioningKey(object):
-    @property
-    def temporalKey(self):
-        raise NotImplementedError
-
-    @property
-    def spatialKey(self):
-        raise NotImplementedError
-
-
-class PartitionedImages(Data):
-    """Superclass for data returned by an Images.partition() call.
-    """
-    _metadata = Data._metadata + ['_dims', '_nimages']
-
-    def __init__(self, rdd, dims=None, nimages=None, dtype=None):
-        super(PartitionedImages, self).__init__(rdd, dtype=dtype)
-        self._dims = dims
-        self._nimages = nimages
-
-    @property
-    def dims(self):
-        """Shape of the original Images data from which this PartitionedImages was derived.
-
-        n-tuple of positive int
-        """
-        if not self._dims:
-            self.populateParamsFromFirstRecord()
-        return self._dims
-
-    @property
-    def nimages(self):
-        """Number of images (time points) in the original Images data from which this PartitionedImages was derived.
-
-        positive int
-        """
-        return self._nimages
-
-    def toSeries(self):
-        """Returns a Series Data object.
-
-        Subclasses that can be converted to a Series object are expected to override this method.
-        """
-        raise NotImplementedError("toSeries not implemented")
-
-    def toBinarySeries(self):
-        """Returns an RDD of binary series data.
-
-        The keys of a binary series RDD should be filenames ending in ".bin".
-        The values should be packed binary data.
-
-        Subclasses that can be converted to a Series object are expected to override this method.
-        """
-        raise NotImplementedError
-
-    def saveAsBinarySeries(self, outputdirname, overwrite=False):
-        """Writes out Series-formatted data.
-
-        Subclasses are *not* expected to override this method.
-
-        Parameters
-        ----------
-        outputdirname : string path or URI to directory to be created
-            Output files will be written underneath outputdirname. This directory must not yet exist
-            (unless overwrite is True), and must be no more than one level beneath an existing directory.
-            It will be created as a result of this call.
-
-        overwrite : bool
-            If true, outputdirname and all its contents will be deleted and recreated as part
-            of this call.
-        """
-        from thunder.rdds.fileio.writers import getParallelWriterForPath
-        from thunder.rdds.fileio.seriesloader import writeSeriesConfig
-
-        writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
-
-        binseriesrdd = self.toBinarySeries()
-
-        binseriesrdd.foreach(writer.writerFcn)
-        writeSeriesConfig(outputdirname, len(self.dims), self.nimages, dims=self.dims.count,
-                          keytype='int16', valuetype=self.dtype, overwrite=overwrite)
