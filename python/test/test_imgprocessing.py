@@ -54,6 +54,14 @@ class TestRegistration(ImprocessingTestCase):
         assert(allclose(ref[2:, :-2], imout[2:, :-2]))
         assert(allclose(paramout, [-2, 2]))
 
+        # just that that applying a filter during registration runs
+        # TODO add a check that shows this helps compensate for noisy pixels
+        reg = Register('crosscorr').setFilter('median', 2)
+        im = shift(ref, [-2, 2], mode='constant', order=0)
+        imin = ImagesLoader(self.sc).fromArrays(im)
+        paramout = reg.estimate(imin, ref).collect()[0][1]
+        imout = reg.transform(imin, ref).first()[1]
+
     def test_crosscorr_volume(self):
 
         random.seed(42)
