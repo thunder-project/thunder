@@ -405,6 +405,11 @@ class ThunderContext():
         import os
 
         path = os.path.dirname(os.path.realpath(__file__))
+        # this path might actually be inside an .egg file (appears to happen with Spark 1.2)
+        # check whether data/ directory actually exists on the filesystem, and if not, try
+        # a hardcoded path that should work on ec2 clusters launched via the thunder-ec2 script
+        if not os.path.isdir(os.path.join(path, 'data')):
+            path = "/root/thunder/python/thunder/utils"
 
         if dataset == "iris":
             return self.loadSeries(os.path.join(path, 'data/iris/iris.bin'))
@@ -413,7 +418,8 @@ class ThunderContext():
         elif dataset == "fish-images":
             return self.loadImages(os.path.join(path, 'data/fish/tif-stack'), inputformat="tif-stack")
         else:
-            raise NotImplementedError("Dataset '%s' not found" % dataset)
+            raise NotImplementedError("Dataset '%s' not known; should be one of 'iris', 'fish-series', 'fish-images'"
+                                      % dataset)
 
     def loadExampleEC2(self, dataset):
         """
