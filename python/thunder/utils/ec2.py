@@ -32,7 +32,7 @@ import time
 from distutils.version import LooseVersion
 from sys import stderr
 from optparse import OptionParser
-from spark_ec2 import launch_cluster, get_existing_cluster, stringify_command, \
+from spark_ec2 import launch_cluster, get_existing_cluster, stringify_command,\
     deploy_files, setup_spark_cluster, get_spark_ami, ssh_read, ssh_write, get_or_make_group
 
 try:
@@ -100,7 +100,7 @@ def remap_spark_version_to_hash(user_version_string):
     return SPARK_VERSIONS_TO_HASHES.get(user_version_string, user_version_string)
 
 
-def install_thunder(master, opts, spark_home_loose_version):
+def install_thunder(master, opts, spark_version_string):
     """ Install Thunder and dependencies on a Spark EC2 cluster"""
     print "Installing Thunder on the cluster..."
     # download and build thunder
@@ -142,7 +142,8 @@ def install_thunder(master, opts, spark_home_loose_version):
     # "IPython requires Python 2.7+; please install python2.7 or set PYSPARK_PYTHON"
     # should not do this with earlier versions, as it will lead to
     # "java.lang.IllegalArgumentException: port out of range" [SPARK-3772]
-    if spark_home_loose_version >= LooseVersion("1.2.0"):
+    # this logic doesn't work if we get a hash here; assume in this case it's a recent version of Spark
+    if (not '.' in spark_version_string) or LooseVersion(spark_version_string) >= LooseVersion("1.2.0"):
         ssh(master, opts, "echo 'export PYSPARK_PYTHON=/usr/bin/ipython' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export PATH=/root/thunder/python/bin:$PATH' >> /root/.bash_profile")
     # customize spark configuration parameters
@@ -357,7 +358,7 @@ if __name__ == "__main__":
             )
         setup_cluster(conn, master_nodes, slave_nodes, opts, True)
         master = master_nodes[0].public_dns_name
-        install_thunder(master, opts, spark_home_loose_version)
+        install_thunder(master, opts, spark_version_string)
         print "\n\n"
         print "-------------------------------"
         print "Cluster successfully launched!"
@@ -410,7 +411,7 @@ if __name__ == "__main__":
 
         # Install thunder on the cluster
         elif action == "install":
-            install_thunder(master, opts, spark_home_loose_version)
+            install_thunder(master, opts, spark_version_string)
 
         # Stop a running cluster.  Storage on EBS volumes is
         # preserved, so you can restart the cluster in the same state
