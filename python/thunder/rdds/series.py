@@ -1,4 +1,4 @@
-from numpy import ndarray, array, sum, mean, std, size, arange, \
+from numpy import ndarray, array, sum, mean, median, std, size, arange, \
     polyfit, polyval, percentile, asarray, maximum, zeros, corrcoef, where, \
     true_divide, empty_like, ceil
 from numpy import dtype as dtypefunc
@@ -382,6 +382,22 @@ class Series(Data):
         """ Compute the value mean of each record in a Series """
         return self.seriesStat('mean')
 
+    def seriesMedian(self):
+        """ Compute the value median of each record in a Series """
+        return self.seriesStat('median')
+
+    def seriesPercentile(self, q, interpolation = 'linear'):
+        """ Compute the value percentile of each record in a Series.
+        
+        Parameters
+
+          q: a floating point number between 0 and 100 inclusive.
+          interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}  (see documentation for np.percentile)
+        """
+        from numpy import percentile
+        rdd = self.rdd.mapValues(lambda x: percentile(x,q))
+        return self._constructor(rdd, index='percentile').__finalize__(self, nopropagate=('_dtype',))
+
     def seriesStdev(self):
         """ Compute the value std of each record in a Series """
         return self.seriesStat('stdev')
@@ -397,6 +413,7 @@ class Series(Data):
         STATS = {
             'sum': sum,
             'mean': mean,
+            'median': median,
             'stdev': std,
             'max': max,
             'min': min,
