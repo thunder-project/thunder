@@ -372,6 +372,19 @@ class TestImages(PySparkTestCase):
             assert_equals(tuple(expected.shape), planedData._dims.count)
             assert_equals(str(expected.dtype), planedData._dtype)
 
+    def test_subtract(self):
+        narys = 3
+        arys, sh, sz = _generate_test_arrays(narys)
+        subVals = [1, arange(sz, dtype='int16').reshape(sh)]
+
+        imagedata = ImagesLoader(self.sc).fromArrays(arys)
+        for subVal in subVals:
+            subData = imagedata.subtract(subVal)
+            subtracted = subData.collect()
+            expectedArys = map(lambda ary: ary - subVal, arys)
+            for actual, expected in zip(subtracted, expectedArys):
+                assert_true(allclose(expected, actual[1]))
+
 
 class TestImagesStats(PySparkTestCase):
     def test_mean(self):
