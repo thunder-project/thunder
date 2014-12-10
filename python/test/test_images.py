@@ -3,7 +3,7 @@ import glob
 import struct
 import os
 from operator import mul
-from numpy import allclose, arange, array, array_equal, dtype, prod, zeros
+from numpy import allclose, arange, array, array_equal, dtype, prod, squeeze, zeros
 import itertools
 from nose.tools import assert_equals, assert_true, assert_almost_equal, assert_raises
 
@@ -317,6 +317,60 @@ class TestImages(PySparkTestCase):
             assert_equals(tuple(expectedArys[0].shape), subsampData._dims.count)
             assert_equals(str(arys[0].dtype), str(subsampled[0][1].dtype))
             assert_equals(str(subsampled[0][1].dtype), subsampData._dtype)
+
+    @staticmethod
+    def _run_filter(ary, filterfunc, radius):
+        if ary.ndim <= 2:
+            return filterfunc(ary, radius)
+        else:
+            cpy = zeros(ary.shape, dtype=ary.dtype)
+            for z in xrange(ary.shape[-1]):
+                slices = [slice(None)] * (ary.ndim-1) + [slice(z, z+1, 1)]
+                cpy[slices] = filterfunc(ary[slices], radius)
+            return cpy
+
+    def _run_tst_filter(self, datafunc, filterfunc):
+        narys = 3
+        arys, sh, sz = _generate_test_arrays(narys)
+        sigma = 2
+
+        imagedata = ImagesLoader(self.sc).fromArrays(arys)
+        filteredData = datafunc(imagedata, sigma)
+        filtered = filteredData.collect()
+        expectedArys = map(lambda ary: TestImages._run_filter(ary, filterfunc, sigma), arys)
+        for actual, expected in zip(filtered, expectedArys):
+            assert_true(allclose(expected, actual[1]))
+
+        assert_equals(tuple(expectedArys[0].shape), filtered[0][1].shape)
+        assert_equals(tuple(expectedArys[0].shape), filteredData._dims.count)
+        assert_equals(str(arys[0].dtype), str(filtered[0][1].dtype))
+        assert_equals(str(filtered[0][1].dtype), filteredData._dtype)
+
+    def test_gaussFilter3d(self):
+        from scipy.ndimage.filters import gaussian_filter
+        from thunder.rdds.images import Images
+        self._run_tst_filter(Images.gaussianFilter, gaussian_filter)
+
+    def test_medianFilter3d(self):
+        from scipy.ndimage.filters import median_filter
+        from thunder.rdds.images import Images
+        self._run_tst_filter(Images.medianFilter, median_filter)
+
+    def test_planes(self):
+        # params are images shape, bottom, top, inclusize, expected slices of orig ary
+        PARAMS = [((2, 2, 4), 1, 2, True, [slice(None), slice(None), slice(1, 3)]),
+                  ((2, 2, 4), 0, 2, False, [slice(None), slice(None), slice(1, 2)])]
+        for params in PARAMS:
+            sz = reduce(lambda x, y: x*y, params[0])
+            origAry = arange(sz, dtype='int16').reshape(params[0])
+            imageData = ImagesLoader(self.sc).fromArrays([origAry])
+            planedData = imageData.planes(params[1], params[2], params[3])
+            planed = planedData.collect()
+
+            expected = squeeze(origAry[params[4]])
+            assert_true(array_equal(expected, planed[0][1]))
+            assert_equals(tuple(expected.shape), planedData._dims.count)
+            assert_equals(str(expected.dtype), planedData._dtype)
 
 
 class TestImagesStats(PySparkTestCase):
