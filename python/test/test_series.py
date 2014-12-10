@@ -1,4 +1,4 @@
-from numpy import allclose, arange, array, array_equal, dtype
+from numpy import allclose, amax, arange, array, array_equal, dtype
 from nose.tools import assert_equals, assert_true
 
 from thunder.rdds.series import Series
@@ -270,3 +270,17 @@ class TestSeriesMethods(PySparkTestCase):
         keys, values = data.query(inds)
         assert(allclose(values[0, :], array([1.5, 2., 3.5])))
         assert_equals(data.dtype, values[0, :].dtype)
+
+    def test_maxProject(self):
+        from thunder.rdds.fileio.seriesloader import SeriesLoader
+        ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
+
+        series = SeriesLoader(self.sc).fromArrays(ary)
+        project0Series = series.maxProject(axis=0)
+        project0 = project0Series.pack()
+
+        project1Series = series.maxProject(axis=1)
+        project1 = project1Series.pack(sorting=True)
+
+        assert_true(array_equal(amax(ary.T, 0), project0))
+        assert_true(array_equal(amax(ary.T, 1), project1))
