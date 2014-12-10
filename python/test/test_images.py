@@ -3,7 +3,7 @@ import glob
 import struct
 import os
 from operator import mul
-from numpy import allclose, arange, array, array_equal, dtype, prod, zeros
+from numpy import allclose, arange, array, array_equal, dtype, prod, squeeze, zeros
 import itertools
 from nose.tools import assert_equals, assert_true, assert_almost_equal, assert_raises
 
@@ -317,6 +317,36 @@ class TestImages(PySparkTestCase):
             assert_equals(tuple(expectedArys[0].shape), subsampData._dims.count)
             assert_equals(str(arys[0].dtype), str(subsampled[0][1].dtype))
             assert_equals(str(subsampled[0][1].dtype), subsampData._dtype)
+
+    def test_planes(self):
+        # params are images shape, bottom, top, inclusize, expected slices of orig ary
+        PARAMS = [((2, 2, 4), 1, 2, True, [slice(None), slice(None), slice(1, 3)]),
+                  ((2, 2, 4), 0, 2, False, [slice(None), slice(None), slice(1, 2)])]
+        for params in PARAMS:
+            sz = reduce(lambda x, y: x*y, params[0])
+            origAry = arange(sz, dtype='int16').reshape(params[0])
+            imageData = ImagesLoader(self.sc).fromArrays([origAry])
+            planedData = imageData.planes(params[1], params[2], params[3])
+            planed = planedData.collect()
+
+            expected = squeeze(origAry[params[4]])
+            assert_true(array_equal(expected, planed[0][1]))
+            assert_equals(tuple(expected.shape), planedData._dims.count)
+            assert_equals(str(expected.dtype), planedData._dtype)
+
+    def test_subtract(self):
+        narys = 3
+        arys, sh, sz = _generate_test_arrays(narys)
+        subVals = [1, arange(sz, dtype='int16').reshape(sh)]
+
+        imagedata = ImagesLoader(self.sc).fromArrays(arys)
+        for subVal in subVals:
+            subData = imagedata.subtract(subVal)
+            subtracted = subData.collect()
+            expectedArys = map(lambda ary: ary - subVal, arys)
+            for actual, expected in zip(subtracted, expectedArys):
+                assert_true(allclose(expected, actual[1]))
+
 
 class TestImagesStats(PySparkTestCase):
     def test_mean(self):

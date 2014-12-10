@@ -489,7 +489,7 @@ class Images(Data):
             Value to subtract
         """
         if size(val) != 1:
-            if val.shape != self.dims:
+            if val.shape != self.dims.count:
                 raise Exception('Cannot subtract image with dimensions %s '
                                 'from images with dimension %s' % (str(val.shape), str(self.dims)))
 
