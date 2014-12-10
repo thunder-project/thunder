@@ -66,12 +66,6 @@ class BlockingStrategy(object):
     def combiningFunction(self, spatialIdxAndBlocksSequence):
         raise NotImplementedError("combiningFunction not implemented")
 
-    @property
-    def npartitions(self):
-        """The number of Spark partitions across which the resulting RDD is to be distributed.
-        """
-        raise NotImplementedError("numPartitions not implemented")
-
 
 class SimpleBlockingStrategy(BlockingStrategy):
     """A BlockingStrategy that groups Images into nonoverlapping, roughly equally-sized blocks.
@@ -81,7 +75,7 @@ class SimpleBlockingStrategy(BlockingStrategy):
     for instance, given a 12 x 12 Images object, a SimpleBlockingStrategy with splitsPerDim=(2,2)
     would yield Blocks objects with 4 blocks, each 6 x 6.
     """
-    def __init__(self, splitsPerDim, numSparkPartitions=None):
+    def __init__(self, splitsPerDim):
         """Returns a new SimpleBlockingStrategy.
 
         Parameters
@@ -94,14 +88,12 @@ class SimpleBlockingStrategy(BlockingStrategy):
         super(SimpleBlockingStrategy, self).__init__()
         self._splitsPerDim = SimpleBlockingStrategy.__normalizeSplits(splitsPerDim)
         self._slices = None
-        self._npartitions = reduce(lambda x, y: x * y, self._splitsPerDim, 1) if not numSparkPartitions \
-            else int(numSparkPartitions)
 
     def getBlocksClass(self):
         return SimpleBlocks
 
     @classmethod
-    def generateFromBlockSize(cls, blockSize, dims, nimages, datatype, numSparkPartitions=None, **kwargs):
+    def generateFromBlockSize(cls, blockSize, dims, nimages, datatype, **kwargs):
         """Returns a new SimpleBlockingStrategy, that yields blocks
         closely matching the requested size in bytes.
 
@@ -134,13 +126,7 @@ class SimpleBlockingStrategy(BlockingStrategy):
             # we can produce; just give back the biggest block size
             tmpidx -= 1
         splitsPerDim = memseq.indtosub(tmpidx)
-        return cls(splitsPerDim, numSparkPartitions=numSparkPartitions, **kwargs)
-
-    @property
-    def npartitions(self):
-        """The number of Spark partitions across which the resulting RDD is to be distributed.
-        """
-        return self._npartitions
+        return cls(splitsPerDim, **kwargs)
 
     @staticmethod
     def __normalizeSplits(splitsPerDim):

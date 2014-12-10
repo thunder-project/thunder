@@ -241,13 +241,12 @@ class ThunderContext():
             loader = ImagesLoader(self._sc)
             if inputformat.lower() == 'stack':
                 images = loader.fromStack(datapath, dims, dtype=dtype, startidx=startidx, stopidx=stopidx)
-                strategy = SimpleBlockingStrategy.generateFromBlockSize(blockSize, dims,
-                                                                                 images.nimages, dtype)
+                strategy = SimpleBlockingStrategy.generateFromBlockSize(blockSize, dims, images.nimages, dtype)
             else:
                 # tif stack
                 images = loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)
-                strategy = SimpleBlockingStrategy.generateFromBlockSize(blockSize, images.dims,
-                                                                                 images.nimages, images.dtype)
+                strategy = SimpleBlockingStrategy.generateFromBlockSize(blockSize, images.dims, images.nimages,
+                                                                        images.dtype)
             return images.toBlocks(strategy).toSeries()
 
         else:
@@ -357,10 +356,9 @@ class ThunderContext():
             else:
                 images = loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)
 
-            strategy = SimpleBlockingStrategy.generateFromBlockSize(blockSize=blocksize,
-                                                                             dims=images.dims,
-                                                                             nimages=images.nimages,
-                                                                             datatype=images.dtype)
+            strategy = SimpleBlockingStrategy.generateFromBlockSize(cls=blocksize, blockSize=blocksize,
+                                                                    dims=images.dims, nimages=images.nimages,
+                                                                    datatype=images.dtype)
             images.toBlocks(strategy).saveAsBinarySeries(outputdirpath, overwrite=overwrite)
         else:
             from thunder.rdds.fileio.seriesloader import SeriesLoader

@@ -427,10 +427,8 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
         imagepath = findSourceTreeDir("utils/data/fish/tif-stack")
 
         images = ImagesLoader(self.sc).fromMultipageTif(imagepath)
-        strategy = SimpleBlockingStrategy.generateFromBlockSize(blockSize=76*20,
-                                                                         dims=images.dims.count,
-                                                                         nimages=images.nimages,
-                                                                         datatype=images.dtype)
+        strategy = SimpleBlockingStrategy.generateFromBlockSize(cls=76 * 20, blockSize=76 * 20, dims=images.dims.count,
+                                                                nimages=images.nimages, datatype=images.dtype)
         self._run_tst_roundtripConvertToSeries(images, strategy)
 
     def _run_tst_fromStackToSeriesWithPack(self, strategy):
