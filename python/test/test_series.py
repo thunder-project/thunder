@@ -140,10 +140,13 @@ class TestSeriesMethods(PySparkTestCase):
         data = Series(rdd)
         assert(allclose(data.seriesMean().first()[1], 3.0))
         assert(allclose(data.seriesSum().first()[1], 15.0))
+        assert(allclose(data.seriesMedian().first()[1], 3.0))
         assert(allclose(data.seriesStdev().first()[1], 1.4142135))
         assert(allclose(data.seriesStat('mean').first()[1], 3.0))
         assert(allclose(data.seriesStats().select('mean').first()[1], 3.0))
         assert(allclose(data.seriesStats().select('count').first()[1], 5))
+        assert(allclose(data.seriesPercentile(25).first()[1], 2.0))
+        assert(allclose(data.seriesPercentile((25, 75)).first()[1], array([2.0, 4.0])))
 
     def test_normalization_bypercentile(self):
         rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5], dtype='float16'))])
