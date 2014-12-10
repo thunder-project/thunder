@@ -284,6 +284,7 @@ class TestImages(PySparkTestCase):
             del expectedShape[ax]
             assert_equals(tuple(expectedShape), maxProjected[0][1].shape)
             assert_equals(tuple(expectedShape), projectedData._dims.count)
+            assert_equals(str(arys[0].dtype), str(maxProjected[0][1].dtype))
             assert_equals(str(maxProjected[0][1].dtype), projectedData._dtype)
 
     def test_maxProjection(self):
@@ -291,6 +292,31 @@ class TestImages(PySparkTestCase):
 
     def test_maxminProjection(self):
         self._run_tst_maxProject(TestImages._run_maxminProject)
+
+    def test_subsample(self):
+        narys = 3
+        arys, sh, sz = _generate_test_arrays(narys)
+        sampFactors = [2, (2, 3, 3)]
+
+        def subsamp(ary, factor):
+            if not hasattr(factor, "__len__"):
+                factor = [factor] * ary.ndim
+
+            slices = [slice(0, ary.shape[i], factor[i]) for i in xrange(ary.ndim)]
+            return ary[slices]
+
+        imagedata = ImagesLoader(self.sc).fromArrays(arys)
+        for sampFactor in sampFactors:
+            subsampData = imagedata.subsample(sampFactor)
+            expectedArys = map(lambda ary: subsamp(ary, sampFactor), arys)
+            subsampled = subsampData.collect()
+            for actual, expected in zip(subsampled, expectedArys):
+                assert_true(array_equal(expected, actual[1]))
+
+            assert_equals(tuple(expectedArys[0].shape), subsampled[0][1].shape)
+            assert_equals(tuple(expectedArys[0].shape), subsampData._dims.count)
+            assert_equals(str(arys[0].dtype), str(subsampled[0][1].dtype))
+            assert_equals(str(subsampled[0][1].dtype), subsampData._dtype)
 
 
 class TestImagesStats(PySparkTestCase):

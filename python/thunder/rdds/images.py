@@ -436,8 +436,14 @@ class Images(Data):
         if any((sf <= 0 for sf in samplefactor)):
             raise ValueError("All sampling factors must be positive; got " + str(samplefactor))
 
+        def div_roundup(a, b):
+            # thanks stack overflow & Eli Collins:
+            # http://stackoverflow.com/questions/7181757/how-to-implement-division-with-round-towards-infinity-in-python
+            # this only works for positive ints, but we've checked for that above
+            return (a + b - 1) // b
+
         sampleslices = [slice(0, dims[i], samplefactor[i]) for i in xrange(ndims)]
-        newdims = [dims[i] / samplefactor[i] for i in xrange(ndims)]  # integer division
+        newdims = [div_roundup(dims[i] ,samplefactor[i]) for i in xrange(ndims)]
 
         return self._constructor(
             self.rdd.mapValues(lambda v: v[sampleslices]), dims=newdims).__finalize__(self)
