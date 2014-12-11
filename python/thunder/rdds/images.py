@@ -81,8 +81,9 @@ class Images(Data):
         if isinstance(blockSizeSpec, BlockingStrategy):
             blockingStrategy = blockSizeSpec
         elif isinstance(blockSizeSpec, basestring) or isinstance(blockSizeSpec, int):
-            blockingStrategy = SimpleBlockingStrategy.generateForImagesFromBlockSize(self, blockSizeSpec)
+            blockingStrategy = SimpleBlockingStrategy.generateFromBlockSize(self, blockSizeSpec)
         else:
+            # assume it is a tuple of positive int specifying splits
             blockingStrategy = SimpleBlockingStrategy(blockSizeSpec)
 
         blockingStrategy.setImages(self)

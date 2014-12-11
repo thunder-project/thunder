@@ -2,6 +2,7 @@
 """
 import itertools
 from numpy import expand_dims, zeros
+from numpy import dtype as dtypeFunc
 
 from thunder.rdds.imgblocks.blocks import SimpleBlocks, BlockGroupingKey, Blocks
 
@@ -38,9 +39,9 @@ class BlockingStrategy(object):
     def dtype(self):
         """Numpy data type of the Images data to which this BlockingStrategy is to be applied.
 
-        String or numpy dtype, or None if setImages has not been called
+        String of numpy dtype spec, or None if setImages has not been called
         """
-        return self.dtype
+        return self._dtype
 
     def setImages(self, images):
         """Readies the BlockingStrategy to operate over the passed Images object.
@@ -49,9 +50,9 @@ class BlockingStrategy(object):
 
         No return value.
         """
-        self._dims = images.dims
+        self._dims = _normDimsToShapeTuple(images.dims)
         self._nimages = images.nimages
-        self._dtype = images.dtype
+        self._dtype = str(images.dtype)
 
     def getBlocksClass(self):
         """Get the subtype of Blocks that instances of this strategy will produce.
@@ -59,6 +60,16 @@ class BlockingStrategy(object):
         Subclasses should override this method to return the appropriate Blocks subclass.
         """
         return Blocks
+
+    def calcAverageBlockSize(self):
+        """Calculates the estimated average block size in bytes for this strategy applied to the Images
+        last passed to setImages.
+
+        Returns
+        -------
+        float block size in bytes
+        """
+        raise NotImplementedError("calcAverageBlockSize not implemented")
 
     def blockingFunction(self, timePointIdxAndImageArray):
         raise NotImplementedError("blockingFunction not implemented")
@@ -89,16 +100,23 @@ class SimpleBlockingStrategy(BlockingStrategy):
         self._splitsPerDim = SimpleBlockingStrategy.__normalizeSplits(splitsPerDim)
         self._slices = None
 
+    @property
+    def splitsPerDim(self):
+        return self._splitsPerDim
+
     def getBlocksClass(self):
         return SimpleBlocks
 
     @classmethod
-    def generateFromBlockSize(cls, blockSize, dims, nimages, datatype, **kwargs):
+    def generateFromBlockSize(cls, images, blockSize, **kwargs):
         """Returns a new SimpleBlockingStrategy, that yields blocks
         closely matching the requested size in bytes.
 
         Parameters
         ----------
+        images : Images object
+            Images for which blocking strategy is to be generated.
+
         blockSize : positive int or string
             Requests an average size for the intermediate blocks in bytes. A passed string should
             be in a format like "256k" or "150M" (see util.common.parseMemoryString). If blocksPerDim
@@ -107,33 +125,25 @@ class SimpleBlockingStrategy(BlockingStrategy):
 
         Returns
         -------
-        n-tuple of positive int, where n == len(self.dims)
-            Each value in the returned tuple represents the number of splits to apply along the
-            corresponding dimension in order to yield blocks close to the requested size.
+        SimpleBlockingStrategy or subclass
+            new BlockingStrategy will be created and setImages() called on it with the passed images object
         """
         import bisect
-        from numpy import dtype
         from thunder.utils.common import parseMemoryString
-        minseriessize = nimages * dtype(datatype).itemsize
+        dims, nimages, dtype = images.dims, images.nimages, images.dtype
+        minseriessize = nimages * dtypeFunc(dtype).itemsize
 
         if isinstance(blockSize, basestring):
             blockSize = parseMemoryString(blockSize)
 
-        memseq = _BlockMemoryAsReversedSequence(dims)
+        memseq = _BlockMemoryAsReversedSequence(_normDimsToShapeTuple(dims))
         tmpidx = bisect.bisect_left(memseq, blockSize / float(minseriessize))
         if tmpidx == len(memseq):
             # handle case where requested block is bigger than the biggest image
             # we can produce; just give back the biggest block size
             tmpidx -= 1
         splitsPerDim = memseq.indtosub(tmpidx)
-        return cls(splitsPerDim, **kwargs)
-
-    @classmethod
-    def generateForImagesFromBlockSize(cls, images, blockSize, **kwargs):
-        """Returns a new SimpleBlockingStrategy, that yields blocks
-        closely matching the requested size in bytes.
-        """
-        strategy = cls.generateFromBlockSize(blockSize, images.dims, images.nimages, images.dtype, **kwargs)
+        strategy = cls(splitsPerDim, **kwargs)
         strategy.setImages(images)
         return strategy
 
@@ -178,6 +188,10 @@ class SimpleBlockingStrategy(BlockingStrategy):
         self.__validateSplitsForImage()
         self._slices = SimpleBlockingStrategy.__generateSlices(self._splitsPerDim, self.dims)
 
+    def calcAverageBlockSize(self):
+        elts = _BlockMemoryAsSequence.avgElementsPerBlock(self.dims, self._splitsPerDim)
+        return elts * dtypeFunc(self.dtype).itemsize * self.nimages
+
     @staticmethod
     def extractBlockFromImage(imgary, blockslices, timepoint, numtimepoints):
         # add additional "time" dimension onto front of val
@@ -216,6 +230,16 @@ class SimpleBlockingStrategy(BlockingStrategy):
         # new slices should be full slice for formerly planar dimension, plus existing block slices
         neworigslices = [slice(None)] + list(firstkey.origslices)[1:]
         return BlockGroupingKey(origshape=firstkey.origshape, origslices=neworigslices), ary
+
+
+def _normDimsToShapeTuple(dims):
+    """Returns a shape tuple from the passed object, which may be either already a tuple of int
+    or a Dimensions object.
+    """
+    from thunder.rdds.keys import Dimensions
+    if isinstance(dims, Dimensions):
+        return dims.count
+    return dims
 
 
 class _BlockMemoryAsSequence(object):
@@ -271,19 +295,20 @@ class _BlockMemoryAsSequence(object):
                 break
         return tuple(sub)
 
-    def blockMemoryForSplits(self, sub):
-        """Returns the average number of cells in a block generated by the passed sequence of splits.
+    @staticmethod
+    def avgElementsPerBlock(imageShape, splitsPerDim):
+        """Calculates the average number of elements per block, defined by the passed sequence of splits
+        applied to an array of the passed shape
         """
-        from operator import mul
-        sz = [d / float(s) for (d, s) in zip(self._dims, sub)]
-        return reduce(mul, sz)
+        sz = [d / float(s) for (d, s) in zip(imageShape, splitsPerDim)]
+        return reduce(lambda x, y: x * y, sz)
 
     def __len__(self):
         return sum([d-1 for d in self._dims]) + 1
 
     def __getitem__(self, item):
-        sub = self.indtosub(item)
-        return self.blockMemoryForSplits(sub)
+        splits = self.indtosub(item)
+        return _BlockMemoryAsSequence.avgElementsPerBlock(self._dims, splits)
 
 
 class _BlockMemoryAsReversedSequence(_BlockMemoryAsSequence):

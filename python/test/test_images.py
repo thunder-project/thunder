@@ -2,7 +2,6 @@ import glob
 import struct
 import os
 from numpy import allclose, arange, array, array_equal, dtype, prod, vstack, zeros
-from operator import mul
 import itertools
 from nose.tools import assert_equals, assert_raises, assert_true
 import unittest
@@ -417,15 +416,16 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
         imagepath = findSourceTreeDir("utils/data/fish/tif-stack")
 
         images = ImagesLoader(self.sc).fromMultipageTif(imagepath)
-        strategy = SimpleBlockingStrategy.generateForImagesFromBlockSize(images, blockSize=76 * 20)
+        strategy = SimpleBlockingStrategy.generateFromBlockSize(images, blockSize=76 * 20)
         self._run_tst_roundtripConvertToSeries(images, strategy)
 
-    def _run_tst_fromStackToSeriesWithPack(self, strategy):
+    def test_fromStackToSeriesWithPack(self):
         ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
         filename = os.path.join(self.outputdir, "test.stack")
         ary.tofile(filename)
 
         image = ImagesLoader(self.sc).fromStack(filename, dims=(4, 2))
+        strategy = SimpleBlockingStrategy.generateFromBlockSize(image, "150M")
         series = image.toBlocks(strategy).toSeries()
 
         seriesvals = series.collect()
@@ -450,10 +450,6 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
         # check that packing returns transpose of original array
         assert_true(array_equal(ary.T, seriesary))
-
-    def test_fromStackToSeriesWithPack(self):
-        strategy = SimpleBlockingStrategy.generateFromBlockSize("150M", (4, 2), 1, dtype('int16'))
-        self._run_tst_fromStackToSeriesWithPack(strategy)
 
 
 if __name__ == "__main__":
