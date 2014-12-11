@@ -10,6 +10,11 @@ from thunder.rdds.imgblocks.blocks import SimpleBlocks, BlockGroupingKey, Blocks
 class BlockingStrategy(object):
     """Superclass for objects that define ways to split up images into smaller blocks.
     """
+
+    # max block size that we will produce from images without printing a warning
+    # TODO make configurable?
+    DEFAULT_MAX_BLOCK_SIZE = 500000000  # 500 MB
+
     def __init__(self):
         self._dims = None
         self._nimages = None

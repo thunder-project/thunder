@@ -87,6 +87,12 @@ class Images(Data):
             blockingStrategy = SimpleBlockingStrategy(blockSizeSpec)
 
         blockingStrategy.setImages(self)
+        avgSize = blockingStrategy.calcAverageBlockSize()
+        if avgSize >= BlockingStrategy.DEFAULT_MAX_BLOCK_SIZE:
+            # TODO: use logging module here rather than print
+            print "Thunder WARNING: average block size of %g bytes exceeds suggested max size of %g bytes" % \
+                  (avgSize, BlockingStrategy.DEFAULT_MAX_BLOCK_SIZE)
+
         returntype = blockingStrategy.getBlocksClass()
         vals = self.rdd.flatMap(blockingStrategy.blockingFunction, preservesPartitioning=False)
         # fastest changing dimension (e.g. x) is first, so must sort reversed keys to get desired ordering
