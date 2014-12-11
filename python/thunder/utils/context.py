@@ -237,17 +237,13 @@ class ThunderContext():
 
         if shuffle:
             from thunder.rdds.fileio.imagesloader import ImagesLoader
-            from thunder.rdds.imgblocks.strategy import SimpleBlockingStrategy
             loader = ImagesLoader(self._sc)
             if inputformat.lower() == 'stack':
                 images = loader.fromStack(datapath, dims, dtype=dtype, startidx=startidx, stopidx=stopidx)
-                strategy = SimpleBlockingStrategy.generateFromBlockSize(blockSize, dims, images.nimages, dtype)
             else:
                 # tif stack
                 images = loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)
-                strategy = SimpleBlockingStrategy.generateFromBlockSize(blockSize, images.dims, images.nimages,
-                                                                        images.dtype)
-            return images.toBlocks(strategy).toSeries()
+            return images.toBlocks(blockSize).toSeries()
 
         else:
             from thunder.rdds.fileio.seriesloader import SeriesLoader
@@ -349,17 +345,13 @@ class ThunderContext():
 
         if shuffle:
             from thunder.rdds.fileio.imagesloader import ImagesLoader
-            from thunder.rdds.imgblocks.strategy import SimpleBlockingStrategy
             loader = ImagesLoader(self._sc)
             if inputformat.lower() == 'stack':
                 images = loader.fromStack(datapath, dims, dtype=dtype, startidx=startidx, stopidx=stopidx)
             else:
                 images = loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)
 
-            strategy = SimpleBlockingStrategy.generateFromBlockSize(cls=blocksize, blockSize=blocksize,
-                                                                    dims=images.dims, nimages=images.nimages,
-                                                                    datatype=images.dtype)
-            images.toBlocks(strategy).saveAsBinarySeries(outputdirpath, overwrite=overwrite)
+            images.toBlocks(blocksize).saveAsBinarySeries(outputdirpath, overwrite=overwrite)
         else:
             from thunder.rdds.fileio.seriesloader import SeriesLoader
             loader = SeriesLoader(self._sc)

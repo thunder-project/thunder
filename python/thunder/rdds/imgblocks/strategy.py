@@ -128,6 +128,15 @@ class SimpleBlockingStrategy(BlockingStrategy):
         splitsPerDim = memseq.indtosub(tmpidx)
         return cls(splitsPerDim, **kwargs)
 
+    @classmethod
+    def generateForImagesFromBlockSize(cls, images, blockSize, **kwargs):
+        """Returns a new SimpleBlockingStrategy, that yields blocks
+        closely matching the requested size in bytes.
+        """
+        strategy = cls.generateFromBlockSize(blockSize, images.dims, images.nimages, images.dtype, **kwargs)
+        strategy.setImages(images)
+        return strategy
+
     @staticmethod
     def __normalizeSplits(splitsPerDim):
         splitsPerDim = map(int, splitsPerDim)

@@ -58,8 +58,7 @@ class TestImages(PySparkTestCase):
         arys, sh, sz = _generate_test_arrays(narys)
 
         imagedata = ImagesLoader(self.sc).fromArrays(arys)
-        strategy = SimpleBlockingStrategy(splitsPerDim=(4, 1, 1))
-        series = imagedata.toBlocks(strategy).toSeries().collect()
+        series = imagedata.toBlocks((4, 1, 1)).toSeries().collect()
 
         self.evaluate_series(arys, series, sz)
 
@@ -67,8 +66,7 @@ class TestImages(PySparkTestCase):
         ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        strategy = SimpleBlockingStrategy.generateFromBlockSize("150M", ary.shape, 1, ary.dtype)
-        series = image.toBlocks(strategy).toSeries()
+        series = image.toBlocks("150M").toSeries()
 
         seriesvals = series.collect()
         seriesary = series.pack()
@@ -100,8 +98,7 @@ class TestImages(PySparkTestCase):
         ary = arange(24, dtype=dtype('int16')).reshape((3, 4, 2))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        strategy = SimpleBlockingStrategy.generateFromBlockSize("150M", ary.shape, 1, ary.dtype)
-        series = image.toBlocks(strategy).toSeries()
+        series = image.toBlocks("150M").toSeries()
 
         seriesvals = series.collect()
         seriesary = series.pack()
@@ -148,8 +145,7 @@ class TestImages(PySparkTestCase):
         ary = arange(8, dtype=dtype('int16')).reshape((4, 2))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        strategy = SimpleBlockingStrategy(splitsPerDim=(1, 2))
-        series = image.toBlocks(strategy).toSeries()
+        series = image.toBlocks((1, 2)).toSeries()
 
         seriesvals = series.collect()
         seriesary = series.pack()
@@ -178,8 +174,7 @@ class TestImages(PySparkTestCase):
         ary = arange(8, dtype=dtype('int16')).reshape((4, 2))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        strategy = SimpleBlockingStrategy(splitsPerDim=(2, 1))
-        series = image.toBlocks(strategy).toSeries()
+        series = image.toBlocks((2, 1)).toSeries()
 
         seriesvals = series.collect()
         seriesary = series.pack(sorting=True)
@@ -211,8 +206,7 @@ class TestImages(PySparkTestCase):
         ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        strategy = SimpleBlockingStrategy(splitsPerDim=(1, 2))
-        groupedblocks = image.toBlocks(strategy)
+        groupedblocks = image.toBlocks((1, 2))
 
         # collectedblocks = blocks.collect()
         collectedgroupedblocks = groupedblocks.collect()
@@ -234,16 +228,14 @@ class TestImages(PySparkTestCase):
             (2, 1, 1), (2, 1, 2), (2, 1, 3), (2, 2, 1), (2, 2, 2), (2, 2, 3),
             (2, 3, 1), (2, 3, 2), (2, 3, 3)]
         for bpd in test_params:
-            strategy = SimpleBlockingStrategy(splitsPerDim=bpd)
-            series = imagedata.toBlocks(strategy).toSeries().collect()
+            series = imagedata.toBlocks(bpd).toSeries().collect()
 
             self.evaluate_series(arys, series, sz)
 
     def test_roundtripThroughBlocks(self):
         imagepath = findSourceTreeDir("utils/data/fish/tif-stack")
         images = ImagesLoader(self.sc).fromMultipageTif(imagepath)
-        strategy = SimpleBlockingStrategy((2, 2, 2))
-        partitionedimages = images.toBlocks(strategy)
+        partitionedimages = images.toBlocks((2, 2, 2))
         recombinedimages = partitionedimages.toImages()
 
         collectedimages = images.collect()
@@ -341,8 +333,7 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
         slicesPerDim = [1]*arys[0].ndim
         slicesPerDim[groupingdim_] = arys[0].shape[groupingdim_]
-        strategy = SimpleBlockingStrategy(splitsPerDim=slicesPerDim)
-        images.toBlocks(strategy).saveAsBinarySeries(outdir)
+        images.toBlocks(slicesPerDim).saveAsBinarySeries(outdir)
 
         ndims = len(aryshape)
         # prevent padding to 4-byte boundaries: "=" specifies no alignment
@@ -395,8 +386,7 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
         outdir = os.path.join(self.outputdir, "anotherdir")
         os.mkdir(outdir)
-        dummystrat = SimpleBlockingStrategy(splitsPerDim=(1, 1, 1))
-        assert_raises(ValueError, ImagesLoader(self.sc).fromArrays(arys).toBlocks(dummystrat)
+        assert_raises(ValueError, ImagesLoader(self.sc).fromArrays(arys).toBlocks((1, 1, 1))
                       .saveAsBinarySeries, outdir)
 
         groupingdims = xrange(len(aryshape))
@@ -427,8 +417,7 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
         imagepath = findSourceTreeDir("utils/data/fish/tif-stack")
 
         images = ImagesLoader(self.sc).fromMultipageTif(imagepath)
-        strategy = SimpleBlockingStrategy.generateFromBlockSize(cls=76 * 20, blockSize=76 * 20, dims=images.dims.count,
-                                                                nimages=images.nimages, datatype=images.dtype)
+        strategy = SimpleBlockingStrategy.generateForImagesFromBlockSize(images, blockSize=76 * 20)
         self._run_tst_roundtripConvertToSeries(images, strategy)
 
     def _run_tst_fromStackToSeriesWithPack(self, strategy):
