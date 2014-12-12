@@ -386,16 +386,14 @@ class Series(Data):
         """ Compute the value median of each record in a Series """
         return self.seriesStat('median')
 
-    def seriesPercentile(self, q, interpolation = 'linear'):
+    def seriesPercentile(self, q):
         """ Compute the value percentile of each record in a Series.
         
         Parameters
 
           q: a floating point number between 0 and 100 inclusive.
-          interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}  (see documentation for np.percentile)
         """
-        from numpy import percentile
-        rdd = self.rdd.mapValues(lambda x: percentile(x,q))
+        rdd = self.rdd.mapValues(lambda x: percentile(x, q))
         return self._constructor(rdd, index='percentile').__finalize__(self, nopropagate=('_dtype',))
 
     def seriesStdev(self):

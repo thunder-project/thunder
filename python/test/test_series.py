@@ -1,4 +1,4 @@
-from numpy import allclose, arange, array, array_equal, dtype
+from numpy import allclose, amax, arange, array, array_equal, dtype
 from nose.tools import assert_equals, assert_true
 
 from thunder.rdds.series import Series
@@ -140,10 +140,13 @@ class TestSeriesMethods(PySparkTestCase):
         data = Series(rdd)
         assert(allclose(data.seriesMean().first()[1], 3.0))
         assert(allclose(data.seriesSum().first()[1], 15.0))
+        assert(allclose(data.seriesMedian().first()[1], 3.0))
         assert(allclose(data.seriesStdev().first()[1], 1.4142135))
         assert(allclose(data.seriesStat('mean').first()[1], 3.0))
         assert(allclose(data.seriesStats().select('mean').first()[1], 3.0))
         assert(allclose(data.seriesStats().select('count').first()[1], 5))
+        assert(allclose(data.seriesPercentile(25).first()[1], 2.0))
+        assert(allclose(data.seriesPercentile((25, 75)).first()[1], array([2.0, 4.0])))
 
     def test_normalization_bypercentile(self):
         rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5], dtype='float16'))])
@@ -267,3 +270,17 @@ class TestSeriesMethods(PySparkTestCase):
         keys, values = data.query(inds)
         assert(allclose(values[0, :], array([1.5, 2., 3.5])))
         assert_equals(data.dtype, values[0, :].dtype)
+
+    def test_maxProject(self):
+        from thunder.rdds.fileio.seriesloader import SeriesLoader
+        ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
+
+        series = SeriesLoader(self.sc).fromArrays(ary)
+        project0Series = series.maxProject(axis=0)
+        project0 = project0Series.pack()
+
+        project1Series = series.maxProject(axis=1)
+        project1 = project1Series.pack(sorting=True)
+
+        assert_true(array_equal(amax(ary.T, 0), project0))
+        assert_true(array_equal(amax(ary.T, 1), project1))
