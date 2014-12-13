@@ -4,7 +4,8 @@ import itertools
 from numpy import expand_dims, zeros
 from numpy import dtype as dtypeFunc
 
-from thunder.rdds.imgblocks.blocks import SimpleBlocks, BlockGroupingKey, Blocks
+from thunder.rdds.imgblocks.blocks import BlockGroupingKey, Blocks, PaddedBlockGroupingKey, PaddedBlocks, \
+    SimpleBlocks, getStartStopStep
 
 
 class BlockingStrategy(object):
@@ -197,8 +198,7 @@ class SimpleBlockingStrategy(BlockingStrategy):
         elts = _BlockMemoryAsSequence.avgElementsPerBlock(self.dims, self._splitsPerDim)
         return elts * dtypeFunc(self.dtype).itemsize * self.nimages
 
-    @staticmethod
-    def extractBlockFromImage(imgary, blockslices, timepoint, numtimepoints):
+    def extractBlockFromImage(self, imgary, blockslices, timepoint, numtimepoints):
         # add additional "time" dimension onto front of val
         val = expand_dims(imgary[blockslices], axis=0)
         origshape = [numtimepoints] + list(imgary.shape)
@@ -213,7 +213,7 @@ class SimpleBlockingStrategy(BlockingStrategy):
         ret_vals = []
         sliceproduct = itertools.product(*slices)
         for blockslices in sliceproduct:
-            ret_vals.append(SimpleBlockingStrategy.extractBlockFromImage(imgary, blockslices, tpidx, totnumimages))
+            ret_vals.append(self.extractBlockFromImage(imgary, blockslices, tpidx, totnumimages))
         return ret_vals
 
     def combiningFunction(self, spatialIdxAndBlocksSequence):
@@ -235,6 +235,67 @@ class SimpleBlockingStrategy(BlockingStrategy):
         # new slices should be full slice for formerly planar dimension, plus existing block slices
         newimgslices = [slice(None)] + list(firstkey.imgslices)[1:]
         return BlockGroupingKey(origshape=firstkey.origshape, imgslices=newimgslices), ary
+
+
+class PaddedBlockingStrategy(SimpleBlockingStrategy):
+    def __init__(self, splitsPerDim, padding):
+        super(PaddedBlockingStrategy, self).__init__(splitsPerDim)
+        self._padding = self.__normalizePadding(padding)
+
+    @property
+    def padding(self):
+        return self._padding
+
+    def __normalizePadding(self, padding):
+        # check whether padding is already sequence; if so, validate that it has the expected dimensionality
+        try:
+            lpad = len(padding)
+        except TypeError:
+            padding = [padding] * len(self.splitsPerDim)
+            lpad = len(padding)
+        if not lpad == len(self.splitsPerDim):
+            raise ValueError("Padding tuple must be of equal size as image splits tuple;" +
+                             " got '%s', must be length %d to match splits '%s'" %
+                             (str(padding), len(self.splitsPerDim), self.splitsPerDim))
+        # cast to int and validate nonnegative
+        padding = map(int, padding)
+        if any((pad < 0 for pad in padding)):
+            raise ValueError("All block padding must be nonnegative; got '%s'" % padding)
+        return tuple(padding)
+
+    def getBlocksClass(self):
+        return PaddedBlocks
+
+    @classmethod
+    def generateFromBlockSize(cls, images, blockSize, padding=10, **kwargs):
+        return super(PaddedBlockingStrategy, cls).generateFromBlockSize(images, blockSize, padding=padding, **kwargs)
+
+    def extractBlockFromImage(self, imgary, blockslices, timepoint, numtimepoints):
+        padslices = []
+        actualpadding = []
+        for coreslice, pad, l in zip(blockslices, self.padding, imgary.shape):
+            # normalize 'None' values to appropriate positions
+            normstart, normstop, normstep = getStartStopStep(coreslice, l)
+            start = max(0, normstart-pad)
+            stop = min(l, normstop+pad)
+            startpadsize = normstart - start
+            stoppadsize = stop - normstop
+            padslices.append(slice(start, stop, normstep))
+            actualpadding.append((startpadsize, stoppadsize))
+
+        # calculate "core" slices into values array based on actual size of padding
+        vals = imgary[padslices]
+        corevalslices = []
+        for actualpad, l in zip(actualpadding, vals.shape):
+            actualstartpad, actualstoppad = actualpad
+            corevalslices.append(slice(actualstartpad, l-actualstoppad, 1))
+
+        # add additional "time" dimension onto front of val
+        val = expand_dims(imgary[blockslices], axis=0)
+        origshape = [numtimepoints] + list(imgary.shape)
+        imgslices = [slice(timepoint, timepoint+1, 1)] + list(blockslices)
+        padslices = [slice(timepoint, timepoint+1, 1)] + padslices
+        return PaddedBlockGroupingKey(origshape, padslices, imgslices, tuple(val.shape), corevalslices), val
 
 
 def _normDimsToShapeTuple(dims):

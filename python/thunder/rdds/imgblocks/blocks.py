@@ -217,44 +217,6 @@ class PaddedBlocks(SimpleBlocks):
     def _constructor(self):
         return PaddedBlocks
 
-    @staticmethod
-    def toSeriesIter(blockingKey, ary):
-        """Returns an iterator over key,array pairs suitable for casting into a Series object.
-
-        Returns:
-        --------
-        iterator< key, series >
-        key: tuple of int
-        series: 1d array of self.values.dtype
-        """
-        rangeiters = SimpleBlocks._get_range_iterators(blockingKey.imgslices, blockingKey.origshape)
-        # remove iterator over temporal dimension where we are requesting series
-        del rangeiters[0]
-        insertDim = 0
-
-        for idxSeq in itertools.product(*reversed(rangeiters)):
-            expandedIdxSeq = list(reversed(idxSeq))
-            expandedIdxSeq.insert(insertDim, None)
-            slices = []
-            for d, (idx, origslice, valslice) in enumerate(zip(expandedIdxSeq, blockingKey.imgslices, blockingKey.valslices)):
-                if idx is None:
-                    newslice = slice(None)
-                else:
-                    # correct slice into our own value for any offset given by origslice:
-                    # start = idx - origslice.start if not origslice == slice(None) else idx
-                    # newslice = slice(start, start+1, 1)\
-                    valstart, valstop, valstep = \
-                        PaddedBlocks.getStartStopStep(valslice, blockingKey.valshape[d])
-                    imgstart, imgstop, imgstep = \
-                        PaddedBlocks.getStartStopStep(origslice, blockingKey.imgshape[d])
-                    stepnum = (idx - imgstart) / imgstep
-                    validx = valstart + stepnum * valstep
-                    newslice = slice(validx, validx+1, 1)
-                slices.append(newslice)
-
-            series = ary[slices].squeeze()
-            yield tuple(reversed(idxSeq)), series
-
 
 class BlockingKey(object):
     @property
@@ -350,7 +312,7 @@ class PaddedBlockGroupingKey(BlockGroupingKey):
     origshape: sequence of positive int
         Shape of original Images array of which this block is a part. This shape includes a "time" dimension as the
         first dimension. (This additional dimension is not present on Images values, which are each assumed to represent
-        a single point in time.
+        a single point in time.)
 
     imgslices: sequence of slices
         Slices into an array of shape origshape; these slices represent the full extent of the block in its original
@@ -370,6 +332,33 @@ class PaddedBlockGroupingKey(BlockGroupingKey):
         self.padimgslices = padimgslices
         self.valshape = valshape
         self.valslices = valslices
+
+    def getSeriesDataForSpatialIndices(self, spatialIndices, ary):
+        """Returns a one-dimensional array corresponding to the time series (dimension 0) at the passed spatial
+        indices, given in original image coordinates
+
+        This implementation overrides that in BlockGroupingKey, taking into account padding on the block side
+        as described in self.valslices.
+
+        Parameters
+        ----------
+        spatialIndices: sequence of int of length == ary.ndim - 1
+            spatial coordinates in original image space, ordered as x, y, z
+        """
+        slices = [slice(None)]  # start with full slice in temporal dimension, dim 0
+        for spatialIndex, origslice, valslice, valsize, imgsize in zip(spatialIndices, self.imgslices[1:], self.valslices[1:], self.valshape[1:], self.origshape[1:]):
+            # transform index from original image space into block array space
+            # requires any offset in image space to be subtracted from our starting position
+
+            valstart, valstop, valstep = \
+                getStartStopStep(valslice, valsize)
+            imgstart, imgstop, imgstep = \
+                getStartStopStep(origslice, imgsize)
+            stepnum = (spatialIndex - imgstart) / imgstep
+            validx = valstart + stepnum * valstep
+            slices.append(slice(validx, validx+1, 1))
+
+        return ary[slices].squeeze()
 
     def __repr__(self):
         return "PaddedBlockGroupingKey(origshape=%s, padimgslices=%s, imgslices=%s, valshape=%s, valslices=%s)" % \
