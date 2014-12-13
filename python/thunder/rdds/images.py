@@ -61,7 +61,7 @@ class Images(Data):
         if not isinstance(record[1], ndarray):
             raise Exception('Values must be ndarrays')
 
-    def toBlocks(self, blockSizeSpec):
+    def toBlocks(self, blockSizeSpec="150M"):
         """Convert to Blocks, each representing a subdivision of the larger Images data.
 
         Parameters
