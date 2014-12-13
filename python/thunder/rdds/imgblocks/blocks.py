@@ -8,6 +8,40 @@ from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
 
 
+def getStartStopStep(slise, refsize):
+    """Extracts the start, stop, and step parameters from a passed slice.
+
+    If the slice is slice(None), returns refsize as the stop position. start will be 0 and
+    step 1 in this case, which corresponds to normal python slice semantics.
+    """
+    stop = refsize if slise.stop is None else slise.stop
+    start = 0 if slise.start is None else slise.start
+    step = 1 if slise.step is None else slise.step
+    return start, stop, step
+
+
+def sliceToXRange(sl, stop):
+    return xrange(*getStartStopStep(sl, stop))
+
+
+def slicesToIterators(slices, shape):
+    """Returns a sequence of iterators over the range of the passed slices.
+
+    The output of this function is expected to be passed into itertools.product.
+
+    Parameters
+    ----------
+    slices: sequence of slices
+
+    shape: tuple of positive int, same length as slices
+
+    Returns
+    -------
+    sequence of iterators, one iterator per slice
+    """
+    return [sliceToXRange(slise, size) for slise, size in zip(slices, shape)]
+
+
 class Blocks(Data):
     """Superclass for subdivisions of Images data.
 
@@ -100,71 +134,20 @@ class SimpleBlocks(Blocks):
         return record
 
     @staticmethod
-    def toSeriesIter(blockingKey, ary):
-        """Returns an iterator over key,array pairs suitable for casting into a Series object.
-
-        Returns:
-        --------
-        iterator< key, series >
-        key: tuple of int
-        series: 1d array of self.values.dtype
-        """
-        rangeiters = SimpleBlocks._get_range_iterators(blockingKey.origslices, blockingKey.origshape)
-        # remove iterator over temporal dimension where we are requesting series
-        del rangeiters[0]
-        insertDim = 0
-
-        for idxSeq in itertools.product(*reversed(rangeiters)):
-            expandedIdxSeq = list(reversed(idxSeq))
-            expandedIdxSeq.insert(insertDim, None)
-            slices = []
-            for d, (idx, origslice) in enumerate(zip(expandedIdxSeq, blockingKey.origslices)):
-                if idx is None:
-                    newslice = slice(None)
-                else:
-                    # correct slice into our own value for any offset given by origslice:
-                    start = idx - origslice.start if not origslice == slice(None) else idx
-                    newslice = slice(start, start+1, 1)
-                slices.append(newslice)
-
-            series = ary[slices].squeeze()
-            yield tuple(reversed(idxSeq)), series
-
-    @staticmethod
-    def sliceToXRange(sl, stop):
-        start = sl.start if not sl.start is None else 0
-        stop = sl.stop if not sl.stop is None else stop
-        step = sl.step if not sl.step is None else 1
-        return xrange(start, stop, step)
-
-    @staticmethod
-    def _get_range_iterators(slices, shape):
-        """Returns a sequence of iterators over the range of the slices in self.origslices
-
-        When passed to itertools.product, these iterators should cover the original image
-        volume represented by this block.
-        """
-        iters = []
-        for sliceidx, sl in enumerate(slices):
-            it = SimpleBlocks.sliceToXRange(sl, shape[sliceidx])
-            iters.append(it)
-        return iters
-
-    @staticmethod
     def toTimeSlicedBlocks(kv):
         """Generator function that yields an iteration over (timepoint, ImageBlockValue)
         pairs.
         """
         blockkey, ary = kv
 
-        planarrange = SimpleBlocks.sliceToXRange(blockkey.origslices[0], blockkey.origshape[0])
+        planarrange = sliceToXRange(blockkey.imgslices[0], blockkey.origshape[0])
         for tpidx in planarrange:
             # set up new slices:
-            neworigslices = blockkey.origslices[1:]
+            newimgslices = blockkey.imgslices[1:]
             neworigshape = blockkey.origshape[1:]
             # new array value:
             newval = ary[tpidx]
-            newkey = ImageReconstructionKey(tpidx, neworigshape, neworigslices)
+            newkey = ImageReconstructionKey(tpidx, neworigshape, newimgslices)
             yield newkey, newval
 
     @staticmethod
@@ -177,14 +160,14 @@ class SimpleBlocks(Blocks):
                 # set up collection array:
                 ary = zeros(key.origshape, block.dtype)
             # put values into collection array:
-            ary[key.origslices] = block
+            ary[key.imgslices] = block
 
         return temporalIdx, ary
 
     def toSeries(self, newdtype="smallfloat", casting="safe"):
         from thunder.rdds.series import Series
         # returns generator of (z, y, x) array data for all z, y, x
-        seriesrdd = self.rdd.flatMap(lambda kv: SimpleBlocks.toSeriesIter(kv[0], kv[1]))
+        seriesrdd = self.rdd.flatMap(lambda kv: kv[0].toSeriesIter(kv[1]))
 
         idx = arange(self._nimages) if self._nimages else None
         return Series(seriesrdd, dims=self.dims, index=idx, dtype=self.dtype).astype(newdtype, casting=casting)
@@ -215,7 +198,7 @@ class SimpleBlocks(Blocks):
             label = SimpleBlocks.getBinarySeriesNameForKey(blockKey.spatialKey)+".bin"
             keypacker = None
             buf = StringIO.StringIO()
-            for seriesKey, series in SimpleBlocks.toSeriesIter(blockKey, blockVal):
+            for seriesKey, series in blockKey.toSeriesIter(blockVal):
                 if keypacker is None:
                     keypacker = struct.Struct('h'*len(seriesKey))
                 # print >> sys.stderr, seriesKey, series, series.tostring().encode('hex')
@@ -226,6 +209,51 @@ class SimpleBlocks(Blocks):
             return label, val
 
         return self.rdd.map(blockToBinarySeries)
+
+
+class PaddedBlocks(SimpleBlocks):
+
+    @property
+    def _constructor(self):
+        return PaddedBlocks
+
+    @staticmethod
+    def toSeriesIter(blockingKey, ary):
+        """Returns an iterator over key,array pairs suitable for casting into a Series object.
+
+        Returns:
+        --------
+        iterator< key, series >
+        key: tuple of int
+        series: 1d array of self.values.dtype
+        """
+        rangeiters = SimpleBlocks._get_range_iterators(blockingKey.imgslices, blockingKey.origshape)
+        # remove iterator over temporal dimension where we are requesting series
+        del rangeiters[0]
+        insertDim = 0
+
+        for idxSeq in itertools.product(*reversed(rangeiters)):
+            expandedIdxSeq = list(reversed(idxSeq))
+            expandedIdxSeq.insert(insertDim, None)
+            slices = []
+            for d, (idx, origslice, valslice) in enumerate(zip(expandedIdxSeq, blockingKey.imgslices, blockingKey.valslices)):
+                if idx is None:
+                    newslice = slice(None)
+                else:
+                    # correct slice into our own value for any offset given by origslice:
+                    # start = idx - origslice.start if not origslice == slice(None) else idx
+                    # newslice = slice(start, start+1, 1)\
+                    valstart, valstop, valstep = \
+                        PaddedBlocks.getStartStopStep(valslice, blockingKey.valshape[d])
+                    imgstart, imgstop, imgstep = \
+                        PaddedBlocks.getStartStopStep(origslice, blockingKey.imgshape[d])
+                    stepnum = (idx - imgstart) / imgstep
+                    validx = valstart + stepnum * valstep
+                    newslice = slice(validx, validx+1, 1)
+                slices.append(newslice)
+
+            series = ary[slices].squeeze()
+            yield tuple(reversed(idxSeq)), series
 
 
 class BlockingKey(object):
@@ -239,10 +267,10 @@ class BlockingKey(object):
 
 
 class ImageReconstructionKey(BlockingKey):
-    def __init__(self, timeidx, origshape, origslices):
+    def __init__(self, timeidx, origshape, imgslices):
         self.timeidx = timeidx
         self.origshape = origshape
-        self.origslices = origslices
+        self.imgslices = imgslices
 
     @property
     def temporalKey(self):
@@ -251,28 +279,98 @@ class ImageReconstructionKey(BlockingKey):
     @property
     def spatialKey(self):
         # should this be reversed?
-        return tuple(self.origslices)
+        return tuple(self.imgslices)
 
     def __repr__(self):
-        return "ImageReconstructionKey(timeidx=%d, origshape=%s, origslices=%s)" % (self.timeidx,
-                                                                                    self.origshape,
-                                                                                    self.origslices)
+        return "ImageReconstructionKey(timeidx=%d, origshape=%s, imgslices=%s)" % (self.timeidx,
+                                                                                   self.origshape,
+                                                                                   self.imgslices)
 
 
 class BlockGroupingKey(BlockingKey):
-    def __init__(self, origshape, origslices):
+    def __init__(self, origshape, imgslices):
         self.origshape = origshape
-        self.origslices = origslices
+        self.imgslices = imgslices
 
     @property
     def temporalKey(self):
         # temporal key is index of time point, obtained from first slice (time dimension)
-        return self.origslices[0].start
+        return self.imgslices[0].start
 
     @property
     def spatialKey(self):
         # should this be reversed?
-        return tuple(sl.start for sl in self.origslices[1:])
+        return tuple(sl.start for sl in self.imgslices[1:])
+
+    def getSeriesDataForSpatialIndices(self, spatialIndices, ary):
+        """Returns a one-dimensional array corresponding to the time series (dimension 0) at the passed spatial
+        indices, given in original image coordinates
+
+        Parameters
+        ----------
+        spatialIndices: sequence of int of length == ary.ndim - 1
+            spatial coordinates in original image space, ordered as x, y, z
+        """
+        slices = [slice(None)]  # start with full slice in temporal dimension, dim 0
+        for idx, origslice in zip(spatialIndices, self.imgslices[1:]):
+            # transform index from original image space into block array space
+            # requires any offset in image space to be subtracted from our starting position
+            start = idx - origslice.start if not (origslice.start is None) else idx
+            newslice = slice(start, start+1, 1)
+            slices.append(newslice)
+        return ary[slices].squeeze()
+
+    def toSeriesIter(self, ary):
+        """Returns an iterator over key, array pairs suitable for casting into a Series object.
+
+        Returns:
+        --------
+        iterator< key, series >
+        key: tuple of int
+        series: 1d array of self.values.dtype
+        """
+        rangeiters = slicesToIterators(self.imgslices[1:], self.origshape[1:])
+        for idxSeq in itertools.product(*reversed(rangeiters)):
+            spatialIndices = tuple(reversed(idxSeq))
+            series = self.getSeriesDataForSpatialIndices(spatialIndices, ary)
+            yield spatialIndices, series
 
     def __repr__(self):
-        return "BlockGroupingKey(origshape=%s, origslices=%s)" % (self.origshape, self.origslices)
+        return "BlockGroupingKey(origshape=%s, imgslices=%s)" % (self.origshape, self.imgslices)
+
+
+class PaddedBlockGroupingKey(BlockGroupingKey):
+    """Key used to extract and sort PaddedBlocks.
+
+    These keys are expected to be used in a Spark key-value RDD, where the value is a numpy array representing
+    a contiguous subsection of a 4d spatiotemporal image.
+
+    Attributes
+    ----------
+    origshape: sequence of positive int
+        Shape of original Images array of which this block is a part. This shape includes a "time" dimension as the
+        first dimension. (This additional dimension is not present on Images values, which are each assumed to represent
+        a single point in time.
+
+    imgslices: sequence of slices
+        Slices into an array of shape origshape; these slices represent the full extent of the block in its original
+        space, including padding.
+
+    coreimgslices: sequence of slices
+        Slices into an array of shape origshape; these slices represent the 'core' block, without padding, in its
+        original space.
+
+    corevalslices: sequence of slices
+        Slices into the array-type value for which this object is the key in a Spark key-value RDD. These slices
+        represent the 'core' block, without padding. These slices should be the same size as those in coreimgslices,
+        differing only in their offsets.
+    """
+    def __init__(self, origshape, padimgslices, imgslices, valshape, valslices):
+        super(PaddedBlockGroupingKey, self).__init__(origshape, imgslices)
+        self.padimgslices = padimgslices
+        self.valshape = valshape
+        self.valslices = valslices
+
+    def __repr__(self):
+        return "PaddedBlockGroupingKey(origshape=%s, padimgslices=%s, imgslices=%s, valshape=%s, valslices=%s)" % \
+               (self.origshape, self.padimgslices, self.imgslices, self.valshape, self.valslices)

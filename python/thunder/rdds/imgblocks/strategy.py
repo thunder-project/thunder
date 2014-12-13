@@ -202,8 +202,8 @@ class SimpleBlockingStrategy(BlockingStrategy):
         # add additional "time" dimension onto front of val
         val = expand_dims(imgary[blockslices], axis=0)
         origshape = [numtimepoints] + list(imgary.shape)
-        origslices = [slice(timepoint, timepoint+1, 1)] + list(blockslices)
-        return BlockGroupingKey(origshape, origslices), val
+        imgslices = [slice(timepoint, timepoint+1, 1)] + list(blockslices)
+        return BlockGroupingKey(origshape, imgslices), val
 
     def blockingFunction(self, timePointIdxAndImageArray):
         tpidx, imgary = timePointIdxAndImageArray
@@ -229,12 +229,12 @@ class SimpleBlockingStrategy(BlockingStrategy):
                 firstkey = key
 
             # put values into collection array:
-            targslices = [key.origslices[0]] + ([slice(None)] * (block.ndim - 1))
+            targslices = [key.imgslices[0]] + ([slice(None)] * (block.ndim - 1))
             ary[targslices] = block
 
         # new slices should be full slice for formerly planar dimension, plus existing block slices
-        neworigslices = [slice(None)] + list(firstkey.origslices)[1:]
-        return BlockGroupingKey(origshape=firstkey.origshape, origslices=neworigslices), ary
+        newimgslices = [slice(None)] + list(firstkey.imgslices)[1:]
+        return BlockGroupingKey(origshape=firstkey.origshape, imgslices=newimgslices), ary
 
 
 def _normDimsToShapeTuple(dims):
