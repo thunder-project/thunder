@@ -61,7 +61,7 @@ class Images(Data):
         if not isinstance(record[1], ndarray):
             raise Exception('Values must be ndarrays')
 
-    def toBlocks(self, blockSizeSpec):
+    def toBlocks(self, blockSizeSpec="150M"):
         """Convert to Blocks, each representing a subdivision of the larger Images data.
 
         Parameters
@@ -102,7 +102,7 @@ class Images(Data):
         blockedvals = groupedvals.map(blockingStrategy.combiningFunction)
         return returntype(blockedvals, dims=self.dims, nimages=self.nimages, dtype=self.dtype)
 
-    def toSeries(self, blockSizeSpec):
+    def toSeries(self, blockSizeSpec="150M"):
         """Converts this Images object to a Series object.
 
         This method is equivalent to images.toBlocks(blockSizeSpec).toSeries().
@@ -122,7 +122,7 @@ class Images(Data):
         """
         return self.toBlocks(blockSizeSpec).toSeries()
 
-    def saveAsBinarySeries(self, blockSizeSpec, outputdirname, overwrite=False):
+    def saveAsBinarySeries(self, outputdirname, blockSizeSpec="150M", overwrite=False):
         """Writes this Images object to disk as binary Series data.
 
        This method is equivalent to images.toBlocks(blockSizeSpec).saveAsBinarySeries(outputdirname, overwrite)

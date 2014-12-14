@@ -199,9 +199,10 @@ class ThunderContext():
             tif headers.
 
         blocksize: string formatted as e.g. "64M", "512k", "2G", or positive int. optional, default "150M"
-            Requested size of individual output files in bytes (or kilobytes, megabytes, gigabytes). This parameter
-            also indirectly controls the number of Spark partitions to be used, with one partition used per block
-            created.
+            Requested size of individual output files in bytes (or kilobytes, megabytes, gigabytes). If shuffle=True,
+            blocksize can also be a tuple of int specifying the number of splits per dimension to apply to the loaded
+            images, or an instance of BlockingStrategy. This parameter also indirectly controls the number of Spark
+            partitions to be used, with one partition used per block created.
 
         startidx: nonnegative int, optional
             startidx and stopidx are convenience parameters to allow only a subset of input files to be read in. These
@@ -311,9 +312,10 @@ class ThunderContext():
             tif headers.
 
         blocksize: string formatted as e.g. "64M", "512k", "2G", or positive int. optional, default "150M"
-            Requested size of individual output files in bytes (or kilobytes, megabytes, gigabytes). This parameter
-            also indirectly controls the number of Spark partitions to be used, with one partition used per block
-            created.
+            Requested size of individual output files in bytes (or kilobytes, megabytes, gigabytes). If shuffle=True,
+            blocksize can also be a tuple of int specifying the number of splits per dimension to apply to the loaded
+            images, or an instance of BlockingStrategy. This parameter also indirectly controls the number of Spark
+            partitions to be used, with one partition used per block created.
 
         startidx: nonnegative int, optional
             startidx and stopidx are convenience parameters to allow only a subset of input files to be read in. These
