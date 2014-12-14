@@ -92,7 +92,7 @@ class SimpleBlockingStrategy(BlockingStrategy):
     for instance, given a 12 x 12 Images object, a SimpleBlockingStrategy with splitsPerDim=(2,2)
     would yield Blocks objects with 4 blocks, each 6 x 6.
     """
-    def __init__(self, splitsPerDim):
+    def __init__(self, splitsPerDim, **kwargs):
         """Returns a new SimpleBlockingStrategy.
 
         Parameters
@@ -236,8 +236,8 @@ class SimpleBlockingStrategy(BlockingStrategy):
 
 
 class PaddedBlockingStrategy(SimpleBlockingStrategy):
-    def __init__(self, splitsPerDim, padding):
-        super(PaddedBlockingStrategy, self).__init__(splitsPerDim)
+    def __init__(self, splitsPerDim, padding, **kwargs):
+        super(PaddedBlockingStrategy, self).__init__(splitsPerDim, **kwargs)
         self._padding = self.__normalizePadding(padding)
 
     @property

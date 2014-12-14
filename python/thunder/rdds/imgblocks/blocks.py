@@ -352,7 +352,7 @@ class PaddedBlockGroupingKey(BlockGroupingKey):
         """
         alltimeslice = slice(0, self.origshape[0])
         newimgslices = [alltimeslice] + list(self.imgslices[1:])
-        newpadimgslices = [alltimeslice] + list(self.imgslices[1:])
+        newpadimgslices = [alltimeslice] + list(self.padimgslices[1:])
         newvalshape = [self.origshape[0]] + list(self.valshape[1:])
         newvalslices = [alltimeslice] + list(self.valslices[1:])
         return PaddedBlockGroupingKey(origshape=self.origshape, imgslices=tuple(newimgslices),

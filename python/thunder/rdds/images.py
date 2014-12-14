@@ -61,7 +61,7 @@ class Images(Data):
         if not isinstance(record[1], ndarray):
             raise Exception('Values must be ndarrays')
 
-    def toBlocks(self, blockSizeSpec="150M"):
+    def toBlocks(self, blockSizeSpec="150M", padding=0):
         """Convert to Blocks, each representing a subdivision of the larger Images data.
 
         Parameters
@@ -73,18 +73,25 @@ class Images(Data):
             SimpleBlockingStrategy.
             If an instance of BlockingStrategy is passed, it will be used to generate the returned Blocks.
 
+        padding: nonnegative integer or tuple of int, optional, default 0
+            If padding is >0, or a tuple of int all > 0, then blocks will be generated with `padding` voxels of
+            additional padding on each dimension. These padding voxels will overlap with those in neighboring blocks,
+            but will not be included when e.g. generating Series or Images data from the blocks. See
+            thunder.rdds.imgblocks.strategy.PaddedBlockingStrategy for details.
+
         Returns
         -------
         Blocks instance
         """
-        from thunder.rdds.imgblocks.strategy import BlockingStrategy, SimpleBlockingStrategy
+        from thunder.rdds.imgblocks.strategy import BlockingStrategy, SimpleBlockingStrategy, PaddedBlockingStrategy
+        stratClass = SimpleBlockingStrategy if not padding else PaddedBlockingStrategy
         if isinstance(blockSizeSpec, BlockingStrategy):
             blockingStrategy = blockSizeSpec
         elif isinstance(blockSizeSpec, basestring) or isinstance(blockSizeSpec, int):
-            blockingStrategy = SimpleBlockingStrategy.generateFromBlockSize(self, blockSizeSpec)
+            blockingStrategy = stratClass.generateFromBlockSize(self, blockSizeSpec, padding=padding)
         else:
             # assume it is a tuple of positive int specifying splits
-            blockingStrategy = SimpleBlockingStrategy(blockSizeSpec)
+            blockingStrategy = stratClass(blockSizeSpec, padding=padding)
 
         blockingStrategy.setImages(self)
         avgSize = blockingStrategy.calcAverageBlockSize()
