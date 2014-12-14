@@ -72,6 +72,9 @@ class Blocks(Data):
         """
         return self._nimages
 
+    def _resetCounts(self):
+        pass
+
     def toSeries(self):
         """Returns a Series Data object.
 
@@ -134,23 +137,6 @@ class SimpleBlocks(Blocks):
         return record
 
     @staticmethod
-    def toTimeSlicedBlocks(kv):
-        """Generator function that yields an iteration over (timepoint, ImageBlockValue)
-        pairs.
-        """
-        blockkey, ary = kv
-
-        planarrange = sliceToXRange(blockkey.imgslices[0], blockkey.origshape[0])
-        for tpidx in planarrange:
-            # set up new slices:
-            newimgslices = blockkey.imgslices[1:]
-            neworigshape = blockkey.origshape[1:]
-            # new array value:
-            newval = ary[tpidx]
-            newkey = ImageReconstructionKey(tpidx, neworigshape, newimgslices)
-            yield newkey, newval
-
-    @staticmethod
     def combineTimeSlicedBlocks(temporalIdxAndSlicedSequence):
         temporalIdx, slicedSequence = temporalIdxAndSlicedSequence
         # sequence will be of (partitioning key, np array) pairs
@@ -174,7 +160,7 @@ class SimpleBlocks(Blocks):
 
     def toImages(self):
         from thunder.rdds.images import Images
-        timerdd = self.rdd.flatMap(SimpleBlocks.toTimeSlicedBlocks)
+        timerdd = self.rdd.flatMap(lambda kv: kv[0].toTimeSlicedBlocksIter(kv[1]))
         timesortedrdd = timerdd.groupBy(lambda (k, _): k.temporalKey).sortByKey()
         imagesrdd = timesortedrdd.map(SimpleBlocks.combineTimeSlicedBlocks)
         return Images(imagesrdd, dims=self._dims, nimages=self._nimages, dtype=self._dtype)
@@ -257,12 +243,21 @@ class BlockGroupingKey(BlockingKey):
     @property
     def temporalKey(self):
         # temporal key is index of time point, obtained from first slice (time dimension)
-        return self.imgslices[0].start
+        start = self.imgslices[0].start
+        return start if not (start is None) else 0
 
     @property
     def spatialKey(self):
         # should this be reversed?
         return tuple(sl.start for sl in self.imgslices[1:])
+
+    def asTemporallyConcatenatedKey(self):
+        """Returns a new key that is a copy of self, except that the new temporal range is from 0 to the total number
+        of time points.
+        """
+        # new slices should be full slice for formerly planar dimension, plus existing block slices
+        newimgslices = [slice(0, self.origshape[0])] + list(self.imgslices)[1:]
+        return BlockGroupingKey(origshape=self.origshape, imgslices=tuple(newimgslices))
 
     def getSeriesDataForSpatialIndices(self, spatialIndices, ary):
         """Returns a one-dimensional array corresponding to the time series (dimension 0) at the passed spatial
@@ -282,6 +277,9 @@ class BlockGroupingKey(BlockingKey):
             slices.append(newslice)
         return ary[slices].squeeze()
 
+    def getImageDataForTemporalIndex(self, temporalIndex, ary):
+        return ary[temporalIndex]
+
     def toSeriesIter(self, ary):
         """Returns an iterator over key, array pairs suitable for casting into a Series object.
 
@@ -296,6 +294,21 @@ class BlockGroupingKey(BlockingKey):
             spatialIndices = tuple(reversed(idxSeq))
             series = self.getSeriesDataForSpatialIndices(spatialIndices, ary)
             yield spatialIndices, series
+
+    def toTimeSlicedBlocksIter(self, ary):
+        """Generator function that yields an iteration over (reconstructionKey, numpy array)
+        pairs.
+        """
+
+        planarrange = sliceToXRange(self.imgslices[0], self.origshape[0])
+        for tpidx in planarrange:
+            # set up new slices:
+            newimgslices = self.imgslices[1:]
+            neworigshape = self.origshape[1:]
+            # new array value:
+            newval = self.getImageDataForTemporalIndex(tpidx, ary)
+            newkey = ImageReconstructionKey(tpidx, neworigshape, newimgslices)
+            yield newkey, newval
 
     def __repr__(self):
         return "BlockGroupingKey(origshape=%s, imgslices=%s)" % (self.origshape, self.imgslices)
@@ -333,6 +346,19 @@ class PaddedBlockGroupingKey(BlockGroupingKey):
         self.valshape = valshape
         self.valslices = valslices
 
+    def asTemporallyConcatenatedKey(self):
+        """Returns a new key that is a copy of self, except that the new temporal range is from 0 to the total number
+        of time points.
+        """
+        alltimeslice = slice(0, self.origshape[0])
+        newimgslices = [alltimeslice] + list(self.imgslices[1:])
+        newpadimgslices = [alltimeslice] + list(self.imgslices[1:])
+        newvalshape = [self.origshape[0]] + list(self.valshape[1:])
+        newvalslices = [alltimeslice] + list(self.valslices[1:])
+        return PaddedBlockGroupingKey(origshape=self.origshape, imgslices=tuple(newimgslices),
+                                      padimgslices=tuple(newpadimgslices), valshape=tuple(newvalshape),
+                                      valslices=tuple(newvalslices))
+
     def getSeriesDataForSpatialIndices(self, spatialIndices, ary):
         """Returns a one-dimensional array corresponding to the time series (dimension 0) at the passed spatial
         indices, given in original image coordinates
@@ -346,7 +372,9 @@ class PaddedBlockGroupingKey(BlockGroupingKey):
             spatial coordinates in original image space, ordered as x, y, z
         """
         slices = [slice(None)]  # start with full slice in temporal dimension, dim 0
-        for spatialIndex, origslice, valslice, valsize, imgsize in zip(spatialIndices, self.imgslices[1:], self.valslices[1:], self.valshape[1:], self.origshape[1:]):
+        for spatialIndex, origslice, valslice, valsize, imgsize in zip(spatialIndices, self.imgslices[1:],
+                                                                       self.valslices[1:], self.valshape[1:],
+                                                                       self.origshape[1:]):
             # transform index from original image space into block array space
             # requires any offset in image space to be subtracted from our starting position
 
@@ -359,6 +387,9 @@ class PaddedBlockGroupingKey(BlockGroupingKey):
             slices.append(slice(validx, validx+1, 1))
 
         return ary[slices].squeeze()
+
+    def getImageDataForTemporalIndex(self, tpidx, ary):
+        return ary[tpidx][self.valslices[1:]]
 
     def __repr__(self):
         return "PaddedBlockGroupingKey(origshape=%s, padimgslices=%s, imgslices=%s, valshape=%s, valslices=%s)" % \

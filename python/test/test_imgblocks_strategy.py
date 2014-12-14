@@ -35,7 +35,8 @@ class TestSimpleSplitCalculation(unittest.TestCase):
 class TestBlockExtraction(unittest.TestCase):
     ExtractParams = namedtuple("ExtractParams", "aryshape blockslices timepoint ntimepoints padding")
     PARAMS = [ExtractParams((2, 2), (slice(None), slice(0, 1)), 5, 10, 0),
-              ExtractParams((12, 12), (slice(3, 6, 1), slice(6, 9, 1)), 5, 10, 0)]
+              ExtractParams((12, 12), (slice(3, 6, 1), slice(6, 9, 1)), 5, 10, 0),
+              ExtractParams((12, 12), (slice(3, 6, 1), slice(6, 9, 1)), 5, 10, 2)]
 
     def test_simpleBlockExtraction(self):
         for params in TestBlockExtraction.PARAMS:
@@ -83,7 +84,7 @@ class TestBlockExtraction(unittest.TestCase):
 
             expectedAry = expand_dims(ary[expectedPaddedSlices], axis=0)
             expectedPaddedSlices = [slice(params.timepoint, params.timepoint+1, 1)] + expectedPaddedSlices
-            # expectedValSlices = [slice(None)] + expectedValSlices
+            expectedValSlices = [slice(0, 1, 1)] + expectedValSlices
             assert_equals(tuple(expectedPaddedSlices), tuple(key.padimgslices))
             assert_equals(tuple(expectedValSlices), tuple(key.valslices))
             assert_equals(tuple(expectedAry.shape), tuple(val.shape))

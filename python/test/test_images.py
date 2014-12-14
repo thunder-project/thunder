@@ -8,7 +8,7 @@ import unittest
 
 from thunder.rdds.fileio.imagesloader import ImagesLoader
 from thunder.rdds.fileio.seriesloader import SeriesLoader
-from thunder.rdds.imgblocks.strategy import SimpleBlockingStrategy
+from thunder.rdds.imgblocks.strategy import PaddedBlockingStrategy, SimpleBlockingStrategy
 from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
 
 _have_image = False
@@ -140,11 +140,11 @@ class TestImages(PySparkTestCase):
         assert_true(array_equal(ary, seriesary))
         assert_true(array_equal(ary.T, seriesary_xpose))
 
-    def test_toSeriesWithSplitsAndPack(self):
+    def _run_tst_toSeriesWithSplitsAndPack(self, strategy):
         ary = arange(8, dtype=dtype('int16')).reshape((4, 2))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        series = image.toBlocks((1, 2)).toSeries()
+        series = image.toBlocks(strategy).toSeries()
 
         seriesvals = series.collect()
         seriesary = series.pack()
@@ -168,6 +168,14 @@ class TestImages(PySparkTestCase):
 
         # check that packing returns original array
         assert_true(array_equal(ary, seriesary))
+
+    def test_toSeriesWithSplitsAndPack(self):
+        strategy = SimpleBlockingStrategy((1, 2))
+        self._run_tst_toSeriesWithSplitsAndPack(strategy)
+
+    def test_toSeriesWithPaddedSplitsAndPack(self):
+        strategy = PaddedBlockingStrategy((1, 2), padding=(1, 1))
+        self._run_tst_toSeriesWithSplitsAndPack(strategy)
 
     def test_toSeriesWithInefficientSplitAndSortedPack(self):
         ary = arange(8, dtype=dtype('int16')).reshape((4, 2))
@@ -231,16 +239,24 @@ class TestImages(PySparkTestCase):
 
             self.evaluate_series(arys, series, sz)
 
-    def test_roundtripThroughBlocks(self):
+    def _run_tst_roundtripThroughBlocks(self, strategy):
         imagepath = findSourceTreeDir("utils/data/fish/tif-stack")
         images = ImagesLoader(self.sc).fromMultipageTif(imagepath)
-        partitionedimages = images.toBlocks((2, 2, 2))
-        recombinedimages = partitionedimages.toImages()
+        blockedimages = images.toBlocks(strategy)
+        recombinedimages = blockedimages.toImages()
 
         collectedimages = images.collect()
         roundtrippedimages = recombinedimages.collect()
         for orig, roundtripped in zip(collectedimages, roundtrippedimages):
             assert_true(array_equal(orig[1], roundtripped[1]))
+
+    def test_roundtripThroughBlocks(self):
+        strategy = SimpleBlockingStrategy((2, 2, 2))
+        self._run_tst_roundtripThroughBlocks(strategy)
+
+    def test_roundtripThroughPaddedBlocks(self):
+        strategy = PaddedBlockingStrategy((2, 2, 2), padding=2)
+        self._run_tst_roundtripThroughBlocks(strategy)
 
 
 class TestImagesStats(PySparkTestCase):

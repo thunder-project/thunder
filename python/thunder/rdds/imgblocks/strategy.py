@@ -229,12 +229,10 @@ class SimpleBlockingStrategy(BlockingStrategy):
                 firstkey = key
 
             # put values into collection array:
-            targslices = [key.imgslices[0]] + ([slice(None)] * (block.ndim - 1))
+            targslices = [key.temporalKey] + ([slice(None)] * (block.ndim - 1))
             ary[targslices] = block
 
-        # new slices should be full slice for formerly planar dimension, plus existing block slices
-        newimgslices = [slice(None)] + list(firstkey.imgslices)[1:]
-        return BlockGroupingKey(origshape=firstkey.origshape, imgslices=newimgslices), ary
+        return firstkey.asTemporallyConcatenatedKey(), ary
 
 
 class PaddedBlockingStrategy(SimpleBlockingStrategy):
@@ -285,13 +283,13 @@ class PaddedBlockingStrategy(SimpleBlockingStrategy):
 
         # calculate "core" slices into values array based on actual size of padding
         vals = imgary[padslices]
-        corevalslices = []
+        corevalslices = [slice(0, 1, 1)]  # start with slice for time
         for actualpad, l in zip(actualpadding, vals.shape):
             actualstartpad, actualstoppad = actualpad
             corevalslices.append(slice(actualstartpad, l-actualstoppad, 1))
 
         # add additional "time" dimension onto front of val
-        val = expand_dims(imgary[blockslices], axis=0)
+        val = expand_dims(imgary[padslices], axis=0)
         origshape = [numtimepoints] + list(imgary.shape)
         imgslices = [slice(timepoint, timepoint+1, 1)] + list(blockslices)
         padslices = [slice(timepoint, timepoint+1, 1)] + padslices
