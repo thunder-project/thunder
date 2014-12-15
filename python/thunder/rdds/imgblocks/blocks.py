@@ -411,7 +411,7 @@ class PaddedBlockGroupingKey(BlockGroupingKey):
 
     valslices: sequence of slices
         Slices into the array-type value for which this object is the key in a Spark key-value RDD. These slices
-        represent the 'core' block, without padding. These slices should be the same size as those in coreimgslices,
+        represent the 'core' block, without padding. These slices should be the same size as those in imgslices,
         differing only in their offsets.
 
     """

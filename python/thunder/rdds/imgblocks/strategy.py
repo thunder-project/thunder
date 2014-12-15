@@ -210,11 +210,9 @@ class SimpleBlockingStrategy(BlockingStrategy):
         totnumimages = self.nimages
         slices = self._slices
 
-        ret_vals = []
         sliceproduct = itertools.product(*slices)
         for blockslices in sliceproduct:
-            ret_vals.append(self.extractBlockFromImage(imgary, blockslices, tpidx, totnumimages))
-        return ret_vals
+            yield self.extractBlockFromImage(imgary, blockslices, tpidx, totnumimages)
 
     def combiningFunction(self, spatialIdxAndBlocksSequence):
         _, partitionedSequence = spatialIdxAndBlocksSequence
