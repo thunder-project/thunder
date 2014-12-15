@@ -6,6 +6,7 @@ from numpy import dtype as dtypeFunc
 
 from thunder.rdds.imgblocks.blocks import BlockGroupingKey, Blocks, PaddedBlockGroupingKey, PaddedBlocks, \
     SimpleBlocks, getStartStopStep
+from thunder.utils.common import selectByMatchingPrefix
 
 
 class BlockingStrategy(object):
@@ -92,7 +93,9 @@ class SimpleBlockingStrategy(BlockingStrategy):
     for instance, given a 12 x 12 Images object, a SimpleBlockingStrategy with splitsPerDim=(2,2)
     would yield Blocks objects with 4 blocks, each 6 x 6.
     """
-    def __init__(self, splitsPerDim, **kwargs):
+    VALID_UNITS = frozenset(["pixels", "splits"])
+
+    def __init__(self, unitsPerDim, units="pixels", **kwargs):
         """Returns a new SimpleBlockingStrategy.
 
         Parameters
@@ -103,12 +106,26 @@ class SimpleBlockingStrategy(BlockingStrategy):
             1 <= splitsPerDim[i] <= self.dims[i]
         """
         super(SimpleBlockingStrategy, self).__init__()
-        self._splitsPerDim = SimpleBlockingStrategy.__normalizeSplits(splitsPerDim)
+        try:
+            units = selectByMatchingPrefix(units, SimpleBlockingStrategy.VALID_UNITS)
+        except IndexError:
+            raise ValueError("No valid units match prefix '%s'. Valid choices are: %s" % (units, SimpleBlockingStrategy.VALID_UNITS))
+        unitsPerDim = SimpleBlockingStrategy.__normalizeUnitsPerDim(unitsPerDim)
+        if units == "pixels":
+            self._pixPerDim = unitsPerDim
+            self._splitsPerDim = None
+        else:
+            self._pixPerDim = None
+            self._splitsPerDim = unitsPerDim
         self._slices = None
 
     @property
     def splitsPerDim(self):
         return self._splitsPerDim
+
+    @property
+    def pixelsPerDim(self):
+        return self._pixPerDim
 
     def getBlocksClass(self):
         return SimpleBlocks
@@ -149,28 +166,30 @@ class SimpleBlockingStrategy(BlockingStrategy):
             # we can produce; just give back the biggest block size
             tmpidx -= 1
         splitsPerDim = memseq.indtosub(tmpidx)
-        strategy = cls(splitsPerDim, **kwargs)
+        strategy = cls(splitsPerDim, units="splits", **kwargs)
         strategy.setImages(images)
         return strategy
 
     @staticmethod
-    def __normalizeSplits(splitsPerDim):
-        splitsPerDim = map(int, splitsPerDim)
-        if any((nsplits <= 0 for nsplits in splitsPerDim)):
-            raise ValueError("All numbers of blocks must be positive; got " + str(splitsPerDim))
-        return splitsPerDim
+    def __normalizeUnitsPerDim(unitsPerDim):
+        unitsPerDim = map(int, unitsPerDim)
+        if any((nsplits <= 0 for nsplits in unitsPerDim)):
+            raise ValueError("All unit values must be positive; got " + str(unitsPerDim))
+        return unitsPerDim
 
-    def __validateSplitsForImage(self):
+    def __validateUnitsPerDimForImage(self):
         dims = self.dims
-        splitsPerDim = self._splitsPerDim
+        unitsPerDim, attrName = (self._splitsPerDim, "splitsPerDim") if \
+            not (self._splitsPerDim is None) \
+            else (self._pixPerDim, "pixelsPerDim")
         ndim = len(dims)
-        if not len(splitsPerDim) == ndim:
-            raise ValueError("splitsPerDim length (%d) must match image dimensionality (%d); " %
-                             (len(splitsPerDim), ndim) +
-                             "have splitsPerDim %s and image shape %s" % (str(splitsPerDim), str(dims)))
+        if not len(unitsPerDim) == ndim:
+            raise ValueError("%s length (%d) must match image dimensionality (%d); " %
+                             (attrName, len(unitsPerDim), ndim) +
+                             "have %s %s and image shape %s" % (attrName, str(unitsPerDim), str(dims)))
 
     @staticmethod
-    def __generateSlices(splitsPerDim, dims):
+    def __generateSlicesFromSplits(splitsPerDim, dims):
         # slices will be sequence of sequences of slices
         # slices[i] will hold slices for ith dimension
         slices = []
@@ -189,13 +208,35 @@ class SimpleBlockingStrategy(BlockingStrategy):
             slices.append(dimslices)
         return slices
 
+    @staticmethod
+    def __generateSlicesFromPixels(pixPerDim, dims):
+        # slices will be sequence of sequences of slices
+        # slices[i] will hold slices for ith dimension
+        slices = []
+        for pix, dimsize in zip(pixPerDim, dims):
+            st = 0
+            dimslices = []
+            while st < dimsize:
+                en = st + pix
+                en = min(en, dimsize)
+                dimslices.append(slice(st, en, 1))
+                st += pix
+            slices.append(dimslices)
+        return slices
+
     def setImages(self, images):
         super(SimpleBlockingStrategy, self).setImages(images)
-        self.__validateSplitsForImage()
-        self._slices = SimpleBlockingStrategy.__generateSlices(self._splitsPerDim, self.dims)
+        self.__validateUnitsPerDimForImage()
+        if not (self._splitsPerDim is None):
+            self._slices = SimpleBlockingStrategy.__generateSlicesFromSplits(self._splitsPerDim, self.dims)
+        else:
+            self._slices = SimpleBlockingStrategy.__generateSlicesFromPixels(self._pixPerDim, self.dims)
 
     def calcAverageBlockSize(self):
-        elts = _BlockMemoryAsSequence.avgElementsPerBlock(self.dims, self._splitsPerDim)
+        if not (self._splitsPerDim is None):
+            elts = _BlockMemoryAsSequence.avgElementsPerBlock(self.dims, self._splitsPerDim)
+        else:
+            elts = reduce(lambda x, y: x * y, self._pixPerDim)
         return elts * dtypeFunc(self.dtype).itemsize * self.nimages
 
     def extractBlockFromImage(self, imgary, blockslices, timepoint, numtimepoints):
@@ -234,8 +275,8 @@ class SimpleBlockingStrategy(BlockingStrategy):
 
 
 class PaddedBlockingStrategy(SimpleBlockingStrategy):
-    def __init__(self, splitsPerDim, padding, **kwargs):
-        super(PaddedBlockingStrategy, self).__init__(splitsPerDim, **kwargs)
+    def __init__(self, unitsPerDim, padding, units="pixels", **kwargs):
+        super(PaddedBlockingStrategy, self).__init__(unitsPerDim, units=units, **kwargs)
         self._padding = self.__normalizePadding(padding)
 
     @property
@@ -244,15 +285,17 @@ class PaddedBlockingStrategy(SimpleBlockingStrategy):
 
     def __normalizePadding(self, padding):
         # check whether padding is already sequence; if so, validate that it has the expected dimensionality
+        unitsTuple, unitsName = (self._pixPerDim, "pixPerDim") if not (self._pixPerDim is None) \
+            else (self._splitsPerDim, "splitsPerDim")
         try:
             lpad = len(padding)
         except TypeError:
-            padding = [padding] * len(self.splitsPerDim)
+            padding = [padding] * len(unitsTuple)
             lpad = len(padding)
-        if not lpad == len(self.splitsPerDim):
-            raise ValueError("Padding tuple must be of equal size as image splits tuple;" +
-                             " got '%s', must be length %d to match splits '%s'" %
-                             (str(padding), len(self.splitsPerDim), self.splitsPerDim))
+        if not lpad == len(unitsTuple):
+            raise ValueError("Padding tuple must be of equal size as %s tuple;" % unitsName+
+                             " got '%s', must be length %d to match %s '%s'" %
+                             (str(padding), len(self.splitsPerDim), unitsName, self.splitsPerDim))
         # cast to int and validate nonnegative
         padding = map(int, padding)
         if any((pad < 0 for pad in padding)):

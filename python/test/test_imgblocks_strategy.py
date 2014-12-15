@@ -5,6 +5,8 @@ import unittest
 
 from thunder.rdds.imgblocks.strategy import PaddedBlockingStrategy, SimpleBlockingStrategy
 
+MockImage = namedtuple("MockImage", "dims nimages dtype")
+
 
 class TestSimpleSplitCalculation(unittest.TestCase):
 
@@ -21,7 +23,6 @@ class TestSimpleSplitCalculation(unittest.TestCase):
                         (testIdx, expectedSize, avgSize))
 
     def test_splitCalc(self):
-        MockImage = namedtuple("MockImage", "dims nimages dtype")
         PARAMS = [
             (1, MockImage((2, 2, 2), 1, "uint8"), (2, 2, 2), 1),
             (2, MockImage((2, 2, 2), 2, "uint8"), (2, 2, 2), 2),
@@ -30,6 +31,55 @@ class TestSimpleSplitCalculation(unittest.TestCase):
             ("150MB", MockImage((2048, 1060, 36), 1000, "uint8"), (1, 14, 36), 1.55e+08)]
         for testIdx, params in enumerate(PARAMS):
             TestSimpleSplitCalculation._run_tst_splitCalc(*params, testIdx=testIdx)
+
+    def test_splitsAndPix(self):
+        def genSlicesForPix(pix, size):
+            slices = []
+            st = 0
+            while st < size:
+                en = min(st + pix, size)
+                slices.append(slice(st, en, 1))
+                st = en
+            return slices
+
+        def genSlicesForSplits(splits, size):
+            slices = []
+            blocksize = size / splits  # integer division
+            blockrem = size % splits
+            st = 0
+            while st < size:
+                en = st + blocksize
+                if blockrem > 0:
+                    en += 1
+                    blockrem -= 1
+                en = min(en, size)
+                slices.append(slice(st, en, 1))
+                st = en
+            return slices
+
+        Params = namedtuple("Params", "unitsPerDim units image padding expPix expSplits expSlices0")
+        PARAMS = \
+            [Params((5, 5, 1), "pix", MockImage((15, 15, 3), 2, "uint8"), 0, (5, 5, 1), None, genSlicesForPix(5, 15)),
+             Params((5, 5, 2), "pix", MockImage((7, 7, 3), 2, "uint8"), 0, (5, 5, 2), None, genSlicesForPix(5, 7)),
+             Params((2, 2, 2), "s", MockImage((7, 7, 3), 2, "uint8"), 0, None, (2, 2, 2), genSlicesForSplits(2, 7)),
+             Params((5, 5, 1), "pix", MockImage((15, 15, 3), 2, "uint8"), 2, (5, 5, 1), None, genSlicesForPix(5, 15)),
+             Params((5, 5, 2), "pix", MockImage((7, 7, 3), 2, "uint8"), 2, (5, 5, 2), None, genSlicesForPix(5, 7)),
+             Params((2, 2, 2), "s", MockImage((7, 7, 3), 2, "uint8"), 2, None, (2, 2, 2), genSlicesForSplits(2, 7))]
+        for params in PARAMS:
+            if params.padding:
+                strat = PaddedBlockingStrategy(params.unitsPerDim, units=params.units, padding=params.padding)
+            else:
+                strat = SimpleBlockingStrategy(params.unitsPerDim, params.units)
+            strat.setImages(params.image)
+            if params.expPix:
+                assert_equals(tuple(params.expPix), tuple(strat._pixPerDim))
+            else:
+                assert_true(strat._pixPerDim is None)
+            if params.expSplits:
+                assert_equals(tuple(params.expSplits), tuple(strat._splitsPerDim))
+            else:
+                assert_true(strat._splitsPerDim is None)
+            assert_equals(params.expSlices0, strat._slices[0])
 
 
 class TestBlockExtraction(unittest.TestCase):
