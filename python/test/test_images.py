@@ -57,7 +57,7 @@ class TestImages(PySparkTestCase):
         arys, sh, sz = _generate_test_arrays(narys)
 
         imagedata = ImagesLoader(self.sc).fromArrays(arys)
-        series = imagedata.toBlocks((4, 1, 1)).toSeries().collect()
+        series = imagedata.toBlocks((4, 1, 1), units="s").toSeries().collect()
 
         self.evaluate_series(arys, series, sz)
 
@@ -170,18 +170,18 @@ class TestImages(PySparkTestCase):
         assert_true(array_equal(ary, seriesary))
 
     def test_toSeriesWithSplitsAndPack(self):
-        strategy = SimpleBlockingStrategy((1, 2))
+        strategy = SimpleBlockingStrategy((1, 2), units="s")
         self._run_tst_toSeriesWithSplitsAndPack(strategy)
 
     def test_toSeriesWithPaddedSplitsAndPack(self):
-        strategy = PaddedBlockingStrategy((1, 2), padding=(1, 1))
+        strategy = PaddedBlockingStrategy((1, 2), units="s", padding=(1, 1))
         self._run_tst_toSeriesWithSplitsAndPack(strategy)
 
     def test_toSeriesWithInefficientSplitAndSortedPack(self):
         ary = arange(8, dtype=dtype('int16')).reshape((4, 2))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        series = image.toBlocks((2, 1)).toSeries()
+        series = image.toBlocks((2, 1), units="s").toSeries()
 
         seriesvals = series.collect()
         seriesary = series.pack(sorting=True)
@@ -213,7 +213,7 @@ class TestImages(PySparkTestCase):
         ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        groupedblocks = image.toBlocks((1, 2))
+        groupedblocks = image.toBlocks((1, 2), units="s")
 
         # collectedblocks = blocks.collect()
         collectedgroupedblocks = groupedblocks.collect()
@@ -235,7 +235,7 @@ class TestImages(PySparkTestCase):
             (2, 1, 1), (2, 1, 2), (2, 1, 3), (2, 2, 1), (2, 2, 2), (2, 2, 3),
             (2, 3, 1), (2, 3, 2), (2, 3, 3)]
         for bpd in test_params:
-            series = imagedata.toBlocks(bpd).toSeries().collect()
+            series = imagedata.toBlocks(bpd, units="s").toSeries().collect()
 
             self.evaluate_series(arys, series, sz)
 
@@ -251,11 +251,11 @@ class TestImages(PySparkTestCase):
             assert_true(array_equal(orig[1], roundtripped[1]))
 
     def test_roundtripThroughBlocks(self):
-        strategy = SimpleBlockingStrategy((2, 2, 2))
+        strategy = SimpleBlockingStrategy((2, 2, 2), units="s")
         self._run_tst_roundtripThroughBlocks(strategy)
 
     def test_roundtripThroughPaddedBlocks(self):
-        strategy = PaddedBlockingStrategy((2, 2, 2), padding=2)
+        strategy = PaddedBlockingStrategy((2, 2, 2), units="s", padding=2)
         self._run_tst_roundtripThroughBlocks(strategy)
 
 
@@ -299,7 +299,7 @@ class TestImagesStats(PySparkTestCase):
 
         expected = elementwise_stdev([ary.astype('float16') for ary in arys])
         assert_true(allclose(expected, stdval))
-        #assert_equals('float16', str(stdval.dtype))
+        # assert_equals('float16', str(stdval.dtype))
         # it isn't clear to me why this comes out as float32 and not float16, especially
         # given that var returns float16, as expected. But I'm not too concerned about it.
         # Consider this documentation of current behavior rather than a description of
@@ -348,7 +348,7 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
         slicesPerDim = [1]*arys[0].ndim
         slicesPerDim[groupingdim_] = arys[0].shape[groupingdim_]
-        images.toBlocks(slicesPerDim).saveAsBinarySeries(outdir)
+        images.toBlocks(slicesPerDim, units="splits").saveAsBinarySeries(outdir)
 
         ndims = len(aryshape)
         # prevent padding to 4-byte boundaries: "=" specifies no alignment
@@ -401,7 +401,7 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
         outdir = os.path.join(self.outputdir, "anotherdir")
         os.mkdir(outdir)
-        assert_raises(ValueError, ImagesLoader(self.sc).fromArrays(arys).toBlocks((1, 1, 1))
+        assert_raises(ValueError, ImagesLoader(self.sc).fromArrays(arys).toBlocks((1, 1, 1), units="s")
                       .saveAsBinarySeries, outdir)
 
         groupingdims = xrange(len(aryshape))
