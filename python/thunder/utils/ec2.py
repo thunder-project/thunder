@@ -88,7 +88,7 @@ def get_spark_version_string(default_version):
     return default_version
 
 SPARK_VERSIONS_TO_HASHES = {
-    '1.2.0': "1056e9ec13"  # spark 1.2.0 rc1, remove once Spark is released and mesos/spark-ec2 is updated
+    '1.2.0': "a428c446e23e"  # spark 1.2.0 rc2, remove once Spark is released and mesos/spark-ec2 is updated
 }
 
 
