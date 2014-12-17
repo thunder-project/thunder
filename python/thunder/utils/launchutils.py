@@ -135,12 +135,12 @@ def addOptionsToParser(optionParser, sparkHome):
         help="Extra class path entries to pass to the driver. Note that jars added with --jars are automatically " +
              "included in the classpath.")
     optionParser.add_option_group(uncommonGroup)
-    standaloneClusterGroup = OptionGroup(optionParser, "Spark standalone with cluster deploy mode only")
-    standaloneClusterGroup.add_option("--driver-cores", default=1, type="int",
-                                      help="Cores for driver (default: %default).")
-    standaloneClusterGroup.add_option("--supervise", default=False, action="store_true",
-                                      help="If given, restarts the driver on failure.")
-    optionParser.add_option_group(standaloneClusterGroup)
+    # standaloneClusterGroup = OptionGroup(optionParser, "Spark standalone with cluster deploy mode only")
+    # standaloneClusterGroup.add_option("--driver-cores", default=1, type="int",
+    #                                   help="Cores for driver (default: %default).")
+    # standaloneClusterGroup.add_option("--supervise", default=False, action="store_true",
+    #                                   help="If given, restarts the driver on failure.")
+    # optionParser.add_option_group(standaloneClusterGroup)
     standaloneMesosGroup = OptionGroup(optionParser, "Spark standalone and Mesos only")
     standaloneMesosGroup.add_option("--total-executor-cores", default=-1, type="int",
                                     help="Total cores for all executors.")
@@ -173,7 +173,7 @@ def parseOptionsIntoChildProcessArguments(opts):
     thunderJar = findThunderJar()
 
     childArgs.extend(getOptionsList("--master", opts.master))
-    childArgs.extend(getOptionsList("--deploy-mode", opts.deploy_mode))
+    # childArgs.extend(getOptionsList("--deploy-mode", opts.deploy_mode))
     childArgs.extend(getCommaSeparatedOptionsList("--py-files", opts.py_files, thunderEgg))
     childArgs.extend(getCommaSeparatedOptionsList("--jars", opts.jars, thunderJar))
 
@@ -189,10 +189,10 @@ def parseOptionsIntoChildProcessArguments(opts):
             childArgs.extend(["--conf", key + "=" + value])
 
     # standalone in cluster deploy mode options
-    if opts.master.lower().startswith("spark") and opts.deploy_mode.lower() == "cluster":
-        childArgs.extend(getOptionsList("--driver-cores", opts.driver_cores))
-        if opts.supervise:
-            childArgs.append("--supervise")
+    # if opts.master.lower().startswith("spark") and opts.deploy_mode.lower() == "cluster":
+    #     childArgs.extend(getOptionsList("--driver-cores", opts.driver_cores))
+    #     if opts.supervise:
+    #         childArgs.append("--supervise")
 
     # standalone or mesos options
     if opts.master.lower().startswith("spark") or opts.master.lower().startswith("mesos"):
