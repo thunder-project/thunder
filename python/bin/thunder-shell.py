@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 try:
     import thunder
 except ImportError:
@@ -14,16 +13,18 @@ def main():
     SPARK_HOME = getSparkHome()
 
     from optparse import OptionParser  # use optparse instead of argparse for python2.6 compat
-    parser = OptionParser(usage="%prog [submit options] yourapp.py [application arguments]",
+    parser = OptionParser(usage="%prog [submit options]",
                           version=thunder.__version__)
-    parser.disable_interspersed_args()  # stop parsing options after first positional arg; pass remaining args to app
     addOptionsToParser(parser, SPARK_HOME)
     opts, args = parser.parse_args()
 
     childArgs = parseOptionsIntoChildProcessArguments(opts)
 
-    sparkSubmit = os.path.join(SPARK_HOME, 'bin', 'spark-submit')
-    childArgs = [sparkSubmit] + childArgs + args
+    sparkSubmit = os.path.join(SPARK_HOME, 'bin', 'pyspark')
+    childArgs = [sparkSubmit] + childArgs
+
+    # add python script
+    os.environ['PYTHONSTARTUP'] = os.path.join(os.path.dirname(os.path.realpath(thunder.__file__)), 'utils', 'shell.py')
 
     subprocess.call(childArgs, env=os.environ)
 
