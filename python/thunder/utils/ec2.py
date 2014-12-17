@@ -105,6 +105,12 @@ def install_thunder(master, opts, spark_version_string):
     print "Installing Thunder on the cluster..."
     # download and build thunder
     ssh(master, opts, "rm -rf thunder && git clone https://github.com/freeman-lab/thunder.git")
+    if opts.thunder_version.lower() != "head":
+        tagOrHash = opts.thunder_version
+        if '.' in tagOrHash and not (tagOrHash.startswith('v')):
+            # we have something that looks like a version number. prepend 'v' to get a valid tag id.
+            tagOrHash = 'v' + tagOrHash
+        ssh(master, opts, "cd thunder && git checkout %s" % tagOrHash)
     ssh(master, opts, "chmod u+x thunder/python/bin/build")
     ssh(master, opts, "thunder/python/bin/build")
     # copy local data examples to all workers
@@ -276,6 +282,9 @@ if __name__ == "__main__":
     parser.add_option("-v", "--spark-version", default=spark_home_version_string,
                       help="Version of Spark to use: 'X.Y.Z' or a specific git hash. (default: %s)" %
                            spark_home_version_string)
+    parser.add_option("--thunder-version", default='HEAD',
+                      help="Version of Thunder to use: 'X.Y.Z', 'HEAD' (current state of master branch), " +
+                           " or a specific git hash. (default: %default)")
 
     if spark_home_loose_version >= LooseVersion("1.2.0"):
         parser.add_option(
