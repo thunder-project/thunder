@@ -39,7 +39,7 @@ def getEC2Master():
 def findThunderEgg():
     # get directory
     calldir = os.path.dirname(os.path.realpath(__file__))
-    distdir = os.path.join(calldir, '..', 'dist')
+    distdir = os.path.join(calldir, '..', '..', 'dist')
 
     # check for egg
     egg = glob.glob(os.path.join(distdir, "thunder_python-" + str(thunder.__version__) + "*.egg"))
@@ -61,7 +61,7 @@ def findPy4J(sparkHome):
 
 def buildThunderEgg():
     calldir = os.path.dirname(os.path.realpath(__file__))
-    pythondir = os.path.join(calldir, '..')
+    pythondir = os.path.join(calldir, '..', '..')
     subprocess.check_call(["python", 'setup.py', 'clean', 'bdist_egg'], cwd=pythondir)
     return findThunderEgg()
 
@@ -97,11 +97,13 @@ def addOptionsToParser(optionParser, sparkHome):
     from optparse import OptionGroup
     optionParser.add_option("--master", default=getMasterURI(),
                             help="spark://host:port, mesos://host:port, yarn, or local (default: '%default').")
-    optionParser.add_option("--deploy-mode", default="client", type="choice", choices=["client", "cluster"],
-                            help="Whether to deploy your driver on the worker nodes (cluster) or locally as an " +
-                                 "external client (client) (default: '%default').")
+    # currently only 'client' deploy-mode is supported with python apps - and Thunder is python-only.
+    # optionParser.add_option("--deploy-mode", default="client", type="choice", choices=["client", "cluster"],
+    #                         help="Whether to deploy your driver on the worker nodes (cluster) or locally as an " +
+    #                              "external client (client) (default: '%default').")
+    # 'name' is hardcoded to 'PySparkShell' in Spark's shell.py; this param will have no effect if launching the shell:
     optionParser.add_option("--name", default="",
-                            help="A name for your application.")
+                            help="A name for your application (Has no effect in thunder-shell).")
     optionParser.add_option("--py-files", default="",
                             help="Comma-separated list of additional .zip, .egg, or .py files to place " +
                                  "on the PYTHONPATH for Python apps. The Thunder .egg file is automatically included.")
@@ -117,8 +119,10 @@ def addOptionsToParser(optionParser, sparkHome):
     uncommonGroup.add_option(
         "--properties-file", default=os.path.join(sparkHome, "conf", "spark-defaults.conf"),
         help="Properties file from which to load Spark properties (default: '%default').")
+    # the driver-memory default is changed from the Spark default, which is only 512M, since we
+    # expect to be doing lots of large collect() calls in Thunder:
     uncommonGroup.add_option(
-        "--driver-memory", default="512M",
+        "--driver-memory", default="20G",
         help="Memory for driver (e.g. 1000M, 2G)(default: '%default').")
     uncommonGroup.add_option(
         "--driver-java-options", default="",
