@@ -500,7 +500,14 @@ if __name__ == "__main__":
             for inst in master_nodes:
                 if inst.state not in ["shutting-down", "terminated"]:
                     inst.start()
-            wait_for_cluster(conn, opts.wait, master_nodes, slave_nodes)
+            try:
+                wait_for_cluster(conn, opts.wait, master_nodes, slave_nodes)
+            except NameError:
+                wait_for_cluster_state(
+                    cluster_instances=(master_nodes + slave_nodes),
+                    cluster_state='ssh-ready',
+                    opts=opts
+            )
             setup_cluster(conn, master_nodes, slave_nodes, opts, False)
             master = master_nodes[0].public_dns_name
             print "\n\n"
