@@ -50,6 +50,9 @@ class ICA(object):
         self.maxIter = maxIter
         self.tol = tol
         self.seed = seed
+        self.w = None
+        self.a = None
+        self.sigs = None
 
     def fit(self, data):
         """
@@ -117,7 +120,6 @@ class ICA(object):
             # store results
             bOld = b
             errVec[iter-1] = (1 - minAbsCos)
-
 
         # get un-mixing matrix
         w = dot(b.T, whtMat)

@@ -70,6 +70,8 @@ class MassUnivariateClassifier(object):
 
     @staticmethod
     def load(paramFile, classifyMode, **opts):
+        from thunder.utils.common import checkParams
+        checkParams(classifyMode.lower(), CLASSIFIERS.keys())
         return CLASSIFIERS[classifyMode.lower()](paramFile, **opts)
 
     def get(self, x, featureSet=None):

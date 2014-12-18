@@ -86,10 +86,10 @@ class TestRegistration(ImprocessingTestCase):
 
         print(imin.keys().collect())
 
-        ref = Register.reference(imin, startidx=0, stopidx=2)
+        ref = Register.reference(imin, startIdx=0, stopIdx=2)
         assert(allclose(ref, (im0 + im1) / 2))
 
-        ref = Register.reference(imin, startidx=1, stopidx=2)
+        ref = Register.reference(imin, startIdx=1, stopIdx=2)
         assert(allclose(ref, im1))
 
     def test_reference_3d(self):

@@ -20,8 +20,10 @@ class RegressionModel(object):
     """
 
     @staticmethod
-    def load(modelfile, regressmode, **opts):
-        return REGRESSION_MODELS[regressmode](modelfile, **opts)
+    def load(modelFile, regressMode, **opts):
+        from thunder.utils.common import checkParams
+        checkParams(regressMode.lower(), REGRESSION_MODELS.keys())
+        return REGRESSION_MODELS[regressMode.lower()](modelFile, **opts)
 
     def get(self, y):
         pass
@@ -64,7 +66,7 @@ class MeanRegressionModel(RegressionModel):
 
     Parameters
     ----------
-    modelfile : array, or string
+    modelFile : array, or string
         Array contaiing design matrix, or location of a MAT file
 
     var : string, default = 'X'
@@ -75,24 +77,24 @@ class MeanRegressionModel(RegressionModel):
     x : array
         The design matrix
 
-    xhat : array
+    xHat : array
         Pseudoinverse of the design matrix
     """
 
-    def __init__(self, modelfile, var='X'):
-        if type(modelfile) is str:
-            x = loadMatVar(modelfile, var)
+    def __init__(self, modelFile, var='X'):
+        if type(modelFile) is str:
+            x = loadMatVar(modelFile, var)
         else:
-            x = modelfile
+            x = modelFile
         x = x.astype(float)
-        x_hat = (x.T / sum(x, axis=1)).T
+        xHat = (x.T / sum(x, axis=1)).T
         self.x = x
-        self.x_hat = x_hat
+        self.xHat = xHat
 
     def get(self, y):
         """Compute regression coefficients, r2 statistic, and residuals"""
 
-        b = dot(self.x_hat, y)
+        b = dot(self.xHat, y)
         predic = dot(b, self.x)
         resid = y - predic
         sse = sum((predic - y) ** 2)
@@ -110,7 +112,7 @@ class LinearRegressionModel(RegressionModel):
 
     Parameters
     ----------
-    modelfile : array, or string
+    modelFile : array, or string
         Array contaiing design matrix, or location of a MAT file
 
     var : string, default = 'X'
@@ -125,20 +127,20 @@ class LinearRegressionModel(RegressionModel):
         Pseudoinverse of the design matrix
     """
 
-    def __init__(self, modelfile, var='X'):
-        if type(modelfile) is str:
-            x = loadMatVar(modelfile, var)
+    def __init__(self, modelFile, var='X'):
+        if isinstance(modelFile, basestring):
+            x = loadMatVar(modelFile, var)
         else:
-            x = modelfile
+            x = modelFile
         x = concatenate((ones((1, shape(x)[1])), x))
-        x_hat = pinv(x)
+        xHat = pinv(x)
         self.x = x
-        self.x_hat = x_hat
+        self.xHat = xHat
 
     def get(self, y):
         """Compute regression coefficients, r2 statistic, and residuals"""
 
-        b = dot(self.x_hat, y)
+        b = dot(self.xHat, y)
         predic = dot(b, self.x)
         resid = y - predic
         sse = sum((predic - y) ** 2)
@@ -156,7 +158,7 @@ class BilinearRegressionModel(RegressionModel):
 
     Parameters
     ----------
-    modelfile : tuple(array), or tuple(string)
+    modelFile : tuple(array), or tuple(string)
         Tuple of arrays contaiing design matrices,
         or locations of MAT files
 
@@ -175,31 +177,31 @@ class BilinearRegressionModel(RegressionModel):
         Pseudoinverse of the first design matrix
     """
 
-    def __init__(self, modelfile, var=('X1', 'X2')):
-        if type(modelfile) is str:
-            x1 = loadMatVar(modelfile[0], var[0])
-            x2 = loadMatVar(modelfile[1], var[1])
+    def __init__(self, modelFile, var=('X1', 'X2')):
+        if isinstance(modelFile, basestring):
+            x1 = loadMatVar(modelFile[0], var[0])
+            x2 = loadMatVar(modelFile[1], var[1])
         else:
-            x1 = modelfile[0]
-            x2 = modelfile[1]
-        x1_hat = pinv(x1)
+            x1 = modelFile[0]
+            x2 = modelFile[1]
+        x1Hat = pinv(x1)
         self.x1 = x1
         self.x2 = x2
-        self.x1_hat = x1_hat
+        self.x1Hat = x1Hat
 
     def get(self, y):
         """Compute regression coefficients from the second design matrix,
         a single r2 statistic, and residuals for the full model"""
 
-        b1 = dot(self.x1_hat, y)
+        b1 = dot(self.x1Hat, y)
         b1 = b1 - min(b1)
-        b1_hat = dot(transpose(self.x1), b1)
-        if sum(b1_hat) == 0:
-            b1_hat += 1E-06
-        x3 = self.x2 * b1_hat
+        b1Hat = dot(transpose(self.x1), b1)
+        if sum(b1Hat) == 0:
+            b1Hat += 1E-06
+        x3 = self.x2 * b1Hat
         x3 = concatenate((ones((1, shape(x3)[1])), x3))
-        x3_hat = pinv(x3)
-        b2 = dot(x3_hat, y)
+        x3Hat = pinv(x3)
+        b2 = dot(x3Hat, y)
         predic = dot(b2, x3)
         resid = y - predic
         sse = sum((predic - y) ** 2)

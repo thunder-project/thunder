@@ -15,10 +15,10 @@ class Register(object):
         else:
             raise Exception('Registration method not recognized')
 
-    def get_transform(self, im, ref):
+    def getTransform(self, im, ref):
         raise NotImplementedError
 
-    def apply_transform(self, im, transform):
+    def applyTransform(self, im, transform):
         raise NotImplementedError
 
     def setFilter(self, filter='median', param=2):
@@ -68,7 +68,7 @@ class Register(object):
             return im
 
     @staticmethod
-    def reference(images, method='mean', startidx=None, stopidx=None):
+    def reference(images, method='mean', startIdx=None, stopIdx=None):
         """
         Compute a reference image for use in registration.
 
@@ -91,10 +91,10 @@ class Register(object):
         checkParams(method, ['mean'])
 
         if method == 'mean':
-            if startidx is not None and stopidx is not None:
-                range = lambda x: startidx <= x < stopidx
-                n = stopidx - startidx
-                ref = images.filterOnKeys(range)
+            if startIdx is not None and stopIdx is not None:
+                idxRange = lambda x: startIdx <= x < stopIdx
+                n = stopIdx - startIdx
+                ref = images.filterOnKeys(idxRange)
             else:
                 ref = images
                 n = images.nimages
@@ -102,7 +102,7 @@ class Register(object):
             return refval.astype(images.dtype)
 
     @staticmethod
-    def _apply_vol(vol, func):
+    def _applyVol(vol, func):
         """
         Apply a function to an image, or a volume (plane-by-plane).
         """
@@ -116,7 +116,7 @@ class Register(object):
             return vol
 
     @staticmethod
-    def _check_reference(images, reference):
+    def _checkReference(images, reference):
         """
         Check the dimensions and type of a reference (relative to an Images object),
         as well as check that the images / volumes themselves are either 2D or 3D
@@ -162,27 +162,27 @@ class Register(object):
         if not (isinstance(images, Images)):
             raise Exception('Input data must be Images or a subclass')
 
-        self._check_reference(images, reference)
+        self._checkReference(images, reference)
 
         # apply filtering to reference if defined
         if hasattr(self, '_filter'):
-            reference = self._apply_vol(reference.copy(), self.filter)
+            reference = self._applyVol(reference.copy(), self.filter)
 
         # broadcast the reference (a potentially very large array)
-        reference_bc = images.rdd.context.broadcast(reference)
+        referenceBC = images.rdd.context.broadcast(reference)
 
         # estimate the transform parameters on an image / volume
         def params(im, ref):
             if im.ndim == 2:
-                return self.get_transform(self.filter(im), ref.value)
+                return self.getTransform(self.filter(im), ref.value)
             else:
                 t = []
                 for z in arange(0, im.shape[2]):
-                    t.append(self.get_transform(self.filter(im[:, :, z]), ref.value[:, :, z]))
+                    t.append(self.getTransform(self.filter(im[:, :, z]), ref.value[:, :, z]))
             return t
 
         from thunder import Series
-        return Series(images.rdd.mapValues(lambda x: params(x, reference_bc)))
+        return Series(images.rdd.mapValues(lambda x: params(x, referenceBC)))
 
     def transform(self, images, reference):
         """
@@ -200,30 +200,30 @@ class Register(object):
         if not (isinstance(images, Images)):
             raise Exception('Input data must be Images or a subclass')
 
-        self._check_reference(images, reference)
+        self._checkReference(images, reference)
 
         # apply filtering to reference if defined
         if hasattr(self, '_filter'):
-            reference = self._apply_vol(reference, self.filter)
+            reference = self._applyVol(reference, self.filter)
 
         # broadcast the reference (a potentially very large array)
-        reference_bc = images.rdd.context.broadcast(reference)
+        referenceBC = images.rdd.context.broadcast(reference)
 
         # compute and apply transformation on an image / volume
         def register(im, ref):
             if im.ndim == 2:
-                t = self.get_transform(self.filter(im), ref.value)
-                return self.apply_transform(im, t)
+                t = self.getTransform(self.filter(im), ref.value)
+                return self.applyTransform(im, t)
             else:
                 im.setflags(write=True)
                 for z in arange(0, im.shape[2]):
-                    t = self.get_transform(self.filter(im[:, :, z]), ref.value[:, :, z])
-                    im[:, :, z] = self.apply_transform(im[:, :, z], t)
+                    t = self.getTransform(self.filter(im[:, :, z]), ref.value[:, :, z])
+                    im[:, :, z] = self.applyTransform(im[:, :, z], t)
                 return im
 
         # return the transformed volumes
-        newrdd = images.rdd.mapValues(lambda x: register(x, reference_bc))
-        return Images(newrdd).__finalize__(images)
+        newRdd = images.rdd.mapValues(lambda x: register(x, referenceBC))
+        return Images(newRdd).__finalize__(images)
 
 
 class CrossCorr(Register):
@@ -231,7 +231,7 @@ class CrossCorr(Register):
     Perform affine (translation) registration using cross-correlation
     """
 
-    def get_transform(self, im, ref):
+    def getTransform(self, im, ref):
 
         from numpy.fft import fft2, ifft2
 
@@ -246,7 +246,7 @@ class CrossCorr(Register):
 
         return [d0, d1]
 
-    def apply_transform(self, im, transform):
+    def applyTransform(self, im, transform):
 
         from scipy.ndimage.interpolation import shift
         return shift(im, map(lambda x: -x, transform), mode='nearest')
