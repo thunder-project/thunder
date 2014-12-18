@@ -44,15 +44,15 @@ class SpatialSeries(Series):
             """Create a list of key value pairs with multiple shifted copies
             of each record over a region specified by sz
             """
-            rng_x = range(-sz, sz+1, 1)
-            rng_y = range(-sz, sz+1, 1)
+            rngX = range(-sz, sz+1, 1)
+            rngY = range(-sz, sz+1, 1)
             out = list()
-            for x in rng_x:
-                for y in rng_y:
-                    new_x = clip(ind[0] + x, mn[0], mx[0])
-                    new_y = clip(ind[1] + y, mn[1], mx[1])
-                    newind = (new_x, new_y, ind[2])
-                    out.append((newind, v))
+            for x in rngX:
+                for y in rngY:
+                    newX = clip(ind[0] + x, mn[0], mx[0])
+                    newY = clip(ind[1] + y, mn[1], mx[1])
+                    newInd = (newX, newY, ind[2])
+                    out.append((newInd, v))
             return out
         dims = self.dims
         rdd = self.rdd.flatMap(lambda (k, v): toNeighbors(k, v, neighborhood, dims.min[0:2], dims.max[0:2]))

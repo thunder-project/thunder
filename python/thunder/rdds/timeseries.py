@@ -52,22 +52,22 @@ class TimeSeries(Series):
         events = asarray(events)
         m = zeros((lag*2+1, len(self.index)))
         for i, shift in enumerate(range(-lag, lag+1)):
-            fillinds = events + shift
-            fillinds = fillinds[fillinds >= 0]
-            fillinds = fillinds[fillinds < len(self.index)]
-            m[i, fillinds] = 1
+            fillInds = events + shift
+            fillInds = fillInds[fillInds >= 0]
+            fillInds = fillInds[fillInds < len(self.index)]
+            m[i, fillInds] = 1
 
         if lag == 0:
-            newindex = 0
+            newIndex = 0
         else:
-            newindex = range(-lag, lag+1)
+            newIndex = range(-lag, lag+1)
 
         scale = m.sum(axis=1)
 
         rdd = self.rdd.mapValues(lambda x: dot(m, x) / scale)
-        return self._constructor(rdd, index=newindex).__finalize__(self)
+        return self._constructor(rdd, index=newIndex).__finalize__(self)
 
-    def blockedAverage(self, blocklength):
+    def blockedAverage(self, blockLength):
         """
         Average blocks of a time series together, e.g. because they correspond
         to trials of some repeated measurement or process
@@ -80,20 +80,20 @@ class TimeSeries(Series):
 
         n = len(self.index)
 
-        if divmod(n, blocklength)[1] != 0:
+        if divmod(n, blockLength)[1] != 0:
             raise Exception('Trial length, %g, must evenly divide length of time series, %g'
-                            % (blocklength, n))
+                            % (blockLength, n))
 
-        if n == blocklength:
+        if n == blockLength:
             raise Exception('Trial length, %g, cannot be length of entire time series, %g'
-                            % (blocklength, n))
+                            % (blockLength, n))
 
-        m = tile(diag(ones((blocklength,))), [n/blocklength, 1]).T
-        newindex = range(0, blocklength)
-        scale = n / blocklength
+        m = tile(diag(ones((blockLength,))), [n/blockLength, 1]).T
+        newIndex = range(0, blockLength)
+        scale = n / blockLength
 
         rdd = self.rdd.mapValues(lambda x: dot(m, x) / scale)
-        return self._constructor(rdd, index=newindex).__finalize__(self)
+        return self._constructor(rdd, index=newIndex).__finalize__(self)
 
     def fourier(self, freq=None):
         """
@@ -109,10 +109,10 @@ class TimeSeries(Series):
             nframes = len(y)
             ft = fft.fft(y)
             ft = ft[0:int(fix(nframes/2))]
-            amp_ft = 2*abs(ft)/nframes
-            amp = amp_ft[freq]
-            amp_sum = sqrt(sum(amp_ft**2))
-            co = amp / amp_sum
+            ampFt = 2*abs(ft)/nframes
+            amp = ampFt[freq]
+            ampSum = sqrt(sum(ampFt**2))
+            co = amp / ampSum
             ph = -(pi/2) - angle(ft[freq])
             if ph < 0:
                 ph += pi * 2
@@ -159,15 +159,15 @@ class TimeSeries(Series):
             shifts = range(-lag, lag+1)
             d = len(s)
             m = len(shifts)
-            s_shifted = zeros((m, d))
+            sShifted = zeros((m, d))
             for i in range(0, len(shifts)):
                 tmp = roll(s, shifts[i])
                 if shifts[i] < 0:  # zero padding
                     tmp[(d+shifts[i]):] = 0
                 if shifts[i] > 0:
                     tmp[:shifts[i]] = 0
-                s_shifted[i, :] = tmp
-            s = s_shifted
+                sShifted[i, :] = tmp
+            s = sShifted
         else:
             shifts = 0
 
