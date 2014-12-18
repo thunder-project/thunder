@@ -37,7 +37,7 @@ class TestKMeans(ClusteringTestCase):
         """ Test k=2 also with more points"""
 
         data, centerstrue = DataSets.make(self.sc, "kmeans",
-                                          k=2, nrecords=50, npartitions=5, seed=42, returnparams=True)
+                                          k=2, nrecords=50, npartitions=5, seed=42, returnParams=True)
         centerstrue = KMeansModel(centerstrue)
 
         model = KMeans(k=2, maxIterations=20).fit(data)

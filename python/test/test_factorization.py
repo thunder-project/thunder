@@ -88,7 +88,7 @@ class TestICA(FactorizationTestCase):
     def test_ica(self):
 
         random.seed(42)
-        data, s, a = DataSets.make(self.sc, "ica", nrows=100, returnparams=True)
+        data, s, a = DataSets.make(self.sc, "ica", nrows=100, returnParams=True)
 
         ica = ICA(c=2, svdMethod="direct", seed=1)
         ica.fit(data)

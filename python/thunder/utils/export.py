@@ -9,7 +9,7 @@ from numpy import sum, shape, maximum, minimum, uint8, savetxt, size, save
 from thunder.utils.common import checkParams
 
 
-def arraytoim(mat, filename, format="png"):
+def arrayToImg(mat, filename, format="png"):
     """
     Write a 2D numpy array to a grayscale image.
 
@@ -54,17 +54,17 @@ def rescale(data):
         data = data.mapValues(lambda x: map(lambda y: 0 if isnan(y) else y, x))
     else:
         data = data.mapValues(lambda x: 0 if isnan(x) else x)
-    mnvals = data.map(lambda (_, v): v).reduce(minimum)
-    mxvals = data.map(lambda (_, v): v).reduce(maximum)
-    if sum(mnvals < 0) == 0:
-        data = data.mapValues(lambda x: uint8(255 * (x - mnvals)/(mxvals - mnvals)))
+    mnVals = data.map(lambda (_, v): v).reduce(minimum)
+    mxVals = data.map(lambda (_, v): v).reduce(maximum)
+    if sum(mnVals < 0) == 0:
+        data = data.mapValues(lambda x: uint8(255 * (x - mnVals)/(mxVals - mnVals)))
     else:
-        mxvals = maximum(abs(mxvals), abs(mnvals))
-        data = data.mapValues(lambda x: uint8(255 * ((x / (2 * mxvals)) + 0.5)))
+        mxVals = maximum(abs(mxVals), abs(mnVals))
+        data = data.mapValues(lambda x: uint8(255 * ((x / (2 * mxVals)) + 0.5)))
     return data
 
 
-def export(data, outputdir, outputfile, outputformat, sorting=False):
+def export(data, outputDirPath, outputFilename, outputFormat, sorting=False):
     """
     Export data to a variety of local formats.
 
@@ -76,13 +76,13 @@ def export(data, outputdir, outputfile, outputformat, sorting=False):
     data : Series, or numpy array
         The data to export
 
-    outputdir : str
+    outputDirPath : str
         Output directory
 
-    outputfile : str
+    outputFilename : str
         Output filename
 
-    outputformat : str
+    outputFormat : str
         Output format ("matlab", "npy", or "text")
 
     """
@@ -90,12 +90,12 @@ def export(data, outputdir, outputfile, outputformat, sorting=False):
     from thunder.rdds.series import Series
     from scipy.io import savemat
 
-    checkParams(outputformat, ['matlab', 'npy', 'text'])
+    checkParams(outputFormat, ['matlab', 'npy', 'text'])
 
-    if not os.path.exists(outputdir):
-        os.makedirs(outputdir)
+    if not os.path.exists(outputDirPath):
+        os.makedirs(outputDirPath)
 
-    filename = os.path.join(outputdir, outputfile)
+    filename = os.path.join(outputDirPath, outputFilename)
 
     def write(array, file, format, varname=None):
         if format == 'matlab':
@@ -111,9 +111,9 @@ def export(data, outputdir, outputfile, outputformat, sorting=False):
         if size(data.index) > 1:
             for ix in data.index:
                 result = data.select(ix).pack(sorting=sorting)
-                write(result, filename+"_"+str(ix), outputformat, varname=outputfile+"_"+str(ix))
+                write(result, filename+"_"+str(ix), outputFormat, varname=outputFilename+"_"+str(ix))
         else:
             result = data.pack(sorting=sorting)
-            write(result, filename, outputformat, varname=outputfile+"_"+str(data.index))
+            write(result, filename, outputFormat, varname=outputFilename+"_"+str(data.index))
     else:
-        write(data, filename, outputformat, varname=outputfile)
+        write(data, filename, outputFormat, varname=outputFilename)
