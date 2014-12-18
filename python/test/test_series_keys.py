@@ -5,7 +5,7 @@ import tempfile
 from numpy import array, allclose
 from test_utils import PySparkTestCase
 from thunder.rdds.series import Series
-from thunder.rdds.keys import _subtoind_converter, _indtosub_converter
+from thunder.rdds.keys import _subtoind_converter, _indToSubConverter
 
 
 class SeriesKeysTestCase(PySparkTestCase):
@@ -71,7 +71,7 @@ class TestSubToInd(SeriesKeysTestCase):
 
     def test_ind_to_sub_array(self):
         inds = range(1, 13)
-        converter = _indtosub_converter(dims=[2, 3, 2])
+        converter = _indToSubConverter(dims=[2, 3, 2])
         subs = map(lambda x: converter(x), inds)
         assert(allclose(subs, array([(1, 1, 1), (2, 1, 1), (1, 2, 1), (2, 2, 1), (1, 3, 1), (2, 3, 1),
                                      (1, 1, 2), (2, 1, 2), (1, 2, 2), (2, 2, 2), (1, 3, 2), (2, 3, 2)])))
@@ -116,7 +116,7 @@ def test_subtoind_parameterized():
 
     def check_subtoind_result(si_param):
         data = si_param.subscripts
-        converter = _subtoind_converter(dims=si_param.dims, order=si_param.order, onebased=si_param.onebased)
+        converter = _subtoind_converter(dims=si_param.dims, order=si_param.order, isOneBased=si_param.onebased)
         results = map(lambda x: converter(x), data)
         # check results individually to highlight specific failures
         for res, expected, subscript in zip(results, si_param.indices, si_param.subscripts):
@@ -179,7 +179,7 @@ def test_indtosub_parameterized():
 
     def check_indtosub_result(indsub_param):
         data = indsub_param.indices
-        converter = _indtosub_converter(dims=indsub_param.dims, order=indsub_param.order, onebased=indsub_param.onebased)
+        converter = _indToSubConverter(dims=indsub_param.dims, order=indsub_param.order, isOneBased=indsub_param.onebased)
         results = map(lambda x: converter(x), data)
         for res, expected, index in zip(results, indsub_param.subscripts, indsub_param.indices):
             assert_equals(expected, res, 'Got subscript %s instead of %s for index:%d, dims:%s' %

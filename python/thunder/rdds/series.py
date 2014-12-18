@@ -64,7 +64,7 @@ class Series(Data):
         if self._dims is None:
             entry = self.populateParamsFromFirstRecord()[0]
             n = size(entry)
-            d = self.rdd.keys().mapPartitions(lambda i: [Dimensions(i, n)]).reduce(lambda x, y: x.mergedims(y))
+            d = self.rdd.keys().mapPartitions(lambda i: [Dimensions(i, n)]).reduce(lambda x, y: x.mergeDims(y))
             self._dims = d
         return self._dims
 
@@ -461,7 +461,7 @@ class Series(Data):
         from thunder.rdds.keys import _subtoind_converter
 
         # converter = _subtoind_converter(self.dims.max, order=order, onebased=onebased)
-        converter = _subtoind_converter(self.dims.count, order=order, onebased=onebased)
+        converter = _subtoind_converter(self.dims.count, order=order, isOneBased=onebased)
         rdd = self.rdd.map(lambda (k, v): (converter(k), v))
         return self._constructor(rdd, index=self._index).__finalize__(self)
 
@@ -480,12 +480,12 @@ class Series(Data):
         onebased : boolean, default = True
             True if generated subscript indices are to start at 1, False to start at 0
         """
-        from thunder.rdds.keys import _indtosub_converter
+        from thunder.rdds.keys import _indToSubConverter
 
         if dims is None:
             dims = self.dims.max
 
-        converter = _indtosub_converter(dims, order=order, onebased=onebased)
+        converter = _indToSubConverter(dims, order=order, isOneBased=onebased)
         rdd = self.rdd.map(lambda (k, v): (converter(k), v))
         return self._constructor(rdd, index=self._index).__finalize__(self)
 
@@ -634,8 +634,8 @@ class Series(Data):
 
         n = len(inds)
 
-        from thunder.rdds.keys import _indtosub_converter
-        converter = _indtosub_converter(dims=self.dims.max, order=order, onebased=onebased)
+        from thunder.rdds.keys import _indToSubConverter
+        converter = _indToSubConverter(dims=self.dims.max, order=order, isOneBased=onebased)
 
         keys = zeros((n, len(self.dims.count)))
         values = zeros((n, len(self.first()[1])))

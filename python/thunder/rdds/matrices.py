@@ -110,7 +110,7 @@ class RowMatrix(Series):
                 return val1
 
         if method is "reduce":
-            return self.rdd.map(lambda (k, v): v).mapPartitions(matrixsum_iterator_self).sum()
+            return self.rdd.map(lambda (k, v): v).mapPartitions(matrixSum_Iterator_self).sum()
 
         if method is "accum":
             global mat
@@ -125,17 +125,17 @@ class RowMatrix(Series):
 
         if method is "aggregate":
 
-            def seqop(x, v):
+            def seqOp(x, v):
                 return x + outer(v, v)
 
-            def combop(x, y):
+            def combOp(x, y):
                 x += y
                 return x
 
-            return self.rdd.map(lambda (_, v): v).aggregate(zeros((self.ncols, self.ncols)), seqop, combop)
+            return self.rdd.map(lambda (_, v): v).aggregate(zeros((self.ncols, self.ncols)), seqOp, combOp)
 
         else:
-            raise Exception("method must be reduce or accum")
+            raise Exception("method must be reduce, accum, or aggregate")
 
     def times(self, other):
         """
@@ -159,9 +159,11 @@ class RowMatrix(Series):
         if dtype == RowMatrix:
             if self.nrows != other.nrows:
                 raise Exception(
-                    "cannot multiply shapes ("+str(self.nrows)+","+str(self.ncols)+") and ("+str(other.nrows)+","+str(other.ncols)+")")
+                    "cannot multiply shapes (" + str(self.nrows) + "," + str(self.ncols) + ") and (" +
+                    str(other.nrows) + "," + str(other.ncols) + ")")
             else:
-                return self.rdd.zip(other.rdd).map(lambda ((k1, x), (k2, y)): (x, y)).mapPartitions(matrixsum_iterator_other).sum()
+                return self.rdd.zip(other.rdd).map(lambda ((k1, x), (k2, y)): (x, y))\
+                    .mapPartitions(matrixSum_Iterator_other).sum()
         else:
             dims = shape(other)
             if dims[0] != self.ncols:
@@ -232,7 +234,7 @@ class RowMatrix(Series):
         """
         return RowMatrix.elementwise(self, other, subtract)
 
-    def dottimes(self, other):
+    def dotTimes(self, other):
         """
         Elementwise division of distributed matrices.
 
@@ -242,7 +244,7 @@ class RowMatrix(Series):
         """
         return RowMatrix.elementwise(self, other, multiply)
 
-    def dotdivide(self, other):
+    def dotDivide(self, other):
         """
         Elementwise division of distributed matrices.
 
@@ -253,11 +255,11 @@ class RowMatrix(Series):
         return RowMatrix.elementwise(self, other, divide)
 
 
-def matrixsum_iterator_self(iterator):
+def matrixSum_Iterator_self(iterator):
     yield sum(outer(x, x) for x in iterator)
 
 
-def matrixsum_iterator_other(iterator):
+def matrixSum_Iterator_other(iterator):
     yield sum(outer(x, y) for x, y in iterator)
 
 
