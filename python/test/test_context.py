@@ -109,7 +109,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         pilimg.save(filepath)
         del pilimg, tmpary
 
-        range_series = self.tsc.loadImagesAsSeries(self.outputdir, inputformat="tif-stack", shuffle=shuffle)
+        range_series = self.tsc.loadImagesAsSeries(self.outputdir, inputFormat="tif-stack", shuffle=shuffle)
         assert_equals('float16', range_series._dtype)  # check before any potential first() calls update this val
         range_series_ary = range_series.pack()
 
@@ -138,7 +138,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         testimg_pil.seek(2)
         testimg_arys.append(np.array(testimg_pil))
 
-        range_series = self.tsc.loadImagesAsSeries(imagepath, inputformat="tif-stack", shuffle=shuffle)
+        range_series = self.tsc.loadImagesAsSeries(imagepath, inputFormat="tif-stack", shuffle=shuffle)
         assert_true(range_series._dtype.startswith("float"))
         range_series_ary = range_series.pack()
         range_series_ary_xpose = range_series.pack(transpose=True)
@@ -177,7 +177,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
 
         del pilimg, tmpary
 
-        range_series = self.tsc.loadImagesAsSeries(self.outputdir, inputformat="tif-stack", shuffle=shuffle)
+        range_series = self.tsc.loadImagesAsSeries(self.outputdir, inputFormat="tif-stack", shuffle=shuffle)
         assert_equals('float16', range_series._dtype)
         range_series_ary = range_series.pack()
         range_series_ary_xpose = range_series.pack(transpose=True)
