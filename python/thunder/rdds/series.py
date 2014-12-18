@@ -95,7 +95,7 @@ class Series(Data):
         return Series
 
     @staticmethod
-    def _check_type(record):
+    def _checkType(record):
         key = record[0]
         value = record[1]
         if not isinstance(key, tuple):
@@ -166,27 +166,27 @@ class Series(Data):
                 raise Exception("No indices found matching criterion")
 
         # determine new index and check the result
-        newindex = [i for i in index if crit(i)]
-        if len(newindex) == 0:
+        newIndex = [i for i in index if crit(i)]
+        if len(newIndex) == 0:
             raise Exception("No indices found matching criterion")
-        if array(newindex == index).all():
+        if array(newIndex == index).all():
             return self
 
         # use fast logical indexing to get the new values
-        subinds = where(map(lambda x: crit(x), index))
-        rdd = self.rdd.mapValues(lambda x: x[subinds])
+        subInds = where(map(lambda x: crit(x), index))
+        rdd = self.rdd.mapValues(lambda x: x[subInds])
 
         # if singleton, need to check whether it's an array or a scalar/int
         # if array, recompute a new set of indices
-        if len(newindex) == 1:
+        if len(newIndex) == 1:
             rdd = rdd.mapValues(lambda x: x[0])
             val = rdd.first()[1]
             if size(val) == 1:
-                newindex = newindex[0]
+                newIndex = newIndex[0]
             else:
-                newindex = arange(0, size(val))
+                newIndex = arange(0, size(val))
 
-        return self._constructor(rdd, index=newindex).__finalize__(self)
+        return self._constructor(rdd, index=newIndex).__finalize__(self)
 
     def detrend(self, method='linear', **kwargs):
         """
@@ -241,7 +241,7 @@ class Series(Data):
         method = baseline.lower()
 
         if method == 'mean':
-            basefunc = mean
+            baseFunc = mean
 
         if method == 'percentile' or method == 'window':
             if 'percentile' in kwargs:
@@ -250,7 +250,7 @@ class Series(Data):
                 perc = 20
 
         if method == 'percentile':
-            basefunc = lambda x: percentile(x, perc)
+            baseFunc = lambda x: percentile(x, perc)
 
         # TODO optimize implementation by doing a single initial sort
         if method == 'window':
@@ -265,11 +265,11 @@ class Series(Data):
                 left, right = (window/2, window/2)
 
             n = len(self.index)
-            basefunc = lambda x: asarray([percentile(x[max(ix-left, 0):min(ix+right+1, n)], perc)
+            baseFunc = lambda x: asarray([percentile(x[max(ix-left, 0):min(ix+right+1, n)], perc)
                                           for ix in arange(0, n)])
 
         def get(y):
-            b = basefunc(y)
+            b = baseFunc(y)
             return (y - b) / (b + 0.1)
 
         return self.apply(get)
@@ -286,8 +286,8 @@ class Series(Data):
         if axis == 0:
             return self.apply(lambda x: x - mean(x))
         elif axis == 1:
-            meanvec = self.mean()
-            return self.apply(lambda x: x - meanvec)
+            meanVec = self.mean()
+            return self.apply(lambda x: x - meanVec)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -322,9 +322,9 @@ class Series(Data):
             return self.apply(lambda x: (x - mean(x)) / std(x))
         elif axis == 1:
             stats = self.stats()
-            meanvec = stats.mean()
-            stdvec = stats.stdev()
-            return self.apply(lambda x: (x - meanvec) / stdvec)
+            meanVec = stats.mean()
+            stdVec = stats.stdev()
+            return self.apply(lambda x: (x - meanVec) / stdVec)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -353,18 +353,18 @@ class Series(Data):
             if size(s) != size(self.index):
                 raise Exception('Size of signal to correlate with, %g, does not match size of series' % size(s))
             rdd = self.rdd.mapValues(lambda x: corrcoef(x, s)[0, 1])
-            newindex = 0
+            newIndex = 0
         # handle multiple 1d signals
         elif s.ndim == 2:
             if s.shape[1] != size(self.index):
                 raise Exception('Length of signals to correlate with, %g, does not match size of series' % s.shape[1])
             rdd = self.rdd.mapValues(lambda x: array([corrcoef(x, y)[0, 1] for y in s]))
-            newindex = range(0, s.shape[0])
+            newIndex = range(0, s.shape[0])
         else:
             raise Exception('Signal to correlate with must have 1 or 2 dimensions')
 
         # return result
-        return self._constructor(rdd, dtype='float64', index=newindex).__finalize__(self)
+        return self._constructor(rdd, dtype='float64', index=newIndex).__finalize__(self)
 
     def seriesMax(self):
         """ Compute the value maximum of each record in a Series """
@@ -417,7 +417,7 @@ class Series(Data):
             'min': min,
             'count': size
         }
-        func = STATS[stat]
+        func = STATS[stat.lower()]
         rdd = self.rdd.mapValues(lambda x: func(x))
         return self._constructor(rdd, index=stat).__finalize__(self, noPropagate=('_dtype',))
 
@@ -443,7 +443,7 @@ class Series(Data):
         dims.max = list(array(dims.max)[arange(0, nkeys) != axis])
         return self._constructor(rdd, dims=dims).__finalize__(self)
 
-    def subtoind(self, order='F', onebased=True):
+    def subToInd(self, order='F', isOneBased=True):
         """
         Convert subscript index keys to linear index keys
 
@@ -455,17 +455,17 @@ class Series(Data):
         order : str, 'C' or 'F', default = 'F'
             Specifies row-major or column-major array indexing. See numpy.ravel_multi_index.
 
-        onebased : boolean, default = True
+        isOneBased : boolean, default = True
             True if subscript indices start at 1, False if they start at 0
         """
-        from thunder.rdds.keys import _subtoind_converter
+        from thunder.rdds.keys import _subToIndConverter
 
         # converter = _subtoind_converter(self.dims.max, order=order, onebased=onebased)
-        converter = _subtoind_converter(self.dims.count, order=order, isOneBased=onebased)
+        converter = _subToIndConverter(self.dims.count, order=order, isOneBased=isOneBased)
         rdd = self.rdd.map(lambda (k, v): (converter(k), v))
         return self._constructor(rdd, index=self._index).__finalize__(self)
 
-    def indtosub(self, order='F', onebased=True, dims=None):
+    def indToSub(self, order='F', isOneBased=True, dims=None):
         """
         Convert linear indexing to subscript indexing
 
@@ -485,7 +485,7 @@ class Series(Data):
         if dims is None:
             dims = self.dims.max
 
-        converter = _indToSubConverter(dims, order=order, isOneBased=onebased)
+        converter = _indToSubConverter(dims, order=order, isOneBased=isOneBased)
         rdd = self.rdd.map(lambda (k, v): (converter(k), v))
         return self._constructor(rdd, index=self._index).__finalize__(self)
 
@@ -541,7 +541,7 @@ class Series(Data):
         nout = size(result[0])
 
         if sorting is True:
-            keys = out.subtoind().rdd.map(lambda (k, _): int(k)).collect()
+            keys = out.subToInd().rdd.map(lambda (k, _): int(k)).collect()
             result = array([v for (k, v) in sorted(zip(keys, result), key=lambda (k, v): k)])
 
         # reshape into a dense array of shape (b, x, y, z)  or (b, x, y) or (b, x)
@@ -571,7 +571,7 @@ class Series(Data):
         thresh : float, optional, default = None
             A threshold on standard deviation to use when picking points
 
-        stat : str, optional, default = 'std
+        stat : str, optional, default = 'std'
             Statistic to use for thresholding
 
         Returns
@@ -582,11 +582,11 @@ class Series(Data):
         from numpy.linalg import norm
         from numpy.random import randint
 
-        stat_dict = {'std': std, 'norm': norm}
+        statDict = {'std': std, 'norm': norm}
         seed = randint(0, 2 ** 32 - 1)
 
         if thresh is not None:
-            func = stat_dict[stat]
+            func = statDict[stat]
             result = array(self.rdd.values().filter(lambda x: func(x) > thresh).takeSample(False, nsamples, seed=seed))
         else:
             result = array(self.rdd.values().takeSample(False, nsamples, seed=seed))
@@ -596,7 +596,7 @@ class Series(Data):
 
         return result
 
-    def query(self, inds, var='inds', order='F', onebased=True):
+    def query(self, inds, var='inds', order='F', isOneBased=True):
         """
         Extract records with indices matching those provided
 
@@ -635,19 +635,19 @@ class Series(Data):
         n = len(inds)
 
         from thunder.rdds.keys import _indToSubConverter
-        converter = _indToSubConverter(dims=self.dims.max, order=order, isOneBased=onebased)
+        converter = _indToSubConverter(dims=self.dims.max, order=order, isOneBased=isOneBased)
 
         keys = zeros((n, len(self.dims.count)))
         values = zeros((n, len(self.first()[1])))
 
-        data = self.subtoind(order=order, onebased=onebased)
+        data = self.subToInd(order=order, isOneBased=isOneBased)
 
-        for idx, indlist in enumerate(inds):
-            if len(indlist) > 0:
-                inds_set = set(asarray(indlist).flat)
-                inds_bc = self.rdd.context.broadcast(inds_set)
-                values[idx, :] = data.filterOnKeys(lambda k: k in inds_bc.value).values().mean()
-                keys[idx, :] = mean(map(lambda k: converter(k), indlist), axis=0)
+        for idx, indList in enumerate(inds):
+            if len(indList) > 0:
+                indsSet = set(asarray(indList).flat)
+                indsBC = self.rdd.context.broadcast(indsSet)
+                values[idx, :] = data.filterOnKeys(lambda k: k in indsBC.value).values().mean()
+                keys[idx, :] = mean(map(lambda k: converter(k), indList), axis=0)
 
         return keys, values
 

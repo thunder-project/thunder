@@ -82,7 +82,7 @@ def _indToSubConverter(dims, order='F', isOneBased=True):
     return converter
 
 
-def _subtoind_converter(dims, order='F', isOneBased=True):
+def _subToIndConverter(dims, order='F', isOneBased=True):
     """Converter for changing subscript indexing to linear indexing
 
     See also

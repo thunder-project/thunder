@@ -5,7 +5,7 @@ import tempfile
 from numpy import array, allclose
 from test_utils import PySparkTestCase
 from thunder.rdds.series import Series
-from thunder.rdds.keys import _subtoind_converter, _indToSubConverter
+from thunder.rdds.keys import _subToIndConverter, _indToSubConverter
 
 
 class SeriesKeysTestCase(PySparkTestCase):
@@ -41,14 +41,14 @@ class TestSubToInd(SeriesKeysTestCase):
         data_local = map(lambda x: (x, array([1.0])), subs)
 
         data = Series(self.sc.parallelize(data_local))
-        inds = array(data.subtoind().keys().collect())
+        inds = array(data.subToInd().keys().collect())
         assert(allclose(inds, array(range(1, 13))))
 
     def test_ind_to_sub_rdd(self):
         data_local = map(lambda x: (x, array([1.0])), range(1, 13))
 
         data = Series(self.sc.parallelize(data_local))
-        subs = data.indtosub(dims=[2, 3, 2]).keys().collect()
+        subs = data.indToSub(dims=[2, 3, 2]).keys().collect()
         assert(allclose(subs, array([(1, 1, 1), (2, 1, 1), (1, 2, 1), (2, 2, 1), (1, 3, 1), (2, 3, 1),
                                      (1, 1, 2), (2, 1, 2), (1, 2, 2), (2, 2, 2), (1, 3, 2), (2, 3, 2)])))
 
@@ -59,13 +59,13 @@ class TestSubToInd(SeriesKeysTestCase):
 
         data = Series(self.sc.parallelize(data_local))
         start = data.keys().collect()
-        stop = data.subtoind().indToSub().keys().collect()
+        stop = data.subToInd().indToSub().keys().collect()
         assert(allclose(array(start), array(stop)))
 
     def test_sub_to_ind_array(self):
         subs = [(1, 1, 1), (2, 1, 1), (1, 2, 1), (2, 2, 1), (1, 3, 1), (2, 3, 1),
                 (1, 1, 2), (2, 1, 2), (1, 2, 2), (2, 2, 2), (1, 3, 2), (2, 3, 2)]
-        converter = _subtoind_converter(dims=[2, 3, 2])
+        converter = _subToIndConverter(dims=[2, 3, 2])
         inds = map(lambda x: converter(x), subs)
         assert(allclose(inds, array(range(1, 13))))
 
@@ -116,7 +116,7 @@ def test_subtoind_parameterized():
 
     def check_subtoind_result(si_param):
         data = si_param.subscripts
-        converter = _subtoind_converter(dims=si_param.dims, order=si_param.order, isOneBased=si_param.onebased)
+        converter = _subToIndConverter(dims=si_param.dims, order=si_param.order, isOneBased=si_param.onebased)
         results = map(lambda x: converter(x), data)
         # check results individually to highlight specific failures
         for res, expected, subscript in zip(results, si_param.indices, si_param.subscripts):
