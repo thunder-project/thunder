@@ -599,10 +599,10 @@ class TestBlockMemoryAsSequence(unittest.TestCase):
         undertest = _BlockMemoryAsReversedSequence(dims)
 
         assert_equals(3, len(undertest))
-        assert_equals((2, 2), undertest.indtosub(0))
-        assert_equals((1, 2), undertest.indtosub(1))
-        assert_equals((1, 1), undertest.indtosub(2))
-        assert_raises(IndexError, undertest.indtosub, 3)
+        assert_equals((2, 2), undertest.indToSub(0))
+        assert_equals((1, 2), undertest.indToSub(1))
+        assert_equals((1, 1), undertest.indToSub(2))
+        assert_raises(IndexError, undertest.indToSub, 3)
 
 
 if __name__ == "__main__":

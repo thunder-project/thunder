@@ -1,4 +1,5 @@
-from numpy import ndarray, arange, amax, amin, size, squeeze, dtype
+from numpy import ndarray, arange, amax, amin, size, squeeze
+from numpy import dtype as dtypeFunc
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
@@ -84,9 +85,9 @@ class Images(Data):
         """
         dims = self.dims
         ndim = len(self.dims)
-        blocksperdim = [1] * ndim
-        blocksperdim[groupingDim] = dims[groupingDim]
-        return self._toBlocksBySplits(blocksperdim)
+        blocksPerDim = [1] * ndim
+        blocksPerDim[groupingDim] = dims[groupingDim]
+        return self._toBlocksBySplits(blocksPerDim)
 
     def _toBlocksBySplits(self, splitsPerDim):
         """Splits Images into ImageBlocks by subdividing the image into logically contiguous blocks.
@@ -110,7 +111,7 @@ class Images(Data):
 
         dims = self.dims.count[:]  # currently in Dimensions-convention
         ndim = len(dims)
-        totnumimages = self.nimages
+        totNumImages = self.nimages
 
         if not len(splitsPerDim) == ndim:
             raise ValueError("splitsPerDim length (%d) must match image dimensionality (%d); got splitsPerDim %s" %
@@ -122,38 +123,38 @@ class Images(Data):
         # slices will be sequence of sequences of slices
         # slices[i] will hold slices for ith dimension
         slices = []
-        for nsplits, dimsize in zip(splitsPerDim, dims):
-            blocksize = dimsize / nsplits  # integer division
-            blockrem = dimsize % nsplits
+        for nsplits, dimSize in zip(splitsPerDim, dims):
+            blockSize = dimSize / nsplits  # integer division
+            blockRem = dimSize % nsplits
             st = 0
-            dimslices = []
-            for blockidx in xrange(nsplits):
-                en = st + blocksize
-                if blockrem:
+            dimSlices = []
+            for blockIdx in xrange(nsplits):
+                en = st + blockSize
+                if blockRem:
                     en += 1
-                    blockrem -= 1
-                dimslices.append(slice(st, min(en, dimsize), 1))
+                    blockRem -= 1
+                dimSlices.append(slice(st, min(en, dimSize), 1))
                 st = en
-            slices.append(dimslices)
+            slices.append(dimSlices)
 
         # reverse slices to be in numpy shape ordering convention:
         # slices = slices[::-1]
 
-        def _groupBySlices(imagearyval, slices_, tp_, numtp_):
-            ret_vals = []
-            sliceproduct = itertools.product(*slices_)
-            for blockslices in sliceproduct:
-                blockval = ImageBlockValue.fromArrayBySlices(imagearyval, blockslices, docopy=False)
-                blockval = blockval.addDimension(newdimidx=tp_, newdimsize=numtp_)
+        def _groupBySlices(imageAryVal, slices_, tp_, numtp_):
+            retCals = []
+            sliceProduct = itertools.product(*slices_)
+            for blockSlices in sliceProduct:
+                blockVal = ImageBlockValue.fromArrayBySlices(imageAryVal, blockSlices, docopy=False)
+                blockVal = blockVal.addDimension(newdimidx=tp_, newdimsize=numtp_)
                 # resulting key will be (x, y, z) (for 3d data), where x, y, z are starting
                 # position of block within image volume
-                newkey = [sl.start for sl in blockslices]
-                ret_vals.append((tuple(newkey), blockval))
-            return ret_vals
+                newKey = [sl.start for sl in blockSlices]
+                retCals.append((tuple(newKey), blockVal))
+            return retCals
 
-        def _groupBySlicesAdapter(keyval):
-            tpkey, imgaryval = keyval
-            return _groupBySlices(imgaryval, slices, tpkey, totnumimages)
+        def _groupBySlicesAdapter(kv):
+            tpKey, imgAryVal = kv
+            return _groupBySlices(imgAryVal, slices, tpKey, totNumImages)
 
         return ImageBlocks(self.rdd.flatMap(_groupBySlicesAdapter, preservesPartitioning=False), dtype=self.dtype)
 
@@ -172,29 +173,29 @@ class Images(Data):
             in case of ties.
             """
             maxd = reduce(max, dims)
-            maxidxs = [i for i in xrange(len(dims)) if dims[i] == maxd]
-            return maxidxs[-1]
+            maxIdxs = [i for i in xrange(len(dims)) if dims[i] == maxd]
+            return maxIdxs[-1]
 
-        imgdims = self.dims
-        nimgdims = len(imgdims)
-        if not groupingDim is None:
-            if groupingDim < -1*nimgdims or groupingDim >= nimgdims:
+        imgDims = self.dims
+        nimgDims = len(imgDims)
+        if groupingDim is not None:
+            if groupingDim < -1*nimgDims or groupingDim >= nimgDims:
                 raise ValueError("Grouping dimension must be between %d and %d for a %d-dimensional image; got %d" %
-                                 (-1*nimgdims, nimgdims-1, nimgdims, groupingDim))
-            gd = groupingDim if groupingDim >= 0 else nimgdims + groupingDim
+                                 (-1*nimgDims, nimgDims-1, nimgDims, groupingDim))
+            gd = groupingDim if groupingDim >= 0 else nimgDims + groupingDim
         else:
-            gd = calcGroupingDim(imgdims)
+            gd = calcGroupingDim(imgDims)
         return gd
 
-    def __toSeriesByPlanes(self, groupingdim):
+    def __toSeriesByPlanes(self, groupingDim):
         # normalize grouping dimension, or get a reasonable grouping dimension if unspecified
         # this may trigger a first() call:
-        gd = self.__validateOrCalcGroupingDim(groupingDim=groupingdim)
+        gd = self.__validateOrCalcGroupingDim(groupingDim=groupingDim)
 
         # returns keys of (z, y, x); with z as grouping dimension, key values will be (0, 0, 0), (1, 0, 0), ...
         # (z-1, 0, 0)
-        blocksdata = self._toBlocksByImagePlanes(groupingDim=gd)
-        return blocksdata.toSeries(seriesDim=0)
+        blocksData = self._toBlocksByImagePlanes(groupingDim=gd)
+        return blocksData.toSeries(seriesDim=0)
 
     def __calcBlocksPerDim(self, blockSize):
         """Returns a partitioning strategy, represented as splits per dimension, that yields blocks
@@ -212,22 +213,22 @@ class Images(Data):
             corresponding dimension in order to yield blocks close to the requested size.
         """
         import bisect
-        minseriessize = self.nimages * dtype(self.dtype).itemsize
+        minSeriesSize = self.nimages * dtypeFunc(self.dtype).itemsize
         dims = self.dims
 
         memseq = _BlockMemoryAsReversedSequence(dims)
-        tmpidx = bisect.bisect_left(memseq, blockSize / float(minseriessize))
+        tmpidx = bisect.bisect_left(memseq, blockSize / float(minSeriesSize))
         if tmpidx == len(memseq):
             # handle case where requested block is bigger than the biggest image
             # we can produce; just give back the biggest block size
             tmpidx -= 1
-        return memseq.indtosub(tmpidx)
+        return memseq.indToSub(tmpidx)
 
     def _scatterToBlocks(self, blockSize="150M", blocksPerDim=None, groupingDim=None):
-        if not groupingDim is None:
+        if groupingDim is not None:
             # get series from blocks defined by pivoting:
             gd = self.__validateOrCalcGroupingDim(groupingDim=groupingDim)
-            blocksdata = self._toBlocksByImagePlanes(groupingDim=gd)
+            blocksData = self._toBlocksByImagePlanes(groupingDim=gd)
 
         else:
             # get series from blocks defined by splits
@@ -235,9 +236,9 @@ class Images(Data):
                 # get splits from requested block size
                 blockSize = parseMemoryString(blockSize)
                 blocksPerDim = self.__calcBlocksPerDim(blockSize)
-            blocksdata = self._toBlocksBySplits(blocksPerDim)
+            blocksData = self._toBlocksBySplits(blocksPerDim)
 
-        return blocksdata
+        return blocksData
 
     def toSeries(self, blockSize="150M", splitsPerDim=None, groupingDim=None):
         """Converts this Images object to a Series object.
@@ -277,11 +278,11 @@ class Images(Data):
         -------
         new Series object
         """
-        blocksdata = self._scatterToBlocks(blockSize=blockSize, blocksPerDim=splitsPerDim, groupingDim=groupingDim)
+        blocksData = self._scatterToBlocks(blockSize=blockSize, blocksPerDim=splitsPerDim, groupingDim=groupingDim)
 
-        return blocksdata.toSeries(seriesDim=0)
+        return blocksData.toSeries(seriesDim=0)
 
-    def saveAsBinarySeries(self, outputdirname, blockSize="150M", splitsPerDim=None, groupingDim=None,
+    def saveAsBinarySeries(self, outputDirPath, blockSize="150M", splitsPerDim=None, groupingDim=None,
                            overwrite=False):
         """Writes Image into files on a local filesystem, suitable for loading by SeriesLoader.fromBinary()
 
@@ -291,8 +292,8 @@ class Images(Data):
 
         Parameters
         ----------
-        outputdirname : string path or URI to directory to be created
-            Output files will be written underneath outputdirname. This directory must not yet exist
+        outputDirPath : string path or URI to directory to be created
+            Output files will be written underneath outputDirPath. This directory must not yet exist
             (unless overwrite is True), and must be no more than one level beneath an existing directory.
             It will be created as a result of this call.
 
@@ -316,21 +317,21 @@ class Images(Data):
         from thunder.rdds.fileio.writers import getParallelWriterForPath
         from thunder.rdds.fileio.seriesloader import writeSeriesConfig
 
-        writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
+        writer = getParallelWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite)
 
-        blocksdata = self._scatterToBlocks(blockSize=blockSize, blocksPerDim=splitsPerDim, groupingDim=groupingDim)
+        blocksData = self._scatterToBlocks(blockSize=blockSize, blocksPerDim=splitsPerDim, groupingDim=groupingDim)
 
-        binseriesrdd = blocksdata.toBinarySeries(seriesDim=0)
+        binarySeriesRdd = blocksData.toBinarySeries(seriesDim=0)
 
         def appendBin(kv):
-            binlabel, binvals = kv
-            return binlabel+'.bin', binvals
+            binLabel, binVals = kv
+            return binLabel+'.bin', binVals
 
-        binseriesrdd.map(appendBin).foreach(writer.writerFcn)
-        writeSeriesConfig(outputdirname, len(self.dims), self.nimages, dims=self.dims.count,
+        binarySeriesRdd.map(appendBin).foreach(writer.writerFcn)
+        writeSeriesConfig(outputDirPath, len(self.dims), self.nimages, dims=self.dims.count,
                           keyType='int16', valueType=self.dtype, overwrite=overwrite)
 
-    def exportAsPngs(self, outputdirname, fileprefix="export", overwrite=False,
+    def exportAsPngs(self, outputDirPath, filePrefix="export", overwrite=False,
                      collectToDriver=True):
         """Write out basic png files for two-dimensional image data.
 
@@ -340,11 +341,11 @@ class Images(Data):
 
         Parameters
         ----------
-        outputdirname : string
+        outputDirPath : string
             Path to output directory to be created. Exception will be thrown if this directory already
             exists, unless overwrite is True. Directory must be one level below an existing directory.
 
-        fileprefix : string
+        filePrefix : string
             String to prepend to all filenames. Files will be named <fileprefix>00000.png, <fileprefix>00001.png, etc
 
         overwrite : bool
@@ -366,19 +367,19 @@ class Images(Data):
 
         def toFilenameAndPngBuf(kv):
             key, img = kv
-            fname = fileprefix+"%05d.png" % int(key)
+            fname = filePrefix+"%05d.png" % int(key)
             bytebuf = BytesIO()
             imsave(bytebuf, img, format="png")
             return fname, bytebuf.getvalue()
 
-        bufrdd = self.rdd.map(toFilenameAndPngBuf)
+        bufRdd = self.rdd.map(toFilenameAndPngBuf)
 
         if collectToDriver:
-            writer = getCollectedFileWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
-            writer.writeCollectedFiles(bufrdd.collect())
+            writer = getCollectedFileWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite)
+            writer.writeCollectedFiles(bufRdd.collect())
         else:
-            writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
-            bufrdd.foreach(writer.writerFcn)
+            writer = getParallelWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite)
+            bufRdd.foreach(writer.writerFcn)
 
     def maxProjection(self, axis=2):
         """
@@ -395,9 +396,9 @@ class Images(Data):
 
         proj = self.rdd.mapValues(lambda x: amax(x, axis))
         # update dimensions to remove axis of projection
-        newdims = list(self.dims)
-        del newdims[axis]
-        return self._constructor(proj, dims=newdims).__finalize__(self)
+        newDims = list(self.dims)
+        del newDims[axis]
+        return self._constructor(proj, dims=newDims).__finalize__(self)
 
     def maxminProjection(self, axis=2):
         """
@@ -412,16 +413,16 @@ class Images(Data):
         """
         proj = self.rdd.mapValues(lambda x: amax(x, axis) + amin(x, axis))
         # update dimensions to remove axis of projection
-        newdims = list(self.dims)
-        del newdims[axis]
-        return self._constructor(proj, dims=newdims).__finalize__(self)
+        newDims = list(self.dims)
+        del newDims[axis]
+        return self._constructor(proj, dims=newDims).__finalize__(self)
 
-    def subsample(self, samplefactor):
+    def subsample(self, sampleFactor):
         """Downsample an image volume by an integer factor
 
         Parameters
         ----------
-        samplefactor : positive int or tuple of positive ints
+        sampleFactor : positive int or tuple of positive ints
             Stride to use in subsampling. If a single int is passed, each dimension of the image
             will be downsampled by this same factor. If a tuple is passed, it must have the same
             dimensionality of the image. The strides given in a passed tuple will be applied to
@@ -429,24 +430,24 @@ class Images(Data):
         """
         dims = self.dims
         ndims = len(dims)
-        if not hasattr(samplefactor, "__len__"):
-            samplefactor = [samplefactor] * ndims
-        samplefactor = [int(sf) for sf in samplefactor]
+        if not hasattr(sampleFactor, "__len__"):
+            sampleFactor = [sampleFactor] * ndims
+        sampleFactor = [int(sf) for sf in sampleFactor]
 
-        if any((sf <= 0 for sf in samplefactor)):
-            raise ValueError("All sampling factors must be positive; got " + str(samplefactor))
+        if any((sf <= 0 for sf in sampleFactor)):
+            raise ValueError("All sampling factors must be positive; got " + str(sampleFactor))
 
-        def div_roundup(a, b):
+        def divRoundup(a, b):
             # thanks stack overflow & Eli Collins:
             # http://stackoverflow.com/questions/7181757/how-to-implement-division-with-round-towards-infinity-in-python
             # this only works for positive ints, but we've checked for that above
             return (a + b - 1) // b
 
-        sampleslices = [slice(0, dims[i], samplefactor[i]) for i in xrange(ndims)]
-        newdims = [div_roundup(dims[i] ,samplefactor[i]) for i in xrange(ndims)]
+        sampleSlices = [slice(0, dims[i], sampleFactor[i]) for i in xrange(ndims)]
+        newDims = [divRoundup(dims[i], sampleFactor[i]) for i in xrange(ndims)]
 
         return self._constructor(
-            self.rdd.mapValues(lambda v: v[sampleslices]), dims=newdims).__finalize__(self)
+            self.rdd.mapValues(lambda v: v[sampleSlices]), dims=newDims).__finalize__(self)
             
     def gaussianFilter(self, sigma=2):
         """Spatially smooth images using a gaussian filter.
@@ -535,27 +536,27 @@ class Images(Data):
             raise Exception("Cannot subselect planes, images must be 3D")
 
         if inclusive is True:
-            zrange = arange(bottom, top+1)
+            zRange = arange(bottom, top+1)
         else:
-            zrange = arange(bottom+1, top)
+            zRange = arange(bottom+1, top)
 
-        if len(zrange) == 0:
+        if len(zRange) == 0:
             raise Exception("No planes selected with range (%g, %g) and inclusive=%s, "
                             "try a different range" % (bottom, top, inclusive))
 
-        if zrange.min() < self.dims.min[2]:
-            raise Exception("Cannot include plane %g, first plane is %g" % (zrange.min(), self.dims.min[2]))
+        if zRange.min() < self.dims.min[2]:
+            raise Exception("Cannot include plane %g, first plane is %g" % (zRange.min(), self.dims.min[2]))
 
-        if zrange.max() > self.dims.max[2]:
-            raise Exception("Cannout include plane %g, last plane is %g" % (zrange.max(), self.dims.max[2]))
+        if zRange.max() > self.dims.max[2]:
+            raise Exception("Cannout include plane %g, last plane is %g" % (zRange.max(), self.dims.max[2]))
 
-        newdims = [self.dims[0], self.dims[1], size(zrange)]
+        newDims = [self.dims[0], self.dims[1], size(zRange)]
 
-        if size(zrange) < 2:
-            newdims = newdims[0:2]
+        if size(zRange) < 2:
+            newDims = newDims[0:2]
 
-        return self._constructor(self.rdd.mapValues(lambda v: squeeze(v[:, :, zrange])),
-                                 dims=newdims).__finalize__(self)
+        return self._constructor(self.rdd.mapValues(lambda v: squeeze(v[:, :, zRange])),
+                                 dims=newDims).__finalize__(self)
 
     def subtract(self, val):
         """
@@ -611,7 +612,7 @@ class _BlockMemoryAsSequence(object):
     def __init__(self, dims):
         self._dims = dims
 
-    def indtosub(self, idx):
+    def indToSub(self, idx):
         """Converts a linear index to a corresponding partition strategy, represented as
         number of splits along each dimension.
         """
@@ -639,7 +640,7 @@ class _BlockMemoryAsSequence(object):
         return sum([d-1 for d in self._dims]) + 1
 
     def __getitem__(self, item):
-        sub = self.indtosub(item)
+        sub = self.indToSub(item)
         return self.blockMemoryForSplits(sub)
 
 
@@ -656,5 +657,5 @@ class _BlockMemoryAsReversedSequence(_BlockMemoryAsSequence):
             raise IndexError("list index out of range")
         return l - (idx + 1)
 
-    def indtosub(self, idx):
-        return super(_BlockMemoryAsReversedSequence, self).indtosub(self._reverseIdx(idx))
+    def indToSub(self, idx):
+        return super(_BlockMemoryAsReversedSequence, self).indToSub(self._reverseIdx(idx))

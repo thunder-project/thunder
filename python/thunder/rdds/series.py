@@ -394,7 +394,7 @@ class Series(Data):
           q: a floating point number between 0 and 100 inclusive.
         """
         rdd = self.rdd.mapValues(lambda x: percentile(x, q))
-        return self._constructor(rdd, index='percentile').__finalize__(self, nopropagate=('_dtype',))
+        return self._constructor(rdd, index='percentile').__finalize__(self, noPropagate=('_dtype',))
 
     def seriesStdev(self):
         """ Compute the value std of each record in a Series """
@@ -419,7 +419,7 @@ class Series(Data):
         }
         func = STATS[stat]
         rdd = self.rdd.mapValues(lambda x: func(x))
-        return self._constructor(rdd, index=stat).__finalize__(self, nopropagate=('_dtype',))
+        return self._constructor(rdd, index=stat).__finalize__(self, noPropagate=('_dtype',))
 
     def seriesStats(self):
         """
@@ -427,7 +427,7 @@ class Series(Data):
         """
         rdd = self.rdd.mapValues(lambda x: array([x.size, mean(x), std(x), max(x), min(x)]))
         return self._constructor(rdd, index=['count', 'mean', 'std', 'max', 'min'])\
-            .__finalize__(self, nopropagate=('_dtype',))
+            .__finalize__(self, noPropagate=('_dtype',))
 
     def maxProject(self, axis=0):
         """

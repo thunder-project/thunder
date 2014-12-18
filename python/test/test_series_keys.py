@@ -59,7 +59,7 @@ class TestSubToInd(SeriesKeysTestCase):
 
         data = Series(self.sc.parallelize(data_local))
         start = data.keys().collect()
-        stop = data.subtoind().indtosub().keys().collect()
+        stop = data.subtoind().indToSub().keys().collect()
         assert(allclose(array(start), array(stop)))
 
     def test_sub_to_ind_array(self):
