@@ -22,7 +22,7 @@ if __name__ == "__main__":
     tsc = ThunderContext.start(appName="ica")
 
     data = tsc.loadSeries(args.datafile).cache()
-    model = ICA(k=args.k, c=args.c, svdmethod=args.svdmethod, maxiter=args.maxiter, tol=args.tol, seed=args.seed)
+    model = ICA(k=args.k, c=args.c, svdMethod=args.svdmethod, maxIter=args.maxiter, tol=args.tol, seed=args.seed)
     result = model.fit(data)
 
     outputdir = args.outputdir + "-ica"

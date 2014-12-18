@@ -90,7 +90,7 @@ class TestICA(FactorizationTestCase):
         random.seed(42)
         data, s, a = DataSets.make(self.sc, "ica", nrows=100, returnparams=True)
 
-        ica = ICA(c=2, svdmethod="direct", seed=1)
+        ica = ICA(c=2, svdMethod="direct", seed=1)
         ica.fit(data)
 
         s_ = array(ica.sigs.rows().collect())
@@ -141,7 +141,7 @@ class TestNMF(FactorizationTestCase):
 
         # calculate NMF using the Thunder implementation
         # (maxiter=9 corresponds with Matlab algorithm)
-        nmf_thunder = NMF(k=2, method="als", h0=h0, maxiter=9)
+        nmf_thunder = NMF(k=2, method="als", h0=h0, maxIter=9)
         nmf_thunder.fit(mat)
         h_thunder = nmf_thunder.h
         w_thunder = array(nmf_thunder.w.values().collect())
@@ -162,10 +162,10 @@ class TestNMF(FactorizationTestCase):
         data = self.sc.parallelize(zip([array([i]) for i in range(data_local.shape[0])], data_local))
         mat = RowMatrix(data)
 
-        nmf_thunder = NMF(k=2, recon_hist='final')
+        nmf_thunder = NMF(k=2, reconHist='final')
         nmf_thunder.fit(mat)
 
         # check to see if Thunder's solution achieves close-to-optimal reconstruction error
         # scikit-learn's solution achieves 2.993952
         # matlab's non-deterministic implementation usually achieves < 2.9950 (when it converges)
-        assert(nmf_thunder.recon_err < 2.9950)
+        assert(nmf_thunder.reconErr < 2.9950)

@@ -16,7 +16,7 @@ class PCA(object):
     k : int
         Number of principal components to estimate
 
-    svdmethod : str, optional, default = "direct"
+    svdMethod : str, optional, default = "direct"
         Which method to use for performing the SVD
 
     Attributes
@@ -35,9 +35,12 @@ class PCA(object):
     SVD : singular value decomposition
     """
 
-    def __init__(self, k=3, svdmethod='direct'):
+    def __init__(self, k=3, svdMethod='direct'):
         self.k = k
-        self.svdmethod = svdmethod
+        self.svdMethod = svdMethod
+        self.scores = None
+        self.latent = None
+        self.comps = None
 
     def fit(self, data):
         """Estimate principal components
@@ -58,7 +61,7 @@ class PCA(object):
 
         mat = data.center(0)
 
-        svd = SVD(k=self.k, method=self.svdmethod)
+        svd = SVD(k=self.k, method=self.svdMethod)
         svd.calc(mat)
 
         self.scores = svd.u

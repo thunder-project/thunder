@@ -22,14 +22,14 @@ if __name__ == "__main__":
     tsc = ThunderContext.start(appName="nmf")
 
     data = tsc.loadSeries(args.datafile).cache()
-    nmf = NMF(k=args.k, method=args.nmfmethod, maxiter=args.maxiter, tol=args.tol, w_hist=args.w_hist,
-              recon_hist=args.recon_hist)
+    nmf = NMF(k=args.k, method=args.nmfmethod, maxIter=args.maxiter, tol=args.tol, wHist=args.w_hist,
+              reconHist=args.recon_hist)
     nmf.fit(data)
 
     outputdir = args.outputdir + "-nmf"
     export(nmf.w, outputdir, "w", "matlab")
     export(nmf.h, outputdir, "h", "matlab")
     if args.w_hist:
-        export(nmf.w_convergence, outputdir, "w_convergence", "matlab")
+        export(nmf.wConvergence, outputdir, "w_convergence", "matlab")
     if args.recon_hist:
-        export(nmf.recon_err, outputdir, "rec_err", "matlab")
+        export(nmf.reconErr, outputdir, "rec_err", "matlab")
