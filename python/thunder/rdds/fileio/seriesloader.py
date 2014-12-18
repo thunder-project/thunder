@@ -338,15 +338,15 @@ class SeriesLoader(object):
         tiffp = reader.open(filepath)
         tiffparser = multitif.TiffParser(tiffp, debug=False)
         tiffheaders = multitif.TiffData()
-        tiffparser.parseFileHeader(destination_tiff=tiffheaders)
-        firstifd = tiffparser.parseNextImageFileDirectory(destination_tiff=tiffheaders)
+        tiffparser.parseFileHeader(destinationTiff=tiffheaders)
+        firstifd = tiffparser.parseNextImageFileDirectory(destinationTiff=tiffheaders)
         if not firstifd.isLuminanceImage():
             raise ValueError(("File %s does not appear to be a luminance " % filepath) +
                              "(greyscale or bilevel) TIF image, " +
                              "which are the only types currently supported")
 
         # keep reading pages until we reach the end of the file, in order to get number of planes:
-        while tiffparser.parseNextImageFileDirectory(destination_tiff=tiffheaders):
+        while tiffparser.parseNextImageFileDirectory(destinationTiff=tiffheaders):
             pass
 
         # get dimensions
@@ -433,7 +433,7 @@ class SeriesLoader(object):
                         # the advantage of this is that it cuts way down on the many small reads
                         # that PIL/pillow will make otherwise, which would be a problem for s3
                         tiffparser_ = multitif.TiffParser(fp, debug=False)
-                        tiffilebuffer = multitif.packSinglePage(tiffparser_, page_idx=planeidx)
+                        tiffilebuffer = multitif.packSinglePage(tiffparser_, pageIdx=planeidx)
                         bytebuf = io.BytesIO(tiffilebuffer)
                         try:
                             pilimg = Image.open(bytebuf)

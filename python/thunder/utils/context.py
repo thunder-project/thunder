@@ -151,11 +151,11 @@ class ThunderContext():
         loader = ImagesLoader(self._sc)
 
         if inputformat.lower() == 'stack':
-            data = loader.fromStack(datapath, dims, dtype=dtype, startidx=startidx, stopidx=stopidx)
+            data = loader.fromStack(datapath, dims, dtype=dtype, startIdx=startidx, stopIdx=stopidx)
         elif inputformat.lower() == 'tif':
-            data = loader.fromTif(datapath, startidx=startidx, stopidx=stopidx)
+            data = loader.fromTif(datapath, startIdx=startidx, stopIdx=stopidx)
         elif inputformat.lower() == 'tif-stack':
-            data = loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)
+            data = loader.fromMultipageTif(datapath, startIdx=startidx, stopIdx=stopidx)
         else:
             data = loader.fromPng(datapath)
 
@@ -241,11 +241,11 @@ class ThunderContext():
             from thunder.rdds.fileio.imagesloader import ImagesLoader
             loader = ImagesLoader(self._sc)
             if inputformat.lower() == 'stack':
-                return loader.fromStack(datapath, dims, dtype=dtype, startidx=startidx, stopidx=stopidx)\
+                return loader.fromStack(datapath, dims, dtype=dtype, startIdx=startidx, stopIdx=stopidx)\
                     .toSeries(blockSize=blockSize)
             else:
                 # tif stack
-                return loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)\
+                return loader.fromMultipageTif(datapath, startIdx=startidx, stopIdx=stopidx)\
                     .toSeries(blockSize=blockSize)
 
         else:
@@ -350,10 +350,10 @@ class ThunderContext():
             from thunder.rdds.fileio.imagesloader import ImagesLoader
             loader = ImagesLoader(self._sc)
             if inputformat.lower() == 'stack':
-                loader.fromStack(datapath, dims, dtype=dtype, startidx=startidx, stopidx=stopidx)\
+                loader.fromStack(datapath, dims, dtype=dtype, startIdx=startidx, stopIdx=stopidx)\
                     .saveAsBinarySeries(outputdirpath, blockSize=blocksize, overwrite=overwrite)
             else:
-                loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)\
+                loader.fromMultipageTif(datapath, startIdx=startidx, stopIdx=stopidx)\
                     .saveAsBinarySeries(outputdirpath, blockSize=blocksize, overwrite=overwrite)
         else:
             from thunder.rdds.fileio.seriesloader import SeriesLoader
