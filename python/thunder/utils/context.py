@@ -83,8 +83,8 @@ class ThunderContext():
             data = loader.fromText(datapath, nkeys=nkeys)
         else:
             # must be either 'text' or 'binary'
-            data = loader.fromBinary(datapath, conffilename=conffile, nkeys=nkeys, nvalues=nvalues,
-                                     keytype=keytype, valuetype=valuetype)
+            data = loader.fromBinary(datapath, confFilename=conffile, nkeys=nkeys, nvalues=nvalues,
+                                     keyType=keytype, valueType=valuetype)
 
         return data
 
@@ -252,12 +252,12 @@ class ThunderContext():
             from thunder.rdds.fileio.seriesloader import SeriesLoader
             loader = SeriesLoader(self._sc)
             if inputformat.lower() == 'stack':
-                return loader.fromStack(datapath, dims, datatype=dtype, blockSize=blockSize,
-                                        startidx=startidx, stopidx=stopidx)
+                return loader.fromStack(datapath, dims, dtype=dtype, blockSize=blockSize,
+                                        startIdx=startidx, stopIdx=stopidx)
             else:
                 # tif stack
                 return loader.fromMultipageTif(datapath, blockSize=blockSize,
-                                               startidx=startidx, stopidx=stopidx)
+                                               startIdx=startidx, stopIdx=stopidx)
 
     def convertImagesToSeries(self, datapath, outputdirpath, dims=None, inputformat='stack',
                               dtype='int16', blocksize="150M", startidx=None, stopidx=None,
@@ -359,11 +359,11 @@ class ThunderContext():
             from thunder.rdds.fileio.seriesloader import SeriesLoader
             loader = SeriesLoader(self._sc)
             if inputformat.lower() == 'stack':
-                loader.saveFromStack(datapath, outputdirpath, dims, datatype=dtype,
-                                     blockSize=blocksize, overwrite=overwrite, startidx=startidx, stopidx=stopidx)
+                loader.saveFromStack(datapath, outputdirpath, dims, dtype=dtype,
+                                     blockSize=blocksize, overwrite=overwrite, startIdx=startidx, stopIdx=stopidx)
             else:
                 loader.saveFromMultipageTif(datapath, outputdirpath, blockSize=blocksize,
-                                            startidx=startidx, stopidx=stopidx, overwrite=overwrite)
+                                            startIdx=startidx, stopIdx=stopidx, overwrite=overwrite)
 
     def makeExample(self, dataset, **opts):
         """

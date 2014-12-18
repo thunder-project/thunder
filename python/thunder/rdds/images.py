@@ -328,7 +328,7 @@ class Images(Data):
 
         binseriesrdd.map(appendBin).foreach(writer.writerFcn)
         writeSeriesConfig(outputdirname, len(self.dims), self.nimages, dims=self.dims.count,
-                          keytype='int16', valuetype=self.dtype, overwrite=overwrite)
+                          keyType='int16', valueType=self.dtype, overwrite=overwrite)
 
     def exportAsPngs(self, outputdirname, fileprefix="export", overwrite=False,
                      collectToDriver=True):

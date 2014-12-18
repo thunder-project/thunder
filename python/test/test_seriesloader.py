@@ -277,8 +277,8 @@ class TestSeriesBinaryLoader(PySparkTestCaseWithOutputDir):
 
             loader = SeriesLoader(self.sc)
             if not useConfJson:
-                series = loader.fromBinary(outsubdir, nkeys=item.nkeys, nvalues=item.nvals, keytype=str(item.keyDType),
-                                           valuetype=str(item.valDType))
+                series = loader.fromBinary(outsubdir, nkeys=item.nkeys, nvalues=item.nvals, keyType=str(item.keyDType),
+                                           valueType=str(item.valDType))
             else:
                 # write configuration file
                 conf = {'input': outsubdir,
@@ -336,8 +336,8 @@ class TestSeriesBinaryWriteFromStack(PySparkTestCaseWithOutputDir):
 
         underTest = SeriesLoader(self.sc)
 
-        underTest.saveFromStack(insubdir, outsubdir, dims, blockSize=blockSize, datatype=str(arrays[0].dtype))
-        series = underTest.fromStack(insubdir, dims, datatype=str(arrays[0].dtype))
+        underTest.saveFromStack(insubdir, outsubdir, dims, blockSize=blockSize, dtype=str(arrays[0].dtype))
+        series = underTest.fromStack(insubdir, dims, dtype=str(arrays[0].dtype))
 
         roundtripped_series = underTest.fromBinary(outsubdir)
         roundtripped = roundtripped_series.collect()
