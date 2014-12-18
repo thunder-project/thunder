@@ -150,7 +150,7 @@ def install_thunder(master, opts, spark_version_string):
     # "java.lang.IllegalArgumentException: port out of range" [SPARK-3772]
     # this logic doesn't work if we get a hash here; assume in this case it's a recent version of Spark
     if (not '.' in spark_version_string) or LooseVersion(spark_version_string) >= LooseVersion("1.2.0"):
-        ssh(master, opts, "echo 'export PYSPARK_PYTHON=/usr/bin/ipython' >> /root/.bash_profile")
+        ssh(master, opts, "echo 'export PYSPARK_PYTHON=/usr/bin/python' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export PATH=/root/thunder/python/bin:$PATH' >> /root/.bash_profile")
     # customize spark configuration parameters
     ssh(master, opts, "echo 'spark.akka.frameSize=10000' >> /root/spark/conf/spark-defaults.conf")
