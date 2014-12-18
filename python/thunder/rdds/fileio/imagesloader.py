@@ -79,8 +79,8 @@ class ImagesLoader(object):
             return frombuffer(buf, dtype=dtype, count=int(prod(dims))).reshape(dims, order='F')
 
         reader = getParallelReaderForPath(dataPath)(self.sc)
-        readerRdd = reader.read(dataPath, ext=ext, startidx=startIdx, stopidx=stopIdx)
-        return Images(readerRdd.mapValues(toArray), nimages=reader.lastnrecs, dims=dims,
+        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx)
+        return Images(readerRdd.mapValues(toArray), nimages=reader.lastNRecs, dims=dims,
                       dtype=dtype)
 
     def fromTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None):
@@ -108,8 +108,8 @@ class ImagesLoader(object):
             return imread(fbuf, format='tif')
 
         reader = getParallelReaderForPath(dataPath)(self.sc)
-        readerRdd = reader.read(dataPath, ext=ext, startidx=startIdx, stopidx=stopIdx)
-        return Images(readerRdd.mapValues(readTifFromBuf), nimages=reader.lastnrecs)
+        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx)
+        return Images(readerRdd.mapValues(readTifFromBuf), nimages=reader.lastNRecs)
 
     def fromMultipageTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None):
         """Sets up a new Images object with data to be read from one or more multi-page tif files.
@@ -150,8 +150,8 @@ class ImagesLoader(object):
             return dstack(imgArys)
 
         reader = getParallelReaderForPath(dataPath)(self.sc)
-        readerRdd = reader.read(dataPath, ext=ext, startidx=startIdx, stopidx=stopIdx)
-        return Images(readerRdd.mapValues(multitifReader), nimages=reader.lastnrecs)
+        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx)
+        return Images(readerRdd.mapValues(multitifReader), nimages=reader.lastNRecs)
 
     def fromPng(self, dataPath, ext='png', startIdx=None, stopIdx=None):
         """Load an Images object stored in a directory of png files
@@ -178,5 +178,5 @@ class ImagesLoader(object):
             return imread(fbuf, format='png')
 
         reader = getParallelReaderForPath(dataPath)(self.sc)
-        readerRdd = reader.read(dataPath, ext=ext, startidx=startIdx, stopidx=stopIdx)
-        return Images(readerRdd.mapValues(readPngFromBuf), nimages=reader.lastnrecs)
+        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx)
+        return Images(readerRdd.mapValues(readPngFromBuf), nimages=reader.lastNRecs)
