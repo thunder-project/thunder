@@ -6,7 +6,7 @@ import os
 from math import isnan
 from numpy import sum, shape, maximum, minimum, uint8, savetxt, size, save
 
-from thunder.utils.common import checkparams
+from thunder.utils.common import checkParams
 
 
 def arraytoim(mat, filename, format="png"):
@@ -90,7 +90,7 @@ def export(data, outputdir, outputfile, outputformat, sorting=False):
     from thunder.rdds.series import Series
     from scipy.io import savemat
 
-    checkparams(outputformat, ['matlab', 'npy', 'text'])
+    checkParams(outputformat, ['matlab', 'npy', 'text'])
 
     if not os.path.exists(outputdir):
         os.makedirs(outputdir)

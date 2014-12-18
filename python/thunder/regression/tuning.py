@@ -5,7 +5,7 @@ Classes for mass-unvariate tuning analyses
 from numpy import array, sum, inner, dot, angle, abs, exp, asarray
 
 from thunder.rdds.series import Series
-from thunder.utils.common import loadmatvar
+from thunder.utils.common import loadMatVar
 
 
 class TuningModel(object):
@@ -35,7 +35,7 @@ class TuningModel(object):
 
     def __init__(self, modelfile, var='s'):
         if type(modelfile) is str:
-            self.s = loadmatvar(modelfile, var)
+            self.s = loadMatVar(modelfile, var)
         else:
             self.s = modelfile
 

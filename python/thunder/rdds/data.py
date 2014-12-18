@@ -129,8 +129,8 @@ class Data(object):
             return self
         if dtype == 'smallfloat':
             # get the smallest floating point type that can be safely cast to from our current type
-            from thunder.utils.common import smallest_float_type
-            dtype = smallest_float_type(self.dtype)
+            from thunder.utils.common import smallestFloatType
+            dtype = smallestFloatType(self.dtype)
 
         nextrdd = self.rdd.mapValues(lambda v: v.astype(dtype, casting=casting, copy=False))
         return self._constructor(nextrdd, dtype=str(dtype)).__finalize__(self)

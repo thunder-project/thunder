@@ -5,7 +5,7 @@ from numpy import dtype as dtypefunc
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
-from thunder.utils.common import checkparams, loadmatvar, smallest_float_type
+from thunder.utils.common import checkParams, loadMatVar, smallestFloatType
 
 
 class Series(Data):
@@ -201,7 +201,7 @@ class Series(Data):
         order : int, optional, default = 5
             Order of polynomial, for non-linear detrending only
         """
-        checkparams(method, ['linear', 'nonlin'])
+        checkParams(method, ['linear', 'nonlin'])
 
         if method.lower() == 'linear':
             order = 1
@@ -237,7 +237,7 @@ class Series(Data):
         window : int, optional, default = 6
             Size of window for windowed baseline estimation
         """
-        checkparams(baseline, ['mean', 'percentile', 'window'])
+        checkParams(baseline, ['mean', 'percentile', 'window'])
         method = baseline.lower()
 
         if method == 'mean':
@@ -628,7 +628,7 @@ class Series(Data):
         """
 
         if isinstance(inds, str):
-            inds = loadmatvar(inds, var)[0]
+            inds = loadMatVar(inds, var)[0]
         else:
             inds = asarray(inds)
 

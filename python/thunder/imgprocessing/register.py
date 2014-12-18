@@ -1,14 +1,14 @@
 from numpy import arange, ndarray, argmax, unravel_index, asarray
 
 from thunder.rdds.images import Images
-from thunder.utils.common import checkparams
+from thunder.utils.common import checkParams
 
 
 class Register(object):
 
     def __new__(cls, method="crosscorr"):
 
-        checkparams(method, ["crosscorr"])
+        checkParams(method, ["crosscorr"])
 
         if method == "crosscorr":
             return super(Register, cls).__new__(CrossCorr)
@@ -45,7 +45,7 @@ class Register(object):
 
         """
 
-        checkparams(filter, ['median', 'gaussian'])
+        checkParams(filter, ['median', 'gaussian'])
 
         if filter == 'median':
             from scipy.ndimage.filters import median_filter
@@ -88,7 +88,7 @@ class Register(object):
         # TODO easy option for using the mean of the middle n images
         # TODO fix inclusive behavior to match e.g. image loading
 
-        checkparams(method, ['mean'])
+        checkParams(method, ['mean'])
 
         if method == 'mean':
             if startidx is not None and stopidx is not None:

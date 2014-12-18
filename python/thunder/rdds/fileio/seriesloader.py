@@ -17,7 +17,7 @@ from thunder.rdds.keys import Dimensions
 from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError, selectByStartAndStopIndices, \
     appendExtensionToPathSpec
 from thunder.rdds.series import Series
-from thunder.utils.common import parseMemoryString, smallest_float_type
+from thunder.utils.common import parseMemoryString, smallestFloatType
 
 
 class SeriesLoader(object):
@@ -265,7 +265,7 @@ class SeriesLoader(object):
         if newdtype is None or newdtype == '':
             newdtype = str(datatype)
         elif newdtype == 'smallfloat':
-            newdtype = str(smallest_float_type(datatype))
+            newdtype = str(smallestFloatType(datatype))
         else:
             newdtype = str(newdtype)
 
@@ -397,7 +397,7 @@ class SeriesLoader(object):
         if newdtype is None or str(newdtype) == '':
             newdtype = str(datatype)
         elif newdtype == 'smallfloat':
-            newdtype = str(smallest_float_type(datatype))
+            newdtype = str(smallestFloatType(datatype))
         else:
             newdtype = str(newdtype)
 

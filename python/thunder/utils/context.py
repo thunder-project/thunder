@@ -3,7 +3,7 @@
 from numpy import asarray, floor, ceil
 
 from thunder.utils.datasets import DataSets
-from thunder.utils.common import checkparams
+from thunder.utils.common import checkParams
 
 
 class ThunderContext():
@@ -74,7 +74,7 @@ class ThunderContext():
             of int, with n given by `nkeys` or the configuration passed in `conffile`. RDD values will be a numpy
             array of length `nvalues` (or as specified in the passed configuration file).
         """
-        checkparams(inputformat, ['text', 'binary'])
+        checkParams(inputformat, ['text', 'binary'])
 
         from thunder.rdds.fileio.seriesloader import SeriesLoader
         loader = SeriesLoader(self._sc, minPartitions=minPartitions)
@@ -145,7 +145,7 @@ class ThunderContext():
             A newly-created Images object, wrapping an RDD of <int index, numpy array> key-value pairs.
 
         """
-        checkparams(inputformat, ['stack', 'png', 'tif', 'tif-stack'])
+        checkParams(inputformat, ['stack', 'png', 'tif', 'tif-stack'])
 
         from thunder.rdds.fileio.imagesloader import ImagesLoader
         loader = ImagesLoader(self._sc)
@@ -231,7 +231,7 @@ class ThunderContext():
             a numpy array of length equal to the number of image files loaded. Each loaded image file will contribute
             one point to this value array, with ordering as implied by the lexicographic ordering of image file names.
         """
-        checkparams(inputformat, ['stack', 'tif-stack'])
+        checkParams(inputformat, ['stack', 'tif-stack'])
 
         if inputformat.lower() == 'stack' and not dims:
             raise ValueError("Dimensions ('dims' parameter) must be specified if loading from binary image stack" +
@@ -340,7 +340,7 @@ class ThunderContext():
             already exists. (Use with caution.) If false, a ValueError will be thrown if outputdirpath is found to
             already exist.
         """
-        checkparams(inputformat, ['stack', 'tif-stack'])
+        checkParams(inputformat, ['stack', 'tif-stack'])
 
         if inputformat.lower() == 'stack' and not dims:
             raise ValueError("Dimensions ('dims' parameter) must be specified if loading from binary image stack" +
@@ -383,7 +383,7 @@ class ThunderContext():
             Generated dataset
 
         """
-        checkparams(dataset, ['kmeans', 'pca', 'ica'])
+        checkParams(dataset, ['kmeans', 'pca', 'ica'])
 
         return DataSets.make(self._sc, dataset, **opts)
 
@@ -478,7 +478,7 @@ class ThunderContext():
             Number of partitions for RDD
         """
 
-        checkparams(inputformat, ['mat', 'npy'])
+        checkParams(inputformat, ['mat', 'npy'])
 
         from thunder.rdds.fileio.seriesloader import SeriesLoader
         loader = SeriesLoader(self._sc, minPartitions=minPartitions)

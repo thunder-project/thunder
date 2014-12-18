@@ -8,13 +8,13 @@ def pinv(mat):
     return dot(inv(dot(mat, transpose(mat))), mat)
 
 
-def loadmatvar(filename, var):
+def loadMatVar(filename, var):
     """ Load a variable from a MAT file"""
     from scipy.io import loadmat
     return loadmat(filename)[var]
 
 
-def isrdd(data):
+def isRdd(data):
     """ Check whether data is an RDD or not"""
     dtype = type(data)
     import pyspark
@@ -24,13 +24,13 @@ def isrdd(data):
         return False
 
 
-def checkparams(param, opts):
+def checkParams(param, opts):
     """ Check whether param is contained in opts (including lowercase), otherwise error"""
     if not param.lower() in opts:
         raise ValueError("Option must be one of %s, got %s" % (str(opts)[1:-1], param))
 
 
-def smallest_float_type(dtype):
+def smallestFloatType(dtype):
     """Returns the smallest floating point dtype to which the passed dtype can be safely cast.
 
     For integers and unsigned ints, this will generally be next floating point type larger than the integer type. So
@@ -39,15 +39,15 @@ def smallest_float_type(dtype):
 
     This function relies on numpy's promote_types function.
     """
-    from numpy import dtype as dtype_func
+    from numpy import dtype as dtypeFunc
     from numpy import promote_types
-    intype = dtype_func(dtype)
-    compsize = max(2, intype.itemsize)  # smallest float is at least 16 bits
-    comptype = dtype_func('=f'+str(compsize))  # compare to a float of the same size
-    return promote_types(intype, comptype)
+    inType = dtypeFunc(dtype)
+    compSize = max(2, inType.itemsize)  # smallest float is at least 16 bits
+    compType = dtypeFunc('=f'+str(compSize))  # compare to a float of the same size
+    return promote_types(inType, compType)
 
 
-def parseMemoryString(memstr):
+def parseMemoryString(memStr):
     """Returns the size in bytes of memory represented by a Java-style 'memory string'
 
     parseMemoryString("150k") -> 150000
@@ -57,12 +57,12 @@ def parseMemoryString(memstr):
 
     Recognized suffixes are k, m, and g. Parsing is case-insensitive.
     """
-    if isinstance(memstr, basestring):
+    if isinstance(memStr, basestring):
         import re
-        regpat = r"""(\d+)([bBkKmMgG])?"""
-        m = re.match(regpat, memstr)
+        regPat = r"""(\d+)([bBkKmMgG])?"""
+        m = re.match(regPat, memStr)
         if not m:
-            raise ValueError("Could not parse %s as memory specification; should be NUMBER[k|m|g]" % memstr)
+            raise ValueError("Could not parse '%s' as memory specification; should be NUMBER[k|m|g]" % memStr)
         quant = int(m.group(1))
         units = m.group(2).lower()
         if units == "g":
@@ -73,5 +73,5 @@ def parseMemoryString(memstr):
             return int(quant * 1e3)
         return quant
     else:
-        return int(memstr)
+        return int(memStr)
 

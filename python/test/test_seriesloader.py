@@ -6,7 +6,7 @@ import unittest
 from nose.tools import assert_equals, assert_true, assert_almost_equal
 
 from thunder.rdds.fileio.seriesloader import SeriesLoader
-from thunder.utils.common import smallest_float_type
+from thunder.utils.common import smallestFloatType
 from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
 
 _have_image = False
@@ -297,7 +297,7 @@ class TestSeriesBinaryLoader(PySparkTestCaseWithOutputDir):
 
             for expected, actual in zip(expecteddata, seriesdata):
                 expectedkeys = tuple(expected[0])
-                expectedtype = smallest_float_type(item.valDType)
+                expectedtype = smallestFloatType(item.valDType)
                 expectedvals = array(expected[1], dtype=expectedtype)
                 assert_equals(expectedkeys, actual[0],
                               "Key mismatch in item %d; expected %s, got %s" %
@@ -343,7 +343,7 @@ class TestSeriesBinaryWriteFromStack(PySparkTestCaseWithOutputDir):
         roundtripped = roundtripped_series.collect()
         direct = series.collect()
 
-        expecteddtype = str(smallest_float_type(arrays[0].dtype))
+        expecteddtype = str(smallestFloatType(arrays[0].dtype))
         assert_equals(expecteddtype, roundtripped_series.dtype)
         assert_equals(expecteddtype, series.dtype)
         assert_equals(expecteddtype, str(roundtripped[0][1].dtype))

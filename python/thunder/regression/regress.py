@@ -5,7 +5,7 @@ Classes for mass-unvariate regression
 from numpy import sum, outer, inner, mean, shape, dot, transpose, concatenate, ones, asarray
 
 from thunder.rdds.series import Series
-from thunder.utils.common import loadmatvar, pinv
+from thunder.utils.common import loadMatVar, pinv
 
 
 class RegressionModel(object):
@@ -81,7 +81,7 @@ class MeanRegressionModel(RegressionModel):
 
     def __init__(self, modelfile, var='X'):
         if type(modelfile) is str:
-            x = loadmatvar(modelfile, var)
+            x = loadMatVar(modelfile, var)
         else:
             x = modelfile
         x = x.astype(float)
@@ -127,7 +127,7 @@ class LinearRegressionModel(RegressionModel):
 
     def __init__(self, modelfile, var='X'):
         if type(modelfile) is str:
-            x = loadmatvar(modelfile, var)
+            x = loadMatVar(modelfile, var)
         else:
             x = modelfile
         x = concatenate((ones((1, shape(x)[1])), x))
@@ -177,8 +177,8 @@ class BilinearRegressionModel(RegressionModel):
 
     def __init__(self, modelfile, var=('X1', 'X2')):
         if type(modelfile) is str:
-            x1 = loadmatvar(modelfile[0], var[0])
-            x2 = loadmatvar(modelfile[1], var[1])
+            x1 = loadMatVar(modelfile[0], var[0])
+            x2 = loadMatVar(modelfile[1], var[1])
         else:
             x1 = modelfile[0]
             x2 = modelfile[1]
