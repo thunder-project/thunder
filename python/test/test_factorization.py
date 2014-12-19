@@ -30,54 +30,54 @@ class TestSVD(FactorizationTestCase):
 
     Checks if answers match up to a sign flip
     """
-    def test_svd_direct(self):
-        data_local = [
+    def test_SvdDirect(self):
+        dataLocal = [
             array([1.0, 2.0, 6.0]),
             array([1.0, 3.0, 0.0]),
             array([1.0, 4.0, 6.0]),
             array([5.0, 1.0, 4.0])
         ]
-        data = self.sc.parallelize(zip(range(1, 5), data_local))
+        data = self.sc.parallelize(zip(range(1, 5), dataLocal))
         mat = RowMatrix(data)
 
         svd = SVD(k=1, method="direct")
         svd.calc(mat)
-        u_true, s_true, v_true = LinAlg.svd(array(data_local))
-        u_test = transpose(array(svd.u.rows().collect()))[0]
-        v_test = svd.v[0]
-        assert(allclose(svd.s[0], s_true[0]))
-        assert(allclose(v_test, v_true[0, :]) | allclose(-v_test, v_true[0, :]))
-        assert(allclose(u_test, u_true[:, 0]) | allclose(-u_test, u_true[:, 0]))
+        uTrue, sTrue, vTrue = LinAlg.svd(array(dataLocal))
+        uTest = transpose(array(svd.u.rows().collect()))[0]
+        vTest = svd.v[0]
+        assert(allclose(svd.s[0], sTrue[0]))
+        assert(allclose(vTest, vTrue[0, :]) | allclose(-vTest, vTrue[0, :]))
+        assert(allclose(uTest, uTrue[:, 0]) | allclose(-uTest, uTrue[:, 0]))
 
-    def test_svd_em(self):
-        data_local = [
+    def test_SvdEM(self):
+        dataLocal = [
             array([1.0, 2.0, 6.0]),
             array([1.0, 3.0, 0.0]),
             array([1.0, 4.0, 6.0]),
             array([5.0, 1.0, 4.0])
         ]
-        data = self.sc.parallelize(zip(range(1, 5), data_local))
+        data = self.sc.parallelize(zip(range(1, 5), dataLocal))
         mat = RowMatrix(data)
 
         svd = SVD(k=1, method="em")
         svd.calc(mat)
-        u_true, s_true, v_true = LinAlg.svd(array(data_local))
-        u_test = transpose(array(svd.u.rows().collect()))[0]
-        v_test = svd.v[0]
+        uTrue, sTrue, vTrue = LinAlg.svd(array(dataLocal))
+        uTest = transpose(array(svd.u.rows().collect()))[0]
+        vTest = svd.v[0]
         tol = 10e-04  # allow small error for iterative method
-        assert(allclose(svd.s[0], s_true[0], atol=tol))
-        assert(allclose(v_test, v_true[0, :], atol=tol) | allclose(-v_test, v_true[0, :], atol=tol))
-        assert(allclose(u_test, u_true[:, 0], atol=tol) | allclose(-u_test, u_true[:, 0], atol=tol))
+        assert(allclose(svd.s[0], sTrue[0], atol=tol))
+        assert(allclose(vTest, vTrue[0, :], atol=tol) | allclose(-vTest, vTrue[0, :], atol=tol))
+        assert(allclose(uTest, uTrue[:, 0], atol=tol) | allclose(-uTest, uTrue[:, 0], atol=tol))
 
     def test_conversion(self):
         from thunder.rdds.series import Series
-        data_local = [
+        dataLocal = [
             array([1.0, 2.0, 6.0]),
             array([1.0, 3.0, 0.0]),
             array([1.0, 4.0, 6.0]),
             array([5.0, 1.0, 4.0])
         ]
-        data = Series(self.sc.parallelize(zip(range(1, 5), data_local)))
+        data = Series(self.sc.parallelize(zip(range(1, 5), dataLocal)))
         SVD(k=1, method='direct').calc(data)
 
 
@@ -113,59 +113,59 @@ class TestNMF(FactorizationTestCase):
         """
         #  set data and initializing constants
         keys = [array([i+1]) for i in range(4)]
-        data_local = array([
+        dataLocal = array([
             [1.0, 2.0, 6.0],
             [1.0, 3.0, 0.0],
             [1.0, 4.0, 6.0],
             [5.0, 1.0, 4.0]])
-        data = self.sc.parallelize(zip(keys, data_local))
+        data = self.sc.parallelize(zip(keys, dataLocal))
         mat = RowMatrix(data)
         h0 = array(
             [[0.09082617,  0.85490047,  0.57234593],
              [0.82766740,  0.21301186,  0.90913979]])
 
         # if the rows of h are not normalized on each iteration:
-        h_true = array(
+        hTrue = array(
             [[0.    ,    0.6010,    0.9163],
              [0.8970,    0.1556,    0.7423]])
-        w_true = array(
+        wTrue = array(
             [[4.5885,    1.5348],
              [1.3651,    0.2184],
              [5.9349,    1.0030],
              [0.    ,    5.5147]])
 
         # if the columns of h are normalized (as in the current implementation):
-        scale_mat = diag(norm(h_true, axis=1))
-        h_true = dot(LinAlg.inv(scale_mat), h_true)
-        w_true = dot(w_true, scale_mat)
+        scaleMat = diag(norm(hTrue, axis=1))
+        hTrue = dot(LinAlg.inv(scaleMat), hTrue)
+        wTrue = dot(wTrue, scaleMat)
 
         # calculate NMF using the Thunder implementation
         # (maxiter=9 corresponds with Matlab algorithm)
-        nmf_thunder = NMF(k=2, method="als", h0=h0, maxIter=9)
-        nmf_thunder.fit(mat)
-        h_thunder = nmf_thunder.h
-        w_thunder = array(nmf_thunder.w.values().collect())
+        nmfThunder = NMF(k=2, method="als", h0=h0, maxIter=9)
+        nmfThunder.fit(mat)
+        hThunder = nmfThunder.h
+        wThunder = array(nmfThunder.w.values().collect())
 
         tol = 1e-03  # allow small error
-        assert(allclose(w_thunder, w_true, atol=tol))
-        assert(allclose(h_thunder, h_true, atol=tol))
+        assert(allclose(wThunder, wTrue, atol=tol))
+        assert(allclose(hThunder, hTrue, atol=tol))
 
     def test_init(self):
         """
         test performance of whole function, including random initialization
         """
-        data_local = array([
+        dataLocal = array([
             [1.0, 2.0, 6.0],
             [1.0, 3.0, 0.0],
             [1.0, 4.0, 6.0],
             [5.0, 1.0, 4.0]])
-        data = self.sc.parallelize(zip([array([i]) for i in range(data_local.shape[0])], data_local))
+        data = self.sc.parallelize(zip([array([i]) for i in range(dataLocal.shape[0])], dataLocal))
         mat = RowMatrix(data)
 
-        nmf_thunder = NMF(k=2, reconHist='final')
-        nmf_thunder.fit(mat)
+        nmfThunder = NMF(k=2, reconHist='final')
+        nmfThunder.fit(mat)
 
         # check to see if Thunder's solution achieves close-to-optimal reconstruction error
         # scikit-learn's solution achieves 2.993952
         # matlab's non-deterministic implementation usually achieves < 2.9950 (when it converges)
-        assert(nmf_thunder.reconErr < 2.9950)
+        assert(nmfThunder.reconErr < 2.9950)

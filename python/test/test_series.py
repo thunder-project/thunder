@@ -46,11 +46,11 @@ class TestSeriesDataStatsMethods(PySparkTestCase):
         return SeriesLoader(self.sc).fromArrays([ary1, ary2])
 
     def test_mean(self):
-        from test_utils import elementwise_mean
+        from test_utils import elementwiseMean
         series = self.generateTestSeries()
         meanval = series.mean()
 
-        expected = elementwise_mean(series.values().collect())
+        expected = elementwiseMean(series.values().collect())
         assert_true(allclose(expected, meanval))
         assert_equals('float16', str(meanval.dtype))
 
@@ -65,34 +65,34 @@ class TestSeriesDataStatsMethods(PySparkTestCase):
         assert_equals('float32', str(sumval.dtype))
 
     def test_variance(self):
-        from test_utils import elementwise_var
+        from test_utils import elementwiseVar
         series = self.generateTestSeries()
         varval = series.variance()
 
         arys = series.values().collect()
-        expected = elementwise_var([ary.astype('float16') for ary in arys])
+        expected = elementwiseVar([ary.astype('float16') for ary in arys])
         assert_true(allclose(expected, varval))
         assert_equals('float16', str(varval.dtype))
 
     def test_stdev(self):
-        from test_utils import elementwise_stdev
+        from test_utils import elementwiseStdev
         series = self.generateTestSeries()
         stdval = series.stdev()
 
         arys = series.values().collect()
-        expected = elementwise_stdev([ary.astype('float16') for ary in arys])
+        expected = elementwiseStdev([ary.astype('float16') for ary in arys])
         assert_true(allclose(expected, stdval, atol=0.001))
         assert_equals('float32', str(stdval.dtype))  # why not float16? see equivalent Images test
 
     def test_stats(self):
-        from test_utils import elementwise_mean, elementwise_var
+        from test_utils import elementwiseMean, elementwiseVar
         series = self.generateTestSeries()
         statsval = series.stats()
 
         arys = series.values().collect()
         floatarys = [ary.astype('float16') for ary in arys]
-        expectedmean = elementwise_mean(floatarys)
-        expectedvar = elementwise_var(floatarys)
+        expectedmean = elementwiseMean(floatarys)
+        expectedvar = elementwiseVar(floatarys)
         assert_true(allclose(expectedmean, statsval.mean()))
         assert_true(allclose(expectedvar, statsval.variance()))
 

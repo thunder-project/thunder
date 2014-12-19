@@ -23,7 +23,7 @@ class TestMassUnivariateClassification(ClassificationTestCase):
     test data sets with either 1 or 2 features
     """
 
-    def test_mass_univariate_classification_ttest_1d(self):
+    def test_massUnivariateClassificationTTest_1d(self):
         """Simple classification problem, 1d features"""
         X = array([-1, -0.1, -0.1, 1, 1, 1.1])
         labels = array([1, 1, 1, 2, 2, 2])
@@ -34,10 +34,10 @@ class TestMassUnivariateClassification(ClassificationTestCase):
         # should match direct calculation using scipy
         data = Series(self.sc.parallelize(zip([1], [X])))
         result = clf.fit(data).values().collect()
-        ground_truth = ttest_ind(X[labels == 1], X[labels == 2])
-        assert_array_almost_equal(result[0], ground_truth[0])
+        groundTruth = ttest_ind(X[labels == 1], X[labels == 2])
+        assert_array_almost_equal(result[0], groundTruth[0])
 
-    def test_mass_univariate_classification_ttest_2d(self):
+    def test_massUnivariateClassificationTTest_2d(self):
         """Simple classification problem, 2d features"""
         X = array([-1, -2, -0.1, -2, -0.1, -2.1, 1, 1.1, 1, 1, 1.1, 2])
         features = array([1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2])
@@ -52,16 +52,16 @@ class TestMassUnivariateClassification(ClassificationTestCase):
         # test first feature only
         data = Series(self.sc.parallelize(zip([1], [X])))
         result = clf.fit(data, [[1]]).values().collect()
-        ground_truth = ttest_ind(X[features == 1][:3], X[features == 1][3:])
-        assert_array_almost_equal(result[0], ground_truth[0])
+        groundTruth = ttest_ind(X[features == 1][:3], X[features == 1][3:])
+        assert_array_almost_equal(result[0], groundTruth[0])
 
         # test both features
         result = clf.fit(data, [[1, 2]]).values().collect()
-        ground_truth = ttest_ind(vstack((X[features == 1][:3], X[features == 2][:3])).T,
+        groundTruth = ttest_ind(vstack((X[features == 1][:3], X[features == 2][:3])).T,
                                  vstack((X[features == 1][3:], X[features == 2][3:])).T)
-        assert_array_almost_equal(result[0][0], ground_truth[0])
+        assert_array_almost_equal(result[0][0], groundTruth[0])
 
-    def test_mass_univariate_classification_gnb_1d(self):
+    def test_massUnivariateClassificationGNB_1d(self):
         """Simple classification problem, 1d features"""
         X1 = array([-1, -1, -1.2, 1, 1, 1.2])
         X2 = array([-1, -1, 1.2, 1, 1, 1.2])
@@ -80,7 +80,7 @@ class TestMassUnivariateClassification(ClassificationTestCase):
         result = clf.fit(data).values().collect()
         assert_array_almost_equal(result[0], [5.0/6.0])
 
-    def test_mass_univariate_classification_gnb_2d(self):
+    def test_massUnivariateClassificationGNB_2d(self):
         """Simple classification problem, 2d features"""
 
         X = array([-1, 1, -2, -1, -3, -2, 1, 1, 2, 1, 3, 2])
