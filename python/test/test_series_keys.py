@@ -21,11 +21,11 @@ class SeriesKeysTestCase(PySparkTestCase):
 class TestGetDims(SeriesKeysTestCase):
     """Test getting dimensions"""
 
-    def test_get_dims_rdd(self):
+    def test_getDimsRdd(self):
         subs = [(1, 1, 1), (2, 1, 1), (1, 2, 1), (2, 2, 1), (1, 3, 1), (2, 3, 1),
                 (1, 1, 2), (2, 1, 2), (1, 2, 2), (2, 2, 2), (1, 3, 2), (2, 3, 2)]
-        data_local = map(lambda x: (x, array([1.0])), subs)
-        data = Series(self.sc.parallelize(data_local))
+        dataLocal = map(lambda x: (x, array([1.0])), subs)
+        data = Series(self.sc.parallelize(dataLocal))
         dims = data.dims
         assert(allclose(dims.max, (2, 3, 2)))
         assert(allclose(dims.count, (2, 3, 2)))
@@ -38,16 +38,16 @@ class TestSubToInd(SeriesKeysTestCase):
     def test_sub_to_ind_rdd(self):
         subs = [(1, 1, 1), (2, 1, 1), (1, 2, 1), (2, 2, 1), (1, 3, 1), (2, 3, 1),
                 (1, 1, 2), (2, 1, 2), (1, 2, 2), (2, 2, 2), (1, 3, 2), (2, 3, 2)]
-        data_local = map(lambda x: (x, array([1.0])), subs)
+        dataLocal = map(lambda x: (x, array([1.0])), subs)
 
-        data = Series(self.sc.parallelize(data_local))
+        data = Series(self.sc.parallelize(dataLocal))
         inds = array(data.subToInd().keys().collect())
         assert(allclose(inds, array(range(1, 13))))
 
     def test_ind_to_sub_rdd(self):
-        data_local = map(lambda x: (x, array([1.0])), range(1, 13))
+        dataLocal = map(lambda x: (x, array([1.0])), range(1, 13))
 
-        data = Series(self.sc.parallelize(data_local))
+        data = Series(self.sc.parallelize(dataLocal))
         subs = data.indToSub(dims=[2, 3, 2]).keys().collect()
         assert(allclose(subs, array([(1, 1, 1), (2, 1, 1), (1, 2, 1), (2, 2, 1), (1, 3, 1), (2, 3, 1),
                                      (1, 1, 2), (2, 1, 2), (1, 2, 2), (2, 2, 2), (1, 3, 2), (2, 3, 2)])))
@@ -55,9 +55,9 @@ class TestSubToInd(SeriesKeysTestCase):
     def test_round_trip_rdd(self):
         subs = [(1, 1, 1), (2, 1, 1), (1, 2, 1), (2, 2, 1), (1, 3, 1), (2, 3, 1),
                 (1, 1, 2), (2, 1, 2), (1, 2, 2), (2, 2, 2), (1, 3, 2), (2, 3, 2)]
-        data_local = map(lambda x: (x, array([1.0])), subs)
+        dataLocal = map(lambda x: (x, array([1.0])), subs)
 
-        data = Series(self.sc.parallelize(data_local))
+        data = Series(self.sc.parallelize(dataLocal))
         start = data.keys().collect()
         stop = data.subToInd().indToSub().keys().collect()
         assert(allclose(array(start), array(stop)))
@@ -114,20 +114,20 @@ def test_subtoind_parameterized():
                                      indices=[-2, -1, 0, 1, 2], order='C', onebased=False,)
                   ]
 
-    def check_subtoind_result(si_param):
-        data = si_param.subscripts
-        converter = _subToIndConverter(dims=si_param.dims, order=si_param.order, isOneBased=si_param.onebased)
+    def checkSubtoindResult(siParam):
+        data = siParam.subscripts
+        converter = _subToIndConverter(dims=siParam.dims, order=siParam.order, isOneBased=siParam.onebased)
         results = map(lambda x: converter(x), data)
         # check results individually to highlight specific failures
-        for res, expected, subscript in zip(results, si_param.indices, si_param.subscripts):
+        for res, expected, subscript in zip(results, siParam.indices, siParam.subscripts):
             assert_equals(expected, res, 'Got index %d instead of %d for subscript:%s, dims:%s' %
-                          (res, expected, str(subscript), str(si_param.dims)))
+                          (res, expected, str(subscript), str(siParam.dims)))
 
     for param in parameters:
-        yield check_subtoind_result, param
+        yield checkSubtoindResult, param
 
 
-def test_indtosub_parameterized():
+def test_indtosubParameterized():
     IndToSubParameters = namedtuple('IndToSubParameters', ['indices', 'dims', 'subscripts', 'order', 'onebased'])
     parameters = [IndToSubParameters(range(1, 13), dims=(2, 3, 2), order='F', onebased=True,
                                      subscripts=[(1, 1, 1), (2, 1, 1), (1, 2, 1), (2, 2, 1), (1, 3, 1), (2, 3, 1),
@@ -177,13 +177,13 @@ def test_indtosub_parameterized():
                                                  (0, 2, 0), (0, 2, 1), (0, 2, 2), (0, 2, 3)]),
                   ]
 
-    def check_indtosub_result(indsub_param):
-        data = indsub_param.indices
-        converter = _indToSubConverter(dims=indsub_param.dims, order=indsub_param.order, isOneBased=indsub_param.onebased)
+    def check_indtosubResult(indsubParam):
+        data = indsubParam.indices
+        converter = _indToSubConverter(dims=indsubParam.dims, order=indsubParam.order, isOneBased=indsubParam.onebased)
         results = map(lambda x: converter(x), data)
-        for res, expected, index in zip(results, indsub_param.subscripts, indsub_param.indices):
+        for res, expected, index in zip(results, indsubParam.subscripts, indsubParam.indices):
             assert_equals(expected, res, 'Got subscript %s instead of %s for index:%d, dims:%s' %
-                          (res, expected, index, str(indsub_param.dims)))
+                          (res, expected, index, str(indsubParam.dims)))
 
     for param in parameters:
-        yield check_indtosub_result, param
+        yield check_indtosubResult, param
