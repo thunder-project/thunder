@@ -79,8 +79,8 @@ def get_spark_version_string(default_version):
     import xml.etree.ElementTree as ET
     try:
         root = ET.parse(os.path.join(SPARK_HOME, "pom.xml"))
-        version_elt = root.find("/{http://maven.apache.org/POM/4.0.0}version")
-        if version_elt:
+        version_elt = root.find("./{http://maven.apache.org/POM/4.0.0}version")
+        if version_elt is not None:
             return version_elt.text
     except IOError:
         # no pom file; fall through and return default
@@ -88,7 +88,7 @@ def get_spark_version_string(default_version):
     return default_version
 
 SPARK_VERSIONS_TO_HASHES = {
-    '1.2.0': "a428c446e23e"  # spark 1.2.0 rc2, remove once Spark is released and mesos/spark-ec2 is updated
+    '1.2.0rc2': "a428c446e23e"
 }
 
 
