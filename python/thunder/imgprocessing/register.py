@@ -1,252 +1,316 @@
-from numpy import arange, ndarray, argmax, unravel_index, asarray
+from numpy import ndarray
 
 from thunder.rdds.images import Images
 from thunder.utils.common import checkparams
 
 
 class Register(object):
+    """
+    Class for constructing registration algorithms.
 
-    def __new__(cls, method="crosscorr"):
+    Construct a registration algorthm by specifying its name,
+    and passing any additional keyword arguments. The algorithm
+    can then be used to fit registration parameters on an Images object.
 
-        checkparams(method, ["crosscorr"])
+    Parameters
+    ----------
+    method : string
+        A registration method, options include 'crosscorr' and 'planarcrosscorr'
+    """
 
-        if method == "crosscorr":
-            return super(Register, cls).__new__(CrossCorr)
-        else:
-            raise Exception('Registration method not recognized')
+    def __new__(cls, method, **kwargs):
 
-    def get_transform(self, im, ref):
-        raise NotImplementedError
+        from thunder.imgprocessing.regmethods.crosscorr import CrossCorr, PlanarCrossCorr
 
-    def apply_transform(self, im, transform):
-        raise NotImplementedError
+        REGMETHODS = {
+            'crosscorr': CrossCorr,
+            'planarcrosscorr': PlanarCrossCorr
+        }
 
-    def setFilter(self, filter='median', param=2):
+        checkparams(method, REGMETHODS.keys())
+
+        return REGMETHODS[method](kwargs)
+
+    @staticmethod
+    def load(file):
         """
-        Set a filter to apply to images before registration.
-
-        The filtering will be applied to both the reference and
-        image to compute the transformation parameters, but the filtering
-        will not be applied to the images themselves.
-
-        Parameters
-        ----------
-
-        filter : str, optional, default = 'median'
-            Which filter to use (options are 'median' and 'gaussian')
-
-        param : int, optional, default = 2
-            Parameter to provide to filtering function (e.g. size for median filter)
+        Load a registration model from a file specified using JSON.
 
         See also
         --------
-        Images.medianFilter : apply median filter to images
-        Images.gaussianFilter : apply gaussian filter to images
-
+        RegisterModel.save : specification for saving registration models
+        RegisterModel.load : specifications for loading registration models
         """
 
-        checkparams(filter, ['median', 'gaussian'])
+        return RegisterModel.load(file)
 
-        if filter == 'median':
-            from scipy.ndimage.filters import median_filter
-            self._filter = lambda x: median_filter(x, param)
 
-        if filter == 'gaussian':
-            from scipy.ndimage.filters import gaussian_filter
-            self._filter = lambda x: gaussian_filter(x, param)
+class RegisterMethod(object):
+    """
+    Base class for registration methods
+    """
 
-        return self
+    def __init__(self, *args, **kwargs):
+        pass
 
-    def filter(self, im):
-        """
-        Apply filtering, and if not set, return image unchanged
-        """
-
-        if hasattr(self, '_filter'):
-            return self._filter(im)
-        else:
-            return im
+    def getTransform(self, im, ref):
+        raise NotImplementedError
 
     @staticmethod
-    def reference(images, method='mean', startidx=None, stopidx=None):
+    def reference(images, startidx=None, stopidx=None):
         """
-        Compute a reference image for use in registration.
+        Compute a reference image /volume for use in registration.
+
+        This default method computes the reference as the mean of a
+        subset of frames. Alternative registration algorithms
+        may wish to override this method.
 
         Parameters
         ----------
-        method : str, optional, default = 'mean'
-            How to compute the reference
-
         startidx : int, optional, default = None
             Starting index if computing a mean over a specified range
 
         stopidx : int, optional, default = None
             Stopping index if computing a mean over a specified range
 
+        Returns
+        -------
+        refval : ndarray
+            The reference image / volume
+
         """
 
         # TODO easy option for using the mean of the middle n images
         # TODO fix inclusive behavior to match e.g. image loading
 
-        checkparams(method, ['mean'])
-
-        if method == 'mean':
-            if startidx is not None and stopidx is not None:
-                range = lambda x: startidx <= x < stopidx
-                n = stopidx - startidx
-                ref = images.filterOnKeys(range)
-            else:
-                ref = images
-                n = images.nimages
-            refval = ref.sum() / (1.0 * n)
-            return refval.astype(images.dtype)
-
-    @staticmethod
-    def _apply_vol(vol, func):
-        """
-        Apply a function to an image, or a volume (plane-by-plane).
-        """
-
-        if vol.ndim == 2:
-            return func(vol)
+        if startidx is not None and stopidx is not None:
+            range = lambda x: startidx <= x < stopidx
+            n = stopidx - startidx
+            ref = images.filterOnKeys(range)
         else:
-            vol.setflags(write=True)
-            for z in arange(0, vol.shape[2]):
-                vol[:, :, z] = func(vol[:, :, z])
-            return vol
+            ref = images
+            n = images.nimages
+        refval = ref.sum() / (1.0 * n)
+        return refval.astype(images.dtype)
 
     @staticmethod
-    def _check_reference(images, reference):
+    def checkReference(images, reference):
         """
-        Check the dimensions and type of a reference (relative to an Images object),
-        as well as check that the images / volumes themselves are either 2D or 3D
+        Check the dimensions and type of a reference relative to an Images object.
+
+        This default method ensures that the reference and images have the same dimensions.
+        Alternative registration procedures with more complex references may
+        wish to override this method.
+
+        Parameters
+        ----------
+        images : Images
+            An Images object containg the image / volumes to check reference against
+
+        reference : ndarray
+            The reference image / volume
         """
 
         if isinstance(reference, ndarray):
             if reference.shape != images.dims.count:
                 raise Exception('Dimensions of reference %s do not match dimensions of data %s' %
                                 (reference.shape, images.dims.count))
-            if len(images.dims.count) not in set([2, 3]):
-                raise Exception('Number of image dimensions %s must be 2 or 3' % (len(images.dims.count)))
         else:
             raise Exception('Reference must be an array')
 
-    def estimate(self, images, reference):
+    def fit(self, images, ref=None):
         """
-        Estimate registration parameters on a collection of images / volumes.
+        Compute registration parameters on a collection of images / volumes.
 
-        Will return a list of registration parameters to the driver, rather
-        than the registered images / volumes themselves.
+        Will return the estimated registration parameters to the driver in the form
+        of a RegisterModel, which can then be used to transform Images data.
 
         Parameters
         ----------
         images : Images
-            An Images object containing the images / volumes to estimate registration for
+            An Images object with the images / volumes to estimate registration for.
 
-        reference : ndarray
-            The reference image / volume to estimate registration against
+        ref : ndarray, optional, default = None
+            The reference image / volume to estimate registration against. Can safely pass None
+            for methods that do not require or use a reference.
 
         Returns
         -------
-        params : list
-            Registration parameters, one per image. Will be returned as a list of key-value pairs,
-            where the key is the same key used to identify each image / volume in the Images object,
-            and the value is a list of registration parameters (in whatever format provided by
-            the registration function; e.g. for CrossCorr will return a list of deltas in x and y)
+        model : RegisterModel
+            Registration params as a model that can be used to transform an Images object.
 
         See also
         --------
-        Register.transform : apply transformations
+        RegisterModel : model for applying transformations
         """
 
         if not (isinstance(images, Images)):
             raise Exception('Input data must be Images or a subclass')
 
-        self._check_reference(images, reference)
+        if len(images.dims.count) not in set([2, 3]):
+                raise Exception('Number of image dimensions %s must be 2 or 3' % (len(images.dims.count)))
 
-        # apply filtering to reference if defined
-        if hasattr(self, '_filter'):
-            reference = self._apply_vol(reference.copy(), self.filter)
+        if ref is not None:
+            self.checkReference(images, ref)
 
-        # broadcast the reference (a potentially very large array)
-        reference_bc = images.rdd.context.broadcast(reference)
+        # broadcast the reference
+        ref_bc = images.rdd.context.broadcast(ref)
 
-        # estimate the transform parameters on an image / volume
-        def params(im, ref):
-            if im.ndim == 2:
-                return self.get_transform(self.filter(im), ref.value)
-            else:
-                t = []
-                for z in arange(0, im.shape[2]):
-                    t.append(self.get_transform(self.filter(im[:, :, z]), ref.value[:, :, z]))
-            return t
+        # compute the transformations
+        transformations = images.rdd.mapValues(lambda im: self.getTransform(im, ref_bc.value)).collectAsMap()
 
-        from thunder import Series
-        return Series(images.rdd.mapValues(lambda x: params(x, reference_bc)))
+        # construct the model
+        regmethod = self.__class__.__name__
+        transclass = transformations.itervalues().next().__class__.__name__
+        model = RegisterModel(transformations, regmethod=regmethod, transclass=transclass)
+        return model
 
-    def transform(self, images, reference):
+    def run(self, images, ref=None):
         """
-        Apply registration to a collection of images / volumes.
+        Compute and implement registration on a collection of images / volumes.
+
+        This is a lazy operation that combines the estimation of registration
+        with its implementaiton. It returns a new Images object with transformed
+        images, and does not expose the registration parameters directly, see the
+        'fit' method to obtain parameters directly.
 
         Parameters
         ----------
         images : Images
-            An Images object containing the images / volumes to apply registration to
+            An Images object with the images / volumes to apply registration to.
 
-        reference : ndarray
-            The reference image / volume to register against
+        ref : ndarray, optional, default = None
+            Reference image / volume to estimate registration against. Can safely pass
+            None for methods that do not require or use a reference.
+
+        Return
+        ------
+        Images object with registered images / volumes
         """
 
         if not (isinstance(images, Images)):
             raise Exception('Input data must be Images or a subclass')
 
-        self._check_reference(images, reference)
+        if len(images.dims.count) not in set([2, 3]):
+            raise Exception('Number of image dimensions %s must be 2 or 3' % (len(images.dims.count)))
 
-        # apply filtering to reference if defined
-        if hasattr(self, '_filter'):
-            reference = self._apply_vol(reference, self.filter)
+        if ref is not None:
+            self.checkReference(images, ref)
 
-        # broadcast the reference (a potentially very large array)
-        reference_bc = images.rdd.context.broadcast(reference)
+        # broadcast the reference
+        ref_bc = images.rdd.context.broadcast(ref)
 
-        # compute and apply transformation on an image / volume
-        def register(im, ref):
-            if im.ndim == 2:
-                t = self.get_transform(self.filter(im), ref.value)
-                return self.apply_transform(im, t)
-            else:
-                im.setflags(write=True)
-                for z in arange(0, im.shape[2]):
-                    t = self.get_transform(self.filter(im[:, :, z]), ref.value[:, :, z])
-                    im[:, :, z] = self.apply_transform(im[:, :, z], t)
-                return im
+        def fitandtransform(im, ref):
+            t = self.getTransform(im, ref.value)
+            return t.apply(im)
 
-        # return the transformed volumes
-        newrdd = images.rdd.mapValues(lambda x: register(x, reference_bc))
+        newrdd = images.rdd.mapValues(lambda im: fitandtransform(im, ref_bc))
+
         return Images(newrdd).__finalize__(images)
 
 
-class CrossCorr(Register):
-    """
-    Perform affine (translation) registration using cross-correlation
-    """
+class RegisterModel(object):
 
-    def get_transform(self, im, ref):
+    def __init__(self, transformations, regmethod=None, transclass=None):
+        self.transformations = transformations
+        self.regmethod = regmethod
+        self.transclass = transclass
 
-        from numpy.fft import fft2, ifft2
+    def transform(self, images):
+        """
+        Apply the transformation to an Images object.
 
-        fref = fft2(ref)
-        fim = fft2(im)
-        c = abs(ifft2((fim * fref.conjugate())))
-        d0, d1 = unravel_index(argmax(c), c.shape)
-        if d0 > im.shape[0] // 2:
-            d0 -= im.shape[0]
-        if d1 > im.shape[1] // 2:
-            d1 -= im.shape[1]
+        Will apply the underlying dictionary of transformations to
+        the images or volumes of the Images object. The dictionary acts as a lookup
+        table specifying which transformation should be applied to which record of the
+        Images object based on the key. Because transformations are small,
+        we broadcast the transformations rather than using a join.
 
-        return [d0, d1]
+        See also
+        --------
+        Register : construct registration algorithms
+        """
 
-    def apply_transform(self, im, transform):
+        from thunder.rdds.images import Images
 
-        from scipy.ndimage.interpolation import shift
-        return shift(im, map(lambda x: -x, transform), mode='nearest')
+        # broadcast the transformations
+        transformations_bc = images.rdd.context.broadcast(self.transformations)
+
+        # apply the transformations
+        newrdd = images.rdd.map(lambda (k, im): (k, transformations_bc.value[k].apply(im)))
+        return Images(newrdd).__finalize__(images)
+
+    def save(self, file):
+        """
+        Serialize registration model to a file as text using JSON.
+
+        Format is a dictionary, with keys '_regmethod' and '_transtype' specifying
+        the registration method used and the transformation type (as strings),
+        and '_transformations' containing the transformations. The exact format of the transformations
+        will vary by type, but will always be a dictionary, with keys indexing into an Images object,
+        and values containing the transformation parameters.
+
+        Parameters
+        ----------
+        file : filename or file handle
+            The file to write to
+
+        """
+
+        import json
+
+        if hasattr(file, 'write'):
+            f = file
+        else:
+            f = open(file, 'w')
+        output = json.dumps(self, default=lambda v: v.__dict__)
+        f.write(output)
+        f.close()
+
+    @staticmethod
+    def load(file):
+        """
+        Deserialize registration model from a file containing JSON.
+
+        Assumes a JSON formatted registration model, with keys '_regmethod' and '_transclass' specifying
+        the registration method used and the transformation type as strings, and '_transformations'
+        containing the transformations. The format of the transformations will depend on the type,
+        but it should be a dictionary of key value pairs, where the keys are keys of the target
+        Images object, and the values are arguments for reconstructing each transformation object.
+
+        Parameters
+        ----------
+        file : str
+            Name of a file to read from
+
+        Returns
+        -------
+        model : RegisterModel
+            Instance of a registration model
+        """
+
+        import json
+        import importlib
+
+        f = open(file, 'r')
+        input = json.loads(f.read())
+
+        # import the appropriate transformation class
+        regmethod = str(input['regmethod'])
+        classname = str(input['transclass'])
+        transclass = getattr(importlib.import_module('thunder.imgprocessing.transformation'), classname)
+
+        # instantiate the transformations and construct the model
+        transformations = {int(k): transclass(**v) for k, v in input['transformations'].iteritems()}
+        model = RegisterModel(transformations, regmethod=regmethod, transclass=classname)
+        return model
+
+    def __repr__(self):
+        out = "ResgisterModel(method='%s', transtype='%s', transformations=%s)" % \
+              (self.regmethod, self.transclass, self.transformations)
+        return out[0:120] + " ..."
+
+
+
+
+
