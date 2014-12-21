@@ -15,6 +15,7 @@ setup(
               'thunder.decoding',
               'thunder.factorization',
               'thunder.imgprocessing',
+              'thunder.imgprocessing.regmethods',
               'thunder.lib',
               'thunder.rdds',
               'thunder.rdds.fileio',
