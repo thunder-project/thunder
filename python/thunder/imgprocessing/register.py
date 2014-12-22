@@ -244,9 +244,9 @@ class RegisterModel(object):
         """
         Serialize registration model to a file as text using JSON.
 
-        Format is a dictionary, with keys '_regmethod' and '_transtype' specifying
+        Format is a dictionary, with keys 'regmethod' and 'transtype' specifying
         the registration method used and the transformation type (as strings),
-        and '_transformations' containing the transformations. The exact format of the transformations
+        and 'transformations' containing the transformations. The exact format of the transformations
         will vary by type, but will always be a dictionary, with keys indexing into an Images object,
         and values containing the transformation parameters.
 
@@ -272,8 +272,8 @@ class RegisterModel(object):
         """
         Deserialize registration model from a file containing JSON.
 
-        Assumes a JSON formatted registration model, with keys '_regmethod' and '_transclass' specifying
-        the registration method used and the transformation type as strings, and '_transformations'
+        Assumes a JSON formatted registration model, with keys 'regmethod' and 'transclass' specifying
+        the registration method used and the transformation type as strings, and 'transformations'
         containing the transformations. The format of the transformations will depend on the type,
         but it should be a dictionary of key value pairs, where the keys are keys of the target
         Images object, and the values are arguments for reconstructing each transformation object.
@@ -306,7 +306,7 @@ class RegisterModel(object):
         return model
 
     def __repr__(self):
-        out = "ResgisterModel(method='%s', transtype='%s', transformations=%s)" % \
+        out = "RegisterModel(method='%s', transtype='%s', transformations=%s)" % \
               (self.regmethod, self.transclass, self.transformations)
         return out[0:120] + " ..."
 
