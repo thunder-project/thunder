@@ -90,7 +90,7 @@ class RegisterMethod(object):
         else:
             ref = images
             n = images.nimages
-        refval = ref.sum() / (1.0 * n)
+        refval = ref.sum() / float(n)
         return refval.astype(images.dtype)
 
     @staticmethod
