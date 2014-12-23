@@ -572,7 +572,7 @@ class Images(Data):
                 raise Exception('Cannot subtract image with dimensions %s '
                                 'from images with dimension %s' % (str(val.shape), str(self.dims)))
 
-        return self.apply(lambda x: x - val)
+        return self.applyValues(lambda x: x - val)
 
 
 class _BlockMemoryAsSequence(object):

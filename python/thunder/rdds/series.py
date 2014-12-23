@@ -218,7 +218,7 @@ class Series(Data):
             yy = polyval(p, x)
             return y - yy
 
-        return self.apply(func)
+        return self.applyValues(func)
 
     def normalize(self, baseline='percentile', **kwargs):
         """ Normalize each record by subtracting and dividing by a baseline.
@@ -272,7 +272,7 @@ class Series(Data):
             b = basefunc(y)
             return (y - b) / (b + 0.1)
 
-        return self.apply(get)
+        return self.applyValues(get)
 
     def center(self, axis=0):
         """ Center series data by subtracting the mean
@@ -284,10 +284,10 @@ class Series(Data):
             Which axis to center along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.apply(lambda x: x - mean(x))
+            return self.applyValues(lambda x: x - mean(x))
         elif axis == 1:
             meanvec = self.mean()
-            return self.apply(lambda x: x - meanvec)
+            return self.applyValues(lambda x: x - meanvec)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -301,10 +301,10 @@ class Series(Data):
             Which axis to standardize along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.apply(lambda x: x / std(x))
+            return self.applyValues(lambda x: x / std(x))
         elif axis == 1:
             stdvec = self.stdev()
-            return self.apply(lambda x: x / stdvec)
+            return self.applyValues(lambda x: x / stdvec)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -319,12 +319,12 @@ class Series(Data):
             Which axis to zscore along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.apply(lambda x: (x - mean(x)) / std(x))
+            return self.applyValues(lambda x: (x - mean(x)) / std(x))
         elif axis == 1:
             stats = self.stats()
             meanvec = stats.mean()
             stdvec = stats.stdev()
-            return self.apply(lambda x: (x - meanvec) / stdvec)
+            return self.applyValues(lambda x: (x - meanvec) / stdvec)
         else:
             raise Exception('Axis must be 0 or 1')
 

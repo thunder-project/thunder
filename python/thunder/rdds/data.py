@@ -136,15 +136,18 @@ class Data(object):
         return self._constructor(nextrdd, dtype=str(dtype)).__finalize__(self)
 
     def apply(self, func, dtype=None, casting='safe'):
-        """ Apply arbitrary function to values of a Series, preserving keys and indices
+        """ Apply arbitrary function to records of a Data object.
 
-        If `dtype` is passed, output will be cast to specified datatype - see `astype()`. Otherwise output will
-        be assumed to be of same datatype as input.
+        This wraps the combined process of calling Spark's map operation on
+        the underlying RDD and returning a reconstructed Data object.
+
+        If `dtype` is passed, output will be cast to specified datatype - see `astype()`.
+        Otherwise output will be assumed to be of same datatype as input.
 
         Parameters
         ----------
         func : function
-            Function to apply
+            Function to apply to records.
 
         dtype: numpy dtype or dtype specifier, or string 'smallfloat', or None
             Data type to which RDD values are to be cast. Will return immediately, performing no cast, if None is passed.
@@ -152,6 +155,30 @@ class Data(object):
         casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
             Casting method to pass on to numpy's astype() method; see numpy documentation for details.
         """
+
+        applied = self._constructor(self.rdd.map(func)).__finalize__(self)
+        if dtype:
+            return applied.astype(dtype=dtype, casting=casting)
+        return applied
+
+    def applyKeys(self, func):
+        """ Apply arbitrary function to the keys of a Data object, preserving the values.
+
+        See also
+        --------
+        Series.apply
+        """
+
+        return self._constructor(self.rdd.map(lambda (k, _): (func(k), _))).__finalize__(self)
+
+    def applyValues(self, func, dtype=None, casting='safe'):
+        """ Apply arbitrary function to the values of a Data object, preserving the keys.
+
+        See also
+        --------
+        Series.apply
+        """
+
         applied = self._constructor(self.rdd.mapValues(func)).__finalize__(self)
         if dtype:
             return applied.astype(dtype=dtype, casting=casting)
