@@ -2,24 +2,30 @@
 Example standalone app for mass-univariate regression
 """
 
-import argparse
+import optparse
 from thunder import ThunderContext, RegressionModel, export
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="fit a regression model")
-    parser.add_argument("datafile", type=str)
-    parser.add_argument("modelfile", type=str)
-    parser.add_argument("outputdir", type=str)
-    parser.add_argument("regressmode", choices=("mean", "linear", "bilinear"), help="form of regression")
+    parser = optparse.OptionParser(description="fit a regression model",
+                                   usage="%prog datafile modelfile outputdir [options]")
+    parser.add_option("--regressmode", choices=("mean", "linear", "bilinear"),
+                      default="linear", help="form of regression")
 
-    args = parser.parse_args()
+    opts, args = parser.parse_args()
+    try:
+        datafile = args[0]
+        modelfile = args[1]
+        outputdir = args[2]
+    except IndexError:
+        parser.print_usage()
+        raise Exception("too few arguments")
 
     tsc = ThunderContext.start(appName="regress")
 
-    data = tsc.loadText(args.datafile, args.preprocess)
-    result = RegressionModel.load(args.modelfile, args.regressmode).fit(data)
+    data = tsc.loadText(datafile)
+    result = RegressionModel.load(modelfile, opts.regressmode).fit(data)
 
-    outputdir = args.outputdir + "-regress"
+    outputdir += "-regress"
     export(result.select('stats'), outputdir, "stats", "matlab")
     export(result.select('betas'), outputdir, "betas", "matlab")
