@@ -1,4 +1,4 @@
-from numpy import ndarray, arange, amax, amin, size, squeeze, dtype
+from numpy import ndarray, arange, amax, amin, size, squeeze, dtype, greater
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
@@ -516,46 +516,65 @@ class Images(Data):
         return self._constructor(
             self.rdd.mapValues(lambda v: filter(v))).__finalize__(self)
 
-    def planes(self, bottom, top, inclusive=True):
+    def crop(self, minbound, maxbound):
         """
-        Subselect planes for three-dimensional image data.
+        Crop a spatial region from 2D or 3D data.
 
         Parameters
         ----------
-        bottom : int
-            Bottom plane in desired selection
+        minbound : list or tuple
+            Minimum of crop region (x,y) or (x,y,z)
 
-        top : int
-            Top plane in desired selection
+        maxbound : list or tuple
+            Maximum of crop region (x,y) or (x,y,z)
 
-        inclusive : boolean, optional, default = True
-            Whether returned subset of planes should include bounds
+        Returns
+        -------
+        Images object with cropped images / volume
         """
-        if len(self.dims) == 2 or self.dims[2] == 1:
+
+        dims = self.dims
+        ndims = len(dims)
+
+        if ndims < 2 or ndims > 3:
+            raise Exception("Cropping only supported on 2D or 3D image data.")
+
+        if ndims == 2:
+            xmin, ymin = minbound
+            xmax, ymax = maxbound
+            newrdd = self.rdd.mapValues(lambda v: v[xmin: xmax, ymin: ymax])
+            newdims = (xmax-xmin, ymax-ymin)
+        else:
+            xmin, ymin, zmin = minbound
+            xmax, ymax, zmax = maxbound
+            newrdd = self.rdd.mapValues(lambda v: v[xmin: xmax, ymin: ymax, zmin: zmax])
+            newdims = (xmax-xmin, ymax-ymin, zmax-zmin)
+
+        if any(greater(newdims, dims.count)):
+            raise Exception("Size of requested crop region %s exceeds image dimensions %s" % (newdims, dims.count))
+
+        return self._constructor(newrdd, dims=newdims).__finalize__(self)
+
+    def planes(self, startidz, stopidz):
+        """
+        Subselect planes from 3D image data.
+
+        Parameters
+        ----------
+        startidz, stopidz : int
+            Indices of region to crop in z, interpreted according to python slice indexing conventions.
+
+        See also
+        --------
+        Images.crop
+        """
+
+        dims = self.dims
+
+        if len(dims) == 2 or dims[2] == 1:
             raise Exception("Cannot subselect planes, images must be 3D")
 
-        if inclusive is True:
-            zrange = arange(bottom, top+1)
-        else:
-            zrange = arange(bottom+1, top)
-
-        if len(zrange) == 0:
-            raise Exception("No planes selected with range (%g, %g) and inclusive=%s, "
-                            "try a different range" % (bottom, top, inclusive))
-
-        if zrange.min() < self.dims.min[2]:
-            raise Exception("Cannot include plane %g, first plane is %g" % (zrange.min(), self.dims.min[2]))
-
-        if zrange.max() > self.dims.max[2]:
-            raise Exception("Cannout include plane %g, last plane is %g" % (zrange.max(), self.dims.max[2]))
-
-        newdims = [self.dims[0], self.dims[1], size(zrange)]
-
-        if size(zrange) < 2:
-            newdims = newdims[0:2]
-
-        return self._constructor(self.rdd.mapValues(lambda v: squeeze(v[:, :, zrange])),
-                                 dims=newdims).__finalize__(self)
+        return self.crop([0, 0, startidz], [dims[0], dims[1], stopidz])
 
     def subtract(self, val):
         """

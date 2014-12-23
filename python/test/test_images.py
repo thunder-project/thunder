@@ -356,21 +356,30 @@ class TestImages(PySparkTestCase):
         from thunder.rdds.images import Images
         self._run_tst_filter(Images.medianFilter, median_filter)
 
-    def test_planes(self):
-        # params are images shape, bottom, top, inclusize, expected slices of orig ary
-        PARAMS = [((2, 2, 4), 1, 2, True, [slice(None), slice(None), slice(1, 3)]),
-                  ((2, 2, 4), 0, 2, False, [slice(None), slice(None), slice(1, 2)])]
-        for params in PARAMS:
-            sz = reduce(lambda x, y: x*y, params[0])
-            origAry = arange(sz, dtype='int16').reshape(params[0])
-            imageData = ImagesLoader(self.sc).fromArrays([origAry])
-            planedData = imageData.planes(params[1], params[2], params[3])
-            planed = planedData.collect()
+    def test_crop(self):
+        dims = (2, 2, 4)
+        sz = reduce(lambda x, y: x*y, dims)
+        origAry = arange(sz, dtype='int16').reshape(dims)
+        imageData = ImagesLoader(self.sc).fromArrays([origAry])
+        croppedData = imageData.crop((0, 0, 0), (2, 2, 2))
+        crop = croppedData.collect()[0][1]
+        expected = squeeze(origAry[slice(0, 2), slice(0, 2), slice(0, 2)])
+        assert_true(array_equal(expected, crop))
+        assert_equals(tuple(expected.shape), croppedData._dims.count)
+        assert_equals(str(expected.dtype), croppedData._dtype)
 
-            expected = squeeze(origAry[params[4]])
-            assert_true(array_equal(expected, planed[0][1]))
-            assert_equals(tuple(expected.shape), planedData._dims.count)
-            assert_equals(str(expected.dtype), planedData._dtype)
+    def test_planes(self):
+        dims = (2, 2, 4)
+        sz = reduce(lambda x, y: x*y, dims)
+        origAry = arange(sz, dtype='int16').reshape(dims)
+        imageData = ImagesLoader(self.sc).fromArrays([origAry])
+        planedData = imageData.planes(0, 2)
+        planed = planedData.collect()[0][1]
+
+        expected = squeeze(origAry[slice(None), slice(None), slice(0, 2)])
+        assert_true(array_equal(expected, planed))
+        assert_equals(tuple(expected.shape), planedData._dims.count)
+        assert_equals(str(expected.dtype), planedData._dtype)
 
     def test_subtract(self):
         narys = 3
