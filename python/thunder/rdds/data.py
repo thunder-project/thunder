@@ -21,8 +21,26 @@ class Data(object):
 
     def __init__(self, rdd, dtype=None):
         self.rdd = rdd
-        # 'if dtype' is False here when passed a numpy dtype object.
         self._dtype = dtype
+
+    def __repr__(self):
+
+        # start with class name
+        s = self.__class__.__name__
+
+        # build a printable string by iterating through the dictionary
+        for k, v in self.__dict__.iteritems():
+            if k is not 'rdd':
+                if v is None:
+                    output = 'None (inspect to compute)'
+                else:
+                    output = str(v)
+                # TODO make max line length a configurable property
+                if len(output) > 70:
+                    output = output[0:70] + ' ...'
+                # assumes all non-rdd attributes have underscores (and drops them)
+                s += '\n' + k[1:] + ': ' + output
+        return s
 
     @property
     def dtype(self):
