@@ -152,9 +152,6 @@ class TimeSeries(Series):
         n = size(self.index)
         m = size(s)
 
-        if m > n:
-            raise Exception('Size of signal, %g, must be shorter than time series length, %g' % (m, n))
-
         newrdd = self.rdd.mapValues(lambda x: convolve(x, signal, mode))
 
         # use expected lengths to make a new index
