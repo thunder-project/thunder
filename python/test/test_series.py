@@ -129,12 +129,6 @@ class TestSeriesMethods(PySparkTestCase):
         selection2 = data.select(['label1', 'label2'])
         assert(allclose(selection2.first()[1], array([4, 5])))
 
-    def test_detrend(self):
-        rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5]))])
-        data = Series(rdd).detrend('linear')
-        # detrending linearly increasing data should yield all 0s
-        assert(allclose(data.first()[1], array([0, 0, 0, 0, 0])))
-
     def test_series_stats(self):
         rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5]))])
         data = Series(rdd)
@@ -147,49 +141,6 @@ class TestSeriesMethods(PySparkTestCase):
         assert(allclose(data.seriesStats().select('count').first()[1], 5))
         assert(allclose(data.seriesPercentile(25).first()[1], 2.0))
         assert(allclose(data.seriesPercentile((25, 75)).first()[1], array([2.0, 4.0])))
-
-    def test_normalization_bypercentile(self):
-        rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5], dtype='float16'))])
-        data = Series(rdd, dtype='float16')
-        out = data.normalize('percentile', percentile=20)
-        # check that _dtype has been set properly *before* calling first(), b/c first() will update this
-        # value even if it hasn't been correctly set
-        assert_equals('float16', str(out._dtype))
-        vals = out.first()[1]
-        assert_equals('float16', str(vals.dtype))
-        assert(allclose(vals, array([-0.42105,  0.10526,  0.63157,  1.15789,  1.68421]), atol=1e-3))
-
-    def test_normalization_bywindow(self):
-        y = array([1, 2, 3, 4, 5], dtype='float16')
-        rdd = self.sc.parallelize([(0, y)])
-        data = Series(rdd, dtype='float16')
-        out = data.normalize('window', window=2)
-        # check that _dtype has been set properly *before* calling first(), b/c first() will update this
-        # value even if it hasn't been correctly set
-        assert_equals('float16', str(out._dtype))
-        vals = out.first()[1]
-        assert_equals('float64', str(vals.dtype))
-        b_true = array([1.2,  1.4,  2.4,  3.4,  4.2])
-        result_true = (y - b_true) / (b_true + 0.1)
-        assert(allclose(vals, result_true, atol=1e-3))
-
-        out = data.normalize('window', window=6)
-        vals = out.first()[1]
-        b_true = array([1.6,  1.8,  1.8,  1.8,  2.6])
-        result_true = (y - b_true) / (b_true + 0.1)
-        assert(allclose(vals, result_true, atol=1e-3))
-
-    def test_normalization_bymean(self):
-        rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5], dtype='float16'))])
-        data = Series(rdd, dtype='float16')
-        out = data.normalize('mean')
-        # check that _dtype has been set properly *before* calling first(), b/c first() will update this
-        # value even if it hasn't been correctly set
-        assert_equals('float16', str(out._dtype))
-        vals = out.first()[1]
-        assert_equals('float16', str(vals.dtype))
-        assert(allclose(out.first()[1],
-                        array([-0.64516,  -0.32258,  0.0,  0.32258,  0.64516]), atol=1e-3))
 
     def test_standardization_axis0(self):
         rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5], dtype='float16'))])

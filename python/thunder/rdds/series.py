@@ -1,11 +1,10 @@
 from numpy import ndarray, array, sum, mean, median, std, size, arange, \
-    polyfit, polyval, percentile, asarray, maximum, zeros, corrcoef, where, \
-    true_divide, empty_like, ceil
-from numpy import dtype as dtypefunc
+    percentile, asarray, maximum, zeros, corrcoef, where, \
+    true_divide, ceil
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
-from thunder.utils.common import checkparams, loadmatvar, smallest_float_type
+from thunder.utils.common import checkparams, loadmatvar
 
 
 class Series(Data):
@@ -187,92 +186,6 @@ class Series(Data):
                 newindex = arange(0, size(val))
 
         return self._constructor(rdd, index=newindex).__finalize__(self)
-
-    def detrend(self, method='linear', **kwargs):
-        """
-        Detrend series data with linear or nonlinear detrending
-        Preserve intercept so that subsequent steps can adjust the baseline
-
-        Parameters
-        ----------
-        method : str, optional, default = 'linear'
-            Detrending method
-
-        order : int, optional, default = 5
-            Order of polynomial, for non-linear detrending only
-        """
-        checkparams(method, ['linear', 'nonlin'])
-
-        if method.lower() == 'linear':
-            order = 1
-        else:
-            if 'order' in kwargs:
-                order = kwargs['order']
-            else:
-                order = 5
-
-        def func(y):
-            x = arange(1, len(y)+1)
-            p = polyfit(x, y, order)
-            p[-1] = 0
-            yy = polyval(p, x)
-            return y - yy
-
-        return self.applyValues(func)
-
-    def normalize(self, baseline='percentile', **kwargs):
-        """ Normalize each record by subtracting and dividing by a baseline.
-
-        Baseline can be derived from a global mean or percentile,
-        or a smoothed percentile estimated within a rolling window.
-
-        Parameters
-        ----------
-        baseline : str, optional, default = 'percentile'
-            Quantity to use as the baseline, options are 'mean', 'percentile', or 'window'
-
-        percentile : int, optional, default = 20
-            Percentile value to use, for 'percentile' or 'window' baseline only
-
-        window : int, optional, default = 6
-            Size of window for windowed baseline estimation
-        """
-        checkparams(baseline, ['mean', 'percentile', 'window'])
-        method = baseline.lower()
-
-        if method == 'mean':
-            basefunc = mean
-
-        if method == 'percentile' or method == 'window':
-            if 'percentile' in kwargs:
-                perc = kwargs['percentile']
-            else:
-                perc = 20
-
-        if method == 'percentile':
-            basefunc = lambda x: percentile(x, perc)
-
-        # TODO optimize implementation by doing a single initial sort
-        if method == 'window':
-            if 'window' in kwargs:
-                window = kwargs['window']
-            else:
-                window = 6
-
-            if window & 0x1:
-                left, right = (ceil(window/2), ceil(window/2) + 1)
-            else:
-                left, right = (window/2, window/2)
-
-            n = len(self.index)
-            basefunc = lambda x: asarray([percentile(x[max(ix-left, 0):min(ix+right+1, n)], perc)
-                                          for ix in arange(0, n)])
-
-        def get(y):
-            b = basefunc(y)
-            return (y - b) / (b + 0.1)
-
-        return self.applyValues(get)
 
     def center(self, axis=0):
         """ Center series data by subtracting the mean

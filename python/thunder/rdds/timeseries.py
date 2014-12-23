@@ -1,8 +1,9 @@
 from numpy import sqrt, pi, angle, fft, fix, zeros, roll, dot, mean, \
-    array, size, diag, tile, ones, asarray
+    array, size, diag, tile, ones, asarray, polyfit, polyval, arange, \
+    percentile, ceil
 
 from thunder.rdds.series import Series
-from thunder.utils.common import loadmatvar
+from thunder.utils.common import loadmatvar, checkparams
 
 
 class TimeSeries(Series):
@@ -183,3 +184,79 @@ class TimeSeries(Series):
 
         rdd = self.rdd.mapValues(lambda x: get(x, s))
         return self._constructor(rdd, index=shifts).__finalize__(self)
+
+    def detrend(self, method='linear', **kwargs):
+        """
+        Detrend time series data with linear or nonlinear detrending
+        Preserve intercept so that subsequent steps can adjust the baseline
+
+        Parameters
+        ----------
+        method : str, optional, default = 'linear'
+            Detrending method
+
+        order : int, optional, default = 5
+            Order of polynomial, for non-linear detrending only
+        """
+        checkparams(method, ['linear', 'nonlin'])
+
+        if method.lower() == 'linear':
+            order = 1
+        else:
+            if 'order' in kwargs:
+                order = kwargs['order']
+            else:
+                order = 5
+
+        def func(y):
+            x = arange(1, len(y)+1)
+            p = polyfit(x, y, order)
+            p[-1] = 0
+            yy = polyval(p, x)
+            return y - yy
+
+        return self.applyValues(func)
+
+    def normalize(self, baseline='percentile', window=6, perc=20):
+        """ Normalize each time series by subtracting and dividing by a baseline.
+
+        Baseline can be derived from a global mean or percentile,
+        or a smoothed percentile estimated within a rolling window.
+
+        Parameters
+        ----------
+        baseline : str, optional, default = 'percentile'
+            Quantity to use as the baseline, options are 'mean', 'percentile', or 'window'
+
+        perc : int, optional, default = 20
+            Percentile value to use, for 'percentile' or 'window' baseline only
+
+        window : int, optional, default = 6
+            Size of window for baseline estimation, for 'window' baseline only
+        """
+        checkparams(baseline, ['mean', 'percentile', 'window'])
+        method = baseline.lower()
+
+        if method == 'mean':
+            basefunc = mean
+
+        if method == 'percentile':
+            basefunc = lambda x: percentile(x, perc)
+
+        # TODO optimize implementation by doing a single initial sort
+        if method == 'window':
+            if window & 0x1:
+                left, right = (ceil(window/2), ceil(window/2) + 1)
+            else:
+                left, right = (window/2, window/2)
+
+            n = len(self.index)
+            basefunc = lambda x: asarray([percentile(x[max(ix-left, 0):min(ix+right+1, n)], perc)
+                                          for ix in arange(0, n)])
+
+        def get(y):
+            b = basefunc(y)
+            return (y - b) / (b + 0.1)
+
+        return self.applyValues(get)
+
