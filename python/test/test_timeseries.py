@@ -31,6 +31,14 @@ class TestTimeSeriesMethods(TimeSeriesTestCase):
         assert(allclose(vals.select('coherence').values().collect()[0], 0.578664))
         assert(allclose(vals.select('phase').values().collect()[0], 4.102501))
 
+    def convolve_test(self):
+        data_local = array([1, 2, 3, 4, 5])
+        sig = array([1, 2, 3])
+        rdd = self.sc.parallelize([(0, data_local)])
+        data = TimeSeries(rdd)
+        betas = data.convolve(sig, mode='same')
+        assert(allclose(betas.values().collect()[0], array([4, 10, 16, 22, 22])))
+
     def cross_corr_test(self):
         data_local = array([
             array([1.0, 2.0, -4.0, 5.0, 8.0, 3.0, 4.1, 0.9, 2.3]),

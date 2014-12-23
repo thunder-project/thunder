@@ -125,6 +125,49 @@ class TimeSeries(Series):
         rdd = self.rdd.mapValues(lambda x: get(x, freq))
         return Series(rdd, index=['coherence', 'phase']).__finalize__(self)
 
+    def convolve(self, signal, mode='full', var=None):
+        """
+        Conolve time series data against another signal
+
+        Parameters
+        ----------
+        signal : array, or str
+            Signal to convolve with, can be a numpy array or a
+            MAT file containing the signal as a variable
+
+        var : str
+            Variable name if loading from a MAT file
+
+        mode : str, optional, default='full'
+            Mode of convolution, options are 'full', 'same', and 'same'
+        """
+
+        from numpy import convolve
+
+        if type(signal) is str:
+            s = loadmatvar(signal, var)
+        else:
+            s = asarray(signal)
+
+        n = size(self.index)
+        m = size(s)
+
+        if m > n:
+            raise Exception('Size of signal, %g, must be shorter than time series length, %g' % (m, n))
+
+        newrdd = self.rdd.mapValues(lambda x: convolve(x, signal, mode))
+
+        # use expected lengths to make a new index
+        if mode == 'same':
+            newmax = max(n, m)
+        elif mode == 'valid':
+            newmax = max(m, n) - min(m, n) + 1
+        else:
+            newmax = n+m-1
+        newindex = arange(0, newmax)
+
+        return self._constructor(newrdd, index=newindex).__finalize__(self)
+
     def crossCorr(self, signal, lag=0, var=None):
         """
         Cross correlate time series data against another signal
@@ -146,7 +189,7 @@ class TimeSeries(Series):
         if type(signal) is str:
             s = loadmatvar(signal, var)
         else:
-            s = signal
+            s = asarray(signal)
 
         # standardize signal
         s = s - mean(s)
