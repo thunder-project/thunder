@@ -288,6 +288,13 @@ class Data(object):
         self.rdd = self.rdd.repartition(numPartitions)
         return self
 
+    def filter(self, func):
+        """ Filter records by appliyng a function to each record.
+
+        This calls the Spark filter() method on the underlying RDD.
+        """
+        return self._constructor(self.rdd.filter(lambda d: func(d))).__finalize__(self)._resetCounts()
+
     def filterOnKeys(self, func):
         """ Filter records by applying a function to keys """
         return self._constructor(self.rdd.filter(lambda (k, v): func(k))).__finalize__(self)._resetCounts()
