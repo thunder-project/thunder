@@ -100,16 +100,16 @@ def transformArguments(args):
     opts = {}
     passthruArgs = []
     if len(args) > 1:
+        done = object()  # sentinel
         argIter = iter(args[1:])
-        try:
-            arg = argIter.next()
-            larg = arg.lower().lstrip("-")
-            if larg in frozenset(["master", "py-files", "jars"]):
-                opts[larg] = argIter.next()
+        nextArg = next(argIter, done)
+        while nextArg is not done:
+            strippedArg = nextArg.lower().lstrip("-")
+            if strippedArg in frozenset(["master", "py-files", "jars"]):
+                opts[strippedArg] = next(argIter, "")
             else:
-                passthruArgs.append(arg)
-        except StopIteration:
-            pass
+                passthruArgs.append(nextArg)
+            nextArg = next(argIter, done)
 
     master = getMasterURI(opts)
     if "local" not in master:
@@ -131,4 +131,4 @@ def transformArguments(args):
     retVals.extend(jars)
     retVals.extend(passthruArgs)
 
-    return passthruArgs
+    return retVals
