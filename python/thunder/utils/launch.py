@@ -84,7 +84,19 @@ def transformArguments(args):
 
     The passed arguments will be modified as follows and returned in a new list:
     1. the first element of args will be dropped (assumption is that this is sys.argv[0],
-    the program name, which the caller is responsible for replacing.
+    the program name, which the caller is responsible for replacing).
+    2. if not already present, the flag "--master" will be added to the arg list, with a
+    value taken from the MASTER environment variable if present, otherwise generated
+    from the DNS name of the master node if we believe we are being run on ec2, and
+    otherwise set to "local".
+    3. the flags "--py-files" and "--jars" will have the thunder egg file and thunder
+    jar file appended to the comma-separated list value if present in the arg list.
+    If they are not already in the arg list, they will be added with the egg and jar
+    as their values.
+
+    As a side effect, if the "master" arg is set to anything other than "local*",
+    the thunder egg file will be rebuilt via a system call to setup.py if it does
+    not already exist.
 
     Parameters
     ----------
@@ -95,8 +107,8 @@ def transformArguments(args):
     -------
         Sequence of string arguments
     """
-
-    # first pass through arguments, looking for a few specific flags
+    # check for a few specific flags and cache their values; put other
+    # arguments in a passthrough list
     opts = {}
     passthruArgs = []
     if len(args) > 1:
@@ -111,6 +123,7 @@ def transformArguments(args):
                 passthruArgs.append(nextArg)
             nextArg = next(argIter, done)
 
+    # look for and rebuild the thunder egg file if necessary
     master = getMasterURI(opts)
     if "local" not in master:
         thunderEgg = findThunderEgg()
@@ -123,6 +136,7 @@ def transformArguments(args):
 
     thunderJar = findThunderJar()
 
+    # update arguments list with new values
     pyFiles = getCommaSeparatedOptionsList("--py-files", opts.get("py-files", []), thunderEgg)
     jars = getCommaSeparatedOptionsList("--jars", opts.get("jars", []), thunderJar)
 
