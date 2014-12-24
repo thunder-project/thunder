@@ -2,25 +2,29 @@
 Example standalone app for kmeans clustering
 """
 
-import argparse
+import optparse
 from thunder import ThunderContext, KMeans, export
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="do kmeans clustering")
-    parser.add_argument("datafile", type=str)
-    parser.add_argument("outputdir", type=str)
-    parser.add_argument("k", type=int)
-    parser.add_argument("--maxiter", type=float, default=20, required=False)
-    parser.add_argument("--tol", type=float, default=0.001, required=False)
-
-    args = parser.parse_args()
+    parser = optparse.OptionParser(description="do kmeans clustering",
+                                   usage="%prog datafile outputdir k [options]")
+    parser.add_option("--maxiter", type=float, default=20)
+    parser.add_option("--tol", type=float, default=0.001)
+    opts, args = parser.parse_args()
+    try:
+        datafile = args[0]
+        outputdir = args[1]
+        k = int(args[2])
+    except IndexError:
+        parser.print_usage()
+        raise Exception("too few arguments")
 
     tsc = ThunderContext.start(appName="kmeans")
 
-    data = tsc.loadSeries(args.datafile).cache()
-    model = KMeans(k=args.k, maxIterations=args.maxiter).fit(data)
+    data = tsc.loadSeries(datafile).cache()
+    model = KMeans(k=k, maxIterations=opts.maxiter).fit(data)
     labels = model.predict(data)
 
-    outputdir = args.outputdir + "-kmeans"
+    outputdir += "-kmeans"
     export(model.centers, outputdir, "centers", "matlab")
     export(labels, outputdir, "labels", "matlab")

@@ -105,6 +105,12 @@ def install_thunder(master, opts, spark_version_string):
     print "Installing Thunder on the cluster..."
     # download and build thunder
     ssh(master, opts, "rm -rf thunder && git clone https://github.com/freeman-lab/thunder.git")
+    if opts.thunder_version.lower() != "head":
+        tagOrHash = opts.thunder_version
+        if '.' in tagOrHash and not (tagOrHash.startswith('v')):
+            # we have something that looks like a version number. prepend 'v' to get a valid tag id.
+            tagOrHash = 'v' + tagOrHash
+        ssh(master, opts, "cd thunder && git checkout %s" % tagOrHash)
     ssh(master, opts, "chmod u+x thunder/python/bin/build")
     ssh(master, opts, "thunder/python/bin/build")
     # copy local data examples to all workers
@@ -144,7 +150,7 @@ def install_thunder(master, opts, spark_version_string):
     # "java.lang.IllegalArgumentException: port out of range" [SPARK-3772]
     # this logic doesn't work if we get a hash here; assume in this case it's a recent version of Spark
     if (not '.' in spark_version_string) or LooseVersion(spark_version_string) >= LooseVersion("1.2.0"):
-        ssh(master, opts, "echo 'export PYSPARK_PYTHON=/usr/bin/ipython' >> /root/.bash_profile")
+        ssh(master, opts, "echo 'export PYSPARK_PYTHON=/usr/bin/python' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export PATH=/root/thunder/python/bin:$PATH' >> /root/.bash_profile")
     # customize spark configuration parameters
     ssh(master, opts, "echo 'spark.akka.frameSize=10000' >> /root/spark/conf/spark-defaults.conf")
@@ -269,25 +275,75 @@ if __name__ == "__main__":
     parser.add_option("-t", "--instance-type", default="m3.2xlarge",
                       help="Type of instance to launch (default: m3.2xlarge)." +
                            " WARNING: must be 64-bit; small instances won't work")
+    parser.add_option(
+        "-m", "--master-instance-type", default="",
+        help="Master instance type (leave empty for same as instance-type)")
     parser.add_option("-u", "--user", default="root", help="User name for cluster (default: root)")
     parser.add_option("-v", "--spark-version", default=spark_home_version_string,
                       help="Version of Spark to use: 'X.Y.Z' or a specific git hash. (default: %s)" %
                            spark_home_version_string)
-    parser.add_option("-w", "--wait", type="int", default=160,
-                      help="Seconds to wait for nodes to start (default: 160)")
+    parser.add_option("--thunder-version", default='HEAD',
+                      help="Version of Thunder to use: 'X.Y.Z', 'HEAD' (current state of master branch), " +
+                           " or a specific git hash. (default: %default)")
+
+    if spark_home_loose_version >= LooseVersion("1.2.0"):
+        parser.add_option(
+            "-w", "--wait", type="int", default=160,
+            help="DEPRECATED (no longer necessary for Spark >= 1.2.0) - Seconds to wait for nodes to start")
+    else:
+        parser.add_option("-w", "--wait", type="int", default=160,
+                          help="Seconds to wait for nodes to start (default: 160)")
     parser.add_option("-z", "--zone", default="", help="Availability zone to launch instances in, or 'all' to spread "
                                                        "slaves across multiple (an additional $0.01/Gb for "
                                                        "bandwidth between zones applies)")
+    parser.add_option(
+        "--spark-git-repo",
+        default="https://github.com/apache/spark",
+        help="Github repo from which to checkout supplied commit hash")
+    parser.add_option(
+        "--hadoop-major-version", default="1",
+        help="Major version of Hadoop (default: %default)")
     parser.add_option("--ssh-port-forwarding", default=None,
                       help="Set up ssh port forwarding when you login to the cluster.  " +
                            "This provides a convenient alternative to connecting to iPython " +
                            "notebook over an open port using SSL.  You must supply an argument " +
                            "of the form \"local_port:remote_port\".")
+    parser.add_option(
+        "--ebs-vol-size", metavar="SIZE", type="int", default=0,
+        help="Size (in GB) of each EBS volume.")
+    parser.add_option(
+        "--ebs-vol-type", default="standard",
+        help="EBS volume type (e.g. 'gp2', 'standard').")
+    parser.add_option(
+        "--ebs-vol-num", type="int", default=1,
+        help="Number of EBS volumes to attach to each node as /vol[x]. " +
+             "The volumes will be deleted when the instances terminate. " +
+             "Only possible on EBS-backed AMIs. " +
+             "EBS volumes are only attached if --ebs-vol-size > 0." +
+             "Only support up to 8 EBS volumes.")
+    parser.add_option(
+        "--swap", metavar="SWAP", type="int", default=1024,
+        help="Swap space to set up per node, in MB (default: %default)")
     parser.add_option("--spot-price", metavar="PRICE", type="float",
                       help="If specified, launch slaves as spot instances with the given " +
                            "maximum price (in dollars)")
+    parser.add_option(
+        "--ganglia", action="store_true", default=True,
+        help="Setup Ganglia monitoring on cluster (default: %default). NOTE: " +
+             "the Ganglia page will be publicly accessible")
+    parser.add_option(
+        "--no-ganglia", action="store_false", dest="ganglia",
+        help="Disable Ganglia monitoring for the cluster")
     parser.add_option("--resume", default=False, action="store_true",
                       help="Resume installation on a previously launched cluster (for debugging)")
+    parser.add_option(
+        "--worker-instances", type="int", default=1,
+        help="Number of instances per worker: variable SPARK_WORKER_INSTANCES (default: %default)")
+    parser.add_option("--master-opts", type="string", default="",
+                      help="Extra options to give to master through SPARK_MASTER_OPTS variable " +
+                           "(e.g -Dspark.worker.timeout=180)")
+    parser.add_option("--user-data", type="string", default="",
+                      help="Path to a user-data file (most AMI's interpret this as an initialization script)")
     if spark_home_loose_version >= LooseVersion("1.2.0"):
         parser.add_option("--authorized-address", type="string", default="0.0.0.0/0",
                           help="Address to authorize on created security groups (default: %default)" +
@@ -316,20 +372,9 @@ if __name__ == "__main__":
             raise ValueError("Requested cluster Spark version '%s' is less " % spark_version_string
                              + "than the minimum version required for Thunder, '%s'" % MINIMUM_SPARK_VERSION)
 
-    # The Thunder ec2 scripts hardwire some of the settings that were
-    # broken out as command line options in the Spark ec2 scripts.
-    opts.ami = get_spark_ami(opts)  # "ami-3ecd0c56"
-    opts.ebs_vol_size = 0
-    opts.master_instance_type = ""
-    opts.hadoop_major_version = "1"
-    opts.ganglia = True
+    opts.ami = get_spark_ami(opts)  # "ami-3ecd0c56"\
     # get version string as github commit hash if needed (mainly to support Spark release candidates)
     opts.spark_version = remap_spark_version_to_hash(spark_version_string)
-    opts.spark_git_repo = "https://github.com/apache/spark"
-    opts.swap = 1024
-    opts.worker_instances = 1
-    opts.master_opts = ""
-    opts.user_data = ""
 
     # Launch a cluster, setting several options to defaults
     # (use spark-ec2.py included with Spark for more control)
@@ -406,6 +451,20 @@ if __name__ == "__main__":
                 subprocess.check_call(ssh_command(opts) + proxy_opt +
                                       ['-t', '-t', "%s@%s" % (opts.user, master)])
 
+        elif action == "reboot-slaves":
+            response = raw_input(
+                "Are you sure you want to reboot the cluster " +
+                cluster_name + " slaves?\n" +
+                "Reboot cluster slaves " + cluster_name + " (y/N): ")
+            if response == "y":
+                (master_nodes, slave_nodes) = get_existing_cluster(
+                    conn, opts, cluster_name, die_on_error=False)
+                print "Rebooting slaves..."
+                for inst in slave_nodes:
+                    if inst.state not in ["shutting-down", "terminated"]:
+                        print "Rebooting " + inst.id
+                        inst.reboot()
+
         elif action == "get-master":
             print master_nodes[0].public_dns_name
 
@@ -450,7 +509,14 @@ if __name__ == "__main__":
             for inst in master_nodes:
                 if inst.state not in ["shutting-down", "terminated"]:
                     inst.start()
-            wait_for_cluster(conn, opts.wait, master_nodes, slave_nodes)
+            try:
+                wait_for_cluster(conn, opts.wait, master_nodes, slave_nodes)
+            except NameError:
+                wait_for_cluster_state(
+                    cluster_instances=(master_nodes + slave_nodes),
+                    cluster_state='ssh-ready',
+                    opts=opts
+            )
             setup_cluster(conn, master_nodes, slave_nodes, opts, False)
             master = master_nodes[0].public_dns_name
             print "\n\n"
