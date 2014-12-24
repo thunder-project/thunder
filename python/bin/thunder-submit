@@ -10,7 +10,14 @@ import os
 import subprocess
 import sys
 
-from thunder.utils.launch import getSparkHome, transformArguments
+from thunder.utils.launch import getFilteredHelpMessage, getSparkHome, transformArguments
+
+
+def getUsage(wrappedScriptName='spark-submit'):
+    scriptName = os.path.basename(sys.argv[0])
+    return "Usage: %s [%s options] <python file> [app options]\n" % (sys.argv[0], wrappedScriptName) + \
+           "The '%s' script is a wrapper around Spark's '%s', and accepts all the same options, " % (scriptName, wrappedScriptName) + \
+           "although not all are meaningful when running python scripts. Options for '%s' follow.\n" % wrappedScriptName
 
 
 def main():
@@ -21,7 +28,11 @@ def main():
     sparkSubmit = os.path.join(SPARK_HOME, 'bin', 'spark-submit')
     childArgs = [sparkSubmit] + childArgs
 
-    subprocess.call(childArgs, env=os.environ)
+    # check for help flags, and print our own first if present
+    if "-h" in childArgs or "--help" in childArgs:
+        print >> sys.stderr, getFilteredHelpMessage(sparkSubmit, getUsage())
+    else:
+        subprocess.call(childArgs, env=os.environ)
 
 if __name__ == "__main__":
     main()

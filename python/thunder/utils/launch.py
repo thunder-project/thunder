@@ -2,6 +2,7 @@
 import glob
 import os
 import subprocess
+import sys
 
 import thunder
 
@@ -146,3 +147,11 @@ def transformArguments(args):
     retVals.extend(passthruArgs)
 
     return retVals
+
+
+def getFilteredHelpMessage(wrappedScriptPath, usage):
+    msg = usage
+    p = subprocess.Popen([wrappedScriptPath, "-h"], stderr=subprocess.PIPE)
+    _, errOut = p.communicate()
+    msg += '\n'.join([line for line in errOut.split('\n') if not line.lower().startswith("usage")])
+    return msg

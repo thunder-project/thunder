@@ -11,7 +11,7 @@ import os
 import subprocess
 import sys
 
-from thunder.utils.launch import getSparkHome, transformArguments
+from thunder.utils.launch import getFilteredHelpMessage, getSparkHome, transformArguments
 
 
 def getStandaloneDir():
@@ -23,16 +23,20 @@ def getExampleNames():
     return [os.path.basename(fname)[:-3] for fname in glob.glob(standaloneDir + os.sep + "*.py")]
 
 
-def printUsage():
-    print >> sys.stderr, "usage: thunder-submit-example [spark-submit opts] " + \
-                         "<analysis name> [analysis opts]"
+def getUsage(wrappedScriptName='spark-submit'):
+    scriptName = os.path.basename(sys.argv[0])
+    return "Usage: %s [%s options] <analysis name> [analysis options]\n" % (sys.argv[0], wrappedScriptName) + \
+           "'%s' runs analysis scripts that are found in the %s directory.\n" % (scriptName, getStandaloneDir()) + \
+           "It is a wrapper around Spark's '%s', and accepts all the same options, " % wrappedScriptName + \
+           "although not all are meaningful when running python scripts. Options for '%s' follow.\n" % wrappedScriptName
 
 
 def main():
     SPARK_HOME = getSparkHome()
+    sparkSubmit = os.path.join(SPARK_HOME, 'bin', 'spark-submit')
 
     if len(sys.argv) < 2:
-        printUsage()
+        print >> sys.stderr, getFilteredHelpMessage(sparkSubmit, getUsage())
         exit(1)
 
     exampleNames = getExampleNames()
@@ -44,14 +48,14 @@ def main():
             childArgs[idx] = os.path.join(getStandaloneDir(), arg+".py")
             found = True
             break
+        elif arg == '-h' or arg == '--help':
+            print >> sys.stderr, getFilteredHelpMessage(sparkSubmit, getUsage())
+            exit(0)
     if not found:
-        printUsage()
         raise Exception("Did not recognize a known example analysis name; must be a script in %s (one of: %s)" %
                         (getStandaloneDir(), str(getExampleNames())[1:-1]))
 
-    sparkSubmit = os.path.join(SPARK_HOME, 'bin', 'spark-submit')
     childArgs = [sparkSubmit] + childArgs
-
     subprocess.call(childArgs, env=os.environ)
 
 if __name__ == "__main__":
