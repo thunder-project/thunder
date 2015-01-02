@@ -255,6 +255,9 @@ class TestImages(PySparkTestCase):
             for i in xrange(narys):
                 assert_true(array_equal(arys[i], gatheredary[i]))
 
+
+class TestImagesMethods(PySparkTestCase):
+
     @staticmethod
     def _run_maxProject(image, inputArys, axis):
         from numpy import amax
@@ -288,10 +291,10 @@ class TestImages(PySparkTestCase):
             assert_equals(str(maxProjected[0][1].dtype), projectedData._dtype)
 
     def test_maxProjection(self):
-        self._run_tst_maxProject(TestImages._run_maxProject)
+        self._run_tst_maxProject(TestImagesMethods._run_maxProject)
 
     def test_maxminProjection(self):
-        self._run_tst_maxProject(TestImages._run_maxminProject)
+        self._run_tst_maxProject(TestImagesMethods._run_maxminProject)
 
     def test_subsample(self):
         narys = 3
@@ -337,7 +340,7 @@ class TestImages(PySparkTestCase):
         imagedata = ImagesLoader(self.sc).fromArrays(arys)
         filteredData = datafunc(imagedata, sigma)
         filtered = filteredData.collect()
-        expectedArys = map(lambda ary: TestImages._run_filter(ary, filterfunc, sigma), arys)
+        expectedArys = map(lambda ary: TestImagesMethods._run_filter(ary, filterfunc, sigma), arys)
         for actual, expected in zip(filtered, expectedArys):
             assert_true(allclose(expected, actual[1]))
 
