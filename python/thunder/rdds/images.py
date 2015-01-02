@@ -457,17 +457,25 @@ class Images(Data):
         return self._constructor(
             self.rdd.mapValues(lambda v: v[sampleslices]), dims=newdims).__finalize__(self)
             
-    def gaussianFilter(self, sigma=2):
-        """Spatially smooth images using a gaussian filter.
+    def gaussianFilter(self, sigma=2, order=0):
+        """
+        Spatially smooth images with a gaussian filter.
 
-        This function will be applied to every image in the data set and can be applied
-        to either images or volumes. In the latter case, filtering will be applied separately
-        to each plane.
+        Filtering will be applied to every image in the collection and can be applied
+        to either images or volumes. For volumes, if an single scalar sigma is passed,
+        it will be interpreted as the filter size in x and y, with no filtering in z.
 
         parameters
         ----------
-        sigma : int, optional, default=2
-            Size of the filter neighbourhood in pixels
+        sigma : scalar or sequence of scalars, default=2
+            Size of the filter size as standard deviation in pixels. A sequence is interpreted
+            as the standard deviation for each axis. For three-dimensional data, a single
+            scalar is interpreted as the standard deviation in x and y, with no filtering in z.
+
+        order : choice of 0 / 1 / 2 / 3 or sequence from same set, optional, default = 0
+            Order of the gaussian kernel, 0 is a gaussian, higher numbers correspond
+            to derivatives of a gaussian.
+            is given for each axis. A single number
         """
 
         from scipy.ndimage.filters import gaussian_filter
@@ -475,55 +483,39 @@ class Images(Data):
         dims = self.dims
         ndims = len(dims)
 
-        if ndims == 2:
-
-            def filter(im):
-                return gaussian_filter(im, sigma)
-
-        if ndims == 3:
-
-            def filter(im):
-                im.setflags(write=True)
-                for z in arange(0, dims[2]):
-                    im[:, :, z] = gaussian_filter(im[:, :, z], sigma)
-                return im
+        if ndims == 3 and size(sigma) == 1:
+            sigma = [sigma, sigma, 0]
 
         return self._constructor(
-            self.rdd.mapValues(lambda v: filter(v))).__finalize__(self)
+            self.rdd.mapValues(lambda v: gaussian_filter(v, sigma, order))).__finalize__(self)
 
     def medianFilter(self, size=2):
-        """Spatially smooth images using a median filter.
+        """
+        Spatially smooth images using a median filter.
 
-        The filtering will be applied to every image in the collection and can be applied
-        to either images or volumes. In the latter case, filtering will be applied separately
-        to each plane.
+        Filtering will be applied to every image in the collection and can be applied
+        to either images or volumes. For volumes, if an single scalar neighborhood is passed,
+        it will be interpreted as the filter size in x and y, with no filtering in z.
 
         parameters
         ----------
         size: int, optional, default=2
-            Size of the filter neighbourhood in pixels
+            Size of the filter neighbourhood in pixels. A sequence is interpreted
+            as the neighborhood size for each axis. For three-dimensional data, a single
+            scalar is intrepreted as the neighborhood in x and y, with no filtering in z.
         """
 
         from scipy.ndimage.filters import median_filter
+        from numpy import isscalar
 
         dims = self.dims
         ndims = len(dims)
 
-        if ndims == 2:
-
-            def filter(im):
-                return median_filter(im, size)
-
-        if ndims == 3:
-
-            def filter(im):
-                im.setflags(write=True)
-                for z in arange(0, dims[2]):
-                    im[:, :, z] = median_filter(im[:, :, z], size)
-                return im
+        if ndims == 3 and isscalar(size) == 1:
+            size = [size, size, 1]
 
         return self._constructor(
-            self.rdd.mapValues(lambda v: filter(v))).__finalize__(self)
+            self.rdd.mapValues(lambda v: median_filter(v, size))).__finalize__(self)
 
     def crop(self, minbound, maxbound):
         """
