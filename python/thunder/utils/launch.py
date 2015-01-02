@@ -11,6 +11,8 @@ def getSparkHome():
     sparkhome = os.getenv("SPARK_HOME")
     if sparkhome is None:
         raise Exception("The environment variable SPARK_HOME must be set to the Spark installation directory")
+    if not os.path.exists(sparkhome):
+        raise Exception("No Spark installation at %s, check that SPARK_HOME is correct" % sparkhome)
     return sparkhome
 
 
