@@ -63,7 +63,8 @@ class Images(Data):
             raise Exception('Values must be ndarrays')
 
     def _toBlocksByImagePlanes(self, groupingDim=-1):
-        """Splits Images into ImageBlocks by extracting image planes along specified dimension
+        """
+        Splits Images into ImageBlocks by extracting image planes along specified dimension
 
         Given an Images data object created from n image files each of dimensions x,y,z (fortran-order),
         this method (with default arguments) will return a new ImageBlocks with n*z items, one for each
@@ -89,7 +90,8 @@ class Images(Data):
         return self._toBlocksBySplits(blocksperdim)
 
     def _toBlocksBySplits(self, splitsPerDim):
-        """Splits Images into ImageBlocks by subdividing the image into logically contiguous blocks.
+        """
+        Splits Images into ImageBlocks by subdividing the image into logically contiguous blocks.
 
         Parameters
         ----------
@@ -158,7 +160,8 @@ class Images(Data):
         return ImageBlocks(self.rdd.flatMap(_groupBySlicesAdapter, preservesPartitioning=False), dtype=self.dtype)
 
     def __validateOrCalcGroupingDim(self, groupingDim=None):
-        """Bounds-checks the passed grouping dimension, calculating it if None is passed.
+        """
+        Bounds-checks the passed grouping dimension, calculating it if None is passed.
 
         Returns a valid grouping dimension between 0 and ndims-1, or throws ValueError if passed groupingdim is out of
         bounds.
@@ -166,7 +169,8 @@ class Images(Data):
         The calculation may trigger a spark first() call.
         """
         def calcGroupingDim(dims):
-            """Returns the index of the dimension to use for grouping by image planes.
+            """
+            Returns the index of the dimension to use for grouping by image planes.
 
             The current heuristic is just to take the largest dimension - last largest dimension
             in case of ties.
@@ -197,7 +201,8 @@ class Images(Data):
         return blocksdata.toSeries(seriesDim=0)
 
     def __calcBlocksPerDim(self, blockSize):
-        """Returns a partitioning strategy, represented as splits per dimension, that yields blocks
+        """
+        Returns a partitioning strategy, represented as splits per dimension, that yields blocks
         closely matching the requested size in bytes
 
         Parameters
@@ -240,7 +245,8 @@ class Images(Data):
         return blocksdata
 
     def toSeries(self, blockSize="150M", splitsPerDim=None, groupingDim=None):
-        """Converts this Images object to a Series object.
+        """
+        Converts this Images object to a Series object.
 
         Conversion will be performed by grouping the constituent image time points into
         smaller blocks, shuffling the blocks so that the same part of the image across time is
@@ -283,7 +289,8 @@ class Images(Data):
 
     def saveAsBinarySeries(self, outputdirname, blockSize="150M", splitsPerDim=None, groupingDim=None,
                            overwrite=False):
-        """Writes Image into files on a local filesystem, suitable for loading by SeriesLoader.fromBinary()
+        """
+        Writes Image into files on a local filesystem, suitable for loading by SeriesLoader.fromBinary()
 
         The mount point specified by outputdirname must be visible to all workers; thus this method is
         primarily useful either when Spark is being run locally or in the presence of an NFS mount or
@@ -332,7 +339,8 @@ class Images(Data):
 
     def exportAsPngs(self, outputdirname, fileprefix="export", overwrite=False,
                      collectToDriver=True):
-        """Write out basic png files for two-dimensional image data.
+        """
+        Write out basic png files for two-dimensional image data.
 
         Files will be written into a newly-created directory on the local file system given by outputdirname.
 
@@ -417,7 +425,8 @@ class Images(Data):
         return self._constructor(proj, dims=newdims).__finalize__(self)
 
     def subsample(self, samplefactor):
-        """Downsample an image volume by an integer factor
+        """
+        Downsample an image volume by an integer factor
 
         Parameters
         ----------
