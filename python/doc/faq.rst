@@ -10,7 +10,7 @@ Basic usage
 
 *When should I cache my data?*
 	
-	Any data object in Thunder can be cached into RAM by calling ``data.cache()`` on it. Caching is a powerful capability of Spark, and can greatly speed up subsequent queries or operations on the data. However, you can only cache as much data as your cluster has RAM (and the actual RAM avaialble to Spark for caching is approximately half of the total installed RAM of the cluster). It often makes sense to cache intermediate results, for example, perform filtering on a set of images, convert to a series, and cache the result. You should rarely cache data you only plan to use once; conversely, you should almost always cache data that will be subjected to iterative algorithms (like clustering).
+	Any data object can be cached into RAM by calling ``data.cache()`` on it. Caching is a powerful capability of Spark, and can greatly speed up subsequent queries or operations on the data. However, you can only cache as much data as your cluster has RAM (and the actual RAM avaialble to Spark for caching is approximately half of the total installed RAM of the cluster). It often makes sense to cache intermediate results, for example, perform filtering on a set of images, convert to a series, and cache the result. You should rarely cache data you only plan to use once; conversely, you should almost always cache data that will be subjected to iterative algorithms (like clustering).
 
 
 *I performed an operation and it happened instantaneously, is it really that fast?*
@@ -55,26 +55,65 @@ Basic usage
 Configuration and installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-My university / research institute has a private cluster, can I install Spark on it?
-Yes, but won't go into detail here
+*My university / research institute has a private cluster, can I install Spark on it?*
 
-How many cluster nodes / what total amount of RAM do I need?
+	Yes. We are preparing a blog post that explains exactly how to do this.
 
-What configuration parameters should I use?
+*How many cores / cluster nodes / total amount of RAM do I need?*
+
+	In general, fewer nodes with more cores and RAM is better than more, under-powered nodes, because it minimizes network communication. For RAM, a good rule of thumb is to determine the size of your data (at least the portion you want to cache), and then use a cluster with twice that much RAM in total. For nodes and cores, you want approximately 2-3 cores for each partition of data, which will usually be 50-100MB of the data set.
+
+*What configuration parameters should I use?*
+
+	Spark has many configurable parameters (see the link). The following settings have generally proven useful when running Thunder, and are automatically set by Thunder's EC2 scripts:
+
+	.. code-block:: python 
+
+		spark.akka.frameSize=10000
+		spark.kryoserializer.buffer.max.mb=1024
+		spark.driver.maxResultSize=0
+		export SPARK_DRIVER_MEMORY=20g
 
 
 Using Thunder on Amazon's EC2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-How expensive is S3 and EC2?
+*How expensive is S3 and EC2?*
+	
+	For current on-demand pricing by instance type, see: http://aws.amazon.com/ec2/pricing/. For details on instance types, see: http://aws.amazon.com/ec2/instance-types/, and in particular the instance types matrix at the bottom of that page. For details on storage charges, see: XXX.
 
-Where should I store my data?
+*Where should I store my data?*
+	
+	Options are S3 and glacier.
 
-What EC2 instance types should I use?
+*I want to share my data, what settings should I use?*
+	
+	You can make it public, but then anyone can download it, and you'll pay the bill. So make it requester pays. This requires some things to be set though.
 
-I’m concerned about the costs of running a large EC2 cluster. How can I save money?
+*What EC2 instance types should I use?*
+	
+	Thunder workflows may be bottlenecked either by I/O or by computational limitations, depending on the nature of the workflow. Smaller EC2 instances have both lesser compute capacity and more modest network bandwidth between cluster nodes. Provisioning the same total number of cores spread across a cluster of smaller instances also increases the amount of network traffic required, relative to a cluster composed of fewer but larger instances. Finally, EC2 pricing is generally roughly equivalent for the same total amount of memory and CPUs across a cluster, no matter whether these resources are concentrated in a few large instances or spread across many smaller ones. Overall, this argues for using fewer, larger instances. With Spark, I/O limits can often be effectively addressed by caching in memory (after an initial read from disk or S3), suggesting that high-memory (“r”-type) instances may be a good choice for I/O-bound workflows. Conversely, compute-optimized (“c”-type) instances are likely most cost effective for computationally-intensive workflows. Both these instance types also have 10GB networking available for the largest instances. The thunder-ec2 script currently defaults to m3.2xlarge instances, which represent a balance between memory and compute capacity. 
 
-I see repeated errors like the following when trying to stand up a cluster on Amazon EC2 using the thunder-ec2 script - what should I do?
+*I’m concerned about the costs of running a large EC2 cluster. How can I save money?*
+
+	Consider using spot instances: http://aws.amazon.com/ec2/purchasing-options/spot-instances/. These allow you to set a maximum hourly price that you would be willing to pay for an instance. You will be charged at the spot instance rate for your particular availability zone and instance type, which reflects the current available capacity at the AWS data centers and which will typically be much less than the standard on-demand rate. The downside is that if the spot rate ever exceeds your bid, then you will lose the instances; thus, spot instances are not recommended for last-minute analyses before an abstract submission deadline or similar. However, in practice, spot instances can be very long-lived, and represent a practical and affordable alternative for most data analysis tasks. 
+
+*I'm getting a message saying that I've requested too many instances*
+
+	By default, AWS will limit the maximum number of instances or spot instances of a given type that can be running under a single account. The high-memory (“r”-type) nodes in particular have relatively low spot instance limits: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-spot-limits.html. 
+
+
+*I see repeated errors when starting a cluster on Amazon EC2, what should I do?*
+
+	You will most likely see the following error:
+
+	.. code-block:: python 
+
+		ssh: connect to host ec2-54-197-68-74.compute-1.amazonaws.com port 22: Connection refused
+		Error 255 while executing remote command, retrying after 30 seconds
+
+	This probably indicates that for whatever reason, one or more of the EC2 nodes has been slow to start. Oftentimes this will resolve itself; after waiting ~5 minutes, try resuming the cluster launch, by adding the --resume flag to the same thunder-ec2 command line as previously. Alternatively, you can simply terminate the existing cluster and try again. This most likely represents a transient AWS issue, rather than a problem with Thunder or Spark per se. This issue appears to be much reduced using Spark 1.2, which will automatically wait for all instances to be in an “ssh-ready” state before attempting to connect. If you encounter this problem repeatedly, consider updating the installation of Spark on the machine you use to launch the EC2 cluster to Spark 1.2.0 or later. 
+
 
 
 
