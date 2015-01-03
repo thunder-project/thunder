@@ -69,6 +69,7 @@
    install_local
    install_ec2
    contributing
+   style_guide
    Release notes <https://github.com/freeman-lab/thunder/releases>
 
 .. raw:: html
