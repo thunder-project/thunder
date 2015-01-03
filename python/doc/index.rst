@@ -70,6 +70,7 @@
    install_ec2
    contributing
    style_guide
+   faq
    Release notes <https://github.com/freeman-lab/thunder/releases>
 
 .. raw:: html
