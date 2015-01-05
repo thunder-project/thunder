@@ -30,7 +30,7 @@ Basic usage
 
 *Is there sample data I can try analyses on?*
 	
-	Yes, there are currently sample data sets of light-sheet imaging data available (part of a collaboration with Misha Ahren's lab). They cannot be directly downloaded, but are available through the ``ThunderContext.loadExampleEC2`` method.
+	Yes, there are currently sample data sets of light-sheet imaging data available (as part of a collaboration with Misha Ahren's lab). They cannot be directly downloaded, but are available through the ``ThunderContext.loadExampleEC2`` method.
 
 
 *How should I visualize the results of my analysis?*
