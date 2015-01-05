@@ -6,7 +6,6 @@ except ImportError:
     raise Exception("Unable to import Thunder. Please make sure that the Thunder installation directory is listed in " +
                     "the PYTHONPATH environment variable.")
 import os
-import subprocess
 import sys
 
 from thunder.utils.launch import getFilteredHelpMessage, getSparkHome, transformArguments
@@ -25,7 +24,6 @@ def main():
     childArgs = transformArguments(sys.argv)
 
     sparkSubmit = os.path.join(SPARK_HOME, 'bin', 'pyspark')
-    childArgs = [sparkSubmit] + childArgs
 
     # add python script
     os.environ['PYTHONSTARTUP'] = os.path.join(os.path.dirname(os.path.realpath(thunder.__file__)), 'utils', 'shell.py')
@@ -34,7 +32,7 @@ def main():
     if "-h" in childArgs or "--help" in childArgs:
         print >> sys.stderr, getFilteredHelpMessage(sparkSubmit, getUsage())
     else:
-        subprocess.call(childArgs, env=os.environ)
+        os.execv(sparkSubmit, childArgs)
 
 if __name__ == "__main__":
     main()

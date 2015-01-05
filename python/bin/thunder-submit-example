@@ -8,7 +8,6 @@ except ImportError:
                     "the PYTHONPATH environment variable.")
 import glob
 import os
-import subprocess
 import sys
 
 from thunder.utils.launch import getFilteredHelpMessage, getSparkHome, transformArguments
@@ -55,8 +54,7 @@ def main():
         raise Exception("Did not recognize a known example analysis name; must be a script in %s (one of: %s)" %
                         (getStandaloneDir(), str(getExampleNames())[1:-1]))
 
-    childArgs = [sparkSubmit] + childArgs
-    subprocess.call(childArgs, env=os.environ)
+    os.execv(sparkSubmit, childArgs)
 
 if __name__ == "__main__":
     main()

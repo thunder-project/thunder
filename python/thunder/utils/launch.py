@@ -120,7 +120,7 @@ def transformArguments(args):
         nextArg = next(argIter, done)
         while nextArg is not done:
             strippedArg = nextArg.lower().lstrip("-")
-            if strippedArg in frozenset(["master", "py-files", "jars"]):
+            if strippedArg in frozenset(["master", "py-files", "jars", "driver-class-path"]):
                 opts[strippedArg] = next(argIter, "")
             else:
                 passthruArgs.append(nextArg)
@@ -142,10 +142,12 @@ def transformArguments(args):
     # update arguments list with new values
     pyFiles = getCommaSeparatedOptionsList("--py-files", opts.get("py-files", []), thunderEgg)
     jars = getCommaSeparatedOptionsList("--jars", opts.get("jars", []), thunderJar)
+    driverJars = getCommaSeparatedOptionsList("--driver-class-path", opts.get("driver-class-path", []), thunderJar)
 
     retVals = ["--master", master]
     retVals.extend(pyFiles)
     retVals.extend(jars)
+    retVals.extend(driverJars)
     retVals.extend(passthruArgs)
 
     return retVals
