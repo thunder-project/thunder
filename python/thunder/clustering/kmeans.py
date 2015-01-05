@@ -130,7 +130,7 @@ class KMeans(object):
 
         import pyspark.mllib.clustering as mllib
 
-        model = mllib.KMeans.train(data.rdd.values(), k=self.k, maxIterations=self.maxIterations)
+        model = mllib.KMeans.train(data.astype('float').rdd.values(), k=self.k, maxIterations=self.maxIterations)
 
         return KMeansModel(asarray(model.clusterCenters))
 
