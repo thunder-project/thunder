@@ -2,29 +2,34 @@
 Example standalone app for independent component analysis
 """
 
-import argparse
+import optparse
 from thunder import ThunderContext, ICA, export
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="do independent components analysis")
-    parser.add_argument("datafile", type=str)
-    parser.add_argument("outputdir", type=str)
-    parser.add_argument("k", type=int)
-    parser.add_argument("c", type=int)
-    parser.add_argument("--svdmethod", choices=("direct", "em"), default="direct", required=False)
-    parser.add_argument("--maxiter", type=float, default=100, required=False)
-    parser.add_argument("--tol", type=float, default=0.000001, required=False)
-    parser.add_argument("--seed", type=int, default=0, required=False)
+    parser = optparse.OptionParser(description="do independent components analysis",
+                                   usage="%prog datafile outputdir k c [options]")
+    parser.add_option("--svdmethod", choices=("direct", "em"), default="direct")
+    parser.add_option("--maxiter", type=float, default=100)
+    parser.add_option("--tol", type=float, default=0.000001)
+    parser.add_option("--seed", type=int, default=0)
 
-    args = parser.parse_args()
+    opts, args = parser.parse_args()
+    try:
+        datafile = args[0]
+        outputdir = args[1]
+        k = int(args[2])
+        c = int(args[3])
+    except IndexError:
+        parser.print_usage()
+        raise Exception("too few arguments")
 
     tsc = ThunderContext.start(appName="ica")
 
-    data = tsc.loadSeries(args.datafile).cache()
-    model = ICA(k=args.k, c=args.c, svdMethod=args.svdmethod, maxIter=args.maxiter, tol=args.tol, seed=args.seed)
+    data = tsc.loadSeries(datafile).cache()
+    model = ICA(k=k, c=c, svdmethod=opts.svdmethod, maxiter=opts.maxiter, tol=opts.tol, seed=opts.seed)
     result = model.fit(data)
 
-    outputdir = args.outputdir + "-ica"
+    outputdir += "-ica"
     export(result.a, outputdir, "a", "matlab")
     export(result.sigs, outputdir, "sigs", "matlab")

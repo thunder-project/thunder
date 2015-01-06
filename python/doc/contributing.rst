@@ -46,7 +46,9 @@ You should write a test for anything new that you develop, as well as make sure 
 
 Ideas for contributions
 ~~~~~~~~~~~~~~~~~~~~~~~
-The following are fairly simple extensions that would make for a great initial contribution:
+A good starting point is to check the `issue <https://github.com/freeman-lab/thunder/issues>`_ page. If there is an outstanding issue that appears unaddressed, add a comment that you are starting to work on it.
+
+Beyond existing issues, the following are fairly simple new features that would make for a great initial contribution:
 
 - Add new temopral filtering methods to :class:`TimeSeries`, like moving average or savistky golay
 - Add more time series calculations to :class:`TimeSeries`, like autocorrelation
@@ -56,8 +58,7 @@ The following are fairly simple extensions that would make for a great initial c
 These are more involved. It would be worth posting to the `mailing list <https://groups.google.com/forum/?hl=en#!forum/thunder-user>`_ before starting work on them to avoid duplcating other efforts.
 
 - A new EventSeries class and associated methods for working with event data
-- A basic image alignment routine
 - Add a linear discriminant analysis (including LDA for dimensionality reduction)
 - Methods for computing and working with arbitrary distance matrices
 
-You can also check the `issue <https://github.com/freeman-lab/thunder/issues>`_ page for contribution ideas.
+

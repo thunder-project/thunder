@@ -36,7 +36,7 @@ class KMeansModel(object):
         centers = self.centers
 
         if isinstance(data, Series):
-            return data.apply(lambda x: func(centers, x))
+            return data.applyValues(lambda x: func(centers, x))
 
         elif isinstance(data, list):
             return map(lambda x: func(centers, x), data)
@@ -130,7 +130,7 @@ class KMeans(object):
 
         import pyspark.mllib.clustering as mllib
 
-        model = mllib.KMeans.train(data.rdd.values(), k=self.k, maxIterations=self.maxIterations)
+        model = mllib.KMeans.train(data.astype('float').rdd.values(), k=self.k, maxIterations=self.maxIterations)
 
         return KMeansModel(asarray(model.clusterCenters))
 

@@ -1,4 +1,5 @@
-from numpy import ndarray, arange, amax, amin, size, squeeze
+
+from numpy import ndarray, arange, amax, amin, greater, size, squeeze
 from numpy import dtype as dtypeFunc
 
 from thunder.rdds.data import Data
@@ -64,7 +65,8 @@ class Images(Data):
             raise Exception('Values must be ndarrays')
 
     def _toBlocksByImagePlanes(self, groupingDim=-1):
-        """Splits Images into ImageBlocks by extracting image planes along specified dimension
+        """
+        Splits Images into ImageBlocks by extracting image planes along specified dimension
 
         Given an Images data object created from n image files each of dimensions x,y,z (fortran-order),
         this method (with default arguments) will return a new ImageBlocks with n*z items, one for each
@@ -90,7 +92,8 @@ class Images(Data):
         return self._toBlocksBySplits(blocksPerDim)
 
     def _toBlocksBySplits(self, splitsPerDim):
-        """Splits Images into ImageBlocks by subdividing the image into logically contiguous blocks.
+        """
+        Splits Images into ImageBlocks by subdividing the image into logically contiguous blocks.
 
         Parameters
         ----------
@@ -159,7 +162,8 @@ class Images(Data):
         return ImageBlocks(self.rdd.flatMap(_groupBySlicesAdapter, preservesPartitioning=False), dtype=self.dtype)
 
     def __validateOrCalcGroupingDim(self, groupingDim=None):
-        """Bounds-checks the passed grouping dimension, calculating it if None is passed.
+        """
+        Bounds-checks the passed grouping dimension, calculating it if None is passed.
 
         Returns a valid grouping dimension between 0 and ndims-1, or throws ValueError if passed groupingdim is out of
         bounds.
@@ -167,7 +171,8 @@ class Images(Data):
         The calculation may trigger a spark first() call.
         """
         def calcGroupingDim(dims):
-            """Returns the index of the dimension to use for grouping by image planes.
+            """
+            Returns the index of the dimension to use for grouping by image planes.
 
             The current heuristic is just to take the largest dimension - last largest dimension
             in case of ties.
@@ -198,7 +203,8 @@ class Images(Data):
         return blocksData.toSeries(seriesDim=0)
 
     def __calcBlocksPerDim(self, blockSize):
-        """Returns a partitioning strategy, represented as splits per dimension, that yields blocks
+        """
+        Returns a partitioning strategy, represented as splits per dimension, that yields blocks
         closely matching the requested size in bytes
 
         Parameters
@@ -241,7 +247,8 @@ class Images(Data):
         return blocksData
 
     def toSeries(self, blockSize="150M", splitsPerDim=None, groupingDim=None):
-        """Converts this Images object to a Series object.
+        """
+        Converts this Images object to a Series object.
 
         Conversion will be performed by grouping the constituent image time points into
         smaller blocks, shuffling the blocks so that the same part of the image across time is
@@ -284,7 +291,8 @@ class Images(Data):
 
     def saveAsBinarySeries(self, outputDirPath, blockSize="150M", splitsPerDim=None, groupingDim=None,
                            overwrite=False):
-        """Writes Image into files on a local filesystem, suitable for loading by SeriesLoader.fromBinary()
+        """
+        Writes Image into files on a local filesystem, suitable for loading by SeriesLoader.fromBinary()
 
         The mount point specified by outputdirname must be visible to all workers; thus this method is
         primarily useful either when Spark is being run locally or in the presence of an NFS mount or
@@ -333,7 +341,8 @@ class Images(Data):
 
     def exportAsPngs(self, outputDirPath, filePrefix="export", overwrite=False,
                      collectToDriver=True):
-        """Write out basic png files for two-dimensional image data.
+        """
+        Write out basic png files for two-dimensional image data.
 
         Files will be written into a newly-created directory on the local file system given by outputdirname.
 
@@ -449,17 +458,25 @@ class Images(Data):
         return self._constructor(
             self.rdd.mapValues(lambda v: v[sampleSlices]), dims=newDims).__finalize__(self)
             
-    def gaussianFilter(self, sigma=2):
-        """Spatially smooth images using a gaussian filter.
+    def gaussianFilter(self, sigma=2, order=0):
+        """
+        Spatially smooth images with a gaussian filter.
 
-        This function will be applied to every image in the data set and can be applied
-        to either images or volumes. In the latter case, filtering will be applied separately
-        to each plane.
+        Filtering will be applied to every image in the collection and can be applied
+        to either images or volumes. For volumes, if an single scalar sigma is passed,
+        it will be interpreted as the filter size in x and y, with no filtering in z.
 
         parameters
         ----------
-        sigma : int, optional, default=2
-            Size of the filter neighbourhood in pixels
+        sigma : scalar or sequence of scalars, default=2
+            Size of the filter size as standard deviation in pixels. A sequence is interpreted
+            as the standard deviation for each axis. For three-dimensional data, a single
+            scalar is interpreted as the standard deviation in x and y, with no filtering in z.
+
+        order : choice of 0 / 1 / 2 / 3 or sequence from same set, optional, default = 0
+            Order of the gaussian kernel, 0 is a gaussian, higher numbers correspond
+            to derivatives of a gaussian.
+            is given for each axis. A single number
         """
 
         from scipy.ndimage.filters import gaussian_filter
@@ -467,96 +484,98 @@ class Images(Data):
         dims = self.dims
         ndims = len(dims)
 
-        if ndims == 2:
-
-            def filter(im):
-                return gaussian_filter(im, sigma)
-
-        if ndims == 3:
-
-            def filter(im):
-                im.setflags(write=True)
-                for z in arange(0, dims[2]):
-                    im[:, :, z] = gaussian_filter(im[:, :, z], sigma)
-                return im
+        if ndims == 3 and size(sigma) == 1:
+            sigma = [sigma, sigma, 0]
 
         return self._constructor(
-            self.rdd.mapValues(lambda v: filter(v))).__finalize__(self)
+            self.rdd.mapValues(lambda v: gaussian_filter(v, sigma, order))).__finalize__(self)
 
     def medianFilter(self, size=2):
-        """Spatially smooth images using a median filter.
+        """
+        Spatially smooth images using a median filter.
 
-        The filtering will be applied to every image in the collection and can be applied
-        to either images or volumes. In the latter case, filtering will be applied separately
-        to each plane.
+        Filtering will be applied to every image in the collection and can be applied
+        to either images or volumes. For volumes, if an single scalar neighborhood is passed,
+        it will be interpreted as the filter size in x and y, with no filtering in z.
 
         parameters
         ----------
         size: int, optional, default=2
-            Size of the filter neighbourhood in pixels
+            Size of the filter neighbourhood in pixels. A sequence is interpreted
+            as the neighborhood size for each axis. For three-dimensional data, a single
+            scalar is intrepreted as the neighborhood in x and y, with no filtering in z.
         """
 
         from scipy.ndimage.filters import median_filter
+        from numpy import isscalar
 
         dims = self.dims
         ndims = len(dims)
 
-        if ndims == 2:
-
-            def filter(im):
-                return median_filter(im, size)
-
-        if ndims == 3:
-
-            def filter(im):
-                im.setflags(write=True)
-                for z in arange(0, dims[2]):
-                    im[:, :, z] = median_filter(im[:, :, z], size)
-                return im
+        if ndims == 3 and isscalar(size) == 1:
+            size = [size, size, 1]
 
         return self._constructor(
-            self.rdd.mapValues(lambda v: filter(v))).__finalize__(self)
+            self.rdd.mapValues(lambda v: median_filter(v, size))).__finalize__(self)
 
-    def planes(self, bottom, top, inclusive=True):
+    def crop(self, minbound, maxbound):
         """
-        Subselect planes for three-dimensional image data.
+        Crop a spatial region from 2D or 3D data.
 
         Parameters
         ----------
-        bottom : int
-            Bottom plane in desired selection
+        minbound : list or tuple
+            Minimum of crop region (x,y) or (x,y,z)
 
-        top : int
-            Top plane in desired selection
+        maxbound : list or tuple
+            Maximum of crop region (x,y) or (x,y,z)
 
-        inclusive : boolean, optional, default = True
-            Whether returned subset of planes should include bounds
+        Returns
+        -------
+        Images object with cropped images / volume
         """
-        if len(self.dims) == 2 or self.dims[2] == 1:
+        dims = self.dims
+        ndims = len(dims)
+
+        if ndims < 2 or ndims > 3:
+            raise Exception("Cropping only supported on 2D or 3D image data.")
+
+        if ndims == 2:
+            xmin, ymin = minbound
+            xmax, ymax = maxbound
+            newrdd = self.rdd.mapValues(lambda v: v[xmin: xmax, ymin: ymax])
+            newdims = (xmax-xmin, ymax-ymin)
+        else:
+            xmin, ymin, zmin = minbound
+            xmax, ymax, zmax = maxbound
+            newrdd = self.rdd.mapValues(lambda v: v[xmin: xmax, ymin: ymax, zmin: zmax])
+            newdims = (xmax-xmin, ymax-ymin, zmax-zmin)
+
+        if any(greater(newdims, dims.count)):
+            raise Exception("Size of requested crop region %s exceeds image dimensions %s" % (newdims, dims.count))
+
+        return self._constructor(newrdd, dims=newdims).__finalize__(self)
+
+    def planes(self, startidz, stopidz):
+        """
+        Subselect planes from 3D image data.
+
+        Parameters
+        ----------
+        startidz, stopidz : int
+            Indices of region to crop in z, interpreted according to python slice indexing conventions.
+
+        See also
+        --------
+        Images.crop
+        """
+
+        dims = self.dims
+
+        if len(dims) == 2 or dims[2] == 1:
             raise Exception("Cannot subselect planes, images must be 3D")
 
-        if inclusive is True:
-            zRange = arange(bottom, top+1)
-        else:
-            zRange = arange(bottom+1, top)
-
-        if len(zRange) == 0:
-            raise Exception("No planes selected with range (%g, %g) and inclusive=%s, "
-                            "try a different range" % (bottom, top, inclusive))
-
-        if zRange.min() < self.dims.min[2]:
-            raise Exception("Cannot include plane %g, first plane is %g" % (zRange.min(), self.dims.min[2]))
-
-        if zRange.max() > self.dims.max[2]:
-            raise Exception("Cannout include plane %g, last plane is %g" % (zRange.max(), self.dims.max[2]))
-
-        newDims = [self.dims[0], self.dims[1], size(zRange)]
-
-        if size(zRange) < 2:
-            newDims = newDims[0:2]
-
-        return self._constructor(self.rdd.mapValues(lambda v: squeeze(v[:, :, zRange])),
-                                 dims=newDims).__finalize__(self)
+        return self.crop([0, 0, startidz], [dims[0], dims[1], stopidz])
 
     def subtract(self, val):
         """
@@ -573,7 +592,7 @@ class Images(Data):
                 raise Exception('Cannot subtract image with dimensions %s '
                                 'from images with dimension %s' % (str(val.shape), str(self.dims)))
 
-        return self.apply(lambda x: x - val)
+        return self.applyValues(lambda x: x - val)
 
 
 class _BlockMemoryAsSequence(object):

@@ -37,7 +37,7 @@ class Dimensions(object):
         return cls(values=[mx, mn], n=len(tup))
 
     def __str__(self):
-        return "Dimensions: min=%s, max=%s, count=%s" % (str(self.min), str(self.max), str(self.count))
+        return "min=%s, max=%s, count=%s" % (str(self.min), str(self.max), str(self.count))
 
     def __repr__(self):
         return "Dimensions(values=[%s, %s], n=%d)" % (str(self.min), str(self.max), len(self.min))

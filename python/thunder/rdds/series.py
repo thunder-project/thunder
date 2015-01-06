@@ -1,7 +1,6 @@
 from numpy import ndarray, array, sum, mean, median, std, size, arange, \
-    polyfit, polyval, percentile, asarray, maximum, zeros, corrcoef, where, \
-    true_divide, empty_like, ceil
-from numpy import dtype as dtypefunc
+    percentile, asarray, maximum, zeros, corrcoef, where, \
+    true_divide, ceil
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
@@ -188,91 +187,6 @@ class Series(Data):
 
         return self._constructor(rdd, index=newIndex).__finalize__(self)
 
-    def detrend(self, method='linear', **kwargs):
-        """
-        Detrend series data with linear or nonlinear detrending
-        Preserve intercept so that subsequent steps can adjust the baseline
-
-        Parameters
-        ----------
-        method : str, optional, default = 'linear'
-            Detrending method
-
-        order : int, optional, default = 5
-            Order of polynomial, for non-linear detrending only
-        """
-        checkParams(method, ['linear', 'nonlin'])
-
-        if method.lower() == 'linear':
-            order = 1
-        else:
-            if 'order' in kwargs:
-                order = kwargs['order']
-            else:
-                order = 5
-
-        def func(y):
-            x = arange(1, len(y)+1)
-            p = polyfit(x, y, order)
-            p[-1] = 0
-            yy = polyval(p, x)
-            return y - yy
-
-        return self.apply(func)
-
-    def normalize(self, baseline='percentile', **kwargs):
-        """ Normalize each record by subtracting and dividing by a baseline.
-
-        Baseline can be derived from a global mean or percentile,
-        or a smoothed percentile estimated within a rolling window.
-
-        Parameters
-        ----------
-        baseline : str, optional, default = 'percentile'
-            Quantity to use as the baseline, options are 'mean', 'percentile', or 'window'
-
-        percentile : int, optional, default = 20
-            Percentile value to use, for 'percentile' or 'window' baseline only
-
-        window : int, optional, default = 6
-            Size of window for windowed baseline estimation
-        """
-        checkParams(baseline, ['mean', 'percentile', 'window'])
-        method = baseline.lower()
-
-        if method == 'mean':
-            baseFunc = mean
-
-        if method == 'percentile' or method == 'window':
-            if 'percentile' in kwargs:
-                perc = kwargs['percentile']
-            else:
-                perc = 20
-
-        if method == 'percentile':
-            baseFunc = lambda x: percentile(x, perc)
-
-        # TODO optimize implementation by doing a single initial sort
-        if method == 'window':
-            if 'window' in kwargs:
-                window = kwargs['window']
-            else:
-                window = 6
-
-            if window & 0x1:
-                left, right = (ceil(window/2), ceil(window/2) + 1)
-            else:
-                left, right = (window/2, window/2)
-
-            n = len(self.index)
-            baseFunc = lambda x: asarray([percentile(x[max(ix-left, 0):min(ix+right+1, n)], perc)
-                                          for ix in arange(0, n)])
-
-        def get(y):
-            b = baseFunc(y)
-            return (y - b) / (b + 0.1)
-
-        return self.apply(get)
 
     def center(self, axis=0):
         """ Center series data by subtracting the mean
@@ -284,10 +198,10 @@ class Series(Data):
             Which axis to center along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.apply(lambda x: x - mean(x))
+            return self.applyValues(lambda x: x - mean(x))
         elif axis == 1:
             meanVec = self.mean()
-            return self.apply(lambda x: x - meanVec)
+            return self.applyValues(lambda x: x - meanVec)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -301,10 +215,10 @@ class Series(Data):
             Which axis to standardize along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.apply(lambda x: x / std(x))
+            return self.applyValues(lambda x: x / std(x))
         elif axis == 1:
             stdvec = self.stdev()
-            return self.apply(lambda x: x / stdvec)
+            return self.applyValues(lambda x: x / stdvec)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -319,12 +233,12 @@ class Series(Data):
             Which axis to zscore along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.apply(lambda x: (x - mean(x)) / std(x))
+            return self.applyValues(lambda x: (x - mean(x)) / std(x))
         elif axis == 1:
             stats = self.stats()
             meanVec = stats.mean()
             stdVec = stats.stdev()
-            return self.apply(lambda x: (x - meanVec) / stdVec)
+            return self.applyValues(lambda x: (x - meanVec) / stdVec)
         else:
             raise Exception('Axis must be 0 or 1')
 
