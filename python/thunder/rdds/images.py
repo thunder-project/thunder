@@ -99,7 +99,7 @@ class Images(Data):
             # assume it is a tuple of positive int specifying splits
             blockingStrategy = stratClass(blockSizeSpec, units=units, padding=padding)
 
-        blockingStrategy.setImages(self)
+        blockingStrategy.setSource(self)
         avgSize = blockingStrategy.calcAverageBlockSize()
         if avgSize >= BlockingStrategy.DEFAULT_MAX_BLOCK_SIZE:
             # TODO: use logging module here rather than print

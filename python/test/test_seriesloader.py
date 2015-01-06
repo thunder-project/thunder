@@ -1,9 +1,11 @@
+import glob
 import json
-from numpy import allclose, arange, array, array_equal, dtype
 import os
 import struct
 import unittest
-from nose.tools import assert_equals, assert_true, assert_almost_equal
+
+from nose.tools import assert_almost_equal, assert_equals, assert_true, assert_raises
+from numpy import allclose, arange, array, array_equal, dtype
 
 from thunder.rdds.fileio.seriesloader import SeriesLoader
 from thunder.utils.common import smallest_float_type
@@ -216,7 +218,7 @@ class TestSeriesLoader(PySparkTestCase):
         assert_true(array_equal(testimg_arys[1], series_ary[:, :, 1]))
         assert_true(array_equal(testimg_arys[2], series_ary[:, :, 2]))
 
-    def _run_fromFishTif(self, blocksize="150M"):
+    def _run_fromFishTif(self, blocksize):
         imagepath = TestSeriesLoader._findSourceTreeDir("utils/data/fish/tif-stack")
         series = SeriesLoader(self.sc).fromMultipageTif(imagepath, blockSize=blocksize)
         assert_equals('float16', series._dtype)
@@ -229,7 +231,7 @@ class TestSeriesLoader(PySparkTestCase):
 
     @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
     def test_fromFishTif(self):
-        self._run_fromFishTif()
+        self._run_fromFishTif("150M")
 
     @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
     def test_fromFishTifWithTinyBlocks(self):
@@ -255,17 +257,18 @@ class TestSeriesBinaryLoader(PySparkTestCaseWithOutputDir):
 
     def _run_tst_fromBinary(self, useConfJson=False):
         # run this as a single big test so as to avoid repeated setUp and tearDown of the spark context
-        DATA = []
         # data will be a sequence of test data
         # all keys and all values in a test data item must be of the same length
         # keys get converted to ints regardless of raw input format
-        DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11, 12, 13]], 'int16', 'int16'))
-        DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3], [5, 6, 7]], [[11], [12]], 'int16', 'int16'))
-        DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11, 12, 13]], 'int16', 'int32'))
-        DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11, 12, 13]], 'int32', 'int16'))
-        DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11.0, 12.0, 13.0]], 'int16', 'float32'))
-        DATA.append(SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11.0, 12.0, 13.0]], 'float32', 'float32'))
-        DATA.append(SeriesBinaryTestData.fromArrays([[2, 3, 4]], [[11.0, 12.0, 13.0]], 'float32', 'float32'))
+        DATA = [
+            SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11, 12, 13]], 'int16', 'int16'),
+            SeriesBinaryTestData.fromArrays([[1, 2, 3], [5, 6, 7]], [[11], [12]], 'int16', 'int16'),
+            SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11, 12, 13]], 'int16', 'int32'),
+            SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11, 12, 13]], 'int32', 'int16'),
+            SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11.0, 12.0, 13.0]], 'int16', 'float32'),
+            SeriesBinaryTestData.fromArrays([[1, 2, 3]], [[11.0, 12.0, 13.0]], 'float32', 'float32'),
+            SeriesBinaryTestData.fromArrays([[2, 3, 4]], [[11.0, 12.0, 13.0]], 'float32', 'float32'),
+        ]
 
         for itemidx, item in enumerate(DATA):
             outsubdir = os.path.join(self.outputdir, 'input%d' % itemidx)
@@ -324,11 +327,10 @@ class TestSeriesBinaryWriteFromStack(PySparkTestCaseWithOutputDir):
         os.mkdir(insubdir)
 
         outsubdir = os.path.join(self.outputdir, 'output%d' % testCount)
-        #os.mkdir(outsubdir)
 
-        for aryCount, array in enumerate(arrays):
+        for aryCount, ary in enumerate(arrays):
             # array.tofile always writes in column-major order...
-            array.tofile(os.path.join(insubdir, "img%02d.stack" % aryCount))
+            ary.tofile(os.path.join(insubdir, "img%02d.stack" % aryCount))
 
         # ... but we will read and interpret these as though they are in row-major order
         dims = list(arrays[0].shape)
@@ -360,7 +362,6 @@ class TestSeriesBinaryWriteFromStack(PySparkTestCaseWithOutputDir):
             assert_equals(directvalues, seriesvalues)
 
             for seriesidx, seriesval in enumerate(seriesvalues):
-                #print "seriesidx: %d; serieskeys: %s; seriesval: %g" % (seriesidx, serieskeys, seriesval)
                 # flip indices again for row vs col-major insanity
                 arykeys = list(serieskeys)
                 arykeys.reverse()
@@ -377,7 +378,6 @@ class TestSeriesBinaryWriteFromStack(PySparkTestCaseWithOutputDir):
 
     def _roundtrip_tst_driver(self, moreTests=False):
         # parameterized test fixture
-        #arrays = [arange(6, dtype='int16').reshape((2, 3), order='F')]
         arrays = TestSeriesBinaryWriteFromStack.generate_tst_images(1, (2, 3), "int16")
         self._run_roundtrip_tst(0, arrays, 6*2)
         self._run_roundtrip_tst(1, arrays, 2*2)
@@ -398,3 +398,71 @@ class TestSeriesBinaryWriteFromStack(PySparkTestCaseWithOutputDir):
 
     def test_roundtrip(self):
         self._roundtrip_tst_driver(False)
+
+
+class TestSeriesBinaryRoundtrip(PySparkTestCaseWithOutputDir):
+
+    def _run_roundtrip_tst(self, testIdx, nimages, aryShape, dtypeSpec, npartitions):
+        testArrays = TestSeriesBinaryWriteFromStack.generate_tst_images(nimages, aryShape, dtypeSpec)
+        loader = SeriesLoader(self.sc)
+        series = loader.fromArrays(testArrays)
+
+        saveDirPath = os.path.join(self.outputdir, 'save%d' % testIdx)
+        series.repartition(npartitions)  # note: this does an elementwise shuffle! won't be in sorted order
+        series.saveAsBinarySeries(saveDirPath)
+
+        nnonemptyPartitions = 0
+        for partitionList in series.rdd.glom().collect():
+            if partitionList:
+                nnonemptyPartitions += 1
+        del partitionList
+        nsaveFiles = len(glob.glob(saveDirPath + os.sep + "*.bin"))
+
+        roundtrippedSeries = loader.fromBinary(saveDirPath)
+
+        # sorting is required here b/c of the randomization induced by the repartition.
+        # orig and roundtripped will in general be different from each other, since roundtripped
+        # will have (0, 0, 0) index as first element (since it will be the lexicographically first
+        # file) while orig has only a 1 in npartitions chance of starting with (0, 0, 0) after repartition.
+        expectedPackedAry = series.pack(sorting=True)
+        actualPackedAry = roundtrippedSeries.pack(sorting=True)
+
+        assert_true(array_equal(expectedPackedAry, actualPackedAry))
+        assert_equals(nnonemptyPartitions, nsaveFiles)
+
+    def test_roundtrip(self):
+        self._run_roundtrip_tst(0, 2, (2, 5, 5), "int16", 1)
+        self._run_roundtrip_tst(1, 2, (2, 5, 5), "float32", 2)
+        self._run_roundtrip_tst(2, 4, (5, 25, 25), "float16", 5)
+
+
+class TestSeriesBlocksRoundtrip(PySparkTestCase):
+
+    def _run_roundtrip_tst(self, nimages, aryShape, dtypeSpec, sizeSpec):
+        testArrays = TestSeriesBinaryWriteFromStack.generate_tst_images(nimages, aryShape, dtypeSpec)
+        loader = SeriesLoader(self.sc)
+        series = loader.fromArrays(testArrays)
+
+        blocks = series.toBlocks(sizeSpec)
+
+        roundtrippedSeries = blocks.toSeries(newdtype=series.dtype)
+
+        packedSeries = series.pack()
+        packedRoundtrippedSeries = roundtrippedSeries.pack()
+
+        assert_true(array_equal(packedSeries, packedRoundtrippedSeries))
+
+    def _run_roundtrip_exception_tst(self, nimages, aryShape, dtypeSpec, sizeSpec):
+        testArrays = TestSeriesBinaryWriteFromStack.generate_tst_images(nimages, aryShape, dtypeSpec)
+        loader = SeriesLoader(self.sc)
+        series = loader.fromArrays(testArrays)
+
+        assert_raises(ValueError, series.toBlocks, sizeSpec)
+
+    def test_roundtrip(self):
+        self._run_roundtrip_tst(2, (2, 5, 5), "int16", (1, 1, 2))
+        self._run_roundtrip_tst(2, (2, 5, 5), "int16", (1, 5, 2))
+        self._run_roundtrip_tst(2, (2, 5, 5), "int16", (5, 5, 2))
+        self._run_roundtrip_tst(2, (2, 5, 5), "uint8", 20)
+
+        self._run_roundtrip_exception_tst(2, (2, 5, 5), "int16", (1, 5, 1))

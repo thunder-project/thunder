@@ -70,7 +70,7 @@ class TestSimpleSplitCalculation(unittest.TestCase):
                 strat = PaddedBlockingStrategy(params.unitsPerDim, units=params.units, padding=params.padding)
             else:
                 strat = SimpleBlockingStrategy(params.unitsPerDim, params.units)
-            strat.setImages(params.image)
+            strat.setSource(params.image)
             if params.expPix:
                 assert_equals(tuple(params.expPix), tuple(strat._pixPerDim))
             else:
