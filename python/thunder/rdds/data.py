@@ -213,6 +213,14 @@ class Data(object):
         """
         return self.rdd.collect()
 
+    def collectAsArray(self):
+        """ Return all records to the driver as a numpy array
+
+        This will be slow for large datasets, and may exhaust the available memory on the driver.
+        """
+        from numpy import asarray
+        return asarray(self.rdd.values().collect())
+
     def count(self):
         """ Mean of values, ignoring keys
 
