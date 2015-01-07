@@ -402,15 +402,13 @@ class TestSeriesBinaryWriteFromStack(PySparkTestCaseWithOutputDir):
 
 class TestSeriesBinaryRoundtrip(PySparkTestCaseWithOutputDir):
 
-    def _run_roundtrip_tst(self, testIdx, nimages, aryShape, dtypeSpec, npartitions, hasDimsAttr=True):
+    def _run_roundtrip_tst(self, testIdx, nimages, aryShape, dtypeSpec, npartitions):
         testArrays = TestSeriesBinaryWriteFromStack.generate_tst_images(nimages, aryShape, dtypeSpec)
         loader = SeriesLoader(self.sc)
         series = loader.fromArrays(testArrays)
 
         saveDirPath = os.path.join(self.outputdir, 'save%d' % testIdx)
         series.repartition(npartitions)  # note: this does an elementwise shuffle! won't be in sorted order
-        if not hasDimsAttr:
-            series._dims = None  # manually remove dims to test this execution path; output should be identical
         series.saveAsBinarySeries(saveDirPath)
 
         nnonemptyPartitions = 0
@@ -447,7 +445,6 @@ class TestSeriesBinaryRoundtrip(PySparkTestCaseWithOutputDir):
         self._run_roundtrip_tst(0, 2, (2, 5, 5), "int16", 1)
         self._run_roundtrip_tst(1, 2, (2, 5, 5), "float32", 2)
         self._run_roundtrip_tst(2, 4, (5, 25, 25), "float16", 5)
-        self._run_roundtrip_tst(3, 2, (2, 5, 5), "float32", 2, hasDimsAttr=False)
 
 
 class TestSeriesBlocksRoundtrip(PySparkTestCase):

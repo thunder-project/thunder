@@ -691,12 +691,6 @@ class Series(Data):
         tsc.convertImagesToSeries() will likely be more efficient than
         tsc.loadImages().toSeries().saveAsBinarySeries().
 
-        The json config file written out by this method takes the value of the 'nvalues' key from the
-        length of this object's .index attribute. If the index has been modified to have a different length
-        than the number of values in a Series record, then the resulting data files will be read back in
-        incorrectly. (If the .dims attribute on this series object has not been set, then instead a first()
-        call will be made and 'nvalues' will be taken from the length of the first record.)
-
         Parameters
         ----------
         outputdirname : string path or URI to directory to be created
@@ -747,18 +741,11 @@ class Series(Data):
 
         binseriesrdd.foreach(writer.writerFcn)
 
-        if self._dims is not None:
-            # if we already have calculated the .dims attribute, write it out (as a count tuple) in dims metadata
-            # note that we use len(self.index) here for nvalues! we don't really have a great alternative
-            # to this at the moment, short of calling first().
-            writeSeriesConfig(outputdirname, len(self.dims), len(self.index), keytype='int16', valuetype=self.dtype,
-                              overwrite=overwrite)
-        else:
-            # if we don't have dims already calculated, run first() to get nkeys (instead of calculating from dims)
-            # and don't write out dims attribute in metadata
-            firstKey, firstVal = self.first()
-            writeSeriesConfig(outputdirname, len(firstKey), len(firstVal), keytype='int16', valuetype=self.dtype,
-                              overwrite=overwrite)
+        # TODO: all we really need here are the number of keys and number of values, which could in principle
+        # be cached in _nkeys and _nvals attributes, removing the need for this .first() call in most cases.
+        firstKey, firstVal = self.first()
+        writeSeriesConfig(outputdirname, len(firstKey), len(firstVal), keytype='int16', valuetype=self.dtype,
+                          overwrite=overwrite)
 
     def toRowMatrix(self):
         """
