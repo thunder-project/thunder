@@ -554,6 +554,11 @@ class SeriesLoader(object):
 
     @staticmethod
     def __saveSeriesRdd(seriesblocks, outputdirname, dims, npointsinseries, datatype, overwrite=False):
+        if not overwrite:
+            from thunder.utils.common import raiseErrorIfPathExists
+            raiseErrorIfPathExists(outputdirname)
+            overwrite = True  # prevent additional downstream checks for this path
+
         writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
 
         def blockToBinarySeries(kviter):
@@ -615,6 +620,11 @@ class SeriesLoader(object):
             already exists. If false, a ValueError will be thrown if outputdirpath is found to already exist.
 
         """
+        if not overwrite:
+            from thunder.utils.common import raiseErrorIfPathExists
+            raiseErrorIfPathExists(outputdirpath)
+            overwrite = True  # prevent additional downstream checks for this path
+
         seriesblocks, npointsinseries, newdtype = \
             self._getSeriesBlocksFromStack(datapath, dims, ext=ext, blockSize=blockSize, datatype=datatype,
                                            newdtype=newdtype, casting=casting, startidx=startidx, stopidx=stopidx)
@@ -658,6 +668,11 @@ class SeriesLoader(object):
             already exists. If false, a ValueError will be thrown if outputdirpath is found to already exist.
 
         """
+        if not overwrite:
+            from thunder.utils.common import raiseErrorIfPathExists
+            raiseErrorIfPathExists(outputdirpath)
+            overwrite = True  # prevent additional downstream checks for this path
+
         seriesblocks, metadata = self._getSeriesBlocksFromMultiTif(datapath, ext=ext, blockSize=blockSize,
                                                                    newdtype=newdtype, casting=casting,
                                                                    startidx=startidx, stopidx=stopidx)
