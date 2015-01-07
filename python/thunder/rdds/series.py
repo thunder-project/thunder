@@ -687,10 +687,15 @@ class Series(Data):
         sorted and no records have been removed by filtering, then the resulting output should be equivalent
         to what one would get from calling myImages.saveAsBinarySeries().
 
+        If all one wishes to do is to save out Images data in a binary series format, then
+        tsc.convertImagesToSeries() will likely be more efficient than
+        tsc.loadImages().toSeries().saveAsBinarySeries().
+
         The json config file written out by this method takes the value of the 'nvalues' key from the
         length of this object's .index attribute. If the index has been modified to have a different length
         than the number of values in a Series record, then the resulting data files will be read back in
-        incorrectly.
+        incorrectly. (If the .dims attribute on this series object has not been set, then instead a first()
+        call will be made and 'nvalues' will be taken from the length of the first record.)
 
         Parameters
         ----------
