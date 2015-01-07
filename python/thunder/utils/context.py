@@ -3,7 +3,7 @@
 from numpy import asarray, floor, ceil
 
 from thunder.utils.datasets import DataSets
-from thunder.utils.common import checkparams
+from thunder.utils.common import checkparams, raiseErrorIfPathExists
 
 
 class ThunderContext():
@@ -345,6 +345,10 @@ class ThunderContext():
         if inputformat.lower() == 'stack' and not dims:
             raise ValueError("Dimensions ('dims' parameter) must be specified if loading from binary image stack" +
                              " ('stack' value for 'inputformat' parameter)")
+
+        if not overwrite:
+            raiseErrorIfPathExists(outputdirpath)
+            overwrite = True  # prevent additional downstream checks for this path
 
         if shuffle:
             from thunder.rdds.fileio.imagesloader import ImagesLoader
