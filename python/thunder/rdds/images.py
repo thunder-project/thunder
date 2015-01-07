@@ -512,10 +512,17 @@ class Images(Data):
         ndims = len(dims)
 
         if ndims == 3 and isscalar(size) == 1:
-            size = [size, size, 1]
+            # improved performance applying separately to each plane
+            def filter(im):
+                 im.setflags(write=True)
+                 for z in arange(0, dims[2]):
+                     im[:, :, z] = median_filter(im[:, :, z], size)
+                 return im
+        else:
+            filter = lambda im: median_filter(im, size)
 
         return self._constructor(
-            self.rdd.mapValues(lambda v: median_filter(v, size))).__finalize__(self)
+            self.rdd.mapValues(lambda v: filter(v))).__finalize__(self)
 
     def crop(self, minbound, maxbound):
         """
