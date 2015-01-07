@@ -4,7 +4,7 @@ import os
 import struct
 import unittest
 
-from nose.tools import assert_almost_equal, assert_equals, assert_true, assert_raises
+from nose.tools import assert_almost_equal, assert_equals, assert_false, assert_true, assert_raises
 from numpy import allclose, arange, array, array_equal, dtype
 
 from thunder.rdds.fileio.seriesloader import SeriesLoader
@@ -402,13 +402,15 @@ class TestSeriesBinaryWriteFromStack(PySparkTestCaseWithOutputDir):
 
 class TestSeriesBinaryRoundtrip(PySparkTestCaseWithOutputDir):
 
-    def _run_roundtrip_tst(self, testIdx, nimages, aryShape, dtypeSpec, npartitions):
+    def _run_roundtrip_tst(self, testIdx, nimages, aryShape, dtypeSpec, npartitions, hasDimsAttr=True):
         testArrays = TestSeriesBinaryWriteFromStack.generate_tst_images(nimages, aryShape, dtypeSpec)
         loader = SeriesLoader(self.sc)
         series = loader.fromArrays(testArrays)
 
         saveDirPath = os.path.join(self.outputdir, 'save%d' % testIdx)
         series.repartition(npartitions)  # note: this does an elementwise shuffle! won't be in sorted order
+        if not hasDimsAttr:
+            series._dims = None  # manually remove dims to test this execution path
         series.saveAsBinarySeries(saveDirPath)
 
         nnonemptyPartitions = 0
@@ -420,6 +422,9 @@ class TestSeriesBinaryRoundtrip(PySparkTestCaseWithOutputDir):
 
         roundtrippedSeries = loader.fromBinary(saveDirPath)
 
+        with open(os.path.join(saveDirPath, "conf.json"), 'r') as fp:
+            conf = json.load(fp)
+
         # sorting is required here b/c of the randomization induced by the repartition.
         # orig and roundtripped will in general be different from each other, since roundtripped
         # will have (0, 0, 0) index as first element (since it will be the lexicographically first
@@ -428,12 +433,26 @@ class TestSeriesBinaryRoundtrip(PySparkTestCaseWithOutputDir):
         actualPackedAry = roundtrippedSeries.pack(sorting=True)
 
         assert_true(array_equal(expectedPackedAry, actualPackedAry))
+
         assert_equals(nnonemptyPartitions, nsaveFiles)
+
+        assert_equals(len(aryShape), conf["nkeys"])
+        assert_equals(nimages, conf["nvalues"])
+        assert_equals("int16", conf["keytype"])
+        assert_equals(str(series.dtype), conf["valuetype"])
+        if hasDimsAttr:
+            assert_equals(tuple(series.dims.count), tuple(conf["dims"]))
+        else:
+            assert_false("dims" in conf)
+
+        # check that we have converted ourselves to an appropriate float after reloading
+        assert_equals(str(smallest_float_type(series.dtype)), str(roundtrippedSeries.dtype))
 
     def test_roundtrip(self):
         self._run_roundtrip_tst(0, 2, (2, 5, 5), "int16", 1)
         self._run_roundtrip_tst(1, 2, (2, 5, 5), "float32", 2)
         self._run_roundtrip_tst(2, 4, (5, 25, 25), "float16", 5)
+        self._run_roundtrip_tst(3, 2, (2, 5, 5), "float32", 2, hasDimsAttr=False)
 
 
 class TestSeriesBlocksRoundtrip(PySparkTestCase):
