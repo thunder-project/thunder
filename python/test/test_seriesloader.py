@@ -410,7 +410,7 @@ class TestSeriesBinaryRoundtrip(PySparkTestCaseWithOutputDir):
         saveDirPath = os.path.join(self.outputdir, 'save%d' % testIdx)
         series.repartition(npartitions)  # note: this does an elementwise shuffle! won't be in sorted order
         if not hasDimsAttr:
-            series._dims = None  # manually remove dims to test this execution path
+            series._dims = None  # manually remove dims to test this execution path; output should be identical
         series.saveAsBinarySeries(saveDirPath)
 
         nnonemptyPartitions = 0
@@ -440,11 +440,6 @@ class TestSeriesBinaryRoundtrip(PySparkTestCaseWithOutputDir):
         assert_equals(nimages, conf["nvalues"])
         assert_equals("int16", conf["keytype"])
         assert_equals(str(series.dtype), conf["valuetype"])
-        if hasDimsAttr:
-            assert_equals(tuple(series.dims.count), tuple(conf["dims"]))
-        else:
-            assert_false("dims" in conf)
-
         # check that we have converted ourselves to an appropriate float after reloading
         assert_equals(str(smallest_float_type(series.dtype)), str(roundtrippedSeries.dtype))
 

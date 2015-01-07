@@ -121,8 +121,8 @@ class Blocks(Data):
         binseriesrdd = self.toBinarySeries()
 
         binseriesrdd.foreach(writer.writerFcn)
-        writeSeriesConfig(outputdirname, len(self.dims), self.nimages, dims=self.dims.count,
-                          keytype='int16', valuetype=self.dtype, overwrite=overwrite)
+        writeSeriesConfig(outputdirname, len(self.dims), self.nimages, keytype='int16', valuetype=self.dtype,
+                          overwrite=overwrite)
 
 
 class SimpleBlocks(Blocks):

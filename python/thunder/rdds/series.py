@@ -751,14 +751,14 @@ class Series(Data):
             # if we already have calculated the .dims attribute, write it out (as a count tuple) in dims metadata
             # note that we use len(self.index) here for nvalues! we don't really have a great alternative
             # to this at the moment, short of calling first().
-            writeSeriesConfig(outputdirname, len(self.dims), len(self.index), dims=self.dims.count,
-                              keytype='int16', valuetype=self.dtype, overwrite=overwrite)
+            writeSeriesConfig(outputdirname, len(self.dims), len(self.index), keytype='int16', valuetype=self.dtype,
+                              overwrite=overwrite)
         else:
             # if we don't have dims already calculated, run first() to get nkeys (instead of calculating from dims)
             # and don't write out dims attribute in metadata
             firstKey, firstVal = self.first()
-            writeSeriesConfig(outputdirname, len(firstKey), len(firstVal), keytype='int16',
-                              valuetype=self.dtype, overwrite=overwrite)
+            writeSeriesConfig(outputdirname, len(firstKey), len(firstVal), keytype='int16', valuetype=self.dtype,
+                              overwrite=overwrite)
 
     def toRowMatrix(self):
         """

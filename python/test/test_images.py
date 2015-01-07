@@ -387,7 +387,6 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
             import json
             conf = json.load(fconf)
             assert_equals(outdir, conf['input'])
-            assert_equals(tuple(dims), tuple(conf['dims']))
             assert_equals(len(aryshape), conf['nkeys'])
             assert_equals(narys_, conf['nvalues'])
             assert_equals(valdtype, conf['valuetype'])
