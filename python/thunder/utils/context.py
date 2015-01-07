@@ -1,7 +1,5 @@
 """ Simple wrapper for a Spark Context to provide loading functionality """
 
-from numpy import asarray, floor, ceil
-
 from thunder.utils.datasets import DataSets
 from thunder.utils.common import checkparams
 
@@ -162,7 +160,7 @@ class ThunderContext():
         return data
 
     def loadImagesAsSeries(self, datapath, dims=None, inputformat='stack', dtype='int16',
-                           blockSize="150M", startidx=None, stopidx=None, shuffle=False):
+                           blockSize="150M", blockSizeUnits="pixels", startidx=None, stopidx=None, shuffle=False):
         """
         Load Images data as Series data.
 
@@ -201,9 +199,16 @@ class ThunderContext():
             tif headers.
 
         blocksize: string formatted as e.g. "64M", "512k", "2G", or positive int. optional, default "150M"
-            Requested size of individual output files in bytes (or kilobytes, megabytes, gigabytes). This parameter
-            also indirectly controls the number of Spark partitions to be used, with one partition used per block
-            created.
+            Requested size of individual output files in bytes (or kilobytes, megabytes, gigabytes). If shuffle=True,
+            blocksize can also be a tuple of int specifying either the number of pixels or of splits per dimension to
+            apply to the loaded images, or an instance of BlockingStrategy. Whether a tuple of int is interpreted as
+            pixels or as splits depends on the value of the blockSizeUnits parameter. blocksize also indirectly
+            controls the number of Spark partitions to be used, with one partition used per block created.
+
+        blockSizeUnits: string, either "pixels" or "splits" (or unique prefix of each, such as "s"), default "pixels"
+            Specifies units to be used in interpreting a tuple passed as blockSizeSpec when shuffle=True. If a string
+            or a BlockingStrategy instance is passed as blockSizeSpec, or if shuffle=False, this parameter has no
+            effect.
 
         startidx: nonnegative int, optional
             startidx and stopidx are convenience parameters to allow only a subset of input files to be read in. These
@@ -241,12 +246,11 @@ class ThunderContext():
             from thunder.rdds.fileio.imagesloader import ImagesLoader
             loader = ImagesLoader(self._sc)
             if inputformat.lower() == 'stack':
-                return loader.fromStack(datapath, dims, dtype=dtype, startidx=startidx, stopidx=stopidx)\
-                    .toSeries(blockSize=blockSize)
+                images = loader.fromStack(datapath, dims, dtype=dtype, startidx=startidx, stopidx=stopidx)
             else:
                 # tif stack
-                return loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)\
-                    .toSeries(blockSize=blockSize)
+                images = loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)
+            return images.toBlocks(blockSize, units=blockSizeUnits).toSeries()
 
         else:
             from thunder.rdds.fileio.seriesloader import SeriesLoader
@@ -260,7 +264,7 @@ class ThunderContext():
                                                startidx=startidx, stopidx=stopidx)
 
     def convertImagesToSeries(self, datapath, outputdirpath, dims=None, inputformat='stack',
-                              dtype='int16', blocksize="150M", startidx=None, stopidx=None,
+                              dtype='int16', blocksize="150M", blockSizeUnits="pixels", startidx=None, stopidx=None,
                               shuffle=False, overwrite=False):
         """
         Write out Images data as Series data, saved in a flat binary format.
@@ -313,10 +317,18 @@ class ThunderContext():
             'tif-stack', the dtype parameter (if any) will be ignored; data type will instead be read out from the
             tif headers.
 
-        blocksize: string formatted as e.g. "64M", "512k", "2G", or positive int. optional, default "150M"
-            Requested size of individual output files in bytes (or kilobytes, megabytes, gigabytes). This parameter
-            also indirectly controls the number of Spark partitions to be used, with one partition used per block
-            created.
+        blocksize: string formatted as e.g. "64M", "512k", "2G", or positive int, tuple of positive int, or instance of
+                   BlockingStrategy. optional, default "150M"
+            Requested size of individual output files in bytes (or kilobytes, megabytes, gigabytes). blocksize can also
+            be an instance of blockingStrategy, or a tuple of int specifying either the number of pixels or of splits
+            per dimension to apply to the loaded images. Whether a tuple of int is interpreted as pixels or as splits
+            depends on the value of the blockSizeUnits parameter.  This parameter also indirectly controls the number
+            of Spark partitions to be used, with one partition used per block created.
+
+        blockSizeUnits: string, either "pixels" or "splits" (or unique prefix of each, such as "s"), default "pixels"
+            Specifies units to be used in interpreting a tuple passed as blockSizeSpec when shuffle=True. If a string
+            or a BlockingStrategy instance is passed as blockSizeSpec, or if shuffle=False, this parameter has no
+            effect.
 
         startidx: nonnegative int, optional
             startidx and stopidx are convenience parameters to allow only a subset of input files to be read in. These
@@ -350,11 +362,11 @@ class ThunderContext():
             from thunder.rdds.fileio.imagesloader import ImagesLoader
             loader = ImagesLoader(self._sc)
             if inputformat.lower() == 'stack':
-                loader.fromStack(datapath, dims, dtype=dtype, startidx=startidx, stopidx=stopidx)\
-                    .saveAsBinarySeries(outputdirpath, blockSize=blocksize, overwrite=overwrite)
+                images = loader.fromStack(datapath, dims, dtype=dtype, startidx=startidx, stopidx=stopidx)
             else:
-                loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)\
-                    .saveAsBinarySeries(outputdirpath, blockSize=blocksize, overwrite=overwrite)
+                images = loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)
+
+            images.toBlocks(blocksize, units=blockSizeUnits).saveAsBinarySeries(outputdirpath, overwrite=overwrite)
         else:
             from thunder.rdds.fileio.seriesloader import SeriesLoader
             loader = SeriesLoader(self._sc)
