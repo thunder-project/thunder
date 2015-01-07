@@ -4,7 +4,6 @@ from matplotlib.pyplot import imread
 from io import BytesIO
 from numpy import array, dstack, frombuffer, ndarray, prod
 from thunder.rdds.fileio.readers import getParallelReaderForPath
-from thunder.rdds.keys import Dimensions
 from thunder.rdds.images import Images
 
 

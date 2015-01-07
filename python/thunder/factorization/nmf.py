@@ -176,7 +176,7 @@ class NMF(object):
                     if wOld is not None:
                         self.wConvergence.append(rddFrobeniusNorm(w, wOld))
                     else:
-                        self.w.convergence.append(inf)
+                        self.wConvergence.append(inf)
 
                 # calculate reconstruction error
                 if self.reconHist == 'all':
@@ -208,4 +208,3 @@ class NMF(object):
             print "Error: %s is not a supported algorithm." % self.method
 
         return self
-

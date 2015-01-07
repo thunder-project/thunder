@@ -10,12 +10,12 @@ Basic usage
 
 *When should I cache my data?*
 	
-	Any data object can be cached into RAM by calling ``data.cache()`` on it. Caching is a powerful capability of Spark, and can greatly speed up subsequent queries or operations on the data. However, you can only cache as much data as your cluster has RAM (and the actual RAM avaialble to Spark for caching is approximately half of the total installed RAM of the cluster). It often makes sense to cache intermediate results, for example, perform filtering on a set of images, convert to a series, and cache the result. You should rarely cache data you only plan to use once; conversely, you should almost always cache data that will be subjected to iterative algorithms (like clustering).
+	Any data object can be cached into RAM by calling ``data.cache()`` on it. Caching is a powerful capability of Spark, and can greatly speed up subsequent queries or operations on the data. However, you can only cache as much data as your cluster has RAM (and the actual RAM available to Spark for caching is approximately half of the total installed RAM of the cluster). It often makes sense to cache intermediate results, for example, perform filtering on a set of images, convert to a series, and cache the result. You should rarely cache data you only plan to use once; conversely, you should almost always cache data that will be subjected to iterative algorithms (like clustering).
 
 
 *I performed an operation and it happened instantaneously, is it really that fast?*
 
-	Probably not. Many distributed operations in Thunder and Spark are lazy, which means they will not be executed until the neccessary output requires them to be. For example, if you call ``images.medianFilter().sum()`` on an ``Images`` object, the first filtering operation is lazy, and is computed only because you asked for the sum. If you had just called ``imgs.medianFilter()`` it would appear to have happened immediately, but nothing would have actually been computed (yet).
+	Probably not. Many distributed operations in Thunder and Spark are lazy, which means they will not be executed until the necessary output requires them to be. For example, if you call ``images.medianFilter().sum()`` on an ``Images`` object, the first filtering operation is lazy, and is computed only because you asked for the sum. If you had just called ``imgs.medianFilter()`` it would appear to have happened immediately, but nothing would have actually been computed (yet).
 
 
 *Can I index directly into an Images or Series object?*
@@ -80,7 +80,7 @@ Using Thunder on Amazon's EC2
 
 *How expensive is S3 and EC2?*
 	
-	For current on-demand pricing by instance type, see: http://aws.amazon.com/ec2/pricing/. For details on instance types, see: http://aws.amazon.com/ec2/instance-types/, and in particular the instance types matrix at the bottom of that page. For details on storage charges, see: XXX.
+	For current on-demand pricing by instance type, see: http://aws.amazon.com/ec2/pricing/. For details on instance types, see: http://aws.amazon.com/ec2/instance-types/, and in particular the instance types matrix at the bottom of that page. For details on storage charges, see: http://aws.amazon.com/s3/pricing/.
 
 *Where should I store my data?*
 	

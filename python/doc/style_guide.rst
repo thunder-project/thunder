@@ -44,12 +44,12 @@ Imports should be grouped as follows: all third-party imports (e.g. ``numpy``, `
 	from thunder.rdds.keys import Dimensions
 	from thunder.utils.common import parseMemoryString
 
-Locally-scoped imports are strongly encouraged, and top-level imports discouraged, especially for modules with user-facing classes. This is to avoid a performance hit arising from PySpark's handling of function serialization, especially problematic for imports from large and complex libiaries (e.g. ``matplotlib``). For any modules that are exposed at Thunder’s top-level (e.g. those imported when calling ``from thunder import *``), limit top-level imports to ``numpy``, and other ``thunder`` modules which themselves only import from ``numpy``, and otherwise use locally-scoped imports.
+Locally-scoped imports are strongly encouraged, and top-level imports discouraged, especially for modules with user-facing classes. This is to avoid a performance hit arising from PySpark's handling of function serialization, especially problematic for imports from large and complex libraries (e.g. ``matplotlib``). For any modules that are exposed at Thunder’s top-level (e.g. those imported when calling ``from thunder import *``), limit top-level imports to ``numpy``, and other ``thunder`` modules which themselves only import from ``numpy``, and otherwise use locally-scoped imports.
 
 Testing
 ~~~~~~~
 
-Within the ``thunder/test`` folder, there are several files with names beginning with ``test_`` each containing unit tests for a corresponding package or module. Within each of these files, there are one or more test classes (each derived from the base class ``PySparkTestCase``), and each test class has as methods a set of individual tests.
+Within the ``thunder/test`` folder, there are several files with names beginning with ``test_`` each containing unit tests for a corresponding package or module. Within each of these files, there are one or more test classes (usually derived from the base class ``PySparkTestCase``), and each test class has as methods a set of individual tests.
 
 All new features should include appropriate unit tests. When adding a new feature, a good place to start is to find a piece of functionality similar to the one you are adding, find the existing test, and use it as as a starting point.
 
@@ -60,9 +60,9 @@ Most functionality in Thunder is organized broadly into two parts: distributed d
 
 Methods on data objects are designed to provide easy access to common data processing operations. For example, filtering or cropping images, or computing correlations on time series. Data object methods are not intended for complex analyses.
 
-Analysis packages are designed for more complex operations and model fitting workflows. Most are desgined after the style of scikit-learn, with a single class or classes for each kind of model. These classes should usually have ``fit`` methods (for fitting the parameters of a model from a data object), and ``predict`` and/or ``transform`` methods (for applying the estimated model to new data). 
+Analysis packages are designed for more complex operations and model fitting workflows. Most are designed after the style of scikit-learn, with a single class or classes for each kind of model. These classes should usually have ``fit`` methods (for fitting the parameters of a model from a data object), and ``predict`` and/or ``transform`` methods (for applying the estimated model to new data). 
 
-Data objects are extendable by design -- see, for example, ``TimeSeries`` which is a subclass of ``Series`` -- and some new features may be best implemented through a new class (for example, an ``EventTimeSeries`` for working with sparse time series data). To extend an existing data object, your subclass just needs to define a ``_constructor`` that returns the correct type, as in:
+Data objects are extensible by design -- see, for example, ``TimeSeries`` which is a subclass of ``Series`` -- and some new features may be best implemented through a new class (for example, an ``EventTimeSeries`` for working with sparse time series data). To extend an existing data object, your subclass just needs to define a ``_constructor`` that returns the correct type, as in:
 
 .. code-block:: python
 

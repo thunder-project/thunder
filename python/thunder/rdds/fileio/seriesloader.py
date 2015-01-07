@@ -12,10 +12,10 @@ import urlparse
 import math
 
 from thunder.rdds.fileio.writers import getParallelWriterForPath
-from thunder.rdds.imageblocks import ImageBlocks
 from thunder.rdds.keys import Dimensions
 from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError, selectByStartAndStopIndices, \
     appendExtensionToPathSpec
+from thunder.rdds.imgblocks.blocks import SimpleBlocks
 from thunder.rdds.series import Series
 from thunder.utils.common import parseMemoryString, smallestFloatType
 
@@ -564,7 +564,7 @@ class SeriesLoader(object):
             for seriesKey, series in kvIter:
                 if keyPacker is None:
                     keyPacker = struct.Struct('h'*len(seriesKey))
-                    label = ImageBlocks.getBinarySeriesNameForKey(seriesKey) + ".bin"
+                    label = SimpleBlocks.getBinarySeriesNameForKey(seriesKey) + ".bin"
                 buf.write(keyPacker.pack(*seriesKey))
                 buf.write(series.tostring())
             val = buf.getvalue()
@@ -572,8 +572,7 @@ class SeriesLoader(object):
             return [(label, val)]
 
         seriesBlocks.mapPartitions(blockToBinarySeries).foreach(writer.writerFcn)
-        writeSeriesConfig(outputDirPath, len(dims), npointsInSeries, dims=dims, valueType=dtype,
-                          overwrite=overwrite)
+        writeSeriesConfig(outputDirPath, len(dims), npointsInSeries, valueType=dtype, overwrite=overwrite)
 
     def saveFromStack(self, dataPath, outputDirPath, dims, ext="stack", blockSize="150M", dtype='int16',
                       newDtype=None, casting='safe', startIdx=None, stopIdx=None, overwrite=False):
@@ -727,7 +726,7 @@ class SeriesLoader(object):
         return params
 
 
-def writeSeriesConfig(outputDirPath, nkeys, nvalues, dims=None, keyType='int16', valueType='int16',
+def writeSeriesConfig(outputDirPath, nkeys, nvalues, keyType='int16', valueType='int16',
                       confFilename="conf.json", overwrite=True):
     """Helper function to write out a conf.json file with required information to load Series binary data.
     """
@@ -740,8 +739,6 @@ def writeSeriesConfig(outputDirPath, nkeys, nvalues, dims=None, keyType='int16',
     conf = {'input': outputDirPath,
             'nkeys': nkeys, 'nvalues': nvalues,
             'valuetype': str(valueType), 'keytype': str(keyType)}
-    if dims:
-        conf["dims"] = dims
 
     confWriter = filewriterClass(outputDirPath, confFilename, overwrite=overwrite)
     confWriter.writeFile(json.dumps(conf, indent=2))

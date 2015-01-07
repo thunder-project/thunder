@@ -105,12 +105,12 @@ class ICA(object):
             random.seed(self.seed)
         b = orth(random.randn(self.k, self.c))
         bOld = zeros((self.k, self.c))
-        iter = 0
+        niter = 0
         minAbsCos = 0
         errVec = zeros(self.maxIter)
 
-        while (iter < self.maxIter) & ((1 - minAbsCos) > self.tol):
-            iter += 1
+        while (niter < self.maxIter) & ((1 - minAbsCos) > self.tol):
+            niter += 1
             # update rule for pow3 non-linearity (TODO: add others)
             b = wht.rows().map(lambda x: outer(x, dot(x, b) ** 3)).sum() / wht.nrows - 3 * b
             # make orthogonal
@@ -119,7 +119,7 @@ class ICA(object):
             minAbsCos = min(abs(diag(dot(transpose(b), bOld))))
             # store results
             bOld = b
-            errVec[iter-1] = (1 - minAbsCos)
+            errVec[niter-1] = (1 - minAbsCos)
 
         # get un-mixing matrix
         w = dot(b.T, whtMat)

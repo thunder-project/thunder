@@ -1,4 +1,4 @@
-from numpy import arange, ndarray, argmax, unravel_index, asarray
+from numpy import arange, ndarray, argmax, unravel_index
 
 from thunder.rdds.images import Images
 from thunder.utils.common import checkParams

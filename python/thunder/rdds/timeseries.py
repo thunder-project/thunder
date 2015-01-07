@@ -257,7 +257,7 @@ class TimeSeries(Series):
 
         return self.applyValues(func)
 
-    def normalize(self, baseline='percentile', window=6, perc=20):
+    def normalize(self, baseline='percentile', window=None, perc=20):
         """ Normalize each time series by subtracting and dividing by a baseline.
 
         Baseline can be derived from a global mean or percentile,
@@ -276,6 +276,10 @@ class TimeSeries(Series):
         """
         checkParams(baseline, ['mean', 'percentile', 'window'])
         method = baseline.lower()
+    
+        from warnings import warn
+        if method is not 'window' and window is not None:
+            warn('Setting window without using method "window" has no effect')
 
         if method == 'mean':
             baseFunc = mean

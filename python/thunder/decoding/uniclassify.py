@@ -54,7 +54,8 @@ class MassUnivariateClassifier(object):
         elif type(paramFile) is dict:
             params = paramFile
         else:
-            raise TypeError("Parameters for classification must be provided as string with file location, or dictionary")
+            raise TypeError("Parameters for classification must be provided as string with file location," +
+                            " or dictionary")
 
         self.labels = params['labels']
 

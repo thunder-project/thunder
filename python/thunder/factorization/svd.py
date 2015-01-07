@@ -92,7 +92,7 @@ class SVD(object):
 
             # initialize random matrix
             c = random.rand(self.k, mat.ncols)
-            iter = 0
+            niter = 0
             error = 100
 
             # define an accumulator
@@ -116,7 +116,7 @@ class SVD(object):
             # iterative update subspace using expectation maximization
             # e-step: x = (c'c)^-1 c' y
             # m-step: c = y x' (xx')^-1
-            while (iter < self.maxIter) & (error > self.tol):
+            while (niter < self.maxIter) & (error > self.tol):
 
                 cOld = c
 
@@ -140,7 +140,7 @@ class SVD(object):
                 c = c.T
 
                 error = sum(sum((c - cOld) ** 2))
-                iter += 1
+                niter += 1
 
             # project data into subspace spanned by columns of c
             # use standard eigendecomposition to recover an orthonormal basis
@@ -157,7 +157,3 @@ class SVD(object):
             self.v = v
 
         return self
-
-
-
-
