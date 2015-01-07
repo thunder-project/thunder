@@ -571,8 +571,7 @@ class SeriesLoader(object):
             return [(label, val)]
 
         seriesblocks.mapPartitions(blockToBinarySeries).foreach(writer.writerFcn)
-        writeSeriesConfig(outputdirname, len(dims), npointsinseries, dims=dims, valuetype=datatype,
-                          overwrite=overwrite)
+        writeSeriesConfig(outputdirname, len(dims), npointsinseries, valuetype=datatype, overwrite=overwrite)
 
     def saveFromStack(self, datapath, outputdirpath, dims, ext="stack", blockSize="150M", datatype='int16',
                       newdtype=None, casting='safe', startidx=None, stopidx=None, overwrite=False):
@@ -726,8 +725,8 @@ class SeriesLoader(object):
         return params
 
 
-def writeSeriesConfig(outputdirname, nkeys, nvalues, dims=None, keytype='int16', valuetype='int16',
-                      confname="conf.json", overwrite=True):
+def writeSeriesConfig(outputdirname, nkeys, nvalues, keytype='int16', valuetype='int16', confname="conf.json",
+                      overwrite=True):
     """Helper function to write out a conf.json file with required information to load Series binary data.
     """
     import json
@@ -738,8 +737,6 @@ def writeSeriesConfig(outputdirname, nkeys, nvalues, dims=None, keytype='int16',
     conf = {'input': outputdirname,
             'nkeys': nkeys, 'nvalues': nvalues,
             'valuetype': str(valuetype), 'keytype': str(keytype)}
-    if dims:
-        conf["dims"] = dims
 
     confwriter = filewriterclass(outputdirname, confname, overwrite=overwrite)
     confwriter.writeFile(json.dumps(conf, indent=2))

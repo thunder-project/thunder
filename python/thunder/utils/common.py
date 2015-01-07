@@ -30,6 +30,28 @@ def checkparams(param, opts):
         raise ValueError("Option must be one of %s, got %s" % (str(opts)[1:-1], param))
 
 
+def selectByMatchingPrefix(param, opts):
+    """Given a string parameter and a sequence of possible options, returns an option that is uniquely
+    specified by matching its prefix to the passed parameter.
+
+    The match is checked without sensitivity to case.
+
+    Throws IndexError if none of opts starts with param, or if multiple opts start with param.
+
+    >> selectByMatchingPrefix("a", ["aardvark", "mongoose"])
+    "aardvark"
+    """
+    lparam = param.lower()
+    hits = [opt for opt in opts if opt.lower().startswith(lparam)]
+    nhits = len(hits)
+    if nhits == 1:
+        return hits[0]
+    if nhits:
+        raise IndexError("Multiple matches for for prefix '%s': %s") % (param, hits)
+    else:
+        raise IndexError("No matches for prefix '%s' found in options %s") % (param, opts)
+
+
 def smallest_float_type(dtype):
     """Returns the smallest floating point dtype to which the passed dtype can be safely cast.
 
@@ -75,3 +97,17 @@ def parseMemoryString(memstr):
     else:
         return int(memstr)
 
+
+def raiseErrorIfPathExists(path):
+    """Raises a ValueError if the passed path string is found to already exist.
+
+    The ValueError message will suggest calling with overwrite=True; this function is expected to be
+    called from the various output methods that accept an 'overwrite' keyword argument.
+    """
+    # check that specified output path does not already exist
+    from thunder.rdds.fileio.readers import getFileReaderForPath
+    reader = getFileReaderForPath(path)()
+    existing = reader.list(path)
+    if existing:
+        raise ValueError("Path %s appears to already exist. Specify a new directory, or call " % path +
+                         "with overwrite=True to overwrite.")
