@@ -714,6 +714,11 @@ class Series(Data):
         from thunder.rdds.fileio.writers import getParallelWriterForPath
         from thunder.rdds.fileio.seriesloader import writeSeriesConfig
 
+        if not overwrite:
+            from thunder.utils.common import raiseErrorIfPathExists
+            raiseErrorIfPathExists(outputdirname)
+            overwrite = True  # prevent additional downstream checks for this path
+
         def partitionToBinarySeries(kvIter):
             """Collects all Series records in a partition into a single binary series record.
             """

@@ -111,6 +111,11 @@ class Blocks(Data):
         from thunder.rdds.fileio.writers import getParallelWriterForPath
         from thunder.rdds.fileio.seriesloader import writeSeriesConfig
 
+        if not overwrite:
+            from thunder.utils.common import raiseErrorIfPathExists
+            raiseErrorIfPathExists(outputdirname)
+            overwrite = True  # prevent additional downstream checks for this path
+
         writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
 
         binseriesrdd = self.toBinarySeries()
