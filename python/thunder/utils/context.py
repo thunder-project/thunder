@@ -1,7 +1,7 @@
 """ Simple wrapper for a Spark Context to provide loading functionality """
 
 from thunder.utils.datasets import DataSets
-from thunder.utils.common import checkParams
+from thunder.utils.common import checkParams, raiseErrorIfPathExists
 
 
 class ThunderContext():
@@ -357,6 +357,10 @@ class ThunderContext():
         if inputFormat.lower() == 'stack' and not dims:
             raise ValueError("Dimensions ('dims' parameter) must be specified if loading from binary image stack" +
                              " ('stack' value for 'inputformat' parameter)")
+
+        if not overwrite:
+            raiseErrorIfPathExists(outputdirpath)
+            overwrite = True  # prevent additional downstream checks for this path
 
         if shuffle:
             from thunder.rdds.fileio.imagesloader import ImagesLoader
