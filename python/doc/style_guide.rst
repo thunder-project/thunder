@@ -25,12 +25,12 @@ Variable names may use abbreviations so long as their meaning is relatively clea
 
 Leading underscores may be used to indicate attributes not intended to be accessed outside of the object where they are defined. Double leading underscores may be used in method names for the same purpose. Trailing underscores may be used (sparingly) to avoid shadowing variables of the same name inside nested scopes, such as nested functions. A single underscore ``_`` in a function may be used to denote a dummy variable required for unpacking a tuple, as in a method return value, that will not be otherwise accessed, e.g. ``data.map(lambda (_, v): (_, v * 2)``).
 
-A Spark broadcast variable may be denoted by the trailing capital letters ``BC``.
+A Spark broadcast variable may be denoted by the trailing capital letters ``BC``, as in ``modelBC = sc.broadcast(model)``.
 
 Imports
 ~~~~~~~
 
-All imports should be in the form ``from modulename import a, b, c``
+All imports should be in the form ``from modulename import a, b, c``. This includes ``numpy``. Please do not use the convention of ``import numpy as np``. Although there are some advantages to this approach, we find overall that it leads to a codebase that is harder to read and understand.
 
 Variables imported from a module should be listed in alphabetical order.
 
@@ -44,7 +44,7 @@ Imports should be grouped as follows: all third-party imports (e.g. ``numpy``, `
 	from thunder.rdds.keys import Dimensions
 	from thunder.utils.common import parseMemoryString
 
-Locally-scoped imports are strongly encouraged, and top-level imports discouraged, especially for modules with user-facing classes. This is to avoid a performance hit arising from PySpark's handling of function serialization, especially problematic for imports from large and complex libraries (e.g. ``matplotlib``). For any modules that are exposed at Thunder’s top-level (e.g. those imported when calling ``from thunder import *``), limit top-level imports to ``numpy``, and other ``thunder`` modules which themselves only import from ``numpy``, and otherwise use locally-scoped imports.
+Locally-scoped imports are strongly encouraged, and top-level imports discouraged, especially for modules with user-facing classes (anything imported in Thunder's top-level ``__init__.py``, which are those modules imported when calling ``from thunder import *``). This is to avoid a performance problem arising from how PySpark serializes inline functions, especially problematic for imports from large and complex libraries (e.g. ``matplotlib``). For user-facing modules, limit top-level imports to ``numpy``, and other ``thunder`` modules which themselves only import from ``numpy``, and otherwise use locally-scoped imports.
 
 Testing
 ~~~~~~~
@@ -53,10 +53,12 @@ Within the ``thunder/test`` folder, there are several files with names beginning
 
 All new features should include appropriate unit tests. When adding a new feature, a good place to start is to find a piece of functionality similar to the one you are adding, find the existing test, and use it as as a starting point.
 
+See [link] for information on how to run the tests. All tests will be automatically run on any pull request, but you can save time by running tests locally and resolving any issues.
+
 Design principles
 ~~~~~~~~~~~~~~~~~
 
-Most functionality in Thunder is organized broadly into two parts: distributed data objects and their associated methods (e.g. ``Images``, ``Series``, etc.), and analysis packages (e.g. ``clustering``, ``factorization``, ``regression``) that take these objects as inputs. Before working on a new feature, post an `issue <https://github.com/freeman-lab/thunder/issues>`_, or send a message to the `mailing list <https://groups.google.com/forum/?hl=en#!forum/thunder-user>`_, to solicit feedback from the community. We can help figure out how to add it!
+Most functionality in Thunder is organized broadly into two parts: distributed data objects and their associated methods (e.g. ``Images``, ``Series``, etc.), and analysis packages (e.g. ``clustering``, ``factorization``, ``regression``) that take these objects as inputs.
 
 Methods on data objects are designed to provide easy access to common data processing operations. For example, filtering or cropping images, or computing correlations on time series. Data object methods are not intended for complex analyses.
 
@@ -89,6 +91,8 @@ All data objects in Thunder (e.g. ``Images``, ``Series``, etc.) are backed by RD
 	newrdd = self.rdd.func1().func2() ...
 	newdata = self._constructor(newrdd).__finalize__(self)
 	return newdata
+
+Keep these design considereations in mind when planning to add a new feature. It's also a great idea to post an `issue <https://github.com/freeman-lab/thunder/issues>`_, or send a message to the `mailing list <https://groups.google.com/forum/?hl=en#!forum/thunder-user>`_ with your idea, to solicit feedback from the community. We can help figure out how to add it!
 
 
 (Indexing with “startIdx”, “stopIdx” parameters)
