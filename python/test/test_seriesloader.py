@@ -459,7 +459,7 @@ class TestSeriesBlocksRoundtrip(PySparkTestCase):
 
         blocks = series.toBlocks(sizeSpec)
 
-        roundtrippedSeries = blocks.toSeries(newdtype=series.dtype)
+        roundtrippedSeries = blocks.toSeries(newDType=series.dtype)
 
         packedSeries = series.pack()
         packedRoundtrippedSeries = roundtrippedSeries.pack()

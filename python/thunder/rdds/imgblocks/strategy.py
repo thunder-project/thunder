@@ -156,9 +156,9 @@ class SimpleBlockingStrategy(BlockingStrategy):
             new BlockingStrategy will be created and setSource() called on it with the passed images object
         """
         dims, nimages, dtype = images.dims, images.nimages, images.dtype
-        minseriessize = nimages * dtypeFunc(dtype).itemsize
+        minSeriesSize = nimages * dtypeFunc(dtype).itemsize
 
-        splitsPerDim = _calcSplitsForBlockSize(blockSize, minseriessize, dims)
+        splitsPerDim = _calcSplitsForBlockSize(blockSize, minSeriesSize, dims)
         strategy = cls(splitsPerDim, units="splits", **kwargs)
         strategy.setSource(images)
         return strategy
@@ -186,19 +186,19 @@ class SimpleBlockingStrategy(BlockingStrategy):
         # slices will be sequence of sequences of slices
         # slices[i] will hold slices for ith dimension
         slices = []
-        for nsplits, dimsize in zip(splitsPerDim, dims):
-            blocksize = dimsize / nsplits  # integer division
-            blockrem = dimsize % nsplits
-            st = 0
-            dimslices = []
-            for blockidx in xrange(nsplits):
-                en = st + blocksize
-                if blockrem:
-                    en += 1
-                    blockrem -= 1
-                dimslices.append(slice(st, min(en, dimsize), 1))
-                st = en
-            slices.append(dimslices)
+        for nsplits, dimSize in zip(splitsPerDim, dims):
+            blockSize = dimSize / nsplits  # integer division
+            blockRem = dimSize % nsplits
+            start = 0
+            dimSlices = []
+            for blockIdx in xrange(nsplits):
+                end = start + blockSize
+                if blockRem:
+                    end += 1
+                    blockRem -= 1
+                dimSlices.append(slice(start, min(end, dimSize), 1))
+                start = end
+            slices.append(dimSlices)
         return slices
 
     @staticmethod
@@ -206,15 +206,15 @@ class SimpleBlockingStrategy(BlockingStrategy):
         # slices will be sequence of sequences of slices
         # slices[i] will hold slices for ith dimension
         slices = []
-        for pix, dimsize in zip(pixPerDim, dims):
-            st = 0
-            dimslices = []
-            while st < dimsize:
-                en = st + pix
-                en = min(en, dimsize)
-                dimslices.append(slice(st, en, 1))
-                st += pix
-            slices.append(dimslices)
+        for pix, dimSize in zip(pixPerDim, dims):
+            start = 0
+            dimSlices = []
+            while start < dimSize:
+                end = start + pix
+                end = min(end, dimSize)
+                dimSlices.append(slice(start, end, 1))
+                start += pix
+            slices.append(dimSlices)
         return slices
 
     def setSource(self, images):
@@ -233,39 +233,39 @@ class SimpleBlockingStrategy(BlockingStrategy):
             elts = reduce(lambda x, y: x * y, self._pixPerDim)
         return elts * dtypeFunc(self.dtype).itemsize * self.nimages
 
-    def extractBlockFromImage(self, imgary, blockslices, timepoint, numtimepoints):
+    def extractBlockFromImage(self, imgAry, blockSlices, timepoint, numTimepoints):
         # add additional "time" dimension onto front of val
-        val = expand_dims(imgary[blockslices], axis=0)
-        origshape = [numtimepoints] + list(imgary.shape)
-        imgslices = [slice(timepoint, timepoint+1, 1)] + list(blockslices)
-        return BlockGroupingKey(origshape, imgslices), val
+        val = expand_dims(imgAry[blockSlices], axis=0)
+        origShape = [numTimepoints] + list(imgAry.shape)
+        imgSlices = [slice(timepoint, timepoint+1, 1)] + list(blockSlices)
+        return BlockGroupingKey(origShape, imgSlices), val
 
     def blockingFunction(self, timePointIdxAndImageArray):
-        tpidx, imgary = timePointIdxAndImageArray
-        totnumimages = self.nimages
+        tpIdx, imgAry = timePointIdxAndImageArray
+        totNumImages = self.nimages
         slices = self._slices
 
-        sliceproduct = itertools.product(*slices)
-        for blockslices in sliceproduct:
-            yield self.extractBlockFromImage(imgary, blockslices, tpidx, totnumimages)
+        sliceProduct = itertools.product(*slices)
+        for blockSlices in sliceProduct:
+            yield self.extractBlockFromImage(imgAry, blockSlices, tpIdx, totNumImages)
 
     def combiningFunction(self, spatialIdxAndBlocksSequence):
         _, partitionedSequence = spatialIdxAndBlocksSequence
         # sequence will be of (partitioning key, np array) pairs
         ary = None
-        firstkey = None
+        firstKey = None
         for key, block in partitionedSequence:
             if ary is None:
                 # set up collection array:
-                newshape = [key.origshape[0]] + list(block.shape)[1:]
-                ary = zeros(newshape, block.dtype)
-                firstkey = key
+                newShape = [key.origShape[0]] + list(block.shape)[1:]
+                ary = zeros(newShape, block.dtype)
+                firstKey = key
 
             # put values into collection array:
-            targslices = [key.temporalKey] + ([slice(None)] * (block.ndim - 1))
-            ary[targslices] = block
+            targSlices = [key.temporalKey] + ([slice(None)] * (block.ndim - 1))
+            ary[targSlices] = block
 
-        return firstkey.asTemporallyConcatenatedKey(), ary
+        return firstKey.asTemporallyConcatenatedKey(), ary
 
 
 class SeriesBlockingStrategy(BlockingStrategy):
@@ -464,32 +464,32 @@ class PaddedBlockingStrategy(SimpleBlockingStrategy):
     def generateFromBlockSize(cls, images, blockSize, padding=10, **kwargs):
         return super(PaddedBlockingStrategy, cls).generateFromBlockSize(images, blockSize, padding=padding, **kwargs)
 
-    def extractBlockFromImage(self, imgary, blockslices, timepoint, numtimepoints):
-        padslices = []
-        actualpadding = []
-        for coreslice, pad, l in zip(blockslices, self.padding, imgary.shape):
+    def extractBlockFromImage(self, imgAry, blockSlices, timepoint, numTimepoints):
+        padSlices = []
+        actualPadding = []
+        for coreSlice, pad, l in zip(blockSlices, self.padding, imgAry.shape):
             # normalize 'None' values to appropriate positions
-            normstart, normstop, normstep = getStartStopStep(coreslice, l)
-            start = max(0, normstart-pad)
-            stop = min(l, normstop+pad)
-            startpadsize = normstart - start
-            stoppadsize = stop - normstop
-            padslices.append(slice(start, stop, normstep))
-            actualpadding.append((startpadsize, stoppadsize))
+            normStart, normStop, normStep = getStartStopStep(coreSlice, l)
+            start = max(0, normStart-pad)
+            stop = min(l, normStop+pad)
+            startPadSize = normStart - start
+            stopPadSize = stop - normStop
+            padSlices.append(slice(start, stop, normStep))
+            actualPadding.append((startPadSize, stopPadSize))
 
         # calculate "core" slices into values array based on actual size of padding
-        vals = imgary[padslices]
-        corevalslices = [slice(0, 1, 1)]  # start with slice for time
-        for actualpad, l in zip(actualpadding, vals.shape):
-            actualstartpad, actualstoppad = actualpad
-            corevalslices.append(slice(actualstartpad, l-actualstoppad, 1))
+        vals = imgAry[padSlices]
+        coreValSlices = [slice(0, 1, 1)]  # start with slice for time
+        for actualPad, l in zip(actualPadding, vals.shape):
+            actualStartPad, actualStopPad = actualPad
+            coreValSlices.append(slice(actualStartPad, l-actualStopPad, 1))
 
         # add additional "time" dimension onto front of val
-        val = expand_dims(imgary[padslices], axis=0)
-        origshape = [numtimepoints] + list(imgary.shape)
-        imgslices = [slice(timepoint, timepoint+1, 1)] + list(blockslices)
-        padslices = [slice(timepoint, timepoint+1, 1)] + padslices
-        return PaddedBlockGroupingKey(origshape, padslices, imgslices, tuple(val.shape), corevalslices), val
+        val = expand_dims(imgAry[padSlices], axis=0)
+        origShape = [numTimepoints] + list(imgAry.shape)
+        imgSlices = [slice(timepoint, timepoint+1, 1)] + list(blockSlices)
+        padSlices = [slice(timepoint, timepoint+1, 1)] + padSlices
+        return PaddedBlockGroupingKey(origShape, padSlices, imgSlices, tuple(val.shape), coreValSlices), val
 
 
 def _normDimsToShapeTuple(dims):
@@ -508,13 +508,13 @@ def _calcSplitsForBlockSize(blockSize, elementSize, dims):
     if isinstance(blockSize, basestring):
         blockSize = parseMemoryString(blockSize)
 
-    memseq = _BlockMemoryAsReversedSequence(_normDimsToShapeTuple(dims))
-    tmpidx = bisect.bisect_left(memseq, blockSize / float(elementSize))
-    if tmpidx == len(memseq):
+    memSeq = _BlockMemoryAsReversedSequence(_normDimsToShapeTuple(dims))
+    tmpIdx = bisect.bisect_left(memSeq, blockSize / float(elementSize))
+    if tmpIdx == len(memSeq):
         # handle case where requested block is bigger than the biggest image
         # we can produce; just give back the biggest block size
-        tmpidx -= 1
-    return memseq.indtosub(tmpidx)
+        tmpIdx -= 1
+    return memSeq.indToSub(tmpIdx)
 
 
 class _BlockMemoryAsSequence(object):
@@ -553,18 +553,18 @@ class _BlockMemoryAsSequence(object):
     def __init__(self, dims):
         self._dims = dims
 
-    def indtosub(self, idx):
+    def indToSub(self, idx):
         """Converts a linear index to a corresponding blocking strategy, represented as
         number of splits along each dimension.
         """
         dims = self._dims
         ndims = len(dims)
         sub = [1] * ndims
-        for didx, d in enumerate(dims[::-1]):
-            didx = ndims - (didx + 1)
-            delta = min(dims[didx]-1, idx)
+        for dIdx, d in enumerate(dims[::-1]):
+            dIdx = ndims - (dIdx + 1)
+            delta = min(dims[dIdx]-1, idx)
             if delta > 0:
-                sub[didx] += delta
+                sub[dIdx] += delta
                 idx -= delta
             if idx <= 0:
                 break
@@ -582,7 +582,7 @@ class _BlockMemoryAsSequence(object):
         return sum([d-1 for d in self._dims]) + 1
 
     def __getitem__(self, item):
-        splits = self.indtosub(item)
+        splits = self.indToSub(item)
         return _BlockMemoryAsSequence.avgElementsPerBlock(self._dims, splits)
 
 
@@ -599,5 +599,5 @@ class _BlockMemoryAsReversedSequence(_BlockMemoryAsSequence):
             raise IndexError("list index out of range")
         return l - (idx + 1)
 
-    def indtosub(self, idx):
-        return super(_BlockMemoryAsReversedSequence, self).indtosub(self._reverseIdx(idx))
+    def indToSub(self, idx):
+        return super(_BlockMemoryAsReversedSequence, self).indToSub(self._reverseIdx(idx))
