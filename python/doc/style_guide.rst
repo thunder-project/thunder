@@ -25,7 +25,7 @@ Variable names may use abbreviations so long as their meaning is relatively clea
 
 Leading underscores may be used to indicate attributes not intended to be accessed outside of the object where they are defined. Double leading underscores may be used in method names for the same purpose. Trailing underscores may be used (sparingly) to avoid shadowing variables of the same name inside nested scopes, such as nested functions. A single underscore ``_`` in a function may be used to denote a dummy variable required for unpacking a tuple, as in a method return value, that will not be otherwise accessed, e.g. ``data.map(lambda (_, v): (_, v * 2)``).
 
-A Spark broadcast variable may be denoted by the trailing capital letters ``BC``, as in ``modelBC = sc.broadcast(model)``.
+A Spark broadcast variable may be denoted by initial lowercase letters ``bc``, as in ``bcModel = sc.broadcast(model)``.
 
 Imports
 ~~~~~~~
