@@ -2,7 +2,7 @@
 """
 Wrapper for the Spark EC2 launch script that additionally
 installs Thunder and its dependencies, and optionally
-loads an example data set
+loads example data sets
 """
 #
 # Licensed to the Apache Software Foundation (ASF) under one
@@ -103,6 +103,7 @@ def remap_spark_version_to_hash(user_version_string):
 def install_thunder(master, opts, spark_version_string):
     """ Install Thunder and dependencies on a Spark EC2 cluster"""
     print "Installing Thunder on the cluster..."
+
     # download and build thunder
     ssh(master, opts, "rm -rf thunder && git clone https://github.com/freeman-lab/thunder.git")
     if opts.thunder_version.lower() != "head":
@@ -113,37 +114,47 @@ def install_thunder(master, opts, spark_version_string):
         ssh(master, opts, "cd thunder && git checkout %s" % tagOrHash)
     ssh(master, opts, "chmod u+x thunder/python/bin/build")
     ssh(master, opts, "thunder/python/bin/build")
+
     # copy local data examples to all workers
     ssh(master, opts, "yum install -y pssh")
     ssh(master, opts, "pssh -h /root/spark-ec2/slaves mkdir -p /root/thunder/python/thunder/utils/data/")
     ssh(master, opts, "~/spark-ec2/copy-dir /root/thunder/python/thunder/utils/data/")
+
     # install pip
     ssh(master, opts, "wget http://pypi.python.org/packages/source/p/pip/pip-1.1.tar.gz")
     ssh(master, opts, "tar xzf pip-1.1.tar.gz")
     ssh(master, opts, "cd pip-1.1 && sudo python setup.py install")
+
     # install pip on workers
-    worker_pip_install = "wget http://pypi.python.org/packages/source/p/pip/pip-1.1.tar.gz && tar xzf pip-1.1.tar.gz && cd pip-1.1 && python setup.py install"
+    worker_pip_install = "wget http://pypi.python.org/packages/source/p/pip/pip-1.1.tar.gz " \
+                         "&& tar xzf pip-1.1.tar.gz && cd pip-1.1 && python setup.py install"
     ssh(master, opts, "printf '"+worker_pip_install+"' > /root/workers_pip_install.sh")
     ssh(master, opts, "pssh -h /root/spark-ec2/slaves -I < /root/workers_pip_install.sh")
+
     # uninstall PIL, install Pillow on master and workers
     ssh(master, opts, "rpm -e --nodeps python-imaging")
     ssh(master, opts, "yum install -y libtiff libtiff-devel")
     ssh(master, opts, "pip install Pillow")
-    worker_pillow_install = "rpm -e --nodeps python-imaging && yum install -y libtiff libtiff-devel && pip install Pillow"
+    worker_pillow_install = "rpm -e --nodeps python-imaging && yum install -y " \
+                            "libtiff libtiff-devel && pip install Pillow"
     ssh(master, opts, "printf '"+worker_pillow_install+"' > /root/workers_pillow_install.sh")
     ssh(master, opts, "pssh -h /root/spark-ec2/slaves -I < /root/workers_pillow_install.sh")
+
     # install libraries
     ssh(master, opts, "source ~/.bash_profile && pip install mpld3 && pip install seaborn "
                       "&& pip install jinja2 && pip install -U scikit-learn")
+
     # install ipython 1.1
     ssh(master, opts, "pip uninstall -y ipython")
     ssh(master, opts, "git clone https://github.com/ipython/ipython.git")
     ssh(master, opts, "cd ipython && git checkout tags/rel-1.1.0")
     ssh(master, opts, "cd ipython && sudo python setup.py install")
+
     # set environmental variables
     ssh(master, opts, "echo 'export SPARK_HOME=/root/spark' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export PYTHONPATH=/root/thunder/python' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export IPYTHON=1' >> /root/.bash_profile")
+
     # need to explicitly set PYSPARK_PYTHON with spark 1.2.0; otherwise fails with:
     # "IPython requires Python 2.7+; please install python2.7 or set PYSPARK_PYTHON"
     # should not do this with earlier versions, as it will lead to
@@ -152,11 +163,10 @@ def install_thunder(master, opts, spark_version_string):
     if (not '.' in spark_version_string) or LooseVersion(spark_version_string) >= LooseVersion("1.2.0"):
         ssh(master, opts, "echo 'export PYSPARK_PYTHON=/usr/bin/python' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export PATH=/root/thunder/python/bin:$PATH' >> /root/.bash_profile")
+
     # customize spark configuration parameters
     ssh(master, opts, "echo 'spark.akka.frameSize=10000' >> /root/spark/conf/spark-defaults.conf")
     ssh(master, opts, "echo 'spark.kryoserializer.buffer.max.mb=1024' >> /root/spark/conf/spark-defaults.conf")
-    # disable filtering collect() calls by max result size. (Only matters for spark >= 1.2.0, but no harm in
-    # specifying for earlier versions)
     ssh(master, opts, "echo 'spark.driver.maxResultSize=0' >> /root/spark/conf/spark-defaults.conf")
     ssh(master, opts, "echo 'export SPARK_DRIVER_MEMORY=20g' >> /root/spark/conf/spark-env.sh")
     ssh(master, opts, "sed 's/log4j.rootCategory=INFO/log4j.rootCategory=ERROR/g' "
@@ -168,11 +178,13 @@ def install_thunder(master, opts, spark_version_string):
     access, secret = get_s3_keys()
     filled = configstring.replace('ACCESS', access).replace('SECRET', secret)
     ssh(master, opts, "sed -i'f' 's,.*</configuration>.*,"+filled+"&,' /root/ephemeral-hdfs/conf/core-site.xml")
+
     # add AWS credentials to ~/.boto
     credentialstring = "[Credentials]\naws_access_key_id = ACCESS\naws_secret_access_key = SECRET\n"
     credentialsfilled = credentialstring.replace('ACCESS', access).replace('SECRET', secret)
     ssh(master, opts, "printf '"+credentialsfilled+"' > /root/.boto")
     ssh(master, opts, "pscp.pssh -h /root/spark-ec2/slaves /root/.boto /root/.boto")
+
     # configure requester pays
     ssh(master, opts, "touch /root/spark/conf/jets3t.properties")
     ssh(master, opts, "echo 'httpclient.requester-pays-buckets-enabled = true' >> /root/spark/conf/jets3t.properties")
