@@ -159,6 +159,9 @@ def install_thunder(master, opts, spark_version_string):
     # specifying for earlier versions)
     ssh(master, opts, "echo 'spark.driver.maxResultSize=0' >> /root/spark/conf/spark-defaults.conf")
     ssh(master, opts, "echo 'export SPARK_DRIVER_MEMORY=20g' >> /root/spark/conf/spark-env.sh")
+    ssh(master, opts, "sed 's/log4j.rootCategory=INFO/log4j.rootCategory=ERROR/g' "
+                      "/root/spark/conf/log4j.properties.template > /root/spark/conf/log4j.properties")
+
     # add AWS credentials to core-site.xml
     configstring = "<property><name>fs.s3n.awsAccessKeyId</name><value>ACCESS</value></property><property>" \
                    "<name>fs.s3n.awsSecretAccessKey</name><value>SECRET</value></property>"
