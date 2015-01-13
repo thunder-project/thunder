@@ -86,7 +86,7 @@ class ThunderContext():
 
         return data
 
-    def loadImages(self, datapath, dims=None, inputformat='stack', dtype='int16', startidx=None, stopidx=None):
+    def loadImages(self, datapath, dims=None, inputformat='stack', dtype='int16', startidx=None, stopidx=None, recursive=False):
         """
         Loads an Images object from data stored as a binary image stack, tif, tif-stack, or png files.
 
@@ -137,6 +137,11 @@ class ThunderContext():
         stopidx: nonnegative int, optional
             See startidx.
 
+        recursive: boolean, default False
+            If true, will recursively descend directories rooted at datapath, loading all files in the tree that
+            have an appropriate extension. Recursive loading is currently only implemented for local filesystems
+            (not s3).
+
         Returns
         -------
         data: thunder.rdds.Images
@@ -149,18 +154,19 @@ class ThunderContext():
         loader = ImagesLoader(self._sc)
 
         if inputformat.lower() == 'stack':
-            data = loader.fromStack(datapath, dims, dtype=dtype, startidx=startidx, stopidx=stopidx)
+            data = loader.fromStack(datapath, dims, dtype=dtype, startidx=startidx, stopidx=stopidx, recursive=recursive)
         elif inputformat.lower() == 'tif':
-            data = loader.fromTif(datapath, startidx=startidx, stopidx=stopidx)
+            data = loader.fromTif(datapath, startidx=startidx, stopidx=stopidx, recursive=recursive)
         elif inputformat.lower() == 'tif-stack':
-            data = loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)
+            data = loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx, recursive=recursive)
         else:
-            data = loader.fromPng(datapath)
+            data = loader.fromPng(datapath, startidx=startidx, stopidx=stopidx, recursive=recursive)
 
         return data
 
     def loadImagesAsSeries(self, datapath, dims=None, inputformat='stack', dtype='int16',
-                           blockSize="150M", blockSizeUnits="pixels", startidx=None, stopidx=None, shuffle=False):
+                           blockSize="150M", blockSizeUnits="pixels", startidx=None, stopidx=None,
+                           shuffle=False, recursive=False):
         """
         Load Images data as Series data.
 
@@ -227,6 +233,11 @@ class ThunderContext():
             some cases, but the default method appears to be more stable with larger data set sizes. This default may
             change in future releases.
 
+        recursive: boolean, default False
+            If true, will recursively descend directories rooted at datapath, loading all files in the tree that
+            have an appropriate extension. Recursive loading is currently only implemented for local filesystems
+            (not s3), and only with shuffle=True.
+
         Returns
         -------
         data: thunder.rdds.Series
@@ -246,13 +257,17 @@ class ThunderContext():
             from thunder.rdds.fileio.imagesloader import ImagesLoader
             loader = ImagesLoader(self._sc)
             if inputformat.lower() == 'stack':
-                images = loader.fromStack(datapath, dims, dtype=dtype, startidx=startidx, stopidx=stopidx)
+                images = loader.fromStack(datapath, dims, dtype=dtype, startidx=startidx, stopidx=stopidx,
+                                          recursive=recursive)
             else:
                 # tif stack
-                images = loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)
+                images = loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx,
+                                                 recursive=recursive)
             return images.toBlocks(blockSize, units=blockSizeUnits).toSeries()
 
         else:
+            if recursive:
+                raise NotImplementedError("Recursive loading is currently only implemented with shuffle=True - sorry!")
             from thunder.rdds.fileio.seriesloader import SeriesLoader
             loader = SeriesLoader(self._sc)
             if inputformat.lower() == 'stack':
@@ -265,7 +280,7 @@ class ThunderContext():
 
     def convertImagesToSeries(self, datapath, outputdirpath, dims=None, inputformat='stack',
                               dtype='int16', blocksize="150M", blockSizeUnits="pixels", startidx=None, stopidx=None,
-                              shuffle=False, overwrite=False):
+                              shuffle=False, overwrite=False, recursive=False):
         """
         Write out Images data as Series data, saved in a flat binary format.
 
@@ -351,6 +366,11 @@ class ThunderContext():
             If true, the directory specified by outputdirpath will first be deleted, along with all its contents, if it
             already exists. (Use with caution.) If false, a ValueError will be thrown if outputdirpath is found to
             already exist.
+
+        recursive: boolean, default False
+            If true, will recursively descend directories rooted at datapath, loading all files in the tree that
+            have an appropriate extension. Recursive loading is currently only implemented for local filesystems
+            (not s3), and only with shuffle=True.
         """
         checkparams(inputformat, ['stack', 'tif-stack'])
 
@@ -366,12 +386,15 @@ class ThunderContext():
             from thunder.rdds.fileio.imagesloader import ImagesLoader
             loader = ImagesLoader(self._sc)
             if inputformat.lower() == 'stack':
-                images = loader.fromStack(datapath, dims, dtype=dtype, startidx=startidx, stopidx=stopidx)
+                images = loader.fromStack(datapath, dims, dtype=dtype, startidx=startidx, stopidx=stopidx,
+                                          recursive=recursive)
             else:
-                images = loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx)
+                images = loader.fromMultipageTif(datapath, startidx=startidx, stopidx=stopidx, recursive=recursive)
 
             images.toBlocks(blocksize, units=blockSizeUnits).saveAsBinarySeries(outputdirpath, overwrite=overwrite)
         else:
+            if recursive:
+                raise NotImplementedError("Recursive loading is currently only implemented with shuffle=True - sorry!")
             from thunder.rdds.fileio.seriesloader import SeriesLoader
             loader = SeriesLoader(self._sc)
             if inputformat.lower() == 'stack':

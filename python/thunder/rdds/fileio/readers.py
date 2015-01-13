@@ -22,12 +22,13 @@ syntax allows a single wildcard "*" character in the filename, making possible p
 "s3n:///my-bucket/key-one/foo*.bar", referring to "every object in the S3 bucket my-bucket whose key starts with
 'key-one/foo' and ends with '.bar'".
 """
+import errno
+import fnmatch
 import glob
+import itertools
 import os
 import urllib
 import urlparse
-import errno
-import itertools
 
 _have_boto = False
 try:
@@ -139,31 +140,50 @@ class LocalFSParallelReader(object):
         return path
 
     @staticmethod
-    def listFiles(abspath, ext=None, startidx=None, stopidx=None):
-        """Get sorted list of file paths matching passed `abspath` path and `ext` filename extension
-        """
+    def __listFilesRecursive(abspath, ext=None):
+        filenames = set()
+        for root, dirs, files in os.walk(abspath):
+            if ext:
+                files = fnmatch.filter(files, '*.' + ext)
+            for filename in files:
+                filenames.add(os.path.join(root, filename))
+        filenames = list(filenames)
+        filenames.sort()
+        return sorted(filenames)
+
+    @staticmethod
+    def __listFilesNonRecursive(abspath, ext=None):
         if os.path.isdir(abspath):
             if ext:
-                files = sorted(glob.glob(os.path.join(abspath, '*.' + ext)))
+                files = glob.glob(os.path.join(abspath, '*.' + ext))
             else:
-                files = sorted(os.listdir(abspath))
+                files = [os.path.join(abspath, fname) for fname in os.listdir(abspath)]
         else:
-            files = sorted(glob.glob(abspath))
+            files = glob.glob(abspath)
+        # filter out directories
+        files = [fpath for fpath in files if not os.path.isdir(fpath)]
+        return sorted(files)
+
+    @staticmethod
+    def listFiles(abspath, ext=None, startidx=None, stopidx=None, recursive=False):
+        """Get sorted list of file paths matching passed `abspath` path and `ext` filename extension
+        """
+        files = LocalFSParallelReader.__listFilesNonRecursive(abspath, ext) if not recursive else \
+            LocalFSParallelReader.__listFilesRecursive(abspath, ext)
 
         if len(files) < 1:
             raise FileNotFoundError('cannot find files of type "%s" in %s' % (ext if ext else '*', abspath))
 
         files = selectByStartAndStopIndices(files, startidx, stopidx)
-
         return files
 
-    def read(self, datapath, ext=None, startidx=None, stopidx=None):
+    def read(self, datapath, ext=None, startidx=None, stopidx=None, recursive=False):
         """Sets up Spark RDD across files specified by datapath on local filesystem.
 
         Returns RDD of <string filepath, string buffer> k/v pairs.
         """
         abspath = self.uriToPath(datapath)
-        filepaths = self.listFiles(abspath, ext=ext, startidx=startidx, stopidx=stopidx)
+        filepaths = self.listFiles(abspath, ext=ext, startidx=startidx, stopidx=stopidx, recursive=recursive)
 
         lfilepaths = len(filepaths)
         self.lastnrecs = lfilepaths
@@ -286,11 +306,13 @@ class BotoS3ParallelReader(_BotoS3Client):
 
         return bucket.name, keynamelist
 
-    def read(self, datapath, ext=None, startidx=None, stopidx=None):
+    def read(self, datapath, ext=None, startidx=None, stopidx=None, recursive=False):
         """Sets up Spark RDD across S3 objects specified by datapath.
 
         Returns RDD of <string s3 keyname, string buffer> k/v pairs.
         """
+        if recursive:
+            raise NotImplementedError("Recursive traversal of directories isn't yet implemented for S3 - sorry!")
         datapath = appendExtensionToPathSpec(datapath, ext)
         bucketname, keynamelist = self._listFiles(datapath, startidx=startidx, stopidx=stopidx)
 
