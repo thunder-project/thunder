@@ -213,7 +213,7 @@ class SeriesLoader(object):
         return Series(data, dtype=str(valdtype), index=arange(paramsObj.nvalues)).astype(newdtype, casting)
 
     def _getSeriesBlocksFromStack(self, datapath, dims, ext="stack", blockSize="150M", datatype='int16',
-                                  newdtype='smallfloat', casting='safe', startidx=None, stopidx=None):
+                                  newdtype='smallfloat', casting='safe', startidx=None, stopidx=None, recursive=False):
         """Create an RDD of <string blocklabel, (int k-tuple indices, array of datatype values)>
 
         Parameters
@@ -237,6 +237,11 @@ class SeriesLoader(object):
 
         casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
             Casting method to pass on to numpy's `astype()` method; see numpy documentation for details.
+
+        recursive: boolean, default False
+            If true, will recursively descend directories rooted at datapath, loading all files in the tree that
+            have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
+            (not s3).
 
         Returns
         ---------
@@ -270,10 +275,9 @@ class SeriesLoader(object):
             newdtype = str(newdtype)
 
         reader = getFileReaderForPath(datapath)()
-        filenames = reader.list(datapath)
+        filenames = reader.list(datapath, startidx=startidx, stopidx=stopidx, recursive=recursive)
         if not filenames:
             raise IOError("No files found for path '%s'" % datapath)
-        filenames = selectByStartAndStopIndices(filenames, startidx, stopidx)
 
         datasize = totaldim * len(filenames) * datatype.itemsize
         nblocks = max(datasize / blockSize, 1)  # integer division
@@ -374,7 +378,8 @@ class SeriesLoader(object):
         return height, width, npages, datatype
 
     def _getSeriesBlocksFromMultiTif(self, datapath, ext="tif", blockSize="150M",
-                                     newdtype='smallfloat', casting='safe', startidx=None, stopidx=None):
+                                     newdtype='smallfloat', casting='safe', startidx=None, stopidx=None,
+                                     recursive=False):
         import thunder.rdds.fileio.multitif as multitif
         import itertools
         from PIL import Image
@@ -384,10 +389,9 @@ class SeriesLoader(object):
         blockSize = parseMemoryString(blockSize)
 
         reader = getFileReaderForPath(datapath)()
-        filenames = reader.list(datapath)
+        filenames = reader.list(datapath, startidx=startidx, stopidx=stopidx, recursive=recursive)
         if not filenames:
             raise IOError("No files found for path '%s'" % datapath)
-        filenames = selectByStartAndStopIndices(filenames, startidx, stopidx)
         ntimepoints = len(filenames)
 
         minimize_reads = datapath.lower().startswith("s3")
@@ -477,7 +481,7 @@ class SeriesLoader(object):
         return rdd, metadata
 
     def fromStack(self, datapath, dims, ext="stack", blockSize="150M", datatype='int16',
-                  newdtype='smallfloat', casting='safe', startidx=None, stopidx=None):
+                  newdtype='smallfloat', casting='safe', startidx=None, stopidx=None, recursive=False):
         """Load a Series object directly from binary image stack files.
 
         Parameters
@@ -509,16 +513,22 @@ class SeriesLoader(object):
         startidx, stopidx: nonnegative int. optional.
             Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
             `datapath` and `ext`. Interpreted according to python slice indexing conventions.
+
+        recursive: boolean, default False
+            If true, will recursively descend directories rooted at datapath, loading all files in the tree that
+            have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
+            (not s3).
         """
         seriesblocks, npointsinseries, newdtype = \
             self._getSeriesBlocksFromStack(datapath, dims, ext=ext, blockSize=blockSize, datatype=datatype,
-                                           newdtype=newdtype, casting=casting, startidx=startidx, stopidx=stopidx)
+                                           newdtype=newdtype, casting=casting, startidx=startidx, stopidx=stopidx,
+                                           recursive=recursive)
 
         return Series(seriesblocks, dims=dims, dtype=newdtype, index=arange(npointsinseries))
 
     def fromMultipageTif(self, datapath, ext="tif", blockSize="150M",
                          newdtype='smallfloat', casting='safe',
-                         startidx=None, stopidx=None):
+                         startidx=None, stopidx=None, recursive=False):
         """Load a Series object from multipage tiff files.
 
         Parameters
@@ -544,10 +554,16 @@ class SeriesLoader(object):
         startidx, stopidx: nonnegative int. optional.
             Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
             `datapath` and `ext`. Interpreted according to python slice indexing conventions.
+
+        recursive: boolean, default False
+            If true, will recursively descend directories rooted at datapath, loading all files in the tree that
+            have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
+            (not s3).
         """
         seriesblocks, metadata = self._getSeriesBlocksFromMultiTif(datapath, ext=ext, blockSize=blockSize,
                                                                    newdtype=newdtype, casting=casting,
-                                                                   startidx=startidx, stopidx=stopidx)
+                                                                   startidx=startidx, stopidx=stopidx,
+                                                                   recursive=False)
         dims, npointsinseries, datatype = metadata
         return Series(seriesblocks, dims=Dimensions.fromTuple(dims[::-1]), dtype=datatype,
                       index=arange(npointsinseries))
@@ -579,7 +595,7 @@ class SeriesLoader(object):
         writeSeriesConfig(outputdirname, len(dims), npointsinseries, valuetype=datatype, overwrite=overwrite)
 
     def saveFromStack(self, datapath, outputdirpath, dims, ext="stack", blockSize="150M", datatype='int16',
-                      newdtype=None, casting='safe', startidx=None, stopidx=None, overwrite=False):
+                      newdtype=None, casting='safe', startidx=None, stopidx=None, overwrite=False, recursive=False):
         """Write out data from binary image stack files in the Series data flat binary format.
 
         Parameters
@@ -627,13 +643,14 @@ class SeriesLoader(object):
 
         seriesblocks, npointsinseries, newdtype = \
             self._getSeriesBlocksFromStack(datapath, dims, ext=ext, blockSize=blockSize, datatype=datatype,
-                                           newdtype=newdtype, casting=casting, startidx=startidx, stopidx=stopidx)
+                                           newdtype=newdtype, casting=casting, startidx=startidx, stopidx=stopidx,
+                                           recursive=recursive)
 
         SeriesLoader.__saveSeriesRdd(seriesblocks, outputdirpath, dims, npointsinseries, newdtype, overwrite=overwrite)
 
     def saveFromMultipageTif(self, datapath, outputdirpath, ext="tif", blockSize="150M",
                              newdtype=None, casting='safe',
-                             startidx=None, stopidx=None, overwrite=False):
+                             startidx=None, stopidx=None, overwrite=False, recursive=False):
         """Write out data from multipage tif files in the Series data flat binary format.
 
         Parameters
@@ -675,7 +692,8 @@ class SeriesLoader(object):
 
         seriesblocks, metadata = self._getSeriesBlocksFromMultiTif(datapath, ext=ext, blockSize=blockSize,
                                                                    newdtype=newdtype, casting=casting,
-                                                                   startidx=startidx, stopidx=stopidx)
+                                                                   startidx=startidx, stopidx=stopidx,
+                                                                   recursive=recursive)
         dims, npointsinseries, datatype = metadata
         SeriesLoader.__saveSeriesRdd(seriesblocks, outputdirpath, dims, npointsinseries, datatype, overwrite=overwrite)
 

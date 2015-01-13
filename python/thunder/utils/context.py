@@ -266,17 +266,15 @@ class ThunderContext():
             return images.toBlocks(blockSize, units=blockSizeUnits).toSeries()
 
         else:
-            if recursive:
-                raise NotImplementedError("Recursive loading is currently only implemented with shuffle=True - sorry!")
             from thunder.rdds.fileio.seriesloader import SeriesLoader
             loader = SeriesLoader(self._sc)
             if inputformat.lower() == 'stack':
                 return loader.fromStack(datapath, dims, datatype=dtype, blockSize=blockSize,
-                                        startidx=startidx, stopidx=stopidx)
+                                        startidx=startidx, stopidx=stopidx, recursive=recursive)
             else:
                 # tif stack
                 return loader.fromMultipageTif(datapath, blockSize=blockSize,
-                                               startidx=startidx, stopidx=stopidx)
+                                               startidx=startidx, stopidx=stopidx, recursive=recursive)
 
     def convertImagesToSeries(self, datapath, outputdirpath, dims=None, inputformat='stack',
                               dtype='int16', blocksize="150M", blockSizeUnits="pixels", startidx=None, stopidx=None,
@@ -393,16 +391,16 @@ class ThunderContext():
 
             images.toBlocks(blocksize, units=blockSizeUnits).saveAsBinarySeries(outputdirpath, overwrite=overwrite)
         else:
-            if recursive:
-                raise NotImplementedError("Recursive loading is currently only implemented with shuffle=True - sorry!")
             from thunder.rdds.fileio.seriesloader import SeriesLoader
             loader = SeriesLoader(self._sc)
             if inputformat.lower() == 'stack':
                 loader.saveFromStack(datapath, outputdirpath, dims, datatype=dtype,
-                                     blockSize=blocksize, overwrite=overwrite, startidx=startidx, stopidx=stopidx)
+                                     blockSize=blocksize, overwrite=overwrite, startidx=startidx,
+                                     stopidx=stopidx, recursive=recursive)
             else:
                 loader.saveFromMultipageTif(datapath, outputdirpath, blockSize=blocksize,
-                                            startidx=startidx, stopidx=stopidx, overwrite=overwrite)
+                                            startidx=startidx, stopidx=stopidx, overwrite=overwrite,
+                                            recursive=recursive)
 
     def makeExample(self, dataset, **opts):
         """

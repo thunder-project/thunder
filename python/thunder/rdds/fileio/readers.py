@@ -130,7 +130,6 @@ class LocalFSParallelReader(object):
     def uriToPath(uri):
         # thanks stack overflow:
         # http://stackoverflow.com/questions/5977576/is-there-a-convenient-way-to-map-a-file-uri-to-os-path
-        print "URI: %s" % uri
         path = urllib.url2pathname(urlparse.urlparse(uri).path)
         if uri and (not path):
             # passed a nonempty uri, got an empty path back
@@ -351,15 +350,34 @@ class BotoS3ParallelReader(_BotoS3Client):
 class LocalFSFileReader(object):
     """File reader backed by python's native file() objects.
     """
+    def __listRecursive(self, datapath):
+        if os.path.isdir(datapath):
+            dirname = datapath
+            matchpattern = None
+        else:
+            dirname, matchpattern = os.path.split(datapath)
+
+        filenames = set()
+        for root, dirs, files in os.walk(dirname):
+            if matchpattern:
+                files = fnmatch.filter(files, matchpattern)
+            for filename in files:
+                filenames.add(os.path.join(root, filename))
+        filenames = list(filenames)
+        filenames.sort()
+        return filenames
+
     def list(self, datapath, filename=None, startidx=None, stopidx=None, recursive=False):
         """List files specified by datapath.
+
+        Datapath may include a single wildcard ('*') in the filename specifier.
 
         Returns sorted list of absolute path strings.
         """
         abspath = LocalFSParallelReader.uriToPath(datapath)
 
         if (not filename) and recursive:
-            return LocalFSParallelReader._listFilesRecursive(abspath)
+            return self.__listRecursive(abspath)
 
         if filename:
             if os.path.isdir(abspath):
