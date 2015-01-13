@@ -130,6 +130,7 @@ class LocalFSParallelReader(object):
     def uriToPath(uri):
         # thanks stack overflow:
         # http://stackoverflow.com/questions/5977576/is-there-a-convenient-way-to-map-a-file-uri-to-os-path
+        print "URI: %s" % uri
         path = urllib.url2pathname(urlparse.urlparse(uri).path)
         if uri and (not path):
             # passed a nonempty uri, got an empty path back
@@ -140,7 +141,7 @@ class LocalFSParallelReader(object):
         return path
 
     @staticmethod
-    def __listFilesRecursive(abspath, ext=None):
+    def _listFilesRecursive(abspath, ext=None):
         filenames = set()
         for root, dirs, files in os.walk(abspath):
             if ext:
@@ -152,7 +153,7 @@ class LocalFSParallelReader(object):
         return sorted(filenames)
 
     @staticmethod
-    def __listFilesNonRecursive(abspath, ext=None):
+    def _listFilesNonRecursive(abspath, ext=None):
         if os.path.isdir(abspath):
             if ext:
                 files = glob.glob(os.path.join(abspath, '*.' + ext))
@@ -164,12 +165,11 @@ class LocalFSParallelReader(object):
         files = [fpath for fpath in files if not os.path.isdir(fpath)]
         return sorted(files)
 
-    @staticmethod
-    def listFiles(abspath, ext=None, startidx=None, stopidx=None, recursive=False):
+    def listFiles(self, abspath, ext=None, startidx=None, stopidx=None, recursive=False):
         """Get sorted list of file paths matching passed `abspath` path and `ext` filename extension
         """
-        files = LocalFSParallelReader.__listFilesNonRecursive(abspath, ext) if not recursive else \
-            LocalFSParallelReader.__listFilesRecursive(abspath, ext)
+        files = LocalFSParallelReader._listFilesNonRecursive(abspath, ext) if not recursive else \
+            LocalFSParallelReader._listFilesRecursive(abspath, ext)
 
         if len(files) < 1:
             raise FileNotFoundError('cannot find files of type "%s" in %s' % (ext if ext else '*', abspath))
@@ -293,17 +293,25 @@ class BotoS3ParallelReader(_BotoS3Client):
         self.sc = sparkcontext
         self.lastnrecs = None
 
-    def _listFiles(self, datapath, startidx=None, stopidx=None):
+    def listFiles(self, datapath, ext=None, startidx=None, stopidx=None, recursive=False):
+        bucketname, keynames = self._listFilesImpl(datapath, ext=ext, startidx=startidx, stopidx=stopidx,
+                                                   recursive=recursive)
+        return ["s3n:///%s/%s" % (bucketname, keyname) for keyname in keynames]
+
+    def _listFilesImpl(self, datapath, ext=None, startidx=None, stopidx=None, recursive=False):
+        if recursive:
+            raise NotImplementedError("Recursive traversal of directories isn't yet implemented for S3 - sorry!")
         parse = _BotoS3Client.parseS3Query(datapath)
 
         conn = boto.connect_s3()
         bucket = conn.get_bucket(parse[0])
         keys = _BotoS3Client.retrieveKeys(bucket, parse[1], prefix=parse[2], postfix=parse[3])
         keynamelist = [key.name for key in keys]
+        if ext:
+            keynamelist = [keyname for keyname in keynamelist if keyname.endswith(ext)]
         keynamelist.sort()
 
         keynamelist = selectByStartAndStopIndices(keynamelist, startidx, stopidx)
-
         return bucket.name, keynamelist
 
     def read(self, datapath, ext=None, startidx=None, stopidx=None, recursive=False):
@@ -314,7 +322,7 @@ class BotoS3ParallelReader(_BotoS3Client):
         if recursive:
             raise NotImplementedError("Recursive traversal of directories isn't yet implemented for S3 - sorry!")
         datapath = appendExtensionToPathSpec(datapath, ext)
-        bucketname, keynamelist = self._listFiles(datapath, startidx=startidx, stopidx=stopidx)
+        bucketname, keynamelist = self._listFilesImpl(datapath, startidx=startidx, stopidx=stopidx)
 
         if not keynamelist:
             raise FileNotFoundError("No S3 objects found for '%s'" % datapath)
@@ -343,20 +351,31 @@ class BotoS3ParallelReader(_BotoS3Client):
 class LocalFSFileReader(object):
     """File reader backed by python's native file() objects.
     """
-    def list(self, datapath, filename=None):
+    def list(self, datapath, filename=None, startidx=None, stopidx=None, recursive=False):
         """List files specified by datapath.
 
         Returns sorted list of absolute path strings.
         """
         abspath = LocalFSParallelReader.uriToPath(datapath)
 
+        if (not filename) and recursive:
+            return LocalFSParallelReader._listFilesRecursive(abspath)
+
         if filename:
             if os.path.isdir(abspath):
                 abspath = os.path.join(abspath, filename)
             else:
                 abspath = os.path.join(os.path.dirname(abspath), filename)
+        else:
+            if os.path.isdir(abspath):
+                abspath = os.path.join(abspath, "*")
 
-        return sorted(glob.glob(abspath))
+        files = glob.glob(abspath)
+        # filter out directories
+        files = [fpath for fpath in files if not os.path.isdir(fpath)]
+        files.sort()
+        files = selectByStartAndStopIndices(files, startidx, stopidx)
+        return files
 
     def read(self, datapath, filename=None, startOffset=None, size=-1):
         filenames = self.list(datapath, filename=filename)
@@ -408,14 +427,19 @@ class BotoS3FileReader(_BotoS3Client):
 
         return _BotoS3Client.retrieveKeys(bucket, keyname, prefix=parse[2], postfix=parse[3])
 
-    def list(self, datapath, filename=None):
+    def list(self, datapath, filename=None, startidx=None, stopidx=None, recursive=False):
         """List s3 objects specified by datapath.
 
         Returns sorted list of 's3n://' URIs.
         """
+        if recursive:
+            raise NotImplementedError("Recursive traversal of directories isn't yet implemented for S3 - sorry!")
+
         keys = self.__getMatchingKeys(datapath, filename=filename)
         keynames = ["s3n:///" + key.bucket.name + "/" + key.name for key in keys]
-        return sorted(keynames)
+        keynames.sort()
+        keynames = selectByStartAndStopIndices(keynames, startidx, stopidx)
+        return keynames
 
     def __getSingleMatchingKey(self, datapath, filename=None):
         keys = self.__getMatchingKeys(datapath, filename=filename)

@@ -37,7 +37,7 @@ class TestLocalReader(unittest.TestCase):
 
 class TestLocalFileListing(TestCaseWithOutputDir):
 
-    def _run_tst(self, filenames, recursive=False, expected=None):
+    def _setup_files(self, filenames, expected=None):
         if expected:
             basenames = expected
         else:
@@ -48,25 +48,51 @@ class TestLocalFileListing(TestCaseWithOutputDir):
         inputFilepaths = [os.path.join(self.outputdir, fname) for fname in filenames]
         for fname in inputFilepaths:
             touch_empty(fname)
+        return expected
+
+    def _run_parallelReader_tst(self, filenames, recursive=False, expected=None):
+        expected = self._setup_files(filenames, expected=expected)
 
         reader = LocalFSParallelReader(None)
         actual = reader.listFiles(self.outputdir, recursive=recursive)
         assert_equal(sorted(expected), actual)
 
-    def test_flatDirRecursive(self):
+    def _run_localReader_tst(self,  filenames, recursive=False, expected=None):
+        expected = self._setup_files(filenames, expected=expected)
+        reader = LocalFSFileReader()
+        actual = reader.list(self.outputdir, recursive=recursive)
+        assert_equal(sorted(expected), actual)
+
+    def test_flatDirParallelRecursive(self):
         filenames = ["b", "a", "c"]
-        self._run_tst(filenames, True)
+        self._run_parallelReader_tst(filenames, True)
 
-    def test_flatDir(self):
+    def test_flatDirLocalRecursive(self):
         filenames = ["b", "a", "c"]
-        self._run_tst(filenames, False)
+        self._run_localReader_tst(filenames, True)
 
-    def test_nestedDirRecursive(self):
-        filenames = ["foo/b", "foo/bar/q", "bar/a", "c"]
-        self._run_tst(filenames, True)
+    def test_flatDirParallel(self):
+        filenames = ["b", "a", "c"]
+        self._run_parallelReader_tst(filenames, False)
 
-    def test_nestedDir(self):
+    def test_flatDirLocal(self):
+        filenames = ["b", "a", "c"]
+        self._run_localReader_tst(filenames, False)
+
+    def test_nestedDirParallelRecursive(self):
         filenames = ["foo/b", "foo/bar/q", "bar/a", "c"]
-        self._run_tst(filenames, False, expected=["c"])
+        self._run_parallelReader_tst(filenames, True)
+
+    def test_nestedDirLocalRecursive(self):
+        filenames = ["foo/b", "foo/bar/q", "bar/a", "c"]
+        self._run_localReader_tst(filenames, True)
+
+    def test_nestedDirParallel(self):
+        filenames = ["foo/b", "foo/bar/q", "bar/a", "c"]
+        self._run_parallelReader_tst(filenames, False, expected=["c"])
+
+    def test_nestedDirLocal(self):
+        filenames = ["foo/b", "foo/bar/q", "bar/a", "c"]
+        self._run_localReader_tst(filenames, False, expected=["c"])
 
 
