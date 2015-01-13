@@ -110,7 +110,7 @@ class RowMatrix(Series):
                 return val1
 
         if method is "reduce":
-            return self.rdd.map(lambda (k, v): v).mapPartitions(matrixSum_Iterator_self).sum()
+            return self.rdd.map(lambda (k, v): v).mapPartitions(matrixSumIterator_self).sum()
 
         if method is "accum":
             global mat
@@ -163,7 +163,7 @@ class RowMatrix(Series):
                     str(other.nrows) + "," + str(other.ncols) + ")")
             else:
                 return self.rdd.zip(other.rdd).map(lambda ((k1, x), (k2, y)): (x, y))\
-                    .mapPartitions(matrixSum_Iterator_other).sum()
+                    .mapPartitions(matrixSumIterator_other).sum()
         else:
             dims = shape(other)
             if dims[0] != self.ncols:
@@ -255,11 +255,11 @@ class RowMatrix(Series):
         return RowMatrix.elementwise(self, other, divide)
 
 
-def matrixSum_Iterator_self(iterator):
+def matrixSumIterator_self(iterator):
     yield sum(outer(x, x) for x in iterator)
 
 
-def matrixSum_Iterator_other(iterator):
+def matrixSumIterator_other(iterator):
     yield sum(outer(x, y) for x, y in iterator)
 
 

@@ -169,7 +169,7 @@ class Register(object):
             reference = self._applyVol(reference.copy(), self.filter)
 
         # broadcast the reference (a potentially very large array)
-        referenceBC = images.rdd.context.broadcast(reference)
+        bcReference = images.rdd.context.broadcast(reference)
 
         # estimate the transform parameters on an image / volume
         def params(im, ref):
@@ -182,7 +182,7 @@ class Register(object):
             return t
 
         from thunder import Series
-        return Series(images.rdd.mapValues(lambda x: params(x, referenceBC)))
+        return Series(images.rdd.mapValues(lambda x: params(x, bcReference)))
 
     def transform(self, images, reference):
         """
