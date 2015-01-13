@@ -15,7 +15,7 @@ Class names should be ``CapitalizedNames``.
 Variables, attributes, methods, and function names should all be ``camelCased``. This is primarily to maintain consistency with the Spark code base. The following are possible exceptions to the convention: 
 
 - variables storing counts beginning with ``n`` (e.g. ``nfeatures``) should be in lower case
-- compound words or words sometime written as one can be in lowercase (e.g. ``filename``, or ``pinv`` for pseudoinverse)
+- compound words or words sometimes written as one can be in lowercase (e.g. ``filename``, or ``pinv`` for pseudoinverse)
 
 Literal constants should be named in all caps, with underscores separating words (e.g. ``INIT_IFD_SIZE``).
 
@@ -23,14 +23,14 @@ If a method directly wraps a method from another library, under most circumstanc
 
 Variable names may use abbreviations so long as their meaning is relatively clear, e.g. ``whtMat`` or ``whiteningMatrix`` would be acceptable. Single letter variable names are acceptable if following a known convention, e.g. ``w`` for weights, ``i``, ``j``, ``k`` for loop indices, ``n`` for counts, ``x``, ``y`` for numeric values.
 
-Leading underscores may be used to indicate attributes not intended to be accessed outside of the object where they are defined. Double leading underscores may be used in method names for the same purpose. Trailing underscores may be used (sparingly) to avoid shadowing variables of the same name inside nested scopes, such as nested functions. A single underscore ``_`` in a function may be used to denote a dummy variable required for unpacking a tuple, as in a method return value, that will not be otherwise accessed, e.g. ``data.map(lambda (_, v): (_, v * 2)``).
+Leading underscores may be used to indicate attributes not intended to be accessed outside of the object where they are defined. Double leading underscores may be used in method names for the same purpose. Trailing underscores may be used (sparingly) to avoid shadowing variables of the same name inside nested scopes, such as nested functions. A single underscore ``_`` in a function may be used to denote a dummy variable required for unpacking a tuple, as in a method return value, that will not be otherwise accessed, e.g. ``data.apply(lambda (_, v): (_, v * 2)``).
 
 A Spark broadcast variable may be denoted by initial lowercase letters ``bc``, as in ``bcModel = sc.broadcast(model)``.
 
 Imports
 ~~~~~~~
 
-All imports should be in the form ``from modulename import a, b, c``. This includes ``numpy``. Please do not use the convention of ``import numpy as np``. Although there are some advantages to this approach, we find overall that it leads to a codebase that is harder to read and understand.
+All imports should be in the form ``from modulename import a, b, c``. This includes ``numpy``. Please do not use the convention of ``import numpy as np``. Although there are some advantages to this approach, we find overall that it leads to a codebase that is harder to read.
 
 Variables imported from a module should be listed in alphabetical order.
 
@@ -53,7 +53,7 @@ Within the ``thunder/test`` folder, there are several files with names beginning
 
 All new features should include appropriate unit tests. When adding a new feature, a good place to start is to find a piece of functionality similar to the one you are adding, find the existing test, and use it as as a starting point.
 
-See [link] for information on how to run the tests. All tests will be automatically run on any pull request, but you can save time by running tests locally and resolving any issues.
+See [link] for information on how to run the tests. All tests will be automatically run on any pull request, but you can save time by running tests locally and resolving any issues before submitting.
 
 Design principles
 ~~~~~~~~~~~~~~~~~
