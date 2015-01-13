@@ -367,7 +367,8 @@ class LocalFSFileReader(object):
         filenames.sort()
         return filenames
 
-    def list(self, datapath, filename=None, startidx=None, stopidx=None, recursive=False):
+    def list(self, datapath, filename=None, startidx=None, stopidx=None, recursive=False,
+             includeDirectories=False):
         """List files specified by datapath.
 
         Datapath may include a single wildcard ('*') in the filename specifier.
@@ -385,12 +386,13 @@ class LocalFSFileReader(object):
             else:
                 abspath = os.path.join(os.path.dirname(abspath), filename)
         else:
-            if os.path.isdir(abspath):
+            if os.path.isdir(abspath) and not includeDirectories:
                 abspath = os.path.join(abspath, "*")
 
         files = glob.glob(abspath)
         # filter out directories
-        files = [fpath for fpath in files if not os.path.isdir(fpath)]
+        if not includeDirectories:
+            files = [fpath for fpath in files if not os.path.isdir(fpath)]
         files.sort()
         files = selectByStartAndStopIndices(files, startidx, stopidx)
         return files
@@ -445,13 +447,19 @@ class BotoS3FileReader(_BotoS3Client):
 
         return _BotoS3Client.retrieveKeys(bucket, keyname, prefix=parse[2], postfix=parse[3])
 
-    def list(self, datapath, filename=None, startidx=None, stopidx=None, recursive=False):
+    def list(self, datapath, filename=None, startidx=None, stopidx=None, recursive=False, includeDirectories=True):
         """List s3 objects specified by datapath.
 
         Returns sorted list of 's3n://' URIs.
         """
+        # TODO: note that the default value for includeDirectories is here True, which reflects the current (and
+        # longstanding) behavior of this class. This *differs* from the local FS list() method, which by default
+        # filters out directories (which is definitely what we want if we're reading with recursive=True).
+        # These two need to be made more consistent.
         if recursive:
             raise NotImplementedError("Recursive traversal of directories isn't yet implemented for S3 - sorry!")
+        if not includeDirectories:
+            raise NotImplementedError("Filtering out directories is not yet implemented for S3 - sorry!")
 
         keys = self.__getMatchingKeys(datapath, filename=filename)
         keynames = ["s3n:///" + key.bucket.name + "/" + key.name for key in keys]
