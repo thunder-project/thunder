@@ -1,6 +1,6 @@
 from numpy import sqrt, pi, angle, fft, fix, zeros, roll, dot, mean, \
     array, size, diag, tile, ones, asarray, polyfit, polyval, arange, \
-    percentile, ceil, round, sort, ones, concatenate
+    percentile, ceil, round, sort, concatenate
 
 from thunder.rdds.series import Series
 from thunder.utils.common import loadmatvar, checkparams
@@ -298,22 +298,22 @@ class TimeSeries(Series):
                                           for ix in arange(0, n)])
 
         if method == 'window-fast':
-            if window%2:
+            if window % 2:
                 left, right = ((window-1)/2, (window-1)/2)
             else:
                 left, right = (window/2 - 1, window/2)
 
             n = len(self.index)
-            ind_perc = round((window-1)*(perc/100.0)) 
+            indPerc = round((window-1)*(perc/100.0))
             
             def basefunc(x):
-                left_pad = mean(x[:right])
+                leftPad = mean(x[:right])
                 if left != 0:
-                    right_pad = mean(x[-left:])
+                    rightPad = mean(x[-left:])
                 else:
-                    right_pad = x[-1]
-                y = concatenate([ left_pad*ones(left), x, right_pad*ones(right) ])  
-                return asarray([sort(y[i-left:i+right+1])[ind_perc] for i in xrange(left,len(x)+left)])
+                    rightPad = x[-1]
+                y = concatenate([leftPad*ones(left), x, rightPad*ones(right)])
+                return asarray([sort(y[i-left:i+right+1])[indPerc] for i in xrange(left, len(x)+left)])
 
         def get(y):
             b = basefunc(y)
