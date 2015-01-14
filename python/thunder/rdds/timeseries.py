@@ -1,6 +1,6 @@
 from numpy import sqrt, pi, angle, fft, fix, zeros, roll, dot, mean, \
     array, size, diag, tile, ones, asarray, polyfit, polyval, arange, \
-    percentile, ceil, round, sort, ones
+    percentile, ceil, round, sort, ones, concatenate
 
 from thunder.rdds.series import Series
 from thunder.utils.common import loadmatvar, checkparams
@@ -309,7 +309,7 @@ class TimeSeries(Series):
             def basefunc(x):
                 left_pad = mean(x[:right])
                 right_pad = mean(x[-left:])
-                y = concatenate([ left_pad*np.ones(left), x, right_pad*ones(right) ])  
+                y = concatenate([ left_pad*ones(left), x, right_pad*ones(right) ])  
                 return asarray([sort(y[i-left:i+right+1])[ind_perc] for i in xrange(left,len(x)+left)])
 
         def get(y):
