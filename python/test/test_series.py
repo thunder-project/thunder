@@ -52,7 +52,7 @@ class TestSeriesDataStatsMethods(PySparkTestCase):
 
         expected = elementwise_mean(series.values().collect())
         assert_true(allclose(expected, meanval))
-        assert_equals('float16', str(meanval.dtype))
+        assert_equals('float64', str(meanval.dtype))
 
     def test_sum(self):
         from numpy import add
@@ -72,7 +72,7 @@ class TestSeriesDataStatsMethods(PySparkTestCase):
         arys = series.values().collect()
         expected = elementwise_var([ary.astype('float16') for ary in arys])
         assert_true(allclose(expected, varval))
-        assert_equals('float16', str(varval.dtype))
+        assert_equals('float64', str(varval.dtype))
 
     def test_stdev(self):
         from test_utils import elementwise_stdev
@@ -82,7 +82,7 @@ class TestSeriesDataStatsMethods(PySparkTestCase):
         arys = series.values().collect()
         expected = elementwise_stdev([ary.astype('float16') for ary in arys])
         assert_true(allclose(expected, stdval, atol=0.001))
-        assert_equals('float32', str(stdval.dtype))  # why not float16? see equivalent Images test
+        assert_equals('float64', str(stdval.dtype))
 
     def test_stats(self):
         from test_utils import elementwise_mean, elementwise_var
