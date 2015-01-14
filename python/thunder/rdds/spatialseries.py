@@ -60,6 +60,22 @@ class SpatialSeries(Series):
         return self._constructor(rdd).__finalize__(self)
 
     def localCorr(self, neighborhood):
+        """
+        Correlate every signal to the average of its local neighborhood.
+
+        This algorithm computes, for every spatial record, the correlation coefficient
+        between that record's series, and the average series of all records within
+        a local neighborhood with a size defined by the neighborhood parameter.
+        For data with three spatial keys, only neighborhoods in x and y
+        currently supported.
+
+        Parameters
+        ----------
+        neighborhood : integer
+            Size of neighborhood, describes extent in either direction, so
+            total neighborhood will be 2n + 1.
+
+        """
 
         if len(self.dims.max) not in [2, 3]:
                 raise NotImplementedError('keys must have 2 or 3 dimensions to compute local correlations')
