@@ -133,6 +133,16 @@ class ImagesLoader(object):
             Image = None
             raise ImportError("fromMultipageTif requires a successful 'from PIL import Image'; " +
                               "the PIL/pillow library appears to be missing or broken.", e)
+        # we know that that array(pilimg) works correctly for pillow == 2.3.0, and that it
+        # does not work (at least not with spark) for old PIL == 1.1.7. we believe but have not confirmed
+        # that array(pilimg) works correctly for every version of pillow. thus currently we check only whether
+        # our PIL library is in fact pillow, and choose our conversion function accordingly
+        isPillow = hasattr(Image, "PILLOW_VERSION")
+        if isPillow:
+            conversionFcn = array  # use numpy's array() function
+        else:
+            from thunder.utils.common import pil_to_array
+            conversionFcn = pil_to_array  # use our modified version of matplotlib's pil_to_array
 
         def multitifReader(buf):
             fbuf = BytesIO(buf)
@@ -142,7 +152,7 @@ class ImagesLoader(object):
             while True:
                 try:
                     multipage.seek(pageidx)
-                    imgarys.append(array(multipage))
+                    imgarys.append(conversionFcn(multipage))
                     pageidx += 1
                 except EOFError:
                     # past last page in tif
