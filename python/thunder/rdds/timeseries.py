@@ -278,7 +278,7 @@ class TimeSeries(Series):
         method = baseline.lower()
     
         from warnings import warn
-        if method is not 'window' and window is not None:
+        if method != 'window' and window is not None:
             warn('Setting window without using method "window" has no effect')
 
         if method == 'mean':
