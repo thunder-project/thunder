@@ -304,11 +304,14 @@ class TimeSeries(Series):
                 left, right = (window/2 - 1, window/2)
 
             n = len(self.index)
-            ind_perc = round((window-1)*(perc/100)) 
+            ind_perc = round((window-1)*(perc/100.0)) 
             
             def basefunc(x):
                 left_pad = mean(x[:right])
-                right_pad = mean(x[-left:])
+                if left != 0:
+                    right_pad = mean(x[-left:])
+                else:
+                    right_pad = x[-1]
                 y = concatenate([ left_pad*ones(left), x, right_pad*ones(right) ])  
                 return asarray([sort(y[i-left:i+right+1])[ind_perc] for i in xrange(left,len(x)+left)])
 
