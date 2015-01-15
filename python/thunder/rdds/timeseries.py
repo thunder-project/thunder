@@ -1,6 +1,7 @@
 from numpy import sqrt, pi, angle, fft, fix, zeros, roll, dot, mean, \
     array, size, diag, tile, ones, asarray, polyfit, polyval, arange, \
-    percentile, ceil, round, sort, concatenate
+    percentile, ceil, float64
+from scipy.ndimage.filters import percentile_filter
 
 from thunder.rdds.series import Series
 from thunder.utils.common import loadmatvar, checkparams
@@ -298,22 +299,8 @@ class TimeSeries(Series):
                                           for ix in arange(0, n)])
 
         if method == 'window-fast':
-            if window % 2:
-                left, right = ((window-1)/2, (window-1)/2)
-            else:
-                left, right = (window/2 - 1, window/2)
-
-            n = len(self.index)
-            indPerc = round((window-1)*(perc/100.0))
-            
             def basefunc(x):
-                leftPad = mean(x[:right])
-                if left != 0:
-                    rightPad = mean(x[-left:])
-                else:
-                    rightPad = x[-1]
-                y = concatenate([leftPad*ones(left), x, rightPad*ones(right)])
-                return asarray([sort(y[i-left:i+right+1])[indPerc] for i in xrange(left, len(x)+left)])
+                return percentile_filter(x.astype(float64), perc, window, mode='nearest')
 
         def get(y):
             b = basefunc(y)
