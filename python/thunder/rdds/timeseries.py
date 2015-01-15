@@ -1,7 +1,6 @@
 from numpy import sqrt, pi, angle, fft, fix, zeros, roll, dot, mean, \
     array, size, diag, tile, ones, asarray, polyfit, polyval, arange, \
     percentile, ceil, float64
-from scipy.ndimage.filters import percentile_filter
 
 from thunder.rdds.series import Series
 from thunder.utils.common import loadmatvar, checkparams
@@ -299,8 +298,8 @@ class TimeSeries(Series):
                                           for ix in arange(0, n)])
 
         if method == 'window-fast':
-            def basefunc(x):
-                return percentile_filter(x.astype(float64), perc, window, mode='nearest')
+            from scipy.ndimage.filters import percentile_filter
+            basefunc = lambda x: percentile_filter(x.astype(float64), perc, window, mode='nearest')
 
         def get(y):
             b = basefunc(y)
