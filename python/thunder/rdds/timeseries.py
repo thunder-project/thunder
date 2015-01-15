@@ -268,11 +268,11 @@ class TimeSeries(Series):
         baseline : str, optional, default = 'percentile'
             Quantity to use as the baseline, options are 'mean', 'percentile', 'window', or 'window-fast'
 
-        perc : int, optional, default = 20
-            Percentile value to use, for 'percentile', 'window', or 'window-fast' baseline only
-
         window : int, optional, default = 6
             Size of window for baseline estimation, for 'window' and 'window-fast' baseline only
+
+        perc : int, optional, default = 20
+            Percentile value to use, for 'percentile', 'window', or 'window-fast' baseline only
         """
         checkparams(baseline, ['mean', 'percentile', 'window', 'window-fast'])
         method = baseline.lower()
