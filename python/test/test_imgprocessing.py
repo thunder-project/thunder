@@ -77,14 +77,12 @@ class TestRegistration(ImgProcessingTestCase):
     def test_reference_2d(self):
 
         random.seed(42)
-        im0 = random.randn(25, 25).astype('uint16')
-        im1 = random.randn(25, 25).astype('uint16')
-        im2 = random.randn(25, 25).astype('uint16')
+        im0 = random.random_integers(0, high=127, size=(25, 25)).astype('uint16')
+        im1 = random.random_integers(0, high=127, size=(25, 25)).astype('uint16')
+        im2 = random.random_integers(0, high=127, size=(25, 25)).astype('uint16')
         imgIn = ImagesLoader(self.sc).fromArrays([im0, im1, im2])
         ref = Register.reference(imgIn)
         assert(allclose(ref, (im0 + im1 + im2) / 3))
-
-        print(imgIn.keys().collect())
 
         ref = Register.reference(imgIn, startIdx=0, stopIdx=2)
         assert(allclose(ref, (im0 + im1) / 2))
@@ -95,8 +93,8 @@ class TestRegistration(ImgProcessingTestCase):
     def test_reference_3d(self):
 
         random.seed(42)
-        im0 = random.randn(25, 25, 3).astype('uint16')
-        im1 = random.randn(25, 25, 3).astype('uint16')
+        im0 = random.random_integers(0, high=127, size=(25, 25, 3)).astype('uint16')
+        im1 = random.random_integers(0, high=127, size=(25, 25, 3)).astype('uint16')
         imgIn = ImagesLoader(self.sc).fromArrays([im0, im1])
         ref = Register.reference(imgIn)
         assert(allclose(ref, (im0 + im1) / 2))

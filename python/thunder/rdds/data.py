@@ -232,7 +232,7 @@ class Data(object):
         """
         return self.rdd.count()
 
-    def mean(self, dtype='smallfloat', casting='safe'):
+    def mean(self, dtype='float64', casting='safe'):
         """ Mean of values, ignoring keys
 
         If dtype is not None, then the values will first be cast to the requested type before the operation is
@@ -240,7 +240,7 @@ class Data(object):
         """
         return self.stats('mean', dtype=dtype, casting=casting).mean()
 
-    def sum(self, dtype=None, casting='safe'):
+    def sum(self, dtype='float64', casting='safe'):
         """ Sum of values, ignoring keys
 
         If dtype is not None, then the values will first be cast to the requested type before the operation is
@@ -251,7 +251,7 @@ class Data(object):
         out = self.astype(dtype, casting)
         return out.rdd.values().sum()
 
-    def variance(self, dtype='smallfloat', casting='safe'):
+    def variance(self, dtype='float64', casting='safe'):
         """ Variance of values, ignoring keys
 
         If dtype is not None, then the values will first be cast to the requested type before the operation is
@@ -259,7 +259,7 @@ class Data(object):
         """
         return self.stats('variance', dtype=dtype, casting=casting).variance()
 
-    def stdev(self, dtype='smallfloat', casting='safe'):
+    def stdev(self, dtype='float64', casting='safe'):
         """ Standard deviation of values, ignoring keys
 
         If dtype is not None, then the values will first be cast to the requested type before the operation is
@@ -269,7 +269,7 @@ class Data(object):
         """
         return self.stats('stdev', dtype=dtype, casting=casting).stdev()
 
-    def stats(self, requestedStats='all', dtype='smallfloat', casting='safe'):
+    def stats(self, requestedStats='all', dtype='float64', casting='safe'):
         """
         Return a L{StatCounter} object that captures all or some of the mean, variance, maximum, minimum,
         and count of the RDD's elements in one operation.

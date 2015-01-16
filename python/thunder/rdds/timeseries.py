@@ -1,6 +1,6 @@
 from numpy import sqrt, pi, angle, fft, fix, zeros, roll, dot, mean, \
     array, size, diag, tile, ones, asarray, polyfit, polyval, arange, \
-    percentile, ceil
+    percentile, ceil, round, sort, concatenate
 
 from thunder.rdds.series import Series
 from thunder.utils.common import loadMatVar, checkParams
@@ -266,19 +266,19 @@ class TimeSeries(Series):
         Parameters
         ----------
         baseline : str, optional, default = 'percentile'
-            Quantity to use as the baseline, options are 'mean', 'percentile', or 'window'
+            Quantity to use as the baseline, options are 'mean', 'percentile', 'window', or 'window-fast'
 
         perc : int, optional, default = 20
-            Percentile value to use, for 'percentile' or 'window' baseline only
+            Percentile value to use, for 'percentile', 'window', or 'window-fast' baseline only
 
         window : int, optional, default = 6
-            Size of window for baseline estimation, for 'window' baseline only
+            Size of window for baseline estimation, for 'window' and 'window-fast' baseline only
         """
-        checkParams(baseline, ['mean', 'percentile', 'window'])
+        checkParams(baseline, ['mean', 'percentile', 'window', 'window-fast'])
         method = baseline.lower()
     
         from warnings import warn
-        if method is not 'window' and window is not None:
+        if not (method == 'window' or method == 'window-fast') and window is not None:
             warn('Setting window without using method "window" has no effect')
 
         if method == 'mean':
@@ -287,7 +287,6 @@ class TimeSeries(Series):
         if method == 'percentile':
             baseFunc = lambda x: percentile(x, perc)
 
-        # TODO optimize implementation by doing a single initial sort
         if method == 'window':
             if window & 0x1:
                 left, right = (ceil(window/2), ceil(window/2) + 1)
@@ -297,6 +296,24 @@ class TimeSeries(Series):
             n = len(self.index)
             baseFunc = lambda x: asarray([percentile(x[max(ix-left, 0):min(ix+right+1, n)], perc)
                                           for ix in arange(0, n)])
+
+        if method == 'window-fast':
+            if window % 2:
+                left, right = ((window-1)/2, (window-1)/2)
+            else:
+                left, right = (window/2 - 1, window/2)
+
+            n = len(self.index)
+            indPerc = round((window-1)*(perc/100.0))
+            
+            def baseFunc(x):
+                leftPad = mean(x[:right])
+                if left != 0:
+                    rightPad = mean(x[-left:])
+                else:
+                    rightPad = x[-1]
+                y = concatenate([leftPad*ones(left), x, rightPad*ones(right)])
+                return asarray([sort(y[i-left:i+right+1])[indPerc] for i in xrange(left, len(x)+left)])
 
         def get(y):
             b = baseFunc(y)

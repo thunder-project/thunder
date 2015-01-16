@@ -4,7 +4,7 @@ try:
 except ImportError:
     thunder = None
     raise Exception("Unable to import Thunder. Please make sure that the Thunder installation directory is listed in " +
-                    "the PYTHONPATH environment variable.")
+                    "the PYTHONPATH environment variable. Also check that your build of Thunder is functional and it can be imported.")
 import os
 import sys
 

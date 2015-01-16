@@ -407,10 +407,9 @@ class TestImagesStats(PySparkTestCase):
         arys, shape, size = _generateTestArrays(2, 'uint8')
         imageData = ImagesLoader(self.sc).fromArrays(arys)
         meanVal = imageData.mean()
-
         expected = elementwiseMean(arys).astype('float16')
         assert_true(allclose(expected, meanVal))
-        assert_equals('float16', str(meanVal.dtype))
+        assert_equals('float64', str(meanVal.dtype))
 
     def test_sum(self):
         from numpy import add
@@ -431,7 +430,7 @@ class TestImagesStats(PySparkTestCase):
 
         expected = elementwiseVar([ary.astype('float16') for ary in arys])
         assert_true(allclose(expected, varVal))
-        assert_equals('float16', str(varVal.dtype))
+        assert_equals('float64', str(varVal.dtype))
 
     def test_stdev(self):
         from test_utils import elementwiseStdev
@@ -441,12 +440,7 @@ class TestImagesStats(PySparkTestCase):
 
         expected = elementwiseStdev([ary.astype('float16') for ary in arys])
         assert_true(allclose(expected, stdval))
-        # assert_equals('float16', str(stdval.dtype))
-        # it isn't clear to me why this comes out as float32 and not float16, especially
-        # given that var returns float16, as expected. But I'm not too concerned about it.
-        # Consider this documentation of current behavior rather than a description of
-        # desired behavior.
-        assert_equals('float32', str(stdval.dtype))
+        assert_equals('float64', str(stdval.dtype))
 
     def test_stats(self):
         from test_utils import elementwiseMean, elementwiseVar
