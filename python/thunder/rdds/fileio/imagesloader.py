@@ -134,7 +134,10 @@ class ImagesLoader(object):
                 except EOFError:
                     # past last page in tif
                     break
-            return dstack(imgarys)
+            if len(imgarys) == 1:
+                return imgarys[0]
+            else:
+                return dstack(imgarys)
 
         reader = getParallelReaderForPath(datafile)(self.sc)
         readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx, recursive=recursive)
