@@ -1,8 +1,6 @@
 Thunder
 =======
 
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/freeman-lab/thunder?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
 <div class="row">
   <a href="http://freeman-lab.github.io/thunder/">
       <img src="http://thefreemanlab.com/thunder/docs/_static/thumbnail_row.png" width="800px" height="125px">
@@ -11,7 +9,7 @@ Thunder
 
 Large-scale neural data analysis with Spark - [project page](http://freeman-lab.github.io/thunder/)
 
-[![Build Status](https://travis-ci.org/freeman-lab/thunder.png?branch=master)](https://travis-ci.org/freeman-lab/thunder)
+[![Build Status](https://travis-ci.org/freeman-lab/thunder.png?branch=master)](https://travis-ci.org/freeman-lab/thunder) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/freeman-lab/thunder?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 About
 -----
