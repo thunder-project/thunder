@@ -88,8 +88,8 @@ class ImagesLoader(object):
         return Images(readerrdd.mapValues(toArray), nimages=reader.lastnrecs, dims=dims,
                       dtype=dtype)
 
-    def fromMultipageTif(self, datafile, ext='tif', startidx=None, stopidx=None, recursive=False):
-        """Sets up a new Images object with data to be read from one or more multi-page tif files.
+    def fromTif(self, datafile, ext='tif', startidx=None, stopidx=None, recursive=False):
+        """Sets up a new Images object with data to be read from one or more tif files.
 
         The RDD underlying the returned Images will have key, value data as follows:
 

@@ -163,7 +163,7 @@ class ThunderContext():
             data = loader.fromStack(datapath, dims, dtype=dtype, ext=ext, startidx=startidx, stopidx=stopidx,
                                     recursive=recursive)
         elif inputformat.lower().startswith('tif'):
-            data = loader.fromMultipageTif(datapath, ext=ext, startidx=startidx, stopidx=stopidx, recursive=recursive)
+            data = loader.fromTif(datapath, ext=ext, startidx=startidx, stopidx=stopidx, recursive=recursive)
         else:
             data = loader.fromPng(datapath, ext=ext, startidx=startidx, stopidx=stopidx, recursive=recursive)
 
@@ -269,7 +269,7 @@ class ThunderContext():
                                           recursive=recursive)
             else:
                 # tif / tif stack
-                images = loader.fromMultipageTif(datapath, ext=ext, startidx=startidx, stopidx=stopidx,
+                images = loader.fromTif(datapath, ext=ext, startidx=startidx, stopidx=stopidx,
                                                  recursive=recursive)
             return images.toBlocks(blockSize, units=blockSizeUnits).toSeries()
 
@@ -281,7 +281,7 @@ class ThunderContext():
                                         startidx=startidx, stopidx=stopidx, recursive=recursive)
             else:
                 # tif / tif stack
-                return loader.fromMultipageTif(datapath, ext=ext, blockSize=blockSize,
+                return loader.fromTif(datapath, ext=ext, blockSize=blockSize,
                                                startidx=startidx, stopidx=stopidx, recursive=recursive)
 
     def convertImagesToSeries(self, datapath, outputdirpath, dims=None, inputformat='stack', ext=None,
@@ -398,7 +398,7 @@ class ThunderContext():
                                           recursive=recursive)
             else:
                 # 'tif' or 'tif-stack'
-                images = loader.fromMultipageTif(datapath, ext=ext, startidx=startidx, stopidx=stopidx,
+                images = loader.fromTif(datapath, ext=ext, startidx=startidx, stopidx=stopidx,
                                                  recursive=recursive)
 
             images.toBlocks(blocksize, units=blockSizeUnits).saveAsBinarySeries(outputdirpath, overwrite=overwrite)
@@ -411,7 +411,7 @@ class ThunderContext():
                                      stopidx=stopidx, recursive=recursive)
             else:
                 # 'tif' or 'tif-stack'
-                loader.saveFromMultipageTif(datapath, outputdirpath, ext=ext, blockSize=blocksize,
+                loader.saveFromTif(datapath, outputdirpath, ext=ext, blockSize=blocksize,
                                             startidx=startidx, stopidx=stopidx, overwrite=overwrite,
                                             recursive=recursive)
 

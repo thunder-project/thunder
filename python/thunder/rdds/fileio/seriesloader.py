@@ -535,9 +535,9 @@ class SeriesLoader(object):
 
         return Series(seriesblocks, dims=dims, dtype=newdtype, index=arange(npointsinseries))
 
-    def fromMultipageTif(self, datapath, ext="tif", blockSize="150M",
-                         newdtype='smallfloat', casting='safe',
-                         startidx=None, stopidx=None, recursive=False):
+    def fromTif(self, datapath, ext="tif", blockSize="150M",
+                newdtype='smallfloat', casting='safe',
+                startidx=None, stopidx=None, recursive=False):
         """Load a Series object from multipage tiff files.
 
         Parameters
@@ -572,7 +572,7 @@ class SeriesLoader(object):
         seriesblocks, metadata = self._getSeriesBlocksFromMultiTif(datapath, ext=ext, blockSize=blockSize,
                                                                    newdtype=newdtype, casting=casting,
                                                                    startidx=startidx, stopidx=stopidx,
-                                                                   recursive=False)
+                                                                   recursive=recursive)
         dims, npointsinseries, datatype = metadata
         return Series(seriesblocks, dims=Dimensions.fromTuple(dims[::-1]), dtype=datatype,
                       index=arange(npointsinseries))
@@ -657,9 +657,9 @@ class SeriesLoader(object):
 
         SeriesLoader.__saveSeriesRdd(seriesblocks, outputdirpath, dims, npointsinseries, newdtype, overwrite=overwrite)
 
-    def saveFromMultipageTif(self, datapath, outputdirpath, ext="tif", blockSize="150M",
-                             newdtype=None, casting='safe',
-                             startidx=None, stopidx=None, overwrite=False, recursive=False):
+    def saveFromTif(self, datapath, outputdirpath, ext="tif", blockSize="150M",
+                    newdtype=None, casting='safe',
+                    startidx=None, stopidx=None, overwrite=False, recursive=False):
         """Write out data from multipage tif files in the Series data flat binary format.
 
         Parameters

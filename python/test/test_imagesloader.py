@@ -55,7 +55,7 @@ class TestImagesFileLoaders(PySparkTestCase):
 
     def test_fromTif(self):
         imagepath = os.path.join(self.testresourcesdir, "singlelayer_tif", "dot1_lzw.tif")
-        tifimage = ImagesLoader(self.sc).fromMultipageTif(imagepath, self.sc)
+        tifimage = ImagesLoader(self.sc).fromTif(imagepath, self.sc)
         firsttifimage = tifimage.first()
         assert_equals(0, firsttifimage[0], "Key error; expected first image key to be 0, was "+str(firsttifimage[0]))
         expectedshape = (70, 75, 4)  # 4 channel tif; RGBalpha
@@ -80,7 +80,7 @@ class TestImagesFileLoaders(PySparkTestCase):
 
     def test_fromTifWithMultipleFiles(self):
         imagepath = os.path.join(self.testresourcesdir, "singlelayer_tif", "dot*_lzw.tif")
-        tifimages = ImagesLoader(self.sc).fromMultipageTif(imagepath, self.sc).collect()
+        tifimages = ImagesLoader(self.sc).fromTif(imagepath, self.sc).collect()
 
         expectednum = 3
         expectedshape = (70, 75, 4)  # 4 channel tif; RGBalpha
@@ -90,7 +90,7 @@ class TestImagesFileLoaders(PySparkTestCase):
 
     def _run_tst_multitif(self, filename, expectedDtype):
         imagepath = os.path.join(self.testresourcesdir, "multilayer_tif", filename)
-        tifimages = ImagesLoader(self.sc).fromMultipageTif(imagepath, self.sc).collect()
+        tifimages = ImagesLoader(self.sc).fromTif(imagepath, self.sc).collect()
 
         expectednum = 1
         expectedshape = (70, 75, 3)  # 3 concatenated pages, each with single luminance channel
