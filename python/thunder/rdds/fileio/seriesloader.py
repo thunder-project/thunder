@@ -391,6 +391,15 @@ class SeriesLoader(object):
         ntimepoints = len(filenames)
 
         minimize_reads = datapath.lower().startswith("s3")
+        # check PIL version to see whether it is actually pillow or indeed old PIL and choose
+        # conversion function appropriately. See ImagesLoader.fromMultipageTif and common.pil_to_array
+        # for more explanation.
+        isPillow = hasattr(Image, "PILLOW_VERSION")
+        if isPillow:
+            conversionFcn = array  # use numpy's array() function
+        else:
+            from thunder.utils.common import pil_to_array
+            conversionFcn = pil_to_array  # use our modified version of matplotlib's pil_to_array
 
         height, width, npages, datatype = SeriesLoader.__readMetadataFromFirstPageOfMultiTif(reader, filenames[0])
         pixelbytesize = dtypefunc(datatype).itemsize
@@ -437,7 +446,7 @@ class SeriesLoader(object):
                         bytebuf = io.BytesIO(tiffilebuffer)
                         try:
                             pilimg = Image.open(bytebuf)
-                            ary = array(pilimg).T
+                            ary = conversionFcn(pilimg).T
                         finally:
                             bytebuf.close()
                         del tiffilebuffer, tiffparser_, pilimg, bytebuf
@@ -445,7 +454,7 @@ class SeriesLoader(object):
                         # read tif using PIL directly
                         pilimg = Image.open(fp)
                         pilimg.seek(planeidx)
-                        ary = array(pilimg).T
+                        ary = conversionFcn(pilimg).T
                         del pilimg
 
                     if not planeshape:
