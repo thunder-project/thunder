@@ -101,13 +101,13 @@ class TestTimeSeriesMethods(TimeSeriesTestCase):
         assert_equals('float16', str(out._dtype))
         vals = out.first()[1]
         assert_equals('float64', str(vals.dtype))
-        b_true = array([1.0, 2.0, 3.0, 4.0, 5.0])
+        b_true = array([1, 1, 2, 3, 4])
         result_true = (y - b_true) / (b_true + 0.1)
         assert(allclose(vals, result_true, atol=1e-3))
 
         out = data.normalize('window-fast', window=5)
         vals = out.first()[1]
-        b_true = array([1.5, 1.5, 2, 3, 4])
+        b_true = array([1, 1, 2, 3, 4])
         result_true = (y - b_true) / (b_true + 0.1)
         assert(allclose(vals, result_true, atol=1e-3))
 

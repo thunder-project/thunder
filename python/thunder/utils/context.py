@@ -38,17 +38,17 @@ class ThunderContext():
         ----------
         dataPath: string
             Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-            including scheme. A datapath argument may include a single '*' wildcard character in the filename. Examples
-            of valid datapaths include 'a/local/relative/directory/*.stack", "s3n:///my-s3-bucket/data/mydatafile.tif",
+            including scheme. A dataPath argument may include a single '*' wildcard character in the filename. Examples
+            of valid dataPaths include 'a/local/relative/directory/*.stack", "s3n:///my-s3-bucket/data/mydatafile.tif",
             "/mnt/my/absolute/data/directory/", or "file:///mnt/another/data/directory/".
 
-        nkeys: int, optional (but required if `inputformat` is 'text')
+        nkeys: int, optional (but required if `inputFormat` is 'text')
             dimensionality of data keys. (For instance, (x,y,z) keyed data for 3-dimensional image timeseries data.)
             For text data, number of keys must be specified in this parameter; for binary data, number of keys must be
             specified either in this parameter or in a configuration file named by the 'conffile' argument if this
             parameter is not set.
 
-        nvalues: int, optional (but required if `inputformat` is 'text')
+        nvalues: int, optional (but required if `inputFormat` is 'text')
             Number of values expected to be read. For binary data, nvalues must be specified either in this parameter
             or in a configuration file named by the 'conffile' argument if this parameter is not set.
 
@@ -83,10 +83,10 @@ class ThunderContext():
             # must be either 'text' or 'binary'
             data = loader.fromBinary(dataPath, confFilename=confFilename, nkeys=nkeys, nvalues=nvalues,
                                      keyType=keyType, valueType=valueType)
-
         return data
 
-    def loadImages(self, dataPath, dims=None, inputFormat='stack', dtype='int16', startIdx=None, stopIdx=None):
+    def loadImages(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
+                   startIdx=None, stopIdx=None, recursive=False):
         """
         Loads an Images object from data stored as a binary image stack, tif, tif-stack, or png files.
 
@@ -97,11 +97,11 @@ class ThunderContext():
         ----------
         dataPath: string
             Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-            including scheme. A datapath argument may include a single '*' wildcard character in the filename. Examples
-            of valid datapaths include 'a/local/relative/directory/*.stack", "s3n:///my-s3-bucket/data/mydatafile.tif",
+            including scheme. A dataPath argument may include a single '*' wildcard character in the filename. Examples
+            of valid dataPaths include 'a/local/relative/directory/*.stack", "s3n:///my-s3-bucket/data/mydatafile.tif",
             "/mnt/my/absolute/data/directory/", or "file:///mnt/another/data/directory/".
 
-        dims: tuple of positive int, optional (but required if inputformat is 'stack')
+        dims: tuple of positive int, optional (but required if inputFormat is 'stack')
             Dimensions of input image data, similar to a numpy 'shape' parameter, for instance (1024, 1024, 48). Binary
             stack data will be interpreted as coming from a multidimensional array of the specified dimensions. Stack
             data should be stored in row-major order (Fortran or Matlab convention) rather than column-major order (C
@@ -109,7 +109,7 @@ class ThunderContext():
             on disk. So for instance given dims of (x, y, z), the coordinates of the data in a binary stack file
             should be ordered as [(x0, y0, z0), (x1, y0, zo), ..., (xN, y0, z0), (x0, y1, z0), (x1, y1, z0), ...,
             (xN, yM, z0), (x0, y0, z1), ..., (xN, yM, zP)].
-            If inputformat is 'png', 'tif', or'tif-stack', the dims parameter (if any) will be ignored; data dimensions
+            If inputFormat is 'png', 'tif', or'tif-stack', the dims parameter (if any) will be ignored; data dimensions
             will instead be read out from the image file headers.
 
         inputFormat: {'stack', 'png', 'tif', 'tif-stack'}. optional, default 'stack'
@@ -121,21 +121,30 @@ class ThunderContext():
             This method assumes that stack data consists of signed 16-bit integers in native byte order. Data types of
             image file data will be as specified in the file headers.
 
+        ext: string, optional, default None
+            Extension required on data files to be loaded. By default will be "stack" if inputFormat=="stack", "tif" for
+            inputFormat=='tif' or 'tif-stack', and 'png' for inputFormat="png".
+
         dtype: string or numpy dtype. optional, default 'int16'
-            Data type of the image files to be loaded, specified as a numpy "dtype" string. If inputformat is
+            Data type of the image files to be loaded, specified as a numpy "dtype" string. If inputFormat is
             'tif-stack', the dtype parameter (if any) will be ignored; data type will instead be read out from the
             tif headers.
 
         startIdx: nonnegative int, optional
             startIdx and stopIdx are convenience parameters to allow only a subset of input files to be read in. These
             parameters give the starting index (inclusive) and final index (exclusive) of the data files to be used
-            after lexicographically sorting all input data files matching the datapath argument. For example,
-            startidx=None (the default) and stopidx=10 will cause only the first 10 data files in datapath to be read
-            in; startidx=2 and stopidx=3 will cause only the third file (zero-based index of 2) to be read in. startidx
-            and stopidx use the python slice indexing convention (zero-based indexing with an exclusive final position).
+            after lexicographically sorting all input data files matching the dataPath argument. For example,
+            startIdx=None (the default) and stopIdx=10 will cause only the first 10 data files in dataPath to be read
+            in; startIdx=2 and stopIdx=3 will cause only the third file (zero-based index of 2) to be read in. startIdx
+            and stopIdx use the python slice indexing convention (zero-based indexing with an exclusive final position).
 
         stopIdx: nonnegative int, optional
             See startIdx.
+
+        recursive: boolean, default False
+            If true, will recursively descend directories rooted at dataPath, loading all files in the tree that
+            have an appropriate extension. Recursive loading is currently only implemented for local filesystems
+            (not s3).
 
         Returns
         -------
@@ -148,19 +157,24 @@ class ThunderContext():
         from thunder.rdds.fileio.imagesloader import ImagesLoader
         loader = ImagesLoader(self._sc)
 
+        if not ext:
+            ext = DEFAULT_EXTENSIONS.get(inputFormat.lower(), None)
+
         if inputFormat.lower() == 'stack':
-            data = loader.fromStack(dataPath, dims, dtype=dtype, startIdx=startIdx, stopIdx=stopIdx)
+            data = loader.fromStack(dataPath, dims, dtype=dtype, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
+                                    recursive=recursive)
         elif inputFormat.lower() == 'tif':
-            data = loader.fromTif(dataPath, startIdx=startIdx, stopIdx=stopIdx)
+            data = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
         elif inputFormat.lower() == 'tif-stack':
-            data = loader.fromMultipageTif(dataPath, startIdx=startIdx, stopIdx=stopIdx)
+            data = loader.fromMultipageTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
         else:
-            data = loader.fromPng(dataPath)
+            data = loader.fromPng(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
 
         return data
 
-    def loadImagesAsSeries(self, dataPath, dims=None, inputFormat='stack', dtype='int16',
-                           blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None, shuffle=False):
+    def loadImagesAsSeries(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
+                           blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None, 
+                           shuffle=True, recursive=False):
         """
         Load Images data as Series data.
 
@@ -168,11 +182,11 @@ class ThunderContext():
         ----------
         dataPath: string
             Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-            including scheme. A datapath argument may include a single '*' wildcard character in the filename. Examples
-            of valid datapaths include 'a/local/relative/directory/*.stack", "s3n:///my-s3-bucket/data/mydatafile.tif",
+            including scheme. A dataPath argument may include a single '*' wildcard character in the filename. Examples
+            of valid dataPaths include 'a/local/relative/directory/*.stack", "s3n:///my-s3-bucket/data/mydatafile.tif",
             "/mnt/my/absolute/data/directory/", or "file:///mnt/another/data/directory/".
 
-        dims: tuple of positive int, optional (but required if inputformat is 'stack')
+        dims: tuple of positive int, optional (but required if inputFormat is 'stack')
             Dimensions of input image data, for instance (1024, 1024, 48). Binary stack data will be interpreted as
             coming from a multidimensional array of the specified dimensions.
 
@@ -183,7 +197,7 @@ class ThunderContext():
             which by default has the fastest-changing dimension listed last (column-major convention). Thus, if loading
             a numpy array `ary`, where `ary.shape == (z, y, x)`, written to disk by `ary.tofile("myarray.stack")`, the
             corresponding dims parameter should be (x, y, z).
-            If inputformat is 'tif-stack', the dims parameter (if any) will be ignored; data dimensions will instead
+            If inputFormat is 'tif-stack', the dims parameter (if any) will be ignored; data dimensions will instead
             be read out from the tif file headers.
 
         inputFormat: {'stack', 'tif-stack'}. optional, default 'stack'
@@ -193,8 +207,12 @@ class ThunderContext():
             given by lexicographic sorting of file names.
             This method assumes that stack data consists of signed 16-bit integers in native byte order.
 
+        ext: string, optional, default None
+            Extension required on data files to be loaded. By default will be "stack" if inputFormat=="stack", "tif" for
+            inputFormat=='tif-stack'.
+
         dtype: string or numpy dtype. optional, default 'int16'
-            Data type of the image files to be loaded, specified as a numpy "dtype" string. If inputformat is
+            Data type of the image files to be loaded, specified as a numpy "dtype" string. If inputFormat is
             'tif-stack', the dtype parameter (if any) will be ignored; data type will instead be read out from the
             tif headers.
 
@@ -213,24 +231,26 @@ class ThunderContext():
         startIdx: nonnegative int, optional
             startIdx and stopIdx are convenience parameters to allow only a subset of input files to be read in. These
             parameters give the starting index (inclusive) and final index (exclusive) of the data files to be used
-            after lexicographically sorting all input data files matching the datapath argument. For example,
-            startidx=None (the default) and stopidx=10 will cause only the first 10 data files in datapath to be read
-            in; startidx=2 and stopidx=3 will cause only the third file (zero-based index of 2) to be read in. startidx
-            and stopidx use the python slice indexing convention (zero-based indexing with an exclusive final position).
+            after lexicographically sorting all input data files matching the dataPath argument. For example,
+            startIdx=None (the default) and stopIdx=10 will cause only the first 10 data files in dataPath to be read
+            in; startIdx=2 and stopIdx=3 will cause only the third file (zero-based index of 2) to be read in. startIdx
+            and stopIdx use the python slice indexing convention (zero-based indexing with an exclusive final position).
 
         stopIdx: nonnegative int, optional
             See startIdx.
 
-        shuffle: boolean, optional, default False
+        shuffle: boolean, optional, default True
             Controls whether the conversion from Images to Series formats will make use of a Spark shuffle-based method.
-            The default at present is not to use a shuffle. The shuffle-based method may lead to higher performance in
-            some cases, but the default method appears to be more stable with larger data set sizes. This default may
-            change in future releases.
+
+        recursive: boolean, default False
+            If true, will recursively descend directories rooted at dataPath, loading all files in the tree that
+            have an appropriate extension. Recursive loading is currently only implemented for local filesystems
+            (not s3), and only with shuffle=True.
 
         Returns
         -------
         data: thunder.rdds.Series
-            A newly-created Series object, wrapping an RDD of timeseries data generated from the images in datapath.
+            A newly-created Series object, wrapping an RDD of timeseries data generated from the images in dataPath.
             This RDD will have as keys an n-tuple of int, with n given by the dimensionality of the original images. The
             keys will be the zero-based spatial index of the timeseries data in the RDD value. The value will be
             a numpy array of length equal to the number of image files loaded. Each loaded image file will contribute
@@ -240,32 +260,38 @@ class ThunderContext():
 
         if inputFormat.lower() == 'stack' and not dims:
             raise ValueError("Dimensions ('dims' parameter) must be specified if loading from binary image stack" +
-                             " ('stack' value for 'inputformat' parameter)")
+                             " ('stack' value for 'inputFormat' parameter)")
+
+        if not ext:
+            ext = DEFAULT_EXTENSIONS.get(inputFormat.lower(), None)
 
         if shuffle:
             from thunder.rdds.fileio.imagesloader import ImagesLoader
             loader = ImagesLoader(self._sc)
+
             if inputFormat.lower() == 'stack':
-                images = loader.fromStack(dataPath, dims, dtype=dtype, startIdx=startIdx, stopIdx=stopIdx)
+                images = loader.fromStack(dataPath, dims, dtype=dtype, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
+                                          recursive=recursive)
             else:
                 # tif stack
-                images = loader.fromMultipageTif(dataPath, startIdx=startIdx, stopIdx=stopIdx)
+                images = loader.fromMultipageTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
+                                                 recursive=recursive)
             return images.toBlocks(blockSize, units=blockSizeUnits).toSeries()
 
         else:
             from thunder.rdds.fileio.seriesloader import SeriesLoader
             loader = SeriesLoader(self._sc)
             if inputFormat.lower() == 'stack':
-                return loader.fromStack(dataPath, dims, dtype=dtype, blockSize=blockSize,
-                                        startIdx=startIdx, stopIdx=stopIdx)
+                return loader.fromStack(dataPath, dims, ext=ext, dtype=dtype, blockSize=blockSize,
+                                        startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
             else:
                 # tif stack
-                return loader.fromMultipageTif(dataPath, blockSize=blockSize,
-                                               startIdx=startIdx, stopIdx=stopIdx)
+                return loader.fromMultipageTif(dataPath, ext=ext, blockSize=blockSize,
+                                               startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
 
-    def convertImagesToSeries(self, dataPath, outputDirPath, dims=None, inputFormat='stack',
+    def convertImagesToSeries(self, dataPath, outputDirPath, dims=None, inputFormat='stack', ext=None,
                               dtype='int16', blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,
-                              shuffle=False, overwrite=False):
+                              shuffle=False, overwrite=False, recursive=False):
         """
         Write out Images data as Series data, saved in a flat binary format.
 
@@ -278,19 +304,19 @@ class ThunderContext():
         ----------
         dataPath: string
             Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-            including scheme. A datapath argument may include a single '*' wildcard character in the filename. Examples
-            of valid datapaths include 'a/local/relative/directory/*.stack", "s3n:///my-s3-bucket/data/mydatafile.tif",
+            including scheme. A dataPath argument may include a single '*' wildcard character in the filename. Examples
+            of valid dataPaths include 'a/local/relative/directory/*.stack", "s3n:///my-s3-bucket/data/mydatafile.tif",
             "/mnt/my/absolute/data/directory/", or "file:///mnt/another/data/directory/".
 
         outputDirPath: string
             Path to a directory into which to write Series file output. An outputdir argument may be either a path
-            on the local file system or a URI-like format, as in datapath. Examples of valid outputdirpaths include
+            on the local file system or a URI-like format, as in dataPath. Examples of valid outputDirPaths include
             "a/relative/directory/", "s3n:///my-s3-bucket/data/myoutput/", or "file:///mnt/a/new/directory/". If the
-            directory specified by outputdirpath already exists and the 'overwrite' parameter is False, this method
+            directory specified by outputDirPath already exists and the 'overwrite' parameter is False, this method
             will throw a ValueError. If the directory exists and 'overwrite' is True, the existing directory and all
             its contents will be deleted and overwritten.
 
-        dims: tuple of positive int, optional (but required if inputformat is 'stack')
+        dims: tuple of positive int, optional (but required if inputFormat is 'stack')
             Dimensions of input image data, for instance (1024, 1024, 48). Binary stack data will be interpreted as
             coming from a multidimensional array of the specified dimensions.
 
@@ -301,7 +327,7 @@ class ThunderContext():
             which by default has the fastest-changing dimension listed last (column-major convention). Thus, if loading
             a numpy array `ary`, where `ary.shape == (z, y, x)`, written to disk by `ary.tofile("myarray.stack")`, the
             corresponding dims parameter should be (x, y, z).
-            If inputformat is 'tif-stack', the dims parameter (if any) will be ignored; data dimensions will instead
+            If inputFormat is 'tif-stack', the dims parameter (if any) will be ignored; data dimensions will instead
             be read out from the tif file headers.
 
         inputFormat: {'stack', 'tif-stack'}. optional, default 'stack'
@@ -309,11 +335,13 @@ class ThunderContext():
             indicates a sequence of multipage tif files, with each page of the tif corresponding to a separate z-plane.
             For both stacks and tif stacks, separate files are interpreted as distinct time points, with ordering
             given by lexicographic sorting of file names.
-            This method assumes that stack data consists of signed 16-bit integers in native byte order. The lower-level
-            API method SeriesLoader.saveFromStack() allows alternative data types to be read in.
+
+        ext: string, optional, default None
+            Extension required on data files to be loaded. By default will be "stack" if inputFormat=="stack", "tif" for
+            inputFormat=='tif-stack'.
 
         dtype: string or numpy dtype. optional, default 'int16'
-            Data type of the image files to be loaded, specified as a numpy "dtype" string. If inputformat is
+            Data type of the image files to be loaded, specified as a numpy "dtype" string. If inputFormat is
             'tif-stack', the dtype parameter (if any) will be ignored; data type will instead be read out from the
             tif headers.
 
@@ -333,53 +361,61 @@ class ThunderContext():
         startIdx: nonnegative int, optional
             startIdx and stopIdx are convenience parameters to allow only a subset of input files to be read in. These
             parameters give the starting index (inclusive) and final index (exclusive) of the data files to be used
-            after lexicographically sorting all input data files matching the datapath argument. For example,
-            startidx=None (the default) and stopidx=10 will cause only the first 10 data files in datapath to be read
-            in; startidx=2 and stopidx=3 will cause only the third file (zero-based index of 2) to be read in. startidx
-            and stopidx use the python slice indexing convention (zero-based indexing with an exclusive final position).
+            after lexicographically sorting all input data files matching the dataPath argument. For example,
+            startIdx=None (the default) and stopIdx=10 will cause only the first 10 data files in dataPath to be read
+            in; startIdx=2 and stopIdx=3 will cause only the third file (zero-based index of 2) to be read in. startIdx
+            and stopIdx use the python slice indexing convention (zero-based indexing with an exclusive final position).
 
         stopIdx: nonnegative int, optional
             See startIdx.
 
-        shuffle: boolean, optional, default False
+        shuffle: boolean, optional, default True
             Controls whether the conversion from Images to Series formats will make use of a Spark shuffle-based method.
-            The default at present is not to use a shuffle. The shuffle-based method may lead to higher performance in
-            some cases, but the default method appears to be more stable with larger data set sizes. This default may
-            change in future releases.
 
         overwrite: boolean, optional, default False
-            If true, the directory specified by outputdirpath will first be deleted, along with all its contents, if it
-            already exists. (Use with caution.) If false, a ValueError will be thrown if outputdirpath is found to
+            If true, the directory specified by outputDirPath will first be deleted, along with all its contents, if it
+            already exists. (Use with caution.) If false, a ValueError will be thrown if outputDirPath is found to
             already exist.
+
+        recursive: boolean, default False
+            If true, will recursively descend directories rooted at dataPath, loading all files in the tree that
+            have an appropriate extension. Recursive loading is currently only implemented for local filesystems
+            (not s3), and only with shuffle=True.
         """
         checkParams(inputFormat, ['stack', 'tif-stack'])
 
         if inputFormat.lower() == 'stack' and not dims:
             raise ValueError("Dimensions ('dims' parameter) must be specified if loading from binary image stack" +
-                             " ('stack' value for 'inputformat' parameter)")
+                             " ('stack' value for 'inputFormat' parameter)")
 
         if not overwrite:
-            raiseErrorIfPathExists(outputdirpath)
+            raiseErrorIfPathExists(outputDirPath)
             overwrite = True  # prevent additional downstream checks for this path
+
+        if not ext:
+            ext = DEFAULT_EXTENSIONS.get(inputFormat.lower(), None)
 
         if shuffle:
             from thunder.rdds.fileio.imagesloader import ImagesLoader
             loader = ImagesLoader(self._sc)
             if inputFormat.lower() == 'stack':
-                images = loader.fromStack(dataPath, dims, dtype=dtype, startIdx=startIdx, stopIdx=stopIdx)
+                images = loader.fromStack(dataPath, dims, dtype=dtype, startIdx=startIdx, stopIdx=stopIdx,
+                                          recursive=recursive)
             else:
-                images = loader.fromMultipageTif(dataPath, startIdx=startIdx, stopIdx=stopIdx)
+                images = loader.fromMultipageTif(dataPath, startIdx=startIdx, stopIdx=stopIdx,
+                                                 recursive=recursive)
             images.toBlocks(blockSize, units=blockSizeUnits).saveAsBinarySeries(outputDirPath, overwrite=overwrite)
-
         else:
             from thunder.rdds.fileio.seriesloader import SeriesLoader
             loader = SeriesLoader(self._sc)
             if inputFormat.lower() == 'stack':
-                loader.saveFromStack(dataPath, outputDirPath, dims, dtype=dtype,
-                                     blockSize=blockSize, overwrite=overwrite, startIdx=startIdx, stopIdx=stopIdx)
+                loader.saveFromStack(dataPath, outputDirPath, dims, ext=ext, dtype=dtype,
+                                     blockSize=blockSize, overwrite=overwrite, startIdx=startIdx,
+                                     stopIdx=stopIdx, recursive=recursive)
             else:
-                loader.saveFromMultipageTif(dataPath, outputDirPath, blockSize=blockSize,
-                                            startIdx=startIdx, stopIdx=stopIdx, overwrite=overwrite)
+                loader.saveFromMultipageTif(dataPath, outputDirPath, ext=ext, blockSize=blockSize,
+                                            startIdx=startIdx, stopIdx=stopIdx, overwrite=overwrite,
+                                            recursive=recursive)
 
     def makeExample(self, dataset, **opts):
         """
@@ -462,7 +498,8 @@ class ThunderContext():
             raise Exception("must be running on EC2 to load this example data sets")
         elif dataset == "zebrafish-optomotor-response":
             path = 'zebrafish.datasets/optomotor-response/1/'
-            data = self.loadSeries("s3n://" + path + 'data/dat_plane*.txt', inputFormat='text', minPartitions=1000, nkeys=3)
+            data = self.loadSeries("s3n://" + path + 'data/dat_plane*.txt', inputFormat='text', minPartitions=1000,
+                                   nkeys=3)
             paramFile = self._sc.textFile("s3n://" + path + "params.json")
             params = json.loads(paramFile.first())
             modelFile = asarray(params['trials'])
@@ -508,3 +545,10 @@ class ThunderContext():
             data = loader.fromNpyLocal(dataFilePath, keyFilePath)
 
         return data
+
+DEFAULT_EXTENSIONS = {
+    "stack": "stack",
+    "tif": "tif",
+    "tif-stack": "tif",
+    "png": "png"
+}

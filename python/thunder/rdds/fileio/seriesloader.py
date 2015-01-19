@@ -13,8 +13,7 @@ import math
 
 from thunder.rdds.fileio.writers import getParallelWriterForPath
 from thunder.rdds.keys import Dimensions
-from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError, selectByStartAndStopIndices, \
-    appendExtensionToPathSpec
+from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError, appendExtensionToPathSpec
 from thunder.rdds.imgblocks.blocks import SimpleBlocks
 from thunder.rdds.series import Series
 from thunder.utils.common import parseMemoryString, smallestFloatType
@@ -214,7 +213,7 @@ class SeriesLoader(object):
         return Series(data, dtype=str(valDtype), index=arange(paramsObj.nvalues)).astype(newDtype, casting)
 
     def _getSeriesBlocksFromStack(self, dataPath, dims, ext="stack", blockSize="150M", dtype='int16',
-                                  newDtype='smallfloat', casting='safe', startIdx=None, stopIdx=None):
+                                  newDtype='smallfloat', casting='safe', startIdx=None, stopIdx=None, recursive=False):
         """Create an RDD of <string blocklabel, (int k-tuple indices, array of datatype values)>
 
         Parameters
@@ -239,6 +238,11 @@ class SeriesLoader(object):
         casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
             Casting method to pass on to numpy's `astype()` method; see numpy documentation for details.
 
+        recursive: boolean, default False
+            If true, will recursively descend directories rooted at dataPath, loading all files in the tree that
+            have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
+            (not s3).
+
         Returns
         ---------
         pair of (RDD, ntimepoints)
@@ -253,7 +257,7 @@ class SeriesLoader(object):
             series of values at position across loaded image volumes
 
         ntimepoints: int
-            number of time points in returned series, determined from number of stack files found at datapath
+            number of time points in returned series, determined from number of stack files found at dataPath
 
         newDtype: string
             string representation of numpy data type of returned blocks
@@ -271,10 +275,9 @@ class SeriesLoader(object):
             newDtype = str(newDtype)
 
         reader = getFileReaderForPath(dataPath)()
-        filenames = reader.list(dataPath)
+        filenames = reader.list(dataPath, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
         if not filenames:
             raise IOError("No files found for path '%s'" % dataPath)
-        filenames = selectByStartAndStopIndices(filenames, startIdx, stopIdx)
 
         dataSize = totalDim * len(filenames) * dtype.itemsize
         nblocks = max(dataSize / blockSize, 1)  # integer division
@@ -375,7 +378,8 @@ class SeriesLoader(object):
         return height, width, npages, dtype
 
     def _getSeriesBlocksFromMultiTif(self, dataPath, ext="tif", blockSize="150M",
-                                     newDtype='smallfloat', casting='safe', startIdx=None, stopIdx=None):
+                                     newDtype='smallfloat', casting='safe', startIdx=None, stopIdx=None,
+                                     recursive=False):
         import thunder.rdds.fileio.multitif as multitif
         import itertools
         from PIL import Image
@@ -385,13 +389,21 @@ class SeriesLoader(object):
         blockSize = parseMemoryString(blockSize)
 
         reader = getFileReaderForPath(dataPath)()
-        filenames = reader.list(dataPath)
+        filenames = reader.list(dataPath, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
         if not filenames:
             raise IOError("No files found for path '%s'" % dataPath)
-        filenames = selectByStartAndStopIndices(filenames, startIdx, stopIdx)
         ntimepoints = len(filenames)
 
         doMinimizeReads = dataPath.lower().startswith("s3")
+        # check PIL version to see whether it is actually pillow or indeed old PIL and choose
+        # conversion function appropriately. See ImagesLoader.fromMultipageTif and common.pil_to_array
+        # for more explanation.
+        isPillow = hasattr(Image, "PILLOW_VERSION")
+        if isPillow:
+            conversionFcn = array  # use numpy's array() function
+        else:
+            from thunder.utils.common import pil_to_array
+            conversionFcn = pil_to_array  # use our modified version of matplotlib's pil_to_array
 
         height, width, npages, dtype = SeriesLoader.__readMetadataFromFirstPageOfMultiTif(reader, filenames[0])
         pixelBytesize = dtypeFunc(dtype).itemsize
@@ -438,7 +450,7 @@ class SeriesLoader(object):
                         byteBuf = io.BytesIO(tiffFilebuffer)
                         try:
                             pilImg = Image.open(byteBuf)
-                            ary = array(pilImg).T
+                            ary = conversionFcn(pilImg).T
                         finally:
                             byteBuf.close()
                         del tiffFilebuffer, tiffParser_, pilImg, byteBuf
@@ -446,7 +458,7 @@ class SeriesLoader(object):
                         # read tif using PIL directly
                         pilImg = Image.open(fp)
                         pilImg.seek(planeIdx)
-                        ary = array(pilImg).T
+                        ary = conversionFcn(pilImg).T
                         del pilImg
 
                     if not planeShape:
@@ -478,7 +490,7 @@ class SeriesLoader(object):
         return rdd, metadata
 
     def fromStack(self, dataPath, dims, ext="stack", blockSize="150M", dtype='int16',
-                  newDtype='smallfloat', casting='safe', startIdx=None, stopIdx=None):
+                  newDtype='smallfloat', casting='safe', startIdx=None, stopIdx=None, recursive=False):
         """Load a Series object directly from binary image stack files.
 
         Parameters
@@ -486,7 +498,7 @@ class SeriesLoader(object):
 
         dataPath: string
             Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-            including scheme. A datapath argument may include a single '*' wildcard character in the filename.
+            including scheme. A dataPath argument may include a single '*' wildcard character in the filename.
 
         dims: tuple of positive int
             Dimensions of input image data, ordered with the fastest-changing dimension first.
@@ -509,17 +521,22 @@ class SeriesLoader(object):
 
         startIdx, stopIdx: nonnegative int. optional.
             Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
-            `datapath` and `ext`. Interpreted according to python slice indexing conventions.
+            `dataPath` and `ext`. Interpreted according to python slice indexing conventions.
+
+        recursive: boolean, default False
+            If true, will recursively descend directories rooted at dataPath, loading all files in the tree that
+            have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
+            (not s3).
         """
         seriesBlocks, npointsInSeries, newDtype = \
             self._getSeriesBlocksFromStack(dataPath, dims, ext=ext, blockSize=blockSize, dtype=dtype,
-                                           newDtype=newDtype, casting=casting, startIdx=startIdx, stopIdx=stopIdx)
-
+                                           newDtype=newDtype, casting=casting, startIdx=startIdx, stopIdx=stopIdx,
+                                           recursive=recursive)
         return Series(seriesBlocks, dims=dims, dtype=newDtype, index=arange(npointsInSeries))
 
     def fromMultipageTif(self, dataPath, ext="tif", blockSize="150M",
                          newDtype='smallfloat', casting='safe',
-                         startIdx=None, stopIdx=None):
+                         startIdx=None, stopIdx=None, recursive=False):
         """Load a Series object from multipage tiff files.
 
         Parameters
@@ -527,7 +544,7 @@ class SeriesLoader(object):
 
         dataPath: string
             Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-            including scheme. A datapath argument may include a single '*' wildcard character in the filename.
+            including scheme. A dataPath argument may include a single '*' wildcard character in the filename.
 
         ext: string, optional, default "tif"
             Extension required on data files to be loaded.
@@ -544,11 +561,17 @@ class SeriesLoader(object):
 
         startIdx, stopIdx: nonnegative int. optional.
             Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
-            `datapath` and `ext`. Interpreted according to python slice indexing conventions.
+            `dataPath` and `ext`. Interpreted according to python slice indexing conventions.
+
+        recursive: boolean, default False
+            If true, will recursively descend directories rooted at dataPath, loading all files in the tree that
+            have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
+            (not s3).
         """
         seriesBlocks, metadata = self._getSeriesBlocksFromMultiTif(dataPath, ext=ext, blockSize=blockSize,
                                                                    newDtype=newDtype, casting=casting,
-                                                                   startIdx=startIdx, stopIdx=stopIdx)
+                                                                   startIdx=startIdx, stopIdx=stopIdx,
+                                                                   recursive=recursive)
         dims, npointsInSeries, dtype = metadata
         return Series(seriesBlocks, dims=Dimensions.fromTuple(dims[::-1]), dtype=dtype,
                       index=arange(npointsInSeries))
@@ -579,18 +602,18 @@ class SeriesLoader(object):
         writeSeriesConfig(outputDirPath, len(dims), npointsInSeries, valueType=dtype, overwrite=overwrite)
 
     def saveFromStack(self, dataPath, outputDirPath, dims, ext="stack", blockSize="150M", dtype='int16',
-                      newDtype=None, casting='safe', startIdx=None, stopIdx=None, overwrite=False):
+                      newDtype=None, casting='safe', startIdx=None, stopIdx=None, overwrite=False, recursive=False):
         """Write out data from binary image stack files in the Series data flat binary format.
 
         Parameters
         ----------
         dataPath: string
             Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-            including scheme. A datapath argument may include a single '*' wildcard character in the filename.
+            including scheme. A dataPath argument may include a single '*' wildcard character in the filename.
 
         outputDirPath: string
             Path to a directory into which to write Series file output. An outputdir argument may be either a path
-            on the local file system or a URI-like format, as in datapath.
+            on the local file system or a URI-like format, as in dataPath.
 
         dims: tuple of positive int
             Dimensions of input image data, ordered with the fastest-changing dimension first.
@@ -613,7 +636,7 @@ class SeriesLoader(object):
 
         startIdx, stopIdx: nonnegative int. optional.
             Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
-            `datapath` and `ext`. Interpreted according to python slice indexing conventions.
+            `dataPath` and `ext`. Interpreted according to python slice indexing conventions.
 
         overwrite: boolean, optional, default False
             If true, the directory specified by outputdirpath will first be deleted, along with all its contents, if it
@@ -627,24 +650,25 @@ class SeriesLoader(object):
 
         seriesBlocks, npointsInSeries, newDtype = \
             self._getSeriesBlocksFromStack(dataPath, dims, ext=ext, blockSize=blockSize, dtype=dtype,
-                                           newDtype=newDtype, casting=casting, startIdx=startIdx, stopIdx=stopIdx)
+                                           newDtype=newDtype, casting=casting, startIdx=startIdx, stopIdx=stopIdx,
+                                           recursive=recursive)
 
         SeriesLoader.__saveSeriesRdd(seriesBlocks, outputDirPath, dims, npointsInSeries, newDtype, overwrite=overwrite)
 
     def saveFromMultipageTif(self, dataPath, outputDirPath, ext="tif", blockSize="150M",
                              newDtype=None, casting='safe',
-                             startIdx=None, stopIdx=None, overwrite=False):
+                             startIdx=None, stopIdx=None, overwrite=False, recursive=False):
         """Write out data from multipage tif files in the Series data flat binary format.
 
         Parameters
         ----------
         dataPath: string
             Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-            including scheme. A datapath argument may include a single '*' wildcard character in the filename.
+            including scheme. A dataPath argument may include a single '*' wildcard character in the filename.
 
         outputDirPpath: string
             Path to a directory into which to write Series file output. An outputdir argument may be either a path
-            on the local file system or a URI-like format, as in datapath.
+            on the local file system or a URI-like format, as in dataPath.
 
         ext: string, optional, default "stack"
             Extension required on data files to be loaded.
@@ -661,7 +685,7 @@ class SeriesLoader(object):
 
         startIdx, stopIdx: nonnegative int. optional.
             Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
-            `datapath` and `ext`. Interpreted according to python slice indexing conventions.
+            `dataPath` and `ext`. Interpreted according to python slice indexing conventions.
 
         overwrite: boolean, optional, default False
             If true, the directory specified by outputdirpath will first be deleted, along with all its contents, if it
@@ -675,7 +699,8 @@ class SeriesLoader(object):
 
         seriesBlocks, metadata = self._getSeriesBlocksFromMultiTif(dataPath, ext=ext, blockSize=blockSize,
                                                                    newDtype=newDtype, casting=casting,
-                                                                   startIdx=startIdx, stopIdx=stopIdx)
+                                                                   startIdx=startIdx, stopIdx=stopIdx,
+                                                                   recursive=recursive)
         dims, npointsInSeries, dtype = metadata
         SeriesLoader.__saveSeriesRdd(seriesBlocks, outputDirPath, dims, npointsInSeries, dtype, overwrite=overwrite)
 

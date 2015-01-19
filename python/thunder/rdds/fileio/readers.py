@@ -22,12 +22,13 @@ syntax allows a single wildcard "*" character in the filename, making possible p
 "s3n:///my-bucket/key-one/foo*.bar", referring to "every object in the S3 bucket my-bucket whose key starts with
 'key-one/foo' and ends with '.bar'".
 """
+import errno
+import fnmatch
 import glob
+import itertools
 import os
 import urllib
 import urlparse
-import errno
-import itertools
 
 _haveBoto = False
 try:
@@ -53,8 +54,8 @@ def appendExtensionToPathSpec(dataPath, ext=None):
 
     Returns
     -------
-    result: string datapath
-        datapath string formed by concatenating passed `datapath` with "*" and passed `ext`, with some
+    result: string dataPath
+        dataPath string formed by concatenating passed `dataPath` with "*" and passed `ext`, with some
         normalization as appropriate
     """
     if ext:
@@ -63,7 +64,7 @@ def appendExtensionToPathSpec(dataPath, ext=None):
             # what they're doing and don't want us overriding their path by appending extensions to it
             return dataPath
         elif os.path.splitext(dataPath)[1]:
-            # looks like we already have a literal extension specified at the end of datapath.
+            # looks like we already have a literal extension specified at the end of dataPath.
             # go with that.
             return dataPath
         else:
@@ -75,14 +76,14 @@ def appendExtensionToPathSpec(dataPath, ext=None):
                 ext = '.'+ext
             if not dataPath.endswith(ext):
                 # we have an extension and we'd like to append it.
-                # we assume that datapath should be pointing to a directory at this point, but we might
+                # we assume that dataPath should be pointing to a directory at this point, but we might
                 # or might not have a directory separator at the end of it. add it if we don't.
                 if not dataPath.endswith(os.path.sep):
                     dataPath += os.path.sep
                 # return a path with "/*."+`ext` added to it.
                 return dataPath+'*'+ext
             else:
-                # we are asking to append `ext`, but it looks like datapath already ends with '.'+`ext`
+                # we are asking to append `ext`, but it looks like dataPath already ends with '.'+`ext`
                 return dataPath
     else:
         return dataPath
@@ -139,31 +140,48 @@ class LocalFSParallelReader(object):
         return path
 
     @staticmethod
-    def listFiles(absPath, ext=None, startIdx=None, stopIdx=None):
-        """Get sorted list of file paths matching passed `abspath` path and `ext` filename extension
-        """
+    def _listFilesRecursive(absPath, ext=None):
+        filenames = set()
+        for root, dirs, files in os.walk(absPath):
+            if ext:
+                files = fnmatch.filter(files, '*.' + ext)
+            for filename in files:
+                filenames.add(os.path.join(root, filename))
+        filenames = list(filenames)
+        filenames.sort()
+        return sorted(filenames)
+
+    @staticmethod
+    def _listFilesNonRecursive(absPath, ext=None):
         if os.path.isdir(absPath):
             if ext:
-                files = sorted(glob.glob(os.path.join(absPath, '*.' + ext)))
+                files = glob.glob(os.path.join(absPath, '*.' + ext))
             else:
-                files = sorted(os.listdir(absPath))
+                files = [os.path.join(absPath, fname) for fname in os.listdir(absPath)]
         else:
-            files = sorted(glob.glob(absPath))
+            files = glob.glob(absPath)
+        # filter out directories
+        files = [fpath for fpath in files if not os.path.isdir(fpath)]
+        return sorted(files)
 
+    def listFiles(self, absPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
+        """Get sorted list of file paths matching passed `absPath` path and `ext` filename extension
+        """
+        files = LocalFSParallelReader._listFilesNonRecursive(absPath, ext) if not recursive else \
+            LocalFSParallelReader._listFilesRecursive(absPath, ext)
         if len(files) < 1:
             raise FileNotFoundError('cannot find files of type "%s" in %s' % (ext if ext else '*', absPath))
-
         files = selectByStartAndStopIndices(files, startIdx, stopIdx)
 
         return files
 
-    def read(self, dataPath, ext=None, startIdx=None, stopIdx=None):
-        """Sets up Spark RDD across files specified by datapath on local filesystem.
+    def read(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
+        """Sets up Spark RDD across files specified by dataPath on local filesystem.
 
         Returns RDD of <string filepath, string buffer> k/v pairs.
         """
         absPath = self.uriToPath(dataPath)
-        filePaths = self.listFiles(absPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx)
+        filePaths = self.listFiles(absPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
 
         lfilepaths = len(filePaths)
         self.lastNRecs = lfilepaths
@@ -273,26 +291,36 @@ class BotoS3ParallelReader(_BotoS3Client):
         self.sc = sparkContext
         self.lastNRecs = None
 
-    def _listFiles(self, dataPath, startIdx=None, stopIdx=None):
+    def listFiles(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
+        bucketname, keyNames = self._listFilesImpl(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
+                                                   recursive=recursive)
+        return ["s3n:///%s/%s" % (bucketname, keyname) for keyname in keyNames]
+
+    def _listFilesImpl(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
+        if recursive:
+            raise NotImplementedError("Recursive traversal of directories isn't yet implemented for S3 - sorry!")
         parse = _BotoS3Client.parseS3Query(dataPath)
 
         conn = boto.connect_s3()
         bucket = conn.get_bucket(parse[0])
         keys = _BotoS3Client.retrieveKeys(bucket, parse[1], prefix=parse[2], postfix=parse[3])
         keyNameList = [key.name for key in keys]
+        if ext:
+            keyNameList = [keyname for keyname in keyNameList if keyname.endswith(ext)]
         keyNameList.sort()
-
         keyNameList = selectByStartAndStopIndices(keyNameList, startIdx, stopIdx)
 
         return bucket.name, keyNameList
 
-    def read(self, dataPath, ext=None, startIdx=None, stopIdx=None):
-        """Sets up Spark RDD across S3 objects specified by datapath.
+    def read(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
+        """Sets up Spark RDD across S3 objects specified by dataPath.
 
         Returns RDD of <string s3 keyname, string buffer> k/v pairs.
         """
+        if recursive:
+            raise NotImplementedError("Recursive traversal of directories isn't yet implemented for S3 - sorry!")
         dataPath = appendExtensionToPathSpec(dataPath, ext)
-        bucketName, keyNameList = self._listFiles(dataPath, startIdx=startIdx, stopIdx=stopIdx)
+        bucketName, keyNameList = self._listFilesImpl(dataPath, startIdx=startIdx, stopIdx=stopIdx)
 
         if not keyNameList:
             raise FileNotFoundError("No S3 objects found for '%s'" % dataPath)
@@ -321,20 +349,52 @@ class BotoS3ParallelReader(_BotoS3Client):
 class LocalFSFileReader(object):
     """File reader backed by python's native file() objects.
     """
-    def list(self, dataPath, filename=None):
-        """List files specified by datapath.
+    def __listRecursive(self, dataPath):
+        if os.path.isdir(dataPath):
+            dirname = dataPath
+            matchpattern = None
+        else:
+            dirname, matchpattern = os.path.split(dataPath)
+
+        filenames = set()
+        for root, dirs, files in os.walk(dirname):
+            if matchpattern:
+                files = fnmatch.filter(files, matchpattern)
+            for filename in files:
+                filenames.add(os.path.join(root, filename))
+        filenames = list(filenames)
+        filenames.sort()
+        return filenames
+
+    def list(self, dataPath, filename=None, startIdx=None, stopIdx=None, recursive=False,
+             includeDirectories=False):
+        """List files specified by dataPath.
+
+        Datapath may include a single wildcard ('*') in the filename specifier.
 
         Returns sorted list of absolute path strings.
         """
         absPath = LocalFSParallelReader.uriToPath(dataPath)
+
+        if (not filename) and recursive:
+            return self.__listRecursive(absPath)
 
         if filename:
             if os.path.isdir(absPath):
                 absPath = os.path.join(absPath, filename)
             else:
                 absPath = os.path.join(os.path.dirname(absPath), filename)
+        else:
+            if os.path.isdir(absPath) and not includeDirectories:
+                absPath = os.path.join(absPath, "*")
 
-        return sorted(glob.glob(absPath))
+        files = glob.glob(absPath)
+        # filter out directories
+        if not includeDirectories:
+            files = [fpath for fpath in files if not os.path.isdir(fpath)]
+        files.sort()
+        files = selectByStartAndStopIndices(files, startIdx, stopIdx)
+        return files
 
     def read(self, dataPath, filename=None, startOffset=None, size=-1):
         filenames = self.list(dataPath, filename=filename)
@@ -368,7 +428,7 @@ class BotoS3FileReader(_BotoS3Client):
         bucket = conn.get_bucket(bucketName)
 
         if filename:
-            # check whether last section of datapath refers to a directory
+            # check whether last section of dataPath refers to a directory
             if not keyName.endswith("/"):
                 if self.checkPrefix(bucket, keyName + "/"):
                     # keyname is a directory, but we've omitted the trailing "/"
@@ -386,14 +446,25 @@ class BotoS3FileReader(_BotoS3Client):
 
         return _BotoS3Client.retrieveKeys(bucket, keyName, prefix=parse[2], postfix=parse[3])
 
-    def list(self, dataPath, filename=None):
-        """List s3 objects specified by datapath.
+    def list(self, dataPath, filename=None, startIdx=None, stopIdx=None, recursive=False, includeDirectories=True):
+        """List s3 objects specified by dataPath.
 
         Returns sorted list of 's3n://' URIs.
         """
+        # TODO: note that the default value for includeDirectories is here True, which reflects the current (and
+        # longstanding) behavior of this class. This *differs* from the local FS list() method, which by default
+        # filters out directories (which is definitely what we want if we're reading with recursive=True).
+        # These two need to be made more consistent.
+        if recursive:
+            raise NotImplementedError("Recursive traversal of directories isn't yet implemented for S3 - sorry!")
+        if not includeDirectories:
+            raise NotImplementedError("Filtering out directories is not yet implemented for S3 - sorry!")
+
         keys = self.__getMatchingKeys(dataPath, filename=filename)
         keyNames = ["s3n:///" + key.bucket.name + "/" + key.name for key in keys]
-        return sorted(keyNames)
+        keyNames.sort()
+        keyNames = selectByStartAndStopIndices(keyNames, startIdx, stopIdx)
+        return keyNames
 
     def __getSingleMatchingKey(self, dataPath, filename=None):
         keys = self.__getMatchingKeys(dataPath, filename=filename)
@@ -531,7 +602,7 @@ def getByScheme(dataPath, lookup, default):
 
 
 def getParallelReaderForPath(dataPath):
-    """Returns the class of a parallel reader suitable for the scheme used by `datapath`.
+    """Returns the class of a parallel reader suitable for the scheme used by `dataPath`.
 
     The resulting class object must still be instantiated in order to get a usable instance of the class.
 
@@ -542,7 +613,7 @@ def getParallelReaderForPath(dataPath):
 
 
 def getFileReaderForPath(dataPath):
-    """Returns the class of a file reader suitable for the scheme used by `datapath`.
+    """Returns the class of a file reader suitable for the scheme used by `dataPath`.
 
     The resulting class object must still be instantiated in order to get a usable instance of the class.
 
