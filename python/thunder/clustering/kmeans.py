@@ -62,8 +62,8 @@ class KMeansModel(object):
             For each data point, ggives the closest center to that point
         """
         from scipy.spatial.distance import cdist
-        closestpoint = lambda centers, p: argmin(cdist(centers, array([p])))
-        out = self.calc(data, closestpoint)
+        closestPoint = lambda centers, p: argmin(cdist(centers, array([p])))
+        out = self.calc(data, closestPoint)
         if isinstance(data, Series):
             out._index = 'label'
         return out

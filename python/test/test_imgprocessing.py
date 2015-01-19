@@ -7,17 +7,17 @@ from thunder.imgprocessing.register import Register
 from thunder.rdds.fileio.imagesloader import ImagesLoader
 
 
-class ImprocessingTestCase(PySparkTestCase):
+class ImgProcessingTestCase(PySparkTestCase):
     def setUp(self):
-        super(ImprocessingTestCase, self).setUp()
+        super(ImgProcessingTestCase, self).setUp()
         self.outputdir = tempfile.mkdtemp()
 
     def tearDown(self):
-        super(ImprocessingTestCase, self).tearDown()
+        super(ImgProcessingTestCase, self).tearDown()
         shutil.rmtree(self.outputdir)
 
 
-class TestRegistration(ImprocessingTestCase):
+class TestRegistration(ImgProcessingTestCase):
 
     def test_crosscorr_image(self):
 
@@ -27,40 +27,40 @@ class TestRegistration(ImprocessingTestCase):
         reg = Register('crosscorr')
 
         im = shift(ref, [2, 0], mode='constant', order=0)
-        imin = ImagesLoader(self.sc).fromArrays(im)
-        paramout = reg.estimate(imin, ref).collect()[0][1]
-        imout = reg.transform(imin, ref).first()[1]
-        assert(allclose(ref[:-2, :], imout[:-2, :]))
-        assert(allclose(paramout, [2, 0]))
+        imgIn = ImagesLoader(self.sc).fromArrays(im)
+        paramOut = reg.estimate(imgIn, ref).collect()[0][1]
+        imgOut = reg.transform(imgIn, ref).first()[1]
+        assert(allclose(ref[:-2, :], imgOut[:-2, :]))
+        assert(allclose(paramOut, [2, 0]))
 
         im = shift(ref, [0, 2], mode='constant', order=0)
-        imin = ImagesLoader(self.sc).fromArrays(im)
-        paramout = reg.estimate(imin, ref).collect()[0][1]
-        imout = reg.transform(imin, ref).first()[1]
-        assert(allclose(ref[:, :-2], imout[:, :-2]))
-        assert(allclose(paramout, [0, 2]))
+        imgIn = ImagesLoader(self.sc).fromArrays(im)
+        paramOut = reg.estimate(imgIn, ref).collect()[0][1]
+        imgOut = reg.transform(imgIn, ref).first()[1]
+        assert(allclose(ref[:, :-2], imgOut[:, :-2]))
+        assert(allclose(paramOut, [0, 2]))
 
         im = shift(ref, [2, -2], mode='constant', order=0)
-        imin = ImagesLoader(self.sc).fromArrays(im)
-        paramout = reg.estimate(imin, ref).collect()[0][1]
-        imout = reg.transform(imin, ref).first()[1]
-        assert(allclose(ref[:-2, 2:], imout[:-2, 2:]))
-        assert(allclose(paramout, [2, -2]))
+        imgIn = ImagesLoader(self.sc).fromArrays(im)
+        paramOut = reg.estimate(imgIn, ref).collect()[0][1]
+        imgOut = reg.transform(imgIn, ref).first()[1]
+        assert(allclose(ref[:-2, 2:], imgOut[:-2, 2:]))
+        assert(allclose(paramOut, [2, -2]))
 
         im = shift(ref, [-2, 2], mode='constant', order=0)
-        imin = ImagesLoader(self.sc).fromArrays(im)
-        paramout = reg.estimate(imin, ref).collect()[0][1]
-        imout = reg.transform(imin, ref).first()[1]
-        assert(allclose(ref[2:, :-2], imout[2:, :-2]))
-        assert(allclose(paramout, [-2, 2]))
+        imgIn = ImagesLoader(self.sc).fromArrays(im)
+        paramOut = reg.estimate(imgIn, ref).collect()[0][1]
+        imgOut = reg.transform(imgIn, ref).first()[1]
+        assert(allclose(ref[2:, :-2], imgOut[2:, :-2]))
+        assert(allclose(paramOut, [-2, 2]))
 
         # just that that applying a filter during registration runs
         # TODO add a check that shows this helps compensate for noisy pixels
         reg = Register('crosscorr').setFilter('median', 2)
         im = shift(ref, [-2, 2], mode='constant', order=0)
-        imin = ImagesLoader(self.sc).fromArrays(im)
-        paramout = reg.estimate(imin, ref).collect()[0][1]
-        imout = reg.transform(imin, ref).first()[1]
+        imgIn = ImagesLoader(self.sc).fromArrays(im)
+        paramOut = reg.estimate(imgIn, ref).collect()[0][1]
+        imgOut = reg.transform(imgIn, ref).first()[1]
 
     def test_crosscorr_volume(self):
 
@@ -68,11 +68,11 @@ class TestRegistration(ImprocessingTestCase):
         ref = random.randn(25, 25, 3)
 
         im = shift(ref, [2, -2, 0], mode='constant', order=0)
-        imin = ImagesLoader(self.sc).fromArrays(im)
-        paramout = Register('crosscorr').estimate(imin, ref).collect()[0][1]
-        imout = Register('crosscorr').transform(imin, ref).first()[1]
-        assert(allclose(paramout, [[2, -2], [2, -2], [2, -2]]))
-        assert(allclose(ref[:-2, 2:, :], imout[:-2, 2:, :]))
+        imgIn = ImagesLoader(self.sc).fromArrays(im)
+        paramOut = Register('crosscorr').estimate(imgIn, ref).collect()[0][1]
+        imgOut = Register('crosscorr').transform(imgIn, ref).first()[1]
+        assert(allclose(paramOut, [[2, -2], [2, -2], [2, -2]]))
+        assert(allclose(ref[:-2, 2:, :], imgOut[:-2, 2:, :]))
 
     def test_reference_2d(self):
 
@@ -80,14 +80,14 @@ class TestRegistration(ImprocessingTestCase):
         im0 = random.random_integers(0, high=127, size=(25, 25)).astype('uint16')
         im1 = random.random_integers(0, high=127, size=(25, 25)).astype('uint16')
         im2 = random.random_integers(0, high=127, size=(25, 25)).astype('uint16')
-        imin = ImagesLoader(self.sc).fromArrays([im0, im1, im2])
-        ref = Register.reference(imin)
+        imgIn = ImagesLoader(self.sc).fromArrays([im0, im1, im2])
+        ref = Register.reference(imgIn)
         assert(allclose(ref, (im0 + im1 + im2) / 3))
 
-        ref = Register.reference(imin, startidx=0, stopidx=2)
+        ref = Register.reference(imgIn, startIdx=0, stopIdx=2)
         assert(allclose(ref, (im0 + im1) / 2))
 
-        ref = Register.reference(imin, startidx=1, stopidx=2)
+        ref = Register.reference(imgIn, startIdx=1, stopIdx=2)
         assert(allclose(ref, im1))
 
     def test_reference_3d(self):
@@ -95,6 +95,6 @@ class TestRegistration(ImprocessingTestCase):
         random.seed(42)
         im0 = random.random_integers(0, high=127, size=(25, 25, 3)).astype('uint16')
         im1 = random.random_integers(0, high=127, size=(25, 25, 3)).astype('uint16')
-        imin = ImagesLoader(self.sc).fromArrays([im0, im1])
-        ref = Register.reference(imin)
+        imgIn = ImagesLoader(self.sc).fromArrays([im0, im1])
+        ref = Register.reference(imgIn)
         assert(allclose(ref, (im0 + im1) / 2))

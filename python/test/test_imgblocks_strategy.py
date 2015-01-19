@@ -98,9 +98,9 @@ class TestBlockExtraction(unittest.TestCase):
             expectedSlices = [slice(params.timepoint, params.timepoint+1, 1)] + list(params.blockslices)
             expectedAry = expand_dims(ary[params.blockslices], axis=0)
             assert_equals(params.timepoint, key.temporalKey)
-            assert_equals(params.ntimepoints, key.origshape[0])
-            assert_equals(tuple(params.aryshape), tuple(key.origshape[1:]))
-            assert_equals(tuple(expectedSlices), tuple(key.imgslices))
+            assert_equals(params.ntimepoints, key.origShape[0])
+            assert_equals(tuple(params.aryshape), tuple(key.origShape[1:]))
+            assert_equals(tuple(expectedSlices), tuple(key.imgSlices))
             assert_true(array_equal(expectedAry, val))
 
     def test_paddedBlockExtraction(self):
@@ -112,9 +112,9 @@ class TestBlockExtraction(unittest.TestCase):
 
             expectedSlices = [slice(params.timepoint, params.timepoint+1, 1)] + list(params.blockslices)
             assert_equals(params.timepoint, key.temporalKey)
-            assert_equals(params.ntimepoints, key.origshape[0])
-            assert_equals(tuple(params.aryshape), tuple(key.origshape[1:]))
-            assert_equals(tuple(expectedSlices), tuple(key.imgslices))
+            assert_equals(params.ntimepoints, key.origShape[0])
+            assert_equals(tuple(params.aryshape), tuple(key.origShape[1:]))
+            assert_equals(tuple(expectedSlices), tuple(key.imgSlices))
 
             try:
                 _ = len(params.padding)
@@ -135,7 +135,7 @@ class TestBlockExtraction(unittest.TestCase):
             expectedAry = expand_dims(ary[expectedPaddedSlices], axis=0)
             expectedPaddedSlices = [slice(params.timepoint, params.timepoint+1, 1)] + expectedPaddedSlices
             expectedValSlices = [slice(0, 1, 1)] + expectedValSlices
-            assert_equals(tuple(expectedPaddedSlices), tuple(key.padimgslices))
-            assert_equals(tuple(expectedValSlices), tuple(key.valslices))
+            assert_equals(tuple(expectedPaddedSlices), tuple(key.padImgSlices))
+            assert_equals(tuple(expectedValSlices), tuple(key.valSlices))
             assert_equals(tuple(expectedAry.shape), tuple(val.shape))
             assert_true(array_equal(expectedAry, val))

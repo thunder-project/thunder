@@ -4,14 +4,13 @@ from matplotlib.pyplot import imread
 from io import BytesIO
 from numpy import array, dstack, frombuffer, ndarray, prod
 from thunder.rdds.fileio.readers import getParallelReaderForPath
-from thunder.rdds.keys import Dimensions
 from thunder.rdds.images import Images
 
 
 class ImagesLoader(object):
     """Loader object used to instantiate Images data stored in a variety of formats.
     """
-    def __init__(self, sparkcontext):
+    def __init__(self, sparkContext):
         """Initialize a new ImagesLoader object.
 
         Parameters
@@ -19,7 +18,7 @@ class ImagesLoader(object):
         sparkcontext: SparkContext
             The pyspark SparkContext object used by the current Thunder environment.
         """
-        self.sc = sparkcontext
+        self.sc = sparkContext
 
     def fromArrays(self, arrays):
         """Load Images data from passed sequence of numpy arrays.
@@ -46,7 +45,7 @@ class ImagesLoader(object):
         return Images(self.sc.parallelize(enumerate(arrays), len(arrays)),
                       dims=shape, dtype=str(dtype), nimages=len(arrays))
 
-    def fromStack(self, datapath, dims, dtype='int16', ext='stack', startidx=None, stopidx=None, recursive=False):
+    def fromStack(self, dataPath, dims, dtype='int16', ext='stack', startIdx=None, stopIdx=None, recursive=False):
         """Load an Images object stored in a directory of flat binary files
 
         The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
@@ -58,7 +57,7 @@ class ImagesLoader(object):
         Parameters
         ----------
 
-        datapath: string
+        dataPath: string
             Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
             including scheme. A datapath argument may include a single '*' wildcard character in the filename.
 
@@ -68,7 +67,7 @@ class ImagesLoader(object):
         ext: string, optional, default "stack"
             Extension required on data files to be loaded.
 
-        startidx, stopidx: nonnegative int. optional.
+        startIdx, stopIdx: nonnegative int. optional.
             Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
             `datapath` and `ext`. Interpreted according to python slice indexing conventions.
 
@@ -83,12 +82,12 @@ class ImagesLoader(object):
         def toArray(buf):
             return frombuffer(buf, dtype=dtype, count=int(prod(dims))).reshape(dims, order='F')
 
-        reader = getParallelReaderForPath(datapath)(self.sc)
-        readerrdd = reader.read(datapath, ext=ext, startidx=startidx, stopidx=stopidx, recursive=recursive)
-        return Images(readerrdd.mapValues(toArray), nimages=reader.lastnrecs, dims=dims,
+        reader = getParallelReaderForPath(dataPath)(self.sc)
+        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
+        return Images(readerRdd.mapValues(toArray), nimages=reader.lastNRecs, dims=dims,
                       dtype=dtype)
 
-    def fromTif(self, datafile, ext='tif', startidx=None, stopidx=None, recursive=False):
+    def fromTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False):
         """Sets up a new Images object with data to be read from one or more tif files.
 
         The RDD underlying the returned Images will have key, value data as follows:
@@ -124,26 +123,26 @@ class ImagesLoader(object):
         def multitifReader(buf):
             fbuf = BytesIO(buf)
             multipage = Image.open(fbuf)
-            pageidx = 0
-            imgarys = []
+            pageIdx = 0
+            imgArys = []
             while True:
                 try:
-                    multipage.seek(pageidx)
-                    imgarys.append(conversionFcn(multipage))
-                    pageidx += 1
+                    multipage.seek(pageIdx)
+                    imgArys.append(conversionFcn(multipage))
+                    pageIdx += 1
                 except EOFError:
                     # past last page in tif
                     break
-            if len(imgarys) == 1:
-                return imgarys[0]
+            if len(imgArys) == 1:
+                return imgArys[0]
             else:
-                return dstack(imgarys)
+                return dstack(imgArys)
 
-        reader = getParallelReaderForPath(datafile)(self.sc)
-        readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx, recursive=recursive)
-        return Images(readerrdd.mapValues(multitifReader), nimages=reader.lastnrecs)
+        reader = getParallelReaderForPath(dataPath)(self.sc)
+        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
+        return Images(readerRdd.mapValues(multitifReader), nimages=reader.lastNRecs)
 
-    def fromPng(self, datafile, ext='png', startidx=None, stopidx=None, recursive=False):
+    def fromPng(self, dataPath, ext='png', startIdx=None, stopIdx=None, recursive=False):
         """Load an Images object stored in a directory of png files
 
         The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
@@ -152,14 +151,14 @@ class ImagesLoader(object):
         Parameters
         ----------
 
-        datapath: string
+        dataPath: string
             Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
             including scheme. A datapath argument may include a single '*' wildcard character in the filename.
 
         ext: string, optional, default "png"
             Extension required on data files to be loaded.
 
-        startidx, stopidx: nonnegative int. optional.
+        startIdx, stopIdx: nonnegative int. optional.
             Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
             `datapath` and `ext`. Interpreted according to python slice indexing conventions.
 
@@ -172,6 +171,6 @@ class ImagesLoader(object):
             fbuf = BytesIO(buf)
             return imread(fbuf, format='png')
 
-        reader = getParallelReaderForPath(datafile)(self.sc)
-        readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx, recursive=recursive)
-        return Images(readerrdd.mapValues(readPngFromBuf), nimages=reader.lastnrecs)
+        reader = getParallelReaderForPath(dataPath)(self.sc)
+        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
+        return Images(readerRdd.mapValues(readPngFromBuf), nimages=reader.lastNRecs)

@@ -18,34 +18,34 @@ class ClusteringTestCase(PySparkTestCase):
 
 
 class TestKMeans(ClusteringTestCase):
-    def test_kmeans_k1(self):
+    def test_KMeans_k1(self):
         """ With k=1 always get one cluster centered on the mean"""
 
-        data_local = [
+        dataLocal = [
             array([1.0, 2.0, 6.0]),
             array([1.0, 3.0, 0.0]),
             array([1.0, 4.0, 6.0])]
 
-        data = Series(self.sc.parallelize(zip(range(1, 4), data_local)))
+        data = Series(self.sc.parallelize(zip(range(1, 4), dataLocal)))
 
         model = KMeans(k=1, maxIterations=20).fit(data)
         labels = model.predict(data)
         assert array_equal(model.centers[0], array([1.0, 3.0, 4.0]))
         assert array_equal(labels.values().collect(), array([0, 0, 0]))
 
-    def test_kmeans_k2(self):
+    def test_KMeans_k2(self):
         """ Test k=2 also with more points"""
 
-        data, centerstrue = DataSets.make(self.sc, "kmeans",
-                                          k=2, nrecords=50, npartitions=5, seed=42, returnparams=True)
-        centerstrue = KMeansModel(centerstrue)
+        data, centersTrue = DataSets.make(self.sc, "kmeans",
+                                          k=2, nrecords=50, npartitions=5, seed=42, returnParams=True)
+        centersTrue = KMeansModel(centersTrue)
 
         model = KMeans(k=2, maxIterations=20).fit(data)
 
         labels = array(model.predict(data).values().collect())
-        labelstrue = array(centerstrue.predict(data).values().collect())
+        labelsTrue = array(centersTrue.predict(data).values().collect())
 
-        assert(array_equal(labels, labelstrue) or array_equal(labels, 1 - labelstrue))
+        assert(array_equal(labels, labelsTrue) or array_equal(labels, 1 - labelsTrue))
 
 
 

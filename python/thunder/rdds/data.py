@@ -66,7 +66,7 @@ class Data(object):
         self._dtype = str(asarray(record[1]).dtype)
         return record
 
-    def __finalize__(self, other, nopropagate=()):
+    def __finalize__(self, other, noPropagate=()):
         """
         Lazily propagate attributes from other to self, only if attributes
         are not already defined in self
@@ -76,14 +76,14 @@ class Data(object):
         other : the object from which to get the attributes that we are going
             to propagate
 
-        nopropagate : iterable of string attribute names, default empty tuple
+        noPropagate : iterable of string attribute names, default empty tuple
             attributes found in nopropagate will *not* have their values propagated forward from the passed object,
             but will keep their existing values, even if these are None. Attribute names should be specified
             in their "private" versions (with underscores; e.g. "_dtype" and not "dtype") where applicable.
         """
         if isinstance(other, Data):
             for name in self._metadata:
-                if not name in nopropagate:
+                if name not in noPropagate:
                     if (getattr(other, name, None) is not None) and (getattr(self, name, None) is None):
                         object.__setattr__(self, name, getattr(other, name, None))
         return self
@@ -91,6 +91,10 @@ class Data(object):
     @property
     def _constructor(self):
         raise NotImplementedError
+
+    def _resetCounts(self):
+        # to be overridden in subclasses
+        pass
 
     def first(self):
         """ Return first record.
@@ -149,11 +153,11 @@ class Data(object):
             return self
         if dtype == 'smallfloat':
             # get the smallest floating point type that can be safely cast to from our current type
-            from thunder.utils.common import smallest_float_type
-            dtype = smallest_float_type(self.dtype)
+            from thunder.utils.common import smallestFloatType
+            dtype = smallestFloatType(self.dtype)
 
-        nextrdd = self.rdd.mapValues(lambda v: v.astype(dtype, casting=casting, copy=False))
-        return self._constructor(nextrdd, dtype=str(dtype)).__finalize__(self)
+        nextRdd = self.rdd.mapValues(lambda v: v.astype(dtype, casting=casting, copy=False))
+        return self._constructor(nextRdd, dtype=str(dtype)).__finalize__(self)
 
     def apply(self, func, dtype=None, casting='safe'):
         """ Apply arbitrary function to records of a Data object.
