@@ -174,7 +174,7 @@ class ThunderContext():
 
     def loadImagesAsSeries(self, datapath, dims=None, inputformat='stack', ext=None, dtype='int16',
                            blockSize="150M", blockSizeUnits="pixels", startidx=None, stopidx=None,
-                           shuffle=False, recursive=False):
+                           shuffle=True, recursive=False):
         """
         Load Images data as Series data.
 
@@ -239,11 +239,8 @@ class ThunderContext():
         stopidx: nonnegative int, optional
             See startidx.
 
-        shuffle: boolean, optional, default False
+        shuffle: boolean, optional, default True
             Controls whether the conversion from Images to Series formats will make use of a Spark shuffle-based method.
-            The default at present is not to use a shuffle. The shuffle-based method may lead to higher performance in
-            some cases, but the default method appears to be more stable with larger data set sizes. This default may
-            change in future releases.
 
         recursive: boolean, default False
             If true, will recursively descend directories rooted at datapath, loading all files in the tree that
@@ -293,7 +290,7 @@ class ThunderContext():
 
     def convertImagesToSeries(self, datapath, outputdirpath, dims=None, inputformat='stack', ext=None,
                               dtype='int16', blocksize="150M", blockSizeUnits="pixels", startidx=None, stopidx=None,
-                              shuffle=False, overwrite=False, recursive=False):
+                              shuffle=True, overwrite=False, recursive=False):
         """
         Write out Images data as Series data, saved in a flat binary format.
 
@@ -371,11 +368,8 @@ class ThunderContext():
         stopidx: nonnegative int, optional
             See startidx.
 
-        shuffle: boolean, optional, default False
+        shuffle: boolean, optional, default True
             Controls whether the conversion from Images to Series formats will make use of a Spark shuffle-based method.
-            The default at present is not to use a shuffle. The shuffle-based method may lead to higher performance in
-            some cases, but the default method appears to be more stable with larger data set sizes. This default may
-            change in future releases.
 
         overwrite: boolean, optional, default False
             If true, the directory specified by outputdirpath will first be deleted, along with all its contents, if it
