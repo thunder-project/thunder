@@ -11,9 +11,9 @@ class TestLocalCorr(PySparkTestCase):
 
     Test with indexing from both 0 and 1
     """
-    def test_localcorr_0_indexing(self):
+    def test_localCorr_0Indexing(self):
 
-        data_local = [
+        dataLocal = [
             ((0, 0, 0), array([1.0, 2.0, 3.0])),
             ((0, 1, 0), array([2.0, 2.0, 4.0])),
             ((0, 2, 0), array([9.0, 2.0, 1.0])),
@@ -26,19 +26,19 @@ class TestLocalCorr(PySparkTestCase):
         ]
 
         # get ground truth by correlating mean with the center
-        ts = map(lambda x: x[1], data_local)
+        ts = map(lambda x: x[1], dataLocal)
         mn = mean(ts, axis=0)
         truth = corrcoef(mn, array([4.0, 2.0, 8.0]))[0, 1]
 
-        data = SpatialSeries(self.sc.parallelize(data_local))
+        data = SpatialSeries(self.sc.parallelize(dataLocal))
 
         corr = data.localCorr(1)
 
         assert(allclose(corr.collect()[4][1], truth))
 
-    def test_localcorr_1_indexing(self):
+    def test_localCorr_1Indexing(self):
 
-        data_local = [
+        dataLocal = [
             ((1, 1, 1), array([1.0, 2.0, 3.0])),
             ((1, 2, 1), array([2.0, 2.0, 4.0])),
             ((1, 3, 1), array([9.0, 2.0, 1.0])),
@@ -51,11 +51,11 @@ class TestLocalCorr(PySparkTestCase):
         ]
 
         # get ground truth by correlating mean with the center
-        ts = map(lambda x: x[1], data_local)
+        ts = map(lambda x: x[1], dataLocal)
         mn = mean(ts, axis=0)
         truth = corrcoef(mn, array([4.0, 2.0, 8.0]))[0, 1]
 
-        data = SpatialSeries(self.sc.parallelize(data_local))
+        data = SpatialSeries(self.sc.parallelize(dataLocal))
 
         corr = data.localCorr(1)
 

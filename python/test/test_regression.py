@@ -24,7 +24,7 @@ class TestRegress(RegressionTestCase):
     (ground truth derived by doing the algebra in MATLAB)
 
     """
-    def test_linear_regress(self):
+    def test_linearRegress(self):
         data = Series(self.sc.parallelize([(1, array([1.5, 2.3, 6.2, 5.1, 3.4, 2.1]))]))
         x = array([
             array([1, 0, 0, 0, 0, 0]),
@@ -41,7 +41,7 @@ class TestRegress(RegressionTestCase):
         assert(allclose(result.select('resid').index, array([0, 1, 2, 3, 4, 5])))
         assert(result.select('stats').index == 'stats')
 
-    def test_blinear_regress(self):
+    def test_bilinearRegress(self):
         data = Series(self.sc.parallelize([(1, array([1.5, 2.3, 6.2, 5.1, 3.4, 2.1]))]))
         x1 = array([
             array([1, 0, 1, 0, 1, 0]),
@@ -73,7 +73,7 @@ class TestTuning(RegressionTestCase):
     Also tests that main analysis script runs without crashing
     (separately, to test a variety of inputs)
     """
-    def test_gaussian_tuning_model(self):
+    def test_gaussianTuningModel(self):
         data = Series(self.sc.parallelize([(1, array([1.5, 2.3, 6.2, 5.1, 3.4, 2.1]))]))
         s = array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
         model = TuningModel.load(s, "gaussian")
@@ -82,7 +82,7 @@ class TestTuning(RegressionTestCase):
         assert(allclose(params.select('center').values().collect()[0], array([0.36262]), atol=tol))
         assert(allclose(params.select('spread').values().collect()[0], array([0.01836]), atol=tol))
 
-    def test_circular_tuning_model(self):
+    def test_circularTuningModel(self):
         data = Series(self.sc.parallelize([(1, array([1.5, 2.3, 6.2, 5.1, 3.4, 2.1]))]))
         s = array([-pi/2, -pi/3, -pi/4, pi/4, pi/3, pi/2])
         model = TuningModel.load(s, "circular")

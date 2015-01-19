@@ -19,7 +19,7 @@ class Dimensions(object):
         self.max = tuple(map(max, self.max, value))
         return self
 
-    def mergedims(self, other):
+    def mergeDims(self, other):
         self.min = tuple(map(min, self.min, other.min))
         self.max = tuple(map(max, self.max, other.max))
         return self
@@ -52,7 +52,7 @@ class Dimensions(object):
         return self.count[item]
 
 
-def _indtosub_converter(dims, order='F', onebased=True):
+def _indToSubConverter(dims, order='F', isOneBased=True):
     """Converter for changing linear indexing to subscript indexing
 
     See also
@@ -60,67 +60,67 @@ def _indtosub_converter(dims, order='F', onebased=True):
     Series.indtosub
     """
 
-    _check_order(order)
+    _checkOrder(order)
 
-    def indtosub_inline_onebased(k, dimprod):
-        return tuple(map(lambda (x, y): int(mod(ceil(float(k)/y) - 1, x) + 1), dimprod))
+    def indToSub_InlineOneBased(k, dimProd_):
+        return tuple(map(lambda (x, y): int(mod(ceil(float(k)/y) - 1, x) + 1), dimProd_))
 
-    def indtosub_inline_zerobased(k, dimprod):
-        return tuple(map(lambda (x, y): int(mod(ceil(float(k+1)/y) - 1, x)), dimprod))
+    def indToSub_InlineZeroBased(k, dimProd_):
+        return tuple(map(lambda (x, y): int(mod(ceil(float(k+1)/y) - 1, x)), dimProd_))
 
-    inline_fcn = indtosub_inline_onebased if onebased else indtosub_inline_zerobased
+    inlineFcn = indToSub_InlineOneBased if isOneBased else indToSub_InlineZeroBased
 
     if size(dims) > 1:
         if order == 'F':
-            dimprod = zip(dims, append(1, cumprod(dims)[0:-1]))
+            dimProd = zip(dims, append(1, cumprod(dims)[0:-1]))
         else:
-            dimprod = zip(dims, append(1, cumprod(dims[::-1])[0:-1])[::-1])
-        converter = lambda k: inline_fcn(k, dimprod)
+            dimProd = zip(dims, append(1, cumprod(dims[::-1])[0:-1])[::-1])
+        converter = lambda k: inlineFcn(k, dimProd)
     else:
         converter = lambda k: (k,)
 
     return converter
 
 
-def _subtoind_converter(dims, order='F', onebased=True):
+def _subToIndConverter(dims, order='F', isOneBased=True):
     """Converter for changing subscript indexing to linear indexing
 
     See also
     --------
     Series.subtoind
     """
-    _check_order(order)
+    _checkOrder(order)
 
-    def onebased_prod(x_y):
-        x, y = x_y
+    def onebasedProd(xy):
+        x, y = xy
         return (x - 1) * y
 
-    def zerobased_prod(x_y):
-        x, y = x_y
+    def zerobasedProd(xy):
+        x, y = xy
         return x * y
 
-    def subtoind_inline_colmajor(k, dimprod, p_func):
-        return sum(map(p_func, zip(k[1:], dimprod))) + k[0]
+    def subToInd_InlineColmajor(k, dimProd_, prodFunc):
+        return sum(map(prodFunc, zip(k[1:], dimProd_))) + k[0]
 
-    def subtoind_inline_rowmajor(k, revdimprod, p_func):
-        return sum(map(p_func, zip(k[:-1], revdimprod))) + k[-1]
+    def subToInd_InlineRowmajor(k, revDimProd, prodFunc):
+        return sum(map(prodFunc, zip(k[:-1], revDimProd))) + k[-1]
 
     if size(dims) > 1:
         if order == 'F':
-            dimprod = cumprod(dims)[0:-1]
-            inline_fcn = subtoind_inline_colmajor
+            dimProd = cumprod(dims)[0:-1]
+            inlineFcn = subToInd_InlineColmajor
         else:
-            dimprod = cumprod(dims[::-1])[0:-1][::-1]
-            inline_fcn = subtoind_inline_rowmajor
-        prod_fcn = onebased_prod if onebased else zerobased_prod
-        converter = lambda k: inline_fcn(k, dimprod, prod_fcn)
+            dimProd = cumprod(dims[::-1])[0:-1][::-1]
+            inlineFcn = subToInd_InlineRowmajor
+        prodFcn = onebasedProd if isOneBased else zerobasedProd
+        converter = lambda k: inlineFcn(k, dimProd, prodFcn)
     else:
         converter = lambda k: k[0]
 
     return converter
 
 
-def _check_order(order):
-    if not order in ('C', 'F'):
+def _checkOrder(order):
+    if order not in ('C', 'F'):
         raise TypeError("Order %s not understood, should be 'C' or 'F'.")
 

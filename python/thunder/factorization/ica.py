@@ -21,10 +21,10 @@ class ICA(object):
     c : int
         Number of independent components to estimate
 
-    svdmethod : string, optional, default = "direct"
+    svdMethod : string, optional, default = "direct"
         Which SVD method to use
 
-    maxiter : Int, optional, default = 10
+    maxIter : Int, optional, default = 10
         Maximum number of iterations
 
     tol : float, optional, default = 0.00001
@@ -43,13 +43,16 @@ class ICA(object):
 
     """
 
-    def __init__(self, c, k=None, svdmethod="direct", maxiter=10, tol=0.000001, seed=0):
+    def __init__(self, c, k=None, svdMethod="direct", maxIter=10, tol=0.000001, seed=0):
         self.k = k
         self.c = c
-        self.svdmethod = svdmethod
-        self.maxiter = maxiter
+        self.svdMethod = svdMethod
+        self.maxIter = maxIter
         self.tol = tol
         self.seed = seed
+        self.w = None
+        self.a = None
+        self.sigs = None
 
     def fit(self, data):
         """
@@ -90,40 +93,39 @@ class ICA(object):
                             " must be less than the data dimensionality " + str(d))
 
         # reduce dimensionality
-        svd = SVD(k=self.k, method=self.svdmethod).calc(data)
+        svd = SVD(k=self.k, method=self.svdMethod).calc(data)
 
         # whiten data
-        whtmat = real(dot(inv(diag(svd.s/sqrt(data.nrows))), svd.v))
-        unwhtmat = real(dot(transpose(svd.v), diag(svd.s/sqrt(data.nrows))))
-        wht = data.times(whtmat.T)
+        whtMat = real(dot(inv(diag(svd.s/sqrt(data.nrows))), svd.v))
+        unWhtMat = real(dot(transpose(svd.v), diag(svd.s/sqrt(data.nrows))))
+        wht = data.times(whtMat.T)
 
         # do multiple independent component extraction
         if self.seed != 0:
             random.seed(self.seed)
         b = orth(random.randn(self.k, self.c))
-        b_old = zeros((self.k, self.c))
-        iter = 0
-        minabscos = 0
-        errvec = zeros(self.maxiter)
+        bOld = zeros((self.k, self.c))
+        niter = 0
+        minAbsCos = 0
+        errVec = zeros(self.maxIter)
 
-        while (iter < self.maxiter) & ((1 - minabscos) > self.tol):
-            iter += 1
+        while (niter < self.maxIter) & ((1 - minAbsCos) > self.tol):
+            niter += 1
             # update rule for pow3 non-linearity (TODO: add others)
             b = wht.rows().map(lambda x: outer(x, dot(x, b) ** 3)).sum() / wht.nrows - 3 * b
             # make orthogonal
             b = dot(b, real(sqrtm(inv(dot(transpose(b), b)))))
             # evaluate error
-            minabscos = min(abs(diag(dot(transpose(b), b_old))))
+            minAbsCos = min(abs(diag(dot(transpose(b), bOld))))
             # store results
-            b_old = b
-            errvec[iter-1] = (1 - minabscos)
-
+            bOld = b
+            errVec[niter-1] = (1 - minAbsCos)
 
         # get un-mixing matrix
-        w = dot(b.T, whtmat)
+        w = dot(b.T, whtMat)
 
         # get mixing matrix
-        a = dot(unwhtmat, b)
+        a = dot(unWhtMat, b)
 
         # get components
         sigs = data.times(w.T)

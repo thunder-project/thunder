@@ -10,28 +10,28 @@ from thunder.rdds.series import Series
 
 class DataSets(object):
 
-    def __init__(self, sc, returnparams=False):
+    def __init__(self, sc, returnParams=False):
         self.sc = sc
-        self.returnparams = returnparams
+        self.returnParams = returnParams
 
     @staticmethod
-    def make(sc, name, returnparams=False, **opts):
+    def make(sc, name, returnParams=False, **opts):
         try:
-            return DATASET_MAKERS[name](sc, returnparams).generate(**opts)
+            return DATASET_MAKERS[name.lower()](sc, returnParams).generate(**opts)
         except KeyError:
             raise NotImplementedError("no dataset generator for '%s'" % name)
 
 
 # eliminate this
-def appendkeys(data):
+def appendKeys(data):
 
     data = array(data)
     n = shape(data)[0]
     x = (random.rand(n) * n).astype(int)
     y = (random.rand(n) * n).astype(int)
     z = (random.rand(n) * n).astype(int)
-    data_zipped = zip(x, y, z, data)
-    return map(lambda (k1, k2, k3, v): ((k1, k2, k3), v), data_zipped)
+    dataZipped = zip(x, y, z, data)
+    return map(lambda (k1, k2, k3, v): ((k1, k2, k3), v), dataZipped)
 
 
 class KMeansData(DataSets):
@@ -39,10 +39,10 @@ class KMeansData(DataSets):
     def generate(self, k=5, npartitions=10, ndims=5, nrecords=100, noise=0.1, seed=None):
         random.seed(seed)
         centers = random.randn(k, ndims)
-        gen_func = lambda i: centers[int(floor(random.rand(1, 1) * k))] + noise*random.rand(ndims)
-        data_local = map(gen_func, range(0, nrecords))
-        data = Series(self.sc.parallelize(appendkeys(data_local), npartitions))
-        if self.returnparams is True:
+        genFunc = lambda i: centers[int(floor(random.rand(1, 1) * k))] + noise*random.rand(ndims)
+        dataLocal = map(genFunc, range(0, nrecords))
+        data = Series(self.sc.parallelize(appendKeys(dataLocal), npartitions))
+        if self.returnParams is True:
             return data, centers
         else:
             return data
@@ -56,8 +56,8 @@ class PCAData(DataSets):
         v = random.randn(k, ncols)
         a = dot(u, v)
         a += random.randn(shape(a)[0], shape(a)[1])
-        data = RowMatrix(self.sc.parallelize(appendkeys(a), npartitions))
-        if self.returnparams is True:
+        data = RowMatrix(self.sc.parallelize(appendKeys(a), npartitions))
+        if self.returnParams is True:
             return data, u, v
         else:
             return data
@@ -75,8 +75,8 @@ class ICAData(DataSets):
         s /= s.std(axis=0)
         a = array([[1, 1], [0.5, 2]])
         x = dot(s, a.T)
-        data = RowMatrix(self.sc.parallelize(appendkeys(x), npartitions))
-        if self.returnparams is True:
+        data = RowMatrix(self.sc.parallelize(appendKeys(x), npartitions))
+        if self.returnParams is True:
             return data, s, a
         else:
             return data
