@@ -88,39 +88,6 @@ class ImagesLoader(object):
         return Images(readerrdd.mapValues(toArray), nimages=reader.lastnrecs, dims=dims,
                       dtype=dtype)
 
-    def fromTif(self, datapath, ext='tif', startidx=None, stopidx=None, recursive=False):
-        """Load an Images object stored in a directory of (single-page) tif files
-
-        The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
-        files read in by this method.
-
-        Parameters
-        ----------
-
-        datapath: string
-            Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-            including scheme. A datapath argument may include a single '*' wildcard character in the filename.
-
-        ext: string, optional, default "tif"
-            Extension required on data files to be loaded.
-
-        startidx, stopidx: nonnegative int. optional.
-            Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
-            `datapath` and `ext`. Interpreted according to python slice indexing conventions.
-
-        recursive: boolean, default False
-            If true, will recursively descend directories rooted at datapath, loading all files in the tree that
-            have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
-            (not s3).
-        """
-        def readTifFromBuf(buf):
-            fbuf = BytesIO(buf)
-            return imread(fbuf, format='tif')
-
-        reader = getParallelReaderForPath(datapath)(self.sc)
-        readerrdd = reader.read(datapath, ext=ext, startidx=startidx, stopidx=stopidx, recursive=recursive)
-        return Images(readerrdd.mapValues(readTifFromBuf), nimages=reader.lastnrecs)
-
     def fromMultipageTif(self, datafile, ext='tif', startidx=None, stopidx=None, recursive=False):
         """Sets up a new Images object with data to be read from one or more multi-page tif files.
 
