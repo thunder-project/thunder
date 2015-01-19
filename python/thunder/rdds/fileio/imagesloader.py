@@ -46,7 +46,7 @@ class ImagesLoader(object):
         return Images(self.sc.parallelize(enumerate(arrays), len(arrays)),
                       dims=shape, dtype=str(dtype), nimages=len(arrays))
 
-    def fromStack(self, datapath, dims, dtype='int16', ext='stack', startidx=None, stopidx=None):
+    def fromStack(self, datapath, dims, dtype='int16', ext='stack', startidx=None, stopidx=None, recursive=False):
         """Load an Images object stored in a directory of flat binary files
 
         The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
@@ -71,6 +71,11 @@ class ImagesLoader(object):
         startidx, stopidx: nonnegative int. optional.
             Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
             `datapath` and `ext`. Interpreted according to python slice indexing conventions.
+
+        recursive: boolean, default False
+            If true, will recursively descend directories rooted at datapath, loading all files in the tree that
+            have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
+            (not s3).
         """
         if not dims:
             raise ValueError("Image dimensions must be specified if loading from binary stack data")
@@ -79,11 +84,11 @@ class ImagesLoader(object):
             return frombuffer(buf, dtype=dtype, count=int(prod(dims))).reshape(dims, order='F')
 
         reader = getParallelReaderForPath(datapath)(self.sc)
-        readerrdd = reader.read(datapath, ext=ext, startidx=startidx, stopidx=stopidx)
+        readerrdd = reader.read(datapath, ext=ext, startidx=startidx, stopidx=stopidx, recursive=recursive)
         return Images(readerrdd.mapValues(toArray), nimages=reader.lastnrecs, dims=dims,
                       dtype=dtype)
 
-    def fromTif(self, datapath, ext='tif', startidx=None, stopidx=None):
+    def fromTif(self, datapath, ext='tif', startidx=None, stopidx=None, recursive=False):
         """Load an Images object stored in a directory of (single-page) tif files
 
         The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
@@ -102,16 +107,21 @@ class ImagesLoader(object):
         startidx, stopidx: nonnegative int. optional.
             Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
             `datapath` and `ext`. Interpreted according to python slice indexing conventions.
+
+        recursive: boolean, default False
+            If true, will recursively descend directories rooted at datapath, loading all files in the tree that
+            have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
+            (not s3).
         """
         def readTifFromBuf(buf):
             fbuf = BytesIO(buf)
             return imread(fbuf, format='tif')
 
         reader = getParallelReaderForPath(datapath)(self.sc)
-        readerrdd = reader.read(datapath, ext=ext, startidx=startidx, stopidx=stopidx)
+        readerrdd = reader.read(datapath, ext=ext, startidx=startidx, stopidx=stopidx, recursive=recursive)
         return Images(readerrdd.mapValues(readTifFromBuf), nimages=reader.lastnrecs)
 
-    def fromMultipageTif(self, datafile, ext='tif', startidx=None, stopidx=None):
+    def fromMultipageTif(self, datafile, ext='tif', startidx=None, stopidx=None, recursive=False):
         """Sets up a new Images object with data to be read from one or more multi-page tif files.
 
         The RDD underlying the returned Images will have key, value data as follows:
@@ -160,10 +170,10 @@ class ImagesLoader(object):
             return dstack(imgarys)
 
         reader = getParallelReaderForPath(datafile)(self.sc)
-        readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)
+        readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx, recursive=recursive)
         return Images(readerrdd.mapValues(multitifReader), nimages=reader.lastnrecs)
 
-    def fromPng(self, datafile, ext='png', startidx=None, stopidx=None):
+    def fromPng(self, datafile, ext='png', startidx=None, stopidx=None, recursive=False):
         """Load an Images object stored in a directory of png files
 
         The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
@@ -182,11 +192,16 @@ class ImagesLoader(object):
         startidx, stopidx: nonnegative int. optional.
             Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
             `datapath` and `ext`. Interpreted according to python slice indexing conventions.
+
+        recursive: boolean, default False
+            If true, will recursively descend directories rooted at datapath, loading all files in the tree that
+            have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
+            (not s3).
         """
         def readPngFromBuf(buf):
             fbuf = BytesIO(buf)
             return imread(fbuf, format='png')
 
         reader = getParallelReaderForPath(datafile)(self.sc)
-        readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx)
+        readerrdd = reader.read(datafile, ext=ext, startidx=startidx, stopidx=stopidx, recursive=recursive)
         return Images(readerrdd.mapValues(readPngFromBuf), nimages=reader.lastnrecs)

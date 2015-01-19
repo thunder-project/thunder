@@ -186,7 +186,7 @@ def raiseErrorIfPathExists(path):
     # check that specified output path does not already exist
     from thunder.rdds.fileio.readers import getFileReaderForPath
     reader = getFileReaderForPath(path)()
-    existing = reader.list(path)
+    existing = reader.list(path, includeDirectories=True)
     if existing:
         raise ValueError("Path %s appears to already exist. Specify a new directory, or call " % path +
                          "with overwrite=True to overwrite.")
