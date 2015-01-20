@@ -42,7 +42,7 @@ class TestImagesFileLoaders(PySparkTestCase):
 
     def test_fromPng(self):
         imagePath = os.path.join(self.testResourcesDir, "singlelayer_png", "dot1.png")
-        pngImage = ImagesLoader(self.sc).fromPng(imagePath, self.sc)
+        pngImage = ImagesLoader(self.sc).fromPng(imagePath)
         firstPngImage = pngImage.first()
         assert_equals(0, firstPngImage[0], "Key error; expected first image key to be 0, was "+str(firstPngImage[0]))
         expectedShape = (70, 75, 4)  # 4 channel png; RGBalpha
@@ -56,7 +56,7 @@ class TestImagesFileLoaders(PySparkTestCase):
 
     def test_fromTif(self):
         imagePath = os.path.join(self.testResourcesDir, "singlelayer_tif", "dot1_lzw.tif")
-        tiffImage = ImagesLoader(self.sc).fromTif(imagePath, self.sc)
+        tiffImage = ImagesLoader(self.sc).fromTif(imagePath)
         firstTiffImage = tiffImage.first()
         assert_equals(0, firstTiffImage[0], "Key error; expected first image key to be 0, was "+str(firstTiffImage[0]))
         expectedShape = (70, 75, 4)  # 4 channel tif; RGBalpha
@@ -81,7 +81,7 @@ class TestImagesFileLoaders(PySparkTestCase):
 
     def test_fromTifWithMultipleFiles(self):
         imagePath = os.path.join(self.testResourcesDir, "singlelayer_tif", "dot*_lzw.tif")
-        tiffImages = ImagesLoader(self.sc).fromTif(imagePath, self.sc).collect()
+        tiffImages = ImagesLoader(self.sc).fromTif(imagePath).collect()
 
         expectedNum = 3
         expectedShape = (70, 75, 4)  # 4 channel tif; RGBalpha
@@ -91,14 +91,13 @@ class TestImagesFileLoaders(PySparkTestCase):
 
     def _run_tst_multitif(self, filename, expectedDtype):
         imagePath = os.path.join(self.testResourcesDir, "multilayer_tif", filename)
-        tiffImages = ImagesLoader(self.sc).fromMultipageTif(imagePath, self.sc).collect()
+        tiffImages = ImagesLoader(self.sc).fromMultipageTif(imagePath).collect()
 
         expectedNum = 1
         expectedShape = (70, 75, 3)  # 3 concatenated pages, each with single luminance channel
         # 3 images have increasing #s of black dots, so lower luminance overall
         expectedSums = [1140006, 1119161, 1098917]
         expectedKey = 0
-        #self._evaluateMultipleImages(tiffImages, expectedNum, expectedShape, expectedKeys, expectedSums)
 
         assert_equals(expectedNum, len(tiffImages), "Expected %s images, got %d" % (expectedNum, len(tiffImages)))
         tiffImage = tiffImages[0]
@@ -117,6 +116,12 @@ class TestImagesFileLoaders(PySparkTestCase):
     @unittest.skipIf(not _haveImage, "PIL/pillow not installed or not functional")
     def test_fromFloatingpointTif(self):
         self._run_tst_multitif("dotdotdot_float32.tif", "float32")
+
+    # WIP
+    # def test_fromMultiTimepointTif(self):
+    #     imagePath = os.path.join(self.testResourcesDir, "multilayer_tif", "dotdotdot_lzw.tif")
+    #     tiffImages = ImagesLoader(self.sc).fromMultipageTif(imagePath).collect()
+
 
 
 class TestImagesLoaderUsingOutputDir(PySparkTestCaseWithOutputDir):
