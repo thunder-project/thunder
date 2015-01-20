@@ -362,17 +362,32 @@ class TestImagesMethods(PySparkTestCase):
         from thunder.rdds.images import Images
         self._run_tst_filter(Images.medianFilter, median_filter)
 
-    def test_crop(self):
+    def _run_tst_crop(self, minBounds, maxBounds):
         dims = (2, 2, 4)
         sz = reduce(lambda x, y: x*y, dims)
         origAry = arange(sz, dtype=dtypeFunc('int16')).reshape(dims)
         imageData = ImagesLoader(self.sc).fromArrays([origAry])
-        croppedData = imageData.crop((0, 0, 0), (2, 2, 2))
+        croppedData = imageData.crop(minBounds, maxBounds)
         crop = croppedData.collect()[0][1]
-        expected = squeeze(origAry[slice(0, 2), slice(0, 2), slice(0, 2)])
+
+        slices = []
+        for minb, maxb in zip(minBounds, maxBounds):
+            # skip the bounds-checking that we do in actual function; assume minb is <= maxb
+            if minb < maxb:
+                slices.append(slice(minb, maxb))
+            else:
+                slices.append(minb)
+
+        expected = squeeze(origAry[slices])
         assert_true(array_equal(expected, crop))
         assert_equals(tuple(expected.shape), croppedData._dims.count)
         assert_equals(str(expected.dtype), croppedData._dtype)
+
+    def test_crop(self):
+        self._run_tst_crop((0, 0, 0), (2, 2, 2))
+
+    def test_cropAndSqueeze(self):
+        self._run_tst_crop((0, 0, 1), (2, 2, 1))
 
     def test_planes(self):
         dims = (2, 2, 4)

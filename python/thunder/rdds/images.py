@@ -385,23 +385,34 @@ class Images(Data):
         """
         dims = self.dims
         ndims = len(dims)
+        dimsCount = dims.count
 
         if ndims < 2 or ndims > 3:
             raise Exception("Cropping only supported on 2D or 3D image data.")
 
-        if ndims == 2:
-            xmin, ymin = minbound
-            xmax, ymax = maxbound
-            newrdd = self.rdd.mapValues(lambda v: v[xmin: xmax, ymin: ymax])
-            newdims = (xmax-xmin, ymax-ymin)
-        else:
-            xmin, ymin, zmin = minbound
-            xmax, ymax, zmax = maxbound
-            newrdd = self.rdd.mapValues(lambda v: v[xmin: xmax, ymin: ymax, zmin: zmax])
-            newdims = (xmax-xmin, ymax-ymin, zmax-zmin)
+        dimMinMaxTuples = zip(dimsCount, minbound, maxbound)
+        if len(dimMinMaxTuples) != ndims:
+            raise ValueError("Number of specified bounds (%d) must equal image dimensionality (%d)" % 
+                             (len(dimMinMaxTuples), ndims))
+        slices = []
+        newdims = []
+        for dim, minb, maxb in dimMinMaxTuples:
+            if maxb > dim:
+                raise ValueError("Maximum bound (%d) may not exceed image size (%d)" % (maxb, dim))
+            if minb < 0:
+                raise ValueError("Minumum bound (%d) must be positive" % minb)
+            if minb < maxb:
+                slise = slice(minb, maxb)
+                newdims.append(maxb - minb)
+            elif minb == maxb:
+                slise = minb  # just an integer index, not a slice; this squeezes out singleton dimensions
+                # don't append to newdims, this dimension will be squeezed out
+            else:
+                raise ValueError("Minimum bound (%d) must be <= max bound (%d)" % (minb, maxb))
+            slices.append(slise)
 
-        if any(greater(newdims, dims.count)):
-            raise Exception("Size of requested crop region %s exceeds image dimensions %s" % (newdims, dims.count))
+        newrdd = self.rdd.mapValues(lambda v: v[slices])
+        newdims = tuple(newdims)
 
         return self._constructor(newrdd, dims=newdims).__finalize__(self)
 
