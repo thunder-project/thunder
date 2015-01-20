@@ -174,6 +174,11 @@ class Images(Data):
         -------
         no return value
         """
+        if not overwrite:
+            from thunder.utils.common import raiseErrorIfPathExists
+            raiseErrorIfPathExists(outputDirPath)
+            overwrite = True  # prevent additional downstream checks for this path
+
         self.toBlocks(blockSizeSpec, units=units).saveAsBinarySeries(outputDirPath, overwrite=overwrite)
 
     def exportAsPngs(self, outputDirPath, filePrefix="export", overwrite=False,
