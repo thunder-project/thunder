@@ -89,19 +89,22 @@ class ImagesLoader(object):
                 yield idx, ary
             else:
                 # divide array into chunks of nplanes
+                npoints = dims[-1] / nplanes  # integer division
+                if dims[-1] % nplanes:
+                    npoints += 1
                 timepoint = 0
                 lastPlane = 0
                 curPlane = 1
                 while curPlane < ary.shape[-1]:
                     if curPlane % nplanes == 0:
                         slices = [slice(None)] * (ary.ndim - 1) + [slice(lastPlane, curPlane)]
-                        yield (idx, timepoint), ary[slices]
+                        yield idx*npoints + timepoint, ary[slices]
                         timepoint += 1
                         lastPlane = curPlane
                     curPlane += 1
                 # yield remaining planes
                 slices = [slice(None)] * (ary.ndim - 1) + [slice(lastPlane, ary.shape[-1])]
-                yield (idx, timepoint), ary[slices]
+                yield idx*npoints + timepoint, ary[slices]
 
         reader = getParallelReaderForPath(dataPath)(self.sc)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
@@ -186,7 +189,7 @@ class ImagesLoader(object):
             pageIdx = 0
             imgArys = []
             npagesLeft = -1 if nplanes is None else nplanes  # counts number of planes remaining in image if positive
-            timepoints = 0  # counts number of images generated from this file
+            values = []
             while True:
                 try:
                     multipage.seek(pageIdx)
@@ -196,9 +199,8 @@ class ImagesLoader(object):
                     if npagesLeft == 0:
                         # we have just finished an image from this file
                         retAry = dstack(imgArys) if len(imgArys) > 1 else imgArys[0]
-                        yield (idx, timepoints), retAry
+                        values.append(retAry)
                         # reset counters:
-                        timepoints += 1
                         npagesLeft = nplanes
                         imgArys = []
                 except EOFError:
@@ -206,9 +208,10 @@ class ImagesLoader(object):
                     break
             if imgArys:
                 retAry = dstack(imgArys) if len(imgArys) > 1 else imgArys[0]
-                # key should be (idx, timepoints) if we have passed nplanes, else just idx
-                retKey = (idx, timepoints) if npagesLeft >= 0 else idx
-                yield retKey, retAry
+                values.append(retAry)
+            nvals = len(values)
+            keys = [idx*nvals + timepoint for timepoint in xrange(nvals)]
+            return zip(keys, values)
 
         reader = getParallelReaderForPath(dataPath)(self.sc)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
