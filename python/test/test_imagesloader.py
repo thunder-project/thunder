@@ -119,12 +119,17 @@ class TestImagesFileLoaders(PySparkTestCase):
 
     def test_fromMultiTimepointTif(self):
         imagePath = os.path.join(self.testResourcesDir, "multilayer_tif", "dotdotdot_lzw.tif")
-        tiffImages = ImagesLoader(self.sc).fromMultipageTif(imagePath, nplanes=1).collect()
+        tiffImages = ImagesLoader(self.sc).fromMultipageTif(imagePath, nplanes=1)
+        # we don't expect to have nimages cached, since the driver doesn't know how many images there are per file
+        assert_true(tiffImages._nimages is None)
+        assert_equals(3, tiffImages.nimages)
 
-        assert_equals(3, len(tiffImages), "Expected 3 images, got %d" % len(tiffImages))
+        collectedTiffImages = tiffImages.collect()
+
+        assert_equals(3, len(collectedTiffImages), "Expected 3 images, got %d" % len(collectedTiffImages))
         expectedSums = [1140006, 1119161, 1098917]
         expectedIdx = (0, 0)
-        for idx, tiffAry in tiffImages:
+        for idx, tiffAry in collectedTiffImages:
             assert_equals((70, 75), tiffAry.shape)
             assert_equals(expectedIdx, idx)
             assert_equals(expectedSums[idx[1]], tiffAry.ravel().sum())
@@ -163,3 +168,27 @@ class TestImagesLoaderUsingOutputDir(PySparkTestCaseWithOutputDir):
         assert_true(array_equal(ary.T, collectedImage[0][1]))  # check value
         assert_equals(1, collectedImage[1][0])  # check image 2
         assert_true(array_equal(ary2.T, collectedImage[1][1]))
+
+    def test_fromMultiTimepointStacks(self):
+        ary = arange(12, dtype=dtypeFunc('uint8')).reshape((3, 2, 2))
+        ary2 = arange(12, 24, dtype=dtypeFunc('uint8')).reshape((3, 2, 2))
+        ary.tofile(os.path.join(self.outputdir, "test01.stack"))
+        ary2.tofile(os.path.join(self.outputdir, "test02.stack"))
+
+        image = ImagesLoader(self.sc).fromStack(self.outputdir, dtype="uint8", dims=(2, 2, 3), nplanes=2)
+        collectedImage = image.collect()
+
+        # we don't expect to have nimages cached, since we get an unknown number of images per file
+        assert_true(image._nimages is None)
+        assert_equals(4, image.nimages)
+        assert_equals(4, len(collectedImage))
+        # check keys:
+        assert_equals((0, 0), collectedImage[0][0])
+        assert_equals((0, 1), collectedImage[1][0])
+        assert_equals((1, 0), collectedImage[2][0])
+        assert_equals((1, 1), collectedImage[3][0])
+        # check values:
+        assert_true(array_equal(ary[:2].T, collectedImage[0][1]))
+        assert_true(array_equal(ary[2:].T, collectedImage[1][1]))
+        assert_true(array_equal(ary2[:2].T, collectedImage[2][1]))
+        assert_true(array_equal(ary2[2:].T, collectedImage[3][1]))

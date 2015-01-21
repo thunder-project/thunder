@@ -45,7 +45,7 @@ class ImagesLoader(object):
         return Images(self.sc.parallelize(enumerate(arrays), len(arrays)),
                       dims=shape, dtype=str(dtype), nimages=len(arrays))
 
-    def fromStack(self, dataPath, dims, dtype='int16', ext='stack', startIdx=None, stopIdx=None, recursive=False):
+    def fromStack(self, dataPath, dims, dtype='int16', ext='stack', startIdx=None, stopIdx=None, recursive=False, nplanes=None):
         """Load an Images object stored in a directory of flat binary files
 
         The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
@@ -79,12 +79,34 @@ class ImagesLoader(object):
         if not dims:
             raise ValueError("Image dimensions must be specified if loading from binary stack data")
 
-        def toArray(buf):
-            return frombuffer(buf, dtype=dtype, count=int(prod(dims))).reshape(dims, order='F')
+        if nplanes is not None and nplanes <= 0:
+            raise ValueError("nplanes must be positive if passed, got %d" % nplanes)
+
+        def toArray(idxAndBuf):
+            idx, buf = idxAndBuf
+            ary = frombuffer(buf, dtype=dtype, count=int(prod(dims))).reshape(dims, order='F')
+            if nplanes is None:
+                yield idx, ary
+            else:
+                # divide array into chunks of nplanes
+                timepoint = 0
+                lastPlane = 0
+                curPlane = 1
+                while curPlane < ary.shape[-1]:
+                    if curPlane % nplanes == 0:
+                        slices = [slice(None)] * (ary.ndim - 1) + [slice(lastPlane, curPlane)]
+                        yield (idx, timepoint), ary[slices]
+                        timepoint += 1
+                        lastPlane = curPlane
+                    curPlane += 1
+                # yield remaining planes
+                slices = [slice(None)] * (ary.ndim - 1) + [slice(lastPlane, ary.shape[-1])]
+                yield (idx, timepoint), ary[slices]
 
         reader = getParallelReaderForPath(dataPath)(self.sc)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
-        return Images(readerRdd.mapValues(toArray), nimages=reader.lastNRecs, dims=dims,
+        nimages = reader.lastNRecs if nplanes is None else None
+        return Images(readerRdd.flatMap(toArray), nimages=nimages, dims=dims,
                       dtype=dtype)
 
     def fromTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False):
@@ -190,7 +212,8 @@ class ImagesLoader(object):
 
         reader = getParallelReaderForPath(dataPath)(self.sc)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
-        return Images(readerRdd.flatMap(multitifReader), nimages=reader.lastNRecs)
+        nimages = reader.lastNRecs if nplanes is None else None
+        return Images(readerRdd.flatMap(multitifReader), nimages=nimages)
 
     def fromPng(self, dataPath, ext='png', startIdx=None, stopIdx=None, recursive=False):
         """Load an Images object stored in a directory of png files
