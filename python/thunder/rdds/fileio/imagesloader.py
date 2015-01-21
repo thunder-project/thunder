@@ -120,13 +120,14 @@ class ImagesLoader(object):
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
         return Images(readerRdd.mapValues(readTifFromBuf), nimages=reader.lastNRecs)
 
-    def fromMultipageTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False):
+    def fromMultipageTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, nplanes=None):
         """Sets up a new Images object with data to be read from one or more multi-page tif files.
 
         The RDD underlying the returned Images will have key, value data as follows:
 
-        key: int
-            key is index of original data file, determined by lexicographic ordering of filenames
+        key: int or (int, int)
+            key is index of original data file, determined by lexicographic ordering of filenames.
+            If nplanes is passed, then the key will be an integer pair (index of original data file, timepoint within file)
         value: numpy ndarray
             value dimensions with be x by y by num_channels*num_pages; all channels and pages in a file are
             concatenated together in the third dimension of the resulting ndarray. For pages 0, 1, etc
@@ -153,24 +154,43 @@ class ImagesLoader(object):
             from thunder.utils.common import pil_to_array
             conversionFcn = pil_to_array  # use our modified version of matplotlib's pil_to_array
 
-        def multitifReader(buf):
+        if nplanes is not None and nplanes <= 0:
+            raise ValueError("nplanes must be positive if passed, got %d" % nplanes)
+
+        def multitifReader(idxAndBuf):
+            idx, buf = idxAndBuf
             fbuf = BytesIO(buf)
             multipage = Image.open(fbuf)
             pageIdx = 0
             imgArys = []
+            npagesLeft = -1 if nplanes is None else nplanes  # counts number of planes remaining in image if positive
+            timepoints = 0  # counts number of images generated from this file
             while True:
                 try:
                     multipage.seek(pageIdx)
                     imgArys.append(conversionFcn(multipage))
                     pageIdx += 1
+                    npagesLeft -= 1
+                    if npagesLeft == 0:
+                        # we have just finished an image from this file
+                        retAry = dstack(imgArys) if len(imgArys) > 1 else imgArys[0]
+                        yield (idx, timepoints), retAry
+                        # reset counters:
+                        timepoints += 1
+                        npagesLeft = nplanes
+                        imgArys = []
                 except EOFError:
                     # past last page in tif
                     break
-            return dstack(imgArys)
+            if imgArys:
+                retAry = dstack(imgArys) if len(imgArys) > 1 else imgArys[0]
+                # key should be (idx, timepoints) if we have passed nplanes, else just idx
+                retKey = (idx, timepoints) if npagesLeft >= 0 else idx
+                yield retKey, retAry
 
         reader = getParallelReaderForPath(dataPath)(self.sc)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
-        return Images(readerRdd.mapValues(multitifReader), nimages=reader.lastNRecs)
+        return Images(readerRdd.flatMap(multitifReader), nimages=reader.lastNRecs)
 
     def fromPng(self, dataPath, ext='png', startIdx=None, stopIdx=None, recursive=False):
         """Load an Images object stored in a directory of png files

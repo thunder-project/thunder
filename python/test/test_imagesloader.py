@@ -70,7 +70,7 @@ class TestImagesFileLoaders(PySparkTestCase):
 
     @staticmethod
     def _evaluateMultipleImages(tiffImages, expectedNum, expectedShape, expectedKeys, expectedSums):
-        assert_equals(expectedNum, len(tiffImages), "Expected %s images, got %d" % (expectedNum, len(tiffImages)))
+        assert_equals(expectedNum, len(tiffImages), "Expected %d images, got %d" % (expectedNum, len(tiffImages)))
         for img, expectedKey, expectedSum in zip(tiffImages, expectedKeys, expectedSums):
             assert_equals(expectedKey, img[0], "Expected key %s, got %s" % (str(expectedKey), str(img[0])))
 
@@ -99,7 +99,7 @@ class TestImagesFileLoaders(PySparkTestCase):
         expectedSums = [1140006, 1119161, 1098917]
         expectedKey = 0
 
-        assert_equals(expectedNum, len(tiffImages), "Expected %s images, got %d" % (expectedNum, len(tiffImages)))
+        assert_equals(expectedNum, len(tiffImages), "Expected %d images, got %d" % (expectedNum, len(tiffImages)))
         tiffImage = tiffImages[0]
         assert_equals(expectedKey, tiffImage[0], "Expected key %s, got %s" % (str(expectedKey), str(tiffImage[0])))
         assert_true(isinstance(tiffImage[1], ndarray),
@@ -117,11 +117,18 @@ class TestImagesFileLoaders(PySparkTestCase):
     def test_fromFloatingpointTif(self):
         self._run_tst_multitif("dotdotdot_float32.tif", "float32")
 
-    # WIP
-    # def test_fromMultiTimepointTif(self):
-    #     imagePath = os.path.join(self.testResourcesDir, "multilayer_tif", "dotdotdot_lzw.tif")
-    #     tiffImages = ImagesLoader(self.sc).fromMultipageTif(imagePath).collect()
+    def test_fromMultiTimepointTif(self):
+        imagePath = os.path.join(self.testResourcesDir, "multilayer_tif", "dotdotdot_lzw.tif")
+        tiffImages = ImagesLoader(self.sc).fromMultipageTif(imagePath, nplanes=1).collect()
 
+        assert_equals(3, len(tiffImages), "Expected 3 images, got %d" % len(tiffImages))
+        expectedSums = [1140006, 1119161, 1098917]
+        expectedIdx = (0, 0)
+        for idx, tiffAry in tiffImages:
+            assert_equals((70, 75), tiffAry.shape)
+            assert_equals(expectedIdx, idx)
+            assert_equals(expectedSums[idx[1]], tiffAry.ravel().sum())
+            expectedIdx = (expectedIdx[0], expectedIdx[1]+1)
 
 
 class TestImagesLoaderUsingOutputDir(PySparkTestCaseWithOutputDir):

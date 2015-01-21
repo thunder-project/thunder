@@ -178,7 +178,7 @@ class LocalFSParallelReader(object):
     def read(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
         """Sets up Spark RDD across files specified by dataPath on local filesystem.
 
-        Returns RDD of <string filepath, string buffer> k/v pairs.
+        Returns RDD of <integer file index, string buffer> k/v pairs.
         """
         absPath = self.uriToPath(dataPath)
         filePaths = self.listFiles(absPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
