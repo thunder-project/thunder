@@ -67,11 +67,11 @@ class Series(Data):
             self.populateParametersFromFirstRecord()
         try:
             lenValue = len(value)
-            lenSelf = len(self._index)
-            if lenValue != lenSelf:
-                raise ValueError("Length of new index ({1}) must match length of original index ({2})".format(lenValue, lenSelf))
         except:
             raise TypeError("Index must be an object with a length")
+        lenSelf = len(self._index)
+        if lenValue != lenSelf:
+            raise ValueError("Length of new index ({0}) must match length of original index ({1})".format(lenValue, lenSelf))
         self._index = value
 
     @property
