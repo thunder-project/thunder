@@ -56,6 +56,17 @@ class Series(Data):
         if self._index is None:
             self.populateParamsFromFirstRecord()
         return self._index
+        
+    @index.setter
+    def index(self, value):
+        try:
+            value[0]
+        except:
+            raise ValueError("Index must be a non-empty indexable object")
+        if not self._index is None:
+            if len(value) != len(self._index):
+                raise ValueError("New index length must match that of the current index")
+        self._index = value
 
     @property
     def dims(self):
