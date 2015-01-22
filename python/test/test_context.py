@@ -102,6 +102,33 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
     def test_loadMultipleStacksAsSeriesWithShuffle(self):
         self.__run_loadMultipleStacksAsSeries(True)
 
+    def test_loadMultipleMultipointStacksAsSeries(self):
+        rangeAry = arange(64*128, dtype=dtypeFunc('int16'))
+        filePath = os.path.join(self.outputdir, "rangeary01.stack")
+        rangeAry.tofile(filePath)
+        expectedAry = rangeAry.reshape((32, 32, 8), order='F')
+        rangeAry2 = arange(64*128, 2*64*128, dtype=dtypeFunc('int16'))
+        filePath = os.path.join(self.outputdir, "rangeary02.stack")
+        rangeAry2.tofile(filePath)
+        expectedAry2 = rangeAry2.reshape((32, 32, 8), order='F')
+
+        rangeSeries = self.tsc.loadImagesAsSeries(self.outputdir, dims=(32, 32, 8), nplanes=2, shuffle=True)
+        assert_equals('float32', rangeSeries._dtype)
+
+        rangeSeriesAry = rangeSeries.pack()
+
+        assert_equals((32, 32, 2), rangeSeries.dims.count)
+        assert_equals((8, 32, 32, 2), rangeSeriesAry.shape)
+        assert_equals('float32', str(rangeSeriesAry.dtype))
+        assert_true(array_equal(expectedAry[:, :, :2], rangeSeriesAry[0]))
+        assert_true(array_equal(expectedAry[:, :, 2:4], rangeSeriesAry[1]))
+        assert_true(array_equal(expectedAry[:, :, 4:6], rangeSeriesAry[2]))
+        assert_true(array_equal(expectedAry[:, :, 6:], rangeSeriesAry[3]))
+        assert_true(array_equal(expectedAry2[:, :, :2], rangeSeriesAry[4]))
+        assert_true(array_equal(expectedAry2[:, :, 2:4], rangeSeriesAry[5]))
+        assert_true(array_equal(expectedAry2[:, :, 4:6], rangeSeriesAry[6]))
+        assert_true(array_equal(expectedAry2[:, :, 6:], rangeSeriesAry[7]))
+
     def __run_loadTifAsSeries(self, shuffle):
         tmpAry = arange(60*120, dtype=dtypeFunc('uint16'))
         rangeAry = mod(tmpAry, 255).astype('uint8').reshape((60, 120))

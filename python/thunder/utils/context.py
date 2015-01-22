@@ -86,7 +86,7 @@ class ThunderContext():
         return data
 
     def loadImages(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
-                   startIdx=None, stopIdx=None, recursive=False):
+                   startIdx=None, stopIdx=None, recursive=False, nplanes=None):
         """
         Loads an Images object from data stored as a binary image stack, tif, tif-stack, or png files.
 
@@ -146,6 +146,11 @@ class ThunderContext():
             have an appropriate extension. Recursive loading is currently only implemented for local filesystems
             (not s3).
 
+        nplanes: positive integer, default None
+            If passed, will cause a single image file to be subdivided into multiple time points. Every `nplanes` image
+            planes in the file will be considered as a new time point. With nplanes=None (the default), a single file
+            will be considered to represent a single time point.
+
         Returns
         -------
         data: thunder.rdds.Images
@@ -162,19 +167,25 @@ class ThunderContext():
 
         if inputFormat.lower() == 'stack':
             data = loader.fromStack(dataPath, dims, dtype=dtype, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
-                                    recursive=recursive)
+                                    recursive=recursive, nplanes=nplanes)
         elif inputFormat.lower() == 'tif':
+            if nplanes:
+                raise NotImplementedError("nplanes argument is not supported for single-page tifs - " +
+                                          "use 'tif-stack' inputformat instead")
             data = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
         elif inputFormat.lower() == 'tif-stack':
-            data = loader.fromMultipageTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
+            data = loader.fromMultipageTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
+                                           nplanes=nplanes)
         else:
+            if nplanes:
+                raise NotImplementedError("nplanes argument is not supported for png files")
             data = loader.fromPng(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
 
         return data
 
     def loadImagesAsSeries(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
                            blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None, 
-                           shuffle=True, recursive=False):
+                           shuffle=True, recursive=False, nplanes=None):
         """
         Load Images data as Series data.
 
@@ -247,6 +258,12 @@ class ThunderContext():
             have an appropriate extension. Recursive loading is currently only implemented for local filesystems
             (not s3), and only with shuffle=True.
 
+        nplanes: positive integer, default None
+            If passed, will cause a single image file to be subdivided into multiple time points. Every `nplanes` image
+            planes in the file will be considered as a new time point. With nplanes=None (the default), a single file
+            will be considered to represent a single time point. nplanes is only supported for shuffle=True (the
+            default).
+
         Returns
         -------
         data: thunder.rdds.Series
@@ -271,15 +288,18 @@ class ThunderContext():
 
             if inputFormat.lower() == 'stack':
                 images = loader.fromStack(dataPath, dims, dtype=dtype, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
-                                          recursive=recursive)
+                                          recursive=recursive, nplanes=nplanes)
             else:
                 # tif stack
                 images = loader.fromMultipageTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
-                                                 recursive=recursive)
+                                                 recursive=recursive, nplanes=nplanes)
             return images.toBlocks(blockSize, units=blockSizeUnits).toSeries()
 
         else:
             from thunder.rdds.fileio.seriesloader import SeriesLoader
+            if nplanes is not None:
+                raise NotImplementedError("nplanes is not supported with shuffle=False")
+
             loader = SeriesLoader(self._sc)
             if inputFormat.lower() == 'stack':
                 return loader.fromStack(dataPath, dims, ext=ext, dtype=dtype, blockSize=blockSize,
@@ -291,7 +311,7 @@ class ThunderContext():
 
     def convertImagesToSeries(self, dataPath, outputDirPath, dims=None, inputFormat='stack', ext=None,
                               dtype='int16', blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,
-                              shuffle=False, overwrite=False, recursive=False):
+                              shuffle=False, overwrite=False, recursive=False, nplanes=None):
         """
         Write out Images data as Series data, saved in a flat binary format.
 
@@ -381,6 +401,12 @@ class ThunderContext():
             If true, will recursively descend directories rooted at dataPath, loading all files in the tree that
             have an appropriate extension. Recursive loading is currently only implemented for local filesystems
             (not s3), and only with shuffle=True.
+
+        nplanes: positive integer, default None
+            If passed, will cause a single image file to be subdivided into multiple time points. Every `nplanes` image
+            planes in the file will be considered as a new time point. With nplanes=None (the default), a single file
+            will be considered to represent a single time point. nplanes is only supported for shuffle=True (the
+            default).
         """
         checkParams(inputFormat, ['stack', 'tif-stack'])
 
@@ -400,13 +426,15 @@ class ThunderContext():
             loader = ImagesLoader(self._sc)
             if inputFormat.lower() == 'stack':
                 images = loader.fromStack(dataPath, dims, dtype=dtype, startIdx=startIdx, stopIdx=stopIdx,
-                                          recursive=recursive)
+                                          recursive=recursive, nplanes=nplanes)
             else:
                 images = loader.fromMultipageTif(dataPath, startIdx=startIdx, stopIdx=stopIdx,
-                                                 recursive=recursive)
+                                                 recursive=recursive, nplanes=nplanes)
             images.toBlocks(blockSize, units=blockSizeUnits).saveAsBinarySeries(outputDirPath, overwrite=overwrite)
         else:
             from thunder.rdds.fileio.seriesloader import SeriesLoader
+            if nplanes is not None:
+                raise NotImplementedError("nplanes is not supported with shuffle=False")
             loader = SeriesLoader(self._sc)
             if inputFormat.lower() == 'stack':
                 loader.saveFromStack(dataPath, outputDirPath, dims, ext=ext, dtype=dtype,

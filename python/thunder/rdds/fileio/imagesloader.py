@@ -109,8 +109,8 @@ class ImagesLoader(object):
         reader = getParallelReaderForPath(dataPath)(self.sc)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
         nimages = reader.lastNRecs if nplanes is None else None
-        return Images(readerRdd.flatMap(toArray), nimages=nimages, dims=dims,
-                      dtype=dtype)
+        newDims = tuple(list(dims[:-1]) + [nplanes]) if nplanes else dims
+        return Images(readerRdd.flatMap(toArray), nimages=nimages, dims=newDims, dtype=dtype)
 
     def fromTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False):
         """Load an Images object stored in a directory of (single-page) tif files
