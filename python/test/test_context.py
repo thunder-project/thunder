@@ -226,3 +226,23 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
     @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
     def test_loadMultipleTifsAsSeriesWithShuffle(self):
         self.__run_loadMultipleTifsAsSeries(True)
+
+    @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
+    def test_loadMultipleMultipointTifsAsSeries(self):
+        testResourcesDir = TestContextLoading._findTestResourcesDir()
+        imagesPath = os.path.join(testResourcesDir, "multilayer_tif", "dotdotdot_lzw*.tif")
+
+        # load only one file, second is a copy of this one
+        testimg_pil = Image.open(os.path.join(testResourcesDir, "multilayer_tif", "dotdotdot_lzw.tif"))
+        testimg_arys = [array(testimg_pil)]
+        for idx in xrange(1, 3):
+            testimg_pil.seek(idx)
+            testimg_arys.append(array(testimg_pil))
+
+        rangeSeries = self.tsc.loadImagesAsSeries(imagesPath, inputFormat="tif-stack", shuffle=True, nplanes=1)
+        assert_equals((70, 75), rangeSeries.dims.count)
+
+        rangeSeriesAry = rangeSeries.pack()
+        assert_equals((6, 70, 75), rangeSeriesAry.shape)
+        for idx in xrange(6):
+            assert_true(array_equal(testimg_arys[idx % 3], rangeSeriesAry[idx]))
