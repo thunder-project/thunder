@@ -65,7 +65,11 @@ class Series(Data):
             raise ValueError("Index must be a non-empty indexable object")
         if self._index is None:
             self.populateParametersFromFirstRecord()
-        if len(value) != len(self._index):
+        try:
+            lenMatch = len(value) == len(self._index)
+        except:
+            raise ValueError("Index must be an object with a length")
+        if not lenMatch:
             raise ValueError("New index length must match that of the current index")
         self._index = value
 
