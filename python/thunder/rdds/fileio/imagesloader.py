@@ -45,7 +45,8 @@ class ImagesLoader(object):
         return Images(self.sc.parallelize(enumerate(arrays), len(arrays)),
                       dims=shape, dtype=str(dtype), nimages=len(arrays))
 
-    def fromStack(self, dataPath, dims, dtype='int16', ext='stack', startIdx=None, stopIdx=None, recursive=False, nplanes=None):
+    def fromStack(self, dataPath, dims, dtype='int16', ext='stack', startIdx=None, stopIdx=None, recursive=False,
+                  nplanes=None):
         """Load an Images object stored in a directory of flat binary files
 
         The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
@@ -75,6 +76,11 @@ class ImagesLoader(object):
             If true, will recursively descend directories rooted at datapath, loading all files in the tree that
             have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
             (not s3).
+
+        nplanes: positive integer, default None
+            If passed, will cause a single binary stack file to be subdivided into multiple time points. Every
+            `nplanes` image planes in the file (after reshaping to dims) will be considered as a new time point. With
+            nplanes=None (the default), a single file will be considered to represent a single time point.
         """
         if not dims:
             raise ValueError("Image dimensions must be specified if loading from binary stack data")
@@ -136,6 +142,11 @@ class ImagesLoader(object):
             If true, will recursively descend directories rooted at datapath, loading all files in the tree that
             have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
             (not s3).
+
+        nplanes: positive integer, default None
+            If passed, will cause a single multipage tif file to be subdivided into multiple time points. Every
+            `nplanes` tif pages in the file will be considered as a new time point. With nplanes=None (the default), a
+            single file will be considered to represent a single time point.
         """
         def readTifFromBuf(buf):
             fbuf = BytesIO(buf)
@@ -152,7 +163,7 @@ class ImagesLoader(object):
 
         key: int or (int, int)
             key is index of original data file, determined by lexicographic ordering of filenames.
-            If nplanes is passed, then the key will be an integer pair (index of original data file, timepoint within file)
+
         value: numpy ndarray
             value dimensions with be x by y by num_channels*num_pages; all channels and pages in a file are
             concatenated together in the third dimension of the resulting ndarray. For pages 0, 1, etc
