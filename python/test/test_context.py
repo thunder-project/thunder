@@ -141,7 +141,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         assert_equals('float16', rangeSeries._dtype)  # check before any potential first() calls update this val
         rangeSeriesAry = rangeSeries.pack()
 
-        assert_equals((60, 120, 1), rangeSeries.dims.count)
+        assert_equals((60, 120), rangeSeries.dims.count)  # 2d tif now loaded as 2d image; was 3d with singleton z dim
         assert_equals((60, 120), rangeSeriesAry.shape)
         assert_equals('float16', str(rangeSeriesAry.dtype))
         assert_true(array_equal(rangeAry, rangeSeriesAry))
@@ -210,7 +210,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         rangeSeriesAry = rangeSeries.pack()
         rangeSeriesAry_xpose = rangeSeries.pack(transpose=True)
 
-        assert_equals((60, 120, 1), rangeSeries.dims.count)
+        assert_equals((60, 120), rangeSeries.dims.count)  # 2d tif now loaded as 2d image; was 3d with singleton z dim
         assert_equals((2, 60, 120), rangeSeriesAry.shape)
         assert_equals((2, 120, 60), rangeSeriesAry_xpose.shape)
         assert_equals('float16', str(rangeSeriesAry.dtype))

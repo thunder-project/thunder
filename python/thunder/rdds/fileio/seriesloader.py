@@ -479,12 +479,18 @@ class SeriesLoader(object):
 
             seriesKeys = zip(*map(tuple, unravel_index(linearIdx, planeShape, order='C')))
             # add plane index to end of keys
-            seriesKeys = [tuple(list(keys_)[::-1]+[planeIdx]) for keys_ in seriesKeys]
+            if npages > 1:
+                seriesKeys = [tuple(list(keys_)[::-1]+[planeIdx]) for keys_ in seriesKeys]
+            else:
+                seriesKeys = [tuple(list(keys_)[::-1]) for keys_ in seriesKeys]
             return zip(seriesKeys, buf)
 
         # map over blocks
         rdd = self.sc.parallelize(keys, len(keys)).flatMap(readBlockFromTiff)
-        dims = (npages, width, height)
+        if npages > 1:
+            dims = (npages, width, height)
+        else:
+            dims = (width, height)
 
         metadata = (dims, ntimepoints, newDtype)
         return rdd, metadata
