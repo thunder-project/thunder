@@ -1,6 +1,6 @@
 from numpy import allclose, amax, arange, array, array_equal
 from numpy import dtype as dtypeFunc
-from nose.tools import assert_equals, assert_true
+from nose.tools import assert_equals, assert_true, assert_raises
 
 from thunder.rdds.series import Series
 from test_utils import *
@@ -237,3 +237,22 @@ class TestSeriesMethods(PySparkTestCase):
 
         assert_true(array_equal(amax(ary.T, 0), project0))
         assert_true(array_equal(amax(ary.T, 1), project1))
+
+    def test_index_setter_getter(self):
+        dataLocal = [
+            ((1,), array([1.0, 2.0, 3.0])),
+            ((2,), array([2.0, 2.0, 4.0])),
+            ((3,), array([4.0, 2.0, 1.0]))
+        ]
+        data = Series(self.sc.parallelize(dataLocal))
+
+        assert_true(array_equal(data.index, array([0, 1, 2])))
+        data.index = [3, 2, 1]
+        assert_true(data.index == [3, 2, 1])
+
+        def setIndex(data, idx):
+            data.index = idx
+
+        assert_raises(AttributeError, setIndex, data, 5)
+        assert_raises(ValueError, setIndex, data, [1, 2])
+

@@ -63,13 +63,11 @@ class Series(Data):
             value[0]
         except:
             raise AttributeError("Index must be a non-empty indexable object")
-        if self._index is None:
-            self.populateParametersFromFirstRecord()
         try:
             lenValue = len(value)
         except:
             raise TypeError("Index must be an object with a length")
-        lenSelf = len(self._index)
+        lenSelf = len(self.index)
         if lenValue != lenSelf:
             raise ValueError("Length of new index ({0}) must match length of original index ({1})".format(lenValue, lenSelf))
         self._index = value
