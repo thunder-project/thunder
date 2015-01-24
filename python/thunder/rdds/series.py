@@ -764,7 +764,7 @@ class Series(Data):
         ind = self.index[:,level]
         reshaped, ind = self._reshapeByIndex(index=ind)
         aggregrated = reshaped.mapValues(lambda v: map(function, v))
-        return aggregrated, ind
+        return Series(aggregrated, index=ind).__finalize__(self, noPropagate=('_dtype'))
 
     def seriesSelectByIndex(self, level=None, val=None, squeeze=False):
         """
@@ -797,4 +797,4 @@ class Series(Data):
         if squeeze:
             indOut = delete(indOut, remove, axis=1)
 
-        return selected, indOut,
+        return self.__init__(selected, index=indOut).__finalize__(self)
