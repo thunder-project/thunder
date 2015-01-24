@@ -1,10 +1,13 @@
 from numpy import ndarray, array, sum, mean, median, std, size, arange, \
     percentile, asarray, maximum, zeros, corrcoef, where, \
-    true_divide, ceil
+    true_divide, ceil, unique, array_equal, concatenate, squeeze, delete
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
 from thunder.utils.common import checkParams, loadMatVar, smallestFloatType
+
+from itertools import product
+from collections import Iterable
 
 
 class Series(Data):
@@ -27,6 +30,7 @@ class Series(Data):
 
     index : array-like or one-dimensional list
         Values must be unique, same length as the arrays in the input data.
+        levels = set(levels)
         Defaults to arange(len(data)) if not provided.
 
     dims : Dimensions
@@ -707,3 +711,90 @@ class Series(Data):
         """
         from thunder.rdds.spatialseries import SpatialSeries
         return SpatialSeries(self.rdd).__finalize__(self)
+
+    def _reshapeByIndex(self, index=None):
+        """
+        Internal function that reshapes series data on each record accoring to multilevel index
+        """
+
+        if index is None:
+            index = self.index
+
+        if not (type(index) is ndarray and type(index[0]) is ndarray):
+            raise TypeError('Multilevel indexing functionality requires the Series index to be an ndarray of ndarrays')
+            
+        lenIdx = index.shape[0]
+        nlevels = index.shape[1]
+
+        # compute all possible combinations of velues across levels
+        combs = product(*[unique(index.T[i,:]) for i in xrange(nlevels)])
+        combs = array([l for l in combs])
+
+        # collect the data into groups based on these combinations
+        # TODO: this function could be optimized to make only a single pass through the series (perhaps computing masks first)
+        def collectRecordByLevel(data):
+            allLevels =  [array([data[x] for x in xrange(lenIdx) if array_equal(index[x], l)]) for l in combs]
+            return [x for x in allLevels if x.size != 0]
+        
+        used = set(map(tuple, list(index)))
+        idx = [x for x in combs if tuple(x) in used]
+
+        return  self.rdd.mapValues(collectRecordByLevel), array(idx) 
+
+    def seriesAggregrateByIndx(self, level=None, function=None):
+        """
+        Aggregrate the date in each record, grouping by a multilevel index
+        
+        This function transforms the series data on a record-by-record basis and requires a multilevel index that takes
+        the form of a 2D ndarray. The data in all records are first grouped according to the values of their indices
+        at the specified levels of the multilevel index. Then an aggregating function computes a value for each of these
+        groups. Returns a new Series object where each record contains these aggregated values and the indices indicate
+        which of the unique level-specifactions correspond to each element.
+        
+        Parameters:
+        -----------
+        level: An integer or an list of integers specificying which levels in the multilevel index to use when
+            performing the grouping. To group by all levels, simply use arange({number of levels}).
+        
+        function: The function to apply to each each of the group of indices. Should take a single ndarray of values
+            as input and return a single value
+        """
+        if type(level) is int:
+            level = [level]
+        ind = self.index[:,level]
+        reshaped, ind = self._reshapeByIndex(index=ind)
+        aggregrated = reshaped.mapValues(lambda v: map(function, v))
+        return aggregrated, ind
+
+    def seriesSelectByIndex(self, level=None, val=None, squeeze=False):
+        """
+        Select a subset of the data in each record base on values in multilevel index
+        """
+        if not isinstance(val, Iterable):
+            val = [val]
+        if not isinstance(level, Iterable):
+            level = [level]
+                                
+        remove = []
+        for i in xrange(len(val)):
+            if not isinstance(val[i], Iterable):
+                val[i] = [val[i]]
+                if squeeze:
+                    remove.append(level[i])
+        
+        p = product(*val)
+        s = set([x for x in p])
+
+        reshaped, ind = self._reshapeByIndex()
+
+        indLen = ind.shape[0]
+        def selectRecordByLevel(data):
+           return concatenate([data[i] for i in xrange(indLen) if tuple(ind[i, level]) in s]) 
+
+        selected = reshaped.mapValues(lambda v: selectRecordByLevel(v))
+        indOut = array([ind[i] for i in xrange(indLen) if tuple(ind[i, level]) in s])
+ 
+        if squeeze:
+            indOut = delete(indOut, remove, axis=1)
+
+        return selected, indOut,
