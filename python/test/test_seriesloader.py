@@ -209,7 +209,7 @@ class TestSeriesLoader(PySparkTestCase):
         testImg_Pil.seek(2)
         testImgArys.append(array(testImg_Pil))
 
-        series = SeriesLoader(self.sc).fromMultipageTif(imagePath)
+        series = SeriesLoader(self.sc).fromTif(imagePath)
         assert_equals('float16', series._dtype)
         seriesAry = series.pack()
 
@@ -221,7 +221,7 @@ class TestSeriesLoader(PySparkTestCase):
 
     def _run_fromFishTif(self, blocksize):
         imagepath = TestSeriesLoader._findSourceTreeDir("utils/data/fish/tif-stack")
-        series = SeriesLoader(self.sc).fromMultipageTif(imagepath, blockSize=blocksize)
+        series = SeriesLoader(self.sc).fromTif(imagepath, blockSize=blocksize)
         assert_equals('float16', series._dtype)
         seriesAry = series.pack()
         seriesAry_xpose = series.pack(transpose=True)

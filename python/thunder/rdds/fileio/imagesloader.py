@@ -88,40 +88,7 @@ class ImagesLoader(object):
                       dtype=dtype)
 
     def fromTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False):
-        """Load an Images object stored in a directory of (single-page) tif files
-
-        The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
-        files read in by this method.
-
-        Parameters
-        ----------
-
-        dataPath: string
-            Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-            including scheme. A datapath argument may include a single '*' wildcard character in the filename.
-
-        ext: string, optional, default "tif"
-            Extension required on data files to be loaded.
-
-        startIdx, stopIdx: nonnegative int. optional.
-            Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
-            `datapath` and `ext`. Interpreted according to python slice indexing conventions.
-
-        recursive: boolean, default False
-            If true, will recursively descend directories rooted at datapath, loading all files in the tree that
-            have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
-            (not s3).
-        """
-        def readTifFromBuf(buf):
-            fbuf = BytesIO(buf)
-            return imread(fbuf, format='tif')
-
-        reader = getParallelReaderForPath(dataPath)(self.sc)
-        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
-        return Images(readerRdd.mapValues(readTifFromBuf), nimages=reader.lastNRecs)
-
-    def fromMultipageTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False):
-        """Sets up a new Images object with data to be read from one or more multi-page tif files.
+        """Sets up a new Images object with data to be read from one or more tif files.
 
         The RDD underlying the returned Images will have key, value data as follows:
 
@@ -166,7 +133,10 @@ class ImagesLoader(object):
                 except EOFError:
                     # past last page in tif
                     break
-            return dstack(imgArys)
+            if len(imgArys) == 1:
+                return imgArys[0]
+            else:
+                return dstack(imgArys)
 
         reader = getParallelReaderForPath(dataPath)(self.sc)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
