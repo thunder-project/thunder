@@ -328,7 +328,7 @@ class Series(Data):
         """
         rdd = self.rdd.mapValues(lambda x: percentile(x, q))
         print rdd.first()
-        return self._constructor(rdd, index='percentile').__finalize__(self, noPropagate=('_dtype',))
+        return self._constructor(rdd, index=q).__finalize__(self, noPropagate=('_dtype',))
 
     def seriesStdev(self):
         """ Compute the value std of each record in a Series """
