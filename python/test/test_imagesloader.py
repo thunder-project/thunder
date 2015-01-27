@@ -120,7 +120,7 @@ class TestImagesFileLoaders(PySparkTestCase):
 
     def test_fromMultiTimepointTif(self):
         imagePath = os.path.join(self.testResourcesDir, "multilayer_tif", "dotdotdot_lzw.tif")
-        tiffImages = ImagesLoader(self.sc).fromMultipageTif(imagePath, nplanes=1)
+        tiffImages = ImagesLoader(self.sc).fromTif(imagePath, nplanes=1)
         # we don't expect to have nimages cached, since the driver doesn't know how many images there are per file
         assert_true(tiffImages._nimages is None)
         assert_equals(3, tiffImages.nimages)
@@ -138,7 +138,7 @@ class TestImagesFileLoaders(PySparkTestCase):
 
     def test_fromMultipleMultiTimepointTifs(self):
         imagePath = os.path.join(self.testResourcesDir, "multilayer_tif", "dotdotdot_lzw*.tif")
-        tiffImages = ImagesLoader(self.sc).fromMultipageTif(imagePath, nplanes=1)
+        tiffImages = ImagesLoader(self.sc).fromTif(imagePath, nplanes=1)
         assert_true(tiffImages._nimages is None)
         assert_equals(6, tiffImages.nimages)
 
