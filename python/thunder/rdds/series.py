@@ -48,7 +48,7 @@ class Series(Data):
     def __init__(self, rdd, index=None, dims=None, dtype=None):
         super(Series, self).__init__(rdd, dtype=dtype)
         self._index = None
-        if not index is None:
+        if index is not None:
             self.index = index
         if dims and not isinstance(dims, Dimensions):
             try:
@@ -65,14 +65,15 @@ class Series(Data):
         
     @index.setter
     def index(self, value):
+        # touches self.index to trigger automatic calculation from first record if self.index is not set
         lenSelf = len(self.index)
         if type(value) is str:
             value = [value]
+        # if new index is not indexable, assume that it is meant as an index of length 1
         try:
             value[0]
         except:
             value = [value]
-            #raise AttributeError("Index must be a non-empty indexable object")
         try:
             lenValue = len(value)
         except:
@@ -331,7 +332,6 @@ class Series(Data):
           q: a floating point number between 0 and 100 inclusive.
         """
         rdd = self.rdd.mapValues(lambda x: percentile(x, q))
-        print rdd.first()
         return self._constructor(rdd, index=q).__finalize__(self, noPropagate=('_dtype',))
 
     def seriesStdev(self):
