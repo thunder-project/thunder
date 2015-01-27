@@ -234,7 +234,7 @@ class TestSeriesMethods(PySparkTestCase):
         itemIdxs = [1, 2]  # data keys for items 1 and 2 (0-based)
         keys = [dataLocal[idx][0] for idx in itemIdxs]
 
-        expectedKeys = tuple(vstack([dataLocal[idx][0] for idx in itemIdxs]).mean(axis=0).astype('int16'))
+        expectedKeys = tuple(vstack(keys).mean(axis=0).astype('int16'))
         expected = vstack([dataLocal[idx][1] for idx in itemIdxs]).mean(axis=0)
         return series, keys, expectedKeys, expected
 
@@ -254,6 +254,31 @@ class TestSeriesMethods(PySparkTestCase):
         assert_equals(1, len(actual))
         assert_equals(expectedKeys, actual[0][0])
         assert_true(array_equal(expected, actual[0][1]))
+
+    def test_meanByRegions_twoRegions(self):
+        dataLocal = [
+            ((0, 0), array([1.0, 2.0, 3.0])),
+            ((0, 1), array([2.0, 2.0, 4.0])),
+            ((1, 0), array([4.0, 2.0, 1.0])),
+            ((1, 1), array([3.0, 1.0, 1.0]))
+        ]
+        series = Series(self.sc.parallelize(dataLocal))
+        nestedKeys, expectedKeys, expected = [], [], []
+        expectedKeys = []
+        for itemIdxs in [(0, 1), (1, 2)]:
+            keys = [dataLocal[idx][0] for idx in itemIdxs]
+            nestedKeys.append(keys)
+            avgKeys = tuple(vstack(keys).mean(axis=0).astype('int16'))
+            expectedKeys.append(avgKeys)
+            avgVals = vstack([dataLocal[idx][1] for idx in itemIdxs]).mean(axis=0)
+            expected.append(avgVals)
+
+        actualSeries = series.meanByRegions(nestedKeys)
+        actual = actualSeries.collect()
+        assert_equals(2, len(actual))
+        for regionIdx in xrange(2):
+            assert_equals(expectedKeys[regionIdx], actual[regionIdx][0])
+            assert_true(array_equal(expected[regionIdx], actual[regionIdx][1]))
 
     def test_maxProject(self):
         from thunder.rdds.fileio.seriesloader import SeriesLoader

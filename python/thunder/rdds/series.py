@@ -562,18 +562,27 @@ class Series(Data):
         return keys, values
 
     def meanByRegion(self, keys):
+        """Takes the mean of Series values within a single region specified by the passed keys.
+
+        Parameters
+        ----------
+        keys: sequence of Series record keys
+
+        Returns
+        -------
+        tuple of ((mean keys), (mean value))
+        """
         bcRegionKeys = self.rdd.context.broadcast(frozenset(keys))
         n, kmean, vmean = self.rdd.filter(lambda (k, v): k in bcRegionKeys.value) \
             .map(lambda (k, v):  (array(k, dtype=v.dtype), v)) \
             .aggregate(_MeanCombiner.createZeroTuple(),
                        _MeanCombiner.mergeIntoMeanTuple,
                        _MeanCombiner.combineMeanTuples)
-        kmean = tuple(kmean.astype('int16'))
+        kmean = tuple(kmean.astype('int32'))
         return kmean, vmean
 
     def meanByRegions(self, nestedKeys):
-        """
-        Takes the mean of Series values within groupings specified by the passed keys.
+        """Takes the mean of Series values within groupings specified by the passed keys.
 
         Each sequence of keys passed specifies a "region" within which to calculate the mean. For instance,
         series.aggregateByRegions([[1,2]]) would return the mean of the records in series with key 1 and 2.
