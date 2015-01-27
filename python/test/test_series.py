@@ -223,7 +223,7 @@ class TestSeriesMethods(PySparkTestCase):
         assert(allclose(values[0, :], array([1.5, 2., 3.5])))
         assert_equals(data.dtype, values[0, :].dtype)
 
-    def test_aggregateMean_singleRegion(self):
+    def __setup_meanByRegion(self):
         dataLocal = [
             ((0, 0), array([1.0, 2.0, 3.0])),
             ((0, 1), array([2.0, 2.0, 4.0])),
@@ -233,12 +233,23 @@ class TestSeriesMethods(PySparkTestCase):
         series = Series(self.sc.parallelize(dataLocal))
         itemIdxs = [1, 2]  # data keys for items 1 and 2 (0-based)
         keys = [dataLocal[idx][0] for idx in itemIdxs]
-        regionIndices = [keys]
 
         expectedKeys = tuple(vstack([dataLocal[idx][0] for idx in itemIdxs]).mean(axis=0).astype('int16'))
         expected = vstack([dataLocal[idx][1] for idx in itemIdxs]).mean(axis=0)
+        return series, keys, expectedKeys, expected
 
-        actualSeries = series.meanByRegions(regionIndices)
+    def test_meanByRegion(self):
+        series, keys, expectedKeys, expected = self.__setup_meanByRegion()
+
+        actual = series.meanByRegion(keys)
+        assert_equals(2, len(actual))
+        assert_equals(expectedKeys, actual[0])
+        assert_true(array_equal(expected, actual[1]))
+
+    def test_meanByRegions_singleRegion(self):
+        series, keys, expectedKeys, expected = self.__setup_meanByRegion()
+
+        actualSeries = series.meanByRegions([keys])
         actual = actualSeries.collect()
         assert_equals(1, len(actual))
         assert_equals(expectedKeys, actual[0][0])
