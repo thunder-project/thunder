@@ -9,7 +9,7 @@ Thunder
 
 Large-scale neural data analysis with Spark - [project page](http://freeman-lab.github.io/thunder/)
 
-[![Build Status](https://travis-ci.org/freeman-lab/thunder.png?branch=master)](https://travis-ci.org/freeman-lab/thunder) 
+[![Build Status](https://travis-ci.org/thunder-project/thunder.png?branch=master)](https://travis-ci.org/thunder-project/thunder) 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/thunder-project/thunder?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 About

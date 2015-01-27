@@ -540,9 +540,8 @@ class SeriesLoader(object):
                                            recursive=recursive)
         return Series(seriesBlocks, dims=dims, dtype=newDtype, index=arange(npointsInSeries))
 
-    def fromMultipageTif(self, dataPath, ext="tif", blockSize="150M",
-                         newDtype='smallfloat', casting='safe',
-                         startIdx=None, stopIdx=None, recursive=False):
+    def fromTif(self, dataPath, ext="tif", blockSize="150M", newDtype='smallfloat', casting='safe',
+                startIdx=None, stopIdx=None, recursive=False):
         """Load a Series object from multipage tiff files.
 
         Parameters
@@ -661,9 +660,9 @@ class SeriesLoader(object):
 
         SeriesLoader.__saveSeriesRdd(seriesBlocks, outputDirPath, dims, npointsInSeries, newDtype, overwrite=overwrite)
 
-    def saveFromMultipageTif(self, dataPath, outputDirPath, ext="tif", blockSize="150M",
-                             newDtype=None, casting='safe',
-                             startIdx=None, stopIdx=None, overwrite=False, recursive=False):
+    def saveFromTif(self, dataPath, outputDirPath, ext="tif", blockSize="150M",
+                    newDtype=None, casting='safe', startIdx=None, stopIdx=None,
+                    overwrite=False, recursive=False):
         """Write out data from multipage tif files in the Series data flat binary format.
 
         Parameters

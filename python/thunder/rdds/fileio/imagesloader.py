@@ -118,8 +118,11 @@ class ImagesLoader(object):
         newDims = tuple(list(dims[:-1]) + [nplanes]) if nplanes else dims
         return Images(readerRdd.flatMap(toArray), nimages=nimages, dims=newDims, dtype=dtype)
 
-    def fromTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False):
-        """Load an Images object stored in a directory of (single-page) tif files
+    def fromTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, nplanes=None):
+        """Sets up a new Images object with data to be read from one or more tif files.
+
+        This method attempts to explicitly import PIL. ImportError may be thrown if 'from PIL import Image' is
+        unsuccessful. (PIL/pillow is not an explicit requirement for thunder.)
 
         The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
         files read in by this method.
@@ -148,31 +151,7 @@ class ImagesLoader(object):
             `nplanes` tif pages in the file will be considered as a new time point. With nplanes=None (the default), a
             single file will be considered to represent a single time point.
         """
-        def readTifFromBuf(buf):
-            fbuf = BytesIO(buf)
-            return imread(fbuf, format='tif')
 
-        reader = getParallelReaderForPath(dataPath)(self.sc)
-        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
-        return Images(readerRdd.mapValues(readTifFromBuf), nimages=reader.lastNRecs)
-
-    def fromMultipageTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, nplanes=None):
-        """Sets up a new Images object with data to be read from one or more multi-page tif files.
-
-        The RDD underlying the returned Images will have key, value data as follows:
-
-        key: int or (int, int)
-            key is index of original data file, determined by lexicographic ordering of filenames.
-
-        value: numpy ndarray
-            value dimensions with be x by y by num_channels*num_pages; all channels and pages in a file are
-            concatenated together in the third dimension of the resulting ndarray. For pages 0, 1, etc
-            of a multipage TIF of RGB images, ary[:,:,0] will be R channel of page 0 ("R0"), ary[:,:,1] will be B0,
-            ... ary[:,:,3] == R1, and so on.
-
-        This method attempts to explicitly import PIL. ImportError may be thrown if 'from PIL import Image' is
-        unsuccessful. (PIL/pillow is not an explicit requirement for thunder.)
-        """
         try:
             from PIL import Image
         except ImportError, e:

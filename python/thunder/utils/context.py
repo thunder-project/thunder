@@ -85,10 +85,11 @@ class ThunderContext():
                                      keyType=keyType, valueType=valueType)
         return data
 
+
     def loadImages(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
                    startIdx=None, stopIdx=None, recursive=False, nplanes=None):
         """
-        Loads an Images object from data stored as a binary image stack, tif, tif-stack, or png files.
+        Loads an Images object from data stored as a binary image stack, tif, or png files.
 
         Supports single files or multiple files, stored on a local file system, a networked file sytem
         (mounted and available on all nodes), or Amazon S3. HDFS is not currently supported for image file data.
@@ -109,25 +110,23 @@ class ThunderContext():
             on disk. So for instance given dims of (x, y, z), the coordinates of the data in a binary stack file
             should be ordered as [(x0, y0, z0), (x1, y0, zo), ..., (xN, y0, z0), (x0, y1, z0), (x1, y1, z0), ...,
             (xN, yM, z0), (x0, y0, z1), ..., (xN, yM, zP)].
-            If inputFormat is 'png', 'tif', or'tif-stack', the dims parameter (if any) will be ignored; data dimensions
+            If inputFormat is 'png' or 'tif', the dims parameter (if any) will be ignored; data dimensions
             will instead be read out from the image file headers.
 
-        inputFormat: {'stack', 'png', 'tif', 'tif-stack'}. optional, default 'stack'
+        inputFormat: {'stack', 'png', 'tif'}. optional, default 'stack'
             Expected format of the input data. 'stack' indicates flat files of raw binary data. 'png' or 'tif' indicate
-            two-dimensional image files of the corresponding formats. 'tif-stack' indicates a sequence of multipage tif
-            files, with each page of the tif corresponding to a separate z-plane.
+            image files of the corresponding formats. Each page of a multipage tif file will be interpreted as a separate
+            z-plane.
             For all formats, separate files are interpreted as distinct time points, with ordering given by
             lexicographic sorting of file names.
-            This method assumes that stack data consists of signed 16-bit integers in native byte order. Data types of
-            image file data will be as specified in the file headers.
 
         ext: string, optional, default None
             Extension required on data files to be loaded. By default will be "stack" if inputFormat=="stack", "tif" for
-            inputFormat=='tif' or 'tif-stack', and 'png' for inputFormat="png".
+            inputFormat=='tif', and 'png' for inputFormat="png".
 
         dtype: string or numpy dtype. optional, default 'int16'
             Data type of the image files to be loaded, specified as a numpy "dtype" string. If inputFormat is
-            'tif-stack', the dtype parameter (if any) will be ignored; data type will instead be read out from the
+            'tif' or 'png', the dtype parameter (if any) will be ignored; data type will instead be read out from the
             tif headers.
 
         startIdx: nonnegative int, optional
@@ -168,14 +167,9 @@ class ThunderContext():
         if inputFormat.lower() == 'stack':
             data = loader.fromStack(dataPath, dims, dtype=dtype, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
                                     recursive=recursive, nplanes=nplanes)
-        elif inputFormat.lower() == 'tif':
-            if nplanes:
-                raise NotImplementedError("nplanes argument is not supported for single-page tifs - " +
-                                          "use 'tif-stack' inputformat instead")
-            data = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
-        elif inputFormat.lower() == 'tif-stack':
-            data = loader.fromMultipageTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
-                                           nplanes=nplanes)
+        elif inputFormat.lower().startswith('tif'):
+            data = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
+                                  nplanes=nplanes)
         else:
             if nplanes:
                 raise NotImplementedError("nplanes argument is not supported for png files")
@@ -208,30 +202,29 @@ class ThunderContext():
             which by default has the fastest-changing dimension listed last (column-major convention). Thus, if loading
             a numpy array `ary`, where `ary.shape == (z, y, x)`, written to disk by `ary.tofile("myarray.stack")`, the
             corresponding dims parameter should be (x, y, z).
-            If inputFormat is 'tif-stack', the dims parameter (if any) will be ignored; data dimensions will instead
+            If inputFormat is 'tif', the dims parameter (if any) will be ignored; data dimensions will instead
             be read out from the tif file headers.
 
-        inputFormat: {'stack', 'tif-stack'}. optional, default 'stack'
-            Expected format of the input data. 'stack' indicates flat files of raw binary data, while 'tif-stack'
-            indicates a sequence of multipage tif files, with each page of the tif corresponding to a separate z-plane.
-            For both stacks and tif stacks, separate files are interpreted as distinct time points, with ordering
-            given by lexicographic sorting of file names.
-            This method assumes that stack data consists of signed 16-bit integers in native byte order.
+        inputFormat: {'stack', 'tif'}. optional, default 'stack'
+            Expected format of the input data. 'stack' indicates flat files of raw binary data, while 'tif' indicates
+            greyscale / luminance TIF images. Each page of a multipage tif file will be interpreted as a separate
+            z-plane. For both stacks and tif stacks, separate files are interpreted as distinct time points, with
+            ordering given by lexicographic sorting of file names.
 
         ext: string, optional, default None
             Extension required on data files to be loaded. By default will be "stack" if inputFormat=="stack", "tif" for
-            inputFormat=='tif-stack'.
+            inputFormat=='tif'.
 
         dtype: string or numpy dtype. optional, default 'int16'
             Data type of the image files to be loaded, specified as a numpy "dtype" string. If inputFormat is
-            'tif-stack', the dtype parameter (if any) will be ignored; data type will instead be read out from the
+            'tif', the dtype parameter (if any) will be ignored; data type will instead be read out from the
             tif headers.
 
         blockSize: string formatted as e.g. "64M", "512k", "2G", or positive int. optional, default "150M"
             Requested size of individual output files in bytes (or kilobytes, megabytes, gigabytes). If shuffle=True,
-            blocksize can also be a tuple of int specifying either the number of pixels or of splits per dimension to
+            blockSize can also be a tuple of int specifying either the number of pixels or of splits per dimension to
             apply to the loaded images, or an instance of BlockingStrategy. Whether a tuple of int is interpreted as
-            pixels or as splits depends on the value of the blockSizeUnits parameter. blocksize also indirectly
+            pixels or as splits depends on the value of the blockSizeUnits parameter. blockSize also indirectly
             controls the number of Spark partitions to be used, with one partition used per block created.
 
         blockSizeUnits: string, either "pixels" or "splits" (or unique prefix of each, such as "s"), default "pixels"
@@ -273,7 +266,7 @@ class ThunderContext():
             a numpy array of length equal to the number of image files loaded. Each loaded image file will contribute
             one point to this value array, with ordering as implied by the lexicographic ordering of image file names.
         """
-        checkParams(inputFormat, ['stack', 'tif-stack'])
+        checkParams(inputFormat, ['stack', 'tif', 'tif-stack'])
 
         if inputFormat.lower() == 'stack' and not dims:
             raise ValueError("Dimensions ('dims' parameter) must be specified if loading from binary image stack" +
@@ -285,13 +278,12 @@ class ThunderContext():
         if shuffle:
             from thunder.rdds.fileio.imagesloader import ImagesLoader
             loader = ImagesLoader(self._sc)
-
             if inputFormat.lower() == 'stack':
                 images = loader.fromStack(dataPath, dims, dtype=dtype, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
                                           recursive=recursive, nplanes=nplanes)
             else:
-                # tif stack
-                images = loader.fromMultipageTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
+                # tif / tif stack
+                images = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
                                                  recursive=recursive, nplanes=nplanes)
             return images.toBlocks(blockSize, units=blockSizeUnits).toSeries()
 
@@ -305,9 +297,9 @@ class ThunderContext():
                 return loader.fromStack(dataPath, dims, ext=ext, dtype=dtype, blockSize=blockSize,
                                         startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
             else:
-                # tif stack
-                return loader.fromMultipageTif(dataPath, ext=ext, blockSize=blockSize,
-                                               startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
+                # tif / tif stack
+                return loader.fromTif(dataPath, ext=ext, blockSize=blockSize,
+                                      startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
 
     def convertImagesToSeries(self, dataPath, outputDirPath, dims=None, inputFormat='stack', ext=None,
                               dtype='int16', blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,
@@ -347,27 +339,27 @@ class ThunderContext():
             which by default has the fastest-changing dimension listed last (column-major convention). Thus, if loading
             a numpy array `ary`, where `ary.shape == (z, y, x)`, written to disk by `ary.tofile("myarray.stack")`, the
             corresponding dims parameter should be (x, y, z).
-            If inputFormat is 'tif-stack', the dims parameter (if any) will be ignored; data dimensions will instead
+            If inputFormat is 'tif', the dims parameter (if any) will be ignored; data dimensions will instead
             be read out from the tif file headers.
 
-        inputFormat: {'stack', 'tif-stack'}. optional, default 'stack'
-            Expected format of the input data. 'stack' indicates flat files of raw binary data, while 'tif-stack'
-            indicates a sequence of multipage tif files, with each page of the tif corresponding to a separate z-plane.
-            For both stacks and tif stacks, separate files are interpreted as distinct time points, with ordering
-            given by lexicographic sorting of file names.
+        inputFormat: {'stack', 'tif'}. optional, default 'stack'
+            Expected format of the input data. 'stack' indicates flat files of raw binary data, while 'tif' indicates
+            greyscale / luminance TIF images. Each page of a multipage tif file will be interpreted as a separate
+            z-plane. For both stacks and tif stacks, separate files are interpreted as distinct time points, with
+            ordering given by lexicographic sorting of file names.
 
         ext: string, optional, default None
             Extension required on data files to be loaded. By default will be "stack" if inputFormat=="stack", "tif" for
-            inputFormat=='tif-stack'.
+            inputFormat=='tif'.
 
         dtype: string or numpy dtype. optional, default 'int16'
             Data type of the image files to be loaded, specified as a numpy "dtype" string. If inputFormat is
-            'tif-stack', the dtype parameter (if any) will be ignored; data type will instead be read out from the
+            'tif', the dtype parameter (if any) will be ignored; data type will instead be read out from the
             tif headers.
 
         blockSize: string formatted as e.g. "64M", "512k", "2G", or positive int, tuple of positive int, or instance of
                    BlockingStrategy. optional, default "150M"
-            Requested size of individual output files in bytes (or kilobytes, megabytes, gigabytes). blocksize can also
+            Requested size of individual output files in bytes (or kilobytes, megabytes, gigabytes). blockSize can also
             be an instance of blockingStrategy, or a tuple of int specifying either the number of pixels or of splits
             per dimension to apply to the loaded images. Whether a tuple of int is interpreted as pixels or as splits
             depends on the value of the blockSizeUnits parameter.  This parameter also indirectly controls the number
@@ -408,7 +400,7 @@ class ThunderContext():
             will be considered to represent a single time point. nplanes is only supported for shuffle=True (the
             default).
         """
-        checkParams(inputFormat, ['stack', 'tif-stack'])
+        checkParams(inputFormat, ['stack', 'tif', 'tif-stack'])
 
         if inputFormat.lower() == 'stack' and not dims:
             raise ValueError("Dimensions ('dims' parameter) must be specified if loading from binary image stack" +
@@ -428,8 +420,9 @@ class ThunderContext():
                 images = loader.fromStack(dataPath, dims, dtype=dtype, startIdx=startIdx, stopIdx=stopIdx,
                                           recursive=recursive, nplanes=nplanes)
             else:
-                images = loader.fromMultipageTif(dataPath, startIdx=startIdx, stopIdx=stopIdx,
-                                                 recursive=recursive, nplanes=nplanes)
+                # 'tif' or 'tif-stack'
+                images = loader.fromTif(dataPath, startIdx=startIdx, stopIdx=stopIdx,
+                                        recursive=recursive, nplanes=nplanes)
             images.toBlocks(blockSize, units=blockSizeUnits).saveAsBinarySeries(outputDirPath, overwrite=overwrite)
         else:
             from thunder.rdds.fileio.seriesloader import SeriesLoader
@@ -441,9 +434,10 @@ class ThunderContext():
                                      blockSize=blockSize, overwrite=overwrite, startIdx=startIdx,
                                      stopIdx=stopIdx, recursive=recursive)
             else:
-                loader.saveFromMultipageTif(dataPath, outputDirPath, ext=ext, blockSize=blockSize,
-                                            startIdx=startIdx, stopIdx=stopIdx, overwrite=overwrite,
-                                            recursive=recursive)
+                # 'tif' or 'tif-stack'
+                loader.saveFromTif(dataPath, outputDirPath, ext=ext, blockSize=blockSize,
+                                   startIdx=startIdx, stopIdx=stopIdx, overwrite=overwrite,
+                                   recursive=recursive)
 
     def makeExample(self, dataset, **opts):
         """
@@ -496,7 +490,7 @@ class ThunderContext():
         elif dataset == "fish-series":
             return self.loadSeries(os.path.join(path, 'data/fish/bin/'))
         elif dataset == "fish-images":
-            return self.loadImages(os.path.join(path, 'data/fish/tif-stack'), inputFormat="tif-stack")
+            return self.loadImages(os.path.join(path, 'data/fish/tif-stack'), inputFormat="tif")
         else:
             raise NotImplementedError("Dataset '%s' not known; should be one of 'iris', 'fish-series', 'fish-images'"
                                       % dataset)

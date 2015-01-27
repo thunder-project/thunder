@@ -362,9 +362,6 @@ class Series(Data):
 
         Parameters
         ----------
-        dims : array-like
-            Maximum dimensions
-
         order : str, 'C' or 'F', default = 'F'
             Specifies row-major or column-major array indexing. See numpy.ravel_multi_index.
 
