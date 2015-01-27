@@ -234,11 +234,15 @@ class TestSeriesMethods(PySparkTestCase):
         itemIdxs = [1, 2]  # data keys for items 1 and 2 (0-based)
         keys = [dataLocal[idx][0] for idx in itemIdxs]
         regionIndices = [keys]
+
+        expectedKeys = tuple(vstack([dataLocal[idx][0] for idx in itemIdxs]).mean(axis=0).astype('int16'))
         expected = vstack([dataLocal[idx][1] for idx in itemIdxs]).mean(axis=0)
 
-        actual = series.meanByRegions(regionIndices)
+        actualSeries = series.meanByRegions(regionIndices)
+        actual = actualSeries.collect()
         assert_equals(1, len(actual))
-        assert_true(array_equal(expected, actual[0]))
+        assert_equals(expectedKeys, actual[0][0])
+        assert_true(array_equal(expected, actual[0][1]))
 
     def test_maxProject(self):
         from thunder.rdds.fileio.seriesloader import SeriesLoader

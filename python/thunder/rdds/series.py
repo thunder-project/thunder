@@ -561,15 +561,15 @@ class Series(Data):
 
         return keys, values
 
-    def aggregateByRegions(self, keys, aggregateFcn=None):
+    def meanByRegions(self, keys):
         """
-        Combines Series values within groupings specified by the passed keys.
+        Takes the mean of Series values within groupings specified by the passed keys.
 
-        Each sequence of keys passed specifies a "region". The given aggregation function will be applied to
-        all values within that region. For instance, series.aggregateByRegions([[1,2]]) would return the mean
-        of the records in series with key 1 and 2. If multiple regions are passed in, then multiple aggregates
-        will be returned. For instance, series.aggregateByRegions([[1,2], [1,3]]) would return two means,
-        one for the region composed of records 1 and 2, the other for records 1 and 3.
+        Each sequence of keys passed specifies a "region" within which to calculate the mean. For instance,
+        series.aggregateByRegions([[1,2]]) would return the mean of the records in series with key 1 and 2.
+        If multiple regions are passed in, then multiple aggregates will be returned. For instance,
+        series.aggregateByRegions([[1,2], [1,3]]) would return two means, one for the region composed of
+        records 1 and 2, the other for records 1 and 3.
 
         Parameters
         ----------
@@ -578,10 +578,10 @@ class Series(Data):
 
         Returns
         -------
-        sequence of aggregated Series values, one for each region passed in keys
+        new Series object
+            New Series will have one record per region. Record keys will be the mean of keys within the region,
+            while record values will be the mean of values in the region.
         """
-        if aggregateFcn is None:
-            aggregateFcn = lambda v: v
         # transform keys into map from keys to sequence of region indices
         regionLookup = {}
         for regionIdx, region in enumerate(keys):
@@ -594,15 +594,43 @@ class Series(Data):
             regionLookup_ = bcRegionLookup.value
             for k, val in kvIter:
                 for regionIdx in regionLookup_.get(k, []):
-                    yield regionIdx, val
+                    yield regionIdx, (k, val)
 
-        data = self.rdd.mapPartitions(toRegionIdx).groupByKey(len(keys)) \
-            .map(lambda (k_, v): (k_, aggregateFcn(vstack(v)).squeeze())).collect()
-        return [val for k, val in sorted(data)]
+        def createMeanTuple(kv):
+            key, val = kv
+            return 1, array(key, dtype=val.dtype), val
 
-    def meanByRegions(self, keys):
-        meanFunc = lambda v: mean(v, axis=0)
-        return self.aggregateByRegions(keys, meanFunc)
+        def mergeIntoMeanTuple(meanTuple, kv):
+            n, kmu, vmu = meanTuple
+            newn = n+1
+            return newn, kmu + (kv[0] - kmu) / newn, vmu + (kv[1] - vmu) / newn
+
+        def combineMeanTuples(meanTup1, meanTup2):
+            n1, kmu1, vmu1 = meanTup1
+            n2, kmu2, vmu2 = meanTup2
+            # assume n1, n2 always > 0, which should be the case for combineByKeys
+            assert n1 > 0
+            assert n2 > 0
+            newn = n1 + n2
+            if n2 * 10 < n1:
+                kdel = kmu2 - kmu1
+                vdel = vmu2 - vmu1
+                kmu1 += (kdel * n2) / newn
+                vmu1 += (vdel * n2) / newn
+            elif n1 * 10 < n2:
+                kdel = kmu2 - kmu1
+                vdel = vmu2 - vmu1
+                kmu1 = kmu2 - (kdel * n1) / newn
+                vmu1 = vmu2 - (vdel * n1) / newn
+            else:
+                kmu1 = (kmu1 * n1 + kmu2 * n2) / newn
+                vmu1 = (vmu1 * n1 + vmu2 * n2) / newn
+            return newn, kmu1, vmu1
+
+        data = self.rdd.mapPartitions(toRegionIdx) \
+            .combineByKey(createMeanTuple, mergeIntoMeanTuple, combineMeanTuples, numPartitions=len(keys)) \
+            .map(lambda (region_, (n, kmean, vmean)): (tuple(kmean.astype('int16')), vmean))
+        return self._constructor(data).__finalize__(self)
 
     def toBlocks(self, blockSizeSpec="150M"):
         """
