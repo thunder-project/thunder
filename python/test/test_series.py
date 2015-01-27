@@ -130,7 +130,6 @@ class TestSeriesMethods(PySparkTestCase):
         selection2 = data.select(['label1', 'label2'])
         assert(allclose(selection2.first()[1], array([4, 5])))
 
-
     def test_seriesStats(self):
         rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5]))])
         data = Series(rdd)
@@ -223,6 +222,23 @@ class TestSeriesMethods(PySparkTestCase):
         keys, values = data.query(inds)
         assert(allclose(values[0, :], array([1.5, 2., 3.5])))
         assert_equals(data.dtype, values[0, :].dtype)
+
+    def test_aggregateMean_singleRegion(self):
+        dataLocal = [
+            ((0, 0), array([1.0, 2.0, 3.0])),
+            ((0, 1), array([2.0, 2.0, 4.0])),
+            ((1, 0), array([4.0, 2.0, 1.0])),
+            ((1, 1), array([3.0, 1.0, 1.0]))
+        ]
+        series = Series(self.sc.parallelize(dataLocal))
+        itemIdxs = [1, 2]  # data keys for items 1 and 2 (0-based)
+        keys = [dataLocal[idx][0] for idx in itemIdxs]
+        regionIndices = [keys]
+        expected = vstack([dataLocal[idx][1] for idx in itemIdxs]).mean(axis=0)
+
+        actual = series.meanByRegions(regionIndices)
+        assert_equals(1, len(actual))
+        assert_true(array_equal(expected, actual[0]))
 
     def test_maxProject(self):
         from thunder.rdds.fileio.seriesloader import SeriesLoader

@@ -1,6 +1,6 @@
 from numpy import ndarray, array, sum, mean, median, std, size, arange, \
     percentile, asarray, maximum, zeros, corrcoef, where, \
-    true_divide, ceil
+    true_divide, ceil, vstack
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
@@ -560,6 +560,49 @@ class Series(Data):
                 keys[idx, :] = mean(map(lambda k: converter(k), indList), axis=0)
 
         return keys, values
+
+    def aggregateByRegions(self, keys, aggregateFcn=None):
+        """
+        Combines Series values within groupings specified by the passed keys.
+
+        Each sequence of keys passed specifies a "region". The given aggregation function will be applied to
+        all values within that region. For instance, series.aggregateByRegions([[1,2]]) would return the mean
+        of the records in series with key 1 and 2. If multiple regions are passed in, then multiple aggregates
+        will be returned. For instance, series.aggregateByRegions([[1,2], [1,3]]) would return two means,
+        one for the region composed of records 1 and 2, the other for records 1 and 3.
+
+        Parameters
+        ----------
+        keys: sequence of sequences of Series record keys
+            Each nested sequence specifies keys for a single region.
+
+        Returns
+        -------
+        sequence of aggregated Series values, one for each region passed in keys
+        """
+        if aggregateFcn is None:
+            aggregateFcn = lambda v: v
+        # transform keys into map from keys to sequence of region indices
+        regionLookup = {}
+        for regionIdx, region in enumerate(keys):
+            for key in region:
+                regionLookup.setdefault(key, []).append(regionIdx)
+
+        bcRegionLookup = self.rdd.context.broadcast(regionLookup)
+
+        def toRegionIdx(kvIter):
+            regionLookup_ = bcRegionLookup.value
+            for k, val in kvIter:
+                for regionIdx in regionLookup_.get(k, []):
+                    yield regionIdx, val
+
+        data = self.rdd.mapPartitions(toRegionIdx).groupByKey(len(keys)) \
+            .map(lambda (k_, v): (k_, aggregateFcn(vstack(v)).squeeze())).collect()
+        return [val for k, val in sorted(data)]
+
+    def meanByRegions(self, keys):
+        meanFunc = lambda v: mean(v, axis=0)
+        return self.aggregateByRegions(keys, meanFunc)
 
     def toBlocks(self, blockSizeSpec="150M"):
         """
