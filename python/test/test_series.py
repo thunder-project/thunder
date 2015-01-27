@@ -253,6 +253,6 @@ class TestSeriesMethods(PySparkTestCase):
         def setIndex(data, idx):
             data.index = idx
 
-        assert_raises(AttributeError, setIndex, data, 5)
+        assert_raises(ValueError, setIndex, data, 5)
         assert_raises(ValueError, setIndex, data, [1, 2])
 
