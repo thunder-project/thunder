@@ -561,7 +561,7 @@ class Series(Data):
 
         return keys, values
 
-    def meanByRegion(self, keys):
+    def meanOfRegion(self, keys):
         """Takes the mean of Series values within a single region specified by the passed keys.
 
         Parameters
@@ -570,7 +570,7 @@ class Series(Data):
 
         Returns
         -------
-        tuple of ((mean keys), (mean value))
+        tuple of ((mean of keys), (mean value))
         """
         bcRegionKeys = self.rdd.context.broadcast(frozenset(keys))
         n, kmean, vmean = self.rdd.filter(lambda (k, v): k in bcRegionKeys.value) \

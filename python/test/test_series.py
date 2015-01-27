@@ -238,10 +238,10 @@ class TestSeriesMethods(PySparkTestCase):
         expected = vstack([dataLocal[idx][1] for idx in itemIdxs]).mean(axis=0)
         return series, keys, expectedKeys, expected
 
-    def test_meanByRegion(self):
+    def test_meanOfRegion(self):
         series, keys, expectedKeys, expected = self.__setup_meanByRegion()
 
-        actual = series.meanByRegion(keys)
+        actual = series.meanOfRegion(keys)
         assert_equals(2, len(actual))
         assert_equals(expectedKeys, actual[0])
         assert_true(array_equal(expected, actual[1]))
