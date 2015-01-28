@@ -211,12 +211,31 @@ class Data(object):
         return self.rdd.collect()
 
     def collectAsArray(self):
+        """ Return all keys and values to the driver as a tuple of numpy arrays
+
+        This will be slow for large datasets, and may exhaust the available memory on the driver.
+        """
+        from numpy import asarray
+        out = self.rdd.collect()
+        keys = asarray(map(lambda (k, v): k, out))
+        values = asarray(map(lambda (k, v): v, out))
+        return keys, values
+
+    def collectValuesAsArray(self):
         """ Return all records to the driver as a numpy array
 
         This will be slow for large datasets, and may exhaust the available memory on the driver.
         """
         from numpy import asarray
         return asarray(self.rdd.values().collect())
+
+    def collectKeysAsArray(self):
+        """ Return all values to the driver as a numpy array
+
+        This will be slow for large datasets, and may exhaust the available memory on the driver.
+        """
+        from numpy import asarray
+        return asarray(self.rdd.keys().collect())
 
     def count(self):
         """ Mean of values, ignoring keys
