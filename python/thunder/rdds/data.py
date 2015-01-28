@@ -90,7 +90,7 @@ class Data(object):
 
     @property
     def _constructor(self):
-        raise NotImplementedError
+        return Data
 
     def _resetCounts(self):
         # to be overridden in subclasses
@@ -159,33 +159,29 @@ class Data(object):
         nextRdd = self.rdd.mapValues(lambda v: v.astype(dtype, casting=casting, copy=False))
         return self._constructor(nextRdd, dtype=str(dtype)).__finalize__(self)
 
-    def apply(self, func, dtype=None, casting='safe'):
+    def apply(self, func, keepdtype=False):
         """ Apply arbitrary function to records of a Data object.
 
         This wraps the combined process of calling Spark's map operation on
         the underlying RDD and returning a reconstructed Data object.
-
-        If `dtype` is passed, output will be cast to specified datatype - see `astype()`.
-        Otherwise output will be assumed to be of same datatype as input.
 
         Parameters
         ----------
         func : function
             Function to apply to records.
 
-        dtype: numpy dtype or dtype specifier, or string 'smallfloat', or None
-            Data type to which RDD values are to be cast. Will return immediately, performing no cast, if None is passed.
-
-        casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
-            Casting method to pass on to numpy's astype() method; see numpy documentation for details.
+        keepdtype : boolean
+            Whether to preserve the dtype, if false dtype will be set to none
+            under the assumption that the function might change it
         """
 
-        applied = self._constructor(self.rdd.map(func)).__finalize__(self)
-        if dtype:
-            return applied.astype(dtype=dtype, casting=casting)
-        return applied
+        if keepdtype:
+            noprop = ()
+        else:
+            noprop = ('_dtype',)
+        return self._constructor(self.rdd.map(func)).__finalize__(self, noPropagate=noprop)
 
-    def applyKeys(self, func):
+    def applyKeys(self, func, **kwargs):
         """ Apply arbitrary function to the keys of a Data object, preserving the values.
 
         See also
@@ -193,9 +189,9 @@ class Data(object):
         Series.apply
         """
 
-        return self._constructor(self.rdd.map(lambda (k, _): (func(k), _))).__finalize__(self)
+        return self.apply(lambda (k, v): (func(k), v), **kwargs)
 
-    def applyValues(self, func, dtype=None, casting='safe'):
+    def applyValues(self, func, **kwargs):
         """ Apply arbitrary function to the values of a Data object, preserving the keys.
 
         See also
@@ -203,10 +199,7 @@ class Data(object):
         Series.apply
         """
 
-        applied = self._constructor(self.rdd.mapValues(func)).__finalize__(self)
-        if dtype:
-            return applied.astype(dtype=dtype, casting=casting)
-        return applied
+        return self.apply(lambda (k, v): (k, func(v)), **kwargs)
 
     def collect(self):
         """ Return all records to the driver

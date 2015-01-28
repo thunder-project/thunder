@@ -70,9 +70,6 @@ class TestTimeSeriesMethods(TimeSeriesTestCase):
         rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5], dtype='float16'))])
         data = TimeSeries(rdd, dtype='float16')
         out = data.normalize('percentile', perc=20)
-        # check that _dtype has been set properly *before* calling first(), b/c first() will update this
-        # value even if it hasn't been correctly set
-        assert_equals('float16', str(out._dtype))
         vals = out.first()[1]
         assert_equals('float16', str(vals.dtype))
         assert(allclose(vals, array([-0.42105,  0.10526,  0.63157,  1.15789,  1.68421]), atol=1e-3))
@@ -82,9 +79,6 @@ class TestTimeSeriesMethods(TimeSeriesTestCase):
         rdd = self.sc.parallelize([(0, y)])
         data = TimeSeries(rdd, dtype='float16')
         out = data.normalize('window', window=2)
-        # check that _dtype has been set properly *before* calling first(), b/c first() will update this
-        # value even if it hasn't been correctly set
-        assert_equals('float16', str(out._dtype))
         vals = out.first()[1]
         assert_equals('float64', str(vals.dtype))
         b_true = array([1.2,  1.4,  2.4,  3.4,  4.2])
@@ -98,7 +92,6 @@ class TestTimeSeriesMethods(TimeSeriesTestCase):
         assert(allclose(vals, result_true, atol=1e-3))
 
         out = data.normalize('window-fast', window=2)
-        assert_equals('float16', str(out._dtype))
         vals = out.first()[1]
         assert_equals('float64', str(vals.dtype))
         b_true = array([1, 1, 2, 3, 4])
@@ -117,9 +110,6 @@ class TestTimeSeriesMethods(TimeSeriesTestCase):
         rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5], dtype='float16'))])
         data = TimeSeries(rdd, dtype='float16')
         out = data.normalize('mean')
-        # check that _dtype has been set properly *before* calling first(), b/c first() will update this
-        # value even if it hasn't been correctly set
-        assert_equals('float16', str(out._dtype))
         vals = out.first()[1]
         assert_equals('float16', str(vals.dtype))
         assert(allclose(out.first()[1],
