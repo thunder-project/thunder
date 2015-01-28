@@ -581,14 +581,14 @@ class Series(Data):
         kmean = tuple(kmean.astype('int32'))
         return kmean, vmean
 
-    def meanByRegions(self, nestedKeys):
+    def meanByRegion(self, nestedKeys):
         """Takes the mean of Series values within groupings specified by the passed keys.
 
         Each sequence of keys passed specifies a "region" within which to calculate the mean. For instance,
-        series.aggregateByRegions([[1,2]]) would return the mean of the records in series with key 1 and 2.
+        series.meanByRegion([[(1,0), (2,0)]) would return the mean of the records in series with keys (1,0) and (2,0).
         If multiple regions are passed in, then multiple aggregates will be returned. For instance,
-        series.aggregateByRegions([[1,2], [1,3]]) would return two means, one for the region composed of
-        records 1 and 2, the other for records 1 and 3.
+        series.meanByRegion([[(1,0), (2,0)], [(1,0), (3,0)]]) would return two means, one for the region composed
+        of records (1,0) and (2,0), the other for records (1,0) and (3,0).
 
         Parameters
         ----------

@@ -249,7 +249,7 @@ class TestSeriesMethods(PySparkTestCase):
     def test_meanByRegions_singleRegion(self):
         series, keys, expectedKeys, expected = self.__setup_meanByRegion()
 
-        actualSeries = series.meanByRegions([keys])
+        actualSeries = series.meanByRegion([keys])
         actual = actualSeries.collect()
         assert_equals(1, len(actual))
         assert_equals(expectedKeys, actual[0][0])
@@ -273,7 +273,7 @@ class TestSeriesMethods(PySparkTestCase):
             avgVals = vstack([dataLocal[idx][1] for idx in itemIdxs]).mean(axis=0)
             expected.append(avgVals)
 
-        actualSeries = series.meanByRegions(nestedKeys)
+        actualSeries = series.meanByRegion(nestedKeys)
         actual = actualSeries.collect()
         assert_equals(2, len(actual))
         for regionIdx in xrange(2):
