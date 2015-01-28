@@ -605,7 +605,7 @@ class Series(Data):
         regionLookup = {}
         for regionIdx, region in enumerate(nestedKeys):
             for key in region:
-                regionLookup.setdefault(key, []).append(regionIdx)
+                regionLookup.setdefault(tuple(key), []).append(regionIdx)
 
         bcRegionLookup = self.rdd.context.broadcast(regionLookup)
 
