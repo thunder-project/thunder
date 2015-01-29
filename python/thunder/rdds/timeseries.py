@@ -96,6 +96,22 @@ class TimeSeries(Series):
         rdd = self.rdd.mapValues(lambda x: dot(m, x) / scale)
         return self._constructor(rdd, index=newIndex).__finalize__(self)
 
+    def subsample(self, sampleFactor=2):
+        """
+        Subsample time series by an integer factor
+
+        Parameters
+        ----------
+        sampleFactor : positive integer, optional, default=2
+
+        """
+        if sampleFactor < 0:
+            raise Exception('Factor for subsampling must be postive, got %g' % sampleFactor)
+        s = slice(0, len(self.index), sampleFactor)
+        newIndex = self.index[s]
+        return self._constructor(
+            self.rdd.mapValues(lambda v: v[s]), index=newIndex).__finalize__(self)
+
     def fourier(self, freq=None):
         """
         Compute statistics of a Fourier decomposition on time series data
