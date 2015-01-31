@@ -1,10 +1,10 @@
-from numpy import ndarray
+from numpy import ndarray, asarray
 
 from thunder.rdds.images import Images
 from thunder.utils.common import checkparams
 
 
-class Register(object):
+class Registration(object):
     """
     Class for constructing registration algorithms.
 
@@ -42,10 +42,10 @@ class Register(object):
         RegisterModel.load : specifications for loading registration models
         """
 
-        return RegisterModel.load(file)
+        return RegistrationModel.load(file)
 
 
-class RegisterMethod(object):
+class RegistrationMethod(object):
     """
     Base class for registration methods
     """
@@ -53,16 +53,31 @@ class RegisterMethod(object):
     def __init__(self, *args, **kwargs):
         pass
 
-    def getTransform(self, im, ref):
+    def getTransform(self, im):
         raise NotImplementedError
 
-    @staticmethod
-    def reference(images, startidx=None, stopidx=None):
+    def setReference(self, reference):
         """
-        Compute a reference image /volume for use in registration.
+        Set the reference directly with a numpy array.
+
+        Parameters
+        ----------
+        refererence : array-like
+        """
+        reference = asarray(reference)
+        if reference.ndim not in set([2, 3]):
+            raise Exception("Dimensions of reference must be 2 or 3, got %g" % reference.ndim)
+
+        self.reference = reference
+
+        return self
+
+    def fitReference(self, images, startidx=None, stopidx=None):
+        """
+        Estimate a reference image /volume for use in registration.
 
         This default method computes the reference as the mean of a
-        subset of frames. Alternative registration algorithms
+        subset of frames. Subclassed registration algorithms
         may wish to override this method.
 
         Parameters
@@ -91,10 +106,12 @@ class RegisterMethod(object):
             ref = images
             n = images.nimages
         refval = ref.sum() / float(n)
-        return refval.astype(images.dtype)
 
-    @staticmethod
-    def checkReference(images, reference):
+        self.reference = refval.astype(images.dtype)
+
+        return self
+
+    def checkReference(self, images):
         """
         Check the dimensions and type of a reference relative to an Images object.
 
@@ -111,14 +128,14 @@ class RegisterMethod(object):
             The reference image / volume
         """
 
-        if isinstance(reference, ndarray):
-            if reference.shape != images.dims.count:
+        if isinstance(self.reference, ndarray):
+            if self.reference.shape != images.dims.count:
                 raise Exception('Dimensions of reference %s do not match dimensions of data %s' %
-                                (reference.shape, images.dims.count))
+                                (self.reference.shape, images.dims.count))
         else:
             raise Exception('Reference must be an array')
 
-    def fit(self, images, ref=None):
+    def fit(self, images):
         """
         Compute registration parameters on a collection of images / volumes.
 
@@ -129,10 +146,6 @@ class RegisterMethod(object):
         ----------
         images : Images
             An Images object with the images / volumes to estimate registration for.
-
-        ref : ndarray, optional, default = None
-            The reference image / volume to estimate registration against. Can safely pass None
-            for methods that do not require or use a reference.
 
         Returns
         -------
@@ -150,22 +163,22 @@ class RegisterMethod(object):
         if len(images.dims.count) not in set([2, 3]):
                 raise Exception('Number of image dimensions %s must be 2 or 3' % (len(images.dims.count)))
 
-        if ref is not None:
-            self.checkReference(images, ref)
+        if self.reference is not None:
+            self.checkReference(images)
 
-        # broadcast the reference
-        ref_bc = images.rdd.context.broadcast(ref)
+        # broadcast the registration model
+        reg_bc = images.rdd.context.broadcast(self)
 
         # compute the transformations
-        transformations = images.rdd.mapValues(lambda im: self.getTransform(im, ref_bc.value)).collectAsMap()
+        transformations = images.rdd.mapValues(lambda im: reg_bc.value.getTransform(im)).collectAsMap()
 
         # construct the model
         regmethod = self.__class__.__name__
         transclass = transformations.itervalues().next().__class__.__name__
-        model = RegisterModel(transformations, regmethod=regmethod, transclass=transclass)
+        model = RegistrationModel(transformations, regmethod=regmethod, transclass=transclass)
         return model
 
-    def run(self, images, ref=None):
+    def run(self, images):
         """
         Compute and implement registration on a collection of images / volumes.
 
@@ -179,10 +192,6 @@ class RegisterMethod(object):
         images : Images
             An Images object with the images / volumes to apply registration to.
 
-        ref : ndarray, optional, default = None
-            Reference image / volume to estimate registration against. Can safely pass
-            None for methods that do not require or use a reference.
-
         Return
         ------
         Images object with registered images / volumes
@@ -194,22 +203,22 @@ class RegisterMethod(object):
         if len(images.dims.count) not in set([2, 3]):
             raise Exception('Number of image dimensions %s must be 2 or 3' % (len(images.dims.count)))
 
-        if ref is not None:
-            self.checkReference(images, ref)
+        if self.reference is not None:
+            self.checkReference(images)
 
         # broadcast the reference
-        ref_bc = images.rdd.context.broadcast(ref)
+        reg_bc = images.rdd.context.broadcast(self)
 
-        def fitandtransform(im, ref):
-            t = self.getTransform(im, ref.value)
+        def fitandtransform(im, reg):
+            t = reg.value.getTransform(im)
             return t.apply(im)
 
-        newrdd = images.rdd.mapValues(lambda im: fitandtransform(im, ref_bc))
+        newrdd = images.rdd.mapValues(lambda im: fitandtransform(im, reg_bc))
 
         return Images(newrdd).__finalize__(images)
 
 
-class RegisterModel(object):
+class RegistrationModel(object):
 
     def __init__(self, transformations, regmethod=None, transclass=None):
         self.transformations = transformations
@@ -302,7 +311,7 @@ class RegisterModel(object):
 
         # instantiate the transformations and construct the model
         transformations = {int(k): transclass(**v) for k, v in input['transformations'].iteritems()}
-        model = RegisterModel(transformations, regmethod=regmethod, transclass=classname)
+        model = RegistrationModel(transformations, regmethod=regmethod, transclass=classname)
         return model
 
     def __repr__(self):

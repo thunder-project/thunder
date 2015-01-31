@@ -1,15 +1,15 @@
 """ Registration methods based on cross correlation """
 
-from thunder.imgprocessing.register import RegisterMethod
+from thunder.imgprocessing.registration import RegistrationMethod
 from thunder.imgprocessing.regmethods.utils import computeDisplacement
 
 
-class CrossCorr(RegisterMethod):
+class CrossCorr(RegistrationMethod):
     """
     Translation using cross correlation.
     """
 
-    def getTransform(self, im, ref):
+    def getTransform(self, im):
         """
         Compute displacement between an image or volume and reference.
 
@@ -28,17 +28,17 @@ class CrossCorr(RegisterMethod):
 
         from thunder.imgprocessing.transformation import Displacement
 
-        delta = computeDisplacement(im, ref)
+        delta = computeDisplacement(im, self.reference)
 
         return Displacement(delta)
 
 
-class PlanarCrossCorr(RegisterMethod):
+class PlanarCrossCorr(RegistrationMethod):
     """
     Translation using cross correlation on each plane.
     """
 
-    def getTransform(self, im, ref):
+    def getTransform(self, im):
         """
         Compute the planar displacement between an image or volume and reference.
 
@@ -60,9 +60,9 @@ class PlanarCrossCorr(RegisterMethod):
         delta = []
 
         if im.ndim == 2:
-            delta.append(computeDisplacement(im, ref))
+            delta.append(computeDisplacement(im, self.reference))
         else:
             for z in range(0, im.shape[2]):
-                delta.append(computeDisplacement(im[:, :, z], ref[:, :, z]))
+                delta.append(computeDisplacement(im[:, :, z], self.reference[:, :, z]))
 
         return PlanarDisplacement(delta)
