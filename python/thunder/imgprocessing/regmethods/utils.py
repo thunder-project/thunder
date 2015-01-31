@@ -1,5 +1,67 @@
 """ Shared utilities for registration methods """
 
+from numpy import ndarray
+
+from thunder.rdds.images import Images
+
+
+def computeReferenceMean(images, startidx, stopidx):
+    """
+    Compute a reference by taking the mean across images.
+
+    Parameters
+    ----------
+    images : Images
+            An Images object containg the image / volumes to compute reference from
+
+    startidx : int, optional, default = None
+        Starting index if computing a mean over a specified range
+
+    stopidx : int, optional, default = None
+        Stopping index if computing a mean over a specified range
+
+    Returns
+    -------
+    refval : ndarray
+        The reference image / volume
+    """
+
+    if not (isinstance(images, Images)):
+        raise Exception('Input data must be Images or a subclass')
+
+    if startidx is not None and stopidx is not None:
+        range = lambda x: startidx <= x < stopidx
+        n = stopidx - startidx
+        ref = images.filterOnKeys(range)
+    else:
+        ref = images
+        n = images.nimages
+
+    reference = (ref.sum() / float(n)).astype(images.dtype)
+
+    return reference
+
+
+def checkReference(images, reference):
+    """
+    Check that a reference is an ndarray and matches the dimensions of images.
+
+    Parameters
+    ----------
+    images : Images
+        An Images object containing the image / volumes to check against the reference
+
+    reference : ndarray
+        A reference image / volume
+    """
+
+    if isinstance(reference, ndarray):
+        if reference.shape != images.dims.count:
+            raise Exception('Dimensions of reference %s do not match dimensions of data %s' %
+                            (reference.shape, images.dims.count))
+        else:
+            raise Exception('Reference must be an array')
+
 
 def computeDisplacement(arry1, arry2):
     """

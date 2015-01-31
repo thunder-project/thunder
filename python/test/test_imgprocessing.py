@@ -32,7 +32,7 @@ class TestRegistrationBasic(ImgprocessingTestCase):
         imin = ImagesLoader(self.sc).fromArrays(im)
 
         reg = Registration('crosscorr')
-        reg.setReference(ref)
+        reg.prepare(ref)
         model1 = reg.fit(imin)
 
         t = tempfile.mkdtemp()
@@ -55,7 +55,7 @@ class TestRegistrationBasic(ImgprocessingTestCase):
         imin = ImagesLoader(self.sc).fromArrays(im)
 
         reg = Registration('crosscorr')
-        reg.setReference(ref)
+        reg.prepare(ref)
         model = reg.fit(imin)
         out1 = model.transform(imin).first()[1]
         out2 = reg.run(imin).first()[1]
@@ -72,15 +72,15 @@ class TestRegistrationBasic(ImgprocessingTestCase):
         im2 = random.randn(25, 25).astype('uint16')
         imin = ImagesLoader(self.sc).fromArrays([im0, im1, im2])
 
-        reg = Registration('crosscorr').fitReference(imin)
+        reg = Registration('crosscorr').prepare(imin)
         assert(allclose(reg.reference, (im0 + im1 + im2) / 3))
 
         print(imin.keys().collect())
 
-        reg = Registration('crosscorr').fitReference(imin, startidx=0, stopidx=2)
+        reg = Registration('crosscorr').prepare(imin, startidx=0, stopidx=2)
         assert(allclose(reg.reference, (im0 + im1) / 2))
 
-        reg = Registration('crosscorr').fitReference(imin, startidx=1, stopidx=2)
+        reg = Registration('crosscorr').prepare(imin, startidx=1, stopidx=2)
         assert(allclose(reg.reference, im1))
 
     def test_reference_3d(self):
@@ -91,7 +91,7 @@ class TestRegistrationBasic(ImgprocessingTestCase):
         im0 = random.randn(25, 25, 3).astype('uint16')
         im1 = random.randn(25, 25, 3).astype('uint16')
         imin = ImagesLoader(self.sc).fromArrays([im0, im1])
-        reg = Registration('crosscorr').fitReference(imin)
+        reg = Registration('crosscorr').prepare(imin)
         assert(allclose(reg.reference, (im0 + im1) / 2))
 
 
@@ -106,29 +106,29 @@ class TestCrossCorr(ImgprocessingTestCase):
 
         im = shift(ref, [2, 0], mode='constant', order=0)
         imin = ImagesLoader(self.sc).fromArrays(im)
-        paramout = reg.setReference(ref).fit(imin).transformations[0].delta
-        imout = reg.setReference(ref).run(imin).first()[1]
+        paramout = reg.prepare(ref).fit(imin).transformations[0].delta
+        imout = reg.prepare(ref).run(imin).first()[1]
         assert(allclose(ref[:-2, :], imout[:-2, :]))
         assert(allclose(paramout, [2, 0]))
 
         im = shift(ref, [0, 2], mode='constant', order=0)
         imin = ImagesLoader(self.sc).fromArrays(im)
-        paramout = reg.setReference(ref).fit(imin).transformations[0].delta
-        imout = reg.setReference(ref).run(imin).first()[1]
+        paramout = reg.prepare(ref).fit(imin).transformations[0].delta
+        imout = reg.prepare(ref).run(imin).first()[1]
         assert(allclose(ref[:, :-2], imout[:, :-2]))
         assert(allclose(paramout, [0, 2]))
 
         im = shift(ref, [2, -2], mode='constant', order=0)
         imin = ImagesLoader(self.sc).fromArrays(im)
-        paramout = reg.setReference(ref).fit(imin).transformations[0].delta
-        imout = reg.setReference(ref).run(imin).first()[1]
+        paramout = reg.prepare(ref).fit(imin).transformations[0].delta
+        imout = reg.prepare(ref).run(imin).first()[1]
         assert(allclose(ref[:-2, 2:], imout[:-2, 2:]))
         assert(allclose(paramout, [2, -2]))
 
         im = shift(ref, [-2, 2], mode='constant', order=0)
         imin = ImagesLoader(self.sc).fromArrays(im)
-        paramout = reg.setReference(ref).fit(imin).transformations[0].delta
-        imout = reg.setReference(ref).run(imin).first()[1]
+        paramout = reg.prepare(ref).fit(imin).transformations[0].delta
+        imout = reg.prepare(ref).run(imin).first()[1]
         assert(allclose(ref[2:, :-2], imout[2:, :-2]))
         assert(allclose(paramout, [-2, 2]))
 
@@ -140,13 +140,13 @@ class TestCrossCorr(ImgprocessingTestCase):
         imin = ImagesLoader(self.sc).fromArrays(im)
 
         # use 3D cross correlation
-        paramout = Registration('crosscorr').setReference(ref).fit(imin).transformations[0].delta
-        imout = Registration('crosscorr').setReference(ref).run(imin).first()[1]
+        paramout = Registration('crosscorr').prepare(ref).fit(imin).transformations[0].delta
+        imout = Registration('crosscorr').prepare(ref).run(imin).first()[1]
         assert(allclose(paramout, [2, -2, 0]))
         assert(allclose(ref[:-2, 2:, :], imout[:-2, 2:, :]))
 
         # use 2D cross correlation on each plane
-        paramout = Registration('planarcrosscorr').setReference(ref).fit(imin).transformations[0].delta
-        imout = Registration('planarcrosscorr').setReference(ref).run(imin).first()[1]
+        paramout = Registration('planarcrosscorr').prepare(ref).fit(imin).transformations[0].delta
+        imout = Registration('planarcrosscorr').prepare(ref).run(imin).first()[1]
         assert(allclose(paramout, [[2, -2], [2, -2], [2, -2]]))
         assert(allclose(ref[:-2, 2:, :], imout[:-2, 2:, :]))

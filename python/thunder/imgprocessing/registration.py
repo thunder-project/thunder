@@ -53,87 +53,14 @@ class RegistrationMethod(object):
     def __init__(self, *args, **kwargs):
         pass
 
-    def getTransform(self, im):
+    def prepare(self, **kwargs):
         raise NotImplementedError
 
-    def setReference(self, reference):
-        """
-        Set the reference directly with a numpy array.
+    def isPrepared(self, images):
+        raise NotImplementedError
 
-        Parameters
-        ----------
-        refererence : array-like
-        """
-        reference = asarray(reference)
-        if reference.ndim not in set([2, 3]):
-            raise Exception("Dimensions of reference must be 2 or 3, got %g" % reference.ndim)
-
-        self.reference = reference
-
-        return self
-
-    def fitReference(self, images, startidx=None, stopidx=None):
-        """
-        Estimate a reference image /volume for use in registration.
-
-        This default method computes the reference as the mean of a
-        subset of frames. Subclassed registration algorithms
-        may wish to override this method.
-
-        Parameters
-        ----------
-        startidx : int, optional, default = None
-            Starting index if computing a mean over a specified range
-
-        stopidx : int, optional, default = None
-            Stopping index if computing a mean over a specified range
-
-        Returns
-        -------
-        refval : ndarray
-            The reference image / volume
-
-        """
-
-        # TODO easy option for using the mean of the middle n images
-        # TODO fix inclusive behavior to match e.g. image loading
-
-        if startidx is not None and stopidx is not None:
-            range = lambda x: startidx <= x < stopidx
-            n = stopidx - startidx
-            ref = images.filterOnKeys(range)
-        else:
-            ref = images
-            n = images.nimages
-        refval = ref.sum() / float(n)
-
-        self.reference = refval.astype(images.dtype)
-
-        return self
-
-    def checkReference(self, images):
-        """
-        Check the dimensions and type of a reference relative to an Images object.
-
-        This default method ensures that the reference and images have the same dimensions.
-        Alternative registration procedures with more complex references may
-        wish to override this method.
-
-        Parameters
-        ----------
-        images : Images
-            An Images object containg the image / volumes to check reference against
-
-        reference : ndarray
-            The reference image / volume
-        """
-
-        if isinstance(self.reference, ndarray):
-            if self.reference.shape != images.dims.count:
-                raise Exception('Dimensions of reference %s do not match dimensions of data %s' %
-                                (self.reference.shape, images.dims.count))
-        else:
-            raise Exception('Reference must be an array')
+    def getTransform(self, im):
+        raise NotImplementedError
 
     def fit(self, images):
         """
@@ -157,14 +84,10 @@ class RegistrationMethod(object):
         RegisterModel : model for applying transformations
         """
 
-        if not (isinstance(images, Images)):
-            raise Exception('Input data must be Images or a subclass')
-
         if len(images.dims.count) not in set([2, 3]):
                 raise Exception('Number of image dimensions %s must be 2 or 3' % (len(images.dims.count)))
 
-        if self.reference is not None:
-            self.checkReference(images)
+        self.isPrepared(images)
 
         # broadcast the registration model
         reg_bc = images.rdd.context.broadcast(self)
@@ -203,8 +126,7 @@ class RegistrationMethod(object):
         if len(images.dims.count) not in set([2, 3]):
             raise Exception('Number of image dimensions %s must be 2 or 3' % (len(images.dims.count)))
 
-        if self.reference is not None:
-            self.checkReference(images)
+        self.isPrepared(images)
 
         # broadcast the reference
         reg_bc = images.rdd.context.broadcast(self)
