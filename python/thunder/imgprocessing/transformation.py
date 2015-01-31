@@ -38,7 +38,7 @@ class Displacement(Transformation):
         return shift(im, map(lambda x: -x, self.delta), mode='nearest')
 
     def __repr__(self):
-        return "Displacement(delta=%s)" % str(self.delta)
+        return "Displacement(delta=%s)" % repr(self.delta)
 
 
 class PlanarDisplacement(Transformation):
@@ -77,4 +77,4 @@ class PlanarDisplacement(Transformation):
             return im
 
     def __repr__(self):
-        return "PlanarDisplacement(delta=%s)" % str(self.delta)
+        return "PlanarDisplacement(delta=%s)" % repr(self.delta)
