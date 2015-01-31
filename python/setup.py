@@ -19,6 +19,7 @@ setup(
               'thunder.lib',
               'thunder.rdds',
               'thunder.rdds.fileio',
+              'thunder.rdds.imgblocks',
               'thunder.regression',
               'thunder.standalone',
               'thunder.utils',

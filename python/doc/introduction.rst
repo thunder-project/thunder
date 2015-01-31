@@ -17,7 +17,7 @@ It is built on top of the `Spark <http://www.spark-project.org/>`_ distributed c
 
 - A :class:`ThunderContext` with methods for loading or converting raw input sources
 - Classes for distributed data types, like :class:`Images`, :class:`Series`, :class:`TimeSeries`, and :class:`RowMatrix`
-- Methods for performing common manipulations, like :func:`Series.normalize` and :func:`Images.subsample`
+- Methods for performing common manipulations, like :func:`TimeSeries.detrend` and :func:`Images.subsample`
 - Classes for analyses, like :class:`RegressionModel` and :class:`ICA`, with methods for fitting models and extracting results or predictions
 - Helper components like :class:`Colorize` and :func:`export` for working with and inspecting analysis results
 

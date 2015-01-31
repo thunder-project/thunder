@@ -2,27 +2,32 @@
 Example standalone app for principal component analysis
 """
 
-import argparse
+import optparse
 from thunder import ThunderContext, PCA, export
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="do principal components analysis")
-    parser.add_argument("datafile", type=str)
-    parser.add_argument("outputdir", type=str)
-    parser.add_argument("k", type=int)
-    parser.add_argument("--svdmethod", choices=("direct", "em"), default="direct", required=False)
+    parser = optparse.OptionParser(description="do principal components analysis",
+                                   usage="%prog datafile outputdir k [options]")
+    parser.add_option("--svdmethod", choices=("direct", "em"), default="direct")
 
-    args = parser.parse_args()
+    opts, args = parser.parse_args()
+    try:
+        datafile = args[0]
+        outputdir = args[1]
+        k = int(args[2])
+    except IndexError:
+        parser.print_usage()
+        raise Exception("too few arguments")
 
     tsc = ThunderContext.start(appName="pca")
 
-    data = tsc.loadSeries(args.datafile).cache()
+    data = tsc.loadSeries(datafile).cache()
 
-    model = PCA(args.k, args.svdmethod)
+    model = PCA(k, opts.svdmethod)
     model.fit(data)
 
-    outputdir = args.outputdir + "-pca"
+    outputdir += "-pca"
     export(model.comps, outputdir, "comps", "matlab")
     export(model.latent, outputdir, "latent", "matlab")
     export(model.scores, outputdir, "scores", "matlab")

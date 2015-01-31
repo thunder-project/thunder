@@ -1,7 +1,5 @@
-from numpy import ndarray, asarray
-
 from thunder.rdds.images import Images
-from thunder.utils.common import checkparams
+from thunder.utils.common import checkParams
 
 
 class Registration(object):
@@ -27,7 +25,7 @@ class Registration(object):
             'planarcrosscorr': PlanarCrossCorr
         }
 
-        checkparams(method, REGMETHODS.keys())
+        checkParams(method, REGMETHODS.keys())
 
         return REGMETHODS[method](kwargs)
 

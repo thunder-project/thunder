@@ -2,23 +2,28 @@
 Example standalone app for calculating series statistics
 """
 
-import argparse
+import optparse
 from thunder import ThunderContext, export
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="compute summary statistics on time series data")
-    parser.add_argument("datafile", type=str)
-    parser.add_argument("outputdir", type=str)
-    parser.add_argument("mode", type=str)
-    parser.add_argument("--preprocess", default=False, required=False)
+    parser = optparse.OptionParser(description="compute summary statistics on time series data",
+                                   usage="%prog datafile outputdir mode [options]")
+    parser.add_option("--preprocess", action="store_true", default=False)
 
-    args = parser.parse_args()
+    opts, args = parser.parse_args()
+    try:
+        datafile = args[0]
+        outputdir = args[1]
+        mode = args[2]
+    except IndexError:
+        parser.print_usage()
+        raise Exception("too few arguments")
 
     tsc = ThunderContext.start(appName="stats")
 
-    data = tsc.loadSeries(args.datafile).cache()
-    vals = data.seriesStat(args.mode)
+    data = tsc.loadSeries(datafile).cache()
+    vals = data.seriesStat(mode)
 
-    outputdir = args.outputdir + "-stats"
-    save(vals, outputdir, "stats_" + args.mode, "matlab")
+    outputdir += "-stats"
+    export(vals, outputdir, "stats_" + mode, "matlab")

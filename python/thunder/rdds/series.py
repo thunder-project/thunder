@@ -1,11 +1,10 @@
 from numpy import ndarray, array, sum, mean, median, std, size, arange, \
-    polyfit, polyval, percentile, asarray, maximum, zeros, corrcoef, where, \
-    true_divide, empty_like, ceil
-from numpy import dtype as dtypefunc
+    percentile, asarray, maximum, zeros, corrcoef, where, \
+    true_divide, ceil, vstack
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
-from thunder.utils.common import checkparams, loadmatvar, smallest_float_type
+from thunder.utils.common import checkParams, loadMatVar, smallestFloatType
 
 
 class Series(Data):
@@ -64,7 +63,7 @@ class Series(Data):
         if self._dims is None:
             entry = self.populateParamsFromFirstRecord()[0]
             n = size(entry)
-            d = self.rdd.keys().mapPartitions(lambda i: [Dimensions(i, n)]).reduce(lambda x, y: x.mergedims(y))
+            d = self.rdd.keys().mapPartitions(lambda i: [Dimensions(i, n)]).reduce(lambda x, y: x.mergeDims(y))
             self._dims = d
         return self._dims
 
@@ -95,7 +94,7 @@ class Series(Data):
         return Series
 
     @staticmethod
-    def _check_type(record):
+    def _checkType(record):
         key = record[0]
         value = record[1]
         if not isinstance(key, tuple):
@@ -166,113 +165,27 @@ class Series(Data):
                 raise Exception("No indices found matching criterion")
 
         # determine new index and check the result
-        newindex = [i for i in index if crit(i)]
-        if len(newindex) == 0:
+        newIndex = [i for i in index if crit(i)]
+        if len(newIndex) == 0:
             raise Exception("No indices found matching criterion")
-        if array(newindex == index).all():
+        if array(newIndex == index).all():
             return self
 
         # use fast logical indexing to get the new values
-        subinds = where(map(lambda x: crit(x), index))
-        rdd = self.rdd.mapValues(lambda x: x[subinds])
+        subInds = where(map(lambda x: crit(x), index))
+        rdd = self.rdd.mapValues(lambda x: x[subInds])
 
         # if singleton, need to check whether it's an array or a scalar/int
         # if array, recompute a new set of indices
-        if len(newindex) == 1:
+        if len(newIndex) == 1:
             rdd = rdd.mapValues(lambda x: x[0])
             val = rdd.first()[1]
             if size(val) == 1:
-                newindex = newindex[0]
+                newIndex = newIndex[0]
             else:
-                newindex = arange(0, size(val))
+                newIndex = arange(0, size(val))
 
-        return self._constructor(rdd, index=newindex).__finalize__(self)
-
-    def detrend(self, method='linear', **kwargs):
-        """
-        Detrend series data with linear or nonlinear detrending
-        Preserve intercept so that subsequent steps can adjust the baseline
-
-        Parameters
-        ----------
-        method : str, optional, default = 'linear'
-            Detrending method
-
-        order : int, optional, default = 5
-            Order of polynomial, for non-linear detrending only
-        """
-        checkparams(method, ['linear', 'nonlin'])
-
-        if method.lower() == 'linear':
-            order = 1
-        else:
-            if 'order' in kwargs:
-                order = kwargs['order']
-            else:
-                order = 5
-
-        def func(y):
-            x = arange(1, len(y)+1)
-            p = polyfit(x, y, order)
-            p[-1] = 0
-            yy = polyval(p, x)
-            return y - yy
-
-        return self.apply(func)
-
-    def normalize(self, baseline='percentile', **kwargs):
-        """ Normalize each record by subtracting and dividing by a baseline.
-
-        Baseline can be derived from a global mean or percentile,
-        or a smoothed percentile estimated within a rolling window.
-
-        Parameters
-        ----------
-        baseline : str, optional, default = 'percentile'
-            Quantity to use as the baseline, options are 'mean', 'percentile', or 'window'
-
-        percentile : int, optional, default = 20
-            Percentile value to use, for 'percentile' or 'window' baseline only
-
-        window : int, optional, default = 6
-            Size of window for windowed baseline estimation
-        """
-        checkparams(baseline, ['mean', 'percentile', 'window'])
-        method = baseline.lower()
-
-        if method == 'mean':
-            basefunc = mean
-
-        if method == 'percentile' or method == 'window':
-            if 'percentile' in kwargs:
-                perc = kwargs['percentile']
-            else:
-                perc = 20
-
-        if method == 'percentile':
-            basefunc = lambda x: percentile(x, perc)
-
-        # TODO optimize implementation by doing a single initial sort
-        if method == 'window':
-            if 'window' in kwargs:
-                window = kwargs['window']
-            else:
-                window = 6
-
-            if window & 0x1:
-                left, right = (ceil(window/2), ceil(window/2) + 1)
-            else:
-                left, right = (window/2, window/2)
-
-            n = len(self.index)
-            basefunc = lambda x: asarray([percentile(x[max(ix-left, 0):min(ix+right+1, n)], perc)
-                                          for ix in arange(0, n)])
-
-        def get(y):
-            b = basefunc(y)
-            return (y - b) / (b + 0.1)
-
-        return self.apply(get)
+        return self._constructor(rdd, index=newIndex).__finalize__(self)
 
     def center(self, axis=0):
         """ Center series data by subtracting the mean
@@ -284,10 +197,10 @@ class Series(Data):
             Which axis to center along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.apply(lambda x: x - mean(x))
+            return self.applyValues(lambda x: x - mean(x))
         elif axis == 1:
-            meanvec = self.mean()
-            return self.apply(lambda x: x - meanvec)
+            meanVec = self.mean()
+            return self.applyValues(lambda x: x - meanVec)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -301,10 +214,10 @@ class Series(Data):
             Which axis to standardize along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.apply(lambda x: x / std(x))
+            return self.applyValues(lambda x: x / std(x))
         elif axis == 1:
             stdvec = self.stdev()
-            return self.apply(lambda x: x / stdvec)
+            return self.applyValues(lambda x: x / stdvec)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -319,12 +232,12 @@ class Series(Data):
             Which axis to zscore along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.apply(lambda x: (x - mean(x)) / std(x))
+            return self.applyValues(lambda x: (x - mean(x)) / std(x))
         elif axis == 1:
             stats = self.stats()
-            meanvec = stats.mean()
-            stdvec = stats.stdev()
-            return self.apply(lambda x: (x - meanvec) / stdvec)
+            meanVec = stats.mean()
+            stdVec = stats.stdev()
+            return self.applyValues(lambda x: (x - meanVec) / stdVec)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -353,18 +266,18 @@ class Series(Data):
             if size(s) != size(self.index):
                 raise Exception('Size of signal to correlate with, %g, does not match size of series' % size(s))
             rdd = self.rdd.mapValues(lambda x: corrcoef(x, s)[0, 1])
-            newindex = 0
+            newIndex = 0
         # handle multiple 1d signals
         elif s.ndim == 2:
             if s.shape[1] != size(self.index):
                 raise Exception('Length of signals to correlate with, %g, does not match size of series' % s.shape[1])
             rdd = self.rdd.mapValues(lambda x: array([corrcoef(x, y)[0, 1] for y in s]))
-            newindex = range(0, s.shape[0])
+            newIndex = range(0, s.shape[0])
         else:
             raise Exception('Signal to correlate with must have 1 or 2 dimensions')
 
         # return result
-        return self._constructor(rdd, dtype='float64', index=newindex).__finalize__(self)
+        return self._constructor(rdd, dtype='float64', index=newIndex).__finalize__(self)
 
     def seriesMax(self):
         """ Compute the value maximum of each record in a Series """
@@ -394,7 +307,7 @@ class Series(Data):
           q: a floating point number between 0 and 100 inclusive.
         """
         rdd = self.rdd.mapValues(lambda x: percentile(x, q))
-        return self._constructor(rdd, index='percentile').__finalize__(self, nopropagate=('_dtype',))
+        return self._constructor(rdd, index='percentile').__finalize__(self, noPropagate=('_dtype',))
 
     def seriesStdev(self):
         """ Compute the value std of each record in a Series """
@@ -417,9 +330,9 @@ class Series(Data):
             'min': min,
             'count': size
         }
-        func = STATS[stat]
+        func = STATS[stat.lower()]
         rdd = self.rdd.mapValues(lambda x: func(x))
-        return self._constructor(rdd, index=stat).__finalize__(self, nopropagate=('_dtype',))
+        return self._constructor(rdd, index=stat).__finalize__(self, noPropagate=('_dtype',))
 
     def seriesStats(self):
         """
@@ -427,7 +340,7 @@ class Series(Data):
         """
         rdd = self.rdd.mapValues(lambda x: array([x.size, mean(x), std(x), max(x), min(x)]))
         return self._constructor(rdd, index=['count', 'mean', 'std', 'max', 'min'])\
-            .__finalize__(self, nopropagate=('_dtype',))
+            .__finalize__(self, noPropagate=('_dtype',))
 
     def maxProject(self, axis=0):
         """
@@ -443,29 +356,26 @@ class Series(Data):
         dims.max = list(array(dims.max)[arange(0, nkeys) != axis])
         return self._constructor(rdd, dims=dims).__finalize__(self)
 
-    def subtoind(self, order='F', onebased=True):
+    def subToInd(self, order='F', isOneBased=True):
         """
         Convert subscript index keys to linear index keys
 
         Parameters
         ----------
-        dims : array-like
-            Maximum dimensions
-
         order : str, 'C' or 'F', default = 'F'
             Specifies row-major or column-major array indexing. See numpy.ravel_multi_index.
 
-        onebased : boolean, default = True
+        isOneBased : boolean, default = True
             True if subscript indices start at 1, False if they start at 0
         """
-        from thunder.rdds.keys import _subtoind_converter
+        from thunder.rdds.keys import _subToIndConverter
 
         # converter = _subtoind_converter(self.dims.max, order=order, onebased=onebased)
-        converter = _subtoind_converter(self.dims.count, order=order, onebased=onebased)
+        converter = _subToIndConverter(self.dims.count, order=order, isOneBased=isOneBased)
         rdd = self.rdd.map(lambda (k, v): (converter(k), v))
         return self._constructor(rdd, index=self._index).__finalize__(self)
 
-    def indtosub(self, order='F', onebased=True, dims=None):
+    def indToSub(self, order='F', isOneBased=True, dims=None):
         """
         Convert linear indexing to subscript indexing
 
@@ -480,12 +390,12 @@ class Series(Data):
         onebased : boolean, default = True
             True if generated subscript indices are to start at 1, False to start at 0
         """
-        from thunder.rdds.keys import _indtosub_converter
+        from thunder.rdds.keys import _indToSubConverter
 
         if dims is None:
             dims = self.dims.max
 
-        converter = _indtosub_converter(dims, order=order, onebased=onebased)
+        converter = _indToSubConverter(dims, order=order, isOneBased=isOneBased)
         rdd = self.rdd.map(lambda (k, v): (converter(k), v))
         return self._constructor(rdd, index=self._index).__finalize__(self)
 
@@ -541,7 +451,7 @@ class Series(Data):
         nout = size(result[0])
 
         if sorting is True:
-            keys = out.subtoind().rdd.map(lambda (k, _): int(k)).collect()
+            keys = out.subToInd().rdd.map(lambda (k, _): int(k)).collect()
             result = array([v for (k, v) in sorted(zip(keys, result), key=lambda (k, v): k)])
 
         # reshape into a dense array of shape (b, x, y, z)  or (b, x, y) or (b, x)
@@ -571,7 +481,7 @@ class Series(Data):
         thresh : float, optional, default = None
             A threshold on standard deviation to use when picking points
 
-        stat : str, optional, default = 'std
+        stat : str, optional, default = 'std'
             Statistic to use for thresholding
 
         Returns
@@ -582,11 +492,11 @@ class Series(Data):
         from numpy.linalg import norm
         from numpy.random import randint
 
-        stat_dict = {'std': std, 'norm': norm}
+        statDict = {'std': std, 'norm': norm}
         seed = randint(0, 2 ** 32 - 1)
 
         if thresh is not None:
-            func = stat_dict[stat]
+            func = statDict[stat]
             result = array(self.rdd.values().filter(lambda x: func(x) > thresh).takeSample(False, nsamples, seed=seed))
         else:
             result = array(self.rdd.values().takeSample(False, nsamples, seed=seed))
@@ -596,7 +506,7 @@ class Series(Data):
 
         return result
 
-    def query(self, inds, var='inds', order='F', onebased=True):
+    def query(self, inds, var='inds', order='F', isOneBased=True):
         """
         Extract records with indices matching those provided
 
@@ -628,28 +538,200 @@ class Series(Data):
         """
 
         if isinstance(inds, str):
-            inds = loadmatvar(inds, var)[0]
+            inds = loadMatVar(inds, var)[0]
         else:
             inds = asarray(inds)
 
         n = len(inds)
 
-        from thunder.rdds.keys import _indtosub_converter
-        converter = _indtosub_converter(dims=self.dims.max, order=order, onebased=onebased)
+        from thunder.rdds.keys import _indToSubConverter
+        converter = _indToSubConverter(dims=self.dims.max, order=order, isOneBased=isOneBased)
 
         keys = zeros((n, len(self.dims.count)))
         values = zeros((n, len(self.first()[1])))
 
-        data = self.subtoind(order=order, onebased=onebased)
+        data = self.subToInd(order=order, isOneBased=isOneBased)
 
-        for idx, indlist in enumerate(inds):
-            if len(indlist) > 0:
-                inds_set = set(asarray(indlist).flat)
-                inds_bc = self.rdd.context.broadcast(inds_set)
-                values[idx, :] = data.filterOnKeys(lambda k: k in inds_bc.value).values().mean()
-                keys[idx, :] = mean(map(lambda k: converter(k), indlist), axis=0)
+        for idx, indList in enumerate(inds):
+            if len(indList) > 0:
+                indsSet = set(asarray(indList).flat)
+                bcInds = self.rdd.context.broadcast(indsSet)
+                values[idx, :] = data.filterOnKeys(lambda k: k in bcInds.value).values().mean()
+                keys[idx, :] = mean(map(lambda k: converter(k), indList), axis=0)
 
         return keys, values
+
+    def meanOfRegion(self, keys):
+        """Takes the mean of Series values within a single region specified by the passed keys.
+
+        Parameters
+        ----------
+        keys: sequence of Series record keys
+
+        Returns
+        -------
+        tuple of ((mean of keys), (mean value))
+        """
+        bcRegionKeys = self.rdd.context.broadcast(frozenset(keys))
+        n, kmean, vmean = self.rdd.filter(lambda (k, v): k in bcRegionKeys.value) \
+            .map(lambda (k, v):  (array(k, dtype=v.dtype), v)) \
+            .aggregate(_MeanCombiner.createZeroTuple(),
+                       _MeanCombiner.mergeIntoMeanTuple,
+                       _MeanCombiner.combineMeanTuples)
+        kmean = tuple(kmean.astype('int32'))
+        return kmean, vmean
+
+    def meanByRegion(self, nestedKeys):
+        """Takes the mean of Series values within groupings specified by the passed keys.
+
+        Each sequence of keys passed specifies a "region" within which to calculate the mean. For instance,
+        series.meanByRegion([[(1,0), (2,0)]) would return the mean of the records in series with keys (1,0) and (2,0).
+        If multiple regions are passed in, then multiple aggregates will be returned. For instance,
+        series.meanByRegion([[(1,0), (2,0)], [(1,0), (3,0)]]) would return two means, one for the region composed
+        of records (1,0) and (2,0), the other for records (1,0) and (3,0).
+
+        Parameters
+        ----------
+        nestedKeys: sequence of sequences of Series record keys
+            Each nested sequence specifies keys for a single region.
+
+        Returns
+        -------
+        new Series object
+            New Series will have one record per region. Record keys will be the mean of keys within the region,
+            while record values will be the mean of values in the region.
+        """
+        # transform keys into map from keys to sequence of region indices
+        regionLookup = {}
+        for regionIdx, region in enumerate(nestedKeys):
+            for key in region:
+                regionLookup.setdefault(tuple(key), []).append(regionIdx)
+
+        bcRegionLookup = self.rdd.context.broadcast(regionLookup)
+
+        def toRegionIdx(kvIter):
+            regionLookup_ = bcRegionLookup.value
+            for k, val in kvIter:
+                for regionIdx in regionLookup_.get(k, []):
+                    yield regionIdx, (k, val)
+
+        data = self.rdd.mapPartitions(toRegionIdx) \
+            .combineByKey(_MeanCombiner.createMeanTuple,
+                          _MeanCombiner.mergeIntoMeanTuple,
+                          _MeanCombiner.combineMeanTuples, numPartitions=len(nestedKeys)) \
+            .map(lambda (region_, (n, kmean, vmean)): (tuple(kmean.astype('int16')), vmean))
+        return self._constructor(data).__finalize__(self)
+
+    def toBlocks(self, blockSizeSpec="150M"):
+        """
+        Parameters
+        ----------
+        blockSizeSpec: string memory size, tuple of integer splits per dimension, or instance of BlockingStrategy
+            A string spec will be interpreted as a memory size string (e.g. "64M"). The resulting blocks will be
+            generated by a SeriesBlockingStrategy to be close to the requested size.
+            A tuple of positive ints will be interpreted as "splits per dimension". Only certain patterns of splits
+            are valid to convert Series back to Blocks; see docstring above. These splits will be passed into a
+            SeriesBlockingStrategy that will be used to generate the returned blocks.
+            If an instance of SeriesBlockingStrategy is passed, it will be used to generate the returned Blocks.
+
+        Returns
+        -------
+        Blocks instance
+        """
+        from thunder.rdds.imgblocks.strategy import BlockingStrategy, SeriesBlockingStrategy
+        if isinstance(blockSizeSpec, SeriesBlockingStrategy):
+            blockingStrategy = blockSizeSpec
+        elif isinstance(blockSizeSpec, basestring) or isinstance(blockSizeSpec, int):
+            blockingStrategy = SeriesBlockingStrategy.generateFromBlockSize(self, blockSizeSpec)
+        else:
+            # assume it is a tuple of positive int specifying splits
+            blockingStrategy = SeriesBlockingStrategy(blockSizeSpec)
+
+        blockingStrategy.setSource(self)
+        avgSize = blockingStrategy.calcAverageBlockSize()
+        if avgSize >= BlockingStrategy.DEFAULT_MAX_BLOCK_SIZE:
+            # TODO: use logging module here rather than print
+            print "Thunder WARNING: average block size of %g bytes exceeds suggested max size of %g bytes" % \
+                  (avgSize, BlockingStrategy.DEFAULT_MAX_BLOCK_SIZE)
+
+        returnType = blockingStrategy.getBlocksClass()
+        blockedRdd = self.rdd.map(blockingStrategy.blockingFunction)
+        # since our blocks are likely pretty big, try setting 1 partition per block
+        groupedRdd = blockedRdd.groupByKey(numPartitions=blockingStrategy.nblocks)
+        # <key>, <val> at this point is:
+        # <block number>, <[(series key, series val), (series key, series val), ...]>
+        simpleBlocksRdd = groupedRdd.map(blockingStrategy.combiningFunction)
+        return returnType(simpleBlocksRdd, dims=self.dims, nimages=len(self.index), dtype=self.dtype)
+
+    def saveAsBinarySeries(self, outputdirname, overwrite=False):
+        """Writes out Series-formatted data.
+
+        This method (Series.saveAsBinarySeries) writes out binary series files using the current partitioning
+        of this Series object. (That is, if mySeries.rdd.getNumPartitions() == 5, then 5 files will be written
+        out, one per partition.) The records will not be resorted; the file names for each partition will be
+        taken from the key of the first Series record in that partition. If the Series object is already
+        sorted and no records have been removed by filtering, then the resulting output should be equivalent
+        to what one would get from calling myImages.saveAsBinarySeries().
+
+        If all one wishes to do is to save out Images data in a binary series format, then
+        tsc.convertImagesToSeries() will likely be more efficient than
+        tsc.loadImages().toSeries().saveAsBinarySeries().
+
+        Parameters
+        ----------
+        outputdirname : string path or URI to directory to be created
+            Output files will be written underneath outputdirname. This directory must not yet exist
+            (unless overwrite is True), and must be no more than one level beneath an existing directory.
+            It will be created as a result of this call.
+
+        overwrite : bool
+            If true, outputdirname and all its contents will be deleted and recreated as part
+            of this call.
+        """
+        import cStringIO as StringIO
+        import struct
+        from thunder.rdds.imgblocks.blocks import SimpleBlocks
+        from thunder.rdds.fileio.writers import getParallelWriterForPath
+        from thunder.rdds.fileio.seriesloader import writeSeriesConfig
+
+        if not overwrite:
+            from thunder.utils.common import raiseErrorIfPathExists
+            raiseErrorIfPathExists(outputdirname)
+            overwrite = True  # prevent additional downstream checks for this path
+
+        def partitionToBinarySeries(kvIter):
+            """Collects all Series records in a partition into a single binary series record.
+            """
+            keypacker = None
+            firstKey = None
+            buf = StringIO.StringIO()
+            for seriesKey, series in kvIter:
+                if keypacker is None:
+                    keypacker = struct.Struct('h'*len(seriesKey))
+                    firstKey = seriesKey
+                # print >> sys.stderr, seriesKey, series, series.tostring().encode('hex')
+                buf.write(keypacker.pack(*seriesKey))
+                buf.write(series.tostring())
+            val = buf.getvalue()
+            buf.close()
+            # we might have an empty partition, in which case firstKey will still be None
+            if firstKey is None:
+                return iter([])
+            else:
+                label = SimpleBlocks.getBinarySeriesNameForKey(firstKey) + ".bin"
+                return iter([(label, val)])
+
+        writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
+
+        binseriesrdd = self.rdd.mapPartitions(partitionToBinarySeries)
+
+        binseriesrdd.foreach(writer.writerFcn)
+
+        # TODO: all we really need here are the number of keys and number of values, which could in principle
+        # be cached in _nkeys and _nvals attributes, removing the need for this .first() call in most cases.
+        firstKey, firstVal = self.first()
+        writeSeriesConfig(outputdirname, len(firstKey), len(firstVal), keyType='int16', valueType=self.dtype,
+                          overwrite=overwrite)
 
     def toRowMatrix(self):
         """
@@ -673,3 +755,43 @@ class Series(Data):
         return SpatialSeries(self.rdd).__finalize__(self)
 
 
+class _MeanCombiner(object):
+    @staticmethod
+    def createZeroTuple():
+        return 0, 0.0, 0.0
+
+    @staticmethod
+    def createMeanTuple(kv):
+        key, val = kv
+        return 1, array(key, dtype=val.dtype), val
+
+    @staticmethod
+    def mergeIntoMeanTuple(meanTuple, kv):
+        n, kmu, vmu = meanTuple
+        newn = n+1
+        return newn, kmu + (kv[0] - kmu) / newn, vmu + (kv[1] - vmu) / newn
+
+    @staticmethod
+    def combineMeanTuples(meanTup1, meanTup2):
+        n1, kmu1, vmu1 = meanTup1
+        n2, kmu2, vmu2 = meanTup2
+        if n1 == 0:
+            return n2, kmu2, vmu2
+        elif n2 == 0:
+            return n1, kmu1, vmu1
+        else:
+            newn = n1 + n2
+            if n2 * 10 < n1:
+                kdel = kmu2 - kmu1
+                vdel = vmu2 - vmu1
+                kmu1 += (kdel * n2) / newn
+                vmu1 += (vdel * n2) / newn
+            elif n1 * 10 < n2:
+                kdel = kmu2 - kmu1
+                vdel = vmu2 - vmu1
+                kmu1 = kmu2 - (kdel * n1) / newn
+                vmu1 = vmu2 - (vdel * n1) / newn
+            else:
+                kmu1 = (kmu1 * n1 + kmu2 * n2) / newn
+                vmu1 = (vmu1 * n1 + vmu2 * n2) / newn
+            return newn, kmu1, vmu1

@@ -1,62 +1,36 @@
 #!/usr/bin/env python
 
+try:
+    import thunder
+except ImportError:
+    thunder = None
+    raise Exception("Unable to import Thunder. Please make sure that the Thunder installation directory is listed in " +
+                    "the PYTHONPATH environment variable. Also check that your build of Thunder is functional and it can be imported.")
 import os
 import sys
-import glob
-import thunder
 
-# get arguments
-args = sys.argv[1:]
-if len(args) < 2:
-    print >> sys.stderr, "usage: thunder-submit <analysis name or script file> <opts>"
-    exit(-1)
-analysis = args[0]
-opts = ' '.join(args[1:])
-if not analysis.endswith('py'):
-    thunderdir = os.path.dirname(os.path.realpath(thunder.__file__))
-    analysis = os.path.join(thunderdir, "standalone/" + analysis + ".py")
+from thunder.utils.launch import getFilteredHelpMessage, getSparkHome, transformArguments
 
-# check for SPARK_HOME
-spark = os.getenv('SPARK_HOME')
-if spark is None or spark == '':
-    raise Exception('must assign the environemntal variable SPARK_HOME with the location of Spark')
 
-# check the name of the master, set explicitly to local if empty, unless we're on ec2
-master = os.getenv('MASTER')
-ec2 = os.path.isfile('/root/spark-ec2/cluster-url')
-if master is None:
-    if ec2:
-        master = os.popen('cat /root/spark-ec2/cluster-url').read().replace('\n','')
+def getUsage(wrappedScriptName='spark-submit'):
+    scriptName = os.path.basename(sys.argv[0])
+    return "Usage: %s [%s options] <python file> [app options]\n" % (sys.argv[0], wrappedScriptName) + \
+           "The '%s' script is a wrapper around Spark's '%s', and accepts all the same options, " % (scriptName, wrappedScriptName) + \
+           "although not all are meaningful when running python scripts. Options for '%s' follow.\n" % wrappedScriptName
+
+
+def main():
+    SPARK_HOME = getSparkHome()
+
+    childArgs = transformArguments(sys.argv)
+
+    sparkSubmit = os.path.join(SPARK_HOME, 'bin', 'spark-submit')
+
+    # check for help flags, and print our own first if present
+    if "-h" in childArgs or "--help" in childArgs:
+        print >> sys.stderr, getFilteredHelpMessage(sparkSubmit, getUsage())
     else:
-        master = "local"
+        os.execv(sparkSubmit, childArgs)
 
-# if not running locally, check whether egg exists, and if not, build it
-if not ("local" in master):
-
-    # get directory
-    dist = os.path.join(calldir, '../dist')
-
-    # check for egg
-    egg = glob.glob(os.path.join(dist, "thunder_python-" + str(thunder.__version__) + "*.egg"))
-
-    # build if egg not found
-    if len(egg) == 0:
-        os.system(os.path.join(calldir, 'build'))
-        egg = glob.glob(os.path.join(dist, "thunder_python-" + str(thunder.__version__) + "*.egg"))
-
-    os.environ['ADD_FILES'] = egg[0]
-
-# get location of jar and add to the submit classpath
-jar = os.path.join(os.path.dirname(os.path.realpath(thunder.__file__)), 'lib/thunder_2.10-'+str(thunder.__version__)+'.jar')
-
-if os.getenv('SPARK_SUBMIT_CLASSPATH') is None:
-    os.environ['SPARK_SUBMIT_CLASSPATH'] = ""
-
-os.environ['SPARK_SUBMIT_CLASSPATH'] = os.environ['SPARK_SUBMIT_CLASSPATH'] + ":" + jar
-
-master = "--master " + master
-
-if not ("local" in master):
-    os.system(os.path.join(spark, 'bin/spark-submit ') + master + " " + analysis + " " + files + " " + opts)
-else:
-    os.system(os.path.join(spark, 'bin/spark-submit ') + master + " " + analysis + " " + opts)
+if __name__ == "__main__":
+    main()

@@ -67,15 +67,14 @@ class TestRegistrationBasic(ImgprocessingTestCase):
         # test default reference calculation in 2D
 
         random.seed(42)
-        im0 = random.randn(25, 25).astype('uint16')
-        im1 = random.randn(25, 25).astype('uint16')
-        im2 = random.randn(25, 25).astype('uint16')
+
+        im0 = random.rand(25, 25).astype('float')
+        im1 = random.rand(25, 25).astype('float')
+        im2 = random.rand(25, 25).astype('float')
         imin = ImagesLoader(self.sc).fromArrays([im0, im1, im2])
 
         reg = Registration('crosscorr').prepare(imin)
         assert(allclose(reg.reference, (im0 + im1 + im2) / 3))
-
-        print(imin.keys().collect())
 
         reg = Registration('crosscorr').prepare(imin, startidx=0, stopidx=2)
         assert(allclose(reg.reference, (im0 + im1) / 2))
@@ -88,8 +87,8 @@ class TestRegistrationBasic(ImgprocessingTestCase):
         # test default reference calculation in 3D
 
         random.seed(42)
-        im0 = random.randn(25, 25, 3).astype('uint16')
-        im1 = random.randn(25, 25, 3).astype('uint16')
+        im0 = random.randn(25, 25, 3).astype('float')
+        im1 = random.randn(25, 25, 3).astype('float')
         imin = ImagesLoader(self.sc).fromArrays([im0, im1])
         reg = Registration('crosscorr').prepare(imin)
         assert(allclose(reg.reference, (im0 + im1) / 2))

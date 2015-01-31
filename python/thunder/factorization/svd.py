@@ -20,7 +20,7 @@ class SVD(object):
     method : string, optional, default "direct"
         Whether to use a direct or iterative method
 
-    maxiter : int, optional, default = 20
+    maxIter : int, optional, default = 20
         Maximum number of iterations if using an iterative method
 
     tol : float, optional, default = 0.00001
@@ -37,11 +37,14 @@ class SVD(object):
     `v` : array, shape (k, ncols)
         Right singular vectors
     """
-    def __init__(self, k=3, method="direct", maxiter=20, tol=0.00001):
+    def __init__(self, k=3, method="direct", maxIter=20, tol=0.00001):
         self.k = k
         self.method = method
-        self.maxiter = maxiter
+        self.maxIter = maxIter
         self.tol = tol
+        self.u = None
+        self.s = None
+        self.v = None
 
     def calc(self, mat):
         """
@@ -57,7 +60,7 @@ class SVD(object):
         self : returns an instance of self.
         """
 
-        from numpy import random, sum, argsort, dot, outer, sqrt
+        from numpy import argsort, dot, outer, random, sqrt, sum
         from scipy.linalg import inv, orth
         from numpy.linalg import eigh
 
@@ -89,7 +92,7 @@ class SVD(object):
 
             # initialize random matrix
             c = random.rand(self.k, mat.ncols)
-            iter = 0
+            niter = 0
             error = 100
 
             # define an accumulator
@@ -104,40 +107,40 @@ class SVD(object):
                     return val1
 
             # define an accumulator function
-            global runsum
+            global runSum
 
             def outerSumOther(x, y):
-                global runsum
-                runsum += outer(x, dot(x, y))
+                global runSum
+                runSum += outer(x, dot(x, y))
 
             # iterative update subspace using expectation maximization
             # e-step: x = (c'c)^-1 c' y
             # m-step: c = y x' (xx')^-1
-            while (iter < self.maxiter) & (error > self.tol):
+            while (niter < self.maxIter) & (error > self.tol):
 
-                c_old = c
+                cOld = c
 
                 # pre compute (c'c)^-1 c'
-                c_inv = dot(c.T, inv(dot(c, c.T)))
+                cInv = dot(c.T, inv(dot(c, c.T)))
 
                 # compute (xx')^-1 through a map reduce
-                xx = mat.times(c_inv).gramian()
-                xx_inv = inv(xx)
+                xx = mat.times(cInv).gramian()
+                xxInv = inv(xx)
 
                 # pre compute (c'c)^-1 c' (xx')^-1
-                premult2 = mat.rdd.context.broadcast(dot(c_inv, xx_inv))
+                preMult2 = mat.rdd.context.broadcast(dot(cInv, xxInv))
 
                 # compute the new c using an accumulator
                 # direct approach: c = mat.rows().map(lambda x: outer(x, dot(x, premult2.value))).sum()
-                runsum = mat.rdd.context.accumulator(zeros((mat.ncols, self.k)), MatrixAccumulatorParam())
-                mat.rows().foreach(lambda x: outerSumOther(x, premult2.value))
-                c = runsum.value
+                runSum = mat.rdd.context.accumulator(zeros((mat.ncols, self.k)), MatrixAccumulatorParam())
+                mat.rows().foreach(lambda x: outerSumOther(x, preMult2.value))
+                c = runSum.value
 
                 # transpose result
                 c = c.T
 
-                error = sum(sum((c - c_old) ** 2))
-                iter += 1
+                error = sum(sum((c - cOld) ** 2))
+                niter += 1
 
             # project data into subspace spanned by columns of c
             # use standard eigendecomposition to recover an orthonormal basis
@@ -154,7 +157,3 @@ class SVD(object):
             self.v = v
 
         return self
-
-
-
-

@@ -1,16 +1,16 @@
-from collections import Counter
 import glob
 import struct
 import os
-from operator import mul
-from numpy import allclose, arange, array, array_equal, dtype, prod, squeeze, zeros
+from numpy import allclose, arange, array, array_equal, prod, squeeze, zeros
+from numpy import dtype as dtypeFunc
 import itertools
-from nose.tools import assert_equals, assert_true, assert_almost_equal, assert_raises
+from nose.tools import assert_equals, assert_raises, assert_true
+import unittest
 
 from thunder.rdds.fileio.imagesloader import ImagesLoader
 from thunder.rdds.fileio.seriesloader import SeriesLoader
-from thunder.rdds.images import _BlockMemoryAsReversedSequence
-from test_utils import *
+from thunder.rdds.imgblocks.strategy import PaddedBlockingStrategy, SimpleBlockingStrategy
+from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
 
 _have_image = False
 try:
@@ -21,239 +21,245 @@ except ImportError:
     Image = None
 
 
-def _generate_test_arrays(narys, dtype_='int16'):
+def _generateTestArrays(narys, dtype_='int16'):
     sh = 4, 3, 3
-    sz = prod(sh)
-    arys = [arange(i, i+sz, dtype=dtype(dtype_)).reshape(sh) for i in xrange(0, sz * narys, sz)]
+    sz = reduce(lambda x, y: x * y, sh, 1)
+    arys = [arange(i, i+sz, dtype=dtypeFunc(dtype_)).reshape(sh) for i in xrange(0, sz * narys, sz)]
     return arys, sh, sz
+
+
+def findSourceTreeDir(dirname="utils/data"):
+    testdirpath = os.path.dirname(os.path.realpath(__file__))
+    testresourcesdirpath = os.path.join(testdirpath, "..", "thunder", dirname)
+    if not os.path.isdir(testresourcesdirpath):
+        raise IOError("Directory "+testresourcesdirpath+" not found")
+    return testresourcesdirpath
 
 
 class TestImages(PySparkTestCase):
 
-    def evaluate_series(self, arys, series, sz):
+    def evaluateSeries(self, arys, series, sz):
         assert_equals(sz, len(series))
-        for serieskey, seriesval in series:
-            expectedval = array([ary[serieskey] for ary in arys], dtype='int16')
-            assert_true(array_equal(expectedval, seriesval))
+        for seriesKey, seriesVal in series:
+            expectedVal = array([ary[seriesKey] for ary in arys], dtype='int16')
+            assert_true(array_equal(expectedVal, seriesVal))
 
     def test_castToFloat(self):
-        arys, shape, size = _generate_test_arrays(2, 'uint8')
-        imagedata = ImagesLoader(self.sc).fromArrays(arys)
-        castdata = imagedata.astype("smallfloat")
+        arys, shape, size = _generateTestArrays(2, 'uint8')
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
+        catData = imageData.astype("smallfloat")
 
-        assert_equals('float16', str(castdata.dtype))
-        assert_equals('float16', str(castdata.first()[1].dtype))
+        assert_equals('float16', str(catData.dtype))
+        assert_equals('float16', str(catData.first()[1].dtype))
 
     def test_toSeries(self):
         # create 3 arrays of 4x3x3 images (C-order), containing sequential integers
         narys = 3
-        arys, sh, sz = _generate_test_arrays(narys)
+        arys, sh, sz = _generateTestArrays(narys)
 
-        imagedata = ImagesLoader(self.sc).fromArrays(arys)
-        series = imagedata.toSeries(groupingDim=0).collect()
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
+        series = imageData.toBlocks((4, 1, 1), units="s").toSeries().collect()
 
-        self.evaluate_series(arys, series, sz)
+        self.evaluateSeries(arys, series, sz)
 
     def test_toSeriesWithPack(self):
-        ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
+        ary = arange(8, dtype=dtypeFunc('int16')).reshape((2, 4))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        series = image.toSeries()
+        series = image.toBlocks("150M").toSeries()
 
-        seriesvals = series.collect()
-        seriesary = series.pack()
-        seriesary_xpose = series.pack(transpose=True)
+        seriesVals = series.collect()
+        seriesAry = series.pack()
+        seriesAry_xpose = series.pack(transpose=True)
 
         # check ordering of keys
-        assert_equals((0, 0), seriesvals[0][0])  # first key
-        assert_equals((1, 0), seriesvals[1][0])  # second key
-        assert_equals((0, 1), seriesvals[2][0])
-        assert_equals((1, 1), seriesvals[3][0])
-        assert_equals((0, 2), seriesvals[4][0])
-        assert_equals((1, 2), seriesvals[5][0])
-        assert_equals((0, 3), seriesvals[6][0])
-        assert_equals((1, 3), seriesvals[7][0])
+        assert_equals((0, 0), seriesVals[0][0])  # first key
+        assert_equals((1, 0), seriesVals[1][0])  # second key
+        assert_equals((0, 1), seriesVals[2][0])
+        assert_equals((1, 1), seriesVals[3][0])
+        assert_equals((0, 2), seriesVals[4][0])
+        assert_equals((1, 2), seriesVals[5][0])
+        assert_equals((0, 3), seriesVals[6][0])
+        assert_equals((1, 3), seriesVals[7][0])
 
         # check dimensions tuple matches numpy shape
         assert_equals(image.dims.count, series.dims.count)
         assert_equals(ary.shape, series.dims.count)
 
         # check that values are in Fortran-convention order
-        collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()
-        assert_true(array_equal(ary.ravel(order='F'), collectedvals))
+        collectedVals = array([kv[1] for kv in seriesVals], dtype=dtypeFunc('int16')).ravel()
+        assert_true(array_equal(ary.ravel(order='F'), collectedVals))
 
         # check that packing returns original array
-        assert_true(array_equal(ary, seriesary))
-        assert_true(array_equal(ary.T, seriesary_xpose))
+        assert_true(array_equal(ary, seriesAry))
+        assert_true(array_equal(ary.T, seriesAry_xpose))
 
     def test_threeDArrayToSeriesWithPack(self):
-        ary = arange(24, dtype=dtype('int16')).reshape((3, 4, 2))
+        ary = arange(24, dtype=dtypeFunc('int16')).reshape((3, 4, 2))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        series = image.toSeries()
+        series = image.toBlocks("150M").toSeries()
 
-        seriesvals = series.collect()
-        seriesary = series.pack()
-        seriesary_xpose = series.pack(transpose=True)
+        seriesVals = series.collect()
+        seriesAry = series.pack()
+        seriesAry_xpose = series.pack(transpose=True)
 
         # check ordering of keys
-        assert_equals((0, 0, 0), seriesvals[0][0])  # first key
-        assert_equals((1, 0, 0), seriesvals[1][0])  # second key
-        assert_equals((2, 0, 0), seriesvals[2][0])
-        assert_equals((0, 1, 0), seriesvals[3][0])
-        assert_equals((1, 1, 0), seriesvals[4][0])
-        assert_equals((2, 1, 0), seriesvals[5][0])
-        assert_equals((0, 2, 0), seriesvals[6][0])
-        assert_equals((1, 2, 0), seriesvals[7][0])
-        assert_equals((2, 2, 0), seriesvals[8][0])
-        assert_equals((0, 3, 0), seriesvals[9][0])
-        assert_equals((1, 3, 0), seriesvals[10][0])
-        assert_equals((2, 3, 0), seriesvals[11][0])
-        assert_equals((0, 0, 1), seriesvals[12][0])
-        assert_equals((1, 0, 1), seriesvals[13][0])
-        assert_equals((2, 0, 1), seriesvals[14][0])
-        assert_equals((0, 1, 1), seriesvals[15][0])
-        assert_equals((1, 1, 1), seriesvals[16][0])
-        assert_equals((2, 1, 1), seriesvals[17][0])
-        assert_equals((0, 2, 1), seriesvals[18][0])
-        assert_equals((1, 2, 1), seriesvals[19][0])
-        assert_equals((2, 2, 1), seriesvals[20][0])
-        assert_equals((0, 3, 1), seriesvals[21][0])
-        assert_equals((1, 3, 1), seriesvals[22][0])
-        assert_equals((2, 3, 1), seriesvals[23][0])
+        assert_equals((0, 0, 0), seriesVals[0][0])  # first key
+        assert_equals((1, 0, 0), seriesVals[1][0])  # second key
+        assert_equals((2, 0, 0), seriesVals[2][0])
+        assert_equals((0, 1, 0), seriesVals[3][0])
+        assert_equals((1, 1, 0), seriesVals[4][0])
+        assert_equals((2, 1, 0), seriesVals[5][0])
+        assert_equals((0, 2, 0), seriesVals[6][0])
+        assert_equals((1, 2, 0), seriesVals[7][0])
+        assert_equals((2, 2, 0), seriesVals[8][0])
+        assert_equals((0, 3, 0), seriesVals[9][0])
+        assert_equals((1, 3, 0), seriesVals[10][0])
+        assert_equals((2, 3, 0), seriesVals[11][0])
+        assert_equals((0, 0, 1), seriesVals[12][0])
+        assert_equals((1, 0, 1), seriesVals[13][0])
+        assert_equals((2, 0, 1), seriesVals[14][0])
+        assert_equals((0, 1, 1), seriesVals[15][0])
+        assert_equals((1, 1, 1), seriesVals[16][0])
+        assert_equals((2, 1, 1), seriesVals[17][0])
+        assert_equals((0, 2, 1), seriesVals[18][0])
+        assert_equals((1, 2, 1), seriesVals[19][0])
+        assert_equals((2, 2, 1), seriesVals[20][0])
+        assert_equals((0, 3, 1), seriesVals[21][0])
+        assert_equals((1, 3, 1), seriesVals[22][0])
+        assert_equals((2, 3, 1), seriesVals[23][0])
 
         # check dimensions tuple matches numpy shape
         assert_equals(ary.shape, series.dims.count)
 
         # check that values are in Fortran-convention order
-        collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()
-        assert_true(array_equal(ary.ravel(order='F'), collectedvals))
+        collectedVals = array([kv[1] for kv in seriesVals], dtype=dtypeFunc('int16')).ravel()
+        assert_true(array_equal(ary.ravel(order='F'), collectedVals))
 
         # check that packing returns transpose of original array
-        assert_true(array_equal(ary, seriesary))
-        assert_true(array_equal(ary.T, seriesary_xpose))
+        assert_true(array_equal(ary, seriesAry))
+        assert_true(array_equal(ary.T, seriesAry_xpose))
 
-    def test_toSeriesWithSplitsAndPack(self):
-        ary = arange(8, dtype=dtype('int16')).reshape((4, 2))
-
+    def _run_tst_toSeriesWithSplitsAndPack(self, strategy):
+        ary = arange(8, dtype=dtypeFunc('int16')).reshape((4, 2))
         image = ImagesLoader(self.sc).fromArrays(ary)
-        series = image.toSeries(splitsPerDim=(1, 2))
+        series = image.toBlocks(strategy).toSeries()
 
-        seriesvals = series.collect()
-        seriesary = series.pack()
+        seriesVals = series.collect()
+        seriesAry = series.pack()
 
         # check ordering of keys
-        assert_equals((0, 0), seriesvals[0][0])  # first key
-        assert_equals((1, 0), seriesvals[1][0])  # second key
-        assert_equals((2, 0), seriesvals[2][0])
-        assert_equals((3, 0), seriesvals[3][0])
-        assert_equals((0, 1), seriesvals[4][0])
-        assert_equals((1, 1), seriesvals[5][0])
-        assert_equals((2, 1), seriesvals[6][0])
-        assert_equals((3, 1), seriesvals[7][0])
+        assert_equals((0, 0), seriesVals[0][0])  # first key
+        assert_equals((1, 0), seriesVals[1][0])  # second key
+        assert_equals((2, 0), seriesVals[2][0])
+        assert_equals((3, 0), seriesVals[3][0])
+        assert_equals((0, 1), seriesVals[4][0])
+        assert_equals((1, 1), seriesVals[5][0])
+        assert_equals((2, 1), seriesVals[6][0])
+        assert_equals((3, 1), seriesVals[7][0])
 
         # check dimensions tuple matches numpy shape
         assert_equals(ary.shape, series.dims.count)
 
         # check that values are in Fortran-convention order
-        collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()
-        assert_true(array_equal(ary.ravel(order='F'), collectedvals))
+        collectedVals = array([kv[1] for kv in seriesVals], dtype=dtypeFunc('int16')).ravel()
+        assert_true(array_equal(ary.ravel(order='F'), collectedVals))
 
         # check that packing returns original array
-        assert_true(array_equal(ary, seriesary))
+        assert_true(array_equal(ary, seriesAry))
+
+    def test_toSeriesWithSplitsAndPack(self):
+        strategy = SimpleBlockingStrategy((1, 2), units="s")
+        self._run_tst_toSeriesWithSplitsAndPack(strategy)
+
+    def test_toSeriesWithPaddedSplitsAndPack(self):
+        strategy = PaddedBlockingStrategy((1, 2), units="s", padding=(1, 1))
+        self._run_tst_toSeriesWithSplitsAndPack(strategy)
 
     def test_toSeriesWithInefficientSplitAndSortedPack(self):
-        ary = arange(8, dtype=dtype('int16')).reshape((4, 2))
+        ary = arange(8, dtype=dtypeFunc('int16')).reshape((4, 2))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        series = image.toSeries(splitsPerDim=(2, 1))
+        series = image.toBlocks((2, 1), units="s").toSeries()
 
-        seriesvals = series.collect()
-        seriesary = series.pack(sorting=True)
+        seriesVals = series.collect()
+        seriesAry = series.pack(sorting=True)
 
         # check ordering of keys
-        assert_equals((0, 0), seriesvals[0][0])  # first key
-        assert_equals((1, 0), seriesvals[1][0])  # second key
-        assert_equals((0, 1), seriesvals[2][0])
-        assert_equals((1, 1), seriesvals[3][0])
+        assert_equals((0, 0), seriesVals[0][0])  # first key
+        assert_equals((1, 0), seriesVals[1][0])  # second key
+        assert_equals((0, 1), seriesVals[2][0])
+        assert_equals((1, 1), seriesVals[3][0])
         # end of first block
         # beginning of second block
-        assert_equals((2, 0), seriesvals[4][0])
-        assert_equals((3, 0), seriesvals[5][0])
-        assert_equals((2, 1), seriesvals[6][0])
-        assert_equals((3, 1), seriesvals[7][0])
+        assert_equals((2, 0), seriesVals[4][0])
+        assert_equals((3, 0), seriesVals[5][0])
+        assert_equals((2, 1), seriesVals[6][0])
+        assert_equals((3, 1), seriesVals[7][0])
 
         # check dimensions tuple matches numpy shape
         assert_equals(ary.shape, series.dims.count)
 
         # check that values are in expected order
-        collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()
-        assert_true(array_equal(ary[:2, :].ravel(order='F'), collectedvals[:4]))  # first block
-        assert_true(array_equal(ary[2:4, :].ravel(order='F'), collectedvals[4:]))  # second block
+        collectedVals = array([kv[1] for kv in seriesVals], dtype=dtypeFunc('int16')).ravel()
+        assert_true(array_equal(ary[:2, :].ravel(order='F'), collectedVals[:4]))  # first block
+        assert_true(array_equal(ary[2:4, :].ravel(order='F'), collectedVals[4:]))  # second block
 
         # check that packing returns original array (after sort)
-        assert_true(array_equal(ary, seriesary))
+        assert_true(array_equal(ary, seriesAry))
 
     def test_toBlocksWithSplit(self):
-        ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
+        ary = arange(8, dtype=dtypeFunc('int16')).reshape((2, 4))
 
         image = ImagesLoader(self.sc).fromArrays(ary)
-        blocks = image._scatterToBlocks(blocksPerDim=(1, 2))
-        groupedblocks = blocks._groupIntoSeriesBlocks()
+        groupedblocks = image.toBlocks((1, 2), units="s")
 
         # collectedblocks = blocks.collect()
         collectedgroupedblocks = groupedblocks.collect()
-        assert_equals((0, 0), collectedgroupedblocks[0][0])
-        assert_true(array_equal(ary[:, :2].ravel(), collectedgroupedblocks[0][1].values.ravel()))
-        assert_equals((0, 2), collectedgroupedblocks[1][0])
-        assert_true(array_equal(ary[:, 2:].ravel(), collectedgroupedblocks[1][1].values.ravel()))
+        assert_equals((0, 0), collectedgroupedblocks[0][0].spatialKey)
+        assert_true(array_equal(ary[:, :2].ravel(), collectedgroupedblocks[0][1].ravel()))
+        assert_equals((0, 2), collectedgroupedblocks[1][0].spatialKey)
+        assert_true(array_equal(ary[:, 2:].ravel(), collectedgroupedblocks[1][1].ravel()))
 
     def test_toSeriesBySlices(self):
         narys = 3
-        arys, sh, sz = _generate_test_arrays(narys)
+        arys, sh, sz = _generateTestArrays(narys)
 
-        imagedata = ImagesLoader(self.sc).fromArrays(arys)
-        imagedata.cache()
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
+        imageData.cache()
 
-        test_params = [
+        testParams = [
             (1, 1, 1), (1, 1, 2), (1, 1, 3), (1, 2, 1), (1, 2, 2), (1, 2, 3),
             (1, 3, 1), (1, 3, 2), (1, 3, 3),
             (2, 1, 1), (2, 1, 2), (2, 1, 3), (2, 2, 1), (2, 2, 2), (2, 2, 3),
             (2, 3, 1), (2, 3, 2), (2, 3, 3)]
-        for bpd in test_params:
-            series = imagedata.toSeries(splitsPerDim=bpd).collect()
 
-            self.evaluate_series(arys, series, sz)
+        for bpd in testParams:
+            series = imageData.toBlocks(bpd, units="s").toSeries().collect()
+            self.evaluateSeries(arys, series, sz)
 
-    def test_toBlocksBySlices(self):
-        narys = 3
-        arys, sh, sz = _generate_test_arrays(narys)
+    def _run_tst_roundtripThroughBlocks(self, strategy):
+        imagepath = findSourceTreeDir("utils/data/fish/tif-stack")
+        images = ImagesLoader(self.sc).fromTif(imagepath)
+        blockedimages = images.toBlocks(strategy)
+        recombinedimages = blockedimages.toImages()
 
-        imagedata = ImagesLoader(self.sc).fromArrays(arys)
+        collectedimages = images.collect()
+        roundtrippedimages = recombinedimages.collect()
+        for orig, roundtripped in zip(collectedimages, roundtrippedimages):
+            assert_true(array_equal(orig[1], roundtripped[1]))
 
-        test_params = [
-            (1, 1, 1), (1, 1, 2), (1, 1, 3), (1, 2, 1), (1, 2, 2), (1, 2, 3),
-            (1, 3, 1), (1, 3, 2), (1, 3, 3),
-            (2, 1, 1), (2, 1, 2), (2, 1, 3), (2, 2, 1), (2, 2, 2), (2, 2, 3),
-            (2, 3, 1), (2, 3, 2), (2, 3, 3)]
-        for bpd in test_params:
-            blocks = imagedata._toBlocksBySplits(bpd).collect()
+    def test_roundtripThroughBlocks(self):
+        strategy = SimpleBlockingStrategy((2, 2, 2), units="s")
+        self._run_tst_roundtripThroughBlocks(strategy)
 
-            expectednuniquekeys = reduce(mul, bpd)
-            expectedvalsperkey = narys
+    def test_roundtripThroughPaddedBlocks(self):
+        strategy = PaddedBlockingStrategy((2, 2, 2), units="s", padding=2)
+        self._run_tst_roundtripThroughBlocks(strategy)
 
-            keystocounts = Counter([kv[0] for kv in blocks])
-            assert_equals(expectednuniquekeys, len(keystocounts))
-            assert_equals([expectedvalsperkey] * expectednuniquekeys, keystocounts.values())
 
-            gatheredary = None
-            for _, block in blocks:
-                if gatheredary is None:
-                    gatheredary = zeros(block.origshape, dtype='int16')
-                gatheredary[block.origslices] = block.values
-
-            for i in xrange(narys):
-                assert_true(array_equal(arys[i], gatheredary[i]))
+class TestImagesMethods(PySparkTestCase):
 
     @staticmethod
     def _run_maxProject(image, inputArys, axis):
@@ -271,11 +277,11 @@ class TestImages(PySparkTestCase):
 
     def _run_tst_maxProject(self, runFcn):
         narys = 3
-        arys, sh, sz = _generate_test_arrays(narys)
+        arys, sh, sz = _generateTestArrays(narys)
 
-        imagedata = ImagesLoader(self.sc).fromArrays(arys)
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
         for ax in xrange(arys[0].ndim):
-            projectedData, expectedArys = runFcn(imagedata, arys, ax)
+            projectedData, expectedArys = runFcn(imageData, arys, ax)
             maxProjected = projectedData.collect()
             for actual, expected in zip(maxProjected, expectedArys):
                 assert_true(array_equal(expected, actual[1]))
@@ -288,14 +294,14 @@ class TestImages(PySparkTestCase):
             assert_equals(str(maxProjected[0][1].dtype), projectedData._dtype)
 
     def test_maxProjection(self):
-        self._run_tst_maxProject(TestImages._run_maxProject)
+        self._run_tst_maxProject(TestImagesMethods._run_maxProject)
 
     def test_maxminProjection(self):
-        self._run_tst_maxProject(TestImages._run_maxminProject)
+        self._run_tst_maxProject(TestImagesMethods._run_maxminProject)
 
     def test_subsample(self):
         narys = 3
-        arys, sh, sz = _generate_test_arrays(narys)
+        arys, sh, sz = _generateTestArrays(narys)
         sampFactors = [2, (2, 3, 3)]
 
         def subsamp(ary, factor):
@@ -305,9 +311,9 @@ class TestImages(PySparkTestCase):
             slices = [slice(0, ary.shape[i], factor[i]) for i in xrange(ary.ndim)]
             return ary[slices]
 
-        imagedata = ImagesLoader(self.sc).fromArrays(arys)
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
         for sampFactor in sampFactors:
-            subsampData = imagedata.subsample(sampFactor)
+            subsampData = imageData.subsample(sampFactor)
             expectedArys = map(lambda ary: subsamp(ary, sampFactor), arys)
             subsampled = subsampData.collect()
             for actual, expected in zip(subsampled, expectedArys):
@@ -319,25 +325,25 @@ class TestImages(PySparkTestCase):
             assert_equals(str(subsampled[0][1].dtype), subsampData._dtype)
 
     @staticmethod
-    def _run_filter(ary, filterfunc, radius):
+    def _run_filter(ary, filterFunc, radius):
         if ary.ndim <= 2:
-            return filterfunc(ary, radius)
+            return filterFunc(ary, radius)
         else:
             cpy = zeros(ary.shape, dtype=ary.dtype)
             for z in xrange(ary.shape[-1]):
                 slices = [slice(None)] * (ary.ndim-1) + [slice(z, z+1, 1)]
-                cpy[slices] = filterfunc(ary[slices], radius)
+                cpy[slices] = filterFunc(ary[slices], radius)
             return cpy
 
-    def _run_tst_filter(self, datafunc, filterfunc):
+    def _run_tst_filter(self, dataFunc, filterFunc):
         narys = 3
-        arys, sh, sz = _generate_test_arrays(narys)
+        arys, sh, sz = _generateTestArrays(narys)
         sigma = 2
 
-        imagedata = ImagesLoader(self.sc).fromArrays(arys)
-        filteredData = datafunc(imagedata, sigma)
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
+        filteredData = dataFunc(imageData, sigma)
         filtered = filteredData.collect()
-        expectedArys = map(lambda ary: TestImages._run_filter(ary, filterfunc, sigma), arys)
+        expectedArys = map(lambda ary: TestImagesMethods._run_filter(ary, filterFunc, sigma), arys)
         for actual, expected in zip(filtered, expectedArys):
             assert_true(allclose(expected, actual[1]))
 
@@ -356,30 +362,54 @@ class TestImages(PySparkTestCase):
         from thunder.rdds.images import Images
         self._run_tst_filter(Images.medianFilter, median_filter)
 
-    def test_planes(self):
-        # params are images shape, bottom, top, inclusize, expected slices of orig ary
-        PARAMS = [((2, 2, 4), 1, 2, True, [slice(None), slice(None), slice(1, 3)]),
-                  ((2, 2, 4), 0, 2, False, [slice(None), slice(None), slice(1, 2)])]
-        for params in PARAMS:
-            sz = reduce(lambda x, y: x*y, params[0])
-            origAry = arange(sz, dtype='int16').reshape(params[0])
-            imageData = ImagesLoader(self.sc).fromArrays([origAry])
-            planedData = imageData.planes(params[1], params[2], params[3])
-            planed = planedData.collect()
+    def _run_tst_crop(self, minBounds, maxBounds):
+        dims = (2, 2, 4)
+        sz = reduce(lambda x, y: x*y, dims)
+        origAry = arange(sz, dtype=dtypeFunc('int16')).reshape(dims)
+        imageData = ImagesLoader(self.sc).fromArrays([origAry])
+        croppedData = imageData.crop(minBounds, maxBounds)
+        crop = croppedData.collect()[0][1]
 
-            expected = squeeze(origAry[params[4]])
-            assert_true(array_equal(expected, planed[0][1]))
-            assert_equals(tuple(expected.shape), planedData._dims.count)
-            assert_equals(str(expected.dtype), planedData._dtype)
+        slices = []
+        for minb, maxb in zip(minBounds, maxBounds):
+            # skip the bounds-checking that we do in actual function; assume minb is <= maxb
+            if minb < maxb:
+                slices.append(slice(minb, maxb))
+            else:
+                slices.append(minb)
+
+        expected = squeeze(origAry[slices])
+        assert_true(array_equal(expected, crop))
+        assert_equals(tuple(expected.shape), croppedData._dims.count)
+        assert_equals(str(expected.dtype), croppedData._dtype)
+
+    def test_crop(self):
+        self._run_tst_crop((0, 0, 0), (2, 2, 2))
+
+    def test_cropAndSqueeze(self):
+        self._run_tst_crop((0, 0, 1), (2, 2, 1))
+
+    def test_planes(self):
+        dims = (2, 2, 4)
+        sz = reduce(lambda x, y: x*y, dims)
+        origAry = arange(sz, dtype=dtypeFunc('int16')).reshape(dims)
+        imageData = ImagesLoader(self.sc).fromArrays([origAry])
+        planedData = imageData.planes(0, 2)
+        planed = planedData.collect()[0][1]
+
+        expected = squeeze(origAry[slice(None), slice(None), slice(0, 2)])
+        assert_true(array_equal(expected, planed))
+        assert_equals(tuple(expected.shape), planedData._dims.count)
+        assert_equals(str(expected.dtype), planedData._dtype)
 
     def test_subtract(self):
         narys = 3
-        arys, sh, sz = _generate_test_arrays(narys)
-        subVals = [1, arange(sz, dtype='int16').reshape(sh)]
+        arys, sh, sz = _generateTestArrays(narys)
+        subVals = [1, arange(sz, dtype=dtypeFunc('int16')).reshape(sh)]
 
-        imagedata = ImagesLoader(self.sc).fromArrays(arys)
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
         for subVal in subVals:
-            subData = imagedata.subtract(subVal)
+            subData = imageData.subtract(subVal)
             subtracted = subData.collect()
             expectedArys = map(lambda ary: ary - subVal, arys)
             for actual, expected in zip(subtracted, expectedArys):
@@ -388,222 +418,212 @@ class TestImages(PySparkTestCase):
 
 class TestImagesStats(PySparkTestCase):
     def test_mean(self):
-        from test_utils import elementwise_mean
-        arys, shape, size = _generate_test_arrays(2, 'uint8')
-        imagedata = ImagesLoader(self.sc).fromArrays(arys)
-        meanval = imagedata.mean()
-
-        expected = elementwise_mean(arys).astype('float16')
-        assert_true(allclose(expected, meanval))
-        assert_equals('float16', str(meanval.dtype))
+        from test_utils import elementwiseMean
+        arys, shape, size = _generateTestArrays(2, 'uint8')
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
+        meanVal = imageData.mean()
+        expected = elementwiseMean(arys).astype('float16')
+        assert_true(allclose(expected, meanVal))
+        assert_equals('float64', str(meanVal.dtype))
 
     def test_sum(self):
         from numpy import add
-        arys, shape, size = _generate_test_arrays(2, 'uint8')
-        imagedata = ImagesLoader(self.sc).fromArrays(arys)
-        sumval = imagedata.sum(dtype='uint32')
+        arys, shape, size = _generateTestArrays(2, 'uint8')
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
+        sumVal = imageData.sum(dtype='uint32')
 
         arys = [ary.astype('uint32') for ary in arys]
         expected = reduce(add, arys)
-        assert_true(array_equal(expected, sumval))
-        assert_equals('uint32', str(sumval.dtype))
+        assert_true(array_equal(expected, sumVal))
+        assert_equals('uint32', str(sumVal.dtype))
 
     def test_variance(self):
-        from test_utils import elementwise_var
-        arys, shape, size = _generate_test_arrays(2, 'uint8')
-        imagedata = ImagesLoader(self.sc).fromArrays(arys)
-        varval = imagedata.variance()
+        from test_utils import elementwiseVar
+        arys, shape, size = _generateTestArrays(2, 'uint8')
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
+        varVal = imageData.variance()
 
-        expected = elementwise_var([ary.astype('float16') for ary in arys])
-        assert_true(allclose(expected, varval))
-        assert_equals('float16', str(varval.dtype))
+        expected = elementwiseVar([ary.astype('float16') for ary in arys])
+        assert_true(allclose(expected, varVal))
+        assert_equals('float64', str(varVal.dtype))
 
     def test_stdev(self):
-        from test_utils import elementwise_stdev
-        arys, shape, size = _generate_test_arrays(2, 'uint8')
-        imagedata = ImagesLoader(self.sc).fromArrays(arys)
-        stdval = imagedata.stdev()
+        from test_utils import elementwiseStdev
+        arys, shape, size = _generateTestArrays(2, 'uint8')
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
+        stdval = imageData.stdev()
 
-        expected = elementwise_stdev([ary.astype('float16') for ary in arys])
+        expected = elementwiseStdev([ary.astype('float16') for ary in arys])
         assert_true(allclose(expected, stdval))
-        #assert_equals('float16', str(stdval.dtype))
-        # it isn't clear to me why this comes out as float32 and not float16, especially
-        # given that var returns float16, as expected. But I'm not too concerned about it.
-        # Consider this documentation of current behavior rather than a description of
-        # desired behavior.
-        assert_equals('float32', str(stdval.dtype))
+        assert_equals('float64', str(stdval.dtype))
 
     def test_stats(self):
-        from test_utils import elementwise_mean, elementwise_var
-        arys, shape, size = _generate_test_arrays(2, 'uint8')
-        imagedata = ImagesLoader(self.sc).fromArrays(arys)
-        statsval = imagedata.stats()
+        from test_utils import elementwiseMean, elementwiseVar
+        arys, shape, size = _generateTestArrays(2, 'uint8')
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
+        statsval = imageData.stats()
 
         floatarys = [ary.astype('float16') for ary in arys]
         # StatsCounter contains a few different measures, only test a couple:
-        expectedmean = elementwise_mean(floatarys)
-        expectedvar = elementwise_var(floatarys)
-        assert_true(allclose(expectedmean, statsval.mean()))
-        assert_true(allclose(expectedvar, statsval.variance()))
+        expectedMean = elementwiseMean(floatarys)
+        expectedVar = elementwiseVar(floatarys)
+        assert_true(allclose(expectedMean, statsval.mean()))
+        assert_true(allclose(expectedVar, statsval.variance()))
 
     def test_max(self):
         from numpy import maximum
-        arys, shape, size = _generate_test_arrays(2, 'uint8')
-        imagedata = ImagesLoader(self.sc).fromArrays(arys)
-        maxval = imagedata.max()
-        assert_true(array_equal(reduce(maximum, arys), maxval))
+        arys, shape, size = _generateTestArrays(2, 'uint8')
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
+        maxVal = imageData.max()
+        assert_true(array_equal(reduce(maximum, arys), maxVal))
 
     def test_min(self):
         from numpy import minimum
-        arys, shape, size = _generate_test_arrays(2, 'uint8')
-        imagedata = ImagesLoader(self.sc).fromArrays(arys)
-        minval = imagedata.min()
-        assert_true(array_equal(reduce(minimum, arys), minval))
+        arys, shape, size = _generateTestArrays(2, 'uint8')
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
+        minVal = imageData.min()
+        assert_true(array_equal(reduce(minimum, arys), minVal))
 
 
 class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
     @staticmethod
     def _findSourceTreeDir(dirname="utils/data"):
-        testdirpath = os.path.dirname(os.path.realpath(__file__))
-        testresourcesdirpath = os.path.join(testdirpath, "..", "thunder", dirname)
-        if not os.path.isdir(testresourcesdirpath):
-            raise IOError("Directory "+testresourcesdirpath+" not found")
-        return testresourcesdirpath
+        testDirPath = os.path.dirname(os.path.realpath(__file__))
+        testResourcesDirPath = os.path.join(testDirPath, "..", "thunder", dirname)
+        if not os.path.isdir(testResourcesDirPath):
+            raise IOError("Directory "+testResourcesDirPath+" not found")
+        return testResourcesDirPath
 
-    def _run_tstSaveAsBinarySeries(self, testidx, narys_, valdtype, groupingdim_):
+    def _run_tstSaveAsBinarySeries(self, testIdx, narys_, valDtype, groupingDim_):
         """Pseudo-parameterized test fixture, allows reusing existing spark context
         """
-        paramstr = "(groupingdim=%d, valuedtype='%s')" % (groupingdim_, valdtype)
-        arys, aryshape, arysize = _generate_test_arrays(narys_, dtype_=valdtype)
-        dims = aryshape[:]
-        outdir = os.path.join(self.outputdir, "anotherdir%02d" % testidx)
+        paramStr = "(groupingdim=%d, valuedtype='%s')" % (groupingDim_, valDtype)
+        arys, aryShape, arySize = _generateTestArrays(narys_, dtype_=valDtype)
+        dims = aryShape[:]
+        outdir = os.path.join(self.outputdir, "anotherdir%02d" % testIdx)
 
         images = ImagesLoader(self.sc).fromArrays(arys)
 
-        images.saveAsBinarySeries(outdir, groupingDim=groupingdim_)
+        slicesPerDim = [1]*arys[0].ndim
+        slicesPerDim[groupingDim_] = arys[0].shape[groupingDim_]
+        images.toBlocks(slicesPerDim, units="splits").saveAsBinarySeries(outdir)
 
-        ndims = len(aryshape)
+        ndims = len(aryShape)
         # prevent padding to 4-byte boundaries: "=" specifies no alignment
-        unpacker = struct.Struct('=' + 'h'*ndims + dtype(valdtype).char*narys_)
+        unpacker = struct.Struct('=' + 'h'*ndims + dtypeFunc(valDtype).char*narys_)
 
         def calcExpectedNKeys():
-            tmpshape = list(dims[:])
-            del tmpshape[groupingdim_]
-            return prod(tmpshape)
-        expectednkeys = calcExpectedNKeys()
+            tmpShape = list(dims[:])
+            del tmpShape[groupingDim_]
+            return prod(tmpShape)
+        expectedNKeys = calcExpectedNKeys()
 
         def byrec(f_, unpacker_, nkeys_):
             rec = True
             while rec:
                 rec = f_.read(unpacker_.size)
                 if rec:
-                    allrecvals = unpacker_.unpack(rec)
-                    yield allrecvals[:nkeys_], allrecvals[nkeys_:]
+                    allRecVals = unpacker_.unpack(rec)
+                    yield allRecVals[:nkeys_], allRecVals[nkeys_:]
 
-        outfilenames = glob.glob(os.path.join(outdir, "*.bin"))
-        assert_equals(dims[groupingdim_], len(outfilenames))
-        for outfilename in outfilenames:
-            with open(outfilename, 'rb') as f:
+        outFilenames = glob.glob(os.path.join(outdir, "*.bin"))
+        assert_equals(dims[groupingDim_], len(outFilenames))
+        for outFilename in outFilenames:
+            with open(outFilename, 'rb') as f:
                 nkeys = 0
                 for keys, vals in byrec(f, unpacker, ndims):
                     nkeys += 1
                     assert_equals(narys_, len(vals))
-                    for validx, val in enumerate(vals):
-                        assert_equals(arys[validx][keys], val, "Expected %g, got %g, for test %d %s" %
-                                      (arys[validx][keys], val, testidx, paramstr))
-                assert_equals(expectednkeys, nkeys)
+                    for valIdx, val in enumerate(vals):
+                        assert_equals(arys[valIdx][keys], val, "Expected %g, got %g, for test %d %s" %
+                                      (arys[valIdx][keys], val, testIdx, paramStr))
+                assert_equals(expectedNKeys, nkeys)
 
-        confname = os.path.join(outdir, "conf.json")
-        assert_true(os.path.isfile(confname))
+        confName = os.path.join(outdir, "conf.json")
+        assert_true(os.path.isfile(confName))
         with open(os.path.join(outdir, "conf.json"), 'r') as fconf:
             import json
             conf = json.load(fconf)
             assert_equals(outdir, conf['input'])
-            assert_equals(tuple(dims), tuple(conf['dims']))
-            assert_equals(len(aryshape), conf['nkeys'])
+            assert_equals(len(aryShape), conf['nkeys'])
             assert_equals(narys_, conf['nvalues'])
-            assert_equals(valdtype, conf['valuetype'])
+            assert_equals(valDtype, conf['valuetype'])
             assert_equals('int16', conf['keytype'])
 
         assert_true(os.path.isfile(os.path.join(outdir, 'SUCCESS')))
 
     def test_saveAsBinarySeries(self):
         narys = 3
-        arys, aryshape, _ = _generate_test_arrays(narys)
+        arys, aryShape, _ = _generateTestArrays(narys)
 
         outdir = os.path.join(self.outputdir, "anotherdir")
         os.mkdir(outdir)
-        assert_raises(ValueError, ImagesLoader(self.sc).fromArrays(arys).saveAsBinarySeries, outdir, 0)
+        assert_raises(ValueError, ImagesLoader(self.sc).fromArrays(arys).toBlocks((1, 1, 1), units="s")
+                      .saveAsBinarySeries, outdir)
 
-        groupingdims = xrange(len(aryshape))
+        groupingDims = xrange(len(aryShape))
         dtypes = ('int16', 'int32', 'float32')
-        paramiters = itertools.product(groupingdims, dtypes)
+        paramIters = itertools.product(groupingDims, dtypes)
 
-        for idx, params in enumerate(paramiters):
+        for idx, params in enumerate(paramIters):
             gd, dt = params
             self._run_tstSaveAsBinarySeries(idx, narys, dt, gd)
 
-    def test_roundtripConvertToSeries(self):
-        imagepath = TestImagesUsingOutputDir._findSourceTreeDir("utils/data/fish/tif-stack")
+    def _run_tst_roundtripConvertToSeries(self, images, strategy):
         outdir = os.path.join(self.outputdir, "fish-series-dir")
 
-        images = ImagesLoader(self.sc).fromMultipageTif(imagepath)
-        series = images.toSeries(blockSize=76*20)
+        partitionedimages = images.toBlocks(strategy)
+        series = partitionedimages.toSeries()
         series_ary = series.pack()
 
-        images.saveAsBinarySeries(outdir, blockSize=76*20)
+        partitionedimages.saveAsBinarySeries(outdir)
         converted_series = SeriesLoader(self.sc).fromBinary(outdir)
         converted_series_ary = converted_series.pack()
 
-        assert_equals((76, 87, 2), series.dims.count)
-        assert_equals((20, 76, 87, 2), series_ary.shape)
+        assert_equals(images.dims.count, series.dims.count)
+        expected_shape = tuple([images.nimages] + list(images.dims.count))
+        assert_equals(expected_shape, series_ary.shape)
         assert_true(array_equal(series_ary, converted_series_ary))
 
+    def test_roundtripConvertToSeries(self):
+        imagepath = findSourceTreeDir("utils/data/fish/tif-stack")
+
+        images = ImagesLoader(self.sc).fromTif(imagepath)
+        strategy = SimpleBlockingStrategy.generateFromBlockSize(images, blockSize=76 * 20)
+        self._run_tst_roundtripConvertToSeries(images, strategy)
+
     def test_fromStackToSeriesWithPack(self):
-        ary = arange(8, dtype=dtype('int16')).reshape((2, 4))
+        ary = arange(8, dtype=dtypeFunc('int16')).reshape((2, 4))
         filename = os.path.join(self.outputdir, "test.stack")
         ary.tofile(filename)
 
         image = ImagesLoader(self.sc).fromStack(filename, dims=(4, 2))
-        series = image.toSeries()
+        strategy = SimpleBlockingStrategy.generateFromBlockSize(image, "150M")
+        series = image.toBlocks(strategy).toSeries()
 
-        seriesvals = series.collect()
-        seriesary = series.pack()
+        seriesVals = series.collect()
+        seriesAry = series.pack()
 
         # check ordering of keys
-        assert_equals((0, 0), seriesvals[0][0])  # first key
-        assert_equals((1, 0), seriesvals[1][0])  # second key
-        assert_equals((2, 0), seriesvals[2][0])
-        assert_equals((3, 0), seriesvals[3][0])
-        assert_equals((0, 1), seriesvals[4][0])
-        assert_equals((1, 1), seriesvals[5][0])
-        assert_equals((2, 1), seriesvals[6][0])
-        assert_equals((3, 1), seriesvals[7][0])
+        assert_equals((0, 0), seriesVals[0][0])  # first key
+        assert_equals((1, 0), seriesVals[1][0])  # second key
+        assert_equals((2, 0), seriesVals[2][0])
+        assert_equals((3, 0), seriesVals[3][0])
+        assert_equals((0, 1), seriesVals[4][0])
+        assert_equals((1, 1), seriesVals[5][0])
+        assert_equals((2, 1), seriesVals[6][0])
+        assert_equals((3, 1), seriesVals[7][0])
 
         # check dimensions tuple is reversed from numpy shape
         assert_equals(ary.shape[::-1], series.dims.count)
 
         # check that values are in original order
-        collectedvals = array([kv[1] for kv in seriesvals], dtype=dtype('int16')).ravel()
-        assert_true(array_equal(ary.ravel(), collectedvals))
+        collectedVals = array([kv[1] for kv in seriesVals], dtype=dtypeFunc('int16')).ravel()
+        assert_true(array_equal(ary.ravel(), collectedVals))
 
         # check that packing returns transpose of original array
-        assert_true(array_equal(ary.T, seriesary))
-
-
-class TestBlockMemoryAsSequence(unittest.TestCase):
-
-    def test_range(self):
-        dims = (2, 2)
-        undertest = _BlockMemoryAsReversedSequence(dims)
-
-        assert_equals(3, len(undertest))
-        assert_equals((2, 2), undertest.indtosub(0))
-        assert_equals((1, 2), undertest.indtosub(1))
-        assert_equals((1, 1), undertest.indtosub(2))
-        assert_raises(IndexError, undertest.indtosub, 3)
-
+        assert_true(array_equal(ary.T, seriesAry))
 
 if __name__ == "__main__":
     if not _have_image:

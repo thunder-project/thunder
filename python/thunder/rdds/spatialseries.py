@@ -44,15 +44,15 @@ class SpatialSeries(Series):
             """Create a list of key value pairs with multiple shifted copies
             of each record over a region specified by sz
             """
-            rng_x = range(-sz, sz+1, 1)
-            rng_y = range(-sz, sz+1, 1)
+            rngX = range(-sz, sz+1, 1)
+            rngY = range(-sz, sz+1, 1)
             out = list()
-            for x in rng_x:
-                for y in rng_y:
-                    new_x = clip(ind[0] + x, mn[0], mx[0])
-                    new_y = clip(ind[1] + y, mn[1], mx[1])
-                    newind = (new_x, new_y, ind[2])
-                    out.append((newind, v))
+            for x in rngX:
+                for y in rngY:
+                    newX = clip(ind[0] + x, mn[0], mx[0])
+                    newY = clip(ind[1] + y, mn[1], mx[1])
+                    newInd = (newX, newY, ind[2])
+                    out.append((newInd, v))
             return out
         dims = self.dims
         rdd = self.rdd.flatMap(lambda (k, v): toNeighbors(k, v, neighborhood, dims.min[0:2], dims.max[0:2]))
@@ -60,6 +60,22 @@ class SpatialSeries(Series):
         return self._constructor(rdd).__finalize__(self)
 
     def localCorr(self, neighborhood):
+        """
+        Correlate every signal to the average of its local neighborhood.
+
+        This algorithm computes, for every spatial record, the correlation coefficient
+        between that record's series, and the average series of all records within
+        a local neighborhood with a size defined by the neighborhood parameter.
+        For data with three spatial keys, only neighborhoods in x and y
+        currently supported.
+
+        Parameters
+        ----------
+        neighborhood : integer
+            Size of neighborhood, describes extent in either direction, so
+            total neighborhood will be 2n + 1.
+
+        """
 
         if len(self.dims.max) not in [2, 3]:
                 raise NotImplementedError('keys must have 2 or 3 dimensions to compute local correlations')

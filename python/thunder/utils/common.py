@@ -8,13 +8,13 @@ def pinv(mat):
     return dot(inv(dot(mat, transpose(mat))), mat)
 
 
-def loadmatvar(filename, var):
+def loadMatVar(filename, var):
     """ Load a variable from a MAT file"""
     from scipy.io import loadmat
     return loadmat(filename)[var]
 
 
-def isrdd(data):
+def isRdd(data):
     """ Check whether data is an RDD or not"""
     dtype = type(data)
     import pyspark
@@ -24,13 +24,35 @@ def isrdd(data):
         return False
 
 
-def checkparams(param, opts):
+def checkParams(param, opts):
     """ Check whether param is contained in opts (including lowercase), otherwise error"""
     if not param.lower() in opts:
         raise ValueError("Option must be one of %s, got %s" % (str(opts)[1:-1], param))
 
 
-def smallest_float_type(dtype):
+def selectByMatchingPrefix(param, opts):
+    """Given a string parameter and a sequence of possible options, returns an option that is uniquely
+    specified by matching its prefix to the passed parameter.
+
+    The match is checked without sensitivity to case.
+
+    Throws IndexError if none of opts starts with param, or if multiple opts start with param.
+
+    >> selectByMatchingPrefix("a", ["aardvark", "mongoose"])
+    "aardvark"
+    """
+    lparam = param.lower()
+    hits = [opt for opt in opts if opt.lower().startswith(lparam)]
+    nhits = len(hits)
+    if nhits == 1:
+        return hits[0]
+    if nhits:
+        raise IndexError("Multiple matches for for prefix '%s': %s" % (param, hits))
+    else:
+        raise IndexError("No matches for prefix '%s' found in options %s" % (param, opts))
+
+
+def smallestFloatType(dtype):
     """Returns the smallest floating point dtype to which the passed dtype can be safely cast.
 
     For integers and unsigned ints, this will generally be next floating point type larger than the integer type. So
@@ -39,15 +61,94 @@ def smallest_float_type(dtype):
 
     This function relies on numpy's promote_types function.
     """
-    from numpy import dtype as dtype_func
+    from numpy import dtype as dtypeFunc
     from numpy import promote_types
-    intype = dtype_func(dtype)
-    compsize = max(2, intype.itemsize)  # smallest float is at least 16 bits
-    comptype = dtype_func('=f'+str(compsize))  # compare to a float of the same size
-    return promote_types(intype, comptype)
+    inType = dtypeFunc(dtype)
+    compSize = max(2, inType.itemsize)  # smallest float is at least 16 bits
+    compType = dtypeFunc('=f'+str(compSize))  # compare to a float of the same size
+    return promote_types(inType, compType)
 
 
-def parseMemoryString(memstr):
+def pil_to_array(pilImage):
+    """
+    Load a PIL image and return it as a numpy array.  Only supports greyscale images;
+    the return value will be an M x N array.
+
+    Adapted from matplotlib's pil_to_array, copyright 2009-2012 by John D Hunter
+    """
+    # This is intended to be used only with older versions of PIL, for which the new-style
+    # way of getting a numpy array (np.array(pilimg)) does not appear to work in all cases.
+    # np.array(pilimg) appears to work with Pillow 2.3.0; with PIL 1.1.7 it leads to
+    # errors similar to the following:
+    # In [15]: data = tsc.loadImages('/path/to/tifs/', inputformat='tif-stack')
+    # In [16]: data.first()[1].shape
+    # Out[16]: (1, 1, 1)
+    # In [17]: data.first()[1]
+    # Out[17]: array([[[ <PIL.TiffImagePlugin.TiffImageFile image mode=I;16 size=512x512 at 0x3B02B00>]]],
+    # dtype=object)
+    def toarray(im_, dtype):
+        """Return a 1D array of dtype."""
+        from numpy import fromstring
+        # Pillow wants us to use "tobytes"
+        if hasattr(im_, 'tobytes'):
+            x_str = im_.tobytes('raw', im_.mode)
+        else:
+            x_str = im_.tostring('raw', im_.mode)
+        x_ = fromstring(x_str, dtype)
+        return x_
+    if pilImage.mode in ('RGBA', 'RGBX', 'RGB'):
+        raise ValueError("Thunder only supports luminance / greyscale images in pil_to_array; got image mode: '%s'" %
+                         pilImage.mode)
+    if pilImage.mode == 'L':
+        im = pilImage  # no need to luminance images
+        # return MxN luminance array
+        x = toarray(im, 'uint8')
+        x.shape = im.size[1], im.size[0]
+        return x
+    elif pilImage.mode.startswith('I;16'):
+        # return MxN luminance array of uint16
+        im = pilImage
+        if im.mode.endswith('B'):
+            x = toarray(im, '>u2')
+        else:
+            x = toarray(im, '<u2')
+        x.shape = im.size[1], im.size[0]
+        return x.astype('=u2')
+    elif pilImage.mode.startswith('I;32') or pilImage.mode == 'I':
+        # default 'I' mode is 32 bit; see http://svn.effbot.org/public/tags/pil-1.1.7/libImaging/Unpack.c (at bottom)
+        # return MxN luminance array of uint32
+        im = pilImage
+        if im.mode.endswith('B'):
+            x = toarray(im, '>u4')
+        else:
+            x = toarray(im, '<u4')
+        x.shape = im.size[1], im.size[0]
+        return x.astype('=u4')
+    elif pilImage.mode.startswith('F;16'):
+        # return MxN luminance array of float16
+        im = pilImage
+        if im.mode.endswith('B'):
+            x = toarray(im, '>f2')
+        else:
+            x = toarray(im, '<f2')
+        x.shape = im.size[1], im.size[0]
+        return x.astype('=f2')
+    elif pilImage.mode.startswith('F;32') or pilImage.mode == 'F':
+        # default 'F' mode is 32 bit; see http://svn.effbot.org/public/tags/pil-1.1.7/libImaging/Unpack.c (at bottom)
+        # return MxN luminance array of float32
+        im = pilImage
+        if im.mode.endswith('B'):
+            x = toarray(im, '>f4')
+        else:
+            x = toarray(im, '<f4')
+        x.shape = im.size[1], im.size[0]
+        return x.astype('=f4')
+    else:  # try to convert to an rgba image
+        raise ValueError("Thunder only supports luminance / greyscale images in pil_to_array; got unknown image " +
+                         "mode: '%s'" % pilImage.mode)
+
+
+def parseMemoryString(memStr):
     """Returns the size in bytes of memory represented by a Java-style 'memory string'
 
     parseMemoryString("150k") -> 150000
@@ -57,12 +158,12 @@ def parseMemoryString(memstr):
 
     Recognized suffixes are k, m, and g. Parsing is case-insensitive.
     """
-    if isinstance(memstr, basestring):
+    if isinstance(memStr, basestring):
         import re
-        regpat = r"""(\d+)([bBkKmMgG])?"""
-        m = re.match(regpat, memstr)
+        regPat = r"""(\d+)([bBkKmMgG])?"""
+        m = re.match(regPat, memStr)
         if not m:
-            raise ValueError("Could not parse %s as memory specification; should be NUMBER[k|m|g]" % memstr)
+            raise ValueError("Could not parse '%s' as memory specification; should be NUMBER[k|m|g]" % memStr)
         quant = int(m.group(1))
         units = m.group(2).lower()
         if units == "g":
@@ -73,5 +174,19 @@ def parseMemoryString(memstr):
             return int(quant * 1e3)
         return quant
     else:
-        return int(memstr)
+        return int(memStr)
 
+
+def raiseErrorIfPathExists(path):
+    """Raises a ValueError if the passed path string is found to already exist.
+
+    The ValueError message will suggest calling with overwrite=True; this function is expected to be
+    called from the various output methods that accept an 'overwrite' keyword argument.
+    """
+    # check that specified output path does not already exist
+    from thunder.rdds.fileio.readers import getFileReaderForPath
+    reader = getFileReaderForPath(path)()
+    existing = reader.list(path, includeDirectories=True)
+    if existing:
+        raise ValueError("Path %s appears to already exist. Specify a new directory, or call " % path +
+                         "with overwrite=True to overwrite.")
