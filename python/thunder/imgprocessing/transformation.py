@@ -9,6 +9,17 @@ class Transformation(object):
 
 
 class Displacement(Transformation):
+    """
+    Class for transformations based on spatial displacements.
+
+    Can be applied to either images or volumes.
+
+    Parameters
+    ----------
+    delta : list
+        A list of spatial displacements for each dimensino,
+        e.g. [10,5,2] for a displacement of 10 in x, 5 in y, 2 in z
+    """
 
     def __init__(self, delta=None):
         self.delta = delta
@@ -31,6 +42,17 @@ class Displacement(Transformation):
 
 
 class PlanarDisplacement(Transformation):
+    """
+    Class for transformations based on two-dimensional spatial displacements.
+
+    Applied separately to each plane of a three-dimensional volume.
+
+    Parameters
+    ----------
+    delta : list
+        A nested list, where the first list is over planes, and
+        for each plane a list of [x,y] displacements
+    """
 
     def __init__(self, delta=None):
         self.delta = delta
