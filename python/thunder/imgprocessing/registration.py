@@ -88,15 +88,15 @@ class RegistrationMethod(object):
         self.isPrepared(images)
 
         # broadcast the registration model
-        reg_bc = images.rdd.context.broadcast(self)
+        bcReg = images.rdd.context.broadcast(self)
 
         # compute the transformations
-        transformations = images.rdd.mapValues(lambda im: reg_bc.value.getTransform(im)).collectAsMap()
+        transformations = images.rdd.mapValues(lambda im: bcReg.value.getTransform(im)).collectAsMap()
 
         # construct the model
-        regmethod = self.__class__.__name__
-        transclass = transformations.itervalues().next().__class__.__name__
-        model = RegistrationModel(transformations, regmethod=regmethod, transclass=transclass)
+        regMethod = self.__class__.__name__
+        transClass = transformations.itervalues().next().__class__.__name__
+        model = RegistrationModel(transformations, regMethod=regMethod, transClass=transClass)
         return model
 
     def run(self, images):
@@ -127,23 +127,23 @@ class RegistrationMethod(object):
         self.isPrepared(images)
 
         # broadcast the reference
-        reg_bc = images.rdd.context.broadcast(self)
+        bcReg = images.rdd.context.broadcast(self)
 
         def fitandtransform(im, reg):
             t = reg.value.getTransform(im)
             return t.apply(im)
 
-        newrdd = images.rdd.mapValues(lambda im: fitandtransform(im, reg_bc))
+        newrdd = images.rdd.mapValues(lambda im: fitandtransform(im, bcReg))
 
         return Images(newrdd).__finalize__(images)
 
 
 class RegistrationModel(object):
 
-    def __init__(self, transformations, regmethod=None, transclass=None):
+    def __init__(self, transformations, regMethod=None, transClass=None):
         self.transformations = transformations
-        self.regmethod = regmethod
-        self.transclass = transclass
+        self.regMethod = regMethod
+        self.transClass = transClass
 
     def transform(self, images):
         """
@@ -163,10 +163,10 @@ class RegistrationModel(object):
         from thunder.rdds.images import Images
 
         # broadcast the transformations
-        transformations_bc = images.rdd.context.broadcast(self.transformations)
+        bcTransformations = images.rdd.context.broadcast(self.transformations)
 
         # apply the transformations
-        newrdd = images.rdd.map(lambda (k, im): (k, transformations_bc.value[k].apply(im)))
+        newrdd = images.rdd.map(lambda (k, im): (k, bcTransformations.value[k].apply(im)))
         return Images(newrdd).__finalize__(images)
 
     def save(self, file):
@@ -225,18 +225,18 @@ class RegistrationModel(object):
         input = json.loads(f.read())
 
         # import the appropriate transformation class
-        regmethod = str(input['regmethod'])
-        classname = str(input['transclass'])
-        transclass = getattr(importlib.import_module('thunder.imgprocessing.transformation'), classname)
+        regMethod = str(input['regMethod'])
+        className = str(input['transClass'])
+        transClass = getattr(importlib.import_module('thunder.imgprocessing.transformation'), className)
 
         # instantiate the transformations and construct the model
-        transformations = {int(k): transclass(**v) for k, v in input['transformations'].iteritems()}
-        model = RegistrationModel(transformations, regmethod=regmethod, transclass=classname)
+        transformations = {int(k): transClass(**v) for k, v in input['transformations'].iteritems()}
+        model = RegistrationModel(transformations, regMethod=regMethod, transClass=className)
         return model
 
     def __repr__(self):
-        out = "RegisterModel(method='%s', transtype='%s', transformations=%s)" % \
-              (self.regmethod, self.transclass, self.transformations)
+        out = "RegisterModel(method='%s', trans='%s', transformations=%s)" % \
+              (self.regMethod, self.transClass, self.transformations)
         return out[0:120] + " ..."
 
 
