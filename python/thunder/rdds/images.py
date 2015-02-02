@@ -416,6 +416,65 @@ class Images(Data):
 
         return self._constructor(newrdd, dims=newdims).__finalize__(self)
 
+    def meanByRegions(self, mask):
+        """Collapses images into one or more spatial mean values as specified by the passed mask array.
+
+        The passed mask must be a numpy ndarray of the same shape as the individual arrays in this
+        Images object. If the mask array is of integer or unsigned integer type, one mean value will
+        be calculated for each unique nonzero value in the passed mask. (That is, all pixels with a
+        value of '1' in the mask will be averaged together, as will all with a mask value of '2', and so
+        on.) For other mask array types, all nonzero values in the mask will be averaged together into
+        a single regional average.
+
+        The returned object will be a new 2d Images object with dimensions (1, number of regions).
+
+        Parameters
+        ----------
+        mask: ndarray with shape equal to self.dims.count
+
+        Returns
+        -------
+        new Images object
+        """
+        # argument type checking
+        if not isinstance(mask, ndarray):
+            raise ValueError("Mask should be numpy ndarray, got: '%s'" % str(type(mask)))
+        # check for matching shapes only if we already know our own shape; don't trigger action otherwise
+        if self._dims:
+            if mask.shape != self._dims.count:
+                raise ValueError("Shape mismatch between mask '%s' and image dimensions '%s'; shapes must be equal" %
+                                 (str(mask.shape), str(self._dims.count)))
+
+        from numpy import array, mean, unique
+        ctx = self.rdd.context
+        if mask.dtype.kind in ('i', 'u'):
+            # integer or unsigned int mask
+            isIntMask = True
+            bcUnique = ctx.broadcast(unique(mask))
+            bcMask = ctx.broadcast(mask)
+        else:
+            isIntMask = False
+            bcUnique = None
+            bcMask = ctx.broadcast(mask.nonzero())
+
+        def meanByIntMask(kv):
+            key, ary = kv
+            uniq = bcUnique.value
+            msk = bcMask.value
+            meanVals = [mean(ary[msk == grp]) for grp in uniq if grp != 0]
+            return key, array(meanVals, dtype=ary.dtype).reshape((1, -1))
+
+        def meanByMaskIndices(kv):
+            key, ary = kv
+            maskIdxs = bcMask.value
+            return key, array([mean(ary[maskIdxs])], dtype=ary.dtype).reshape((1, 1))
+
+        if isIntMask:
+            data = self.rdd.map(meanByIntMask)
+        else:
+            data = self.rdd.map(meanByMaskIndices)
+        return self._constructor(data).__finalize__(self)
+
     def planes(self, startidz, stopidz):
         """
         Subselect planes from 3D image data.

@@ -485,6 +485,53 @@ class TestImagesStats(PySparkTestCase):
         assert_true(array_equal(reduce(minimum, arys), minVal))
 
 
+class TestImagesMeanByRegions(PySparkTestCase):
+    def setUp(self):
+        super(TestImagesMeanByRegions, self).setUp()
+        self.ary1 = array([[3, 5], [6, 8]], dtype='int32')
+        self.ary2 = array([[13, 15], [16, 18]], dtype='int32')
+        self.images = ImagesLoader(self.sc).fromArrays([self.ary1, self.ary2])
+
+    def __checkAttrPropagation(self, newImages):
+        assert_equals(self.images._dims, newImages._dims)
+        assert_equals(self.images._nimages, newImages._nimages)
+        assert_equals(self.images._dtype, newImages._dtype)
+
+    def test_badMaskShapeThrowsValueError(self):
+        mask = array([[1]], dtype='int16')
+        assert_raises(ValueError, self.images.meanByRegions, mask)
+
+    def test_meanWithFloatMask(self):
+        mask = array([[1.0, 0.0], [0.0, 1.0]], dtype='float32')
+        regionMeanImages = self.images.meanByRegions(mask)
+        self.__checkAttrPropagation(regionMeanImages)
+        collected = regionMeanImages.collect()
+        assert_equals(2, len(collected))
+        assert_equals((1, 1), collected[0][1].shape)
+        # check keys
+        assert_equals(0, collected[0][0])
+        assert_equals(1, collected[1][0])
+        # check values
+        assert_equals(5, collected[0][1][0])
+        assert_equals(15, collected[1][1][0])
+
+    def test_meanWithIntMask(self):
+        mask = array([[1, 0], [2, 1]], dtype='uint8')
+        regionMeanImages = self.images.meanByRegions(mask)
+        self.__checkAttrPropagation(regionMeanImages)
+        collected = regionMeanImages.collect()
+        assert_equals(2, len(collected))
+        assert_equals((1, 2), collected[0][1].shape)
+        # check keys
+        assert_equals(0, collected[0][0])
+        assert_equals(1, collected[1][0])
+        # check values
+        assert_equals(5, collected[0][1].flat[0])
+        assert_equals(6, collected[0][1].flat[1])
+        assert_equals(15, collected[1][1].flat[0])
+        assert_equals(16, collected[1][1].flat[1])
+
+
 class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
     @staticmethod
