@@ -1,6 +1,6 @@
 from numpy import allclose, amax, arange, array, array_equal
 from numpy import dtype as dtypeFunc
-from nose.tools import assert_equals, assert_true
+from nose.tools import assert_equals, assert_is_none, assert_true
 
 from thunder.rdds.series import Series
 from test_utils import *
@@ -287,3 +287,30 @@ class TestSeriesMethods(PySparkTestCase):
 
         assert_true(array_equal(amax(ary.T, 0), project0))
         assert_true(array_equal(amax(ary.T, 1), project1))
+
+
+class TestSeriesGetters(PySparkTestCase):
+    def setUp(self):
+        super(TestSeriesGetters, self).setUp()
+        self.dataLocal = [
+            ((0, 0), array([1.0, 2.0, 3.0], dtype='float32')),
+            ((0, 1), array([2.0, 2.0, 4.0], dtype='float32')),
+            ((1, 0), array([4.0, 2.0, 1.0], dtype='float32')),
+            ((1, 1), array([3.0, 1.0, 1.0], dtype='float32'))
+        ]
+        self.series = Series(self.sc.parallelize(self.dataLocal), dtype='float32', dims=(2, 2), index=[0, 1, 2])
+
+    def test_getMissing(self):
+        assert_is_none(self.series.get(-1))
+
+    def test_get(self):
+        expected = self.dataLocal[1][1]
+        assert_true(array_equal(expected, self.series.get((0, 1))))
+
+    def test_getAll(self):
+        vals = self.series.getAll([(0, 0), (17, 256), (1, 0), (0, 0)])
+        assert_equals(4, len(vals))
+        assert_true(array_equal(self.dataLocal[0][1], vals[0]))
+        assert_is_none(vals[1])
+        assert_true(array_equal(self.dataLocal[2][1], vals[2]))
+        assert_true(array_equal(self.dataLocal[0][1], vals[3]))

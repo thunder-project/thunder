@@ -111,6 +111,44 @@ class Data(object):
         """
         return self.rdd.take(*args, **kwargs)
 
+    def get(self, key):
+        """Returns a single value matching the passed key, or None if no matching keys found
+
+        If multiple records are found with keys matching the passed key, a sequence of all matching
+        values will be returned. (This is not expected as a normal occurance, but could happen with
+        some user-created rdds.)
+        """
+        filteredVals = self.rdd.filter(lambda (k, v): k == key).values().collect()
+        if len(filteredVals) == 1:
+            return filteredVals[0]
+        elif not filteredVals:
+            return None
+        else:
+            return filteredVals
+
+    def getAll(self, keys):
+        """Returns a sequence of values corresponding to the passed sequence of keys.
+
+        The return value will be a sequence equal in length to the passed keys, with each
+        value in the returned sequence corresponding to the key at the same position in the passed
+        keys sequence. If no value is found for a given key, the corresponding sequence element will be None.
+        If multiple values are found, the corresponding sequence element will be a sequence containing all
+        matching values.
+        """
+        keySet = frozenset(keys)
+        filteredRecs = self.rdd.filter(lambda (k, _): k in keySet).collect()
+        sortingDict = {}
+        for k, v in filteredRecs:
+            sortingDict.setdefault(k, []).append(v)
+        retVals = []
+        for k in keys:
+            vals = sortingDict.get(k)
+            if vals is not None:
+                if len(vals) == 1:
+                    vals = vals[0]
+            retVals.append(vals)
+        return retVals
+
     def values(self):
         """ Return values, ignoring keys
 

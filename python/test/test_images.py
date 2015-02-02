@@ -4,7 +4,7 @@ import os
 from numpy import allclose, arange, array, array_equal, prod, squeeze, zeros
 from numpy import dtype as dtypeFunc
 import itertools
-from nose.tools import assert_equals, assert_raises, assert_true
+from nose.tools import assert_equals, assert_is_none, assert_raises, assert_true
 import unittest
 
 from thunder.rdds.fileio.imagesloader import ImagesLoader
@@ -483,6 +483,28 @@ class TestImagesStats(PySparkTestCase):
         imageData = ImagesLoader(self.sc).fromArrays(arys)
         minVal = imageData.min()
         assert_true(array_equal(reduce(minimum, arys), minVal))
+
+
+class TestImagesGetters(PySparkTestCase):
+    def setUp(self):
+        super(TestImagesGetters, self).setUp()
+        self.ary1 = array([[1, 2], [3, 4]], dtype='int16')
+        self.ary2 = array([[5, 6], [7, 8]], dtype='int16')
+        self.images = ImagesLoader(self.sc).fromArrays([self.ary1, self.ary2])
+
+    def test_getMissing(self):
+        assert_is_none(self.images.get(-1))
+
+    def test_get(self):
+        assert_true(array_equal(self.ary2, self.images.get(1)))
+
+    def test_getAll(self):
+        vals = self.images.getAll([0, -1, 1, 0])
+        assert_equals(4, len(vals))
+        assert_true(array_equal(self.ary1, vals[0]))
+        assert_is_none(vals[1])
+        assert_true(array_equal(self.ary2, vals[2]))
+        assert_true(array_equal(self.ary1, vals[3]))
 
 
 class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
