@@ -1,6 +1,6 @@
 from numpy import allclose, amax, arange, array, array_equal
 from numpy import dtype as dtypeFunc
-from nose.tools import assert_equals, assert_true
+from nose.tools import assert_equals, assert_is_not_none, assert_true
 
 from thunder.rdds.series import Series
 from test_utils import *
@@ -241,7 +241,9 @@ class TestSeriesRegionMeanMethods(PySparkTestCase):
             ((1, 0), array([4.0, 2.0, 1.0])),
             ((1, 1), array([3.0, 1.0, 1.0]))
         ]
-        self.series = Series(self.sc.parallelize(self.dataLocal))
+        self.series = Series(self.sc.parallelize(self.dataLocal),
+                             dtype=self.dataLocal[0][1].dtype,
+                             index=arange(3))
 
     def __setup_meanByRegion(self, useMask=False):
         itemIdxs = [1, 2]  # data keys for items 1 and 2 (0-based)
@@ -266,6 +268,12 @@ class TestSeriesRegionMeanMethods(PySparkTestCase):
             assert_equals(expectedKeys[i], actual[i][0])
             assert_true(array_equal(expected[i], actual[i][1]))
 
+    def __checkReturnedSeriesAttributes(self, newSeries):
+        assert_true(newSeries._dims is None)  # check that new _dims is unset
+        assert_equals(self.series.dtype, newSeries._dtype)  # check that new dtype is set
+        assert_true(array_equal(self.series.index, newSeries._index))  # check that new index is set
+        assert_is_not_none(newSeries.dims)  # check that new dims is at least calculable (expected to be meaningless)
+
     def __run_tst_meanOfRegion(self, useMask):
         keys, expectedKeys, expected = self.__setup_meanByRegion(useMask)
         actual = self.series.meanOfRegion(keys)
@@ -282,6 +290,7 @@ class TestSeriesRegionMeanMethods(PySparkTestCase):
 
         actualSeries = self.series.meanByRegion([keys])
         actual = actualSeries.collect()
+        self.__checkReturnedSeriesAttributes(actualSeries)
         TestSeriesRegionMeanMethods.__checkNestedAsserts(1, [expectedKeys], [expected], actual)
 
     def test_meanByRegions_singleRegionWithMask(self):
@@ -289,6 +298,7 @@ class TestSeriesRegionMeanMethods(PySparkTestCase):
 
         actualSeries = self.series.meanByRegion(mask)
         actual = actualSeries.collect()
+        self.__checkReturnedSeriesAttributes(actualSeries)
         TestSeriesRegionMeanMethods.__checkNestedAsserts(1, [expectedKeys], [expected], actual)
 
     def test_meanByRegions_twoRegions(self):
@@ -303,6 +313,7 @@ class TestSeriesRegionMeanMethods(PySparkTestCase):
 
         actualSeries = self.series.meanByRegion(nestedKeys)
         actual = actualSeries.collect()
+        self.__checkReturnedSeriesAttributes(actualSeries)
         TestSeriesRegionMeanMethods.__checkNestedAsserts(2, expectedKeys, expected, actual)
 
     def test_meanByRegions_twoRegionsWithMask(self):
@@ -317,4 +328,5 @@ class TestSeriesRegionMeanMethods(PySparkTestCase):
 
         actualSeries = self.series.meanByRegion(mask)
         actual = actualSeries.collect()
+        self.__checkReturnedSeriesAttributes(actualSeries)
         TestSeriesRegionMeanMethods.__checkNestedAsserts(2, expectedKeys, expected, actual)

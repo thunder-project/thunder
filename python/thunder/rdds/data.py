@@ -84,8 +84,9 @@ class Data(object):
         if isinstance(other, Data):
             for name in self._metadata:
                 if name not in noPropagate:
-                    if (getattr(other, name, None) is not None) and (getattr(self, name, None) is None):
-                        object.__setattr__(self, name, getattr(other, name, None))
+                    otherAttr = getattr(other, name, None)
+                    if (otherAttr is not None) and (getattr(self, name, None) is None):
+                        object.__setattr__(self, name, otherAttr)
         return self
 
     @property

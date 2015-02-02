@@ -1,12 +1,10 @@
 from numpy import ndarray, array, sum, mean, median, std, size, arange, \
     percentile, asarray, maximum, zeros, corrcoef, where, \
-    true_divide, ceil, vstack
-
-
+    true_divide, ceil
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
-from thunder.utils.common import checkParams, loadMatVar, smallestFloatType
+from thunder.utils.common import loadMatVar
 
 
 class Series(Data):
@@ -661,6 +659,10 @@ class Series(Data):
         and so on). If another type of ndarray is passed, then all nonzero mask elements will be interpreted
         as a single region.
 
+        This method returns a new Series object, with one record per defined region. Record keys will be the mean of
+        keys within the region, while record values will be the mean of values in the region. The `dims` attribute on
+        the new Series will not be set; all other attributes will be as in the source Series object.
+
         Parameters
         ----------
         nestedKeys: sequence of sequences of Series record keys, or ndarray mask.
@@ -668,8 +670,6 @@ class Series(Data):
         Returns
         -------
         new Series object
-            New Series will have one record per region. Record keys will be the mean of keys within the region,
-            while record values will be the mean of values in the region.
         """
         if isinstance(nestedKeys, ndarray):
             nestedKeys = self.__maskToKeys(nestedKeys, returnNested=True)
@@ -693,7 +693,7 @@ class Series(Data):
                           _MeanCombiner.mergeIntoMeanTuple,
                           _MeanCombiner.combineMeanTuples, numPartitions=len(nestedKeys)) \
             .map(lambda (region_, (n, kmean, vmean)): (tuple(kmean.astype('int16')), vmean))
-        return self._constructor(data).__finalize__(self)
+        return self._constructor(data).__finalize__(self, noPropagate=('_dims'))
 
     def toBlocks(self, blockSizeSpec="150M"):
         """
