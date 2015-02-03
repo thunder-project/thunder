@@ -2,10 +2,10 @@
 
 def _isNamedTuple(obj):
   """Heuristic check if an object is a namedtuple."""
-  return isinstance(obj, tuple) \
-           and hasattr(obj, "_fields") \
-           and hasattr(obj, "_asdict") \
-           and callable(obj._asdict)
+  from collections import namedtuple
+  return hasattr(obj, "_fields") \
+     and hasattr(obj, "_asdict") \
+     and callable(obj._asdict)
 
 def serializable(cls):
     '''The @serializable decorator can decorate any class to make it easy to store
@@ -108,7 +108,7 @@ def serializable(cls):
               be converted to a string using Python's standard JSON library (or another library of
               your choice).
             '''
-            from collections import namedtuple, Iterable, OrderedDict
+            from collections import OrderedDict
             from numpy import ndarray
 
             def serializeRecursively(data):
@@ -210,9 +210,11 @@ def serializable(cls):
                 if "py/set" == dataKey:
                     return set(restoreRecursively(dct["py/set"]))
                 if "py/collections.namedtuple" == dataKey:
+                    from collections import namedtuple
                     data = restoreRecursively(dct["py/collections.namedtuple"])
                     return namedtuple(data["type"], data["fields"])(*data["values"])
                 if "py/collections.OrderedDict" == dataKey:
+                    from collections import OrderedDict
                     return OrderedDict(restoreRecursively(dct["py/collections.OrderedDict"]))
                 if "py/datetime" == dataKey:
                     from dateutil import parser
