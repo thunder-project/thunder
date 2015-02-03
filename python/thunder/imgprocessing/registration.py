@@ -230,7 +230,9 @@ class RegistrationModel(object):
         transClass = getattr(importlib.import_module('thunder.imgprocessing.transformation'), className)
 
         # instantiate the transformations and construct the model
-        transformations = {int(k): transClass(**v) for k, v in input['transformations'].iteritems()}
+        transformations = {}
+        for k, v in input['transformations'].iteritems():
+            transformations[int(k)] = transClass(**v)
         model = RegistrationModel(transformations, regMethod=regMethod, transClass=className)
         return model
 
