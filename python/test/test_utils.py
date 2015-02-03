@@ -51,3 +51,50 @@ def elementwiseStdev(arys):
     combined = vstack([ary.ravel() for ary in arys])
     stdAry = std(combined, axis=0)
     return stdAry.reshape(arys[0].shape)
+
+
+class TestSerializableDecorator(PySparkTestCase):
+
+    def test_serializable_decorator(self):
+
+        from thunder.utils.decorators import serializable
+        import numpy as np
+        import datetime
+
+        @serializable
+        class Visitor(object):
+            def __init__(self, ip_addr = None, agent = None, referrer = None):
+                self.ip = ip_addr
+                self.ua = agent
+                self.referrer= referrer
+                self.test_dict = {'a': 10, 'b': "string", 'c': [1, 2, 3]}
+                self.test_vec = np.array([1,2,3])
+                self.test_array = np.array([[1,2,3],[4,5,6.]])
+                self.time = datetime.datetime.now()
+
+            def __str__(self):
+                return str(self.ip) + " " + str(self.ua) + " " + str(self.referrer) + " " + str(self.time)
+
+            def test_method(self):
+                return True
+
+        # Run the test.  Build an object, serialize it, and recover it.
+
+        # Create a new object
+        orig_visitor = Visitor('192.168', 'UA-1', 'http://www.google.com')
+
+        # Serialize the object
+        pickled_visitor = orig_visitor.serialize(numpy_storage='ascii')
+
+        # Restore object
+        recov_visitor = Visitor.deserialize(pickled_visitor)
+
+        # Check that the object was reconstructed successfully
+        assert(orig_visitor.ip == recov_visitor.ip)
+        assert(orig_visitor.ua == recov_visitor.ua)
+        assert(orig_visitor.referrer == recov_visitor.referrer)
+        for key in orig_visitor.test_dict.keys():
+            assert(orig_visitor.test_dict[key] == recov_visitor.test_dict[key])
+
+        assert(np.all(orig_visitor.test_vec == recov_visitor.test_vec))
+        assert(np.all(orig_visitor.test_array == recov_visitor.test_array))
