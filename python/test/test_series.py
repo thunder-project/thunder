@@ -357,3 +357,36 @@ class TestSeriesGetters(PySparkTestCase):
 
         # raise exception if 'step' specified:
         assert_raises(ValueError, self.series.getRange, [slice(0, 4, 2), slice(2, 3)])
+
+    def test_brackets(self):
+        vals = self.series[(1, 0)]
+        assert_true(array_equal(self.dataLocal[2][1], vals))
+
+        vals = self.series[:4, :1]
+        assert_equals(2, len(vals))
+        assert_equals(self.dataLocal[0][0], vals[0][0])
+        assert_equals(self.dataLocal[2][0], vals[1][0])
+        assert_true(array_equal(self.dataLocal[0][1], vals[0][1]))
+        assert_true(array_equal(self.dataLocal[2][1], vals[1][1]))
+
+        vals = self.series[:, 1:2]
+        assert_equals(2, len(vals))
+        assert_equals(self.dataLocal[1][0], vals[0][0])
+        assert_equals(self.dataLocal[3][0], vals[1][0])
+        assert_true(array_equal(self.dataLocal[1][1], vals[0][1]))
+        assert_true(array_equal(self.dataLocal[3][1], vals[1][1]))
+
+        vals = self.series[:, :]
+        assert_equals(4, len(vals))
+        assert_equals(self.dataLocal[0][0], vals[0][0])
+        assert_equals(self.dataLocal[1][0], vals[1][0])
+        assert_equals(self.dataLocal[2][0], vals[2][0])
+        assert_equals(self.dataLocal[3][0], vals[3][0])
+        assert_true(array_equal(self.dataLocal[0][1], vals[0][1]))
+        assert_true(array_equal(self.dataLocal[1][1], vals[1][1]))
+        assert_true(array_equal(self.dataLocal[2][1], vals[2][1]))
+        assert_true(array_equal(self.dataLocal[3][1], vals[3][1]))
+
+        assert_raises(KeyError, self.series.__getitem__, (25, 17))  # equiv: self.series[(25, 17)]
+
+        assert_raises(IndexError, self.series.__getitem__, [slice(2, 3), slice(None)])  # series[2:3,:]

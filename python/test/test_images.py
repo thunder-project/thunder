@@ -535,6 +535,41 @@ class TestImagesGetters(PySparkTestCase):
         # raise exception if 'step' specified:
         assert_raises(ValueError, self.images.getRange, slice(1, 2, 2))
 
+    def test_brackets(self):
+        vals = self.images[1]
+        assert_true(array_equal(self.ary2, vals))
+
+        vals = self.images[0:1]
+        assert_equals(1, len(vals))
+        assert_equals(0, vals[0][0])
+        assert_true(array_equal(self.ary1, vals[0][1]))
+
+        vals = self.images[:]
+        assert_equals(2, len(vals))
+        assert_equals(0, vals[0][0])
+        assert_equals(1, vals[1][0])
+        assert_true(array_equal(self.ary1, vals[0][1]))
+        assert_true(array_equal(self.ary2, vals[1][1]))
+
+        vals = self.images[1:4]
+        assert_equals(1, len(vals))
+        assert_equals(1, vals[0][0])
+        assert_true(array_equal(self.ary2, vals[0][1]))
+
+        vals = self.images[1:]
+        assert_equals(1, len(vals))
+        assert_equals(1, vals[0][0])
+        assert_true(array_equal(self.ary2, vals[0][1]))
+
+        vals = self.images[:1]
+        assert_equals(1, len(vals))
+        assert_equals(0, vals[0][0])
+        assert_true(array_equal(self.ary1, vals[0][1]))
+
+        assert_raises(KeyError, self.images.__getitem__, 2)  # equiv: self.images[2]
+
+        assert_raises(IndexError, self.images.__getitem__, slice(2, 3))  # equiv: self.images[2:3]
+
 
 class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 

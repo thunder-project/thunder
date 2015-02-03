@@ -207,6 +207,19 @@ class Data(object):
         # default sort of tuples is by first item, which happens to be what we want
         return sorted(filteredRecs)
 
+    def __getitem__(self, item):
+        # should raise exception here when no matching items found
+        # see object.__getitem__ in https://docs.python.org/2/reference/datamodel.html
+        if isinstance(item, slice) or (hasattr(item, "__len__") and isinstance(item[0], slice)):
+            retVals = self.getRange(item)
+            if not retVals:
+                raise IndexError("No keys found for slice(s): '%s'" % str(item))
+        else:
+            retVals = self.get(item)
+            if retVals is None:
+                raise KeyError("No key found matching '%s'" % str(item))
+        return retVals
+
     def values(self):
         """ Return values, ignoring keys
 
