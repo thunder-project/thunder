@@ -154,8 +154,14 @@ def serializable(cls):
 
                 raise TypeError("Type %s not data-serializable" % type(data))
 
-            # Start serializing from the top level object dictionary
-            return serializeRecursively(self.wrapped.__dict__)
+            # If this object has slots, we need to convert the slots to a dict before serializing them.
+            if hasattr(cls, "__slots__"):
+                slotDict = { key: self.wrapped.__getattribute__(key) for key in cls.__slots__ }
+                return serializeRecursively(slotDict)
+
+            # Otherwise, we handle the object as though it has a normal __dict__ containing its attributes.
+            else:
+                return serializeRecursively(self.wrapped.__dict__)
 
         # ------------------------------------------------------------------------------
         # DESERIALIZE()
@@ -236,7 +242,15 @@ def serializable(cls):
             # shell of an object, and set its dictionary to the reconstructed
             # dictionary we pulled from the JSON file.
             thawedObject = cls.__new__(cls)
-            thawedObject.__dict__ = restoredDict
+
+            # If this class has slots, we must re-populate them one at a time
+            if hasattr(cls, "__slots__"):
+                for key in restoredDict.keys():
+                    thawedObject.__setattr__(key, restoredDict[key])
+
+            # Otherwise simply update the objects dictionary en masse
+            else:
+                thawedObject.__dict__ = restoredDict
 
             # Finally, we would like this re-hydrated object to also be @serializable, so we re-wrap it
             # in the ThunderSerializeableObjectWrapper using the same trick with __new__().

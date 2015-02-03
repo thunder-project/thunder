@@ -101,6 +101,23 @@ class TestSerializableDecorator(PySparkTestCase):
         assert(all(origVisitor.testVec == recovVisitor.testVec))
         assert(all(origVisitor.testArray == recovVisitor.testArray))
 
+    def testSerializeWithSlots(self):
+        '''
+        Check to make sure that classes that use slots can be serialized / deserialized.
+        '''
+
+        from thunder.utils.decorators import serializable
+
+        @serializable
+        class Foo(object):
+            __slots__ = ['bar']
+
+        foo = Foo()
+        foo.bar = 'a'
+        testJson = foo.serialize()  # boom
+        foo2 = Foo.deserialize(testJson)
+        assert(foo.bar == foo2.bar)
+
     def testNotSerializable(self):
         '''
         Unit test to make sure exceptions are thrown if the object contains an
