@@ -71,16 +71,20 @@ def serializable(cls):
             else:
                 self.__dict__['wrapped'] = args[1]
 
-        # Delegate to wrapped class for common python methods
+        # Delegate to wrapped class for special python object-->string methods
         def __str__(self):
             return self.wrapped.__str__()
+        def __repr__(self):
+            return self.wrapped.__repr__()
+        def __unicode__(self):
+            return self.wrapped.__unicode__()
 
-        # Delegate to wrapped class for common python methods
+        # Delegate to wrapped class for special python methods
         def __call__(self, *args, **kwargs):
             return self.wrapped.__str__(*args, **kwargs)
 
-
-
+        # ------------------------------------------------------------------------------
+        # SERIALIZE()
 
         def serialize(self, numpy_storage='auto'):
             '''
@@ -150,6 +154,8 @@ def serializable(cls):
             # Start serializing from the top level object dictionary
             return serialize_recursively(self.wrapped.__dict__)
 
+        # ------------------------------------------------------------------------------
+        # DESERIALIZE()
 
         @staticmethod
         def deserialize(serialized_dict):
