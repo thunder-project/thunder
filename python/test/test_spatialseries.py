@@ -9,9 +9,35 @@ class TestLocalCorr(PySparkTestCase):
     (verified by directly computing
     result with numpy's mean and corrcoef)
 
-    Test with indexing from both 0 and 1
+    Test with indexing from both 0 and 1,
+    and for both 2D and 3D data
     """
-    def test_localCorr_0Indexing(self):
+    def test_localCorr_0Indexing_2D(self):
+
+        dataLocal = [
+            ((0, 0), array([1.0, 2.0, 3.0])),
+            ((0, 1), array([2.0, 2.0, 4.0])),
+            ((0, 2), array([9.0, 2.0, 1.0])),
+            ((1, 0), array([5.0, 2.0, 5.0])),
+            ((2, 0), array([4.0, 2.0, 6.0])),
+            ((1, 1), array([4.0, 2.0, 8.0])),
+            ((1, 2), array([5.0, 4.0, 1.0])),
+            ((2, 1), array([6.0, 3.0, 2.0])),
+            ((2, 2), array([0.0, 2.0, 1.0]))
+        ]
+
+        # get ground truth by correlating mean with the center
+        ts = map(lambda x: x[1], dataLocal)
+        mn = mean(ts, axis=0)
+        truth = corrcoef(mn, array([4.0, 2.0, 8.0]))[0, 1]
+
+        data = SpatialSeries(self.sc.parallelize(dataLocal))
+
+        corr = data.localCorr(1)
+
+        assert(allclose(corr.collect()[4][1], truth))
+
+    def test_localCorr_0Indexing_3D(self):
 
         dataLocal = [
             ((0, 0, 0), array([1.0, 2.0, 3.0])),
@@ -36,7 +62,7 @@ class TestLocalCorr(PySparkTestCase):
 
         assert(allclose(corr.collect()[4][1], truth))
 
-    def test_localCorr_1Indexing(self):
+    def test_localCorr_1Indexing_3D(self):
 
         dataLocal = [
             ((1, 1, 1), array([1.0, 2.0, 3.0])),
