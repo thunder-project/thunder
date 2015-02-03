@@ -8,14 +8,12 @@ def _isnamedtuple(obj):
            and callable(obj._asdict)
 
 def serializable(cls):
-    '''
-    The @serializable decorator can be added to a class to make it easy to store
-    in a human readable JSON format. Classes instances that are wrapped in this
+    '''The @serializable decorator can decorate any class to make it easy to store
+    that class in a human readable JSON format and then recall it and recover
+    the original object instance. Classes instances that are wrapped in this
     decorator gain the serialize() method, and the class also gains a
-    deserialize() static method that can automatically "pickle" and "unpickle"
-    a wide variety of objects.
-
-    Usage example:
+    deserialize() static method that can automatically "pickle" and "unpickle" a
+    wide variety of objects like so:
 
       @serializable
       class Visitor():
@@ -36,19 +34,22 @@ def serializable(cls):
     Note that this decorator is NOT designed to provide generalized pickling
     capabilities. Rather, it is designed to make it very easy to convert small
     classes containing model properties to a human and machine parsable format
-    for later analysis or visualization.
+    for later analysis or visualization. A few classes under consideration for
+    such decorating include the Transformation class for image alignment and the
+    Source classes for source extraction.
 
-    Any @serializable class can contain data that are not normally supported by
-    Python's stock JSON dump() and load() methods. Supported datatypes include
-    list, set, tuple, namedtuple, OrderedDict, datetime objects, numpy ndarrays,
-    and dicts with non-string (but still data) keys.
+    A key feature of the @serializable decorator is that it can "pickle" data
+    types that are not normally supported by Python's stock JSON dump() and
+    load() methods. Supported datatypes include: list, set, tuple, namedtuple,
+    OrderedDict, datetime objects, numpy ndarrays, and dicts with non-string
+    (but still data) keys. Serialization is performed recursively, and descends
+    into the standard python container types (list, dict, tuple, set).
 
-    Serialization is performed recursively, and descends into the standard
-    python container types (list, dict, tuple, set).
-
-    Some of this code was posted in this fantastic blog post by Chris Wagner:
+    Some of this code was adapted from these fantastic blog posts by Chris
+    Wagner and Sunil Arora:
 
       http://robotfantastic.org/serializing-python-data-to-json-some-edge-cases.html
+      http://sunilarora.org/serializable-decorator-for-python-class/
 
     '''
 
