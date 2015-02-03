@@ -71,6 +71,7 @@ class TestSerializableDecorator(PySparkTestCase):
                 self.testVec = array([1,2,3])
                 self.testArray = array([[1,2,3],[4,5,6.]])
                 self.time = datetime.now()
+                self.testComplex = complex(3,2)
 
             def __str__(self):
                 return str(self.ip) + " " + str(self.ua) + " " + str(self.referrer) + " " + str(self.time)
@@ -93,6 +94,7 @@ class TestSerializableDecorator(PySparkTestCase):
         assert(origVisitor.ip == recovVisitor.ip)
         assert(origVisitor.ua == recovVisitor.ua)
         assert(origVisitor.referrer == recovVisitor.referrer)
+        assert(origVisitor.testComplex == recovVisitor.testComplex)
         for key in origVisitor.testDict.keys():
             assert(origVisitor.testDict[key] == recovVisitor.testDict[key])
 

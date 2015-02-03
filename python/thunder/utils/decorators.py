@@ -137,6 +137,8 @@ def serializable(cls):
                     return {"py/set": [serializeRecursively(val) for val in data]}
                 if isinstance(data, datetime.datetime):
                     return {"py/datetime": str(data)}
+                if isinstance(data, complex):
+                    return {"py/complex": [ data.real, data.imag] }
                 if isinstance(data, ndarray):
                     if numpyStorage == 'ascii' or (numpyStorage == 'auto' and data.size < 1000):
                         return {"py/numpy.ndarray.ascii": {
@@ -181,30 +183,47 @@ def serializable(cls):
                 from numpy import frombuffer, dtype, array
                 from base64 import decodestring
 
-                if "py/dict" in dct:
+                # First, check to see if this is an encoded entry
+                dataKey = None
+                if isinstance(dct, dict):
+                    filteredKeys = filter(lambda x: "py/" in x, dct.keys())
+
+                    # If there is just one key with a "py/" prefix, that is the dataKey!
+                    if len(filteredKeys) == 1:
+                        dataKey = filteredKeys[0]
+
+                # If no data key is found, we assume the data needs no further decoding.
+                if dataKey is None:
+                    return dct
+
+                # Otherwise, decode it!
+                if "py/dict" == dataKey:
                     return dict(restoreRecursively(dct["py/dict"]))
-                if "py/tuple" in dct:
+                if "py/tuple" == dataKey:
                     return tuple(restoreRecursively(dct["py/tuple"]))
-                if "py/set" in dct:
+                if "py/set" == dataKey:
                     return set(restoreRecursively(dct["py/set"]))
-                if "py/collections.namedtuple" in dct:
+                if "py/collections.namedtuple" == dataKey:
                     data = restoreRecursively(dct["py/collections.namedtuple"])
                     return namedtuple(data["type"], data["fields"])(*data["values"])
-                if "py/collections.OrderedDict" in dct:
+                if "py/collections.OrderedDict" == dataKey:
                     return OrderedDict(restoreRecursively(dct["py/collections.OrderedDict"]))
-                if "py/datetime" in dct:
+                if "py/datetime" == dataKey:
                     from dateutil import parser
                     return parser.parse(dct["py/datetime"])
-                if "py/numpy.ndarray.ascii" in dct:
+                if "py/complex" == dataKey:
+                    data = dct["py/complex"]
+                    return complex( float(data[0]), float(data[1]) )
+                if "py/numpy.ndarray.ascii" == dataKey:
                     data = dct["py/numpy.ndarray.ascii"]
                     return array(data["values"], dtype=data["dtype"])
-                if "py/numpy.ndarray.base64" in dct:
+                if "py/numpy.ndarray.base64" == dataKey:
                     data = dct["py/numpy.ndarray.base64"]
                     arr = frombuffer(decodestring(data["values"]), dtype(data["dtype"]))
                     return arr.reshape(data["shape"])
 
-                # Base case: data type needs no further decoding.
-                return dct
+                # If no decoding scheme can be found, raise an exception
+                raise TypeError("Could not de-serialize unknown type: \"%s\"" % dataKey)
 
             # First we must restore the object's dictionary entries.  These are decoded recursively
             # using the helper function above.
