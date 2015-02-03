@@ -45,6 +45,12 @@ def serializable(cls):
     (but still data) keys. Serialization is performed recursively, and descends
     into the standard python container types (list, dict, tuple, set).
 
+    IMPORTANT NOTE: The object decorated with @serializable must store their
+    attributes in __slots__ or a __dict__, but not both! For example, you cannot
+    _directly_ wrap a namedtuple in the serializable decorator. However, you can
+    decorate an object that has an attribute pointing at an namedtuple. Only the
+    decorated object is subject to this restriction.
+
     Some of this code was adapted from these fantastic blog posts by Chris
     Wagner and Sunil Arora:
 
