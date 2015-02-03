@@ -161,7 +161,7 @@ def serializable(cls):
                 raise TypeError("Type %s not data-serializable" % type(data))
 
             # Check for unsupported class.
-            if hasattr(cls, "__slots__") and hasattr(cls, "__dict__"):
+            if hasattr(self.wrapped, "__slots__") and hasattr(self.wrapped, "__dict__"):
                 raise TypeError("Cannot serialize a class that has attributes in both __slots__ and __dict__")
 
             # If this object has slots, we need to convert the slots to a dict before serializing them.

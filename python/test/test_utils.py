@@ -148,3 +148,24 @@ class TestSerializableDecorator(PySparkTestCase):
 
 
 
+    def testNamedTupleSerializable(self):
+        '''
+        Unit test to make sure exceptions are thrown if the object contains an
+        unserializable data type.
+        '''
+
+        from thunder.utils.decorators import serializable
+        from collections import namedtuple
+
+        @serializable
+        class Foo(object):
+            def __init__(self):
+                self.nt = namedtuple('FooTuple', 'bar')
+
+        foo = Foo()
+        foo.nt.bar="baz"
+
+        testJson = foo.serialize()
+        foo2 = Foo.deserialize(testJson)
+        assert(foo.nt.bar == foo2.nt.bar)
+
