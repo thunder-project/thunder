@@ -506,6 +506,35 @@ class TestImagesGetters(PySparkTestCase):
         assert_true(array_equal(self.ary2, vals[2]))
         assert_true(array_equal(self.ary1, vals[3]))
 
+    def test_getRanges(self):
+        vals = self.images.getRange(slice(None))
+        assert_equals(2, len(vals))
+        assert_equals(0, vals[0][0])
+        assert_equals(1, vals[1][0])
+        assert_true(array_equal(self.ary1, vals[0][1]))
+        assert_true(array_equal(self.ary2, vals[1][1]))
+
+        vals = self.images.getRange(slice(0, 1))
+        assert_equals(1, len(vals))
+        assert_equals(0, vals[0][0])
+        assert_true(array_equal(self.ary1, vals[0][1]))
+
+        vals = self.images.getRange(slice(1))
+        assert_equals(1, len(vals))
+        assert_equals(0, vals[0][0])
+        assert_true(array_equal(self.ary1, vals[0][1]))
+
+        vals = self.images.getRange(slice(1, 2))
+        assert_equals(1, len(vals))
+        assert_equals(1, vals[0][0])
+        assert_true(array_equal(self.ary2, vals[0][1]))
+
+        vals = self.images.getRange(slice(2, 3))
+        assert_equals(0, len(vals))
+
+        # raise exception if 'step' specified:
+        assert_raises(ValueError, self.images.getRange, slice(1, 2, 2))
+
 
 class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 

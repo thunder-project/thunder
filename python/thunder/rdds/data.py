@@ -149,6 +149,64 @@ class Data(object):
             retVals.append(vals)
         return retVals
 
+    def getRange(self, sliceOrSlices):
+        """Returns key/value pairs that fall within a range given by the passed slice or slices.
+
+        The return values will be a sorted list of key/value pairs of all records in the underlying
+        RDD for which the key falls within the range given by the passed slice selectors. Note that
+        this may be very large, and could potentially exhaust the available memory on the driver.
+
+        The cardinality of the passed slice or sequence of slices must match that of the keys of
+        this RDD's records. For singleton keys, a single slice (or slice sequence of length one)
+        should be passed. For tuple keys, a sequence of multiple slices (as many as the cardinality
+        of the keys) should be passed.
+
+        Passed slices should not have a `step` attribute defined; this is not supported and a
+        ValueError will be raised if a step attribute is passed.
+
+        Parameters
+        ----------
+        sliceOrSlices: slice object or sequence of slices
+            The passed slice or slices should be of the same cardinality as the keys of the underlying rdd.
+
+        Returns
+        -------
+        sorted sequence of key/value pairs
+        """
+        # None is less than everything except itself
+        def singleSlicePredicate(kv):
+            key, _ = kv
+            if sliceOrSlices.stop is None:
+                return key >= sliceOrSlices.start
+            return sliceOrSlices.stop > key >= sliceOrSlices.start
+
+        def multiSlicesPredicate(kv):
+            key, _ = kv
+            for slise, subkey in zip(sliceOrSlices, key):
+                if slise.stop is None:
+                    if subkey < slise.start:
+                        return False
+                elif not (slise.stop > subkey >= slise.start):
+                    return False
+            return True
+
+        if not hasattr(sliceOrSlices, '__len__'):
+            # make my func the...
+            pFunc = singleSlicePredicate
+            if sliceOrSlices.step is not None:
+                raise ValueError("'step' slice attribute is not supported in getRange, got step: %d" %
+                                 sliceOrSlices.step)
+        else:
+            pFunc = multiSlicesPredicate
+            for slise in sliceOrSlices:
+                if slise.step is not None:
+                    raise ValueError("'step' slice attribute is not supported in getRange, got step: %d" %
+                                     slise.step)
+
+        filteredRecs = self.rdd.filter(pFunc).collect()
+        # default sort of tuples is by first item, which happens to be what we want
+        return sorted(filteredRecs)
+
     def values(self):
         """ Return values, ignoring keys
 

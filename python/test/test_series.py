@@ -1,6 +1,6 @@
 from numpy import allclose, amax, arange, array, array_equal
 from numpy import dtype as dtypeFunc
-from nose.tools import assert_equals, assert_is_none, assert_true
+from nose.tools import assert_equals, assert_is_none, assert_raises, assert_true
 
 from thunder.rdds.series import Series
 from test_utils import *
@@ -314,3 +314,46 @@ class TestSeriesGetters(PySparkTestCase):
         assert_is_none(vals[1])
         assert_true(array_equal(self.dataLocal[2][1], vals[2]))
         assert_true(array_equal(self.dataLocal[0][1], vals[3]))
+
+    def test_getRanges(self):
+        vals = self.series.getRange([slice(2), slice(2)])
+        assert_equals(4, len(vals))
+        assert_equals(self.dataLocal[0][0], vals[0][0])
+        assert_equals(self.dataLocal[1][0], vals[1][0])
+        assert_equals(self.dataLocal[2][0], vals[2][0])
+        assert_equals(self.dataLocal[3][0], vals[3][0])
+        assert_true(array_equal(self.dataLocal[0][1], vals[0][1]))
+        assert_true(array_equal(self.dataLocal[1][1], vals[1][1]))
+        assert_true(array_equal(self.dataLocal[2][1], vals[2][1]))
+        assert_true(array_equal(self.dataLocal[3][1], vals[3][1]))
+
+        vals = self.series.getRange([slice(2), slice(1)])
+        assert_equals(2, len(vals))
+        assert_equals(self.dataLocal[0][0], vals[0][0])
+        assert_equals(self.dataLocal[2][0], vals[1][0])
+        assert_true(array_equal(self.dataLocal[0][1], vals[0][1]))
+        assert_true(array_equal(self.dataLocal[2][1], vals[1][1]))
+
+        vals = self.series.getRange([slice(None), slice(1, 2)])
+        assert_equals(2, len(vals))
+        assert_equals(self.dataLocal[1][0], vals[0][0])
+        assert_equals(self.dataLocal[3][0], vals[1][0])
+        assert_true(array_equal(self.dataLocal[1][1], vals[0][1]))
+        assert_true(array_equal(self.dataLocal[3][1], vals[1][1]))
+
+        vals = self.series.getRange([slice(None), slice(None)])
+        assert_equals(4, len(vals))
+        assert_equals(self.dataLocal[0][0], vals[0][0])
+        assert_equals(self.dataLocal[1][0], vals[1][0])
+        assert_equals(self.dataLocal[2][0], vals[2][0])
+        assert_equals(self.dataLocal[3][0], vals[3][0])
+        assert_true(array_equal(self.dataLocal[0][1], vals[0][1]))
+        assert_true(array_equal(self.dataLocal[1][1], vals[1][1]))
+        assert_true(array_equal(self.dataLocal[2][1], vals[2][1]))
+        assert_true(array_equal(self.dataLocal[3][1], vals[3][1]))
+
+        vals = self.series.getRange([slice(2, 3), slice(None)])
+        assert_equals(0, len(vals))
+
+        # raise exception if 'step' specified:
+        assert_raises(ValueError, self.series.getRange, [slice(0, 4, 2), slice(2, 3)])
