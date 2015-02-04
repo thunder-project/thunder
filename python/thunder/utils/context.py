@@ -86,10 +86,8 @@ class ThunderContext():
         return data
 
 
-    def loadImages(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
-                   startIdx=None, stopIdx=None, recursive=False):
-        """
-        Loads an Images object from data stored as a binary image stack, tif, or png files.
+    def loadImages(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16', startIdx=None, stopIdx=None, minBound=None, maxBound=None, resolution=None, recursive=False):
+        """ Loads an Images object from data stored as a binary image stack, tif, or png files.
 
         Supports single files or multiple files, stored on a local file system, a networked file sytem
         (mounted and available on all nodes), or Amazon S3. HDFS is not currently supported for image file data.
@@ -151,7 +149,7 @@ class ThunderContext():
             A newly-created Images object, wrapping an RDD of <int index, numpy array> key-value pairs.
 
         """
-        checkParams(inputFormat, ['stack', 'png', 'tif', 'tif-stack'])
+        checkParams(inputFormat, ['stack', 'png', 'tif', 'tif-stack', 'ocp'])
 
         from thunder.rdds.fileio.imagesloader import ImagesLoader
         loader = ImagesLoader(self._sc)
@@ -164,6 +162,8 @@ class ThunderContext():
                                     recursive=recursive)
         elif inputFormat.lower().startswith('tif'):
             data = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
+        elif inputFormat.lower() == 'ocp':
+          data = loader.fromOCP(dataPath, startIdx=startIdx, stopIdx=stopIdx, minBound=minBound, maxBound=maxBound, resolution=resolution )
         else:
             data = loader.fromPng(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
 
