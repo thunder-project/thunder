@@ -1,5 +1,6 @@
 """ Useful decorators that are used throughout the library """
 
+
 def _isNamedTuple(obj):
   """Heuristic check if an object is a namedtuple."""
   from collections import namedtuple
@@ -7,36 +8,20 @@ def _isNamedTuple(obj):
      and hasattr(obj, "_asdict") \
      and callable(obj._asdict)
 
+
 def serializable(cls):
-    '''The @serializable decorator can decorate any class to make it easy to store
+    """
+    The @serializable decorator can decorate any class to make it easy to store
     that class in a human readable JSON format and then recall it and recover
     the original object instance. Classes instances that are wrapped in this
     decorator gain the serialize() method, and the class also gains a
     deserialize() static method that can automatically "pickle" and "unpickle" a
-    wide variety of objects like so:
-
-      @serializable
-      class Visitor():
-          def __init__(self, ipAddr = None, agent = None, referrer = None):
-              self.ip = ipAddr
-              self.ua = agent
-              self.referrer= referrer
-              self.time = datetime.datetime.now()
-
-      origVisitor = Visitor('192.168', 'UA-1', 'http://www.google.com')
-
-      #serialize the object
-      pickledVisitor = origVisitor.serialize()
-
-      #restore object
-      recovVisitor = Visitor.deserialize(pickledVisitor)
+    wide variety of objects.
 
     Note that this decorator is NOT designed to provide generalized pickling
     capabilities. Rather, it is designed to make it very easy to convert small
     classes containing model properties to a human and machine parsable format
-    for later analysis or visualization. A few classes under consideration for
-    such decorating include the Transformation class for image alignment and the
-    Source classes for source extraction.
+    for later analysis or visualization.
 
     A key feature of the @serializable decorator is that it can "pickle" data
     types that are not normally supported by Python's stock JSON dump() and
@@ -57,7 +42,27 @@ def serializable(cls):
       http://robotfantastic.org/serializing-python-data-to-json-some-edge-cases.html
       http://sunilarora.org/serializable-decorator-for-python-class/
 
-    '''
+    Examples
+    --------
+
+      @serializable
+      class Visitor(object):
+          def __init__(self, ipAddr = None, agent = None, referrer = None):
+              self.ip = ipAddr
+              self.ua = agent
+              self.referrer= referrer
+              self.time = datetime.datetime.now()
+
+      origVisitor = Visitor('192.168', 'UA-1', 'http://www.google.com')
+
+      # Serialize the object
+      pickledVisitor = origVisitor.serialize()
+
+      # Restore object
+      recovVisitor = Visitor.deserialize(pickledVisitor)
+
+
+    """
 
     class ThunderSerializeableObjectWrapper(object):
 
@@ -81,8 +86,10 @@ def serializable(cls):
         # Delegate to wrapped class for special python object-->string methods
         def __str__(self):
             return self.wrapped.__str__()
+
         def __repr__(self):
             return self.wrapped.__repr__()
+
         def __unicode__(self):
             return self.wrapped.__unicode__()
 
@@ -90,30 +97,29 @@ def serializable(cls):
         def __call__(self, *args, **kwargs):
             return self.wrapped.__str__(*args, **kwargs)
 
-        # ------------------------------------------------------------------------------
-        # SERIALIZE()
-
         def serialize(self, numpyStorage='auto'):
-            '''
+            """
             Serialize this object to a python dictionary that can easily be converted
             to/from JSON using Python's standard JSON library.
 
-            Arguments
+            Parameters
+            ----------
 
-              numpy-storage: choose one of ['auto', 'ascii', 'base64'] (default: auto)
-
-              Use the 'numpyStorage' argument to select whether numpy arrays
-              will be encoded in ASCII (as a list of lists) in Base64 (i.e.
-              space efficient binary), or to select automatically (the default)
-              depending on the size of the array. Currently the Base64 encoding
-              is selecting if the array has more than 1000 elements.
+              numpy-storage: {'auto', 'ascii', 'base64' }, optional, default 'auto'
+                Use to select whether numpy arrays will be encoded in ASCII (as
+                a list of lists) in Base64 (i.e. space efficient binary), or to
+                select automatically (the default) depending on the size of the
+                array. Currently the Base64 encoding is selecting if the array
+                has more than 1000 elements.
 
             Returns
+            -------
 
               The object encoded as a python dictionary with "JSON-safe" datatypes that is ready to
               be converted to a string using Python's standard JSON library (or another library of
               your choice).
-            '''
+
+            """
             from collections import OrderedDict
             from numpy import ndarray
 
@@ -174,29 +180,25 @@ def serializable(cls):
             else:
                 return serializeRecursively(self.wrapped.__dict__)
 
-        # ------------------------------------------------------------------------------
-        # DESERIALIZE()
 
         @staticmethod
         def deserialize(serializedDict):
-            '''
+            """
             Restore the object that has been converted to a python dictionary using an @serializable
             class's serialize() method.
 
-            Arguments
+            Parameters
+            ----------
 
                 serializedDict: a python dictionary returned by serialize()
 
-            Returns:
+            Returns
+            -------
 
                 A reconstituted class instance
-            '''
+            """
 
             def restoreRecursively(dct):
-                '''
-                This object hook helps to deserialize object encoded using the
-                serialize() method above.
-                '''
                 from numpy import frombuffer, dtype, array
                 from base64 import decodestring
 
