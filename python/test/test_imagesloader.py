@@ -40,6 +40,10 @@ class TestImagesFileLoaders(PySparkTestCase):
         assert_equals(0, collectedImage[0][0])  # check key
         assert_true(array_equal(ary, collectedImage[0][1]))  # check value
 
+    def test_fromOCP(self):
+      imagePath = "http://joy.cs.jhu.edu/ocp/ca/freeman14/"
+      ocpImage = ImagesLoader(self.sc).fromOCP(imagePath,startIdx=0,stopIdx=1,minBound=(0,0,0),maxBound=(128,128,16),resolution=0)
+
     def test_fromPng(self):
         imagePath = os.path.join(self.testResourcesDir, "singlelayer_png", "dot1_grey.png")
         pngImage = ImagesLoader(self.sc).fromPng(imagePath)
