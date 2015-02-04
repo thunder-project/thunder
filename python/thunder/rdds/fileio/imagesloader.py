@@ -2,7 +2,7 @@
 """
 from matplotlib.pyplot import imread
 from io import BytesIO
-from numpy import array, dstack, frombuffer, ndarray, prod
+from numpy import array, dstack, frombuffer, ndarray, prod, load
 from thunder.rdds.fileio.readers import getParallelReaderForPath
 from thunder.rdds.images import Images
 
@@ -86,6 +86,80 @@ class ImagesLoader(object):
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
         return Images(readerRdd.mapValues(toArray), nimages=reader.lastNRecs, dims=dims,
                       dtype=dtype)
+
+    def fromOCP (self, dataPath, resolution, startIdx=None, stopIdx=None, minBound=None, maxBound=None ):
+      """Sets up a new Image object with data to read from OCP"""
+      
+      # Given a datapath/bucket Query JSON
+      # Given bounds get a list of URI's
+      import urllib2
+      urlList=[]
+      url = '{}/info/'.format(dataPath)
+
+      try:
+        f = urllib2.urlopen ( url )
+      except urllib2.URLError, e:
+        print "Failed URL {}.".format(url)
+        raise
+
+      import json
+      projInfo = json.loads ( f.read() )
+
+      # Loading Information from JSON object
+      ximageSize, yimageSize = projInfo['dataset']['imagesize']['{}'.format(resolution)]
+      zimageStart, zimageStop = projInfo['dataset']['slicerange']
+      timageStart, timageStop = projInfo['dataset']['timerange']
+      xDim, yDim, zDim = cubeDims = projInfo['dataset']['cube_dimension']['{}'.format(resolution)]
+
+      # Checking if dimensions are within bounds
+      if startIdx == None:
+        startIdx = timageStart
+      elif startIdx < timageStart or startIdx > timageStop:
+        raise Exception ( "startIdx out of bounds {},{}".format(timageStart,timageStop) )
+
+      if stopIdx == None:
+        stopIdx = timageStop
+      elif stopIdx < timageStart or stopIdx > timageStop:
+        raise Exception( "startIdx out of bounds {},{}".format(timageStart,timageStop) )
+
+      if minBound == None:
+        minBound = (0,0,zimageStart)
+      elif minBound < (0,0,zimageStart) or minBound > (ximageSize,yimageSize,zimageStop):
+        raise Exception ( "minBound is incorrect {},{}".format( (0,0,zimageStart), (ximageSize,yimageSize,zimageStop) ) )
+
+      if maxBound == None:
+        maxBound = (ximageSize,yimageSize,zimageStop)
+      elif maxBound < (0,0,zimageStart) or maxBound > (ximageSize,yimageSize,zimageStop):
+        raise Exception ( "minBound is incorrect {},{}".format( (0,0,zimageStart), (ximageSize,yimageSize,zimageStop) ) )
+
+      for t in range(timageStart,timageStop,1):
+        urlList.append( "{}/npz/{},{}/{}/{},{}/{},{}/{},{}/".format(dataPath,t,t+1,resolution,minBound[0],maxBound[0],minBound[1],maxBound[1],minBound[2],maxBound[2]) )
+      
+      print "Successful"
+
+      def read (url):
+        """Featch URL from the server"""
+
+        try:
+          f = urllib2.urlopen (url)
+        except urllib2.URLError, e:
+          print "Failed URL {}.".format(url)
+          raise
+
+        imgData = f.read()
+        
+        import zlib
+        import cStringIO
+        pageStr = zlib.decompress ( imgData[:] )
+        pageObj = cStringIO.StringIO ( pageStr )
+
+        return load(pageObj)
+      
+      
+      print urlList
+      rdd = self.sc.parallelize (enumerate(urlList), len(urlList)).map(lambda (k, v): (k, read(v)))
+      return Images(rdd, nimages=len(urlList) )
+
 
     def fromTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False):
         """Sets up a new Images object with data to be read from one or more tif files.
