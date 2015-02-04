@@ -120,11 +120,12 @@ def serializable(cls):
             def serializeRecursively(data):
                 import datetime
 
-                if data is None or isinstance(data, (bool, int, long, float, basestring)):
+                if data is None or type(data) == bool or type(data) == int or \
+                   type(data) == long or type(data) == float or type(data) == str:
                     return data
-                if isinstance(data, list):
+                if type(data) == list:
                     return [serializeRecursively(val) for val in data]           # Recurse into lists
-                if isinstance(data, OrderedDict):
+                if type(data) == OrderedDict:
                     return {"py/collections.OrderedDict":
                             [[serializeRecursively(k), serializeRecursively(v)] for k, v in data.iteritems()]}
                 if _isNamedTuple(data):
@@ -132,20 +133,20 @@ def serializable(cls):
                         "type":   type(data).__name__,
                         "fields": list(data._fields),
                         "values": [serializeRecursively(getattr(data, f)) for f in data._fields]}}
-                if isinstance(data, dict):
-                    if all(isinstance(k, basestring) for k in data):   # Recurse into dicts
+                if type(data) == dict:
+                    if all(type(k) == str for k in data):   # Recurse into dicts
                         return {k: serializeRecursively(v) for k, v in data.iteritems()}
                     else:
                         return {"py/dict": [[serializeRecursively(k), serializeRecursively(v)] for k, v in data.iteritems()]}
-                if isinstance(data, tuple):                          # Recurse into tuples
+                if type(data) == tuple:                          # Recurse into tuples
                     return {"py/tuple": [serializeRecursively(val) for val in data]}
-                if isinstance(data, set):                            # Recurse into sets
+                if type(data) == set:                            # Recurse into sets
                     return {"py/set": [serializeRecursively(val) for val in data]}
-                if isinstance(data, datetime.datetime):
+                if type(data) == datetime.datetime:
                     return {"py/datetime": str(data)}
-                if isinstance(data, complex):
+                if type(data) == complex:
                     return {"py/complex": [ data.real, data.imag] }
-                if isinstance(data, ndarray):
+                if type(data) == ndarray:
                     if numpyStorage == 'ascii' or (numpyStorage == 'auto' and data.size < 1000):
                         return {"py/numpy.ndarray.ascii": {
                             "shape": data.shape,
@@ -201,7 +202,7 @@ def serializable(cls):
 
                 # First, check to see if this is an encoded entry
                 dataKey = None
-                if isinstance(dct, dict):
+                if type(dct) == dict:
                     filteredKeys = filter(lambda x: "py/" in x, dct.keys())
 
                     # If there is just one key with a "py/" prefix, that is the dataKey!
