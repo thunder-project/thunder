@@ -1,6 +1,6 @@
 from numpy import ndarray, array, sum, mean, median, std, size, arange, \
     percentile, asarray, maximum, zeros, corrcoef, where, \
-    true_divide, ceil, unique, array_equal, concatenate, squeeze, delete
+    true_divide, ceil, unique, array_equal, concatenate, squeeze, delete, ravel
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
@@ -717,6 +717,84 @@ class Series(Data):
         """
         from thunder.rdds.spatialseries import SpatialSeries
         return SpatialSeries(self.rdd).__finalize__(self)
+
+    def _makeMasks(self, index=None, level=None, val=None):
+        if index is None:
+            index = self.index
+
+        if len(index.shape) == 1:
+            index = array(index, ndmin=2).T
+
+        lenIdx = index.shape[0]
+        nlevels = index.shape[1]
+
+        # compute all possible combinations of velues across levels
+        combs = product(*[unique(index.T[i,:]) for i in xrange(nlevels)])
+        combs = array([l for l in combs])
+        ncombs = len(combs)
+
+        # make masks
+        masks = array([[array_equal(index[i], c) for i in xrange(lenIdx)] for c in combs])
+
+        return zip(*[(masks[x], combs[x]) for x in xrange(len(masks)) if masks[x].any()])
+
+    def _applyByIndex(self, level=None, function=None):
+        if type(level) is int:
+            level = [level]
+
+        if len(self.index.shape) == 1:
+            flat = True
+            index = array(self.index, ndmin=2).T
+        else:
+            flat = False
+            index = self.index
+        ind = index[:,level]
+
+        masks, ind = self._makeMasks(index=ind)
+        bcMasks = self.rdd.ctx.broadcast(masks)
+        bcNum = self.rdd.ctx.broadcast(len(masks))
+        def f(data):
+            return array([function(data[bcMasks.value[x]]) for x in xrange(bcNum.value)])
+        rdd = self.rdd.mapValues(f)
+        index = array(ind)
+        if flat:
+            index = ravel(index) 
+        return Series(rdd, index=index).__finalize__(self, noPropagate=('_dtype', '_index'))
+
+    def _selectByIndex(self, level=None, val=None, squeeze=False):
+        if not isinstance(val, Iterable):
+            val = [val]
+        if not isinstance(level, Iterable):
+            level = [level]
+                                
+        remove = []
+        for i in xrange(len(val)):
+            if not isinstance(val[i], Iterable):
+                val[i] = [val[i]]
+                if squeeze:
+                    remove.append(level[i])
+
+        p = product(*val)
+        selected = set([x for x in p])
+
+        index = self.index[:, level]
+        masks, ind = self._makeMasks(index=index)
+        ind = array(ind)
+
+        #TODO: building extra masks and then throwing some away is wasteful; fix by moving this functionality up to _makeMasks
+        nmasks = len(masks)
+        masks = array([masks[x] for x in xrange(nmasks) if tuple(ind[x]) in selected])
+
+        finalMask =  masks.any(axis=0)
+        bcMask = self.rdd.ctx.broadcast(finalMask)
+        
+        rdd = self.rdd.mapValues(lambda v: v[bcMask.value])
+        indFinal = self.index[finalMask]
+
+        if squeeze:
+            indFinal = delete(indFinal, remove, axis=1)
+
+        return Series(rdd, index=indFinal).__finalize__(self, noPropagate=('_index',))
 
     def _reshapeByIndex(self, index=None):
         """
