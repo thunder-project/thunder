@@ -176,30 +176,37 @@ class Data(object):
         # None is less than everything except itself
         def singleSlicePredicate(kv):
             key, _ = kv
-            if sliceOrSlices.stop is None:
-                return key >= sliceOrSlices.start
-            return sliceOrSlices.stop > key >= sliceOrSlices.start
+            if isinstance(sliceOrSlices, slice):
+                if sliceOrSlices.stop is None:
+                    return key >= sliceOrSlices.start
+                return sliceOrSlices.stop > key >= sliceOrSlices.start
+            else:  # apparently this isn't a slice
+                return key == sliceOrSlices
 
         def multiSlicesPredicate(kv):
             key, _ = kv
             for slise, subkey in zip(sliceOrSlices, key):
-                if slise.stop is None:
-                    if subkey < slise.start:
+                if isinstance(slise, slice):
+                    if slise.stop is None:
+                        if subkey < slise.start:
+                            return False
+                    elif not (slise.stop > subkey >= slise.start):
                         return False
-                elif not (slise.stop > subkey >= slise.start):
-                    return False
+                else:  # not a slice
+                    if subkey != slise:
+                        return False
             return True
 
         if not hasattr(sliceOrSlices, '__len__'):
             # make my func the...
             pFunc = singleSlicePredicate
-            if sliceOrSlices.step is not None:
+            if hasattr(sliceOrSlices, 'step') and sliceOrSlices.step is not None:
                 raise ValueError("'step' slice attribute is not supported in getRange, got step: %d" %
                                  sliceOrSlices.step)
         else:
             pFunc = multiSlicesPredicate
             for slise in sliceOrSlices:
-                if slise.step is not None:
+                if hasattr(slise, 'step') and slise.step is not None:
                     raise ValueError("'step' slice attribute is not supported in getRange, got step: %d" %
                                      slise.step)
 
@@ -210,7 +217,14 @@ class Data(object):
     def __getitem__(self, item):
         # should raise exception here when no matching items found
         # see object.__getitem__ in https://docs.python.org/2/reference/datamodel.html
-        if isinstance(item, slice) or (hasattr(item, "__len__") and isinstance(item[0], slice)):
+        isRangeQuery = False
+        if isinstance(item, slice):
+            isRangeQuery = True
+        elif hasattr(item, '__iter__'):
+            if any([isinstance(slise, slice) for slise in item]):
+                isRangeQuery = True
+
+        if isRangeQuery:
             retVals = self.getRange(item)
             if not retVals:
                 raise IndexError("No keys found for slice(s): '%s'" % str(item))
