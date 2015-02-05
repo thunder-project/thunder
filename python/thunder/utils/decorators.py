@@ -149,7 +149,7 @@ def serializable(cls):
                 if type(data) == set:                            # Recurse into sets
                     return {"py/set": [serializeRecursively(val) for val in data]}
                 if type(data) == datetime.datetime:
-                    return {"py/datetime": str(data)}
+                    return {"py/datetime.datetime": str(data)}
                 if type(data) == complex:
                     return {"py/complex": [ data.real, data.imag] }
                 if type(data) == ndarray:
@@ -231,9 +231,9 @@ def serializable(cls):
                 if "py/collections.OrderedDict" == dataKey:
                     from collections import OrderedDict
                     return OrderedDict(restoreRecursively(dct["py/collections.OrderedDict"]))
-                if "py/datetime" == dataKey:
+                if "py/datetime.datetime" == dataKey:
                     from dateutil import parser
-                    return parser.parse(dct["py/datetime"])
+                    return parser.parse(dct["py/datetime.datetime"])
                 if "py/complex" == dataKey:
                     data = dct["py/complex"]
                     return complex( float(data[0]), float(data[1]) )
