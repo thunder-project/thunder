@@ -105,7 +105,7 @@ def serializable(cls):
             Parameters
             ----------
 
-              numpy-storage: {'auto', 'ascii', 'base64' }, optional, default 'auto'
+              numpyStorage: {'auto', 'ascii', 'base64' }, optional, default 'auto'
                 Use to select whether numpy arrays will be encoded in ASCII (as
                 a list of lists) in Base64 (i.e. space efficient binary), or to
                 select automatically (the default) depending on the size of the
@@ -199,7 +199,6 @@ def serializable(cls):
 
                 A reconstituted class instance
             """
-
             def restoreRecursively(dct):
                 from numpy import frombuffer, dtype, array
                 from base64 import decodestring
@@ -207,7 +206,7 @@ def serializable(cls):
                 # First, check to see if this is an encoded entry
                 dataKey = None
                 if type(dct) == dict:
-                    filteredKeys = filter(lambda x: "py/" in x, dct.keys())
+                    filteredKeys = filter(lambda x: x.startswith("py/"), dct.keys())
 
                     # If there is just one key with a "py/" prefix, that is the dataKey!
                     if len(filteredKeys) == 1:

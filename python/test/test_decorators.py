@@ -4,7 +4,6 @@ from pyspark import SparkContext
 class TestSerializableDecorator(unittest.TestCase):
 
     def testSerializableDecorator(self):
-
         from thunder.utils.decorators import serializable
         from numpy import array, all
         from datetime import datetime
