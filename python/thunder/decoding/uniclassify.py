@@ -110,7 +110,7 @@ class MassUnivariateClassifier(object):
                 assert array([item in i for item in self.features]).sum() != 0, "Feature set invalid"
             perf = data.rdd.mapValues(lambda x: asarray(map(lambda j: self.get(x, j), featureSet)))
 
-        return Series(perf, index='performance').__finalize__(data)
+        return Series(perf, index=featureSet).__finalize__(data)
 
 
 class GaussNaiveBayesClassifier(MassUnivariateClassifier):
