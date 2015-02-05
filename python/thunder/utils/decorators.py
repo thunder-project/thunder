@@ -154,16 +154,18 @@ def serializable(cls):
                     return {"py/complex": [ data.real, data.imag] }
                 if type(data) == ndarray:
                     if numpyStorage == 'ascii' or (numpyStorage == 'auto' and data.size < 1000):
-                        return {"py/numpy.ndarray.ascii": {
-                            "shape": data.shape,
-                            "values": data.tolist(),
-                            "dtype":  str(data.dtype)}}
+                        return {"py/numpy.ndarray": {
+                          "encoding": "ascii",
+                          "shape": data.shape,
+                          "values": data.tolist(),
+                          "dtype":  str(data.dtype)}}
                     else:
                         from base64 import b64encode
-                        return {"py/numpy.ndarray.base64": {
-                        "shape": data.shape,
-                        "values": b64encode(data),
-                        "dtype":  str(data.dtype)}}
+                        return {"py/numpy.ndarray": {
+                          "encoding": "base64",
+                          "shape": data.shape,
+                          "values": b64encode(data),
+                          "dtype":  str(data.dtype)}}
 
                 raise TypeError("Type %s not data-serializable" % type(data))
 
@@ -235,13 +237,16 @@ def serializable(cls):
                 if "py/complex" == dataKey:
                     data = dct["py/complex"]
                     return complex( float(data[0]), float(data[1]) )
-                if "py/numpy.ndarray.ascii" == dataKey:
-                    data = dct["py/numpy.ndarray.ascii"]
-                    return array(data["values"], dtype=data["dtype"])
-                if "py/numpy.ndarray.base64" == dataKey:
-                    data = dct["py/numpy.ndarray.base64"]
-                    arr = frombuffer(decodestring(data["values"]), dtype(data["dtype"]))
-                    return arr.reshape(data["shape"])
+                if "py/numpy.ndarray" == dataKey:
+                    data = dct["py/numpy.ndarray"]
+                    if data["encoding"] == "base64":
+                      arr = frombuffer(decodestring(data["values"]), dtype(data["dtype"]))
+                      return arr.reshape(data["shape"])
+                    elif data["encoding"] == "ascii":
+                      data = dct["py/numpy.ndarray"]
+                      return array(data["values"], dtype=data["dtype"])
+                    else:
+                      raise TypeError("Unknown encoding key for numpy.ndarray: \"%s\"" % data["encoding"])
 
                 # If no decoding scheme can be found, raise an exception
                 raise TypeError("Could not de-serialize unknown type: \"%s\"" % dataKey)
