@@ -44,16 +44,21 @@ class SpatialSeries(Series):
             """Create a list of key value pairs with multiple shifted copies
             of each record over a region specified by sz
             """
-            rngX = range(-sz, sz+1, 1)
-            rngY = range(-sz, sz+1, 1)
+            import itertools
+            xrng = range(-sz, sz+1, 1)
+            yrng = range(-sz, sz+1, 1)
             out = list()
-            for x in rngX:
-                for y in rngY:
-                    newX = clip(ind[0] + x, mn[0], mx[0])
-                    newY = clip(ind[1] + y, mn[1], mx[1])
-                    newInd = (newX, newY, ind[2])
-                    out.append((newInd, v))
+            # build list of pairs with new indices and the value
+            for x, y in itertools.product(xrng, yrng):
+                xnew = clip(ind[0] + x, mn[0], mx[0])
+                ynew = clip(ind[1] + y, mn[1], mx[1])
+                key = (xnew, ynew)
+                out.append((key, v))
+            # append third index if present
+            if len(ind) > 2:
+                out = map(lambda (k, v): ((k[0], k[1], ind[2]), v), out)
             return out
+
         dims = self.dims
         rdd = self.rdd.flatMap(lambda (k, v): toNeighbors(k, v, neighborhood, dims.min[0:2], dims.max[0:2]))
 
@@ -74,7 +79,6 @@ class SpatialSeries(Series):
         neighborhood : integer
             Size of neighborhood, describes extent in either direction, so
             total neighborhood will be 2n + 1.
-
         """
 
         if len(self.dims.max) not in [2, 3]:

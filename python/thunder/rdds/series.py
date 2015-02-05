@@ -43,7 +43,9 @@ class Series(Data):
 
     def __init__(self, rdd, index=None, dims=None, dtype=None):
         super(Series, self).__init__(rdd, dtype=dtype)
-        self._index = index
+        self._index = None
+        if index is not None:
+            self.index = index
         if dims and not isinstance(dims, Dimensions):
             try:
                 dims = Dimensions.fromTuple(dims)
@@ -56,6 +58,25 @@ class Series(Data):
         if self._index is None:
             self.populateParamsFromFirstRecord()
         return self._index
+        
+    @index.setter
+    def index(self, value):
+        # touches self.index to trigger automatic calculation from first record if self.index is not set
+        lenSelf = len(self.index)
+        if type(value) is str:
+            value = [value]
+        # if new index is not indexable, assume that it is meant as an index of length 1
+        try:
+            value[0]
+        except:
+            value = [value]
+        try:
+            lenValue = len(value)
+        except:
+            raise TypeError("Index must be an object with a length")
+        if lenValue != lenSelf:
+            raise ValueError("Length of new index ({0}) must match length of original index ({1})".format(lenValue, lenSelf))
+        self._index = value
 
     @property
     def dims(self):
@@ -307,7 +328,7 @@ class Series(Data):
           q: a floating point number between 0 and 100 inclusive.
         """
         rdd = self.rdd.mapValues(lambda x: percentile(x, q))
-        return self._constructor(rdd, index='percentile').__finalize__(self, noPropagate=('_dtype',))
+        return self._constructor(rdd, index=q).__finalize__(self, noPropagate=('_dtype',))
 
     def seriesStdev(self):
         """ Compute the value std of each record in a Series """
