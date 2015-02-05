@@ -416,63 +416,83 @@ class Images(Data):
 
         return self._constructor(newrdd, dims=newdims).__finalize__(self)
 
-    def meanByRegions(self, mask):
-        """Collapses images into one or more spatial mean values as specified by the passed mask array.
+    def meanByRegions(self, selection):
+        """Collapses images into one or more spatial mean values as specified by the passed mask array or sequence of
+        indicies.
 
-        The passed mask must be a numpy ndarray of the same shape as the individual arrays in this
+        A passed mask must be a numpy ndarray of the same shape as the individual arrays in this
         Images object. If the mask array is of integer or unsigned integer type, one mean value will
         be calculated for each unique nonzero value in the passed mask. (That is, all pixels with a
         value of '1' in the mask will be averaged together, as will all with a mask value of '2', and so
         on.) For other mask array types, all nonzero values in the mask will be averaged together into
         a single regional average.
 
-        The returned object will be a new 2d Images object with dimensions (1, number of regions).
+        Alternatively, subscripted indices may be passed directly as a sequence of sequences of tuple indicies. For
+        instance, selection=[[(0,1), (1,0)], [(2,1), (2,2)]] would return two means, one for the region made up
+        of the pixels at (0,1) and (1,0), and the other of (2,1) and (2,2).
+
+        The returned object will be a new 2d Images object with dimensions (1, number of regions). This can be
+        converted into a Series object and from there into time series arrays by calling
+        regionMeanImages.toSeries().collect().
 
         Parameters
         ----------
-        mask: ndarray with shape equal to self.dims.count
+        selection: ndarray mask with shape equal to self.dims.count, or sequence of sequences of pixel indicies
 
         Returns
         -------
         new Images object
         """
-        # argument type checking
-        if not isinstance(mask, ndarray):
-            raise ValueError("Mask should be numpy ndarray, got: '%s'" % str(type(mask)))
-        # check for matching shapes only if we already know our own shape; don't trigger action otherwise
-        if self._dims:
-            if mask.shape != self._dims.count:
-                raise ValueError("Shape mismatch between mask '%s' and image dimensions '%s'; shapes must be equal" %
-                                 (str(mask.shape), str(self._dims.count)))
-
-        from numpy import array, mean, unique
+        from numpy import array, mean
         ctx = self.rdd.context
-        if mask.dtype.kind in ('i', 'u'):
-            # integer or unsigned int mask
-            isIntMask = True
-            bcUnique = ctx.broadcast(unique(mask))
-            bcMask = ctx.broadcast(mask)
-        else:
-            isIntMask = False
-            bcUnique = None
-            bcMask = ctx.broadcast(mask.nonzero())
 
         def meanByIntMask(kv):
             key, ary = kv
             uniq = bcUnique.value
-            msk = bcMask.value
+            msk = bcSelection.value
             meanVals = [mean(ary[msk == grp]) for grp in uniq if grp != 0]
             return key, array(meanVals, dtype=ary.dtype).reshape((1, -1))
 
         def meanByMaskIndices(kv):
             key, ary = kv
-            maskIdxs = bcMask.value
-            return key, array([mean(ary[maskIdxs])], dtype=ary.dtype).reshape((1, 1))
+            maskIdxsSeq = bcSelection.value
+            means = array([mean(ary[maskIdxs]) for maskIdxs in maskIdxsSeq], dtype=ary.dtype).reshape((1, -1))
+            return key, means
 
-        if isIntMask:
-            data = self.rdd.map(meanByIntMask)
+        # argument type checking
+        if isinstance(selection, ndarray):
+            # passed a numpy array mask
+            from numpy import unique
+            # check for matching shapes only if we already know our own shape; don't trigger action otherwise
+            if self._dims:
+                if selection.shape != self._dims.count:
+                    raise ValueError("Shape mismatch between mask '%s' and image dimensions '%s'; shapes must be equal" %
+                                     (str(selection.shape), str(self._dims.count)))
+
+            if selection.dtype.kind in ('i', 'u'):
+                # integer or unsigned int mask
+                selectFcn = meanByIntMask
+                bcUnique = ctx.broadcast(unique(selection))
+                bcSelection = ctx.broadcast(selection)
+            else:
+                selectFcn = meanByMaskIndices
+                bcUnique = None
+                bcSelection = ctx.broadcast((selection.nonzero(), ))
         else:
-            data = self.rdd.map(meanByMaskIndices)
+            # expect sequence of sequences of subindices if we aren't passed a mask
+            selectFcn = meanByMaskIndices
+            regionSelections = []
+            for regionIdxs in selection:
+                # generate sequence of subindex arrays
+                # instead of sequence [(x0, y0, z0), (x1, y1, z1), ... (xN, yN, zN)], want:
+                # array([x0, x1, ... xN]), array([y0, y1, ... yN]), ... array([z0, z1, ... zN])
+                # this can be used directly in an array indexing expression: ary[regionSelect]
+                regionSelect = [array(dimIdxs, dtype='uint16') for dimIdxs in zip(regionIdxs)]
+                regionSelections.append(regionSelect)
+            bcUnique = None
+            bcSelection = ctx.broadcast(regionSelections)
+
+        data = self.rdd.map(selectFcn)
         return self._constructor(data).__finalize__(self)
 
     def planes(self, startidz, stopidz):
