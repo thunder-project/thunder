@@ -111,6 +111,23 @@ class Data(object):
         """
         return self.rdd.take(*args, **kwargs)
 
+    @staticmethod
+    def __getKeyTypeCheck(actualKey, keySpec):
+        if hasattr(actualKey, "__iter__"):
+            try:
+                specLen = len(keySpec) if hasattr(keySpec, "__len__") else \
+                    reduce(lambda x, y: x + y, [1 for item in keySpec], initial=0)
+                if specLen != len(actualKey):
+                    raise ValueError("Length of key specifier '%s' does not match length of first key '%s'" %
+                                     (str(keySpec), str(actualKey)))
+            except TypeError:
+                raise ValueError("Key specifier '%s' appears not to be a sequence type, but actual keys are " %
+                                 str(keySpec) + "sequences (first key: '%s')" % str(actualKey))
+        else:
+            if hasattr(keySpec, "__iter__"):
+                raise ValueError("Key specifier '%s' appears to be a sequence type, " % str(keySpec) +
+                                 "but actual keys are not (first key: '%s')" % str(actualKey))
+
     def get(self, key):
         """Returns a single value matching the passed key, or None if no matching keys found
 
@@ -118,6 +135,8 @@ class Data(object):
         values will be returned. (This is not expected as a normal occurance, but could happen with
         some user-created rdds.)
         """
+        firstKey = self.first()[0]
+        Data.__getKeyTypeCheck(firstKey, key)
         filteredVals = self.rdd.filter(lambda (k, v): k == key).values().collect()
         if len(filteredVals) == 1:
             return filteredVals[0]
@@ -135,6 +154,9 @@ class Data(object):
         If multiple values are found, the corresponding sequence element will be a sequence containing all
         matching values.
         """
+        firstKey = self.first()[0]
+        for key in keys:
+            Data.__getKeyTypeCheck(firstKey, key)
         keySet = frozenset(keys)
         filteredRecs = self.rdd.filter(lambda (k, _): k in keySet).collect()
         sortingDict = {}
@@ -197,7 +219,9 @@ class Data(object):
                         return False
             return True
 
-        if not hasattr(sliceOrSlices, '__len__'):
+        firstKey = self.first()[0]
+        Data.__getKeyTypeCheck(firstKey, sliceOrSlices)
+        if not hasattr(sliceOrSlices, '__iter__'):
             # make my func the pFunc; http://en.wikipedia.org/wiki/P._Funk_%28Wants_to_Get_Funked_Up%29
             pFunc = singleSlicePredicate
             if hasattr(sliceOrSlices, 'step') and sliceOrSlices.step is not None:

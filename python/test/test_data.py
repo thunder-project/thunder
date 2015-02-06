@@ -21,6 +21,9 @@ class TestImagesGetters(PySparkTestCase):
     def test_get(self):
         assert_true(array_equal(self.ary2, self.images.get(1)))
 
+        # keys are integers, ask for sequence
+        assert_raises(ValueError, self.images.get, (1, 2))
+
     def test_getMany(self):
         vals = self.images.getMany([0, -1, 1, 0])
         assert_equals(4, len(vals))
@@ -28,6 +31,10 @@ class TestImagesGetters(PySparkTestCase):
         assert_is_none(vals[1])
         assert_true(array_equal(self.ary2, vals[2]))
         assert_true(array_equal(self.ary1, vals[3]))
+
+        # keys are integers, ask for sequences:
+        assert_raises(ValueError, self.images.get, [(0, 0)])
+        assert_raises(ValueError, self.images.get, [0, (0, 0), 1, 0])
 
     def test_getRanges(self):
         vals = self.images.getRange(slice(None))
@@ -54,6 +61,9 @@ class TestImagesGetters(PySparkTestCase):
 
         vals = self.images.getRange(slice(2, 3))
         assert_equals(0, len(vals))
+
+        # keys are integers, ask for sequence
+        assert_raises(ValueError, self.images.getRange, [slice(1), slice(1)])
 
         # raise exception if 'step' specified:
         assert_raises(ValueError, self.images.getRange, slice(1, 2, 2))
@@ -108,11 +118,14 @@ class TestSeriesGetters(PySparkTestCase):
         self.series = Data(self.sc.parallelize(self.dataLocal), dtype='float32')
 
     def test_getMissing(self):
-        assert_is_none(self.series.get(-1))
+        assert_is_none(self.series.get((-1, -1)))
 
     def test_get(self):
         expected = self.dataLocal[1][1]
         assert_true(array_equal(expected, self.series.get((0, 1))))
+
+        assert_raises(ValueError, self.series.get, 1)  # keys are sequences, ask for integer
+        assert_raises(ValueError, self.series.get, (1, 2, 3))  # key length mismatch
 
     def test_getMany(self):
         vals = self.series.getMany([(0, 0), (17, 256), (1, 0), (0, 0)])
@@ -121,6 +134,9 @@ class TestSeriesGetters(PySparkTestCase):
         assert_is_none(vals[1])
         assert_true(array_equal(self.dataLocal[2][1], vals[2]))
         assert_true(array_equal(self.dataLocal[0][1], vals[3]))
+
+        assert_raises(ValueError, self.series.getMany, [1])  # keys are sequences, ask for integer
+        assert_raises(ValueError, self.series.getMany, [(0, 0), 1, (1, 0), (0, 0)])  # asking for integer again
 
     def test_getRanges(self):
         vals = self.series.getRange([slice(2), slice(2)])
@@ -173,6 +189,12 @@ class TestSeriesGetters(PySparkTestCase):
 
         vals = self.series.getRange([slice(2, 3), slice(None)])
         assert_equals(0, len(vals))
+
+        # keys are sequences, ask for single slice
+        assert_raises(ValueError, self.series.getRange, slice(2, 3))
+
+        # ask for wrong number of slices
+        assert_raises(ValueError, self.series.getRange, [slice(2, 3), slice(2, 3), slice(2, 3)])
 
         # raise exception if 'step' specified:
         assert_raises(ValueError, self.series.getRange, [slice(0, 4, 2), slice(2, 3)])
