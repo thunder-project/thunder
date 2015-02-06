@@ -21,8 +21,8 @@ class TestImagesGetters(PySparkTestCase):
     def test_get(self):
         assert_true(array_equal(self.ary2, self.images.get(1)))
 
-    def test_getAll(self):
-        vals = self.images.getAll([0, -1, 1, 0])
+    def test_getMany(self):
+        vals = self.images.getMany([0, -1, 1, 0])
         assert_equals(4, len(vals))
         assert_true(array_equal(self.ary1, vals[0]))
         assert_is_none(vals[1])
@@ -114,8 +114,8 @@ class TestSeriesGetters(PySparkTestCase):
         expected = self.dataLocal[1][1]
         assert_true(array_equal(expected, self.series.get((0, 1))))
 
-    def test_getAll(self):
-        vals = self.series.getAll([(0, 0), (17, 256), (1, 0), (0, 0)])
+    def test_getMany(self):
+        vals = self.series.getMany([(0, 0), (17, 256), (1, 0), (0, 0)])
         assert_equals(4, len(vals))
         assert_true(array_equal(self.dataLocal[0][1], vals[0]))
         assert_is_none(vals[1])

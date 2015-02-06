@@ -126,7 +126,7 @@ class Data(object):
         else:
             return filteredVals
 
-    def getAll(self, keys):
+    def getMany(self, keys):
         """Returns a sequence of values corresponding to the passed sequence of keys.
 
         The return value will be a sequence equal in length to the passed keys, with each
