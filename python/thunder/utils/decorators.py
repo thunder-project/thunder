@@ -28,7 +28,8 @@ def serializable(cls):
     load() methods. Supported datatypes include: list, set, tuple, namedtuple,
     OrderedDict, datetime objects, numpy ndarrays, and dicts with non-string
     (but still data) keys. Serialization is performed recursively, and descends
-    into the standard python container types (list, dict, tuple, set).
+    into the standard python container types (list, dict, tuple, set). Unicode
+    strings are not currently supported.
 
     IMPORTANT NOTE: The object decorated with @serializable must store their
     attributes in __slots__ or a __dict__, but not both! For example, you cannot
@@ -126,33 +127,33 @@ def serializable(cls):
             def serializeRecursively(data):
                 import datetime
 
-                if data is None or type(data) == bool or type(data) == int or \
-                   type(data) == long or type(data) == float or type(data) == str:
+                dataType = type(data)
+                if dataType in frozenset(type(None), bool, int, long, float, str):
                     return data
-                if type(data) == list:
+                elif dataType == list:
                     return [serializeRecursively(val) for val in data]           # Recurse into lists
-                if type(data) == OrderedDict:
+                elif dataType == OrderedDict:
                     return {"py/collections.OrderedDict":
                             [[serializeRecursively(k), serializeRecursively(v)] for k, v in data.iteritems()]}
-                if _isNamedTuple(data):
+                elif _isNamedTuple(data):
                     return {"py/collections.namedtuple": {
-                        "type":   type(data).__name__,
+                        "type":   dataType.__name__,
                         "fields": list(data._fields),
                         "values": [serializeRecursively(getattr(data, f)) for f in data._fields]}}
-                if type(data) == dict:
+                elif dataType == dict:
                     if all(type(k) == str for k in data):   # Recurse into dicts
                         return {k: serializeRecursively(v) for k, v in data.iteritems()}
                     else:
                         return {"py/dict": [[serializeRecursively(k), serializeRecursively(v)] for k, v in data.iteritems()]}
-                if type(data) == tuple:                          # Recurse into tuples
+                elif dataType == tuple:                          # Recurse into tuples
                     return {"py/tuple": [serializeRecursively(val) for val in data]}
-                if type(data) == set:                            # Recurse into sets
+                elif dataType == set:                            # Recurse into sets
                     return {"py/set": [serializeRecursively(val) for val in data]}
-                if type(data) == datetime.datetime:
+                elif dataType == datetime.datetime:
                     return {"py/datetime.datetime": str(data)}
-                if type(data) == complex:
+                elif dataType == complex:
                     return {"py/complex": [ data.real, data.imag] }
-                if type(data) == ndarray:
+                elif dataType == ndarray:
                     if numpyStorage == 'ascii' or (numpyStorage == 'auto' and data.size < 1000):
                         return {"py/numpy.ndarray": {
                           "encoding": "ascii",
@@ -166,8 +167,14 @@ def serializable(cls):
                           "shape": data.shape,
                           "values": b64encode(data),
                           "dtype":  str(data.dtype)}}
+                elif dataType == ThunderSerializeableObjectWrapper:
+                    # nested serializable object
+                    return {"py/ThunderSerializeableObjectWrapper": {
+                        "clsName": cls.__name__,
+                        "clsModule": cls.__module__,
+                    }}
 
-                raise TypeError("Type %s not data-serializable" % type(data))
+                raise TypeError("Type %s not data-serializable" % dataType)
 
             # Check for unsupported class.
             if hasattr(self.wrapped, "__slots__") and hasattr(self.wrapped, "__dict__"):
@@ -278,6 +285,36 @@ def serializable(cls):
 
             # Return the re-constituted class
             return rewrappedObject
+
+        def save(self, f, numpyStorage='auto'):
+            """Serialize wrapped object to a JSON file.
+
+            Parameters
+            ----------
+            f : filename or file handle
+                The file to write to. A passed handle will be left open for further writing.
+            """
+            def saveImpl(fp, numpyStorage_):
+                fp.write(self.serialize(numpyStorage=numpyStorage_))
+            if isinstance(f, basestring):
+                with open(f, 'w') as handle:
+                    saveImpl(handle, numpyStorage)
+            else:
+                # assume f is a file
+                saveImpl(f, numpyStorage)
+
+        @staticmethod
+        def load(f):
+            def loadImpl(fp):
+                jsonStr = fp.read()
+                return cls.deserialize(jsonStr)
+
+            if isinstance(f, basestring):
+                with open(f, 'w') as handle:
+                    return loadImpl(handle)
+            else:
+                # assume f is a file
+                return loadImpl(f)
 
     # End of decorator.  Return the wrapper class from inside this closure.
     return ThunderSerializeableObjectWrapper

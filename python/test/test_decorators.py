@@ -1,6 +1,7 @@
 import unittest
 from pyspark import SparkContext
 
+
 class TestSerializableDecorator(unittest.TestCase):
 
     def testSerializableDecorator(self):
@@ -13,12 +14,12 @@ class TestSerializableDecorator(unittest.TestCase):
             def __init__(self, ip_addr = None, agent = None, referrer = None):
                 self.ip = ip_addr
                 self.ua = agent
-                self.referrer= referrer
+                self.referrer = referrer
                 self.testDict = {'a': 10, 'b': "string", 'c': [1, 2, 3]}
-                self.testVec = array([1,2,3])
-                self.testArray = array([[1,2,3],[4,5,6.]])
+                self.testVec = array([1, 2, 3])
+                self.testArray = array([[1, 2, 3], [4, 5, 6.]])
                 self.time = datetime.now()
-                self.testComplex = complex(3,2)
+                self.testComplex = complex(3, 2)
 
             def __str__(self):
                 return str(self.ip) + " " + str(self.ua) + " " + str(self.referrer) + " " + str(self.time)
