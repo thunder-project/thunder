@@ -249,14 +249,9 @@ class Data(object):
                 isRangeQuery = True
 
         if isRangeQuery:
-            retVals = self.getRange(item)
-            if not retVals:
-                raise IndexError("No keys found for slice(s): '%s'" % str(item))
+            return self.getRange(item)
         else:
-            retVals = self.get(item)
-            if retVals is None:
-                raise KeyError("No key found matching '%s'" % str(item))
-        return retVals
+            return self.get(item)
 
     def values(self):
         """ Return values, ignoring keys
