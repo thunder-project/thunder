@@ -198,7 +198,7 @@ class Data(object):
             return True
 
         if not hasattr(sliceOrSlices, '__len__'):
-            # make my func the...
+            # make my func the pFunc; http://en.wikipedia.org/wiki/P._Funk_%28Wants_to_Get_Funked_Up%29
             pFunc = singleSlicePredicate
             if hasattr(sliceOrSlices, 'step') and sliceOrSlices.step is not None:
                 raise ValueError("'step' slice attribute is not supported in getRange, got step: %d" %
