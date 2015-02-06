@@ -1,6 +1,6 @@
 from numpy import ndarray, array, sum, mean, median, std, size, arange, \
     percentile, asarray, maximum, zeros, corrcoef, where, \
-    true_divide, ceil, unique, array_equal, concatenate, squeeze, delete, ravel
+    true_divide, ceil, unique, array_equal, concatenate, squeeze, delete, ravel, logical_not
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
@@ -761,7 +761,7 @@ class Series(Data):
             index = ravel(index) 
         return Series(rdd, index=index).__finalize__(self, noPropagate=('_dtype', '_index'))
 
-    def _selectByIndex(self, level=None, val=None, squeeze=False):
+    def _selectByIndex(self, level=None, val=None, squeeze=False, filter=False):
         if not isinstance(val, Iterable):
             val = [val]
         if not isinstance(level, Iterable):
@@ -786,6 +786,8 @@ class Series(Data):
         masks = array([masks[x] for x in xrange(nmasks) if tuple(ind[x]) in selected])
 
         finalMask =  masks.any(axis=0)
+        if filter:
+            finalMask = logical_not(finalMask)
         bcMask = self.rdd.ctx.broadcast(finalMask)
         
         rdd = self.rdd.mapValues(lambda v: v[bcMask.value])
