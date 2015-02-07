@@ -111,6 +111,148 @@ class Data(object):
         """
         return self.rdd.take(*args, **kwargs)
 
+    @staticmethod
+    def __getKeyTypeCheck(actualKey, keySpec):
+        if hasattr(actualKey, "__iter__"):
+            try:
+                specLen = len(keySpec) if hasattr(keySpec, "__len__") else \
+                    reduce(lambda x, y: x + y, [1 for item in keySpec], initial=0)
+                if specLen != len(actualKey):
+                    raise ValueError("Length of key specifier '%s' does not match length of first key '%s'" %
+                                     (str(keySpec), str(actualKey)))
+            except TypeError:
+                raise ValueError("Key specifier '%s' appears not to be a sequence type, but actual keys are " %
+                                 str(keySpec) + "sequences (first key: '%s')" % str(actualKey))
+        else:
+            if hasattr(keySpec, "__iter__"):
+                raise ValueError("Key specifier '%s' appears to be a sequence type, " % str(keySpec) +
+                                 "but actual keys are not (first key: '%s')" % str(actualKey))
+
+    def get(self, key):
+        """Returns a single value matching the passed key, or None if no matching keys found
+
+        If multiple records are found with keys matching the passed key, a sequence of all matching
+        values will be returned. (This is not expected as a normal occurance, but could happen with
+        some user-created rdds.)
+        """
+        firstKey = self.first()[0]
+        Data.__getKeyTypeCheck(firstKey, key)
+        filteredVals = self.rdd.filter(lambda (k, v): k == key).values().collect()
+        if len(filteredVals) == 1:
+            return filteredVals[0]
+        elif not filteredVals:
+            return None
+        else:
+            return filteredVals
+
+    def getMany(self, keys):
+        """Returns a sequence of values corresponding to the passed sequence of keys.
+
+        The return value will be a sequence equal in length to the passed keys, with each
+        value in the returned sequence corresponding to the key at the same position in the passed
+        keys sequence. If no value is found for a given key, the corresponding sequence element will be None.
+        If multiple values are found, the corresponding sequence element will be a sequence containing all
+        matching values.
+        """
+        firstKey = self.first()[0]
+        for key in keys:
+            Data.__getKeyTypeCheck(firstKey, key)
+        keySet = frozenset(keys)
+        filteredRecs = self.rdd.filter(lambda (k, _): k in keySet).collect()
+        sortingDict = {}
+        for k, v in filteredRecs:
+            sortingDict.setdefault(k, []).append(v)
+        retVals = []
+        for k in keys:
+            vals = sortingDict.get(k)
+            if vals is not None:
+                if len(vals) == 1:
+                    vals = vals[0]
+            retVals.append(vals)
+        return retVals
+
+    def getRange(self, sliceOrSlices):
+        """Returns key/value pairs that fall within a range given by the passed slice or slices.
+
+        The return values will be a sorted list of key/value pairs of all records in the underlying
+        RDD for which the key falls within the range given by the passed slice selectors. Note that
+        this may be very large, and could potentially exhaust the available memory on the driver.
+
+        The cardinality of the passed slice or sequence of slices must match that of the keys of
+        this RDD's records. For singleton keys, a single slice (or slice sequence of length one)
+        should be passed. For tuple keys, a sequence of multiple slices (as many as the cardinality
+        of the keys) should be passed.
+
+        Passed slices should not have a `step` attribute defined; this is not supported and a
+        ValueError will be raised if a step attribute is passed.
+
+        Parameters
+        ----------
+        sliceOrSlices: slice object or sequence of slices
+            The passed slice or slices should be of the same cardinality as the keys of the underlying rdd.
+
+        Returns
+        -------
+        sorted sequence of key/value pairs
+        """
+        # None is less than everything except itself
+        def singleSlicePredicate(kv):
+            key, _ = kv
+            if isinstance(sliceOrSlices, slice):
+                if sliceOrSlices.stop is None:
+                    return key >= sliceOrSlices.start
+                return sliceOrSlices.stop > key >= sliceOrSlices.start
+            else:  # apparently this isn't a slice
+                return key == sliceOrSlices
+
+        def multiSlicesPredicate(kv):
+            key, _ = kv
+            for slise, subkey in zip(sliceOrSlices, key):
+                if isinstance(slise, slice):
+                    if slise.stop is None:
+                        if subkey < slise.start:
+                            return False
+                    elif not (slise.stop > subkey >= slise.start):
+                        return False
+                else:  # not a slice
+                    if subkey != slise:
+                        return False
+            return True
+
+        firstKey = self.first()[0]
+        Data.__getKeyTypeCheck(firstKey, sliceOrSlices)
+        if not hasattr(sliceOrSlices, '__iter__'):
+            # make my func the pFunc; http://en.wikipedia.org/wiki/P._Funk_%28Wants_to_Get_Funked_Up%29
+            pFunc = singleSlicePredicate
+            if hasattr(sliceOrSlices, 'step') and sliceOrSlices.step is not None:
+                raise ValueError("'step' slice attribute is not supported in getRange, got step: %d" %
+                                 sliceOrSlices.step)
+        else:
+            pFunc = multiSlicesPredicate
+            for slise in sliceOrSlices:
+                if hasattr(slise, 'step') and slise.step is not None:
+                    raise ValueError("'step' slice attribute is not supported in getRange, got step: %d" %
+                                     slise.step)
+
+        filteredRecs = self.rdd.filter(pFunc).collect()
+        # default sort of tuples is by first item, which happens to be what we want
+        return sorted(filteredRecs)
+
+    def __getitem__(self, item):
+        # should raise exception here when no matching items found
+        # see object.__getitem__ in https://docs.python.org/2/reference/datamodel.html
+        isRangeQuery = False
+        if isinstance(item, slice):
+            isRangeQuery = True
+        elif hasattr(item, '__iter__'):
+            if any([isinstance(slise, slice) for slise in item]):
+                isRangeQuery = True
+
+        if isRangeQuery:
+            return self.getRange(item)
+        else:
+            return self.get(item)
+
     def values(self):
         """ Return values, ignoring keys
 

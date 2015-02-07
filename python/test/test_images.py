@@ -4,7 +4,7 @@ import os
 from numpy import allclose, arange, array, array_equal, prod, squeeze, zeros
 from numpy import dtype as dtypeFunc
 import itertools
-from nose.tools import assert_equals, assert_raises, assert_true
+from nose.tools import assert_equals, assert_is_none, assert_raises, assert_true
 import unittest
 
 from thunder.rdds.fileio.imagesloader import ImagesLoader
