@@ -11,7 +11,7 @@ class Data(object):
     Attributes
     ----------
 
-    rdd: Spark RDD
+    `rdd` : Spark RDD
         The Spark Resilient Distributed Dataset wrapped by this Data object.
         Standard pyspark RDD methods on a data instance `obj` that are not already
         directly exposed by the Data object can be accessed via `obj.rdd`.
@@ -105,7 +105,7 @@ class Data(object):
         return self.populateParamsFromFirstRecord()
 
     def take(self, *args, **kwargs):
-        """ Take samples
+        """ Take samples.
 
         This calls the Spark take() method on the underlying RDD.
         """
@@ -129,11 +129,10 @@ class Data(object):
                                  "but actual keys are not (first key: '%s')" % str(actualKey))
 
     def get(self, key):
-        """Returns a single value matching the passed key, or None if no matching keys found
+        """Returns a single value matching the passed key, or None if no matching keys found.
 
         If multiple records are found with keys matching the passed key, a sequence of all matching
-        values will be returned. (This is not expected as a normal occurance, but could happen with
-        some user-created rdds.)
+        values will be returned.
         """
         firstKey = self.first()[0]
         Data.__getKeyTypeCheck(firstKey, key)
@@ -151,8 +150,7 @@ class Data(object):
         The return value will be a sequence equal in length to the passed keys, with each
         value in the returned sequence corresponding to the key at the same position in the passed
         keys sequence. If no value is found for a given key, the corresponding sequence element will be None.
-        If multiple values are found, the corresponding sequence element will be a sequence containing all
-        matching values.
+        If multiple values are found, a sequence containing all matching values will be returned.
         """
         firstKey = self.first()[0]
         for key in keys:
@@ -178,13 +176,9 @@ class Data(object):
         RDD for which the key falls within the range given by the passed slice selectors. Note that
         this may be very large, and could potentially exhaust the available memory on the driver.
 
-        The cardinality of the passed slice or sequence of slices must match that of the keys of
-        this RDD's records. For singleton keys, a single slice (or slice sequence of length one)
-        should be passed. For tuple keys, a sequence of multiple slices (as many as the cardinality
-        of the keys) should be passed.
-
-        Passed slices should not have a `step` attribute defined; this is not supported and a
-        ValueError will be raised if a step attribute is passed.
+        For singleton keys, a single slice (or slice sequence of length one) should be passed.
+        For tuple keys, a sequence of multiple slices should be passed. A `step` attribute on slices
+        is not supported and a alueError will be raised if passed.
 
         Parameters
         ----------
@@ -268,16 +262,14 @@ class Data(object):
         return self.rdd.keys()
 
     def astype(self, dtype, casting='safe'):
-        """Cast values to specified numpy dtype
+        """Cast values to specified numpy dtype.
 
-        Calls numpy's astype() method.
-
-        If the string 'smallfloat' is passed, then the values will be cast to the smallest floating point representation
+        If 'smallfloat' is passed, values will be cast to the smallest floating point representation
         to which they can be cast safely, as determined by the thunder.utils.common smallest_float_type function.
         Typically this will be a float type larger than a passed integer type (for instance, float16 for int8 or uint8).
 
         If the passed dtype is the same as the current dtype, or if 'smallfloat' is passed when values are already
-        in floating point, then this method will return immediately, returning self.
+        in floating point, then this method will return self unchanged.
 
         Parameters
         ----------
