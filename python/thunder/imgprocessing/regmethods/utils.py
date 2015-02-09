@@ -116,10 +116,10 @@ def computeDisplacement(arry1, arry2):
     c = abs(ifftn((f1 * f2.conjugate())))
 
     # find location of maximum
-    maxinds = unravel_index(argmax(c), c.shape)
+    maxInds = unravel_index(argmax(c), c.shape)
 
     # fix displacements that are greater than half the total size
-    pairs = zip(maxinds, arry1.shape)
+    pairs = zip(maxInds, arry1.shape)
     adjusted = [d - n if d > n // 2 else d for (d, n) in pairs]
 
     return adjusted

@@ -1,6 +1,6 @@
 from numpy import allclose, amax, arange, array, array_equal
 from numpy import dtype as dtypeFunc
-from nose.tools import assert_equals, assert_is_none, assert_raises, assert_true
+from nose.tools import assert_equals, assert_raises, assert_true
 
 from thunder.rdds.series import Series
 from test_utils import *

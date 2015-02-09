@@ -35,7 +35,6 @@ class CrossCorr(RegistrationMethod):
 
         See computeReferenceMean.
         """
-
         if isinstance(images, Images):
             self.reference = computeReferenceMean(images, startIdx, stopIdx,
                                                   defaultNImages=defaultNImages)
@@ -96,7 +95,6 @@ class PlanarCrossCorr(CrossCorr):
         im : ndarray
             The image or volume
         """
-
         from thunder.imgprocessing.transformation import PlanarDisplacement
 
         delta = []
