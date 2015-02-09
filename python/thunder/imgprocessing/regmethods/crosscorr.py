@@ -11,10 +11,22 @@ class CrossCorr(RegistrationMethod):
     """
     Translation using cross correlation.
     """
+    def __init__(self, *args, **kwargs):
+        super(CrossCorr, self).__init__(*args, **kwargs)
+        self.reference = None
 
-    def prepare(self, images, startidx=None, stopidx=None):
+    def prepare(self, images, startIdx=None, stopIdx=None, defaultNImages=20):
         """
         Prepare cross correlation by computing or specifying a reference image.
+
+        `images` should be either a numpy ndarray or an Images object. If an ndarray
+        is passed, it will be used as the reference; otherwise a reference image
+        will be calculated as the mean of some subsection of the passed Images object.
+        If startIdx or stopIdx are passed, then these will be used to determine
+        the starting and ending points over which to calculate the reference mean.
+        If neither startIdx nor stopIdx is passed, then the default behavior is to
+        calculate a reference mean image over the center `defaultNImages` records
+        of the Images object.
 
         Parameters
         ----------
@@ -25,7 +37,8 @@ class CrossCorr(RegistrationMethod):
         """
 
         if isinstance(images, Images):
-            self.reference = computeReferenceMean(images, startidx, stopidx)
+            self.reference = computeReferenceMean(images, startIdx, stopIdx,
+                                                  defaultNImages=defaultNImages)
         elif isinstance(images, ndarray):
             self.reference = images
         else:
@@ -39,11 +52,9 @@ class CrossCorr(RegistrationMethod):
 
         See checkReference.
         """
-
-        if not hasattr(self, 'reference'):
-            raise Exception('Reference not defined')
-        else:
-            checkReference(self.reference, images)
+        if self.reference is None:
+            raise RuntimeError('Reference not defined; prepare() must be called before use.')
+        checkReference(self.reference, images)
 
     def getTransform(self, im):
         """

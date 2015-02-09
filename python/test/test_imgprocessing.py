@@ -1,7 +1,7 @@
 import shutil
 import tempfile
 from test_utils import PySparkTestCase
-from numpy import random, allclose, arange
+from numpy import allclose, dstack, mean, random
 from scipy.ndimage.interpolation import shift
 from thunder.imgprocessing.registration import Registration
 from thunder.rdds.fileio.imagesloader import ImagesLoader
@@ -63,9 +63,8 @@ class TestRegistrationBasic(ImgprocessingTestCase):
         assert(allclose(out1, out2))
 
     def test_reference_2d(self):
-
-        # test default reference calculation in 2D
-
+        """test default reference calculation in 2D
+        """
         random.seed(42)
 
         im0 = random.rand(25, 25).astype('float')
@@ -76,11 +75,20 @@ class TestRegistrationBasic(ImgprocessingTestCase):
         reg = Registration('crosscorr').prepare(imin)
         assert(allclose(reg.reference, (im0 + im1 + im2) / 3))
 
-        reg = Registration('crosscorr').prepare(imin, startidx=0, stopidx=2)
+        reg = Registration('crosscorr').prepare(imin, startIdx=0, stopIdx=2)
         assert(allclose(reg.reference, (im0 + im1) / 2))
 
-        reg = Registration('crosscorr').prepare(imin, startidx=1, stopidx=2)
+        reg = Registration('crosscorr').prepare(imin, startIdx=1, stopIdx=2)
         assert(allclose(reg.reference, im1))
+
+        reg = Registration('crosscorr').prepare(imin, defaultNImages=1)
+        assert(allclose(reg.reference, im1))
+
+        imgs = [random.randn(25, 25).astype('float') for _ in xrange(27)]
+        imin = ImagesLoader(self.sc).fromArrays(imgs)
+        reg = Registration('crosscorr').prepare(imin)
+        expected = mean(dstack(imgs[3:23]), axis=2)
+        assert(allclose(expected, reg.reference))
 
     def test_reference_3d(self):
 
