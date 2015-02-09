@@ -2,11 +2,12 @@
 
 
 def _isNamedTuple(obj):
-  """Heuristic check if an object is a namedtuple."""
-  from collections import namedtuple
-  return hasattr(obj, "_fields") \
-     and hasattr(obj, "_asdict") \
-     and callable(obj._asdict)
+    """Heuristic check if an object is a namedtuple."""
+    return hasattr(obj, "_fields") and hasattr(obj, "_asdict") and callable(obj._asdict)
+
+
+def _isWrappedSerializable(obj):
+    return hasattr(obj, 'serialize') and hasattr(obj, 'wrapped')
 
 
 def serializable(cls):
@@ -98,6 +99,90 @@ def serializable(cls):
         def __call__(self, *args, **kwargs):
             return self.wrapped.__str__(*args, **kwargs)
 
+        def __serializeRecursively(self, data, numpyStorage):
+            from collections import OrderedDict
+            from numpy import ndarray
+            import datetime
+
+            dataType = type(data)
+            if dataType in frozenset([type(None), bool, int, long, float, str]):
+                return data
+            elif dataType == list:
+                # awkward special case - check for lists of homogeneous serializable objects
+                isHomogeneousSerializableList = False
+                wrappedType = None
+                if data and _isWrappedSerializable(data[0]):
+                    wrappedType = type(data[0].wrapped)
+                    isHomogeneousSerializableList = True
+                    for val in data:
+                        if (not _isWrappedSerializable(val)) or (type(val.wrapped) != wrappedType):
+                            isHomogeneousSerializableList = False
+                            break
+                if isHomogeneousSerializableList:
+                    return {
+                        "py/homogeneousSerializableList": {
+                            "type": wrappedType.__name__,
+                            "module": wrappedType.__module__,
+                            "data": [val.serialize() for val in data]
+                        }
+                    }
+                else:
+                    # plain old list
+                    return [self.__serializeRecursively(val, numpyStorage) for val in data]  # Recurse into lists
+            elif dataType == OrderedDict:
+                return {
+                    "py/collections.OrderedDict": [
+                        [self.__serializeRecursively(k, numpyStorage),
+                         self.__serializeRecursively(v, numpyStorage)] for k, v in data.iteritems()
+                    ]
+                }
+            elif _isNamedTuple(data):
+                return {
+                    "py/collections.namedtuple": {
+                        "type": dataType.__name__,
+                        "fields": list(data._fields),
+                        "values": [self.__serializeRecursively(getattr(data, f), numpyStorage) for f in data._fields]
+                    }
+                }
+            elif dataType == dict:
+                if all(type(k) == str for k in data):   # Recurse into dicts
+                    return {k: self.__serializeRecursively(v, numpyStorage) for k, v in data.iteritems()}
+                else:
+                    return {"py/dict": [[self.__serializeRecursively(k, numpyStorage),
+                                         self.__serializeRecursively(v, numpyStorage)] for k, v in data.iteritems()]}
+            elif dataType == tuple:                          # Recurse into tuples
+                return {"py/tuple": [self.__serializeRecursively(val, numpyStorage) for val in data]}
+            elif dataType == set:                            # Recurse into sets
+                return {"py/set": [self.__serializeRecursively(val, numpyStorage) for val in data]}
+            elif dataType == datetime.datetime:
+                return {"py/datetime.datetime": str(data)}
+            elif dataType == complex:
+                return {"py/complex": [ data.real, data.imag] }
+            elif dataType == ndarray:
+                if numpyStorage == 'ascii' or (numpyStorage == 'auto' and data.size < 1000):
+                    return {"py/numpy.ndarray": {
+                        "encoding": "ascii",
+                        "shape": data.shape,
+                        "values": data.tolist(),
+                        "dtype":  str(data.dtype)}}
+                else:
+                    from base64 import b64encode
+                    return {"py/numpy.ndarray": {
+                        "encoding": "base64",
+                        "shape": data.shape,
+                        "values": b64encode(data),
+                        "dtype":  str(data.dtype)}}
+            elif _isWrappedSerializable(data):
+                # nested serializable object
+                wrappedType = type(data.wrapped)
+                return {"py/ThunderSerializeableObjectWrapper": {
+                    "type": wrappedType.__name__,
+                    "module": wrappedType.__module__,
+                    "data": data.serialize()
+                }}
+
+            raise TypeError("Type %s not data-serializable" % dataType)
+
         def serialize(self, numpyStorage='auto'):
             """
             Serialize this object to a python dictionary that can easily be converted
@@ -121,74 +206,18 @@ def serializable(cls):
               your choice).
 
             """
-            from collections import OrderedDict
-            from numpy import ndarray
-
-            def serializeRecursively(data):
-                import datetime
-
-                dataType = type(data)
-                if dataType in frozenset(type(None), bool, int, long, float, str):
-                    return data
-                elif dataType == list:
-                    return [serializeRecursively(val) for val in data]           # Recurse into lists
-                elif dataType == OrderedDict:
-                    return {"py/collections.OrderedDict":
-                            [[serializeRecursively(k), serializeRecursively(v)] for k, v in data.iteritems()]}
-                elif _isNamedTuple(data):
-                    return {"py/collections.namedtuple": {
-                        "type":   dataType.__name__,
-                        "fields": list(data._fields),
-                        "values": [serializeRecursively(getattr(data, f)) for f in data._fields]}}
-                elif dataType == dict:
-                    if all(type(k) == str for k in data):   # Recurse into dicts
-                        return {k: serializeRecursively(v) for k, v in data.iteritems()}
-                    else:
-                        return {"py/dict": [[serializeRecursively(k), serializeRecursively(v)] for k, v in data.iteritems()]}
-                elif dataType == tuple:                          # Recurse into tuples
-                    return {"py/tuple": [serializeRecursively(val) for val in data]}
-                elif dataType == set:                            # Recurse into sets
-                    return {"py/set": [serializeRecursively(val) for val in data]}
-                elif dataType == datetime.datetime:
-                    return {"py/datetime.datetime": str(data)}
-                elif dataType == complex:
-                    return {"py/complex": [ data.real, data.imag] }
-                elif dataType == ndarray:
-                    if numpyStorage == 'ascii' or (numpyStorage == 'auto' and data.size < 1000):
-                        return {"py/numpy.ndarray": {
-                          "encoding": "ascii",
-                          "shape": data.shape,
-                          "values": data.tolist(),
-                          "dtype":  str(data.dtype)}}
-                    else:
-                        from base64 import b64encode
-                        return {"py/numpy.ndarray": {
-                          "encoding": "base64",
-                          "shape": data.shape,
-                          "values": b64encode(data),
-                          "dtype":  str(data.dtype)}}
-                elif dataType == ThunderSerializeableObjectWrapper:
-                    # nested serializable object
-                    return {"py/ThunderSerializeableObjectWrapper": {
-                        "clsName": cls.__name__,
-                        "clsModule": cls.__module__,
-                    }}
-
-                raise TypeError("Type %s not data-serializable" % dataType)
-
             # Check for unsupported class.
             if hasattr(self.wrapped, "__slots__") and hasattr(self.wrapped, "__dict__"):
                 raise TypeError("Cannot serialize a class that has attributes in both __slots__ and __dict__")
 
             # If this object has slots, we need to convert the slots to a dict before serializing them.
             if hasattr(cls, "__slots__"):
-                slotDict = { key: self.wrapped.__getattribute__(key) for key in cls.__slots__ }
-                return serializeRecursively(slotDict)
+                slotDict = {key: self.wrapped.__getattribute__(key) for key in cls.__slots__}
+                return self.__serializeRecursively(slotDict, numpyStorage)
 
             # Otherwise, we handle the object as though it has a normal __dict__ containing its attributes.
             else:
-                return serializeRecursively(self.wrapped.__dict__)
-
+                return self.__serializeRecursively(self.wrapped.__dict__, numpyStorage)
 
         @staticmethod
         def deserialize(serializedDict):
@@ -226,33 +255,47 @@ def serializable(cls):
                 # Otherwise, decode it!
                 if "py/dict" == dataKey:
                     return dict(restoreRecursively(dct["py/dict"]))
-                if "py/tuple" == dataKey:
+                elif "py/tuple" == dataKey:
                     return tuple(restoreRecursively(dct["py/tuple"]))
-                if "py/set" == dataKey:
+                elif "py/set" == dataKey:
                     return set(restoreRecursively(dct["py/set"]))
-                if "py/collections.namedtuple" == dataKey:
+                elif "py/collections.namedtuple" == dataKey:
                     from collections import namedtuple
                     data = restoreRecursively(dct["py/collections.namedtuple"])
                     return namedtuple(data["type"], data["fields"])(*data["values"])
-                if "py/collections.OrderedDict" == dataKey:
+                elif "py/collections.OrderedDict" == dataKey:
                     from collections import OrderedDict
                     return OrderedDict(restoreRecursively(dct["py/collections.OrderedDict"]))
-                if "py/datetime.datetime" == dataKey:
+                elif "py/datetime.datetime" == dataKey:
                     from dateutil import parser
                     return parser.parse(dct["py/datetime.datetime"])
-                if "py/complex" == dataKey:
+                elif "py/complex" == dataKey:
                     data = dct["py/complex"]
-                    return complex( float(data[0]), float(data[1]) )
-                if "py/numpy.ndarray" == dataKey:
+                    return complex(float(data[0]), float(data[1]))
+                elif "py/homogeneousSerializableList" == dataKey:
+                    from importlib import import_module
+                    data = dct["py/homogeneousSerializableList"]
+                    className = data["type"]
+                    moduleName = data["module"]
+                    clazz = getattr(import_module(moduleName), className)
+                    return [clazz.deserialize(val) for val in data["data"]]
+                elif "py/ThunderSerializeableObjectWrapper" == dataKey:
+                    from importlib import import_module
+                    data = dct["py/ThunderSerializeableObjectWrapper"]
+                    className = data["type"]
+                    moduleName = data["module"]
+                    clazz = getattr(import_module(moduleName), className)
+                    return clazz.deserialize(data["data"])
+                elif "py/numpy.ndarray" == dataKey:
                     data = dct["py/numpy.ndarray"]
                     if data["encoding"] == "base64":
-                      arr = frombuffer(decodestring(data["values"]), dtype(data["dtype"]))
-                      return arr.reshape(data["shape"])
+                        arr = frombuffer(decodestring(data["values"]), dtype(data["dtype"]))
+                        return arr.reshape(data["shape"])
                     elif data["encoding"] == "ascii":
-                      data = dct["py/numpy.ndarray"]
-                      return array(data["values"], dtype=data["dtype"])
+                        data = dct["py/numpy.ndarray"]
+                        return array(data["values"], dtype=data["dtype"])
                     else:
-                      raise TypeError("Unknown encoding key for numpy.ndarray: \"%s\"" % data["encoding"])
+                        raise TypeError("Unknown encoding key for numpy.ndarray: \"%s\"" % data["encoding"])
 
                 # If no decoding scheme can be found, raise an exception
                 raise TypeError("Could not de-serialize unknown type: \"%s\"" % dataKey)
@@ -318,7 +361,3 @@ def serializable(cls):
 
     # End of decorator.  Return the wrapper class from inside this closure.
     return ThunderSerializeableObjectWrapper
-
-
-
-
