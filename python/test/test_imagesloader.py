@@ -2,7 +2,7 @@ from numpy import arange, array_equal, ndarray
 from numpy import dtype as dtypeFunc
 import os
 import unittest
-from nose.tools import assert_equals, assert_true, assert_almost_equal
+from nose.tools import assert_almost_equal, assert_equals, assert_raises, assert_true
 
 from thunder.rdds.fileio.imagesloader import ImagesLoader
 from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
@@ -138,6 +138,7 @@ class TestImagesFileLoaders(PySparkTestCase):
 
     def test_fromMultipleMultiTimepointTifs(self):
         imagePath = os.path.join(self.testResourcesDir, "multilayer_tif", "dotdotdot_lzw*.tif")
+
         tiffImages = ImagesLoader(self.sc).fromTif(imagePath, nplanes=1)
         assert_true(tiffImages._nimages is None)
         assert_equals(6, tiffImages.nimages)
@@ -152,6 +153,11 @@ class TestImagesFileLoaders(PySparkTestCase):
             assert_equals(expectedIdx, idx)
             assert_equals(expectedSums[idx], tiffAry.ravel().sum())
             expectedIdx += 1
+
+        # 3 pages / file is not evenly divisible by 2 planes
+        # note this will still log a big traceback, since the exception is in the executor,
+        # not the driver. But this is expected behavior.
+        assert_raises(Exception, ImagesLoader(self.sc).fromTif(imagePath, nplanes=2).count)
 
 
 class TestImagesLoaderUsingOutputDir(PySparkTestCaseWithOutputDir):

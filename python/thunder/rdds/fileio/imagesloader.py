@@ -220,6 +220,10 @@ class ImagesLoader(object):
             if imgArys:
                 retAry = dstack(imgArys) if len(imgArys) > 1 else imgArys[0]
                 values.append(retAry)
+            # check for inappropriate nplanes that doesn't evenly divide num pages
+            if nplanes and (pageIdx % nplanes):
+                raise ValueError("nplanes '%d' does not evenly divide page count of multipage tif '%d'" %
+                                 (nplanes, pageIdx))
             nvals = len(values)
             keys = [idx*nvals + timepoint for timepoint in xrange(nvals)]
             return zip(keys, values)
