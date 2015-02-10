@@ -85,7 +85,6 @@ class ThunderContext():
                                      keyType=keyType, valueType=valueType)
         return data
 
-
     def loadImages(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
                    startIdx=None, stopIdx=None, recursive=False, nplanes=None):
         """
@@ -146,9 +145,12 @@ class ThunderContext():
             (not s3).
 
         nplanes: positive integer, default None
-            If passed, will cause a single image file to be subdivided into multiple time points. Every `nplanes` image
-            planes in the file will be considered as a new time point. With nplanes=None (the default), a single file
-            will be considered to represent a single time point.
+            If passed, will cause a single image file to be subdivided into multiple records. Every
+            `nplanes` z-planes (or multipage tif pages) in the file will be taken as a new record, with the
+            first nplane planes of the first file being record 0, the second nplane planes being record 1, etc,
+            until the first file is exhausted and record ordering continues with the first nplane planes of the
+            second file, and so on. With nplanes=None (the default), a single file will be considered as
+            representing a single record.
 
         Returns
         -------
@@ -395,10 +397,12 @@ class ThunderContext():
             (not s3), and only with shuffle=True.
 
         nplanes: positive integer, default None
-            If passed, will cause a single image file to be subdivided into multiple time points. Every `nplanes` image
-            planes in the file will be considered as a new time point. With nplanes=None (the default), a single file
-            will be considered to represent a single time point. nplanes is only supported for shuffle=True (the
-            default).
+            If passed, will cause a single image file to be subdivided into multiple records. Every
+            `nplanes` z-planes (or multipage tif pages) in the file will be taken as a new record, with the
+            first nplane planes of the first file being record 0, the second nplane planes being record 1, etc,
+            until the first file is exhausted and record ordering continues with the first nplane planes of the
+            second file, and so on. With nplanes=None (the default), a single file will be considered as
+            representing a single record.
         """
         checkParams(inputFormat, ['stack', 'tif', 'tif-stack'])
 

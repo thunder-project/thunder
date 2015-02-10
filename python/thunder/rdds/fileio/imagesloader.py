@@ -121,6 +121,11 @@ class ImagesLoader(object):
     def fromTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, nplanes=None):
         """Sets up a new Images object with data to be read from one or more tif files.
 
+        Multiple pages of a multipage tif file will by default be assumed to represent the z-axis (depth) of a
+        single 3-dimensional volume, in which case a single input multipage tif file will be converted into
+        a single Images record. If `nplanes` is passed, then every nplanes pages will be interpreted as a single
+        3d volume (2d if nplanes==1), allowing a single tif file to contain multiple Images records.
+
         This method attempts to explicitly import PIL. ImportError may be thrown if 'from PIL import Image' is
         unsuccessful. (PIL/pillow is not an explicit requirement for thunder.)
 
@@ -147,9 +152,11 @@ class ImagesLoader(object):
             (not s3).
 
         nplanes: positive integer, default None
-            If passed, will cause a single multipage tif file to be subdivided into multiple time points. Every
-            `nplanes` tif pages in the file will be considered as a new time point. With nplanes=None (the default), a
-            single file will be considered to represent a single time point.
+            If passed, will cause a single multipage tif file to be subdivided into multiple records. Every
+            `nplanes` tif pages in the file will be taken as a new record, with the first nplane pages of the
+            first file being record 0, the second nplane pages being record 1, etc, until the first file is
+            exhausted and record ordering continues with the first nplane images of the second file, and so on.
+            With nplanes=None (the default), a single file will be considered as representing a single record.
         """
 
         try:
