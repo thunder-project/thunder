@@ -20,7 +20,7 @@ class ImagesLoader(object):
         """
         self.sc = sparkContext
 
-    def fromArrays(self, arrays):
+    def fromArrays(self, arrays, npartitions=None):
         """Load Images data from passed sequence of numpy arrays.
 
         Expected usage is mainly in testing - having a full dataset loaded in memory
@@ -42,11 +42,13 @@ class ImagesLoader(object):
             if not ary.dtype == dtype:
                 raise ValueError("Arrays must all be of same data type; got both %s and %s" %
                                  (str(dtype), str(ary.dtype)))
-        return Images(self.sc.parallelize(enumerate(arrays), len(arrays)),
-                      dims=shape, dtype=str(dtype), nimages=len(arrays))
+        narrays = len(arrays)
+        npartitions = min(narrays, npartitions) if npartitions else narrays
+        return Images(self.sc.parallelize(enumerate(arrays), npartitions),
+                      dims=shape, dtype=str(dtype), nimages=narrays)
 
     def fromStack(self, dataPath, dims, dtype='int16', ext='stack', startIdx=None, stopIdx=None, recursive=False,
-                  nplanes=None):
+                  nplanes=None, npartitions=None):
         """Load an Images object stored in a directory of flat binary files
 
         The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
@@ -60,7 +62,7 @@ class ImagesLoader(object):
 
         dataPath: string
             Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-            including scheme. A datapath argument may include a single '*' wildcard character in the filename.
+            including scheme. A dataPath argument may include a single '*' wildcard character in the filename.
 
         dims: tuple of positive int
             Dimensions of input image data, ordered with fastest-changing dimension first
@@ -78,9 +80,15 @@ class ImagesLoader(object):
             (not s3).
 
         nplanes: positive integer, default None
-            If passed, will cause a single binary stack file to be subdivided into multiple time points. Every
-            `nplanes` image planes in the file (after reshaping to dims) will be considered as a new time point. With
-            nplanes=None (the default), a single file will be considered to represent a single time point.
+            If passed, will cause a single binary stack file to be subdivided into multiple records. Every
+            `nplanes` z-planes in the file will be taken as a new record, with the first nplane planes of the
+            first file being record 0, the second nplane planes being record 1, etc, until the first file is
+            exhausted and record ordering continues with the first nplane planes of the second file, and so on.
+            With nplanes=None (the default), a single file will be considered as representing a single record.
+
+        npartitions: positive int, optional.
+            If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
+            partition per image file.
         """
         if not dims:
             raise ValueError("Image dimensions must be specified if loading from binary stack data")
@@ -113,12 +121,14 @@ class ImagesLoader(object):
                 yield idx*npoints + timepoint, ary[slices]
 
         reader = getParallelReaderForPath(dataPath)(self.sc)
-        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
+        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
+                                npartitions=npartitions)
         nimages = reader.lastNRecs if nplanes is None else None
         newDims = tuple(list(dims[:-1]) + [nplanes]) if nplanes else dims
         return Images(readerRdd.flatMap(toArray), nimages=nimages, dims=newDims, dtype=dtype)
 
-    def fromTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, nplanes=None):
+    def fromTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, nplanes=None,
+                npartitions=None):
         """Sets up a new Images object with data to be read from one or more tif files.
 
         Multiple pages of a multipage tif file will by default be assumed to represent the z-axis (depth) of a
@@ -129,8 +139,8 @@ class ImagesLoader(object):
         This method attempts to explicitly import PIL. ImportError may be thrown if 'from PIL import Image' is
         unsuccessful. (PIL/pillow is not an explicit requirement for thunder.)
 
-        The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
-        files read in by this method.
+        The RDD wrapped by the returned Images object will by default have a number of partitions equal to the
+        number of image data files read in by this method; it may have fewer partitions if npartitions is specified.
 
         Parameters
         ----------
@@ -157,6 +167,10 @@ class ImagesLoader(object):
             first file being record 0, the second nplane pages being record 1, etc, until the first file is
             exhausted and record ordering continues with the first nplane images of the second file, and so on.
             With nplanes=None (the default), a single file will be considered as representing a single record.
+
+        npartitions: positive int, optional.
+            If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
+            partition per image file.
         """
 
         try:
@@ -211,11 +225,12 @@ class ImagesLoader(object):
             return zip(keys, values)
 
         reader = getParallelReaderForPath(dataPath)(self.sc)
-        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
+        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
+                                npartitions=npartitions)
         nimages = reader.lastNRecs if nplanes is None else None
         return Images(readerRdd.flatMap(multitifReader), nimages=nimages)
 
-    def fromPng(self, dataPath, ext='png', startIdx=None, stopIdx=None, recursive=False):
+    def fromPng(self, dataPath, ext='png', startIdx=None, stopIdx=None, recursive=False, npartitions=None):
         """Load an Images object stored in a directory of png files
 
         The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
@@ -226,7 +241,7 @@ class ImagesLoader(object):
 
         dataPath: string
             Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-            including scheme. A datapath argument may include a single '*' wildcard character in the filename.
+            including scheme. A dataPath argument may include a single '*' wildcard character in the filename.
 
         ext: string, optional, default "png"
             Extension required on data files to be loaded.
@@ -239,11 +254,16 @@ class ImagesLoader(object):
             If true, will recursively descend directories rooted at datapath, loading all files in the tree that
             have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
             (not s3).
+
+        npartitions: positive int, optional.
+            If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
+            partition per image file.
         """
         def readPngFromBuf(buf):
             fbuf = BytesIO(buf)
             return imread(fbuf, format='png')
 
         reader = getParallelReaderForPath(dataPath)(self.sc)
-        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
+        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
+                                npartitions=npartitions)
         return Images(readerRdd.mapValues(readPngFromBuf), nimages=reader.lastNRecs)

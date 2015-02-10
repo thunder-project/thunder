@@ -86,7 +86,7 @@ class ThunderContext():
         return data
 
     def loadImages(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
-                   startIdx=None, stopIdx=None, recursive=False, nplanes=None):
+                   startIdx=None, stopIdx=None, recursive=False, nplanes=None, npartitions=None):
         """
         Loads an Images object from data stored as a binary image stack, tif, or png files.
 
@@ -114,10 +114,9 @@ class ThunderContext():
 
         inputFormat: {'stack', 'png', 'tif'}. optional, default 'stack'
             Expected format of the input data. 'stack' indicates flat files of raw binary data. 'png' or 'tif' indicate
-            image files of the corresponding formats. Each page of a multipage tif file will be interpreted as a separate
-            z-plane.
-            For all formats, separate files are interpreted as distinct time points, with ordering given by
-            lexicographic sorting of file names.
+            image files of the corresponding formats. Each page of a multipage tif file will be interpreted as a
+            separate z-plane. For all formats, separate files are interpreted as distinct time points, with ordering
+            given by lexicographic sorting of file names.
 
         ext: string, optional, default None
             Extension required on data files to be loaded. By default will be "stack" if inputFormat=="stack", "tif" for
@@ -152,6 +151,10 @@ class ThunderContext():
             second file, and so on. With nplanes=None (the default), a single file will be considered as
             representing a single record.
 
+        npartitions: positive int, optional
+            If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
+            partition per image file.
+
         Returns
         -------
         data: thunder.rdds.Images
@@ -168,20 +171,21 @@ class ThunderContext():
 
         if inputFormat.lower() == 'stack':
             data = loader.fromStack(dataPath, dims, dtype=dtype, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
-                                    recursive=recursive, nplanes=nplanes)
+                                    recursive=recursive, nplanes=nplanes, npartitions=npartitions)
         elif inputFormat.lower().startswith('tif'):
             data = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
-                                  nplanes=nplanes)
+                                  nplanes=nplanes, npartitions=npartitions)
         else:
             if nplanes:
                 raise NotImplementedError("nplanes argument is not supported for png files")
-            data = loader.fromPng(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
+            data = loader.fromPng(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
+                                  recursive=recursive, npartitions=npartitions)
 
         return data
 
     def loadImagesAsSeries(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
-                           blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None, 
-                           shuffle=True, recursive=False, nplanes=None):
+                           blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,
+                           shuffle=True, recursive=False, nplanes=None, npartitions=None):
         """
         Load Images data as Series data.
 
@@ -254,10 +258,16 @@ class ThunderContext():
             (not s3), and only with shuffle=True.
 
         nplanes: positive integer, default None
-            If passed, will cause a single image file to be subdivided into multiple time points. Every `nplanes` image
-            planes in the file will be considered as a new time point. With nplanes=None (the default), a single file
-            will be considered to represent a single time point. nplanes is only supported for shuffle=True (the
-            default).
+            If passed, will cause a single image file to be subdivided into multiple records. Every
+            `nplanes` z-planes (or multipage tif pages) in the file will be taken as a new record, with the
+            first nplane planes of the first file being record 0, the second nplane planes being record 1, etc,
+            until the first file is exhausted and record ordering continues with the first nplane planes of the
+            second file, and so on. With nplanes=None (the default), a single file will be considered as
+            representing a single record. nplanes is only supported for shuffle=True (the default).
+
+        npartitions: positive int, optional
+            If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
+            partition per image file. Only applies when shuffle=True.
 
         Returns
         -------
@@ -282,17 +292,19 @@ class ThunderContext():
             loader = ImagesLoader(self._sc)
             if inputFormat.lower() == 'stack':
                 images = loader.fromStack(dataPath, dims, dtype=dtype, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
-                                          recursive=recursive, nplanes=nplanes)
+                                          recursive=recursive, nplanes=nplanes, npartitions=npartitions)
             else:
                 # tif / tif stack
                 images = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
-                                                 recursive=recursive, nplanes=nplanes)
+                                                 recursive=recursive, nplanes=nplanes, npartitions=npartitions)
             return images.toBlocks(blockSize, units=blockSizeUnits).toSeries()
 
         else:
             from thunder.rdds.fileio.seriesloader import SeriesLoader
             if nplanes is not None:
                 raise NotImplementedError("nplanes is not supported with shuffle=False")
+            if npartitions is not None:
+                raise NotImplementedError("npartitions is not supported with shuffle=False")
 
             loader = SeriesLoader(self._sc)
             if inputFormat.lower() == 'stack':
@@ -305,7 +317,7 @@ class ThunderContext():
 
     def convertImagesToSeries(self, dataPath, outputDirPath, dims=None, inputFormat='stack', ext=None,
                               dtype='int16', blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,
-                              shuffle=False, overwrite=False, recursive=False, nplanes=None):
+                              shuffle=False, overwrite=False, recursive=False, nplanes=None, npartitions=None):
         """
         Write out Images data as Series data, saved in a flat binary format.
 
@@ -402,7 +414,11 @@ class ThunderContext():
             first nplane planes of the first file being record 0, the second nplane planes being record 1, etc,
             until the first file is exhausted and record ordering continues with the first nplane planes of the
             second file, and so on. With nplanes=None (the default), a single file will be considered as
-            representing a single record.
+            representing a single record. nplanes is only supported for shuffle=True (the default).
+
+        npartitions: positive int, optional
+            If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
+            partition per image file. Only applies when shuffle=True.
         """
         checkParams(inputFormat, ['stack', 'tif', 'tif-stack'])
 
@@ -422,16 +438,18 @@ class ThunderContext():
             loader = ImagesLoader(self._sc)
             if inputFormat.lower() == 'stack':
                 images = loader.fromStack(dataPath, dims, dtype=dtype, startIdx=startIdx, stopIdx=stopIdx,
-                                          recursive=recursive, nplanes=nplanes)
+                                          recursive=recursive, nplanes=nplanes, npartitions=npartitions)
             else:
                 # 'tif' or 'tif-stack'
                 images = loader.fromTif(dataPath, startIdx=startIdx, stopIdx=stopIdx,
-                                        recursive=recursive, nplanes=nplanes)
+                                        recursive=recursive, nplanes=nplanes, npartitions=npartitions)
             images.toBlocks(blockSize, units=blockSizeUnits).saveAsBinarySeries(outputDirPath, overwrite=overwrite)
         else:
             from thunder.rdds.fileio.seriesloader import SeriesLoader
             if nplanes is not None:
                 raise NotImplementedError("nplanes is not supported with shuffle=False")
+            if npartitions is not None:
+                raise NotImplementedError("npartitions is not supported with shuffle=False")
             loader = SeriesLoader(self._sc)
             if inputFormat.lower() == 'stack':
                 loader.saveFromStack(dataPath, outputDirPath, dims, ext=ext, dtype=dtype,
@@ -492,7 +510,7 @@ class ThunderContext():
         if dataset == "iris":
             return self.loadSeries(os.path.join(path, 'data/iris/iris.bin'))
         elif dataset == "fish-series":
-            return self.loadSeries(os.path.join(path, 'data/fish/bin/'))
+            return self.loadSeries(os.path.join(path, 'data/fish/bin/')).astype('float')
         elif dataset == "fish-images":
             return self.loadImages(os.path.join(path, 'data/fish/tif-stack'), inputFormat="tif")
         else:

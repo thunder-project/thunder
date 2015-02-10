@@ -11,7 +11,7 @@ class Data(object):
     Attributes
     ----------
 
-    rdd: Spark RDD
+    `rdd` : Spark RDD
         The Spark Resilient Distributed Dataset wrapped by this Data object.
         Standard pyspark RDD methods on a data instance `obj` that are not already
         directly exposed by the Data object can be accessed via `obj.rdd`.
@@ -90,7 +90,7 @@ class Data(object):
 
     @property
     def _constructor(self):
-        raise NotImplementedError
+        return Data
 
     def _resetCounts(self):
         # to be overridden in subclasses
@@ -105,11 +105,147 @@ class Data(object):
         return self.populateParamsFromFirstRecord()
 
     def take(self, *args, **kwargs):
-        """ Take samples
+        """ Take samples.
 
         This calls the Spark take() method on the underlying RDD.
         """
         return self.rdd.take(*args, **kwargs)
+
+    @staticmethod
+    def __getKeyTypeCheck(actualKey, keySpec):
+        if hasattr(actualKey, "__iter__"):
+            try:
+                specLen = len(keySpec) if hasattr(keySpec, "__len__") else \
+                    reduce(lambda x, y: x + y, [1 for item in keySpec], initial=0)
+                if specLen != len(actualKey):
+                    raise ValueError("Length of key specifier '%s' does not match length of first key '%s'" %
+                                     (str(keySpec), str(actualKey)))
+            except TypeError:
+                raise ValueError("Key specifier '%s' appears not to be a sequence type, but actual keys are " %
+                                 str(keySpec) + "sequences (first key: '%s')" % str(actualKey))
+        else:
+            if hasattr(keySpec, "__iter__"):
+                raise ValueError("Key specifier '%s' appears to be a sequence type, " % str(keySpec) +
+                                 "but actual keys are not (first key: '%s')" % str(actualKey))
+
+    def get(self, key):
+        """Returns a single value matching the passed key, or None if no matching keys found.
+
+        If multiple records are found with keys matching the passed key, a sequence of all matching
+        values will be returned.
+        """
+        firstKey = self.first()[0]
+        Data.__getKeyTypeCheck(firstKey, key)
+        filteredVals = self.rdd.filter(lambda (k, v): k == key).values().collect()
+        if len(filteredVals) == 1:
+            return filteredVals[0]
+        elif not filteredVals:
+            return None
+        else:
+            return filteredVals
+
+    def getMany(self, keys):
+        """Returns a sequence of values corresponding to the passed sequence of keys.
+
+        The return value will be a sequence equal in length to the passed keys, with each
+        value in the returned sequence corresponding to the key at the same position in the passed
+        keys sequence. If no value is found for a given key, the corresponding sequence element will be None.
+        If multiple values are found, a sequence containing all matching values will be returned.
+        """
+        firstKey = self.first()[0]
+        for key in keys:
+            Data.__getKeyTypeCheck(firstKey, key)
+        keySet = frozenset(keys)
+        filteredRecs = self.rdd.filter(lambda (k, _): k in keySet).collect()
+        sortingDict = {}
+        for k, v in filteredRecs:
+            sortingDict.setdefault(k, []).append(v)
+        retVals = []
+        for k in keys:
+            vals = sortingDict.get(k)
+            if vals is not None:
+                if len(vals) == 1:
+                    vals = vals[0]
+            retVals.append(vals)
+        return retVals
+
+    def getRange(self, sliceOrSlices):
+        """Returns key/value pairs that fall within a range given by the passed slice or slices.
+
+        The return values will be a sorted list of key/value pairs of all records in the underlying
+        RDD for which the key falls within the range given by the passed slice selectors. Note that
+        this may be very large, and could potentially exhaust the available memory on the driver.
+
+        For singleton keys, a single slice (or slice sequence of length one) should be passed.
+        For tuple keys, a sequence of multiple slices should be passed. A `step` attribute on slices
+        is not supported and a alueError will be raised if passed.
+
+        Parameters
+        ----------
+        sliceOrSlices: slice object or sequence of slices
+            The passed slice or slices should be of the same cardinality as the keys of the underlying rdd.
+
+        Returns
+        -------
+        sorted sequence of key/value pairs
+        """
+        # None is less than everything except itself
+        def singleSlicePredicate(kv):
+            key, _ = kv
+            if isinstance(sliceOrSlices, slice):
+                if sliceOrSlices.stop is None:
+                    return key >= sliceOrSlices.start
+                return sliceOrSlices.stop > key >= sliceOrSlices.start
+            else:  # apparently this isn't a slice
+                return key == sliceOrSlices
+
+        def multiSlicesPredicate(kv):
+            key, _ = kv
+            for slise, subkey in zip(sliceOrSlices, key):
+                if isinstance(slise, slice):
+                    if slise.stop is None:
+                        if subkey < slise.start:
+                            return False
+                    elif not (slise.stop > subkey >= slise.start):
+                        return False
+                else:  # not a slice
+                    if subkey != slise:
+                        return False
+            return True
+
+        firstKey = self.first()[0]
+        Data.__getKeyTypeCheck(firstKey, sliceOrSlices)
+        if not hasattr(sliceOrSlices, '__iter__'):
+            # make my func the pFunc; http://en.wikipedia.org/wiki/P._Funk_%28Wants_to_Get_Funked_Up%29
+            pFunc = singleSlicePredicate
+            if hasattr(sliceOrSlices, 'step') and sliceOrSlices.step is not None:
+                raise ValueError("'step' slice attribute is not supported in getRange, got step: %d" %
+                                 sliceOrSlices.step)
+        else:
+            pFunc = multiSlicesPredicate
+            for slise in sliceOrSlices:
+                if hasattr(slise, 'step') and slise.step is not None:
+                    raise ValueError("'step' slice attribute is not supported in getRange, got step: %d" %
+                                     slise.step)
+
+        filteredRecs = self.rdd.filter(pFunc).collect()
+        # default sort of tuples is by first item, which happens to be what we want
+        return sorted(filteredRecs)
+
+    def __getitem__(self, item):
+        # should raise exception here when no matching items found
+        # see object.__getitem__ in https://docs.python.org/2/reference/datamodel.html
+        isRangeQuery = False
+        if isinstance(item, slice):
+            isRangeQuery = True
+        elif hasattr(item, '__iter__'):
+            if any([isinstance(slise, slice) for slise in item]):
+                isRangeQuery = True
+
+        if isRangeQuery:
+            return self.getRange(item)
+        else:
+            return self.get(item)
 
     def values(self):
         """ Return values, ignoring keys
@@ -126,16 +262,14 @@ class Data(object):
         return self.rdd.keys()
 
     def astype(self, dtype, casting='safe'):
-        """Cast values to specified numpy dtype
+        """Cast values to specified numpy dtype.
 
-        Calls numpy's astype() method.
-
-        If the string 'smallfloat' is passed, then the values will be cast to the smallest floating point representation
+        If 'smallfloat' is passed, values will be cast to the smallest floating point representation
         to which they can be cast safely, as determined by the thunder.utils.common smallest_float_type function.
         Typically this will be a float type larger than a passed integer type (for instance, float16 for int8 or uint8).
 
         If the passed dtype is the same as the current dtype, or if 'smallfloat' is passed when values are already
-        in floating point, then this method will return immediately, returning self.
+        in floating point, then this method will return self unchanged.
 
         Parameters
         ----------
@@ -159,33 +293,29 @@ class Data(object):
         nextRdd = self.rdd.mapValues(lambda v: v.astype(dtype, casting=casting, copy=False))
         return self._constructor(nextRdd, dtype=str(dtype)).__finalize__(self)
 
-    def apply(self, func, dtype=None, casting='safe'):
+    def apply(self, func, keepdtype=False):
         """ Apply arbitrary function to records of a Data object.
 
         This wraps the combined process of calling Spark's map operation on
         the underlying RDD and returning a reconstructed Data object.
-
-        If `dtype` is passed, output will be cast to specified datatype - see `astype()`.
-        Otherwise output will be assumed to be of same datatype as input.
 
         Parameters
         ----------
         func : function
             Function to apply to records.
 
-        dtype: numpy dtype or dtype specifier, or string 'smallfloat', or None
-            Data type to which RDD values are to be cast. Will return immediately, performing no cast, if None is passed.
-
-        casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
-            Casting method to pass on to numpy's astype() method; see numpy documentation for details.
+        keepdtype : boolean
+            Whether to preserve the dtype, if false dtype will be set to none
+            under the assumption that the function might change it
         """
 
-        applied = self._constructor(self.rdd.map(func)).__finalize__(self)
-        if dtype:
-            return applied.astype(dtype=dtype, casting=casting)
-        return applied
+        if keepdtype:
+            noprop = ()
+        else:
+            noprop = ('_dtype',)
+        return self._constructor(self.rdd.map(func)).__finalize__(self, noPropagate=noprop)
 
-    def applyKeys(self, func):
+    def applyKeys(self, func, **kwargs):
         """ Apply arbitrary function to the keys of a Data object, preserving the values.
 
         See also
@@ -193,9 +323,9 @@ class Data(object):
         Series.apply
         """
 
-        return self._constructor(self.rdd.map(lambda (k, _): (func(k), _))).__finalize__(self)
+        return self.apply(lambda (k, v): (func(k), v), **kwargs)
 
-    def applyValues(self, func, dtype=None, casting='safe'):
+    def applyValues(self, func, **kwargs):
         """ Apply arbitrary function to the values of a Data object, preserving the keys.
 
         See also
@@ -203,10 +333,7 @@ class Data(object):
         Series.apply
         """
 
-        applied = self._constructor(self.rdd.mapValues(func)).__finalize__(self)
-        if dtype:
-            return applied.astype(dtype=dtype, casting=casting)
-        return applied
+        return self.apply(lambda (k, v): (k, func(v)), **kwargs)
 
     def collect(self):
         """ Return all records to the driver
@@ -218,12 +345,31 @@ class Data(object):
         return self.rdd.collect()
 
     def collectAsArray(self):
+        """ Return all keys and values to the driver as a tuple of numpy arrays
+
+        This will be slow for large datasets, and may exhaust the available memory on the driver.
+        """
+        from numpy import asarray
+        out = self.rdd.collect()
+        keys = asarray(map(lambda (k, v): k, out))
+        values = asarray(map(lambda (k, v): v, out))
+        return keys, values
+
+    def collectValuesAsArray(self):
         """ Return all records to the driver as a numpy array
 
         This will be slow for large datasets, and may exhaust the available memory on the driver.
         """
         from numpy import asarray
         return asarray(self.rdd.values().collect())
+
+    def collectKeysAsArray(self):
+        """ Return all values to the driver as a numpy array
+
+        This will be slow for large datasets, and may exhaust the available memory on the driver.
+        """
+        from numpy import asarray
+        return asarray(self.rdd.keys().collect())
 
     def count(self):
         """ Mean of values, ignoring keys

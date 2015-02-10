@@ -1,6 +1,6 @@
 from numpy import ndarray, array, sum, mean, median, std, size, arange, \
     percentile, asarray, maximum, zeros, corrcoef, where, \
-    true_divide, ceil
+    true_divide, ceil, vstack
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
@@ -43,7 +43,9 @@ class Series(Data):
 
     def __init__(self, rdd, index=None, dims=None, dtype=None):
         super(Series, self).__init__(rdd, dtype=dtype)
-        self._index = index
+        self._index = None
+        if index is not None:
+            self.index = index
         if dims and not isinstance(dims, Dimensions):
             try:
                 dims = Dimensions.fromTuple(dims)
@@ -56,6 +58,25 @@ class Series(Data):
         if self._index is None:
             self.populateParamsFromFirstRecord()
         return self._index
+        
+    @index.setter
+    def index(self, value):
+        # touches self.index to trigger automatic calculation from first record if self.index is not set
+        lenSelf = len(self.index)
+        if type(value) is str:
+            value = [value]
+        # if new index is not indexable, assume that it is meant as an index of length 1
+        try:
+            value[0]
+        except:
+            value = [value]
+        try:
+            lenValue = len(value)
+        except:
+            raise TypeError("Index must be an object with a length")
+        if lenValue != lenSelf:
+            raise ValueError("Length of new index ({0}) must match length of original index ({1})".format(lenValue, lenSelf))
+        self._index = value
 
     @property
     def dims(self):
@@ -307,7 +328,7 @@ class Series(Data):
           q: a floating point number between 0 and 100 inclusive.
         """
         rdd = self.rdd.mapValues(lambda x: percentile(x, q))
-        return self._constructor(rdd, index='percentile').__finalize__(self, noPropagate=('_dtype',))
+        return self._constructor(rdd, index=q).__finalize__(self, noPropagate=('_dtype',))
 
     def seriesStdev(self):
         """ Compute the value std of each record in a Series """
@@ -561,6 +582,67 @@ class Series(Data):
 
         return keys, values
 
+    def meanOfRegion(self, keys):
+        """Takes the mean of Series values within a single region specified by the passed keys.
+
+        Parameters
+        ----------
+        keys: sequence of Series record keys
+
+        Returns
+        -------
+        tuple of ((mean of keys), (mean value))
+        """
+        bcRegionKeys = self.rdd.context.broadcast(frozenset(keys))
+        n, kmean, vmean = self.rdd.filter(lambda (k, v): k in bcRegionKeys.value) \
+            .map(lambda (k, v):  (array(k, dtype=v.dtype), v)) \
+            .aggregate(_MeanCombiner.createZeroTuple(),
+                       _MeanCombiner.mergeIntoMeanTuple,
+                       _MeanCombiner.combineMeanTuples)
+        kmean = tuple(kmean.astype('int32'))
+        return kmean, vmean
+
+    def meanByRegion(self, nestedKeys):
+        """Takes the mean of Series values within groupings specified by the passed keys.
+
+        Each sequence of keys passed specifies a "region" within which to calculate the mean. For instance,
+        series.meanByRegion([[(1,0), (2,0)]) would return the mean of the records in series with keys (1,0) and (2,0).
+        If multiple regions are passed in, then multiple aggregates will be returned. For instance,
+        series.meanByRegion([[(1,0), (2,0)], [(1,0), (3,0)]]) would return two means, one for the region composed
+        of records (1,0) and (2,0), the other for records (1,0) and (3,0).
+
+        Parameters
+        ----------
+        nestedKeys: sequence of sequences of Series record keys
+            Each nested sequence specifies keys for a single region.
+
+        Returns
+        -------
+        new Series object
+            New Series will have one record per region. Record keys will be the mean of keys within the region,
+            while record values will be the mean of values in the region.
+        """
+        # transform keys into map from keys to sequence of region indices
+        regionLookup = {}
+        for regionIdx, region in enumerate(nestedKeys):
+            for key in region:
+                regionLookup.setdefault(tuple(key), []).append(regionIdx)
+
+        bcRegionLookup = self.rdd.context.broadcast(regionLookup)
+
+        def toRegionIdx(kvIter):
+            regionLookup_ = bcRegionLookup.value
+            for k, val in kvIter:
+                for regionIdx in regionLookup_.get(k, []):
+                    yield regionIdx, (k, val)
+
+        data = self.rdd.mapPartitions(toRegionIdx) \
+            .combineByKey(_MeanCombiner.createMeanTuple,
+                          _MeanCombiner.mergeIntoMeanTuple,
+                          _MeanCombiner.combineMeanTuples, numPartitions=len(nestedKeys)) \
+            .map(lambda (region_, (n, kmean, vmean)): (tuple(kmean.astype('int16')), vmean))
+        return self._constructor(data).__finalize__(self)
+
     def toBlocks(self, blockSizeSpec="150M"):
         """
         Parameters
@@ -692,3 +774,45 @@ class Series(Data):
         """
         from thunder.rdds.spatialseries import SpatialSeries
         return SpatialSeries(self.rdd).__finalize__(self)
+
+
+class _MeanCombiner(object):
+    @staticmethod
+    def createZeroTuple():
+        return 0, 0.0, 0.0
+
+    @staticmethod
+    def createMeanTuple(kv):
+        key, val = kv
+        return 1, array(key, dtype=val.dtype), val
+
+    @staticmethod
+    def mergeIntoMeanTuple(meanTuple, kv):
+        n, kmu, vmu = meanTuple
+        newn = n+1
+        return newn, kmu + (kv[0] - kmu) / newn, vmu + (kv[1] - vmu) / newn
+
+    @staticmethod
+    def combineMeanTuples(meanTup1, meanTup2):
+        n1, kmu1, vmu1 = meanTup1
+        n2, kmu2, vmu2 = meanTup2
+        if n1 == 0:
+            return n2, kmu2, vmu2
+        elif n2 == 0:
+            return n1, kmu1, vmu1
+        else:
+            newn = n1 + n2
+            if n2 * 10 < n1:
+                kdel = kmu2 - kmu1
+                vdel = vmu2 - vmu1
+                kmu1 += (kdel * n2) / newn
+                vmu1 += (vdel * n2) / newn
+            elif n1 * 10 < n2:
+                kdel = kmu2 - kmu1
+                vdel = vmu2 - vmu1
+                kmu1 = kmu2 - (kdel * n1) / newn
+                vmu1 = vmu2 - (vdel * n1) / newn
+            else:
+                kmu1 = (kmu1 * n1 + kmu2 * n2) / newn
+                vmu1 = (vmu1 * n1 + vmu2 * n2) / newn
+            return newn, kmu1, vmu1
