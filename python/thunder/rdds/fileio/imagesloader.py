@@ -93,8 +93,12 @@ class ImagesLoader(object):
         if not dims:
             raise ValueError("Image dimensions must be specified if loading from binary stack data")
 
-        if nplanes is not None and nplanes <= 0:
-            raise ValueError("nplanes must be positive if passed, got %d" % nplanes)
+        if nplanes is not None:
+            if nplanes <= 0:
+                raise ValueError("nplanes must be positive if passed, got %d" % nplanes)
+            if dims[-1] % nplanes:
+                raise ValueError("Last dimension of stack image '%d' must be divisible by nplanes '%d'" %
+                                 (dims[-1], nplanes))
 
         def toArray(idxAndBuf):
             idx, buf = idxAndBuf

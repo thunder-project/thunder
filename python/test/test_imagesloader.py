@@ -194,12 +194,12 @@ class TestImagesLoaderUsingOutputDir(PySparkTestCaseWithOutputDir):
         assert_true(array_equal(ary2.T, collectedImage[1][1]))
 
     def test_fromMultiTimepointStacks(self):
-        ary = arange(12, dtype=dtypeFunc('uint8')).reshape((3, 2, 2))
-        ary2 = arange(12, 24, dtype=dtypeFunc('uint8')).reshape((3, 2, 2))
+        ary = arange(16, dtype=dtypeFunc('uint8')).reshape((4, 2, 2))
+        ary2 = arange(16, 32, dtype=dtypeFunc('uint8')).reshape((4, 2, 2))
         ary.tofile(os.path.join(self.outputdir, "test01.stack"))
         ary2.tofile(os.path.join(self.outputdir, "test02.stack"))
 
-        image = ImagesLoader(self.sc).fromStack(self.outputdir, dtype="uint8", dims=(2, 2, 3), nplanes=2)
+        image = ImagesLoader(self.sc).fromStack(self.outputdir, dtype="uint8", dims=(2, 2, 4), nplanes=2)
         collectedImage = image.collect()
 
         # we don't expect to have nimages cached, since we get an unknown number of images per file
@@ -216,3 +216,7 @@ class TestImagesLoaderUsingOutputDir(PySparkTestCaseWithOutputDir):
         assert_true(array_equal(ary[2:].T, collectedImage[1][1]))
         assert_true(array_equal(ary2[:2].T, collectedImage[2][1]))
         assert_true(array_equal(ary2[2:].T, collectedImage[3][1]))
+
+        # 3 planes does not divide 4
+        assert_raises(ValueError, ImagesLoader(self.sc).fromStack, self.outputdir, dtype="uint8",
+                      dims=(2, 2, 4), nplanes=3)
