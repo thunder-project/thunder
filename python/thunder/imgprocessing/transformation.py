@@ -1,4 +1,5 @@
 """ Transformations produced by registration methods """
+from thunder.utils.decorators import serializable
 
 
 class Transformation(object):
@@ -8,6 +9,7 @@ class Transformation(object):
         raise NotImplementedError
 
 
+@serializable
 class Displacement(Transformation):
     """
     Class for transformations based on spatial displacements.
@@ -41,6 +43,7 @@ class Displacement(Transformation):
         return "Displacement(delta=%s)" % repr(self.delta)
 
 
+@serializable
 class PlanarDisplacement(Transformation):
     """
     Class for transformations based on two-dimensional spatial displacements.

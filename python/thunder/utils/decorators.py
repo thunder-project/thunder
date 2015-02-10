@@ -10,6 +10,300 @@ def _isWrappedSerializable(obj):
     return hasattr(obj, 'serialize') and hasattr(obj, 'wrapped')
 
 
+class ThunderSerializeableObjectWrapper(object):
+
+    def __init__(self, *args, **kwargs):
+        self.wrapped = cls(*args, **kwargs)
+
+    # Allows transparent access to the attributes of the wrapped class
+    def __getattr__(self, *args):
+        if args[0] != 'wrapped':
+            return getattr(self.wrapped, *args)
+        else:
+            return self.__dict__['wrapped']
+
+    # Allows transparent access to the attributes of the wrapped class
+    def __setattr__(self, *args):
+        if args[0] != 'wrapped':
+            return setattr(self.wrapped, *args)
+        else:
+            self.__dict__['wrapped'] = args[1]
+
+    # Delegate to wrapped class for special python object-->string methods
+    def __str__(self):
+        return self.wrapped.__str__()
+
+    def __repr__(self):
+        return self.wrapped.__repr__()
+
+    def __unicode__(self):
+        return self.wrapped.__unicode__()
+
+    # Delegate to wrapped class for special python methods
+    def __call__(self, *args, **kwargs):
+        return self.wrapped.__str__(*args, **kwargs)
+
+    def __serializeRecursively(self, data, numpyStorage):
+        from collections import OrderedDict
+        from numpy import ndarray
+        import datetime
+
+        dataType = type(data)
+        if dataType in frozenset([type(None), bool, int, long, float, str]):
+            return data
+        elif dataType == list:
+            # awkward special case - check for lists of homogeneous serializable objects
+            isHomogeneousSerializableList = False
+            wrappedType = None
+            if data and _isWrappedSerializable(data[0]):
+                wrappedType = type(data[0].wrapped)
+                isHomogeneousSerializableList = True
+                for val in data:
+                    if (not _isWrappedSerializable(val)) or (type(val.wrapped) != wrappedType):
+                        isHomogeneousSerializableList = False
+                        break
+            if isHomogeneousSerializableList:
+                return {
+                    "py/homogeneousSerializableList": {
+                        "type": wrappedType.__name__,
+                        "module": wrappedType.__module__,
+                        "data": [val.serialize() for val in data]
+                    }
+                }
+            else:
+                # plain old list
+                return [self.__serializeRecursively(val, numpyStorage) for val in data]  # Recurse into lists
+        elif dataType == OrderedDict:
+            return {
+                "py/collections.OrderedDict": [
+                    [self.__serializeRecursively(k, numpyStorage),
+                     self.__serializeRecursively(v, numpyStorage)] for k, v in data.iteritems()
+                ]
+            }
+        elif _isNamedTuple(data):
+            return {
+                "py/collections.namedtuple": {
+                    "type": dataType.__name__,
+                    "fields": list(data._fields),
+                    "values": [self.__serializeRecursively(getattr(data, f), numpyStorage) for f in data._fields]
+                }
+            }
+        elif dataType == dict:
+            if all(type(k) == str for k in data):   # Recurse into dicts
+                return {k: self.__serializeRecursively(v, numpyStorage) for k, v in data.iteritems()}
+            else:
+                return {"py/dict": [[self.__serializeRecursively(k, numpyStorage),
+                                     self.__serializeRecursively(v, numpyStorage)] for k, v in data.iteritems()]}
+        elif dataType == tuple:                          # Recurse into tuples
+            return {"py/tuple": [self.__serializeRecursively(val, numpyStorage) for val in data]}
+        elif dataType == set:                            # Recurse into sets
+            return {"py/set": [self.__serializeRecursively(val, numpyStorage) for val in data]}
+        elif dataType == datetime.datetime:
+            return {"py/datetime.datetime": str(data)}
+        elif dataType == complex:
+            return {"py/complex": [ data.real, data.imag] }
+        elif dataType == ndarray:
+            if numpyStorage == 'ascii' or (numpyStorage == 'auto' and data.size < 1000):
+                return {"py/numpy.ndarray": {
+                    "encoding": "ascii",
+                    "shape": data.shape,
+                    "values": data.tolist(),
+                    "dtype":  str(data.dtype)}}
+            else:
+                from base64 import b64encode
+                return {"py/numpy.ndarray": {
+                    "encoding": "base64",
+                    "shape": data.shape,
+                    "values": b64encode(data),
+                    "dtype":  str(data.dtype)}}
+        elif _isWrappedSerializable(data):
+            # nested serializable object
+            wrappedType = type(data.wrapped)
+            return {"py/ThunderSerializeableObjectWrapper": {
+                "type": wrappedType.__name__,
+                "module": wrappedType.__module__,
+                "data": data.serialize()
+            }}
+
+        raise TypeError("Type %s not data-serializable" % dataType)
+
+    def serialize(self, numpyStorage='auto'):
+        """
+        Serialize this object to a python dictionary that can easily be converted
+        to/from JSON using Python's standard JSON library.
+
+        Parameters
+        ----------
+
+          numpyStorage: {'auto', 'ascii', 'base64' }, optional, default 'auto'
+            Use to select whether numpy arrays will be encoded in ASCII (as
+            a list of lists) in Base64 (i.e. space efficient binary), or to
+            select automatically (the default) depending on the size of the
+            array. Currently the Base64 encoding is selecting if the array
+            has more than 1000 elements.
+
+        Returns
+        -------
+
+          The object encoded as a python dictionary with "JSON-safe" datatypes that is ready to
+          be converted to a string using Python's standard JSON library (or another library of
+          your choice).
+
+        """
+        # Check for unsupported class.
+        if hasattr(self.wrapped, "__slots__") and hasattr(self.wrapped, "__dict__"):
+            raise TypeError("Cannot serialize a class that has attributes in both __slots__ and __dict__")
+
+        # If this object has slots, we need to convert the slots to a dict before serializing them.
+        if hasattr(cls, "__slots__"):
+            slotDict = {key: self.wrapped.__getattribute__(key) for key in cls.__slots__}
+            return self.__serializeRecursively(slotDict, numpyStorage)
+
+        # Otherwise, we handle the object as though it has a normal __dict__ containing its attributes.
+        else:
+            return self.__serializeRecursively(self.wrapped.__dict__, numpyStorage)
+
+    @staticmethod
+    def deserialize(serializedDict):
+        """
+        Restore the object that has been converted to a python dictionary using an @serializable
+        class's serialize() method.
+
+        Parameters
+        ----------
+
+            serializedDict: a python dictionary returned by serialize()
+
+        Returns
+        -------
+
+            A reconstituted class instance
+        """
+        def restoreRecursively(dct):
+            from numpy import frombuffer, dtype, array
+            from base64 import decodestring
+
+            # First, check to see if this is an encoded entry
+            dataKey = None
+            if type(dct) == dict:
+                filteredKeys = filter(lambda x: x.startswith("py/"), dct.keys())
+
+                # If there is just one key with a "py/" prefix, that is the dataKey!
+                if len(filteredKeys) == 1:
+                    dataKey = filteredKeys[0]
+
+            # If no data key is found, we assume the data needs no further decoding.
+            if dataKey is None:
+                return dct
+
+            # Otherwise, decode it!
+            if "py/dict" == dataKey:
+                return dict(restoreRecursively(dct["py/dict"]))
+            elif "py/tuple" == dataKey:
+                return tuple(restoreRecursively(dct["py/tuple"]))
+            elif "py/set" == dataKey:
+                return set(restoreRecursively(dct["py/set"]))
+            elif "py/collections.namedtuple" == dataKey:
+                from collections import namedtuple
+                data = restoreRecursively(dct["py/collections.namedtuple"])
+                return namedtuple(data["type"], data["fields"])(*data["values"])
+            elif "py/collections.OrderedDict" == dataKey:
+                from collections import OrderedDict
+                return OrderedDict(restoreRecursively(dct["py/collections.OrderedDict"]))
+            elif "py/datetime.datetime" == dataKey:
+                from dateutil import parser
+                return parser.parse(dct["py/datetime.datetime"])
+            elif "py/complex" == dataKey:
+                data = dct["py/complex"]
+                return complex(float(data[0]), float(data[1]))
+            elif "py/homogeneousSerializableList" == dataKey:
+                from importlib import import_module
+                data = dct["py/homogeneousSerializableList"]
+                className = data["type"]
+                moduleName = data["module"]
+                clazz = getattr(import_module(moduleName), className)
+                return [clazz.deserialize(val) for val in data["data"]]
+            elif "py/ThunderSerializeableObjectWrapper" == dataKey:
+                from importlib import import_module
+                data = dct["py/ThunderSerializeableObjectWrapper"]
+                className = data["type"]
+                moduleName = data["module"]
+                clazz = getattr(import_module(moduleName), className)
+                return clazz.deserialize(data["data"])
+            elif "py/numpy.ndarray" == dataKey:
+                data = dct["py/numpy.ndarray"]
+                if data["encoding"] == "base64":
+                    arr = frombuffer(decodestring(data["values"]), dtype(data["dtype"]))
+                    return arr.reshape(data["shape"])
+                elif data["encoding"] == "ascii":
+                    data = dct["py/numpy.ndarray"]
+                    return array(data["values"], dtype=data["dtype"])
+                else:
+                    raise TypeError("Unknown encoding key for numpy.ndarray: \"%s\"" % data["encoding"])
+
+            # If no decoding scheme can be found, raise an exception
+            raise TypeError("Could not de-serialize unknown type: \"%s\"" % dataKey)
+
+        # First we must restore the object's dictionary entries.  These are decoded recursively
+        # using the helper function above.
+        restoredDict = {}
+        for k in serializedDict.keys():
+            restoredDict[k] = restoreRecursively(serializedDict[k])
+
+        # Next we recreate the object. Calling the __new__() function here creates
+        # an empty object without calling __init__(). We then take this empty
+        # shell of an object, and set its dictionary to the reconstructed
+        # dictionary we pulled from the JSON file.
+        thawedObject = cls.__new__(cls)
+
+        # If this class has slots, we must re-populate them one at a time
+        if hasattr(cls, "__slots__"):
+            for key in restoredDict.keys():
+                thawedObject.__setattr__(key, restoredDict[key])
+
+        # Otherwise simply update the objects dictionary en masse
+        else:
+            thawedObject.__dict__ = restoredDict
+
+        # Finally, we would like this re-hydrated object to also be @serializable, so we re-wrap it
+        # in the ThunderSerializeableObjectWrapper using the same trick with __new__().
+        rewrappedObject = ThunderSerializeableObjectWrapper.__new__(ThunderSerializeableObjectWrapper)
+        rewrappedObject.__dict__['wrapped'] = thawedObject
+
+        # Return the re-constituted class
+        return rewrappedObject
+
+    def save(self, f, numpyStorage='auto'):
+        """Serialize wrapped object to a JSON file.
+
+        Parameters
+        ----------
+        f : filename or file handle
+            The file to write to. A passed handle will be left open for further writing.
+        """
+        def saveImpl(fp, numpyStorage_):
+            fp.write(self.serialize(numpyStorage=numpyStorage_))
+        if isinstance(f, basestring):
+            with open(f, 'w') as handle:
+                saveImpl(handle, numpyStorage)
+        else:
+            # assume f is a file
+            saveImpl(f, numpyStorage)
+
+    @staticmethod
+    def load(f):
+        def loadImpl(fp):
+            jsonStr = fp.read()
+            return cls.deserialize(jsonStr)
+
+        if isinstance(f, basestring):
+            with open(f, 'w') as handle:
+                return loadImpl(handle)
+        else:
+            # assume f is a file
+            return loadImpl(f)
+
+
 def serializable(cls):
     """
     The @serializable decorator can decorate any class to make it easy to store
@@ -65,299 +359,6 @@ def serializable(cls):
 
 
     """
-
-    class ThunderSerializeableObjectWrapper(object):
-
-        def __init__(self, *args, **kwargs):
-            self.wrapped = cls(*args, **kwargs)
-
-        # Allows transparent access to the attributes of the wrapped class
-        def __getattr__(self, *args):
-            if args[0] != 'wrapped':
-                return getattr(self.wrapped, *args)
-            else:
-                return self.__dict__['wrapped']
-
-        # Allows transparent access to the attributes of the wrapped class
-        def __setattr__(self, *args):
-            if args[0] != 'wrapped':
-                return setattr(self.wrapped, *args)
-            else:
-                self.__dict__['wrapped'] = args[1]
-
-        # Delegate to wrapped class for special python object-->string methods
-        def __str__(self):
-            return self.wrapped.__str__()
-
-        def __repr__(self):
-            return self.wrapped.__repr__()
-
-        def __unicode__(self):
-            return self.wrapped.__unicode__()
-
-        # Delegate to wrapped class for special python methods
-        def __call__(self, *args, **kwargs):
-            return self.wrapped.__str__(*args, **kwargs)
-
-        def __serializeRecursively(self, data, numpyStorage):
-            from collections import OrderedDict
-            from numpy import ndarray
-            import datetime
-
-            dataType = type(data)
-            if dataType in frozenset([type(None), bool, int, long, float, str]):
-                return data
-            elif dataType == list:
-                # awkward special case - check for lists of homogeneous serializable objects
-                isHomogeneousSerializableList = False
-                wrappedType = None
-                if data and _isWrappedSerializable(data[0]):
-                    wrappedType = type(data[0].wrapped)
-                    isHomogeneousSerializableList = True
-                    for val in data:
-                        if (not _isWrappedSerializable(val)) or (type(val.wrapped) != wrappedType):
-                            isHomogeneousSerializableList = False
-                            break
-                if isHomogeneousSerializableList:
-                    return {
-                        "py/homogeneousSerializableList": {
-                            "type": wrappedType.__name__,
-                            "module": wrappedType.__module__,
-                            "data": [val.serialize() for val in data]
-                        }
-                    }
-                else:
-                    # plain old list
-                    return [self.__serializeRecursively(val, numpyStorage) for val in data]  # Recurse into lists
-            elif dataType == OrderedDict:
-                return {
-                    "py/collections.OrderedDict": [
-                        [self.__serializeRecursively(k, numpyStorage),
-                         self.__serializeRecursively(v, numpyStorage)] for k, v in data.iteritems()
-                    ]
-                }
-            elif _isNamedTuple(data):
-                return {
-                    "py/collections.namedtuple": {
-                        "type": dataType.__name__,
-                        "fields": list(data._fields),
-                        "values": [self.__serializeRecursively(getattr(data, f), numpyStorage) for f in data._fields]
-                    }
-                }
-            elif dataType == dict:
-                if all(type(k) == str for k in data):   # Recurse into dicts
-                    return {k: self.__serializeRecursively(v, numpyStorage) for k, v in data.iteritems()}
-                else:
-                    return {"py/dict": [[self.__serializeRecursively(k, numpyStorage),
-                                         self.__serializeRecursively(v, numpyStorage)] for k, v in data.iteritems()]}
-            elif dataType == tuple:                          # Recurse into tuples
-                return {"py/tuple": [self.__serializeRecursively(val, numpyStorage) for val in data]}
-            elif dataType == set:                            # Recurse into sets
-                return {"py/set": [self.__serializeRecursively(val, numpyStorage) for val in data]}
-            elif dataType == datetime.datetime:
-                return {"py/datetime.datetime": str(data)}
-            elif dataType == complex:
-                return {"py/complex": [ data.real, data.imag] }
-            elif dataType == ndarray:
-                if numpyStorage == 'ascii' or (numpyStorage == 'auto' and data.size < 1000):
-                    return {"py/numpy.ndarray": {
-                        "encoding": "ascii",
-                        "shape": data.shape,
-                        "values": data.tolist(),
-                        "dtype":  str(data.dtype)}}
-                else:
-                    from base64 import b64encode
-                    return {"py/numpy.ndarray": {
-                        "encoding": "base64",
-                        "shape": data.shape,
-                        "values": b64encode(data),
-                        "dtype":  str(data.dtype)}}
-            elif _isWrappedSerializable(data):
-                # nested serializable object
-                wrappedType = type(data.wrapped)
-                return {"py/ThunderSerializeableObjectWrapper": {
-                    "type": wrappedType.__name__,
-                    "module": wrappedType.__module__,
-                    "data": data.serialize()
-                }}
-
-            raise TypeError("Type %s not data-serializable" % dataType)
-
-        def serialize(self, numpyStorage='auto'):
-            """
-            Serialize this object to a python dictionary that can easily be converted
-            to/from JSON using Python's standard JSON library.
-
-            Parameters
-            ----------
-
-              numpyStorage: {'auto', 'ascii', 'base64' }, optional, default 'auto'
-                Use to select whether numpy arrays will be encoded in ASCII (as
-                a list of lists) in Base64 (i.e. space efficient binary), or to
-                select automatically (the default) depending on the size of the
-                array. Currently the Base64 encoding is selecting if the array
-                has more than 1000 elements.
-
-            Returns
-            -------
-
-              The object encoded as a python dictionary with "JSON-safe" datatypes that is ready to
-              be converted to a string using Python's standard JSON library (or another library of
-              your choice).
-
-            """
-            # Check for unsupported class.
-            if hasattr(self.wrapped, "__slots__") and hasattr(self.wrapped, "__dict__"):
-                raise TypeError("Cannot serialize a class that has attributes in both __slots__ and __dict__")
-
-            # If this object has slots, we need to convert the slots to a dict before serializing them.
-            if hasattr(cls, "__slots__"):
-                slotDict = {key: self.wrapped.__getattribute__(key) for key in cls.__slots__}
-                return self.__serializeRecursively(slotDict, numpyStorage)
-
-            # Otherwise, we handle the object as though it has a normal __dict__ containing its attributes.
-            else:
-                return self.__serializeRecursively(self.wrapped.__dict__, numpyStorage)
-
-        @staticmethod
-        def deserialize(serializedDict):
-            """
-            Restore the object that has been converted to a python dictionary using an @serializable
-            class's serialize() method.
-
-            Parameters
-            ----------
-
-                serializedDict: a python dictionary returned by serialize()
-
-            Returns
-            -------
-
-                A reconstituted class instance
-            """
-            def restoreRecursively(dct):
-                from numpy import frombuffer, dtype, array
-                from base64 import decodestring
-
-                # First, check to see if this is an encoded entry
-                dataKey = None
-                if type(dct) == dict:
-                    filteredKeys = filter(lambda x: x.startswith("py/"), dct.keys())
-
-                    # If there is just one key with a "py/" prefix, that is the dataKey!
-                    if len(filteredKeys) == 1:
-                        dataKey = filteredKeys[0]
-
-                # If no data key is found, we assume the data needs no further decoding.
-                if dataKey is None:
-                    return dct
-
-                # Otherwise, decode it!
-                if "py/dict" == dataKey:
-                    return dict(restoreRecursively(dct["py/dict"]))
-                elif "py/tuple" == dataKey:
-                    return tuple(restoreRecursively(dct["py/tuple"]))
-                elif "py/set" == dataKey:
-                    return set(restoreRecursively(dct["py/set"]))
-                elif "py/collections.namedtuple" == dataKey:
-                    from collections import namedtuple
-                    data = restoreRecursively(dct["py/collections.namedtuple"])
-                    return namedtuple(data["type"], data["fields"])(*data["values"])
-                elif "py/collections.OrderedDict" == dataKey:
-                    from collections import OrderedDict
-                    return OrderedDict(restoreRecursively(dct["py/collections.OrderedDict"]))
-                elif "py/datetime.datetime" == dataKey:
-                    from dateutil import parser
-                    return parser.parse(dct["py/datetime.datetime"])
-                elif "py/complex" == dataKey:
-                    data = dct["py/complex"]
-                    return complex(float(data[0]), float(data[1]))
-                elif "py/homogeneousSerializableList" == dataKey:
-                    from importlib import import_module
-                    data = dct["py/homogeneousSerializableList"]
-                    className = data["type"]
-                    moduleName = data["module"]
-                    clazz = getattr(import_module(moduleName), className)
-                    return [clazz.deserialize(val) for val in data["data"]]
-                elif "py/ThunderSerializeableObjectWrapper" == dataKey:
-                    from importlib import import_module
-                    data = dct["py/ThunderSerializeableObjectWrapper"]
-                    className = data["type"]
-                    moduleName = data["module"]
-                    clazz = getattr(import_module(moduleName), className)
-                    return clazz.deserialize(data["data"])
-                elif "py/numpy.ndarray" == dataKey:
-                    data = dct["py/numpy.ndarray"]
-                    if data["encoding"] == "base64":
-                        arr = frombuffer(decodestring(data["values"]), dtype(data["dtype"]))
-                        return arr.reshape(data["shape"])
-                    elif data["encoding"] == "ascii":
-                        data = dct["py/numpy.ndarray"]
-                        return array(data["values"], dtype=data["dtype"])
-                    else:
-                        raise TypeError("Unknown encoding key for numpy.ndarray: \"%s\"" % data["encoding"])
-
-                # If no decoding scheme can be found, raise an exception
-                raise TypeError("Could not de-serialize unknown type: \"%s\"" % dataKey)
-
-            # First we must restore the object's dictionary entries.  These are decoded recursively
-            # using the helper function above.
-            restoredDict = {}
-            for k in serializedDict.keys():
-                restoredDict[k] = restoreRecursively(serializedDict[k])
-
-            # Next we recreate the object. Calling the __new__() function here creates
-            # an empty object without calling __init__(). We then take this empty
-            # shell of an object, and set its dictionary to the reconstructed
-            # dictionary we pulled from the JSON file.
-            thawedObject = cls.__new__(cls)
-
-            # If this class has slots, we must re-populate them one at a time
-            if hasattr(cls, "__slots__"):
-                for key in restoredDict.keys():
-                    thawedObject.__setattr__(key, restoredDict[key])
-
-            # Otherwise simply update the objects dictionary en masse
-            else:
-                thawedObject.__dict__ = restoredDict
-
-            # Finally, we would like this re-hydrated object to also be @serializable, so we re-wrap it
-            # in the ThunderSerializeableObjectWrapper using the same trick with __new__().
-            rewrappedObject = ThunderSerializeableObjectWrapper.__new__(ThunderSerializeableObjectWrapper)
-            rewrappedObject.__dict__['wrapped'] = thawedObject
-
-            # Return the re-constituted class
-            return rewrappedObject
-
-        def save(self, f, numpyStorage='auto'):
-            """Serialize wrapped object to a JSON file.
-
-            Parameters
-            ----------
-            f : filename or file handle
-                The file to write to. A passed handle will be left open for further writing.
-            """
-            def saveImpl(fp, numpyStorage_):
-                fp.write(self.serialize(numpyStorage=numpyStorage_))
-            if isinstance(f, basestring):
-                with open(f, 'w') as handle:
-                    saveImpl(handle, numpyStorage)
-            else:
-                # assume f is a file
-                saveImpl(f, numpyStorage)
-
-        @staticmethod
-        def load(f):
-            def loadImpl(fp):
-                jsonStr = fp.read()
-                return cls.deserialize(jsonStr)
-
-            if isinstance(f, basestring):
-                with open(f, 'w') as handle:
-                    return loadImpl(handle)
-            else:
-                # assume f is a file
-                return loadImpl(f)
 
     # End of decorator.  Return the wrapper class from inside this closure.
     return ThunderSerializeableObjectWrapper
