@@ -1,6 +1,6 @@
 from numpy import allclose, amax, arange, array, array_equal
 from numpy import dtype as dtypeFunc
-from nose.tools import assert_equals, assert_is_not_none, assert_raises, assert_true
+from nose.tools import assert_equals, assert_is_none, assert_is_not_none, assert_raises, assert_true
 
 from thunder.rdds.series import Series
 from test_utils import *
@@ -302,6 +302,21 @@ class TestSeriesRegionMeanMethods(PySparkTestCase):
 
     def test_meanOfRegionWithMask(self):
         self.__run_tst_meanOfRegion(True)
+
+    def test_meanOfRegionErrorsOnMissing(self):
+        _, expectedKeys, expected = self.__setup_meanByRegion(False)
+        keys = [(17, 24), (17, 25)]
+        # if no records match, return None, None
+        actualKey, actualVal = self.series.meanOfRegion(keys, checkCountMismatch="none")
+        assert_is_none(actualKey)
+        assert_is_none(actualVal)
+        # if we have only a partial match but have turned off errors, return a sensible value
+        keys = [(0, 1), (17, 25)]
+        actualKey, actualVal = self.series.meanOfRegion(keys, checkCountMismatch="none")
+        assert_equals((0, 1), actualKey)
+        assert_true(array_equal(self.dataLocal[1][1], actualVal))
+        # throw an error on a partial match unless explicitly disabled
+        assert_raises(ValueError, self.series.meanOfRegion, keys)
 
     def test_meanByRegions_singleRegion(self):
         keys, expectedKeys, expected = self.__setup_meanByRegion()

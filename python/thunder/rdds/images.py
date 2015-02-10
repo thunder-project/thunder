@@ -417,8 +417,8 @@ class Images(Data):
         return self._constructor(newrdd, dims=newdims).__finalize__(self)
 
     def meanByRegions(self, selection):
-        """Collapses images into one or more spatial mean values as specified by the passed mask array or sequence of
-        indicies.
+        """Reduces images to one or more spatially averaged values using the given selection, which can be
+        either a mask array or sequence of indicies.
 
         A passed mask must be a numpy ndarray of the same shape as the individual arrays in this
         Images object. If the mask array is of integer or unsigned integer type, one mean value will
