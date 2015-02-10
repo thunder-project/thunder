@@ -99,9 +99,8 @@ class TestImagesGetters(PySparkTestCase):
         assert_equals(0, vals[0][0])
         assert_true(array_equal(self.ary1, vals[0][1]))
 
-        assert_is_none(self.images[2])
-
-        assert_equals([], self.images[2:3])
+        assert_raises(KeyError, self.images.__getitem__, 2)
+        assert_raises(KeyError, self.images.__getitem__, slice(2,3))
 
 
 class TestSeriesGetters(PySparkTestCase):
@@ -250,8 +249,8 @@ class TestSeriesGetters(PySparkTestCase):
         assert_true(array_equal(self.dataLocal[0][1], vals[0][1]))
         assert_true(array_equal(self.dataLocal[1][1], vals[1][1]))
 
-        # trying to getitem a key that doesn't exist returns None
-        assert_is_none(self.series[(25, 17)])
+        # trying to getitem a key that doesn't exist throws a KeyError
+        assert_raises(KeyError, self.series.__getitem__, (25, 17))
 
-        # passing a range that is completely out of bounds returns []
-        assert_equals([], self.series[2:3, :])
+        # passing a range that is completely out of bounds throws a KeyError
+        assert_raises(KeyError, self.series.__getitem__, (slice(2, 3), slice(None, None)))
