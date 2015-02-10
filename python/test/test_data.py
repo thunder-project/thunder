@@ -99,7 +99,7 @@ class TestImagesGetters(PySparkTestCase):
         assert_equals(0, vals[0][0])
         assert_true(array_equal(self.ary1, vals[0][1]))
 
-        assert_is_none(self.images[2])
+        assert_raises(KeyError, self.images.__getitem__, 2)
 
         assert_equals([], self.images[2:3])
 

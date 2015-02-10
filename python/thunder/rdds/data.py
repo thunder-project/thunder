@@ -242,10 +242,10 @@ class Data(object):
             if any([isinstance(slise, slice) for slise in item]):
                 isRangeQuery = True
 
-        if isRangeQuery:
-            return self.getRange(item)
-        else:
-            return self.get(item)
+        result = self.getRange(item) if isRangeQuery else self.get(item)
+        if (result is None) or (result == []):
+            raise KeyError("No value found for key: %s" % str(item))
+        return result
 
     def values(self):
         """ Return values, ignoring keys
