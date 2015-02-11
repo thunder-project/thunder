@@ -39,7 +39,7 @@ class Series(Data):
     SpatialSeries : a Series where the keys represent spatial coordinates
     """
 
-    _metadata = Data._metadata + ['_index', '_dims']
+    _metadata = Data._metadata + ['_dims', '_index']
 
     def __init__(self, rdd, index=None, dims=None, dtype=None):
         super(Series, self).__init__(rdd, dtype=dtype)

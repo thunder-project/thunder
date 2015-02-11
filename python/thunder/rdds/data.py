@@ -25,24 +25,27 @@ class Data(object):
         self._dtype = dtype
 
     def __repr__(self):
-
         # start with class name
         s = self.__class__.__name__
 
-        # build a printable string by iterating through the dictionary
-        for k, v in self.__dict__.iteritems():
-            if k is not 'rdd':
-                if v is None:
-                    output = 'None (inspect to compute)'
-                else:
-                    output = str(v)
-                # TODO make max line length a configurable property
-                if len(output) > 70:
-                    output = output[0:70] + ' ...'
-                    if k is '_index':
-                        output += '\nlength: ' + str(len(v))
-                # assumes all non-rdd attributes have underscores (and drops them)
-                s += '\n' + k[1:] + ': ' + output
+        # build a printable string by iterating through _metadata elements
+        for k in self._metadata:
+            v = getattr(self, k)
+            if v is None:
+                output = 'None (inspect to compute)'
+            else:
+                output = str(v)
+            # TODO make max line length a configurable property
+            if len(output) > 50:
+                output = output[0:50].strip() + ' ... '
+                if output.lstrip().startswith('['):
+                    output += '] '
+                if hasattr(v, '__len__'):
+                    output += '(length: %d)' % len(v)
+            # drop any leading underscores from attribute name:
+            if k.startswith('_'):
+                k = k.lstrip('_')
+            s += '\n%s: %s' % (k, output)
         return s
 
     @property
