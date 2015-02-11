@@ -463,11 +463,11 @@ class Images(Data):
         if isinstance(selection, ndarray):
             # passed a numpy array mask
             from numpy import unique
-            # check for matching shapes only if we already know our own shape; don't trigger action otherwise
-            if self._dims:
-                if selection.shape != self._dims.count:
-                    raise ValueError("Shape mismatch between mask '%s' and image dimensions '%s'; shapes must be equal" %
-                                     (str(selection.shape), str(self._dims.count)))
+            # getting image dimensions just requires a first() call, not too expensive; and we probably
+            # already have them anyway
+            if selection.shape != self.dims.count:
+                raise ValueError("Shape mismatch between mask '%s' and image dimensions '%s'; shapes must be equal" %
+                                 (str(selection.shape), str(self.dims.count)))
 
             if selection.dtype.kind in ('i', 'u'):
                 # integer or unsigned int mask
@@ -482,12 +482,26 @@ class Images(Data):
             # expect sequence of sequences of subindices if we aren't passed a mask
             selectFcn = meanByMaskIndices
             regionSelections = []
+            imgNDims = len(self.dims.count)
             for regionIdxs in selection:
                 # generate sequence of subindex arrays
                 # instead of sequence [(x0, y0, z0), (x1, y1, z1), ... (xN, yN, zN)], want:
                 # array([x0, x1, ... xN]), array([y0, y1, ... yN]), ... array([z0, z1, ... zN])
                 # this can be used directly in an array indexing expression: ary[regionSelect]
-                regionSelect = [array(dimIdxs, dtype='uint16') for dimIdxs in zip(regionIdxs)]
+                regionSelect = []
+                for idxTuple in regionIdxs:
+                    if len(idxTuple) != imgNDims:
+                        raise ValueError("Image is %d-dimensional, but got %d dimensional index: %s" %
+                                         (imgNDims, len(idxTuple), str(idxTuple)))
+                for idxDimNum, dimIdxs in enumerate(zip(regionIdxs)):
+                    imgDimMax = self.dims.count[idxDimNum]
+                    dimIdxAry = array(dimIdxs, dtype='uint16')
+                    idxMin, idxMax = dimIdxAry.min(), dimIdxAry.max()
+                    if idxMin < 0 or idxMax >= imgDimMax:
+                        raise ValueError("Index of dimension %d out of bounds; " % idxDimNum +
+                                         "got min/max %d/%d, all must be >=0 and <%d" %
+                                         (idxMin, idxMax, imgDimMax))
+                    regionSelect.append(dimIdxAry)
                 regionSelections.append(regionSelect)
             bcUnique = None
             bcSelection = ctx.broadcast(regionSelections)

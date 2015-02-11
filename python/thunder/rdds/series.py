@@ -740,8 +740,8 @@ class Series(Data):
         def toRegionIdx(kvIter):
             regionLookup_ = bcRegionLookup.value
             for k, val in kvIter:
-                for regionIdx in regionLookup_.get(k, []):
-                    yield regionIdx, (k, val)
+                for regionIdx_ in regionLookup_.get(k, []):
+                    yield regionIdx_, (k, val)
 
         combinedData = self.rdd.mapPartitions(toRegionIdx) \
             .combineByKey(_MeanCombiner.createMeanTuple,
@@ -762,7 +762,8 @@ class Series(Data):
                     # the final map. This contrasts with the current implementation of meanOfRegion, where
                     # we've already finished the calculation by the time we can do the error checking, and so
                     # there we just print a warning but return the values anyway.
-                    msg = "%d records were expected in region %d, but only %d were found" % (expectedNRecords, regionIdx, n)
+                    msg = "%d records were expected in region %d, but only %d were found" % \
+                          (expectedNRecords, regionIdx, n)
                     if mismatchBehavior == "error":
                         raise ValueError(msg)
                     else:

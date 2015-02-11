@@ -561,6 +561,19 @@ class TestImagesMeanByRegions(PySparkTestCase):
         assert_equals(14, collected[1][1].flat[0])
         assert_equals(15, collected[1][1].flat[1])
 
+    def test_badIndexesThrowErrors(self):
+        indices = [[(0, 0), (-1, 0)]]  # index too small (-1)
+        assert_raises(ValueError, self.images.meanByRegions, indices)
+
+        indices = [[(0, 0), (2, 0)]]  # index too large (2)
+        assert_raises(ValueError, self.images.meanByRegions, indices)
+
+        indices = [[(0, 0), (0,)]]  # too few indices
+        assert_raises(ValueError, self.images.meanByRegions, indices)
+
+        indices = [[(0, 0), (0, 1, 0)]]  # too many indices
+        assert_raises(ValueError, self.images.meanByRegions, indices)
+
 
 class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
