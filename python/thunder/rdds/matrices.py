@@ -38,20 +38,21 @@ class RowMatrix(Series):
 
     """
 
-    _metadata = Data._metadata + ['_index', '_dims', '_ncols', '_nrows']
+    _metadata = Series._metadata + ['_ncols', '_nrows']
 
-    def __init__(self, rdd, index=None, dims=None, dtype=None, nrows=None, ncols=None):
-        super(RowMatrix, self).__init__(rdd, dtype=dtype)
-        self._index = index
-        self._dims = dims
-        self._nrows = nrows
+    def __init__(self, rdd, index=None, dims=None, dtype=None, nrows=None, ncols=None, nrecords=None):
+        nrecs = nrecords if nrecords is not None else nrows
+        super(RowMatrix, self).__init__(rdd, nrecords=nrecs, dtype=dtype, dims=dims, index=index)
         self._ncols = ncols
 
     @property
     def nrows(self):
-        if self._nrows is None:
-            self._nrows = self.rdd.count()
-        return self._nrows
+        return self.nrecords
+
+    @property
+    def _nrows(self):
+        # nrows is just an alias for nrecords
+        return self._nrecords
 
     @property
     def ncols(self):

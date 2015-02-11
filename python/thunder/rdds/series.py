@@ -41,8 +41,8 @@ class Series(Data):
 
     _metadata = Data._metadata + ['_dims', '_index']
 
-    def __init__(self, rdd, index=None, dims=None, dtype=None):
-        super(Series, self).__init__(rdd, dtype=dtype)
+    def __init__(self, rdd, nrecords=None, dtype=None, index=None, dims=None):
+        super(Series, self).__init__(rdd, nrecords=nrecords, dtype=dtype)
         self._index = None
         if index is not None:
             self.index = index
