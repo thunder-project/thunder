@@ -459,6 +459,7 @@ class Images(Data):
             means = array([mean(ary[maskIdxs]) for maskIdxs in maskIdxsSeq], dtype=ary.dtype).reshape((1, -1))
             return key, means
 
+        nregions = -1
         # argument type checking
         if isinstance(selection, ndarray):
             # passed a numpy array mask
@@ -472,10 +473,13 @@ class Images(Data):
             if selection.dtype.kind in ('i', 'u'):
                 # integer or unsigned int mask
                 selectFcn = meanByIntMask
-                bcUnique = ctx.broadcast(unique(selection))
+                uniq = unique(selection)
+                nregions = len(uniq) - 1 if 0 in uniq else len(uniq)  # 0 doesn't turn into a region
+                bcUnique = ctx.broadcast(uniq)
                 bcSelection = ctx.broadcast(selection)
             else:
                 selectFcn = meanByMaskIndices
+                nregions = 1
                 bcUnique = None
                 bcSelection = ctx.broadcast((selection.nonzero(), ))
         else:
@@ -503,11 +507,12 @@ class Images(Data):
                                          (idxMin, idxMax, imgDimMax))
                     regionSelect.append(dimIdxAry)
                 regionSelections.append(regionSelect)
+            nregions = len(regionSelections)
             bcUnique = None
             bcSelection = ctx.broadcast(regionSelections)
 
         data = self.rdd.map(selectFcn)
-        return self._constructor(data).__finalize__(self)
+        return self._constructor(data, dims=(1, nregions)).__finalize__(self)
 
     def planes(self, startidz, stopidz):
         """

@@ -492,8 +492,8 @@ class TestImagesMeanByRegions(PySparkTestCase):
         self.ary2 = array([[13, 15], [16, 18]], dtype='int32')
         self.images = ImagesLoader(self.sc).fromArrays([self.ary1, self.ary2])
 
-    def __checkAttrPropagation(self, newImages):
-        assert_equals(self.images._dims, newImages._dims)
+    def __checkAttrPropagation(self, newImages, newDims):
+        assert_equals(newDims, newImages._dims.count)
         assert_equals(self.images._nimages, newImages._nimages)
         assert_equals(self.images._dtype, newImages._dtype)
 
@@ -504,7 +504,7 @@ class TestImagesMeanByRegions(PySparkTestCase):
     def test_meanWithFloatMask(self):
         mask = array([[1.0, 0.0], [0.0, 1.0]], dtype='float32')
         regionMeanImages = self.images.meanByRegions(mask)
-        self.__checkAttrPropagation(regionMeanImages)
+        self.__checkAttrPropagation(regionMeanImages, (1, 1))
         collected = regionMeanImages.collect()
         assert_equals(2, len(collected))
         assert_equals((1, 1), collected[0][1].shape)
@@ -518,7 +518,7 @@ class TestImagesMeanByRegions(PySparkTestCase):
     def test_meanWithIntMask(self):
         mask = array([[1, 0], [2, 1]], dtype='uint8')
         regionMeanImages = self.images.meanByRegions(mask)
-        self.__checkAttrPropagation(regionMeanImages)
+        self.__checkAttrPropagation(regionMeanImages, (1, 2))
         collected = regionMeanImages.collect()
         assert_equals(2, len(collected))
         assert_equals((1, 2), collected[0][1].shape)
@@ -534,7 +534,7 @@ class TestImagesMeanByRegions(PySparkTestCase):
     def test_meanWithSingleRegionIndices(self):
         indices = [[(0, 0), (0, 1)]]  # one region with two indices
         regionMeanImages = self.images.meanByRegions(indices)
-        self.__checkAttrPropagation(regionMeanImages)
+        self.__checkAttrPropagation(regionMeanImages, (1, 1))
         collected = regionMeanImages.collect()
         assert_equals(2, len(collected))
         assert_equals((1, 1), collected[0][1].shape)
@@ -548,7 +548,7 @@ class TestImagesMeanByRegions(PySparkTestCase):
     def test_meanWithMultipleRegionIndices(self):
         indices = [[(0, 0), (0, 1)], [(0, 1), (1, 0)]]  # two regions with two indices each
         regionMeanImages = self.images.meanByRegions(indices)
-        self.__checkAttrPropagation(regionMeanImages)
+        self.__checkAttrPropagation(regionMeanImages, (1, 2))
         collected = regionMeanImages.collect()
         assert_equals(2, len(collected))
         assert_equals((1, 2), collected[0][1].shape)
