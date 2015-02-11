@@ -41,9 +41,17 @@ class RowMatrix(Series):
     _metadata = Series._metadata + ['_ncols', '_nrows']
 
     def __init__(self, rdd, index=None, dims=None, dtype=None, nrows=None, ncols=None, nrecords=None):
+        if nrows is not None and nrecords is not None:
+            if nrows != nrecords:
+                raise ValueError("nrows and nrecords must be consistent, got %d and %d" % (nrows, nrecords))
         nrecs = nrecords if nrecords is not None else nrows
+        if index is not None:
+            if ncols is not None and len(index) != ncols:
+                    raise ValueError("ncols and len(index) must be consistent, got %d and len(index)=%d" %
+                                     (ncols, len(index)))
+        elif ncols is not None:
+            index = arange(ncols)
         super(RowMatrix, self).__init__(rdd, nrecords=nrecs, dtype=dtype, dims=dims, index=index)
-        self._ncols = ncols
 
     @property
     def nrows(self):
@@ -56,13 +64,12 @@ class RowMatrix(Series):
 
     @property
     def ncols(self):
-        if self._ncols is None:
-            vec = self.rdd.first()[1]
-            if type(vec) is ndarray:
-                self._ncols = len(vec)
-            else:
-                self._ncols = 1
-        return self._ncols
+        return len(self.index)
+
+    @property
+    def _ncols(self):
+        # ncols is an alias for len(self.index)
+        return len(self._index) if self._index is not None else None
 
     @property
     def _constructor(self):
