@@ -36,10 +36,10 @@ class Data(object):
                 else:
                     output = str(v)
                 # TODO make max line length a configurable property
-                if len(output) > 70:
-                    output = output[0:70] + ' ...'
+                if len(output) > 50:
+                    output = output[0:50] + ' ...'
                     if k is '_index':
-                        output += '\nlength: ' + str(len(v))
+                        output += '  (length: ' + str(len(v)) + ')'
                 # assumes all non-rdd attributes have underscores (and drops them)
                 s += '\n' + k[1:] + ': ' + output
         return s
