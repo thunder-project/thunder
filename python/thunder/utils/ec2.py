@@ -40,6 +40,9 @@ try:
 except ImportError:
     from spark_ec2 import wait_for_cluster_state
 
+from thunder import __version__ as THUNDER_VERSION
+
+
 MINIMUM_SPARK_VERSION = "1.1.0"
 
 
@@ -54,6 +57,15 @@ def get_s3_keys():
     else:
         s3_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
     return s3_access_key, s3_secret_key
+
+
+def get_default_thunder_version():
+    """Returns 'HEAD' (current state of thunder master branch) if thunder is a _dev version, otherwise
+    return the current thunder version.
+    """
+    if "_dev" in THUNDER_VERSION:
+        return 'HEAD'
+    return THUNDER_VERSION
 
 
 def get_spark_version_string(default_version):
@@ -297,9 +309,9 @@ if __name__ == "__main__":
     parser.add_option("-v", "--spark-version", default=spark_home_version_string,
                       help="Version of Spark to use: 'X.Y.Z' or a specific git hash. (default: %s)" %
                            spark_home_version_string)
-    parser.add_option("--thunder-version", default='HEAD',
+    parser.add_option("--thunder-version", default=get_default_thunder_version(),
                       help="Version of Thunder to use: 'X.Y.Z', 'HEAD' (current state of master branch), " +
-                           " or a specific git hash. (default: %default)")
+                           " or a specific git hash. (default: '%default')")
 
     if spark_home_loose_version >= LooseVersion("1.2.0"):
         parser.add_option(
