@@ -95,6 +95,7 @@ def computeDisplacement(arry1, arry2):
 
     # fix displacements that are greater than half the total size
     pairs = zip(maxinds, arry1.shape)
-    adjusted = [d - n if d > n // 2 else d for (d, n) in pairs]
+    # cast to basic python int for serialization
+    adjusted = [int(d - n) if d > n // 2 else int(d) for (d, n) in pairs]
 
     return adjusted

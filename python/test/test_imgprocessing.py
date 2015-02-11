@@ -1,8 +1,11 @@
 import shutil
 import tempfile
-from test_utils import PySparkTestCase
+import unittest
 from numpy import random, allclose, arange
 from scipy.ndimage.interpolation import shift
+
+
+from test_utils import PySparkTestCase
 from thunder.imgprocessing.registration import Registration
 from thunder.rdds.fileio.imagesloader import ImagesLoader
 
@@ -37,12 +40,16 @@ class TestRegistrationBasic(ImgprocessingTestCase):
 
         t = tempfile.mkdtemp()
         model1.save(t + '/test.json')
+        # with open(t + '/test.json', 'r') as fp:
+        #    print fp.read()
         model2 = Registration.load(t + '/test.json')
+        # print model2
 
         out1 = model1.transform(imin).first()[1]
         out2 = model2.transform(imin).first()[1]
 
         assert(allclose(out1, out2))
+        # assert False
 
     def test_run(self):
 

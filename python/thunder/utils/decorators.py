@@ -1,4 +1,6 @@
 """ Useful decorators that are used throughout the library """
+import abc
+import json
 
 
 def _isNamedTuple(obj):
@@ -6,42 +8,56 @@ def _isNamedTuple(obj):
     return hasattr(obj, "_fields") and hasattr(obj, "_asdict") and callable(obj._asdict)
 
 
-def _isWrappedSerializable(obj):
-    return hasattr(obj, 'serialize') and hasattr(obj, 'wrapped')
+class ThunderSerializable(object):
+    """Mixin class that provides JSON serialization services to classes inheriting from it
+
+    Inheriting from ThunderSerializeable makes it easy to store
+    class instances in a human readable JSON format and then recall it and recover
+    the original object instance. This base class provides the serialize() method,
+    and the class also gains a
+    deserialize() static method that can automatically "pickle" and "unpickle" a
+    wide variety of objects.
+
+    Note that this class is NOT designed to provide generalized pickling
+    capabilities. Rather, it is designed to make it very easy to convert small
+    classes containing model properties to a human and machine parsable format
+    for later analysis or visualization.
+
+    A key feature of the class is that it can "pickle" data
+    types that are not normally supported by Python's stock JSON dump() and
+    load() methods. Supported datatypes include: list, set, tuple, namedtuple,
+    OrderedDict, datetime objects, numpy ndarrays, and dicts with non-string
+    (but still data) keys. Serialization is performed recursively, and descends
+    into the standard python container types (list, dict, tuple, set). Unicode
+    strings are not currently supported.
+
+    Some of this code was adapted from these fantastic blog posts by Chris
+    Wagner and Sunil Arora:
+
+      http://robotfantastic.org/serializing-python-data-to-json-some-edge-cases.html
+      http://sunilarora.org/serializable-decorator-for-python-class/
+
+    Examples
+    --------
+
+      class Visitor(ThunderSerializable):
+          def __init__(self, ipAddr = None, agent = None, referrer = None):
+              self.ip = ipAddr
+              self.ua = agent
+              self.referrer= referrer
+              self.time = datetime.datetime.now()
+
+      origVisitor = Visitor('192.168', 'UA-1', 'http://www.google.com')
+
+      # Serialize the object
+      pickledVisitor = origVisitor.serialize()
+
+      # Restore object
+      recovVisitor = Visitor.deserialize(pickledVisitor)
 
 
-class ThunderSerializeableObjectWrapper(object):
-
-    def __init__(self, *args, **kwargs):
-        self.wrapped = cls(*args, **kwargs)
-
-    # Allows transparent access to the attributes of the wrapped class
-    def __getattr__(self, *args):
-        if args[0] != 'wrapped':
-            return getattr(self.wrapped, *args)
-        else:
-            return self.__dict__['wrapped']
-
-    # Allows transparent access to the attributes of the wrapped class
-    def __setattr__(self, *args):
-        if args[0] != 'wrapped':
-            return setattr(self.wrapped, *args)
-        else:
-            self.__dict__['wrapped'] = args[1]
-
-    # Delegate to wrapped class for special python object-->string methods
-    def __str__(self):
-        return self.wrapped.__str__()
-
-    def __repr__(self):
-        return self.wrapped.__repr__()
-
-    def __unicode__(self):
-        return self.wrapped.__unicode__()
-
-    # Delegate to wrapped class for special python methods
-    def __call__(self, *args, **kwargs):
-        return self.wrapped.__str__(*args, **kwargs)
+    """
+    __metaclass__ = abc.ABCMeta
 
     def __serializeRecursively(self, data, numpyStorage):
         from collections import OrderedDict
@@ -54,25 +70,25 @@ class ThunderSerializeableObjectWrapper(object):
         elif dataType == list:
             # awkward special case - check for lists of homogeneous serializable objects
             isHomogeneousSerializableList = False
-            wrappedType = None
-            if data and _isWrappedSerializable(data[0]):
-                wrappedType = type(data[0].wrapped)
+            elementType = None
+            if data and isinstance(data[0], ThunderSerializable):
+                elementType = type(data[0])
                 isHomogeneousSerializableList = True
                 for val in data:
-                    if (not _isWrappedSerializable(val)) or (type(val.wrapped) != wrappedType):
+                    if (not isinstance(val, ThunderSerializable)) or (type(val) != elementType):
                         isHomogeneousSerializableList = False
                         break
             if isHomogeneousSerializableList:
                 return {
                     "py/homogeneousSerializableList": {
-                        "type": wrappedType.__name__,
-                        "module": wrappedType.__module__,
+                        "type": elementType.__name__,
+                        "module": elementType.__module__,
                         "data": [val.serialize() for val in data]
                     }
                 }
             else:
                 # plain old list
-                return [self.__serializeRecursively(val, numpyStorage) for val in data]  # Recurse into lists
+                return {"py/list": [self.__serializeRecursively(val, numpyStorage) for val in data]}
         elif dataType == OrderedDict:
             return {
                 "py/collections.OrderedDict": [
@@ -92,8 +108,8 @@ class ThunderSerializeableObjectWrapper(object):
             if all(type(k) == str for k in data):   # Recurse into dicts
                 return {k: self.__serializeRecursively(v, numpyStorage) for k, v in data.iteritems()}
             else:
-                return {"py/dict": [[self.__serializeRecursively(k, numpyStorage),
-                                     self.__serializeRecursively(v, numpyStorage)] for k, v in data.iteritems()]}
+                return {"py/dict": [(self.__serializeRecursively(k, numpyStorage),
+                                     self.__serializeRecursively(v, numpyStorage)) for k, v in data.iteritems()]}
         elif dataType == tuple:                          # Recurse into tuples
             return {"py/tuple": [self.__serializeRecursively(val, numpyStorage) for val in data]}
         elif dataType == set:                            # Recurse into sets
@@ -101,7 +117,7 @@ class ThunderSerializeableObjectWrapper(object):
         elif dataType == datetime.datetime:
             return {"py/datetime.datetime": str(data)}
         elif dataType == complex:
-            return {"py/complex": [ data.real, data.imag] }
+            return {"py/complex": [data.real, data.imag]}
         elif dataType == ndarray:
             if numpyStorage == 'ascii' or (numpyStorage == 'auto' and data.size < 1000):
                 return {"py/numpy.ndarray": {
@@ -116,12 +132,11 @@ class ThunderSerializeableObjectWrapper(object):
                     "shape": data.shape,
                     "values": b64encode(data),
                     "dtype":  str(data.dtype)}}
-        elif _isWrappedSerializable(data):
+        elif isinstance(data, ThunderSerializable):
             # nested serializable object
-            wrappedType = type(data.wrapped)
-            return {"py/ThunderSerializeableObjectWrapper": {
-                "type": wrappedType.__name__,
-                "module": wrappedType.__module__,
+            return {"py/ThunderSerializable": {
+                "type": dataType.__name__,
+                "module": dataType.__module__,
                 "data": data.serialize()
             }}
 
@@ -151,20 +166,23 @@ class ThunderSerializeableObjectWrapper(object):
 
         """
         # Check for unsupported class.
-        if hasattr(self.wrapped, "__slots__") and hasattr(self.wrapped, "__dict__"):
+        # is this condition possible? doesn't __slots__ replace __dict__?
+        if hasattr(self, "__slots__") and hasattr(self, "__dict__"):
             raise TypeError("Cannot serialize a class that has attributes in both __slots__ and __dict__")
 
         # If this object has slots, we need to convert the slots to a dict before serializing them.
-        if hasattr(cls, "__slots__"):
-            slotDict = {key: self.wrapped.__getattribute__(key) for key in cls.__slots__}
+        if hasattr(self, "__slots__"):
+            slotDict = {}  # avoid dict comprehension, doesn't exist in python 2.6
+            for key in self.__slots__:
+                slotDict[key] = getattr(self, key)
             return self.__serializeRecursively(slotDict, numpyStorage)
 
         # Otherwise, we handle the object as though it has a normal __dict__ containing its attributes.
         else:
-            return self.__serializeRecursively(self.wrapped.__dict__, numpyStorage)
+            return self.__serializeRecursively(self.__dict__, numpyStorage)
 
-    @staticmethod
-    def deserialize(serializedDict):
+    @classmethod
+    def deserialize(cls, serializedDict):
         """
         Restore the object that has been converted to a python dictionary using an @serializable
         class's serialize() method.
@@ -198,11 +216,13 @@ class ThunderSerializeableObjectWrapper(object):
 
             # Otherwise, decode it!
             if "py/dict" == dataKey:
-                return dict(restoreRecursively(dct["py/dict"]))
+                return dict([(restoreRecursively(k), restoreRecursively(v)) for (k, v) in dct["py/dict"]])
+            elif "py/list" == dataKey:
+                return [restoreRecursively(val) for val in dct["py/list"]]
             elif "py/tuple" == dataKey:
-                return tuple(restoreRecursively(dct["py/tuple"]))
+                return tuple([restoreRecursively(val) for val in dct["py/tuple"]])
             elif "py/set" == dataKey:
-                return set(restoreRecursively(dct["py/set"]))
+                return set([restoreRecursively(val) for val in dct["py/set"]])
             elif "py/collections.namedtuple" == dataKey:
                 from collections import namedtuple
                 data = restoreRecursively(dct["py/collections.namedtuple"])
@@ -223,9 +243,9 @@ class ThunderSerializeableObjectWrapper(object):
                 moduleName = data["module"]
                 clazz = getattr(import_module(moduleName), className)
                 return [clazz.deserialize(val) for val in data["data"]]
-            elif "py/ThunderSerializeableObjectWrapper" == dataKey:
+            elif "py/ThunderSerializable" == dataKey:
                 from importlib import import_module
-                data = dct["py/ThunderSerializeableObjectWrapper"]
+                data = dct["py/ThunderSerializable"]
                 className = data["type"]
                 moduleName = data["module"]
                 clazz = getattr(import_module(moduleName), className)
@@ -259,19 +279,14 @@ class ThunderSerializeableObjectWrapper(object):
         # If this class has slots, we must re-populate them one at a time
         if hasattr(cls, "__slots__"):
             for key in restoredDict.keys():
-                thawedObject.__setattr__(key, restoredDict[key])
+                setattr(thawedObject, key, restoredDict[key])
 
         # Otherwise simply update the objects dictionary en masse
         else:
             thawedObject.__dict__ = restoredDict
 
-        # Finally, we would like this re-hydrated object to also be @serializable, so we re-wrap it
-        # in the ThunderSerializeableObjectWrapper using the same trick with __new__().
-        rewrappedObject = ThunderSerializeableObjectWrapper.__new__(ThunderSerializeableObjectWrapper)
-        rewrappedObject.__dict__['wrapped'] = thawedObject
-
         # Return the re-constituted class
-        return rewrappedObject
+        return thawedObject
 
     def save(self, f, numpyStorage='auto'):
         """Serialize wrapped object to a JSON file.
@@ -282,7 +297,7 @@ class ThunderSerializeableObjectWrapper(object):
             The file to write to. A passed handle will be left open for further writing.
         """
         def saveImpl(fp, numpyStorage_):
-            fp.write(self.serialize(numpyStorage=numpyStorage_))
+            json.dump(self.serialize(numpyStorage=numpyStorage_), fp)
         if isinstance(f, basestring):
             with open(f, 'w') as handle:
                 saveImpl(handle, numpyStorage)
@@ -290,75 +305,15 @@ class ThunderSerializeableObjectWrapper(object):
             # assume f is a file
             saveImpl(f, numpyStorage)
 
-    @staticmethod
-    def load(f):
+    @classmethod
+    def load(cls, f):
         def loadImpl(fp):
-            jsonStr = fp.read()
-            return cls.deserialize(jsonStr)
+            dct = json.load(fp)
+            return cls.deserialize(dct)
 
         if isinstance(f, basestring):
-            with open(f, 'w') as handle:
+            with open(f, 'r') as handle:
                 return loadImpl(handle)
         else:
             # assume f is a file
             return loadImpl(f)
-
-
-def serializable(cls):
-    """
-    The @serializable decorator can decorate any class to make it easy to store
-    that class in a human readable JSON format and then recall it and recover
-    the original object instance. Classes instances that are wrapped in this
-    decorator gain the serialize() method, and the class also gains a
-    deserialize() static method that can automatically "pickle" and "unpickle" a
-    wide variety of objects.
-
-    Note that this decorator is NOT designed to provide generalized pickling
-    capabilities. Rather, it is designed to make it very easy to convert small
-    classes containing model properties to a human and machine parsable format
-    for later analysis or visualization.
-
-    A key feature of the @serializable decorator is that it can "pickle" data
-    types that are not normally supported by Python's stock JSON dump() and
-    load() methods. Supported datatypes include: list, set, tuple, namedtuple,
-    OrderedDict, datetime objects, numpy ndarrays, and dicts with non-string
-    (but still data) keys. Serialization is performed recursively, and descends
-    into the standard python container types (list, dict, tuple, set). Unicode
-    strings are not currently supported.
-
-    IMPORTANT NOTE: The object decorated with @serializable must store their
-    attributes in __slots__ or a __dict__, but not both! For example, you cannot
-    _directly_ wrap a namedtuple in the serializable decorator. However, you can
-    decorate an object that has an attribute pointing at an namedtuple. Only the
-    decorated object is subject to this restriction.
-
-    Some of this code was adapted from these fantastic blog posts by Chris
-    Wagner and Sunil Arora:
-
-      http://robotfantastic.org/serializing-python-data-to-json-some-edge-cases.html
-      http://sunilarora.org/serializable-decorator-for-python-class/
-
-    Examples
-    --------
-
-      @serializable
-      class Visitor(object):
-          def __init__(self, ipAddr = None, agent = None, referrer = None):
-              self.ip = ipAddr
-              self.ua = agent
-              self.referrer= referrer
-              self.time = datetime.datetime.now()
-
-      origVisitor = Visitor('192.168', 'UA-1', 'http://www.google.com')
-
-      # Serialize the object
-      pickledVisitor = origVisitor.serialize()
-
-      # Restore object
-      recovVisitor = Visitor.deserialize(pickledVisitor)
-
-
-    """
-
-    # End of decorator.  Return the wrapper class from inside this closure.
-    return ThunderSerializeableObjectWrapper
