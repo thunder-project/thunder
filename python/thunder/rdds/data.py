@@ -381,11 +381,13 @@ class Data(object):
         return asarray(self.rdd.keys().collect())
 
     def count(self):
-        """ Mean of values, ignoring keys
+        """Calculates and returns the number of records in the RDD.
 
-        This calls the Spark count() method on the underlying RDD.
+        This calls the Spark count() method on the underlying RDD and updates the .nrecords metadata attribute.
         """
-        return self.rdd.count()
+        count = self.rdd.count()
+        self._nrecords = count
+        return count
 
     def mean(self, dtype='float64', casting='safe'):
         """ Mean of values, ignoring keys
