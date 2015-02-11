@@ -27,7 +27,6 @@ class Data(object):
     def __repr__(self):
         # start with class name
         s = self.__class__.__name__
-
         # build a printable string by iterating through _metadata elements
         for k in self._metadata:
             v = getattr(self, k)
