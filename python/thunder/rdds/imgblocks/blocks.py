@@ -219,7 +219,7 @@ class SimpleBlocks(Blocks):
         timeRdd = self.rdd.flatMap(lambda kv: SimpleBlocks._toTimeSlicedBlocksIter(kv[0], kv[1]))
         timeSortedRdd = timeRdd.groupBy(lambda (k, _): k.temporalKey).sortByKey()
         imagesRdd = timeSortedRdd.map(SimpleBlocks._combineTimeSlicedBlocks)
-        return Images(imagesRdd, dims=self._dims, nimages=self._nimages, dtype=self._dtype)
+        return Images(imagesRdd, dims=self._dims, nrecords=self._nimages, dtype=self._dtype)
 
     @staticmethod
     def getBinarySeriesNameForKey(blockKey):

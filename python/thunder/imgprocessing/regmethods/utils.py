@@ -39,7 +39,7 @@ def computeReferenceMean(images, startIdx=None, stopIdx=None, defaultNImages=20)
 
     doFilter = True
     if startIdx is None and stopIdx is None:
-        n = images.nimages
+        n = images.nrecords
         if n <= defaultNImages:
             doFilter = False
         else:
@@ -53,7 +53,7 @@ def computeReferenceMean(images, startIdx=None, stopIdx=None, defaultNImages=20)
         if startIdx is None:
             startIdx = 0
         if stopIdx is None:
-            stopIdx = images.nimages
+            stopIdx = images.nrecords
         n = stopIdx - startIdx
 
     if doFilter:

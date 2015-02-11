@@ -17,10 +17,11 @@ class Data(object):
         directly exposed by the Data object can be accessed via `obj.rdd`.
     """
 
-    _metadata = ['_dtype']
+    _metadata = ['_nrecords', '_dtype']
 
-    def __init__(self, rdd, dtype=None):
+    def __init__(self, rdd, nrecords=None, dtype=None):
         self.rdd = rdd
+        self._nrecords = nrecords
         self._dtype = dtype
 
     def __repr__(self):
@@ -43,6 +44,12 @@ class Data(object):
                 # assumes all non-rdd attributes have underscores (and drops them)
                 s += '\n' + k[1:] + ': ' + output
         return s
+
+    @property
+    def nrecords(self):
+        if self._nrecords is None:
+            self._nrecords = self.rdd.count()
+        return self._nrecords
 
     @property
     def dtype(self):
@@ -93,8 +100,8 @@ class Data(object):
         return Data
 
     def _resetCounts(self):
-        # to be overridden in subclasses
-        pass
+        self._nrecords = None
+        return self
 
     def first(self):
         """ Return first record.

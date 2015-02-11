@@ -582,7 +582,7 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
         converted_series_ary = converted_series.pack()
 
         assert_equals(images.dims.count, series.dims.count)
-        expected_shape = tuple([images.nimages] + list(images.dims.count))
+        expected_shape = tuple([images.nrecords] + list(images.dims.count))
         assert_equals(expected_shape, series_ary.shape)
         assert_true(array_equal(series_ary, converted_series_ary))
 

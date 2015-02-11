@@ -45,7 +45,7 @@ class ImagesLoader(object):
         narrays = len(arrays)
         npartitions = min(narrays, npartitions) if npartitions else narrays
         return Images(self.sc.parallelize(enumerate(arrays), npartitions),
-                      dims=shape, dtype=str(dtype), nimages=narrays)
+                      dims=shape, dtype=str(dtype), nrecords=narrays)
 
     def fromStack(self, dataPath, dims, dtype='int16', ext='stack', startIdx=None, stopIdx=None, recursive=False,
                   npartitions=None):
@@ -92,7 +92,7 @@ class ImagesLoader(object):
         reader = getParallelReaderForPath(dataPath)(self.sc)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                 npartitions=npartitions)
-        return Images(readerRdd.mapValues(toArray), nimages=reader.lastNRecs, dims=dims,
+        return Images(readerRdd.mapValues(toArray), nrecords=reader.lastNRecs, dims=dims,
                       dtype=dtype)
 
     def fromTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, npartitions=None):
@@ -167,7 +167,7 @@ class ImagesLoader(object):
         reader = getParallelReaderForPath(dataPath)(self.sc)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                 npartitions=npartitions)
-        return Images(readerRdd.mapValues(multitifReader), nimages=reader.lastNRecs)
+        return Images(readerRdd.mapValues(multitifReader), nrecords=reader.lastNRecs)
 
     def fromPng(self, dataPath, ext='png', startIdx=None, stopIdx=None, recursive=False, npartitions=None):
         """Load an Images object stored in a directory of png files
@@ -205,4 +205,4 @@ class ImagesLoader(object):
         reader = getParallelReaderForPath(dataPath)(self.sc)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                 npartitions=npartitions)
-        return Images(readerRdd.mapValues(readPngFromBuf), nimages=reader.lastNRecs)
+        return Images(readerRdd.mapValues(readPngFromBuf), nrecords=reader.lastNRecs)
