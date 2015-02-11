@@ -51,3 +51,5 @@ def elementwiseStdev(arys):
     combined = vstack([ary.ravel() for ary in arys])
     stdAry = std(combined, axis=0)
     return stdAry.reshape(arys[0].shape)
+
+

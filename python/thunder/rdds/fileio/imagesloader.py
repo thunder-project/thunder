@@ -20,7 +20,7 @@ class ImagesLoader(object):
         """
         self.sc = sparkContext
 
-    def fromArrays(self, arrays):
+    def fromArrays(self, arrays, npartitions=None):
         """Load Images data from passed sequence of numpy arrays.
 
         Expected usage is mainly in testing - having a full dataset loaded in memory
@@ -42,10 +42,13 @@ class ImagesLoader(object):
             if not ary.dtype == dtype:
                 raise ValueError("Arrays must all be of same data type; got both %s and %s" %
                                  (str(dtype), str(ary.dtype)))
-        return Images(self.sc.parallelize(enumerate(arrays), len(arrays)),
-                      dims=shape, dtype=str(dtype), nimages=len(arrays))
+        narrays = len(arrays)
+        npartitions = min(narrays, npartitions) if npartitions else narrays
+        return Images(self.sc.parallelize(enumerate(arrays), npartitions),
+                      dims=shape, dtype=str(dtype), nimages=narrays)
 
-    def fromStack(self, dataPath, dims, dtype='int16', ext='stack', startIdx=None, stopIdx=None, recursive=False):
+    def fromStack(self, dataPath, dims, dtype='int16', ext='stack', startIdx=None, stopIdx=None, recursive=False,
+                  npartitions=None):
         """Load an Images object stored in a directory of flat binary files
 
         The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
@@ -59,7 +62,7 @@ class ImagesLoader(object):
 
         dataPath: string
             Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-            including scheme. A datapath argument may include a single '*' wildcard character in the filename.
+            including scheme. A dataPath argument may include a single '*' wildcard character in the filename.
 
         dims: tuple of positive int
             Dimensions of input image data, ordered with fastest-changing dimension first
@@ -75,6 +78,10 @@ class ImagesLoader(object):
             If true, will recursively descend directories rooted at datapath, loading all files in the tree that
             have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
             (not s3).
+
+        npartitions: positive int, optional.
+            If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
+            partition per image file.
         """
         if not dims:
             raise ValueError("Image dimensions must be specified if loading from binary stack data")
@@ -83,45 +90,13 @@ class ImagesLoader(object):
             return frombuffer(buf, dtype=dtype, count=int(prod(dims))).reshape(dims, order='F')
 
         reader = getParallelReaderForPath(dataPath)(self.sc)
-        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
+        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
+                                npartitions=npartitions)
         return Images(readerRdd.mapValues(toArray), nimages=reader.lastNRecs, dims=dims,
                       dtype=dtype)
 
-    def fromTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False):
-        """Load an Images object stored in a directory of (single-page) tif files
-
-        The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
-        files read in by this method.
-
-        Parameters
-        ----------
-
-        dataPath: string
-            Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-            including scheme. A datapath argument may include a single '*' wildcard character in the filename.
-
-        ext: string, optional, default "tif"
-            Extension required on data files to be loaded.
-
-        startIdx, stopIdx: nonnegative int. optional.
-            Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
-            `datapath` and `ext`. Interpreted according to python slice indexing conventions.
-
-        recursive: boolean, default False
-            If true, will recursively descend directories rooted at datapath, loading all files in the tree that
-            have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
-            (not s3).
-        """
-        def readTifFromBuf(buf):
-            fbuf = BytesIO(buf)
-            return imread(fbuf, format='tif')
-
-        reader = getParallelReaderForPath(dataPath)(self.sc)
-        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
-        return Images(readerRdd.mapValues(readTifFromBuf), nimages=reader.lastNRecs)
-
-    def fromMultipageTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False):
-        """Sets up a new Images object with data to be read from one or more multi-page tif files.
+    def fromTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, npartitions=None):
+        """Sets up a new Images object with data to be read from one or more tif files.
 
         The RDD underlying the returned Images will have key, value data as follows:
 
@@ -135,6 +110,24 @@ class ImagesLoader(object):
 
         This method attempts to explicitly import PIL. ImportError may be thrown if 'from PIL import Image' is
         unsuccessful. (PIL/pillow is not an explicit requirement for thunder.)
+
+        Parameters
+        ----------
+        ext: string, optional, default "tif"
+            Extension required on data files to be loaded.
+
+        startIdx, stopIdx: nonnegative int. optional.
+            Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
+            `datapath` and `ext`. Interpreted according to python slice indexing conventions.
+
+        recursive: boolean, default False
+            If true, will recursively descend directories rooted at datapath, loading all files in the tree that
+            have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
+            (not s3).
+
+        npartitions: positive int, optional.
+            If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
+            partition per image file.
         """
         try:
             from PIL import Image
@@ -166,13 +159,17 @@ class ImagesLoader(object):
                 except EOFError:
                     # past last page in tif
                     break
-            return dstack(imgArys)
+            if len(imgArys) == 1:
+                return imgArys[0]
+            else:
+                return dstack(imgArys)
 
         reader = getParallelReaderForPath(dataPath)(self.sc)
-        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
+        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
+                                npartitions=npartitions)
         return Images(readerRdd.mapValues(multitifReader), nimages=reader.lastNRecs)
 
-    def fromPng(self, dataPath, ext='png', startIdx=None, stopIdx=None, recursive=False):
+    def fromPng(self, dataPath, ext='png', startIdx=None, stopIdx=None, recursive=False, npartitions=None):
         """Load an Images object stored in a directory of png files
 
         The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
@@ -183,7 +180,7 @@ class ImagesLoader(object):
 
         dataPath: string
             Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-            including scheme. A datapath argument may include a single '*' wildcard character in the filename.
+            including scheme. A dataPath argument may include a single '*' wildcard character in the filename.
 
         ext: string, optional, default "png"
             Extension required on data files to be loaded.
@@ -196,11 +193,16 @@ class ImagesLoader(object):
             If true, will recursively descend directories rooted at datapath, loading all files in the tree that
             have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
             (not s3).
+
+        npartitions: positive int, optional.
+            If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
+            partition per image file.
         """
         def readPngFromBuf(buf):
             fbuf = BytesIO(buf)
             return imread(fbuf, format='png')
 
         reader = getParallelReaderForPath(dataPath)(self.sc)
-        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
+        readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
+                                npartitions=npartitions)
         return Images(readerRdd.mapValues(readPngFromBuf), nimages=reader.lastNRecs)

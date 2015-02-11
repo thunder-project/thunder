@@ -479,12 +479,18 @@ class SeriesLoader(object):
 
             seriesKeys = zip(*map(tuple, unravel_index(linearIdx, planeShape, order='C')))
             # add plane index to end of keys
-            seriesKeys = [tuple(list(keys_)[::-1]+[planeIdx]) for keys_ in seriesKeys]
+            if npages > 1:
+                seriesKeys = [tuple(list(keys_)[::-1]+[planeIdx]) for keys_ in seriesKeys]
+            else:
+                seriesKeys = [tuple(list(keys_)[::-1]) for keys_ in seriesKeys]
             return zip(seriesKeys, buf)
 
         # map over blocks
         rdd = self.sc.parallelize(keys, len(keys)).flatMap(readBlockFromTiff)
-        dims = (npages, width, height)
+        if npages > 1:
+            dims = (npages, width, height)
+        else:
+            dims = (width, height)
 
         metadata = (dims, ntimepoints, newDtype)
         return rdd, metadata
@@ -534,9 +540,8 @@ class SeriesLoader(object):
                                            recursive=recursive)
         return Series(seriesBlocks, dims=dims, dtype=newDtype, index=arange(npointsInSeries))
 
-    def fromMultipageTif(self, dataPath, ext="tif", blockSize="150M",
-                         newDtype='smallfloat', casting='safe',
-                         startIdx=None, stopIdx=None, recursive=False):
+    def fromTif(self, dataPath, ext="tif", blockSize="150M", newDtype='smallfloat', casting='safe',
+                startIdx=None, stopIdx=None, recursive=False):
         """Load a Series object from multipage tiff files.
 
         Parameters
@@ -655,9 +660,9 @@ class SeriesLoader(object):
 
         SeriesLoader.__saveSeriesRdd(seriesBlocks, outputDirPath, dims, npointsInSeries, newDtype, overwrite=overwrite)
 
-    def saveFromMultipageTif(self, dataPath, outputDirPath, ext="tif", blockSize="150M",
-                             newDtype=None, casting='safe',
-                             startIdx=None, stopIdx=None, overwrite=False, recursive=False):
+    def saveFromTif(self, dataPath, outputDirPath, ext="tif", blockSize="150M",
+                    newDtype=None, casting='safe', startIdx=None, stopIdx=None,
+                    overwrite=False, recursive=False):
         """Write out data from multipage tif files in the Series data flat binary format.
 
         Parameters

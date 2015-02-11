@@ -41,32 +41,32 @@ class TestImagesFileLoaders(PySparkTestCase):
         assert_true(array_equal(ary, collectedImage[0][1]))  # check value
 
     def test_fromPng(self):
-        imagePath = os.path.join(self.testResourcesDir, "singlelayer_png", "dot1.png")
-        pngImage = ImagesLoader(self.sc).fromPng(imagePath, self.sc)
+        imagePath = os.path.join(self.testResourcesDir, "singlelayer_png", "dot1_grey.png")
+        pngImage = ImagesLoader(self.sc).fromPng(imagePath)
         firstPngImage = pngImage.first()
         assert_equals(0, firstPngImage[0], "Key error; expected first image key to be 0, was "+str(firstPngImage[0]))
-        expectedShape = (70, 75, 4)  # 4 channel png; RGBalpha
+        expectedShape = (70, 75)
         assert_true(isinstance(firstPngImage[1], ndarray),
                     "Value type error; expected first image value to be numpy ndarray, was " +
                     str(type(firstPngImage[1])))
         assert_equals(expectedShape, firstPngImage[1].shape)
         assert_equals(expectedShape, pngImage.dims.count)
-        assert_almost_equal(0.97, firstPngImage[1][:, :, 0].flatten().max(), places=2)
-        assert_almost_equal(0.03, firstPngImage[1][:, :, 0].flatten().min(), places=2)
+        assert_almost_equal(0.937, firstPngImage[1].ravel().max(), places=2)  # integer val 239
+        assert_almost_equal(0.00392, firstPngImage[1].ravel().min(), places=2)  # integer val 1
 
     def test_fromTif(self):
-        imagePath = os.path.join(self.testResourcesDir, "singlelayer_tif", "dot1_lzw.tif")
+        imagePath = os.path.join(self.testResourcesDir, "singlelayer_tif", "dot1_grey_lzw.tif")
         tiffImage = ImagesLoader(self.sc).fromTif(imagePath, self.sc)
         firstTiffImage = tiffImage.first()
         assert_equals(0, firstTiffImage[0], "Key error; expected first image key to be 0, was "+str(firstTiffImage[0]))
-        expectedShape = (70, 75, 4)  # 4 channel tif; RGBalpha
+        expectedShape = (70, 75)
         assert_true(isinstance(firstTiffImage[1], ndarray),
                     "Value type error; expected first image value to be numpy ndarray, was " +
                     str(type(firstTiffImage[1])))
         assert_equals(expectedShape, firstTiffImage[1].shape)
         assert_equals(expectedShape, tiffImage.dims.count)
-        assert_equals(248, firstTiffImage[1][:, :, 0].flatten().max())
-        assert_equals(8, firstTiffImage[1][:, :, 0].flatten().min())
+        assert_equals(239, firstTiffImage[1].ravel().max())
+        assert_equals(1, firstTiffImage[1].ravel().min())
 
     @staticmethod
     def _evaluateMultipleImages(tiffImages, expectedNum, expectedShape, expectedKeys, expectedSums):
@@ -77,28 +77,28 @@ class TestImagesFileLoaders(PySparkTestCase):
             assert_true(isinstance(img[1], ndarray),
                         "Value type error; expected image value to be numpy ndarray, was " + str(type(img[1])))
             assert_equals(expectedShape, img[1].shape)
-            assert_equals(expectedSum, img[1][:, :, 0].sum())
+            assert_equals(expectedSum, img[1].sum())
 
     def test_fromTifWithMultipleFiles(self):
-        imagePath = os.path.join(self.testResourcesDir, "singlelayer_tif", "dot*_lzw.tif")
+        imagePath = os.path.join(self.testResourcesDir, "singlelayer_tif", "dot*_grey_lzw.tif")
         tiffImages = ImagesLoader(self.sc).fromTif(imagePath, self.sc).collect()
 
         expectedNum = 3
-        expectedShape = (70, 75, 4)  # 4 channel tif; RGBalpha
-        expectedSums = [1282192, 1261328, 1241520]  # 3 images have increasing #s of black dots, so lower luminance overall
+        expectedShape = (70, 75)
+        expectedSums = [1233881, 1212169, 1191300]
+        # 3 images have increasing #s of black dots, so lower luminance overall
         expectedKeys = range(expectedNum)
         self._evaluateMultipleImages(tiffImages, expectedNum, expectedShape, expectedKeys, expectedSums)
 
     def _run_tst_multitif(self, filename, expectedDtype):
         imagePath = os.path.join(self.testResourcesDir, "multilayer_tif", filename)
-        tiffImages = ImagesLoader(self.sc).fromMultipageTif(imagePath, self.sc).collect()
+        tiffImages = ImagesLoader(self.sc).fromTif(imagePath, self.sc).collect()
 
         expectedNum = 1
         expectedShape = (70, 75, 3)  # 3 concatenated pages, each with single luminance channel
         # 3 images have increasing #s of black dots, so lower luminance overall
         expectedSums = [1140006, 1119161, 1098917]
         expectedKey = 0
-        #self._evaluateMultipleImages(tiffImages, expectedNum, expectedShape, expectedKeys, expectedSums)
 
         assert_equals(expectedNum, len(tiffImages), "Expected %s images, got %d" % (expectedNum, len(tiffImages)))
         tiffImage = tiffImages[0]
