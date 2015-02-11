@@ -32,7 +32,8 @@ class TestRegistrationBasic(ImgprocessingTestCase):
         ref = random.randn(25, 25)
 
         im = shift(ref, [2, 0], mode='constant', order=0)
-        imin = ImagesLoader(self.sc).fromArrays(im)
+        im2 = shift(ref, [0, 2], mode='constant', order=0)
+        imin = ImagesLoader(self.sc).fromArrays([im, im2])
 
         reg = Registration('crosscorr')
         reg.prepare(ref)
@@ -49,7 +50,6 @@ class TestRegistrationBasic(ImgprocessingTestCase):
         out2 = model2.transform(imin).first()[1]
 
         assert(allclose(out1, out2))
-        # assert False
 
     def test_run(self):
 

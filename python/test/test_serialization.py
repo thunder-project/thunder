@@ -51,6 +51,7 @@ class TestSerializableDecorator(unittest.TestCase):
 
         # Serialize the object
         pickled_visitor = origVisitor.serialize(numpyStorage='ascii')
+        # print pickled_visitor
 
         # Restore object
         recovVisitor = Visitor.deserialize(pickled_visitor)
@@ -70,9 +71,9 @@ class TestSerializableDecorator(unittest.TestCase):
         """
         Check to make sure that classes that use slots can be serialized / deserialized.
         """
-        raise SkipTest("This test doesn't currently pass after changing serialization from a wrapper to a mixin")
+        # raise SkipTest("This test doesn't currently pass after changing serialization from a wrapper to a mixin")
 
-        class SlottyFoo(ThunderSerializableWithSlots):
+        class SlottyFoo(ThunderSerializable):
             __slots__ = ['bar']
 
         foo = SlottyFoo()
@@ -125,6 +126,7 @@ class TestSerializableDecorator(unittest.TestCase):
         testJson = foo.serialize()
         # print testJson
         roundtripped = Foo.deserialize(testJson)
+        # print roundtripped.__dict__
 
         assert_true(isinstance(roundtripped, Foo))
         assert_true(hasattr(roundtripped, "bar"))

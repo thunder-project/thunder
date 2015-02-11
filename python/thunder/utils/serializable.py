@@ -79,11 +79,12 @@ class ThunderSerializable(object):
                         isHomogeneousSerializableList = False
                         break
             if isHomogeneousSerializableList:
+                # TODO: this won't work when serializing classes with __slots__
                 return {
                     "py/homogeneousSerializableList": {
                         "type": elementType.__name__,
                         "module": elementType.__module__,
-                        "data": [val.serialize() for val in data]
+                        "data": [self.__serializeRecursively(val.__dict__, numpyStorage) for val in data]
                     }
                 }
             else:
@@ -105,7 +106,29 @@ class ThunderSerializable(object):
                 }
             }
         elif dataType == dict:
-            if all(type(k) == str for k in data):   # Recurse into dicts
+            # another awkward special case - check for homogenous serializable value types
+            valueType = None
+            isHomogenousSerializableValueType = False
+            for val in data.itervalues():
+                if isinstance(val, ThunderSerializable):
+                    if valueType is None:
+                        valueType = type(val)
+                        isHomogenousSerializableValueType = True
+                    elif type(val) != valueType:
+                        isHomogenousSerializableValueType = False
+                        break
+                else:
+                    isHomogenousSerializableValueType = False
+                    break
+            if isHomogenousSerializableValueType:
+                return {"py/homogeneousSerializableDict": {
+                    "type": valueType.__name__,
+                    "module": valueType.__module__,
+                    "data": [(self.__serializeRecursively(k, numpyStorage),
+                              self.__serializeRecursively(val.__dict__, numpyStorage)) for (k, val) in data.iteritems()]
+                    }
+                }
+            elif all(type(k) == str for k in data):   # Recurse into dicts
                 return {k: self.__serializeRecursively(v, numpyStorage) for k, v in data.iteritems()}
             else:
                 return {"py/dict": [(self.__serializeRecursively(k, numpyStorage),
@@ -166,20 +189,28 @@ class ThunderSerializable(object):
 
         """
         # Check for unsupported class.
-        # is this condition possible? doesn't __slots__ replace __dict__?
-        if hasattr(self, "__slots__") and hasattr(self, "__dict__"):
-            raise TypeError("Cannot serialize a class that has attributes in both __slots__ and __dict__")
+        # a mix of slots and dicts can happen from multiple inheritance
+        # if hasattr(self, "__slots__") and hasattr(self, "__dict__"):
+        #    raise TypeError("Cannot serialize a class that has attributes in both __slots__ and __dict__")
 
         # If this object has slots, we need to convert the slots to a dict before serializing them.
         if hasattr(self, "__slots__"):
-            slotDict = {}  # avoid dict comprehension, doesn't exist in python 2.6
-            for key in self.__slots__:
-                slotDict[key] = getattr(self, key)
-            return self.__serializeRecursively(slotDict, numpyStorage)
+            retVal = {}
+            for k in self.__slots__:
+                v = getattr(self, k)
+                retVal[self.__serializeRecursively(k, numpyStorage)] = \
+                    self.__serializeRecursively(v, numpyStorage)
+            return retVal
+            # return self.__serializeRecursively(slotDict, numpyStorage)
 
         # Otherwise, we handle the object as though it has a normal __dict__ containing its attributes.
         else:
-            return self.__serializeRecursively(self.__dict__, numpyStorage)
+            retVal = {}
+            for k, v in self.__dict__.iteritems():
+                retVal[self.__serializeRecursively(k, numpyStorage)] = \
+                    self.__serializeRecursively(v, numpyStorage)
+            return retVal
+            # return self.__serializeRecursively(self.__dict__, numpyStorage)
 
     @classmethod
     def deserialize(cls, serializedDict):
@@ -210,9 +241,14 @@ class ThunderSerializable(object):
                 if len(filteredKeys) == 1:
                     dataKey = filteredKeys[0]
 
-            # If no data key is found, we assume the data needs no further decoding.
+            # If no data key is found, may have a primitive, a list, or a dictionary.
             if dataKey is None:
-                return dct
+                if type(dct) == dict:
+                    return dict([(restoreRecursively(k), restoreRecursively(v)) for (k, v) in dct.iteritems()])
+                elif type(dct) == list:
+                    return [restoreRecursively(val) for val in dct]
+                else:
+                    return dct
 
             # Otherwise, decode it!
             if "py/dict" == dataKey:
@@ -243,6 +279,13 @@ class ThunderSerializable(object):
                 moduleName = data["module"]
                 clazz = getattr(import_module(moduleName), className)
                 return [clazz.deserialize(val) for val in data["data"]]
+            elif "py/homogeneousSerializableDict" == dataKey:
+                from importlib import import_module
+                data = dct["py/homogeneousSerializableDict"]
+                className = data["type"]
+                moduleName = data["module"]
+                clazz = getattr(import_module(moduleName), className)
+                return dict([(restoreRecursively(k), clazz.deserialize(v)) for (k, v) in data["data"]])
             elif "py/ThunderSerializable" == dataKey:
                 from importlib import import_module
                 data = dct["py/ThunderSerializable"]
