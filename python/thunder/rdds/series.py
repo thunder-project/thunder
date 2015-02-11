@@ -1,5 +1,5 @@
 from numpy import ndarray, array, sum, mean, median, std, size, arange, \
-    percentile, asarray, maximum, zeros, coffcoef, where, \
+    percentile, asarray, maximum, zeros, corrcoef, where, \
     true_divide, ceil, unique, array_equal, concatenate, squeeze, delete, ravel, logical_not
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
