@@ -3,7 +3,7 @@ from nose.tools import assert_equal, assert_raises, assert_true
 import unittest
 from pyspark import SparkContext
 
-from thunder.utils.decorators import ThunderSerializable
+from thunder.utils.serializable import ThunderSerializable
 
 
 class Foo(ThunderSerializable):

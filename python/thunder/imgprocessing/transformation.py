@@ -1,5 +1,5 @@
 """ Transformations produced by registration methods """
-from thunder.utils.decorators import ThunderSerializable
+from thunder.utils.serializable import ThunderSerializable
 
 
 class Transformation(object):

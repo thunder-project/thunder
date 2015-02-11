@@ -1,6 +1,6 @@
 from thunder.rdds.images import Images
 from thunder.utils.common import checkParams
-from thunder.utils.decorators import ThunderSerializable
+from thunder.utils.serializable import ThunderSerializable
 
 
 class Registration(object):

@@ -1,4 +1,4 @@
-""" Useful decorators that are used throughout the library """
+""" Thunder JSON serialization utility """
 import abc
 import json
 
