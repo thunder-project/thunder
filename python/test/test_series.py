@@ -307,16 +307,16 @@ class TestSeriesRegionMeanMethods(PySparkTestCase):
         _, expectedKeys, expected = self.__setup_meanByRegion(False)
         keys = [(17, 24), (17, 25)]
         # if no records match, return None, None
-        actualKey, actualVal = self.series.meanOfRegion(keys, checkCountMismatch="none")
+        actualKey, actualVal = self.series.meanOfRegion(keys)
         assert_is_none(actualKey)
         assert_is_none(actualVal)
-        # if we have only a partial match but have turned off errors, return a sensible value
+        # if we have only a partial match but haven't turned on validation, return a sensible value
         keys = [(0, 1), (17, 25)]
-        actualKey, actualVal = self.series.meanOfRegion(keys, checkCountMismatch="none")
+        actualKey, actualVal = self.series.meanOfRegion(keys)
         assert_equals((0, 1), actualKey)
         assert_true(array_equal(self.dataLocal[1][1], actualVal))
-        # throw an error on a partial match unless explicitly disabled
-        assert_raises(ValueError, self.series.meanOfRegion, keys)
+        # throw an error on a partial match when validation turned on
+        assert_raises(ValueError, self.series.meanOfRegion, keys, validate=True)
 
     def test_meanByRegions_singleRegion(self):
         keys, expectedKeys, expected = self.__setup_meanByRegion()
@@ -325,6 +325,21 @@ class TestSeriesRegionMeanMethods(PySparkTestCase):
         actual = actualSeries.collect()
         self.__checkReturnedSeriesAttributes(actualSeries)
         TestSeriesRegionMeanMethods.__checkNestedAsserts(1, [expectedKeys], [expected], actual)
+
+    def test_meanByRegionsErrorsOnMissing(self):
+        keys, expectedKeys, expected = self.__setup_meanByRegion()
+        keys += [(17, 25)]
+
+        # check that we get a sensible value with validation turned off:
+        actualSeries = self.series.meanByRegion([keys])
+        actual = actualSeries.collect()
+        self.__checkReturnedSeriesAttributes(actualSeries)
+        TestSeriesRegionMeanMethods.__checkNestedAsserts(1, [expectedKeys], [expected], actual)
+
+        # throw an error on a partial match when validation turned on
+        # this error will be on the workers, which propagates back to the driver
+        # as something other than the ValueError that it started out life as
+        assert_raises(Exception, self.series.meanByRegion([keys], validate=True).count)
 
     def test_meanByRegions_singleRegionWithMask(self):
         mask, expectedKeys, expected = self.__setup_meanByRegion(True)

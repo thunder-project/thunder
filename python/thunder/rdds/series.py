@@ -634,7 +634,7 @@ class Series(Data):
             else:
                 return keys
 
-    def meanOfRegion(self, selection, checkCountMismatch="error"):
+    def meanOfRegion(self, selection, validate=False):
         """Takes the mean of Series values within a single region specified by the passed mask or keys.
 
         The region for which to take the mean may be specified either by a mask array, or directly by
@@ -645,10 +645,9 @@ class Series(Data):
         If a sequence of series record keys is passed, the the mean will be taken across all records
         with keys matching one of those in the passed selection sequence.
 
-        checkCountMismatch controls testing for the case where the calculated mean does not include all
-        records specified by the selection. If "warn" (or "error") is specified, then a warning message
-        will be printed (or ValueError thrown) when the count of records included in the mean does
-        not match the number expected from the passed selection.
+        `validate` controls checking whether all requested records were included in the calculated mean. If True,
+        ValueError will be thrown if the number of records included in the region mean is not equal
+        to the number of records specified for that region by the selection. If False, no such checking is performed.
 
         Parameters
         ----------
@@ -660,8 +659,6 @@ class Series(Data):
         -------
         tuple of (tuple(mean of keys), array(mean value)), or (None, None) if no matching records are found
         """
-        from thunder.utils.common import selectByMatchingPrefix
-        mismatchBehavior = selectByMatchingPrefix(checkCountMismatch, ["none", "warn", "error"])
 
         if isinstance(selection, ndarray):
             selection = self.__maskToKeys(selection, returnNested=False)
@@ -675,17 +672,12 @@ class Series(Data):
         if isinstance(kmean, ndarray):
             kmean = tuple(kmean.astype('int32'))
 
-        if mismatchBehavior != "none" and n != len(selection):
-            msg = "%d records were expected in region, but only %d were found" % (len(selection), n)
-            if mismatchBehavior == "error":
-                raise ValueError(msg)
-            else:
-                # TODO: use logging instead?
-                print "WARNING: meanOfRegion: " + msg
+        if validate and n != len(selection):
+            raise ValueError("%d records were expected in region, but only %d were found" % (len(selection), n))
 
         return (kmean, vmean) if n > 0 else (None, None)
 
-    def meanByRegion(self, nestedKeys, checkCountMismatch="error"):
+    def meanByRegion(self, nestedKeys, validate=False):
         """Takes the mean of Series values within groupings specified by the passed keys.
 
         Each sequence of keys passed specifies a "region" within which to calculate the mean. For instance,
@@ -705,25 +697,20 @@ class Series(Data):
         keys within the region, while record values will be the mean of values in the region. The `dims` attribute on
         the new Series will not be set; all other attributes will be as in the source Series object.
 
-        checkCountMismatch controls testing for the case where the calculated mean does not include all
-        records specified by the selection. If "warn" (or "error") is specified, then a warning message
-        will be printed (or ValueError thrown) when the count of records included in the mean does
-        not match the number expected from the passed selection. Note that "warn" or "error" will trigger
-        a Spark action, while "none" allows for lazy evaluation.
+        `validate` controls checking whether all requested records were included in the calculated mean. If True,
+        exceptions will be thrown on the workers if the number of records included in the region mean is not equal
+        to the number of records specified for that region by the selection. If False, no such checking is performed.
 
         Parameters
         ----------
         nestedKeys: sequence of sequences of Series record keys, or ndarray mask.
 
-        checkCountMismatch: string "none"|"warn"|"error", or unambiguous prefix ("n","w","e")
+        validate: boolean, default False
 
         Returns
         -------
         new Series object
         """
-        from thunder.utils.common import selectByMatchingPrefix
-        mismatchBehavior = selectByMatchingPrefix(checkCountMismatch, ["none", "warn", "error"])
-
         if isinstance(nestedKeys, ndarray):
             nestedKeys = self.__maskToKeys(nestedKeys, returnNested=True)
 
@@ -743,36 +730,23 @@ class Series(Data):
                 for regionIdx_ in regionLookup_.get(k, []):
                     yield regionIdx_, (k, val)
 
+        def validateCounts(region_, n_, kmean, vmean):
+            # nRecsInRegion pulled in via closure
+            if nRecsInRegion[region_] != n_:
+                raise ValueError("%d records were expected in region %d, but only %d were found" %
+                                 (nRecsInRegion[region_], region_, n_))
+            else:
+                return kmean.astype('int16'), vmean
+
         combinedData = self.rdd.mapPartitions(toRegionIdx) \
             .combineByKey(_MeanCombiner.createMeanTuple,
                           _MeanCombiner.mergeIntoMeanTuple,
                           _MeanCombiner.combineMeanTuples, numPartitions=len(nestedKeys))
 
-        if mismatchBehavior != "none":
-            # collect data back onto driver for sanity checking - did we see all the records in each region
-            # that we expected?
-            # this data should be small, only nregions records, so this is not quite as insane as it may sound.
-            # also temporarily cache this data so as to ensure that we don't end up recalculating it
-            collectedCombinedData = combinedData.cache().collect()
-            for regionIdx, (n, _, _) in collectedCombinedData:
-                expectedNRecords = nRecsInRegion[regionIdx]
-                if expectedNRecords != n:
-                    combinedData.unpersist()
-                    # here we raise an error, since we want to exit prematurely without doing (or scheduling)
-                    # the final map. This contrasts with the current implementation of meanOfRegion, where
-                    # we've already finished the calculation by the time we can do the error checking, and so
-                    # there we just print a warning but return the values anyway.
-                    msg = "%d records were expected in region %d, but only %d were found" % \
-                          (expectedNRecords, regionIdx, n)
-                    if mismatchBehavior == "error":
-                        raise ValueError(msg)
-                    else:
-                        # TODO: use logging instead?
-                        print "WARNING: meanByRegion: " + msg
-
-        data = combinedData.map(lambda (region_, (_, kmean, vmean)): (tuple(kmean.astype('int16')), vmean))
-        # get rid of temporary cache, if any:
-        combinedData.unpersist()
+        if validate:
+            data = combinedData.map(lambda (region_, (n, kmean, vmean)): validateCounts(region_, n, kmean, vmean))
+        else:
+            data = combinedData.map(lambda (region_, (_, kmean, vmean)): (tuple(kmean.astype('int16')), vmean))
 
         return self._constructor(data).__finalize__(self, noPropagate=('_dims',))
 
