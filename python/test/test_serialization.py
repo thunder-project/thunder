@@ -163,7 +163,7 @@ class TestSerialization(unittest.TestCase):
             assert_equal(expectedBaz, bar.getBaz())
 
         # check that list is serialized using special case homogenous list encoding:
-        assert_true("py/homogeneousSerializableList" in testJson['lst'])
+        assert_true("py/hmgList" in testJson['lst'])
 
     def test_nestedHeterogenousListSerialization(self):
         """Test that multiple nested serializable objects of differing types are serializable
@@ -206,4 +206,4 @@ class TestSerialization(unittest.TestCase):
             assert_equal(foo.dct[k], v)
 
         # check that dict is serialized using special case homogenous values encoding:
-        assert_true("py/homogeneousSerializableDict" in testJson['dct'])
+        assert_true("py/hmgDict" in testJson['dct'])

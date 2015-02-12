@@ -92,7 +92,7 @@ class Serializable(object):
                 # TODO: this assumes that we have a __dict__ to serialize from, needs to be modified to
                 # work with __slots__ also
                 return {
-                    "py/homogeneousSerializableList": {
+                    "py/hmgList": {
                         "type": elementType.__name__,
                         "module": elementType.__module__,
                         "data": [self.__serializeRecursively(val.__dict__, numpyStorage) for val in data]
@@ -132,7 +132,7 @@ class Serializable(object):
                     isHomogenousSerializableValueType = False
                     break
             if isHomogenousSerializableValueType:
-                return {"py/homogeneousSerializableDict": {
+                return {"py/hmgDict": {
                     "type": valueType.__name__,
                     "module": valueType.__module__,
                     "data": [(self.__serializeRecursively(k, numpyStorage),
@@ -285,16 +285,16 @@ class Serializable(object):
             elif "py/complex" == dataKey:
                 data = dct["py/complex"]
                 return complex(float(data[0]), float(data[1]))
-            elif "py/homogeneousSerializableList" == dataKey:
+            elif "py/hmgList" == dataKey:
                 from importlib import import_module
-                data = dct["py/homogeneousSerializableList"]
+                data = dct["py/hmgList"]
                 className = data["type"]
                 moduleName = data["module"]
                 clazz = getattr(import_module(moduleName), className)
                 return [clazz.deserialize(val) for val in data["data"]]
-            elif "py/homogeneousSerializableDict" == dataKey:
+            elif "py/hmgDict" == dataKey:
                 from importlib import import_module
-                data = dct["py/homogeneousSerializableDict"]
+                data = dct["py/hmgDict"]
                 className = data["type"]
                 moduleName = data["module"]
                 clazz = getattr(import_module(moduleName), className)
