@@ -30,10 +30,10 @@ class Serializable(object):
     descends into the standard python container types (list, dict, tuple, set).
 
     The class provides special-case handling for lists and dictionaries with values that
-    are themselves all Serializable objects of the same type (provided they have a regular
-    dictionary rather than __slots__). The JSON output for such homogenous containers will
-    list the type of the contained objects only once; in the general case, each instance
-    of a nested serializable type will be stored along with its type.
+    are themselves all Serializable objects of the same type. The JSON output for such
+    homogenous containers will list the type of the contained objects only once for the
+    entire container; in the general case, the type of each individual contained object
+    will be listed.
 
     There are a number of limitations on data structures that are currently supported.
     Unicode strings, for instance, are not yet supported. Objects that have both __slots__
@@ -81,7 +81,7 @@ class Serializable(object):
             # awkward special case - check for lists of homogeneous serializable objects
             isHomogeneousSerializableList = False
             elementType = None
-            if data and isinstance(data[0], Serializable) and not hasattr(data[0], "__slots__"):
+            if data and isinstance(data[0], Serializable):
                 elementType = type(data[0])
                 isHomogeneousSerializableList = True
                 for val in data:
@@ -89,13 +89,19 @@ class Serializable(object):
                         isHomogeneousSerializableList = False
                         break
             if isHomogeneousSerializableList:
-                # TODO: this assumes that we have a __dict__ to serialize from, needs to be modified to
-                # work with __slots__ also
+                if hasattr(data[0], "__slots__"):
+                    slotAttrs = data[0].__slots__
+                    outData = []
+                    for val in data:
+                        valDict = dict([(attr, getattr(val, attr)) for attr in slotAttrs if hasattr(val, attr)])
+                        outData.append(self.__serializeRecursively(valDict, numpyStorage))
+                else:
+                    outData = [self.__serializeRecursively(val.__dict__, numpyStorage) for val in data]
                 return {
                     "py/hmgList": {
                         "type": elementType.__name__,
                         "module": elementType.__module__,
-                        "data": [self.__serializeRecursively(val.__dict__, numpyStorage) for val in data]
+                        "data": outData
                     }
                 }
             else:
@@ -132,11 +138,22 @@ class Serializable(object):
                     isHomogenousSerializableValueType = False
                     break
             if isHomogenousSerializableValueType:
+                if hasattr(valueType, "__slots__"):
+                    slotAttrs = valueType.__slots__
+                    outData = []
+                    for key, val in data.iteritems():
+                        keySer = self.__serializeRecursively(key, numpyStorage)
+                        valAttrDict = dict([(attr, getattr(val, attr)) for attr in slotAttrs if hasattr(val, attr)])
+                        valSer = self.__serializeRecursively(valAttrDict, numpyStorage)
+                        outData.append((keySer, valSer))
+                else:
+                    outData = [(self.__serializeRecursively(k, numpyStorage),
+                                self.__serializeRecursively(val.__dict__, numpyStorage))
+                               for (k, val) in data.iteritems()]
                 return {"py/hmgDict": {
                     "type": valueType.__name__,
                     "module": valueType.__module__,
-                    "data": [(self.__serializeRecursively(k, numpyStorage),
-                              self.__serializeRecursively(val.__dict__, numpyStorage)) for (k, val) in data.iteritems()]
+                    "data": outData
                     }
                 }
             elif all(type(k) == str for k in data):  # string keys can be represented natively in JSON
@@ -214,9 +231,10 @@ class Serializable(object):
         if hasattr(self, "__slots__"):
             retVal = {}
             for k in self.__slots__:
-                v = getattr(self, k)
-                retVal[self.__serializeRecursively(k, numpyStorage)] = \
-                    self.__serializeRecursively(v, numpyStorage)
+                if hasattr(self, k):
+                    v = getattr(self, k)
+                    retVal[self.__serializeRecursively(k, numpyStorage)] = \
+                        self.__serializeRecursively(v, numpyStorage)
             return retVal
 
         # Otherwise, we handle the object as though it has a normal __dict__ containing its attributes.
