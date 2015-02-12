@@ -139,7 +139,7 @@ class RegistrationMethod(object):
         return Images(newrdd).__finalize__(images)
 
 
-class RegistrationModel(Serializable):
+class RegistrationModel(object, Serializable):
 
     def __init__(self, transformations, regMethod=None, transClass=None):
         self.transformations = transformations
