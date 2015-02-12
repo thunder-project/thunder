@@ -139,8 +139,11 @@ class RegistrationMethod(object):
         return Images(newrdd).__finalize__(images)
 
 
-class RegistrationModel(object, Serializable):
-
+class RegistrationModel(Serializable, object):
+    # explicitly inherit from both object and Serializable to indicate that
+    # Serializable is intended to be used as a mixin.
+    # Can't inherit as (object, Serializable), has to be other way around:
+    # http://stackoverflow.com/questions/3003053/metaclass-multiple-inheritance-inconsistency
     def __init__(self, transformations, regMethod=None, transClass=None):
         self.transformations = transformations
         self.regMethod = regMethod
