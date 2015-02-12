@@ -1,14 +1,14 @@
 from nose.tools import assert_equal, assert_raises, assert_true
 import unittest
 
-from thunder.utils.serializable import ThunderSerializable
+from thunder.utils.serializable import Serializable
 
 
-class Foo(ThunderSerializable):
+class Foo(Serializable):
     pass
 
 
-class Bar(ThunderSerializable):
+class Bar(Serializable):
     def __init__(self, baz=None):
         self.baz = baz
 
@@ -27,7 +27,7 @@ class TestSerialization(unittest.TestCase):
         from numpy import array, array_equal
         from datetime import datetime
 
-        class Visitor(ThunderSerializable):
+        class Visitor(Serializable):
             def __init__(self, ip_addr=None, agent=None, referrer=None):
                 self.ip = ip_addr
                 self.ua = agent
@@ -73,7 +73,7 @@ class TestSerialization(unittest.TestCase):
         """
         Check to make sure that classes that use slots can be serialized / deserialized.
         """
-        class SlottyFoo(ThunderSerializable):
+        class SlottyFoo(Serializable):
             __slots__ = ['bar']
 
             def __init__(self):
@@ -98,7 +98,7 @@ class TestSerialization(unittest.TestCase):
             def __init__(self):
                 self.someVariable = 3
 
-        class Visitor(ThunderSerializable):
+        class Visitor(Serializable):
             def __init__(self):
                 self.referenceToUnserializableClass = [SomeOtherClass()]
 
@@ -112,7 +112,7 @@ class TestSerialization(unittest.TestCase):
         """
         from collections import namedtuple
 
-        class NamedTupleyFoo(ThunderSerializable):
+        class NamedTupleyFoo(Serializable):
             def __init__(self):
                 self.nt = namedtuple('FooTuple', 'bar')
 

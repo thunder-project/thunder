@@ -8,43 +8,39 @@ def _isNamedTuple(obj):
     return hasattr(obj, "_fields") and hasattr(obj, "_asdict") and callable(obj._asdict)
 
 
-class ThunderSerializable(object):
+class Serializable(object):
     """Mixin class that provides JSON serialization services to classes inheriting from it
 
-    Inheriting from ThunderSerializeable makes it easy to store
-    class instances in a human readable JSON format and then recall it and recover
-    the original object instance. This abstract class provides serialize() and save()
-    instance methods, along with deserialize() and load() class methods. Serialize()
-    and deserialize() convert to and from a python dictionary representation that
-    can then be easily processed by python's standard JSON module. Save() and load()
-    persist and load objects to and from files on the local file system, wrapping
-    calls to serialize() and deserialize().
+    Inheriting from Serializable makes it easy to store class instances in a human
+    readable JSON format and then recover the original object instance. This abstract
+    class provides serialize() and save() instance methods, along with deserialize() and
+    load() class methods. Serialize() and deserialize() convert to and from a python
+    dictionary representation that can then be easily processed by python's standard JSON
+    module. Save() and load() persist and load objects to and from files on the local
+    file system, wrapping calls to serialize() and deserialize().
 
-    Note that this class is NOT intended to provide generalized pickling
-    capabilities. Rather, it is designed to make it very easy to convert small
-    classes containing model properties to a human and machine parsable format
-    for later analysis or visualization.
+    Note that this class is NOT intended to provide fully general pickling capabilities.
+    Rather, it is designed to make it very easy to convert small classes containing model
+    properties to a human and machine parsable format for later analysis or visualization.
 
-    A key feature of the class is that it can "pickle" data
-    types that are not normally supported by Python's stock JSON dump() and
-    load() methods. Supported datatypes include: list, set, tuple, namedtuple,
-    OrderedDict, datetime objects, numpy ndarrays, and dicts with non-string
-    (but still data) keys. Serialization is performed recursively, and descends
-    into the standard python container types (list, dict, tuple, set).
+    A key feature of the class is that it can "pickle" data types that are not normally
+    supported by Python's stock JSON dump() and load() methods. Supported datatypes include:
+    list, set, tuple, namedtuple, OrderedDict, datetime objects, numpy ndarrays, and dicts
+    with non-string (but still data) keys. Serialization is performed recursively, and
+    descends into the standard python container types (list, dict, tuple, set).
 
-    The class provides special-case handling for lists and dictionaries with values
-    that are themselves all ThunderSerializable objects of the same type (and that
-    have a regular dictionary rather than __slots__). The JSON
-    output for such homogenous containers will list the type of the contained objects
-    only once; in the general case, each instance of a nested serializable type will
-    be stored along with its type.
+    The class provides special-case handling for lists and dictionaries with values that
+    are themselves all Serializable objects of the same type (provided they have a regular
+    dictionary rather than __slots__). The JSON output for such homogenous containers will
+    list the type of the contained objects only once; in the general case, each instance
+    of a nested serializable type will be stored along with its type.
 
-    There are a number of limitations on data structures that are currently
-    supported. Unsupported data types include Unicode strings, ... . Objects that
-    have both __slots__ and __dict__ attributes (as can happen from inheritance,
-    such as an object with __slots__ inheriting from ThunderSerializable itself) will
-    have only the __slots__ attributes serialized. Object graphs containing loops
-    will lead to infinite recursion, and should not be used with this class.
+    There are a number of limitations on data structures that are currently supported.
+    Unicode strings, for instance, are not yet supported. Objects that have both __slots__
+    and __dict__ attributes (as can happen from inheritance, such as an object with
+    __slots__ inheriting from Serializable itself) will have only the __slots__ attributes
+    serialized. Object graphs containing loops will lead to infinite recursion, and should
+    not be used with this class.
 
     Some of this code was adapted from these fantastic blog posts by Chris
     Wagner and Sunil Arora:
@@ -55,7 +51,7 @@ class ThunderSerializable(object):
     Examples
     --------
 
-      class Visitor(ThunderSerializable):
+      class Visitor(Serializable):
           def __init__(self, ipAddr = None, agent = None, referrer = None):
               self.ip = ipAddr
               self.ua = agent
@@ -85,11 +81,11 @@ class ThunderSerializable(object):
             # awkward special case - check for lists of homogeneous serializable objects
             isHomogeneousSerializableList = False
             elementType = None
-            if data and isinstance(data[0], ThunderSerializable) and not hasattr(data[0], "__slots__"):
+            if data and isinstance(data[0], Serializable) and not hasattr(data[0], "__slots__"):
                 elementType = type(data[0])
                 isHomogeneousSerializableList = True
                 for val in data:
-                    if (not isinstance(val, ThunderSerializable)) or (type(val) != elementType):
+                    if (not isinstance(val, Serializable)) or (type(val) != elementType):
                         isHomogeneousSerializableList = False
                         break
             if isHomogeneousSerializableList:
@@ -125,7 +121,7 @@ class ThunderSerializable(object):
             valueType = None
             isHomogenousSerializableValueType = False
             for val in data.itervalues():
-                if isinstance(val, ThunderSerializable):
+                if isinstance(val, Serializable):
                     if valueType is None:
                         valueType = type(val)
                         isHomogenousSerializableValueType = True
@@ -174,9 +170,9 @@ class ThunderSerializable(object):
                     "shape": data.shape,
                     "values": b64encode(data),
                     "dtype":  str(data.dtype)}}
-        elif isinstance(data, ThunderSerializable):
+        elif isinstance(data, Serializable):
             # nested serializable object
-            return {"py/ThunderSerializable": {
+            return {"py/Serializable": {
                 "type": dataType.__name__,
                 "module": dataType.__module__,
                 "data": data.serialize()
@@ -305,9 +301,9 @@ class ThunderSerializable(object):
                 moduleName = data["module"]
                 clazz = getattr(import_module(moduleName), className)
                 return dict([(restoreRecursively(k_), clazz.deserialize(v_)) for (k_, v_) in data["data"]])
-            elif "py/ThunderSerializable" == dataKey:
+            elif "py/Serializable" == dataKey:
                 from importlib import import_module
-                data = dct["py/ThunderSerializable"]
+                data = dct["py/Serializable"]
                 className = data["type"]
                 moduleName = data["module"]
                 clazz = getattr(import_module(moduleName), className)

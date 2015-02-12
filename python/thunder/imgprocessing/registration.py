@@ -1,6 +1,6 @@
 from thunder.rdds.images import Images
 from thunder.utils.common import checkParams
-from thunder.utils.serializable import ThunderSerializable
+from thunder.utils.serializable import Serializable
 
 
 class Registration(object):
@@ -139,7 +139,7 @@ class RegistrationMethod(object):
         return Images(newrdd).__finalize__(images)
 
 
-class RegistrationModel(ThunderSerializable):
+class RegistrationModel(Serializable):
 
     def __init__(self, transformations, regMethod=None, transClass=None):
         self.transformations = transformations
