@@ -162,6 +162,9 @@ class TestSerialization(unittest.TestCase):
             assert_true(isinstance(bar, Bar))
             assert_equal(expectedBaz, bar.getBaz())
 
+        # check that list is serialized using special case homogenous list encoding:
+        assert_true("py/homogeneousSerializableList" in testJson['lst'])
+
     def test_nestedHeterogenousListSerialization(self):
         """Test that multiple nested serializable objects of differing types are serializable
         """
@@ -180,3 +183,24 @@ class TestSerialization(unittest.TestCase):
         for expected, actual in zip(foo.lst, roundtrippedLst):
             assert_equal(type(expected), type(actual))
             assert_equal(expected, actual)
+
+        assert_true("py/list" in testJson['lst'])
+
+    def test_nestedHomogenousDictSerialization(self):
+        foo = Foo()
+        foo.dct = {"a": Bar(baz=1), "b": Bar(baz=2)}
+        testJson = foo.serialize()
+        # print testJson
+        roundtripped = Foo.deserialize(testJson)
+
+        assert_true(isinstance(roundtripped, Foo))
+        assert_true(hasattr(roundtripped, "dct"))
+        roundtrippedDict = roundtripped.dct
+        assert_true(isinstance(roundtrippedDict, dict))
+        assert_equal(2, len(roundtrippedDict))
+        for k, v in roundtrippedDict.iteritems():
+            assert_true(isinstance(v, Bar))
+            assert_equal(foo.dct[k], v)
+
+        # check that dict is serialized using special case homogenous values encoding:
+        assert_true("py/homogeneousSerializableDict" in testJson['dct'])
