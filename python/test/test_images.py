@@ -485,6 +485,96 @@ class TestImagesStats(PySparkTestCase):
         assert_true(array_equal(reduce(minimum, arys), minVal))
 
 
+class TestImagesMeanByRegions(PySparkTestCase):
+    def setUp(self):
+        super(TestImagesMeanByRegions, self).setUp()
+        self.ary1 = array([[3, 5], [6, 8]], dtype='int32')
+        self.ary2 = array([[13, 15], [16, 18]], dtype='int32')
+        self.images = ImagesLoader(self.sc).fromArrays([self.ary1, self.ary2])
+
+    def __checkAttrPropagation(self, newImages, newDims):
+        assert_equals(newDims, newImages._dims.count)
+        assert_equals(self.images._nimages, newImages._nimages)
+        assert_equals(self.images._dtype, newImages._dtype)
+
+    def test_badMaskShapeThrowsValueError(self):
+        mask = array([[1]], dtype='int16')
+        assert_raises(ValueError, self.images.meanByRegions, mask)
+
+    def test_meanWithFloatMask(self):
+        mask = array([[1.0, 0.0], [0.0, 1.0]], dtype='float32')
+        regionMeanImages = self.images.meanByRegions(mask)
+        self.__checkAttrPropagation(regionMeanImages, (1, 1))
+        collected = regionMeanImages.collect()
+        assert_equals(2, len(collected))
+        assert_equals((1, 1), collected[0][1].shape)
+        # check keys
+        assert_equals(0, collected[0][0])
+        assert_equals(1, collected[1][0])
+        # check values
+        assert_equals(5, collected[0][1][0])
+        assert_equals(15, collected[1][1][0])
+
+    def test_meanWithIntMask(self):
+        mask = array([[1, 0], [2, 1]], dtype='uint8')
+        regionMeanImages = self.images.meanByRegions(mask)
+        self.__checkAttrPropagation(regionMeanImages, (1, 2))
+        collected = regionMeanImages.collect()
+        assert_equals(2, len(collected))
+        assert_equals((1, 2), collected[0][1].shape)
+        # check keys
+        assert_equals(0, collected[0][0])
+        assert_equals(1, collected[1][0])
+        # check values
+        assert_equals(5, collected[0][1].flat[0])
+        assert_equals(6, collected[0][1].flat[1])
+        assert_equals(15, collected[1][1].flat[0])
+        assert_equals(16, collected[1][1].flat[1])
+
+    def test_meanWithSingleRegionIndices(self):
+        indices = [[(0, 0), (0, 1)]]  # one region with two indices
+        regionMeanImages = self.images.meanByRegions(indices)
+        self.__checkAttrPropagation(regionMeanImages, (1, 1))
+        collected = regionMeanImages.collect()
+        assert_equals(2, len(collected))
+        assert_equals((1, 1), collected[0][1].shape)
+        # check keys
+        assert_equals(0, collected[0][0])
+        assert_equals(1, collected[1][0])
+        # check values
+        assert_equals(4, collected[0][1][0])
+        assert_equals(14, collected[1][1][0])
+
+    def test_meanWithMultipleRegionIndices(self):
+        indices = [[(0, 0), (0, 1)], [(0, 1), (1, 0)]]  # two regions with two indices each
+        regionMeanImages = self.images.meanByRegions(indices)
+        self.__checkAttrPropagation(regionMeanImages, (1, 2))
+        collected = regionMeanImages.collect()
+        assert_equals(2, len(collected))
+        assert_equals((1, 2), collected[0][1].shape)
+        # check keys
+        assert_equals(0, collected[0][0])
+        assert_equals(1, collected[1][0])
+        # check values
+        assert_equals(4, collected[0][1].flat[0])
+        assert_equals(5, collected[0][1].flat[1])
+        assert_equals(14, collected[1][1].flat[0])
+        assert_equals(15, collected[1][1].flat[1])
+
+    def test_badIndexesThrowErrors(self):
+        indices = [[(0, 0), (-1, 0)]]  # index too small (-1)
+        assert_raises(ValueError, self.images.meanByRegions, indices)
+
+        indices = [[(0, 0), (2, 0)]]  # index too large (2)
+        assert_raises(ValueError, self.images.meanByRegions, indices)
+
+        indices = [[(0, 0), (0,)]]  # too few indices
+        assert_raises(ValueError, self.images.meanByRegions, indices)
+
+        indices = [[(0, 0), (0, 1, 0)]]  # too many indices
+        assert_raises(ValueError, self.images.meanByRegions, indices)
+
+
 class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
     @staticmethod
