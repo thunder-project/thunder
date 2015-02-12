@@ -48,7 +48,7 @@ class ImagesLoader(object):
                       dims=shape, dtype=str(dtype), nrecords=narrays)
 
     def fromStack(self, dataPath, dims, dtype='int16', ext='stack', startIdx=None, stopIdx=None, recursive=False,
-                  npartitions=None):
+                  nplanes=None, npartitions=None):
         """Load an Images object stored in a directory of flat binary files
 
         The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
@@ -79,6 +79,13 @@ class ImagesLoader(object):
             have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
             (not s3).
 
+        nplanes: positive integer, default None
+            If passed, will cause a single binary stack file to be subdivided into multiple records. Every
+            `nplanes` z-planes in the file will be taken as a new record, with the first nplane planes of the
+            first file being record 0, the second nplane planes being record 1, etc, until the first file is
+            exhausted and record ordering continues with the first nplane planes of the second file, and so on.
+            With nplanes=None (the default), a single file will be considered as representing a single record.
+
         npartitions: positive int, optional.
             If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
             partition per image file.
@@ -86,33 +93,66 @@ class ImagesLoader(object):
         if not dims:
             raise ValueError("Image dimensions must be specified if loading from binary stack data")
 
-        def toArray(buf):
-            return frombuffer(buf, dtype=dtype, count=int(prod(dims))).reshape(dims, order='F')
+        if nplanes is not None:
+            if nplanes <= 0:
+                raise ValueError("nplanes must be positive if passed, got %d" % nplanes)
+            if dims[-1] % nplanes:
+                raise ValueError("Last dimension of stack image '%d' must be divisible by nplanes '%d'" %
+                                 (dims[-1], nplanes))
+
+        def toArray(idxAndBuf):
+            idx, buf = idxAndBuf
+            ary = frombuffer(buf, dtype=dtype, count=int(prod(dims))).reshape(dims, order='F')
+            if nplanes is None:
+                yield idx, ary
+            else:
+                # divide array into chunks of nplanes
+                npoints = dims[-1] / nplanes  # integer division
+                if dims[-1] % nplanes:
+                    npoints += 1
+                timepoint = 0
+                lastPlane = 0
+                curPlane = 1
+                while curPlane < ary.shape[-1]:
+                    if curPlane % nplanes == 0:
+                        slices = [slice(None)] * (ary.ndim - 1) + [slice(lastPlane, curPlane)]
+                        yield idx*npoints + timepoint, ary[slices]
+                        timepoint += 1
+                        lastPlane = curPlane
+                    curPlane += 1
+                # yield remaining planes
+                slices = [slice(None)] * (ary.ndim - 1) + [slice(lastPlane, ary.shape[-1])]
+                yield idx*npoints + timepoint, ary[slices]
 
         reader = getParallelReaderForPath(dataPath)(self.sc)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                 npartitions=npartitions)
-        return Images(readerRdd.mapValues(toArray), nrecords=reader.lastNRecs, dims=dims,
-                      dtype=dtype)
+        nrecords = reader.lastNRecs if nplanes is None else None
+        newDims = tuple(list(dims[:-1]) + [nplanes]) if nplanes else dims
+        return Images(readerRdd.flatMap(toArray), nrecords=nrecords, dims=newDims, dtype=dtype)
 
-    def fromTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, npartitions=None):
+    def fromTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, nplanes=None,
+                npartitions=None):
         """Sets up a new Images object with data to be read from one or more tif files.
 
-        The RDD underlying the returned Images will have key, value data as follows:
-
-        key: int
-            key is index of original data file, determined by lexicographic ordering of filenames
-        value: numpy ndarray
-            value dimensions with be x by y by num_channels*num_pages; all channels and pages in a file are
-            concatenated together in the third dimension of the resulting ndarray. For pages 0, 1, etc
-            of a multipage TIF of RGB images, ary[:,:,0] will be R channel of page 0 ("R0"), ary[:,:,1] will be B0,
-            ... ary[:,:,3] == R1, and so on.
+        Multiple pages of a multipage tif file will by default be assumed to represent the z-axis (depth) of a
+        single 3-dimensional volume, in which case a single input multipage tif file will be converted into
+        a single Images record. If `nplanes` is passed, then every nplanes pages will be interpreted as a single
+        3d volume (2d if nplanes==1), allowing a single tif file to contain multiple Images records.
 
         This method attempts to explicitly import PIL. ImportError may be thrown if 'from PIL import Image' is
         unsuccessful. (PIL/pillow is not an explicit requirement for thunder.)
 
+        The RDD wrapped by the returned Images object will by default have a number of partitions equal to the
+        number of image data files read in by this method; it may have fewer partitions if npartitions is specified.
+
         Parameters
         ----------
+
+        dataPath: string
+            Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
+            including scheme. A datapath argument may include a single '*' wildcard character in the filename.
+
         ext: string, optional, default "tif"
             Extension required on data files to be loaded.
 
@@ -125,10 +165,18 @@ class ImagesLoader(object):
             have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
             (not s3).
 
+        nplanes: positive integer, default None
+            If passed, will cause a single multipage tif file to be subdivided into multiple records. Every
+            `nplanes` tif pages in the file will be taken as a new record, with the first nplane pages of the
+            first file being record 0, the second nplane pages being record 1, etc, until the first file is
+            exhausted and record ordering continues with the first nplane images of the second file, and so on.
+            With nplanes=None (the default), a single file will be considered as representing a single record.
+
         npartitions: positive int, optional.
             If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
             partition per image file.
         """
+
         try:
             from PIL import Image
         except ImportError, e:
@@ -146,28 +194,49 @@ class ImagesLoader(object):
             from thunder.utils.common import pil_to_array
             conversionFcn = pil_to_array  # use our modified version of matplotlib's pil_to_array
 
-        def multitifReader(buf):
+        if nplanes is not None and nplanes <= 0:
+            raise ValueError("nplanes must be positive if passed, got %d" % nplanes)
+
+        def multitifReader(idxAndBuf):
+            idx, buf = idxAndBuf
             fbuf = BytesIO(buf)
             multipage = Image.open(fbuf)
             pageIdx = 0
             imgArys = []
+            npagesLeft = -1 if nplanes is None else nplanes  # counts number of planes remaining in image if positive
+            values = []
             while True:
                 try:
                     multipage.seek(pageIdx)
                     imgArys.append(conversionFcn(multipage))
                     pageIdx += 1
+                    npagesLeft -= 1
+                    if npagesLeft == 0:
+                        # we have just finished an image from this file
+                        retAry = dstack(imgArys) if len(imgArys) > 1 else imgArys[0]
+                        values.append(retAry)
+                        # reset counters:
+                        npagesLeft = nplanes
+                        imgArys = []
                 except EOFError:
                     # past last page in tif
                     break
-            if len(imgArys) == 1:
-                return imgArys[0]
-            else:
-                return dstack(imgArys)
+            if imgArys:
+                retAry = dstack(imgArys) if len(imgArys) > 1 else imgArys[0]
+                values.append(retAry)
+            # check for inappropriate nplanes that doesn't evenly divide num pages
+            if nplanes and (pageIdx % nplanes):
+                raise ValueError("nplanes '%d' does not evenly divide page count of multipage tif '%d'" %
+                                 (nplanes, pageIdx))
+            nvals = len(values)
+            keys = [idx*nvals + timepoint for timepoint in xrange(nvals)]
+            return zip(keys, values)
 
         reader = getParallelReaderForPath(dataPath)(self.sc)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                 npartitions=npartitions)
-        return Images(readerRdd.mapValues(multitifReader), nrecords=reader.lastNRecs)
+        nrecords = reader.lastNRecs if nplanes is None else None
+        return Images(readerRdd.flatMap(multitifReader), nrecords=nrecords)
 
     def fromPng(self, dataPath, ext='png', startIdx=None, stopIdx=None, recursive=False, npartitions=None):
         """Load an Images object stored in a directory of png files
