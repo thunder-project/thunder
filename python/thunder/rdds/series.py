@@ -664,18 +664,18 @@ class Series(Data):
             selection = self.__maskToKeys(selection, returnNested=False)
 
         bcRegionKeys = self.rdd.context.broadcast(frozenset(selection))
-        n, kmean, vmean = self.rdd.filter(lambda (k, v): k in bcRegionKeys.value) \
+        n, keyMean, valMean = self.rdd.filter(lambda (k, v): k in bcRegionKeys.value) \
             .map(lambda (k, v):  (array(k, dtype=v.dtype), v)) \
             .aggregate(_MeanCombiner.createZeroTuple(),
                        _MeanCombiner.mergeIntoMeanTuple,
                        _MeanCombiner.combineMeanTuples)
-        if isinstance(kmean, ndarray):
-            kmean = tuple(kmean.astype('int32'))
+        if isinstance(keyMean, ndarray):
+            keyMean = tuple(keyMean.astype('int32'))
 
         if validate and n != len(selection):
             raise ValueError("%d records were expected in region, but only %d were found" % (len(selection), n))
 
-        return (kmean, vmean) if n > 0 else (None, None)
+        return (keyMean, valMean) if n > 0 else (None, None)
 
     def meanByRegion(self, nestedKeys, validate=False):
         """Takes the mean of Series values within groupings specified by the passed keys.
@@ -730,13 +730,13 @@ class Series(Data):
                 for regionIdx_ in regionLookup_.get(k, []):
                     yield regionIdx_, (k, val)
 
-        def validateCounts(region_, n_, kmean, vmean):
+        def validateCounts(region_, n_, keyMean, valMean):
             # nRecsInRegion pulled in via closure
             if nRecsInRegion[region_] != n_:
                 raise ValueError("%d records were expected in region %d, but only %d were found" %
                                  (nRecsInRegion[region_], region_, n_))
             else:
-                return kmean.astype('int16'), vmean
+                return keyMean.astype('int16'), valMean
 
         combinedData = self.rdd.mapPartitions(toRegionIdx) \
             .combineByKey(_MeanCombiner.createMeanTuple,
@@ -744,10 +744,11 @@ class Series(Data):
                           _MeanCombiner.combineMeanTuples, numPartitions=len(nestedKeys))
 
         if validate:
-            data = combinedData.map(lambda (region_, (n, kmean, vmean)): validateCounts(region_, n, kmean, vmean))
+            data = combinedData.map(lambda (region_, (n, keyMean, valMean)):
+                                    validateCounts(region_, n, keyMean, valMean))
         else:
-            data = combinedData.map(lambda (region_, (_, kmean, vmean)): (tuple(kmean.astype('int16')), vmean))
-
+            data = combinedData.map(lambda (region_, (_, keyMean, valMean)):
+                                    (tuple(keyMean.astype('int16')), valMean))
         return self._constructor(data).__finalize__(self, noPropagate=('_dims',))
 
     def toBlocks(self, blockSizeSpec="150M"):
