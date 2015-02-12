@@ -1,4 +1,4 @@
-from nose.tools import assert_equal, assert_raises, assert_true
+from nose.tools import assert_equal, assert_false, assert_raises, assert_true
 import unittest
 
 from thunder.utils.serializable import Serializable
@@ -184,7 +184,10 @@ class TestSerialization(unittest.TestCase):
             assert_equal(type(expected), type(actual))
             assert_equal(expected, actual)
 
-        assert_true("py/list" in testJson['lst'])
+        # heterogenous lists should be represented as simple json lists
+        assert_true(isinstance(testJson['lst'], list))
+        # no special "py/" type encoding is needed - no "py/" strings in list:
+        assert_false(any([k.startswith("py/") for k in testJson['lst'] if isinstance(k, basestring)]))
 
     def test_nestedHomogenousDictSerialization(self):
         foo = Foo()

@@ -100,7 +100,7 @@ class Serializable(object):
                 }
             else:
                 # plain old list
-                return {"py/list": [self.__serializeRecursively(val, numpyStorage) for val in data]}
+                return [self.__serializeRecursively(val, numpyStorage) for val in data]
         elif dataType == OrderedDict:
             return {
                 "py/collections.OrderedDict": [
@@ -268,8 +268,6 @@ class Serializable(object):
             # Otherwise, decode it!
             if "py/dict" == dataKey:
                 return dict([(restoreRecursively(k_), restoreRecursively(v_)) for (k_, v_) in dct["py/dict"]])
-            elif "py/list" == dataKey:
-                return [restoreRecursively(val) for val in dct["py/list"]]
             elif "py/tuple" == dataKey:
                 return tuple([restoreRecursively(val) for val in dct["py/tuple"]])
             elif "py/set" == dataKey:
