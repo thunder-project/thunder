@@ -175,17 +175,18 @@ class LocalFSParallelReader(object):
 
         return files
 
-    def read(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
+    def read(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False, npartitions=None):
         """Sets up Spark RDD across files specified by dataPath on local filesystem.
 
-        Returns RDD of <string filepath, string buffer> k/v pairs.
+        Returns RDD of <integer file index, string buffer> k/v pairs.
         """
         absPath = self.uriToPath(dataPath)
         filePaths = self.listFiles(absPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
 
         lfilepaths = len(filePaths)
         self.lastNRecs = lfilepaths
-        return self.sc.parallelize(enumerate(filePaths), lfilepaths).map(lambda (k, v): (k, _localRead(v)))
+        npartitions = min(npartitions, lfilepaths) if npartitions else lfilepaths
+        return self.sc.parallelize(enumerate(filePaths), npartitions).map(lambda (k, v): (k, _localRead(v)))
 
 
 class _BotoS3Client(object):
@@ -312,7 +313,7 @@ class BotoS3ParallelReader(_BotoS3Client):
 
         return bucket.name, keyNameList
 
-    def read(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
+    def read(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False, npartitions=None):
         """Sets up Spark RDD across S3 objects specified by dataPath.
 
         Returns RDD of <string s3 keyname, string buffer> k/v pairs.
@@ -325,12 +326,6 @@ class BotoS3ParallelReader(_BotoS3Client):
         if not keyNameList:
             raise FileNotFoundError("No S3 objects found for '%s'" % dataPath)
 
-        # originally this was set up so as to try to conserve boto connections, with one boto connection
-        # d/ling multiple images - hence this being structured as a mapPartitions() function rather than
-        # a straight map. but it is probably better to maintain one partition per image. all of which is
-        # to say, there is no longer any good reason for this to be a mapPartitions() call rather than
-        # just a map(), since now the parallelize call below is setting number partitions equal to number
-        # images, but it works so I'm not yet messing with it.
         def readSplitFromS3(kvIter):
             conn = boto.connect_s3()
             bucket = conn.get_bucket(bucketName)
@@ -340,10 +335,9 @@ class BotoS3ParallelReader(_BotoS3Client):
                 buf = key.get_contents_as_string()
                 yield idx, buf
 
-        # don't specify number of splits here - allow reuse of connections within partition
         self.lastNRecs = len(keyNameList)
-        # now set num partitions explicitly to num images - see comment on readSplitFromS3 above.
-        return self.sc.parallelize(enumerate(keyNameList), self.lastNRecs).mapPartitions(readSplitFromS3)
+        npartitions = min(npartitions, self.lastNRecs) if npartitions else self.lastNRecs
+        return self.sc.parallelize(enumerate(keyNameList), npartitions).mapPartitions(readSplitFromS3)
 
 
 class LocalFSFileReader(object):

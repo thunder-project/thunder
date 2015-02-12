@@ -11,7 +11,7 @@ class Data(object):
     Attributes
     ----------
 
-    rdd: Spark RDD
+    `rdd` : Spark RDD
         The Spark Resilient Distributed Dataset wrapped by this Data object.
         Standard pyspark RDD methods on a data instance `obj` that are not already
         directly exposed by the Data object can be accessed via `obj.rdd`.
@@ -36,10 +36,10 @@ class Data(object):
                 else:
                     output = str(v)
                 # TODO make max line length a configurable property
-                if len(output) > 70:
-                    output = output[0:70] + ' ...'
+                if len(output) > 50:
+                    output = output[0:50] + ' ...'
                     if k is '_index':
-                        output += '\nlength: ' + str(len(v))
+                        output += '  (length: ' + str(len(v)) + ')'
                 # assumes all non-rdd attributes have underscores (and drops them)
                 s += '\n' + k[1:] + ': ' + output
         return s
@@ -84,8 +84,9 @@ class Data(object):
         if isinstance(other, Data):
             for name in self._metadata:
                 if name not in noPropagate:
-                    if (getattr(other, name, None) is not None) and (getattr(self, name, None) is None):
-                        object.__setattr__(self, name, getattr(other, name, None))
+                    otherAttr = getattr(other, name, None)
+                    if (otherAttr is not None) and (getattr(self, name, None) is None):
+                        object.__setattr__(self, name, otherAttr)
         return self
 
     @property
@@ -105,11 +106,147 @@ class Data(object):
         return self.populateParamsFromFirstRecord()
 
     def take(self, *args, **kwargs):
-        """ Take samples
+        """ Take samples.
 
         This calls the Spark take() method on the underlying RDD.
         """
         return self.rdd.take(*args, **kwargs)
+
+    @staticmethod
+    def __getKeyTypeCheck(actualKey, keySpec):
+        if hasattr(actualKey, "__iter__"):
+            try:
+                specLen = len(keySpec) if hasattr(keySpec, "__len__") else \
+                    reduce(lambda x, y: x + y, [1 for item in keySpec], initial=0)
+                if specLen != len(actualKey):
+                    raise ValueError("Length of key specifier '%s' does not match length of first key '%s'" %
+                                     (str(keySpec), str(actualKey)))
+            except TypeError:
+                raise ValueError("Key specifier '%s' appears not to be a sequence type, but actual keys are " %
+                                 str(keySpec) + "sequences (first key: '%s')" % str(actualKey))
+        else:
+            if hasattr(keySpec, "__iter__"):
+                raise ValueError("Key specifier '%s' appears to be a sequence type, " % str(keySpec) +
+                                 "but actual keys are not (first key: '%s')" % str(actualKey))
+
+    def get(self, key):
+        """Returns a single value matching the passed key, or None if no matching keys found.
+
+        If multiple records are found with keys matching the passed key, a sequence of all matching
+        values will be returned.
+        """
+        firstKey = self.first()[0]
+        Data.__getKeyTypeCheck(firstKey, key)
+        filteredVals = self.rdd.filter(lambda (k, v): k == key).values().collect()
+        if len(filteredVals) == 1:
+            return filteredVals[0]
+        elif not filteredVals:
+            return None
+        else:
+            return filteredVals
+
+    def getMany(self, keys):
+        """Returns a sequence of values corresponding to the passed sequence of keys.
+
+        The return value will be a sequence equal in length to the passed keys, with each
+        value in the returned sequence corresponding to the key at the same position in the passed
+        keys sequence. If no value is found for a given key, the corresponding sequence element will be None.
+        If multiple values are found, a sequence containing all matching values will be returned.
+        """
+        firstKey = self.first()[0]
+        for key in keys:
+            Data.__getKeyTypeCheck(firstKey, key)
+        keySet = frozenset(keys)
+        filteredRecs = self.rdd.filter(lambda (k, _): k in keySet).collect()
+        sortingDict = {}
+        for k, v in filteredRecs:
+            sortingDict.setdefault(k, []).append(v)
+        retVals = []
+        for k in keys:
+            vals = sortingDict.get(k)
+            if vals is not None:
+                if len(vals) == 1:
+                    vals = vals[0]
+            retVals.append(vals)
+        return retVals
+
+    def getRange(self, sliceOrSlices):
+        """Returns key/value pairs that fall within a range given by the passed slice or slices.
+
+        The return values will be a sorted list of key/value pairs of all records in the underlying
+        RDD for which the key falls within the range given by the passed slice selectors. Note that
+        this may be very large, and could potentially exhaust the available memory on the driver.
+
+        For singleton keys, a single slice (or slice sequence of length one) should be passed.
+        For tuple keys, a sequence of multiple slices should be passed. A `step` attribute on slices
+        is not supported and a alueError will be raised if passed.
+
+        Parameters
+        ----------
+        sliceOrSlices: slice object or sequence of slices
+            The passed slice or slices should be of the same cardinality as the keys of the underlying rdd.
+
+        Returns
+        -------
+        sorted sequence of key/value pairs
+        """
+        # None is less than everything except itself
+        def singleSlicePredicate(kv):
+            key, _ = kv
+            if isinstance(sliceOrSlices, slice):
+                if sliceOrSlices.stop is None:
+                    return key >= sliceOrSlices.start
+                return sliceOrSlices.stop > key >= sliceOrSlices.start
+            else:  # apparently this isn't a slice
+                return key == sliceOrSlices
+
+        def multiSlicesPredicate(kv):
+            key, _ = kv
+            for slise, subkey in zip(sliceOrSlices, key):
+                if isinstance(slise, slice):
+                    if slise.stop is None:
+                        if subkey < slise.start:
+                            return False
+                    elif not (slise.stop > subkey >= slise.start):
+                        return False
+                else:  # not a slice
+                    if subkey != slise:
+                        return False
+            return True
+
+        firstKey = self.first()[0]
+        Data.__getKeyTypeCheck(firstKey, sliceOrSlices)
+        if not hasattr(sliceOrSlices, '__iter__'):
+            # make my func the pFunc; http://en.wikipedia.org/wiki/P._Funk_%28Wants_to_Get_Funked_Up%29
+            pFunc = singleSlicePredicate
+            if hasattr(sliceOrSlices, 'step') and sliceOrSlices.step is not None:
+                raise ValueError("'step' slice attribute is not supported in getRange, got step: %d" %
+                                 sliceOrSlices.step)
+        else:
+            pFunc = multiSlicesPredicate
+            for slise in sliceOrSlices:
+                if hasattr(slise, 'step') and slise.step is not None:
+                    raise ValueError("'step' slice attribute is not supported in getRange, got step: %d" %
+                                     slise.step)
+
+        filteredRecs = self.rdd.filter(pFunc).collect()
+        # default sort of tuples is by first item, which happens to be what we want
+        return sorted(filteredRecs)
+
+    def __getitem__(self, item):
+        # should raise exception here when no matching items found
+        # see object.__getitem__ in https://docs.python.org/2/reference/datamodel.html
+        isRangeQuery = False
+        if isinstance(item, slice):
+            isRangeQuery = True
+        elif hasattr(item, '__iter__'):
+            if any([isinstance(slise, slice) for slise in item]):
+                isRangeQuery = True
+
+        result = self.getRange(item) if isRangeQuery else self.get(item)
+        if (result is None) or (result == []):
+            raise KeyError("No value found for key: %s" % str(item))
+        return result
 
     def values(self):
         """ Return values, ignoring keys
@@ -126,16 +263,14 @@ class Data(object):
         return self.rdd.keys()
 
     def astype(self, dtype, casting='safe'):
-        """Cast values to specified numpy dtype
+        """Cast values to specified numpy dtype.
 
-        Calls numpy's astype() method.
-
-        If the string 'smallfloat' is passed, then the values will be cast to the smallest floating point representation
+        If 'smallfloat' is passed, values will be cast to the smallest floating point representation
         to which they can be cast safely, as determined by the thunder.utils.common smallest_float_type function.
         Typically this will be a float type larger than a passed integer type (for instance, float16 for int8 or uint8).
 
         If the passed dtype is the same as the current dtype, or if 'smallfloat' is passed when values are already
-        in floating point, then this method will return immediately, returning self.
+        in floating point, then this method will return self unchanged.
 
         Parameters
         ----------
