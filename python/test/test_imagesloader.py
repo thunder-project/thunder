@@ -121,9 +121,9 @@ class TestImagesFileLoaders(PySparkTestCase):
     def test_fromMultiTimepointTif(self):
         imagePath = os.path.join(self.testResourcesDir, "multilayer_tif", "dotdotdot_lzw.tif")
         tiffImages = ImagesLoader(self.sc).fromTif(imagePath, nplanes=1)
-        # we don't expect to have nimages cached, since the driver doesn't know how many images there are per file
-        assert_true(tiffImages._nimages is None)
-        assert_equals(3, tiffImages.nimages)
+        # we don't expect to have nrecords cached, since the driver doesn't know how many images there are per file
+        assert_true(tiffImages._nrecords is None)
+        assert_equals(3, tiffImages.nrecords)
 
         collectedTiffImages = tiffImages.collect()
 
@@ -140,8 +140,8 @@ class TestImagesFileLoaders(PySparkTestCase):
         imagePath = os.path.join(self.testResourcesDir, "multilayer_tif", "dotdotdot_lzw*.tif")
 
         tiffImages = ImagesLoader(self.sc).fromTif(imagePath, nplanes=1)
-        assert_true(tiffImages._nimages is None)
-        assert_equals(6, tiffImages.nimages)
+        assert_true(tiffImages._nrecords is None)
+        assert_equals(6, tiffImages.nrecords)
 
         collectedTiffImages = tiffImages.collect()
 
@@ -202,9 +202,9 @@ class TestImagesLoaderUsingOutputDir(PySparkTestCaseWithOutputDir):
         image = ImagesLoader(self.sc).fromStack(self.outputdir, dtype="uint8", dims=(2, 2, 4), nplanes=2)
         collectedImage = image.collect()
 
-        # we don't expect to have nimages cached, since we get an unknown number of images per file
-        assert_true(image._nimages is None)
-        assert_equals(4, image.nimages)
+        # we don't expect to have nrecords cached, since we get an unknown number of images per file
+        assert_true(image._nrecords is None)
+        assert_equals(4, image.nrecords)
         assert_equals(4, len(collectedImage))
         # check keys:
         assert_equals(0, collectedImage[0][0])
