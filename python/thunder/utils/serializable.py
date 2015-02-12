@@ -209,6 +209,8 @@ class ThunderSerializable(object):
         """
         # Check for unsupported class.
         # a mix of slots and dicts can happen from multiple inheritance
+        # at the moment, this appears to be "working" - with the restriction that if there
+        # is both __slots__ and __dict__, only the __slots__ attributes will be serialized / deserialized.
         # if hasattr(self, "__slots__") and hasattr(self, "__dict__"):
         #    raise TypeError("Cannot serialize a class that has attributes in both __slots__ and __dict__")
 
@@ -220,7 +222,6 @@ class ThunderSerializable(object):
                 retVal[self.__serializeRecursively(k, numpyStorage)] = \
                     self.__serializeRecursively(v, numpyStorage)
             return retVal
-            # return self.__serializeRecursively(slotDict, numpyStorage)
 
         # Otherwise, we handle the object as though it has a normal __dict__ containing its attributes.
         else:
@@ -229,7 +230,6 @@ class ThunderSerializable(object):
                 retVal[self.__serializeRecursively(k, numpyStorage)] = \
                     self.__serializeRecursively(v, numpyStorage)
             return retVal
-            # return self.__serializeRecursively(self.__dict__, numpyStorage)
 
     @classmethod
     def deserialize(cls, serializedDict):
