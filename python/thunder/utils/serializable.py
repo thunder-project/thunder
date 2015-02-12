@@ -13,12 +13,14 @@ class ThunderSerializable(object):
 
     Inheriting from ThunderSerializeable makes it easy to store
     class instances in a human readable JSON format and then recall it and recover
-    the original object instance. This base class provides the serialize() method,
-    and the class also gains a
-    deserialize() static method that can automatically "pickle" and "unpickle" a
-    wide variety of objects.
+    the original object instance. This abstract class provides serialize() and save()
+    instance methods, along with deserialize() and load() class methods. Serialize()
+    and deserialize() convert to and from a python dictionary representation that
+    can then be easily processed by python's standard JSON module. Save() and load()
+    persist and load objects to and from files on the local file system, wrapping
+    calls to serialize() and deserialize().
 
-    Note that this class is NOT designed to provide generalized pickling
+    Note that this class is NOT intended to provide generalized pickling
     capabilities. Rather, it is designed to make it very easy to convert small
     classes containing model properties to a human and machine parsable format
     for later analysis or visualization.
@@ -28,8 +30,21 @@ class ThunderSerializable(object):
     load() methods. Supported datatypes include: list, set, tuple, namedtuple,
     OrderedDict, datetime objects, numpy ndarrays, and dicts with non-string
     (but still data) keys. Serialization is performed recursively, and descends
-    into the standard python container types (list, dict, tuple, set). Unicode
-    strings are not currently supported.
+    into the standard python container types (list, dict, tuple, set).
+
+    The class provides special-case handling for lists and dictionaries with values
+    that are themselves all ThunderSerializable objects of the same type (and that
+    have a regular dictionary rather than __slots__). The JSON
+    output for such homogenous containers will list the type of the contained objects
+    only once; in the general case, each instance of a nested serializable type will
+    be stored along with its type.
+
+    There are a number of limitations on data structures that are currently
+    supported. Unsupported data types include Unicode strings, ... . Objects that
+    have both __slots__ and __dict__ attributes (as can happen from inheritance,
+    such as an object with __slots__ inheriting from ThunderSerializable itself) will
+    have only the __slots__ attributes serialized. Object graphs containing loops
+    will lead to infinite recursion, and should not be used with this class.
 
     Some of this code was adapted from these fantastic blog posts by Chris
     Wagner and Sunil Arora:
@@ -50,11 +65,10 @@ class ThunderSerializable(object):
       origVisitor = Visitor('192.168', 'UA-1', 'http://www.google.com')
 
       # Serialize the object
-      pickledVisitor = origVisitor.serialize()
+      pickledVisitor = origVisitor.serialize()  # returns dictionary
 
-      # Restore object
+      # Restore object from dictionary
       recovVisitor = Visitor.deserialize(pickledVisitor)
-
 
     """
     __metaclass__ = abc.ABCMeta
@@ -71,7 +85,7 @@ class ThunderSerializable(object):
             # awkward special case - check for lists of homogeneous serializable objects
             isHomogeneousSerializableList = False
             elementType = None
-            if data and isinstance(data[0], ThunderSerializable):
+            if data and isinstance(data[0], ThunderSerializable) and not hasattr(data[0], "__slots__"):
                 elementType = type(data[0])
                 isHomogeneousSerializableList = True
                 for val in data:
@@ -79,7 +93,8 @@ class ThunderSerializable(object):
                         isHomogeneousSerializableList = False
                         break
             if isHomogeneousSerializableList:
-                # TODO: this won't work when serializing classes with __slots__
+                # TODO: this assumes that we have a __dict__ to serialize from, needs to be modified to
+                # work with __slots__ also
                 return {
                     "py/homogeneousSerializableList": {
                         "type": elementType.__name__,
@@ -128,8 +143,12 @@ class ThunderSerializable(object):
                               self.__serializeRecursively(val.__dict__, numpyStorage)) for (k, val) in data.iteritems()]
                     }
                 }
-            elif all(type(k) == str for k in data):   # Recurse into dicts
-                return {k: self.__serializeRecursively(v, numpyStorage) for k, v in data.iteritems()}
+            elif all(type(k) == str for k in data):  # string keys can be represented natively in JSON
+                # avoid dict comprehension for py2.6 compatibility
+                retVal = {}
+                for k, v in data.iteritems():
+                    retVal[k] = self.__serializeRecursively(v, numpyStorage)
+                return retVal
             else:
                 return {"py/dict": [(self.__serializeRecursively(k, numpyStorage),
                                      self.__serializeRecursively(v, numpyStorage)) for k, v in data.iteritems()]}
@@ -177,7 +196,7 @@ class ThunderSerializable(object):
             Use to select whether numpy arrays will be encoded in ASCII (as
             a list of lists) in Base64 (i.e. space efficient binary), or to
             select automatically (the default) depending on the size of the
-            array. Currently the Base64 encoding is selecting if the array
+            array. Currently the Base64 encoding is selected if the array
             has more than 1000 elements.
 
         Returns
@@ -244,7 +263,7 @@ class ThunderSerializable(object):
             # If no data key is found, may have a primitive, a list, or a dictionary.
             if dataKey is None:
                 if type(dct) == dict:
-                    return dict([(restoreRecursively(k), restoreRecursively(v)) for (k, v) in dct.iteritems()])
+                    return dict([(restoreRecursively(k_), restoreRecursively(v_)) for (k_, v_) in dct.iteritems()])
                 elif type(dct) == list:
                     return [restoreRecursively(val) for val in dct]
                 else:
@@ -252,7 +271,7 @@ class ThunderSerializable(object):
 
             # Otherwise, decode it!
             if "py/dict" == dataKey:
-                return dict([(restoreRecursively(k), restoreRecursively(v)) for (k, v) in dct["py/dict"]])
+                return dict([(restoreRecursively(k_), restoreRecursively(v_)) for (k_, v_) in dct["py/dict"]])
             elif "py/list" == dataKey:
                 return [restoreRecursively(val) for val in dct["py/list"]]
             elif "py/tuple" == dataKey:
@@ -285,7 +304,7 @@ class ThunderSerializable(object):
                 className = data["type"]
                 moduleName = data["module"]
                 clazz = getattr(import_module(moduleName), className)
-                return dict([(restoreRecursively(k), clazz.deserialize(v)) for (k, v) in data["data"]])
+                return dict([(restoreRecursively(k_), clazz.deserialize(v_)) for (k_, v_) in data["data"]])
             elif "py/ThunderSerializable" == dataKey:
                 from importlib import import_module
                 data = dct["py/ThunderSerializable"]
@@ -336,7 +355,7 @@ class ThunderSerializable(object):
 
         Parameters
         ----------
-        f : filename or file handle
+        f : string path to file or open writable file handle
             The file to write to. A passed handle will be left open for further writing.
         """
         def saveImpl(fp, numpyStorage_):
@@ -350,6 +369,23 @@ class ThunderSerializable(object):
 
     @classmethod
     def load(cls, f):
+        """Deserialize object from a JSON file.
+
+        Assumes a JSON formatted registration model, with keys 'regmethod' and 'transclass' specifying
+        the registration method used and the transformation type as strings, and 'transformations'
+        containing the transformations. The format of the transformations will depend on the type,
+        but it should be a dictionary of key value pairs, where the keys are keys of the target
+        Images object, and the values are arguments for reconstructing each transformation object.
+
+        Parameters
+        ----------
+        f : string path to file or file handle
+            File to be read from
+
+        Returns
+        -------
+        New instance of cls, deserialized from the passed file
+        """
         def loadImpl(fp):
             dct = json.load(fp)
             return cls.deserialize(dct)
@@ -358,5 +394,5 @@ class ThunderSerializable(object):
             with open(f, 'r') as handle:
                 return loadImpl(handle)
         else:
-            # assume f is a file
+            # assume f is a file object
             return loadImpl(f)

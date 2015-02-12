@@ -1,7 +1,5 @@
-from nose import SkipTest
 from nose.tools import assert_equal, assert_raises, assert_true
 import unittest
-from pyspark import SparkContext
 
 from thunder.utils.serializable import ThunderSerializable
 
@@ -21,10 +19,12 @@ class Bar(ThunderSerializable):
         return isinstance(other, Bar) and other.baz == self.baz
 
 
-class TestSerializableDecorator(unittest.TestCase):
+class TestSerialization(unittest.TestCase):
 
-    def testSerializableDecorator(self):
-        from numpy import array, all
+    def test_basicSerialization(self):
+        """Check serialization of a basic class with a number of data types
+        """
+        from numpy import array, array_equal
         from datetime import datetime
 
         class Visitor(ThunderSerializable):
@@ -41,7 +41,8 @@ class TestSerializableDecorator(unittest.TestCase):
             def __str__(self):
                 return str(self.ip) + " " + str(self.ua) + " " + str(self.referrer) + " " + str(self.time)
 
-            def test_method(self):
+            @staticmethod
+            def test_method():
                 return True
 
         # Run the test.  Build an object, serialize it, and recover it.
@@ -57,49 +58,55 @@ class TestSerializableDecorator(unittest.TestCase):
         recovVisitor = Visitor.deserialize(pickled_visitor)
 
         # Check that the object was reconstructed successfully
-        assert(origVisitor.ip == recovVisitor.ip)
-        assert(origVisitor.ua == recovVisitor.ua)
-        assert(origVisitor.referrer == recovVisitor.referrer)
-        assert(origVisitor.testComplex == recovVisitor.testComplex)
+        assert_equal(origVisitor.ip, recovVisitor.ip)
+        assert_equal(origVisitor.ua, recovVisitor.ua)
+        assert_equal(origVisitor.referrer, recovVisitor.referrer)
+        assert_equal(origVisitor.testComplex, recovVisitor.testComplex)
+        assert_equal(sorted(origVisitor.testDict.keys()), sorted(recovVisitor.testDict.keys()))
         for key in origVisitor.testDict.keys():
-            assert(origVisitor.testDict[key] == recovVisitor.testDict[key])
+            assert_equal(origVisitor.testDict[key], recovVisitor.testDict[key])
 
-        assert(all(origVisitor.testVec == recovVisitor.testVec))
-        assert(all(origVisitor.testArray == recovVisitor.testArray))
+        assert_true(array_equal(origVisitor.testVec, recovVisitor.testVec))
+        assert_true(array_equal(origVisitor.testArray, recovVisitor.testArray))
 
-    def testSerializeWithSlots(self):
+    def test_serializeWithSlots(self):
         """
         Check to make sure that classes that use slots can be serialized / deserialized.
         """
-        # raise SkipTest("This test doesn't currently pass after changing serialization from a wrapper to a mixin")
-
         class SlottyFoo(ThunderSerializable):
             __slots__ = ['bar']
+
+            def __init__(self):
+                self.bar = None
+
+            def __eq__(self, other):
+                return isinstance(other, SlottyFoo) and self.bar == other.bar
 
         foo = SlottyFoo()
         foo.bar = 'a'
         testJson = foo.serialize()
         foo2 = SlottyFoo.deserialize(testJson)
-        assert(foo.bar == foo2.bar)
+        assert_true(isinstance(foo2, SlottyFoo))
+        assert_equal(foo, foo2)
 
-    def testNotSerializable(self):
+    def test_notSerializable(self):
         """
         Unit test to make sure exceptions are thrown if the object contains an
         unserializable data type.
         """
         class SomeOtherClass(object):
             def __init__(self):
-                someVariable = 3
+                self.someVariable = 3
 
         class Visitor(ThunderSerializable):
             def __init__(self):
-                self.refrerenceToUnserializableClass = [SomeOtherClass()]
+                self.referenceToUnserializableClass = [SomeOtherClass()]
 
         origVisitor = Visitor()
         # try to serialize the object, we expect TypeError
         assert_raises(TypeError, origVisitor.serialize)
 
-    def testNamedTupleSerializable(self):
+    def test_namedTupleSerializable(self):
         """
         Test that nested named tuples are serializable
         """
@@ -109,14 +116,17 @@ class TestSerializableDecorator(unittest.TestCase):
             def __init__(self):
                 self.nt = namedtuple('FooTuple', 'bar')
 
+            def __eq__(self, other):
+                return isinstance(other, NamedTupleyFoo) and self.nt.bar == other.nt.bar
+
         foo = NamedTupleyFoo()
         foo.nt.bar = "baz"
 
         testJson = foo.serialize()
         foo2 = NamedTupleyFoo.deserialize(testJson)
-        assert(foo.nt.bar == foo2.nt.bar)
+        assert_equal(foo, foo2)
 
-    def testNestedSerialization(self):
+    def test_nestedSerialization(self):
         """Test that multiple nested serializable objects are serializable
         """
         foo = Foo()
@@ -124,9 +134,8 @@ class TestSerializableDecorator(unittest.TestCase):
         foo.bar.baz = 1
 
         testJson = foo.serialize()
-        # print testJson
+        # print testJson  # uncomment for testing
         roundtripped = Foo.deserialize(testJson)
-        # print roundtripped.__dict__
 
         assert_true(isinstance(roundtripped, Foo))
         assert_true(hasattr(roundtripped, "bar"))
@@ -134,7 +143,7 @@ class TestSerializableDecorator(unittest.TestCase):
         assert_true(isinstance(roundtrippedBar, Bar))
         assert_equal(foo.bar.baz, roundtrippedBar.getBaz())
 
-    def testNestedHomogenousListSerialization(self):
+    def test_nestedHomogenousListSerialization(self):
         """Test that multiple nested serializable objects are serializable
         """
         foo = Foo()
@@ -153,8 +162,8 @@ class TestSerializableDecorator(unittest.TestCase):
             assert_true(isinstance(bar, Bar))
             assert_equal(expectedBaz, bar.getBaz())
 
-    def testNestedHeterogenousListSerialization(self):
-        """Test that multiple nested serializable objects are serializable
+    def test_nestedHeterogenousListSerialization(self):
+        """Test that multiple nested serializable objects of differing types are serializable
         """
         foo = Foo()
         foo.lst = ["monkey", Bar(baz=1), (2, 3)]
@@ -171,4 +180,3 @@ class TestSerializableDecorator(unittest.TestCase):
         for expected, actual in zip(foo.lst, roundtrippedLst):
             assert_equal(type(expected), type(actual))
             assert_equal(expected, actual)
-
