@@ -13,29 +13,22 @@ class Images(Data):
     is an identifier and the value is a two or three-dimensional array.
     """
 
-    _metadata = Data._metadata + ['_dims', '_nimages']
+    _metadata = Data._metadata + ['_dims']
 
-    def __init__(self, rdd, dims=None, nimages=None, dtype=None):
-        super(Images, self).__init__(rdd, dtype=dtype)
+    def __init__(self, rdd, dims=None, nrecords=None, dtype=None):
+        super(Images, self).__init__(rdd, nrecords=nrecords, dtype=dtype)
         if dims and not isinstance(dims, Dimensions):
             try:
                 dims = Dimensions.fromTuple(dims)
             except:
                 raise TypeError("Images dims parameter must be castable to Dimensions object, got: %s" % str(dims))
         self._dims = dims
-        self._nimages = nimages
 
     @property
     def dims(self):
         if self._dims is None:
             self.populateParamsFromFirstRecord()
         return self._dims
-
-    @property
-    def nimages(self):
-        if self._nimages is None:
-            self._nimages = self.rdd.count()
-        return self._nimages
 
     @property
     def dtype(self):
@@ -50,10 +43,6 @@ class Images(Data):
         record = super(Images, self).populateParamsFromFirstRecord()
         self._dims = Dimensions.fromTuple(record[1].shape)
         return record
-
-    def _resetCounts(self):
-        self._nimages = None
-        return self
 
     @staticmethod
     def _check_type(record):
@@ -114,7 +103,7 @@ class Images(Data):
         groupedvals = vals.groupBy(lambda (k, _): k.spatialKey).sortBy(lambda (k, _): tuple(k[::-1]))
         # groupedvals is now rdd of (z, y, x spatial key, [(partitioning key, numpy array)...]
         blockedvals = groupedvals.map(blockingStrategy.combiningFunction)
-        return returntype(blockedvals, dims=self.dims, nimages=self.nimages, dtype=self.dtype)
+        return returntype(blockedvals, dims=self.dims, nimages=self.nrecords, dtype=self.dtype)
 
     def toSeries(self, blockSizeSpec="150M", units="pixels"):
         """Converts this Images object to a Series object.

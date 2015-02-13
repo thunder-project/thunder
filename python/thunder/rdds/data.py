@@ -17,32 +17,41 @@ class Data(object):
         directly exposed by the Data object can be accessed via `obj.rdd`.
     """
 
-    _metadata = ['_dtype']
+    _metadata = ['_nrecords', '_dtype']
 
-    def __init__(self, rdd, dtype=None):
+    def __init__(self, rdd, nrecords=None, dtype=None):
         self.rdd = rdd
+        self._nrecords = nrecords
         self._dtype = dtype
 
     def __repr__(self):
-
         # start with class name
         s = self.__class__.__name__
-
-        # build a printable string by iterating through the dictionary
-        for k, v in self.__dict__.iteritems():
-            if k is not 'rdd':
-                if v is None:
-                    output = 'None (inspect to compute)'
-                else:
-                    output = str(v)
-                # TODO make max line length a configurable property
-                if len(output) > 50:
-                    output = output[0:50] + ' ...'
-                    if k is '_index':
-                        output += '  (length: ' + str(len(v)) + ')'
-                # assumes all non-rdd attributes have underscores (and drops them)
-                s += '\n' + k[1:] + ': ' + output
+        # build a printable string by iterating through _metadata elements
+        for k in self._metadata:
+            v = getattr(self, k)
+            if v is None:
+                output = 'None (inspect to compute)'
+            else:
+                output = str(v)
+            # TODO make max line length a configurable property
+            if len(output) > 50:
+                output = output[0:50].strip() + ' ... '
+                if output.lstrip().startswith('['):
+                    output += '] '
+                if hasattr(v, '__len__'):
+                    output += '(length: %d)' % len(v)
+            # drop any leading underscores from attribute name:
+            if k.startswith('_'):
+                k = k.lstrip('_')
+            s += '\n%s: %s' % (k, output)
         return s
+
+    @property
+    def nrecords(self):
+        if self._nrecords is None:
+            self._nrecords = self.rdd.count()
+        return self._nrecords
 
     @property
     def dtype(self):
@@ -94,8 +103,8 @@ class Data(object):
         return Data
 
     def _resetCounts(self):
-        # to be overridden in subclasses
-        pass
+        self._nrecords = None
+        return self
 
     def first(self):
         """ Return first record.
@@ -373,11 +382,13 @@ class Data(object):
         return asarray(self.rdd.keys().collect())
 
     def count(self):
-        """ Mean of values, ignoring keys
+        """Calculates and returns the number of records in the RDD.
 
-        This calls the Spark count() method on the underlying RDD.
+        This calls the Spark count() method on the underlying RDD and updates the .nrecords metadata attribute.
         """
-        return self.rdd.count()
+        count = self.rdd.count()
+        self._nrecords = count
+        return count
 
     def mean(self, dtype='float64', casting='safe'):
         """ Mean of values, ignoring keys

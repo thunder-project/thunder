@@ -5,7 +5,7 @@ import unittest
 
 from thunder.rdds.imgblocks.strategy import PaddedBlockingStrategy, SimpleBlockingStrategy
 
-MockImage = namedtuple("MockImage", "dims nimages dtype")
+MockImage = namedtuple("MockImage", "dims nrecords dtype")
 
 
 class TestSimpleSplitCalculation(unittest.TestCase):

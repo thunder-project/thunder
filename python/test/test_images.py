@@ -494,7 +494,7 @@ class TestImagesMeanByRegions(PySparkTestCase):
 
     def __checkAttrPropagation(self, newImages, newDims):
         assert_equals(newDims, newImages._dims.count)
-        assert_equals(self.images._nimages, newImages._nimages)
+        assert_equals(self.images._nrecords, newImages._nrecords)
         assert_equals(self.images._dtype, newImages._dtype)
 
     def test_badMaskShapeThrowsValueError(self):
@@ -672,7 +672,7 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
         converted_series_ary = converted_series.pack()
 
         assert_equals(images.dims.count, series.dims.count)
-        expected_shape = tuple([images.nimages] + list(images.dims.count))
+        expected_shape = tuple([images.nrecords] + list(images.dims.count))
         assert_equals(expected_shape, series_ary.shape)
         assert_true(array_equal(series_ary, converted_series_ary))
 

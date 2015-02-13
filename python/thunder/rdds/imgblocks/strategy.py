@@ -155,7 +155,7 @@ class SimpleBlockingStrategy(BlockingStrategy):
         SimpleBlockingStrategy or subclass
             new BlockingStrategy will be created and setSource() called on it with the passed images object
         """
-        dims, nimages, dtype = images.dims, images.nimages, images.dtype
+        dims, nimages, dtype = images.dims, images.nrecords, images.dtype
         minSeriesSize = nimages * dtypeFunc(dtype).itemsize
 
         splitsPerDim = _calcSplitsForBlockSize(blockSize, minSeriesSize, dims)
@@ -219,7 +219,7 @@ class SimpleBlockingStrategy(BlockingStrategy):
 
     def setSource(self, images):
         super(SimpleBlockingStrategy, self).setSource(images)
-        self._nimages = images.nimages
+        self._nimages = images.nrecords
         self.__validateUnitsPerDimForImage()
         if not (self._splitsPerDim is None):
             self._slices = SimpleBlockingStrategy.generateSlicesFromSplits(self._splitsPerDim, self.dims)
