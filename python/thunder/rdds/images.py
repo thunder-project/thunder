@@ -13,29 +13,22 @@ class Images(Data):
     is an identifier and the value is a two or three-dimensional array.
     """
 
-    _metadata = Data._metadata + ['_dims', '_nimages']
+    _metadata = Data._metadata + ['_dims']
 
-    def __init__(self, rdd, dims=None, nimages=None, dtype=None):
-        super(Images, self).__init__(rdd, dtype=dtype)
+    def __init__(self, rdd, dims=None, nrecords=None, dtype=None):
+        super(Images, self).__init__(rdd, nrecords=nrecords, dtype=dtype)
         if dims and not isinstance(dims, Dimensions):
             try:
                 dims = Dimensions.fromTuple(dims)
             except:
                 raise TypeError("Images dims parameter must be castable to Dimensions object, got: %s" % str(dims))
         self._dims = dims
-        self._nimages = nimages
 
     @property
     def dims(self):
         if self._dims is None:
             self.populateParamsFromFirstRecord()
         return self._dims
-
-    @property
-    def nimages(self):
-        if self._nimages is None:
-            self._nimages = self.rdd.count()
-        return self._nimages
 
     @property
     def dtype(self):
@@ -50,10 +43,6 @@ class Images(Data):
         record = super(Images, self).populateParamsFromFirstRecord()
         self._dims = Dimensions.fromTuple(record[1].shape)
         return record
-
-    def _resetCounts(self):
-        self._nimages = None
-        return self
 
     @staticmethod
     def _check_type(record):
@@ -114,7 +103,7 @@ class Images(Data):
         groupedvals = vals.groupBy(lambda (k, _): k.spatialKey).sortBy(lambda (k, _): tuple(k[::-1]))
         # groupedvals is now rdd of (z, y, x spatial key, [(partitioning key, numpy array)...]
         blockedvals = groupedvals.map(blockingStrategy.combiningFunction)
-        return returntype(blockedvals, dims=self.dims, nimages=self.nimages, dtype=self.dtype)
+        return returntype(blockedvals, dims=self.dims, nimages=self.nrecords, dtype=self.dtype)
 
     def toSeries(self, blockSizeSpec="150M", units="pixels"):
         """Converts this Images object to a Series object.
@@ -415,6 +404,104 @@ class Images(Data):
         newdims = tuple(newdims)
 
         return self._constructor(newrdd, dims=newdims).__finalize__(self)
+
+    def meanByRegions(self, selection):
+        """Reduces images to one or more spatially averaged values using the given selection, which can be
+        either a mask array or sequence of indicies.
+
+        A passed mask must be a numpy ndarray of the same shape as the individual arrays in this
+        Images object. If the mask array is of integer or unsigned integer type, one mean value will
+        be calculated for each unique nonzero value in the passed mask. (That is, all pixels with a
+        value of '1' in the mask will be averaged together, as will all with a mask value of '2', and so
+        on.) For other mask array types, all nonzero values in the mask will be averaged together into
+        a single regional average.
+
+        Alternatively, subscripted indices may be passed directly as a sequence of sequences of tuple indicies. For
+        instance, selection=[[(0,1), (1,0)], [(2,1), (2,2)]] would return two means, one for the region made up
+        of the pixels at (0,1) and (1,0), and the other of (2,1) and (2,2).
+
+        The returned object will be a new 2d Images object with dimensions (1, number of regions). This can be
+        converted into a Series object and from there into time series arrays by calling
+        regionMeanImages.toSeries().collect().
+
+        Parameters
+        ----------
+        selection: ndarray mask with shape equal to self.dims.count, or sequence of sequences of pixel indicies
+
+        Returns
+        -------
+        new Images object
+        """
+        from numpy import array, mean
+        ctx = self.rdd.context
+
+        def meanByIntMask(kv):
+            key, ary = kv
+            uniq = bcUnique.value
+            msk = bcSelection.value
+            meanVals = [mean(ary[msk == grp]) for grp in uniq if grp != 0]
+            return key, array(meanVals, dtype=ary.dtype).reshape((1, -1))
+
+        def meanByMaskIndices(kv):
+            key, ary = kv
+            maskIdxsSeq = bcSelection.value
+            means = array([mean(ary[maskIdxs]) for maskIdxs in maskIdxsSeq], dtype=ary.dtype).reshape((1, -1))
+            return key, means
+
+        nregions = -1
+        # argument type checking
+        if isinstance(selection, ndarray):
+            # passed a numpy array mask
+            from numpy import unique
+            # getting image dimensions just requires a first() call, not too expensive; and we probably
+            # already have them anyway
+            if selection.shape != self.dims.count:
+                raise ValueError("Shape mismatch between mask '%s' and image dimensions '%s'; shapes must be equal" %
+                                 (str(selection.shape), str(self.dims.count)))
+
+            if selection.dtype.kind in ('i', 'u'):
+                # integer or unsigned int mask
+                selectFcn = meanByIntMask
+                uniq = unique(selection)
+                nregions = len(uniq) - 1 if 0 in uniq else len(uniq)  # 0 doesn't turn into a region
+                bcUnique = ctx.broadcast(uniq)
+                bcSelection = ctx.broadcast(selection)
+            else:
+                selectFcn = meanByMaskIndices
+                nregions = 1
+                bcUnique = None
+                bcSelection = ctx.broadcast((selection.nonzero(), ))
+        else:
+            # expect sequence of sequences of subindices if we aren't passed a mask
+            selectFcn = meanByMaskIndices
+            regionSelections = []
+            imgNDims = len(self.dims.count)
+            for regionIdxs in selection:
+                # generate sequence of subindex arrays
+                # instead of sequence [(x0, y0, z0), (x1, y1, z1), ... (xN, yN, zN)], want:
+                # array([x0, x1, ... xN]), array([y0, y1, ... yN]), ... array([z0, z1, ... zN])
+                # this can be used directly in an array indexing expression: ary[regionSelect]
+                regionSelect = []
+                for idxTuple in regionIdxs:
+                    if len(idxTuple) != imgNDims:
+                        raise ValueError("Image is %d-dimensional, but got %d dimensional index: %s" %
+                                         (imgNDims, len(idxTuple), str(idxTuple)))
+                for idxDimNum, dimIdxs in enumerate(zip(regionIdxs)):
+                    imgDimMax = self.dims.count[idxDimNum]
+                    dimIdxAry = array(dimIdxs, dtype='uint16')
+                    idxMin, idxMax = dimIdxAry.min(), dimIdxAry.max()
+                    if idxMin < 0 or idxMax >= imgDimMax:
+                        raise ValueError("Index of dimension %d out of bounds; " % idxDimNum +
+                                         "got min/max %d/%d, all must be >=0 and <%d" %
+                                         (idxMin, idxMax, imgDimMax))
+                    regionSelect.append(dimIdxAry)
+                regionSelections.append(regionSelect)
+            nregions = len(regionSelections)
+            bcUnique = None
+            bcSelection = ctx.broadcast(regionSelections)
+
+        data = self.rdd.map(selectFcn)
+        return self._constructor(data, dims=(1, nregions)).__finalize__(self)
 
     def planes(self, startidz, stopidz):
         """

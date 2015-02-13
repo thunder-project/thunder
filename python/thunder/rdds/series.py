@@ -1,9 +1,10 @@
 from numpy import ndarray, array, sum, mean, median, std, size, arange, \
     percentile, asarray, maximum, zeros, corrcoef, where, \
     true_divide, ceil, unique, array_equal, concatenate, squeeze, delete, ravel, logical_not
+
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
-from thunder.utils.common import checkParams, loadMatVar, smallestFloatType
+from thunder.utils.common import loadMatVar
 
 from itertools import product
 
@@ -41,10 +42,10 @@ class Series(Data):
     SpatialSeries : a Series where the keys represent spatial coordinates
     """
 
-    _metadata = Data._metadata + ['_index', '_dims']
+    _metadata = Data._metadata + ['_dims', '_index']
 
-    def __init__(self, rdd, index=None, dims=None, dtype=None):
-        super(Series, self).__init__(rdd, dtype=dtype)
+    def __init__(self, rdd, nrecords=None, dtype=None, index=None, dims=None):
+        super(Series, self).__init__(rdd, nrecords=nrecords, dtype=dtype)
         self._index = None
         if index is not None:
             self.index = index
@@ -584,27 +585,102 @@ class Series(Data):
 
         return keys, values
 
-    def meanOfRegion(self, keys):
-        """Takes the mean of Series values within a single region specified by the passed keys.
+    def __maskToKeys(self, mask, returnNested=False):
+        """Helper method to validate and convert a binary mask to a set of keys for use in
+        mean of/by region(s).
+
+        If returnNested is true, will return a sequence of sequences of keys, suitable for use
+        in meanByRegions. If returnNested is true and an integer or uint mask is passed, a separate set
+        of keys will be returned for each unique nonzero value in the mask, sorted in numeric order of the
+        mask values.
+
+        If returnNested is false, a single sequence of keys will be returned. The keys will be the indices
+        of all nonzero values of the passed mask.
 
         Parameters
         ----------
-        keys: sequence of Series record keys
+        mask: ndarray
+
+        returnNested: boolean, optional, default False
 
         Returns
         -------
-        tuple of ((mean of keys), (mean value))
+        sequence of subscripted indices if returnNested is false,
+        sequence of sequence of subscripted indices if returnNested is true
         """
-        bcRegionKeys = self.rdd.context.broadcast(frozenset(keys))
-        n, kmean, vmean = self.rdd.filter(lambda (k, v): k in bcRegionKeys.value) \
+        # argument type checking
+        if not isinstance(mask, ndarray):
+            raise ValueError("Mask should be numpy ndarray, got: '%s'" % str(type(mask)))
+        # check for matching shapes only if we already know our own shape; don't trigger action otherwise
+        # a shape mismatch should be caught downstream, when expected and actual record counts fail to line up
+        if self._dims:
+            if mask.shape != self._dims.count:
+                raise ValueError("Shape mismatch between mask '%s' and series '%s'; shapes must be equal" %
+                                 (str(mask.shape), str(self._dims.count)))
+        from numpy import nonzero, transpose, unique
+
+        def maskToIndices(bmask):
+            return [tuple(idxs) for idxs in transpose(nonzero(bmask))]
+
+        if mask.dtype.kind in ('i', 'u') and returnNested:
+            nestedKeys = []
+            # integer or unsigned int mask
+            for group in unique(mask):
+                if group != 0:
+                    keys = maskToIndices(mask == group)
+                    nestedKeys.append(keys)
+            return nestedKeys
+        else:
+            keys = maskToIndices(mask)
+            if returnNested:
+                return [keys]
+            else:
+                return keys
+
+    def meanOfRegion(self, selection, validate=False):
+        """Takes the mean of Series values within a single region specified by the passed mask or keys.
+
+        The region for which to take the mean may be specified either by a mask array, or directly by
+        Series keys. If an ndarray is passed as `selection`, then the mean will be taken across all series
+        records corresponding to nonzero elements of the passed mask. (The passed ndarray must have the
+        same shape as series.dims.count, otherwise a ValueError will be thrown.)
+
+        If a sequence of series record keys is passed, the the mean will be taken across all records
+        with keys matching one of those in the passed selection sequence.
+
+        `validate` controls checking whether all requested records were included in the calculated mean. If True,
+        ValueError will be thrown if the number of records included in the region mean is not equal
+        to the number of records specified for that region by the selection. If False, no such checking is performed.
+
+        Parameters
+        ----------
+        selection: sequence of Series record keys, or ndarray mask
+
+        checkCountMismatch: string "none"|"warn"|"error", or unambiguous prefix ("n","w","e")
+
+        Returns
+        -------
+        tuple of (tuple(mean of keys), array(mean value)), or (None, None) if no matching records are found
+        """
+
+        if isinstance(selection, ndarray):
+            selection = self.__maskToKeys(selection, returnNested=False)
+
+        bcRegionKeys = self.rdd.context.broadcast(frozenset(selection))
+        n, keyMean, valMean = self.rdd.filter(lambda (k, v): k in bcRegionKeys.value) \
             .map(lambda (k, v):  (array(k, dtype=v.dtype), v)) \
             .aggregate(_MeanCombiner.createZeroTuple(),
                        _MeanCombiner.mergeIntoMeanTuple,
                        _MeanCombiner.combineMeanTuples)
-        kmean = tuple(kmean.astype('int32'))
-        return kmean, vmean
+        if isinstance(keyMean, ndarray):
+            keyMean = tuple(keyMean.astype('int32'))
 
-    def meanByRegion(self, nestedKeys):
+        if validate and n != len(selection):
+            raise ValueError("%d records were expected in region, but only %d were found" % (len(selection), n))
+
+        return (keyMean, valMean) if n > 0 else (None, None)
+
+    def meanByRegion(self, nestedKeys, validate=False):
         """Takes the mean of Series values within groupings specified by the passed keys.
 
         Each sequence of keys passed specifies a "region" within which to calculate the mean. For instance,
@@ -613,20 +689,39 @@ class Series(Data):
         series.meanByRegion([[(1,0), (2,0)], [(1,0), (3,0)]]) would return two means, one for the region composed
         of records (1,0) and (2,0), the other for records (1,0) and (3,0).
 
+        Alternatively, an ndarray mask may be passed instead of a sequence of sequences of keys. The array mask
+        must be the same shape as the underlying series data (that is, nestedKeys.shape == series.dims.count must
+        be True). If an integer or unsigned integer mask is passed, then each unique nonzero element in the passed
+        mask will be interpreted as a separate region (that is, all '1's will be a single region, as will all '2's,
+        and so on). If another type of ndarray is passed, then all nonzero mask elements will be interpreted
+        as a single region.
+
+        This method returns a new Series object, with one record per defined region. Record keys will be the mean of
+        keys within the region, while record values will be the mean of values in the region. The `dims` attribute on
+        the new Series will not be set; all other attributes will be as in the source Series object.
+
+        `validate` controls checking whether all requested records were included in the calculated mean. If True,
+        exceptions will be thrown on the workers if the number of records included in the region mean is not equal
+        to the number of records specified for that region by the selection. If False, no such checking is performed.
+
         Parameters
         ----------
-        nestedKeys: sequence of sequences of Series record keys
-            Each nested sequence specifies keys for a single region.
+        nestedKeys: sequence of sequences of Series record keys, or ndarray mask.
+
+        validate: boolean, default False
 
         Returns
         -------
         new Series object
-            New Series will have one record per region. Record keys will be the mean of keys within the region,
-            while record values will be the mean of values in the region.
         """
+        if isinstance(nestedKeys, ndarray):
+            nestedKeys = self.__maskToKeys(nestedKeys, returnNested=True)
+
         # transform keys into map from keys to sequence of region indices
         regionLookup = {}
+        nRecsInRegion = []
         for regionIdx, region in enumerate(nestedKeys):
+            nRecsInRegion.append(len(region))
             for key in region:
                 regionLookup.setdefault(tuple(key), []).append(regionIdx)
 
@@ -635,15 +730,29 @@ class Series(Data):
         def toRegionIdx(kvIter):
             regionLookup_ = bcRegionLookup.value
             for k, val in kvIter:
-                for regionIdx in regionLookup_.get(k, []):
-                    yield regionIdx, (k, val)
+                for regionIdx_ in regionLookup_.get(k, []):
+                    yield regionIdx_, (k, val)
 
-        data = self.rdd.mapPartitions(toRegionIdx) \
+        def validateCounts(region_, n_, keyMean, valMean):
+            # nRecsInRegion pulled in via closure
+            if nRecsInRegion[region_] != n_:
+                raise ValueError("%d records were expected in region %d, but only %d were found" %
+                                 (nRecsInRegion[region_], region_, n_))
+            else:
+                return keyMean.astype('int16'), valMean
+
+        combinedData = self.rdd.mapPartitions(toRegionIdx) \
             .combineByKey(_MeanCombiner.createMeanTuple,
                           _MeanCombiner.mergeIntoMeanTuple,
-                          _MeanCombiner.combineMeanTuples, numPartitions=len(nestedKeys)) \
-            .map(lambda (region_, (n, kmean, vmean)): (tuple(kmean.astype('int16')), vmean))
-        return self._constructor(data).__finalize__(self)
+                          _MeanCombiner.combineMeanTuples, numPartitions=len(nestedKeys))
+
+        if validate:
+            data = combinedData.map(lambda (region_, (n, keyMean, valMean)):
+                                    validateCounts(region_, n, keyMean, valMean))
+        else:
+            data = combinedData.map(lambda (region_, (_, keyMean, valMean)):
+                                    (tuple(keyMean.astype('int16')), valMean))
+        return self._constructor(data).__finalize__(self, noPropagate=('_dims',))
 
     def toBlocks(self, blockSizeSpec="150M"):
         """
@@ -1006,7 +1115,7 @@ class Series(Data):
 class _MeanCombiner(object):
     @staticmethod
     def createZeroTuple():
-        return 0, 0.0, 0.0
+        return 0, array((0.0,)), array((0.0,))
 
     @staticmethod
     def createMeanTuple(kv):
