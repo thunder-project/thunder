@@ -901,7 +901,7 @@ class Series(Data):
             if dims == 1:
                 index = array(index, ndmin=2).T
         except:
-            raise TypeError('for multi-index functionality: index must be convertibile to a numpy ndarray')
+            raise TypeError('for multi-index functionality: index must be convertible to a numpy ndarray')
 
         try:
             index = index[:, level]
@@ -913,7 +913,6 @@ class Series(Data):
 
         combs = product(*[unique(index.T[i,:]) for i in xrange(nlevels)])
         combs = array([l for l in combs])
-        ncombs = len(combs)
 
         masks = array([[array_equal(index[i], c) for i in xrange(lenIdx)] for c in combs])
 
@@ -925,7 +924,7 @@ class Series(Data):
 
         Elements of each record are grouped according to unique value combinations of the multi-
         index across the given levels of the multi-index. Then the given function is applied
-        to to each of these groups seperately. If this function is many-to-one, the result
+        to to each of these groups separately. If this function is many-to-one, the result
         can be recast as a Series indexed by the unique index values used for grouping.
         """
 
@@ -980,7 +979,7 @@ class Series(Data):
                 val[0][0]
             except:
                 val = [val]
-            if squeeze and not filter and len(val)==1:
+            if squeeze and not filter and len(val) == 1:
                 remove.append(level[0])
         else:
             for i in xrange(len(val)):
@@ -997,13 +996,13 @@ class Series(Data):
         p = product(*val)
         selected = set([x for x in p])
 
-        #TODO: this could be more efficient if _makeMasks also accpeted the desired values so that
-        #does not produce ALL possible masks which we must then filter down to the ones we want here
+        #TODO: this could be more efficient if _makeMasks also accepted the desired values so that
+        #we not produce ALL possible masks which we must then filter down to the ones we want
         masks, ind = self._makeMasks(index=self.index, level=level)
         nmasks = len(masks)
         masks = array([masks[x] for x in xrange(nmasks) if tuple(ind[x]) in selected])
 
-        finalMask =  masks.any(axis=0)
+        finalMask = masks.any(axis=0)
         if filter:
             finalMask = logical_not(finalMask)
         bcMask = self.rdd.ctx.broadcast(finalMask)
@@ -1029,14 +1028,14 @@ class Series(Data):
         """
         Aggregrate the data in each record, grouping by a multilevel index
         
-        For each unique value of the index (across levels, if multi-index) an aggregrating function is applied to the
-        list of all values with that index (orded by locatation within the series, for the case where the function
+        For each unique value of the index (across levels, if multi-index) an aggregating function is applied to the
+        list of all values with that index (ordered by location within the series, for the case where the function
         is not transitive). This is done on a record-by-record basis. Returns a new Series with the results of this
         operation, indexed by the unique indices used for the grouping.
 
         Parameters:
         -----------
-        level: An integer or an list of integers specificying which levels in the multilevel index to use when
+        level: An integer or an list of integers specifying which levels in the multilevel index to use when
             performing the grouping.
         
         function: The function to apply to each each of the groups of indices. Should take a single ndarray of values
@@ -1044,10 +1043,10 @@ class Series(Data):
         """
 
         if function is None:
-            raise TypeError("Please supply an aggretrating function")
+            raise TypeError("Please supply an aggregating function")
 
         # if we ever demand that Series elements are basic data types, this is the place to check the output
-        # of the aggregrating function returns a single value
+        # of the aggregating function returns a single value
 
         return self._applyByIndex(level=level, function=function)
 
@@ -1072,7 +1071,6 @@ class Series(Data):
         Compute sums of series elements for each unique index value (across levels, if multi-index)
         """
         return self.seriesStatByIndex(level=level, stat='sum')
-
     
     def seriesMeanByIndex(self, level=0):
         """
