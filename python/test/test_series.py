@@ -305,3 +305,82 @@ class TestSeriesMethods(PySparkTestCase):
 
         assert_raises(ValueError, setIndex, data, 5)
         assert_raises(ValueError, setIndex, data, [1, 2])
+
+    def test_selectByIndex(self):
+        dataLocal = [((1,), arange(12))]
+        index = [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2]
+        data = Series(self.sc.parallelize(dataLocal), index=index)
+
+        result = data.selectByIndex(val=1)
+        assert_true(array_equal(result.values().first(), array([4, 5, 6, 7])))
+        assert_true(array_equal(result.index, array([1, 1, 1, 1])))
+
+        result = data.selectByIndex(val=1, squeeze=True)
+        assert_true(array_equal(result.index, array([0, 1, 2, 3])))
+
+        index = [
+            [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1],
+            [0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1],
+            [0, 1, 0, 1, 2, 3, 0, 1, 0, 1, 2, 3]
+        ]
+        data.index = array(index).T
+
+        result = data.selectByIndex(level=2, val=0)
+        assert_true(array_equal(result.values().first(), array([0, 2, 6, 8])))
+        assert_true(array_equal(result.index, array([[0, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 0]])))
+
+        result = data.selectByIndex(level=2, val=0, squeeze=True)
+        assert_true(array_equal(result.values().first(), array([0, 2, 6, 8])))
+        assert_true(array_equal(result.index, array([[0, 0], [0, 1], [1, 0], [1, 1]])))
+
+        result = data.selectByIndex(level=[0, 1], val=[1, 0])
+        assert_true(array_equal(result.values().first(), array([6, 7])))
+        assert_true(array_equal(result.index, array([[1, 0, 0], [1, 0, 1]])))
+
+        result = data.selectByIndex(level=[0, 2], val=[0, [2,3]])
+        assert_true(array_equal(result.values().first(), array([4, 5])))
+        assert_true(array_equal(result.index, array([[0, 1, 2], [0, 1, 3]])))
+
+        result = data.selectByIndex(level=1, val=1, filter=True)
+        assert_true(array_equal(result.values().first(), array([0, 1, 6, 7])))
+        assert_true(array_equal(result.index, array([[0, 0, 0], [0, 0, 1], [1, 0, 0], [1, 0, 1]])))
+
+    def test_seriesAggregateByIndex(self):
+        dataLocal = [((1,), arange(12))]
+        index = [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2]
+        data = Series(self.sc.parallelize(dataLocal), index=index)
+
+        result = data.seriesAggregateByIndex(function=sum)
+        assert_true(array_equal(result.values().first(), array([6, 22, 38])))
+        assert_true(array_equal(result.index, array([0, 1, 2])))
+
+        index = [
+            [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1],
+            [0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1],
+            [0, 1, 0, 1, 2, 3, 0, 1, 0, 1, 2, 3]
+        ]
+        data.index = array(index).T
+        
+        result = data.seriesAggregateByIndex(level=[0,1], function=sum)
+        assert_true(array_equal(result.values().first(), array([1, 14, 13, 38])))
+        assert_true(array_equal(result.index, array([[0, 0], [0, 1], [1, 0], [1, 1]])))
+
+    def test_seriesStatByIndex(self):
+        dataLocal = [((1,), arange(12))]
+        index = [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2]
+        data = Series(self.sc.parallelize(dataLocal), index=index)
+
+        assert_true(array_equal(data.seriesStatByIndex(stat='sum').values().first(), array([6, 22, 38])))
+        assert_true(array_equal(data.seriesStatByIndex(stat='mean').values().first(), array([1.5, 5.5, 9.5])))
+        assert_true(array_equal(data.seriesStatByIndex(stat='min').values().first(), array([0, 4, 8])))
+        assert_true(array_equal(data.seriesStatByIndex(stat='max').values().first(), array([3, 7, 11])))
+        assert_true(array_equal(data.seriesStatByIndex(stat='count').values().first(), array([4, 4, 4])))
+        assert_true(array_equal(data.seriesStatByIndex(stat='median').values().first(), array([1.5, 5.5, 9.5])))
+
+        assert_true(array_equal(data.seriesSumByIndex().values().first(), array([6, 22, 38])))
+        assert_true(array_equal(data.seriesMeanByIndex().values().first(), array([1.5, 5.5, 9.5])))
+        assert_true(array_equal(data.seriesMinByIndex().values().first(), array([0, 4, 8])))
+        assert_true(array_equal(data.seriesMaxByIndex().values().first(), array([3, 7, 11])))
+        assert_true(array_equal(data.seriesCountByIndex().values().first(), array([4, 4, 4])))
+        assert_true(array_equal(data.seriesMedianByIndex().values().first(), array([1.5, 5.5, 9.5])))
+

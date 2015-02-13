@@ -6,7 +6,6 @@ from thunder.rdds.keys import Dimensions
 from thunder.utils.common import checkParams, loadMatVar, smallestFloatType
 
 from itertools import product
-from collections import Iterable
 
 
 class Series(Data):
@@ -778,7 +777,7 @@ class Series(Data):
         from thunder.rdds.spatialseries import SpatialSeries
         return SpatialSeries(self.rdd).__finalize__(self)
 
-    def _makeMasks(self, index=None, level=None, val=None):
+    def _makeMasks(self, index=None, level=0):
         """
         Internal function for generating masks for selecting values based on multi-index values
     
@@ -791,13 +790,15 @@ class Series(Data):
         
         try:
             dims = len(array(index).shape)
-            if dims != 2:
-                raise ValueError('for multi-index functionality: index must be 2-dimensional; check that each entry has the same length')
+            if dims == 1:
+                index = array(index, ndmin=2).T
         except:
             raise TypeError('for multi-index functionality: index must be convertibile to a numpy ndarray')
 
-        if len(index.shape) == 1:
-            index = array(index, ndmin=2).T
+        try:
+            index = index[:, level]
+        except:
+            raise ValueError("levels must be indices into individual elements of the index")
 
         lenIdx = index.shape[0]
         nlevels = index.shape[1]
@@ -823,23 +824,15 @@ class Series(Data):
         if type(level) is int:
             level = [level]
 
-        if len(self.index.shape) == 1:
-            flat = True
-            index = array(self.index, ndmin=2).T
-        else:
-            flat = False
-            index = self.index
-        ind = index[:,level]
-
-        masks, ind = self._makeMasks(index=ind)
+        masks, ind = self._makeMasks(index=self.index, level=level)
         bcMasks = self.rdd.ctx.broadcast(masks)
         bcNum = self.rdd.ctx.broadcast(len(masks))
         def f(data):
             return array([function(data[bcMasks.value[x]]) for x in xrange(bcNum.value)])
         rdd = self.rdd.mapValues(f)
         index = array(ind)
-        if flat:
-            index = ravel(index) 
+        if len(index[0]) == 1:
+            index = ravel(index)
         return Series(rdd, index=index).__finalize__(self, noPropagate=('_dtype', '_index'))
 
     def selectByIndex(self, level=0, val=None, squeeze=False, filter=False):
@@ -864,25 +857,41 @@ class Series(Data):
         filter: If True, then all elemented EXCPET those signified by 'level' and 'value' will be selected.
         """
 
-        if not isinstance(val, Iterable):
-            val  [val]
-        if not isinstance(level, Iterable):
+        try:
+            level[0]
+        except:
             level = [level]
-                                
+        try:
+            val[0]
+        except:
+            val = [val]
+        
         remove = []
-        for i in xrange(len(val)):
-            if not isinstance(val[i], Iterable):
-                val[i] = [val[i]]
-                if squeeze:
+        if len(level) == 1:
+            try:
+                val[0][0]
+            except:
+                val = [val]
+            if squeeze and not filter and len(val)==1:
+                remove.append(level[0])
+        else:
+            for i in xrange(len(val)):
+                try:
+                    val[i][0]
+                except:
+                    val[i] = [val[i]]
+                if squeeze and not filter and len(val[i]) == 1:
                     remove.append(level[i])
+                                
+        if len(level) != len(val):
+            raise ValueError("list of levels must be of same length as list of corresponding values")
 
         p = product(*val)
         selected = set([x for x in p])
 
-        index = self.index[:, level]
-        masks, ind = self._makeMasks(index=index)
-        ind = array(ind)
-
+        #TODO: this could be more efficient if _makeMasks also accpeted the desired values so that
+        #does not produce ALL possible masks which we must then filter down to the ones we want here
+        masks, ind = self._makeMasks(index=self.index, level=level)
         nmasks = len(masks)
         masks = array([masks[x] for x in xrange(nmasks) if tuple(ind[x]) in selected])
 
@@ -892,14 +901,23 @@ class Series(Data):
         bcMask = self.rdd.ctx.broadcast(finalMask)
         
         rdd = self.rdd.mapValues(lambda v: v[bcMask.value])
-        indFinal = self.index[finalMask]
+        indFinal = array(self.index)
+        if len(indFinal.shape) == 1:
+            indFinal = array(indFinal, ndmin=2).T
+        indFinal = indFinal[finalMask]
 
         if squeeze:
             indFinal = delete(indFinal, remove, axis=1)
 
+        if len(indFinal[0]) == 1:
+            indFinal = ravel(indFinal)
+
+        elif len(indFinal[1]) == 0:
+            indFinal = arange(sum(finalMask))
+
         return Series(rdd, index=indFinal).__finalize__(self, noPropagate=('_index',))
 
-    def seriesAggregrateByIndex(self, level=0, function=None):
+    def seriesAggregateByIndex(self, level=0, function=None):
         """
         Aggregrate the data in each record, grouping by a multilevel index
         
@@ -923,7 +941,7 @@ class Series(Data):
         # if we ever demand that Series elements are basic data types, this is the place to check the output
         # of the aggregrating function returns a single value
 
-        return self._applyByIndex(level=0, function=function)
+        return self._applyByIndex(level=level, function=function)
 
     def seriesStatByIndex(self, level=0, stat=None):
         """
@@ -958,7 +976,7 @@ class Series(Data):
         """
         Compute medians of series elements for each unique index value (across levels, if multi-index)
         """
-        reeturn self.seriesStatByIndex(level=level, stat='median')`
+        return self.seriesStatByIndex(level=level, stat='median')
 
     def seriesStdevByIndex(self, level=0):
         """
