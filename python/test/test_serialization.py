@@ -1,7 +1,8 @@
+import json
 from nose.tools import assert_equal, assert_false, assert_raises, assert_true
 import unittest
 
-from thunder.utils.serializable import Serializable
+from thunder.utils.serializable import Serializable, _decode_dict
 
 
 class Foo(Serializable):
@@ -56,11 +57,11 @@ class TestSerialization(unittest.TestCase):
         origVisitor = Visitor('192.168', 'UA-1', 'http://www.google.com')
 
         # Serialize the object
-        pickled_visitor = origVisitor.serialize(numpyStorage='ascii')
+        pickled_visitor = origVisitor.toJSON(numpyStorage='ascii')
         # print pickled_visitor
 
         # Restore object
-        recovVisitor = Visitor.deserialize(pickled_visitor)
+        recovVisitor = Visitor.fromJSON(pickled_visitor)
 
         # Check that the object was reconstructed successfully
         assert_equal(origVisitor.ip, recovVisitor.ip)
@@ -91,8 +92,8 @@ class TestSerialization(unittest.TestCase):
 
         foo = SlottyFoo()
         foo.bar = 'a'
-        testJson = foo.serialize()
-        foo2 = SlottyFoo.deserialize(testJson)
+        testJson = foo.toJSON()
+        foo2 = SlottyFoo.fromJSON(testJson)
         assert_true(isinstance(foo2, SlottyFoo))
         assert_equal(foo, foo2)
 
@@ -129,8 +130,8 @@ class TestSerialization(unittest.TestCase):
         foo = NamedTupleyFoo()
         foo.nt.bar = "baz"
 
-        testJson = foo.serialize()
-        foo2 = NamedTupleyFoo.deserialize(testJson)
+        testJson = foo.toJSON()
+        foo2 = NamedTupleyFoo.fromJSON(testJson)
         assert_equal(foo, foo2)
 
     def test_nestedSerialization(self):
@@ -140,9 +141,9 @@ class TestSerialization(unittest.TestCase):
         foo.bar = Bar()
         foo.bar.baz = 1
 
-        testJson = foo.serialize()
+        testJson = foo.toJSON()
         # print testJson  # uncomment for testing
-        roundtripped = Foo.deserialize(testJson)
+        roundtripped = Foo.fromJSON(testJson)
 
         assert_true(isinstance(roundtripped, Foo))
         assert_true(hasattr(roundtripped, "bar"))
@@ -156,9 +157,9 @@ class TestSerialization(unittest.TestCase):
         foo = Foo()
         foo.lst = [Bar(baz=x) for x in xrange(3)]
 
-        testJson = foo.serialize()
+        testJson = foo.toJSON()
         # print testJson
-        roundtripped = Foo.deserialize(testJson)
+        roundtripped = Foo.fromJSON(testJson)
 
         assert_true(isinstance(roundtripped, Foo))
         assert_true(hasattr(roundtripped, "lst"))
@@ -170,7 +171,8 @@ class TestSerialization(unittest.TestCase):
             assert_equal(expectedBaz, bar.baz)
 
         # check that list is serialized using special case homogenous list encoding:
-        assert_true("py/homogeneousList" in testJson['lst'])
+        decodedDict = json.loads(testJson, object_hook=_decode_dict)
+        assert_true("py/homogeneousList" in decodedDict['lst'])
 
     def test_nestedHomogenousListSerializationWithSlots(self):
         """Test that multiple nested serializable objects with slots are serializable
@@ -178,9 +180,9 @@ class TestSerialization(unittest.TestCase):
         foo = Foo()
         foo.lst = [SlottyBar(baz=x) for x in xrange(3)]
 
-        testJson = foo.serialize()
+        testJson = foo.toJSON()
         # print testJson
-        roundtripped = Foo.deserialize(testJson)
+        roundtripped = Foo.fromJSON(testJson)
 
         assert_true(isinstance(roundtripped, Foo))
         assert_true(hasattr(roundtripped, "lst"))
@@ -192,7 +194,8 @@ class TestSerialization(unittest.TestCase):
             assert_equal(expectedBaz, bar.baz)
 
         # check that list is serialized using special case homogenous list encoding:
-        assert_true("py/homogeneousList" in testJson['lst'])
+        decodedDict = json.loads(testJson, object_hook=_decode_dict)
+        assert_true("py/homogeneousList" in decodedDict['lst'])
 
     def test_nestedHeterogenousListSerialization(self):
         """Test that multiple nested serializable objects of differing types are serializable
@@ -200,9 +203,9 @@ class TestSerialization(unittest.TestCase):
         foo = Foo()
         foo.lst = ["monkey", Bar(baz=1), (2, 3)]
 
-        testJson = foo.serialize()
+        testJson = foo.toJSON()
         # print testJson
-        roundtripped = Foo.deserialize(testJson)
+        roundtripped = Foo.fromJSON(testJson)
 
         assert_true(isinstance(roundtripped, Foo))
         assert_true(hasattr(roundtripped, "lst"))
@@ -213,17 +216,18 @@ class TestSerialization(unittest.TestCase):
             assert_equal(type(expected), type(actual))
             assert_equal(expected, actual)
 
+        decodedDict = json.loads(testJson, object_hook=_decode_dict)
         # heterogenous lists should be represented as simple json lists
-        assert_true(isinstance(testJson['lst'], list))
+        assert_true(isinstance(decodedDict['lst'], list))
         # no special "py/" type encoding is needed - no "py/" strings in list:
-        assert_false(any([k.startswith("py/") for k in testJson['lst'] if isinstance(k, basestring)]))
+        assert_false(any([k.startswith("py/") for k in decodedDict['lst'] if isinstance(k, basestring)]))
 
     def test_nestedHomogenousDictSerialization(self):
         foo = Foo()
         foo.dct = {"a": Bar(baz=1), "b": Bar(baz=2)}
-        testJson = foo.serialize()
+        testJson = foo.toJSON()
         # print testJson
-        roundtripped = Foo.deserialize(testJson)
+        roundtripped = Foo.fromJSON(testJson)
 
         assert_true(isinstance(roundtripped, Foo))
         assert_true(hasattr(roundtripped, "dct"))
@@ -235,7 +239,8 @@ class TestSerialization(unittest.TestCase):
             assert_equal(foo.dct[k], v)
 
         # check that dict is serialized using special case homogenous values encoding:
-        assert_true("py/homogeneousDict" in testJson['dct'])
+        decodedDict = json.loads(testJson, object_hook=_decode_dict)
+        assert_true("py/homogeneousDict" in decodedDict['dct'])
 
     def test_nestedHomogenousDictSerializationWithSlots(self):
         foo = Foo()
@@ -243,9 +248,9 @@ class TestSerialization(unittest.TestCase):
         bar2 = SlottyBar(baz=2)
         bar2.waargh = 3
         foo.dct = {"a": bar1, "b": bar2}
-        testJson = foo.serialize()
+        testJson = foo.toJSON()
         # print testJson
-        roundtripped = Foo.deserialize(testJson)
+        roundtripped = Foo.fromJSON(testJson)
 
         assert_true(isinstance(roundtripped, Foo))
         assert_true(hasattr(roundtripped, "dct"))
@@ -257,4 +262,5 @@ class TestSerialization(unittest.TestCase):
             assert_equal(foo.dct[k], v)
 
         # check that dict is serialized using special case homogenous values encoding:
-        assert_true("py/homogeneousDict" in testJson['dct'])
+        decodedDict = json.loads(testJson, object_hook=_decode_dict)
+        assert_true("py/homogeneousDict" in decodedDict['dct'])

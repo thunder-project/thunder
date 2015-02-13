@@ -8,6 +8,38 @@ def _isNamedTuple(obj):
     return hasattr(obj, "_fields") and hasattr(obj, "_asdict") and callable(obj._asdict)
 
 
+def _decode_list(data):
+    # workaround for JSON decoding to unicode, from
+    # http://stackoverflow.com/questions/956867/how-to-get-string-objects-instead-of-unicode-ones-from-json-in-python
+    rv = []
+    for item in data:
+        if isinstance(item, unicode):
+            item = item.encode('utf-8')
+        elif isinstance(item, list):
+            item = _decode_list(item)
+        elif isinstance(item, dict):
+            item = _decode_dict(item)
+        rv.append(item)
+    return rv
+
+
+def _decode_dict(data):
+    # workaround for JSON decoding to unicode, from
+    # http://stackoverflow.com/questions/956867/how-to-get-string-objects-instead-of-unicode-ones-from-json-in-python
+    rv = {}
+    for key, value in data.iteritems():
+        if isinstance(key, unicode):
+            key = key.encode('utf-8')
+        if isinstance(value, unicode):
+            value = value.encode('utf-8')
+        elif isinstance(value, list):
+            value = _decode_list(value)
+        elif isinstance(value, dict):
+            value = _decode_dict(value)
+        rv[key] = value
+    return rv
+
+
 class Serializable(object):
     """Mixin class that provides JSON serialization services to classes inheriting from it
 
@@ -346,22 +378,48 @@ class Serializable(object):
         # Return the re-constituted class
         return thawedObject
 
-    def save(self, f, numpyStorage='auto'):
-        """Serialize wrapped object to a JSON file.
+    def toJSON(self, numpyStorage='auto', **kwargs):
+        """Serialize this object to a JSON-formatted string
 
         Parameters
         ----------
-        f : string path to file or open writable file handle
+        numpyStorage: numpyStorage: {'auto', 'ascii', 'base64' }, optional, default 'auto'
+            See serialize().
+
+        **kwargs: other keyword arguments
+            Additional keyword arguments to be passed on to json.dumps().
+
+        Returns
+        -------
+        JSON string representation of this object
+        """
+        return json.dumps(self.serialize(numpyStorage=numpyStorage), **kwargs)
+
+    def save(self, f, numpyStorage='auto', **kwargs):
+        """Serialize this object to a JSON file.
+
+        Parameters
+        ----------
+        f: string path to file or open writable file handle
             The file to write to. A passed handle will be left open for further writing.
+
+        **kwargs: other keyword arguments
+            Additional keyword arguments to be passed on to json.dumps().
         """
         def saveImpl(fp, numpyStorage_):
-            json.dump(self.serialize(numpyStorage=numpyStorage_), fp)
+            json.dump(self.serialize(numpyStorage=numpyStorage_), fp, **kwargs)
         if isinstance(f, basestring):
             with open(f, 'w') as handle:
                 saveImpl(handle, numpyStorage)
         else:
             # assume f is a file
             saveImpl(f, numpyStorage)
+
+    @classmethod
+    def fromJSON(cls, s):
+        """Deserialize object from the passed string
+        """
+        return cls.deserialize(json.loads(s, object_hook=_decode_dict))
 
     @classmethod
     def load(cls, f):
@@ -383,7 +441,7 @@ class Serializable(object):
         New instance of cls, deserialized from the passed file
         """
         def loadImpl(fp):
-            dct = json.load(fp)
+            dct = json.load(fp, object_hook=_decode_dict)
             return cls.deserialize(dct)
 
         if isinstance(f, basestring):
