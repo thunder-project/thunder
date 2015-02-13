@@ -1,4 +1,4 @@
-""" Thunder JSON serialization utility """
+""" Thunder JSON object serialization utility """
 import abc
 import json
 
@@ -223,14 +223,12 @@ class Serializable(object):
         raise TypeError("Type %s not data-serializable" % dataType)
 
     def serialize(self, numpyStorage='auto'):
-        """
-        Serialize this object to a python dictionary that can easily be converted
+        """Serialize this object to a python dictionary that can easily be converted
         to/from JSON using Python's standard JSON library.
 
         Parameters
         ----------
-
-          numpyStorage: {'auto', 'ascii', 'base64' }, optional, default 'auto'
+        numpyStorage: {'auto', 'ascii', 'base64' }, optional, default 'auto'
             Use to select whether numpy arrays will be encoded in ASCII (as
             a list of lists) in Base64 (i.e. space efficient binary), or to
             select automatically (the default) depending on the size of the
@@ -239,10 +237,9 @@ class Serializable(object):
 
         Returns
         -------
-
-          The object encoded as a python dictionary with "JSON-safe" datatypes that is ready to
-          be converted to a string using Python's standard JSON library (or another library of
-          your choice).
+        The object encoded as a python dictionary with "JSON-safe" datatypes that is ready to
+        be converted to a string using Python's standard JSON library (or another library of
+        your choice).
 
         """
         # Check for unsupported class.
@@ -263,19 +260,16 @@ class Serializable(object):
 
     @classmethod
     def deserialize(cls, serializedDict):
-        """
-        Restore the object that has been converted to a python dictionary using an @serializable
+        """Restore the object that has been converted to a python dictionary using an @serializable
         class's serialize() method.
 
         Parameters
         ----------
-
-            serializedDict: a python dictionary returned by serialize()
+        serializedDict: a python dictionary, as returned by serialize()
 
         Returns
         -------
-
-            A reconstituted class instance
+        A reconstituted class instance
         """
         def restoreRecursively(dct):
             from numpy import frombuffer, dtype, array
@@ -417,7 +411,11 @@ class Serializable(object):
 
     @classmethod
     def fromJSON(cls, s):
-        """Deserialize object from the passed string
+        """Deserialize object from the passed JSON string
+
+        Parameters
+        ----------
+        s: JSON-encoded string, as returned by toJSON()
         """
         return cls.deserialize(json.loads(s, object_hook=_decode_dict))
 
