@@ -98,7 +98,7 @@ class Serializable(object):
                 else:
                     outData = [self.__serializeRecursively(val.__dict__, numpyStorage) for val in data]
                 return {
-                    "py/hmgList": {
+                    "py/homogeneousList": {
                         "type": elementType.__name__,
                         "module": elementType.__module__,
                         "data": outData
@@ -123,7 +123,7 @@ class Serializable(object):
                 }
             }
         elif dataType == dict:
-            # another awkward special case - check for homogenous serializable value types
+            # another awkward special case - check for homogeneous serializable value types
             valueType = None
             isHomogenousSerializableValueType = False
             for val in data.itervalues():
@@ -150,7 +150,7 @@ class Serializable(object):
                     outData = [(self.__serializeRecursively(k, numpyStorage),
                                 self.__serializeRecursively(val.__dict__, numpyStorage))
                                for (k, val) in data.iteritems()]
-                return {"py/hmgDict": {
+                return {"py/homogeneousDict": {
                     "type": valueType.__name__,
                     "module": valueType.__module__,
                     "data": outData
@@ -303,16 +303,16 @@ class Serializable(object):
             elif "py/complex" == dataKey:
                 data = dct["py/complex"]
                 return complex(float(data[0]), float(data[1]))
-            elif "py/hmgList" == dataKey:
+            elif "py/homogeneousList" == dataKey:
                 from importlib import import_module
-                data = dct["py/hmgList"]
+                data = dct["py/homogeneousList"]
                 className = data["type"]
                 moduleName = data["module"]
                 clazz = getattr(import_module(moduleName), className)
                 return [clazz.deserialize(val) for val in data["data"]]
-            elif "py/hmgDict" == dataKey:
+            elif "py/homogeneousDict" == dataKey:
                 from importlib import import_module
-                data = dct["py/hmgDict"]
+                data = dct["py/homogeneousDict"]
                 className = data["type"]
                 moduleName = data["module"]
                 clazz = getattr(import_module(moduleName), className)
