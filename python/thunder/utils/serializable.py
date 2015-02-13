@@ -69,6 +69,25 @@ class Serializable(object):
     """
     __metaclass__ = abc.ABCMeta
 
+    @staticmethod
+    def __isHomogeneousSerializable(itr):
+        try:
+            val = itr.next()
+        except StopIteration:
+            # empty iterator; define empty sequences as inhomogeneous
+            return False
+        if not isinstance(val, Serializable):
+            return False
+        firstType = type(val)
+        for val in itr:
+            if type(val) != firstType or not isinstance(val, Serializable):
+                return False
+        return True
+
+    @staticmethod
+    def __buildSlotDictionary(slots, objInstance):
+        return dict([(attr, getattr(objInstance, attr)) for attr in slots if hasattr(objInstance, attr)])
+
     def __serializeRecursively(self, data, numpyStorage):
         from collections import OrderedDict
         from numpy import ndarray
@@ -79,22 +98,14 @@ class Serializable(object):
             return data
         elif dataType == list:
             # awkward special case - check for lists of homogeneous serializable objects
-            isHomogeneousSerializableList = False
-            elementType = None
-            if data and isinstance(data[0], Serializable):
+            if self.__isHomogeneousSerializable(iter(data)):
                 elementType = type(data[0])
-                isHomogeneousSerializableList = True
-                for val in data:
-                    if (not isinstance(val, Serializable)) or (type(val) != elementType):
-                        isHomogeneousSerializableList = False
-                        break
-            if isHomogeneousSerializableList:
-                if hasattr(data[0], "__slots__"):
-                    slotAttrs = data[0].__slots__
-                    outData = []
-                    for val in data:
-                        valDict = dict([(attr, getattr(val, attr)) for attr in slotAttrs if hasattr(val, attr)])
-                        outData.append(self.__serializeRecursively(valDict, numpyStorage))
+                if hasattr(elementType, "__slots__"):
+                    outData = [
+                        self.__serializeRecursively(
+                            self.__buildSlotDictionary(elementType.__slots__, val),
+                        numpyStorage) for val in data
+                    ]
                 else:
                     outData = [self.__serializeRecursively(val.__dict__, numpyStorage) for val in data]
                 return {
@@ -124,32 +135,17 @@ class Serializable(object):
             }
         elif dataType == dict:
             # another awkward special case - check for homogeneous serializable value types
-            valueType = None
-            isHomogenousSerializableValueType = False
-            for val in data.itervalues():
-                if isinstance(val, Serializable):
-                    if valueType is None:
-                        valueType = type(val)
-                        isHomogenousSerializableValueType = True
-                    elif type(val) != valueType:
-                        isHomogenousSerializableValueType = False
-                        break
-                else:
-                    isHomogenousSerializableValueType = False
-                    break
-            if isHomogenousSerializableValueType:
+            if self.__isHomogeneousSerializable(data.itervalues()):
+                valueType = type(data.itervalues().next())
                 if hasattr(valueType, "__slots__"):
                     slotAttrs = valueType.__slots__
-                    outData = []
-                    for key, val in data.iteritems():
-                        keySer = self.__serializeRecursively(key, numpyStorage)
-                        valAttrDict = dict([(attr, getattr(val, attr)) for attr in slotAttrs if hasattr(val, attr)])
-                        valSer = self.__serializeRecursively(valAttrDict, numpyStorage)
-                        outData.append((keySer, valSer))
+                    outData = [(self.__serializeRecursively(k, numpyStorage),
+                                self.__serializeRecursively(self.__buildSlotDictionary(slotAttrs, v), numpyStorage))
+                               for (k, v) in data.iteritems()]
                 else:
                     outData = [(self.__serializeRecursively(k, numpyStorage),
-                                self.__serializeRecursively(val.__dict__, numpyStorage))
-                               for (k, val) in data.iteritems()]
+                                self.__serializeRecursively(v.__dict__, numpyStorage))
+                               for (k, v) in data.iteritems()]
                 return {"py/homogeneousDict": {
                     "type": valueType.__name__,
                     "module": valueType.__module__,
@@ -158,10 +154,7 @@ class Serializable(object):
                 }
             elif all(type(k) == str for k in data):  # string keys can be represented natively in JSON
                 # avoid dict comprehension for py2.6 compatibility
-                retVal = {}
-                for k, v in data.iteritems():
-                    retVal[k] = self.__serializeRecursively(v, numpyStorage)
-                return retVal
+                return dict([(k, self.__serializeRecursively(v, numpyStorage)) for (k, v) in data.iteritems()])
             else:
                 return {"py/dict": [(self.__serializeRecursively(k, numpyStorage),
                                      self.__serializeRecursively(v, numpyStorage)) for k, v in data.iteritems()]}
@@ -229,21 +222,12 @@ class Serializable(object):
 
         # If this object has slots, we need to convert the slots to a dict before serializing them.
         if hasattr(self, "__slots__"):
-            retVal = {}
-            for k in self.__slots__:
-                if hasattr(self, k):
-                    v = getattr(self, k)
-                    retVal[self.__serializeRecursively(k, numpyStorage)] = \
-                        self.__serializeRecursively(v, numpyStorage)
-            return retVal
-
-        # Otherwise, we handle the object as though it has a normal __dict__ containing its attributes.
+            dct = self.__buildSlotDictionary(self.__slots__, self)
         else:
-            retVal = {}
-            for k, v in self.__dict__.iteritems():
-                retVal[self.__serializeRecursively(k, numpyStorage)] = \
-                    self.__serializeRecursively(v, numpyStorage)
-            return retVal
+            # Otherwise, we handle the object as though it has a normal __dict__ containing its attributes.
+            dct = self.__dict__
+        # all object attribute names are strings, so no need to serialize those separately
+        return dict([(k, self.__serializeRecursively(v, numpyStorage)) for (k, v) in dct.iteritems()])
 
     @classmethod
     def deserialize(cls, serializedDict):
