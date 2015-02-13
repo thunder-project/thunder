@@ -957,7 +957,7 @@ class Series(Data):
             'count': size
         }
         func = STATS[stat.lower()]
-        return self.seriesAggregrateByIndex(level=level, function=func)
+        return self.seriesAggregateByIndex(level=level, function=func)
 
     def seriesSumByIndex(self, level=0):
         """
