@@ -29,7 +29,6 @@ class Series(Data):
 
     index : array-like or one-dimensional list
         Values must be unique, same length as the arrays in the input data.
-        levels = set(levels)
         Defaults to arange(len(data)) if not provided.
 
     dims : Dimensions
