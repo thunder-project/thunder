@@ -1,5 +1,6 @@
 from thunder.rdds.images import Images
 from thunder.utils.common import checkParams
+from thunder.utils.serializable import Serializable
 
 
 class Registration(object):
@@ -138,8 +139,11 @@ class RegistrationMethod(object):
         return Images(newrdd).__finalize__(images)
 
 
-class RegistrationModel(object):
-
+class RegistrationModel(Serializable, object):
+    # explicitly inherit from both object and Serializable to indicate that
+    # Serializable is intended to be used as a mixin.
+    # Can't inherit as (object, Serializable), has to be other way around:
+    # http://stackoverflow.com/questions/3003053/metaclass-multiple-inheritance-inconsistency
     def __init__(self, transformations, regMethod=None, transClass=None):
         self.transformations = transformations
         self.regMethod = regMethod
@@ -168,73 +172,6 @@ class RegistrationModel(object):
         # apply the transformations
         newrdd = images.rdd.map(lambda (k, im): (k, bcTransformations.value[k].apply(im)))
         return Images(newrdd).__finalize__(images)
-
-    def save(self, file):
-        """
-        Serialize registration model to a file as text using JSON.
-
-        Format is a dictionary, with keys 'regmethod' and 'transtype' specifying
-        the registration method used and the transformation type (as strings),
-        and 'transformations' containing the transformations. The exact format of the transformations
-        will vary by type, but will always be a dictionary, with keys indexing into an Images object,
-        and values containing the transformation parameters.
-
-        Parameters
-        ----------
-        file : filename or file handle
-            The file to write to
-
-        """
-
-        import json
-
-        if hasattr(file, 'write'):
-            f = file
-        else:
-            f = open(file, 'w')
-        output = json.dumps(self, default=lambda v: v.__dict__)
-        f.write(output)
-        f.close()
-
-    @staticmethod
-    def load(file):
-        """
-        Deserialize registration model from a file containing JSON.
-
-        Assumes a JSON formatted registration model, with keys 'regmethod' and 'transclass' specifying
-        the registration method used and the transformation type as strings, and 'transformations'
-        containing the transformations. The format of the transformations will depend on the type,
-        but it should be a dictionary of key value pairs, where the keys are keys of the target
-        Images object, and the values are arguments for reconstructing each transformation object.
-
-        Parameters
-        ----------
-        file : str
-            Name of a file to read from
-
-        Returns
-        -------
-        model : RegisterModel
-            Instance of a registration model
-        """
-
-        import json
-        import importlib
-
-        f = open(file, 'r')
-        input = json.loads(f.read())
-
-        # import the appropriate transformation class
-        regMethod = str(input['regMethod'])
-        className = str(input['transClass'])
-        transClass = getattr(importlib.import_module('thunder.imgprocessing.transformation'), className)
-
-        # instantiate the transformations and construct the model
-        transformations = {}
-        for k, v in input['transformations'].iteritems():
-            transformations[int(k)] = transClass(**v)
-        model = RegistrationModel(transformations, regMethod=regMethod, transClass=className)
-        return model
 
     def __repr__(self):
         out = "RegisterModel(method='%s', trans='%s', transformations=%s)" % \
