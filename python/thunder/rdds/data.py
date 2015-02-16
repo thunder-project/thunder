@@ -303,7 +303,7 @@ class Data(object):
         nextRdd = self.rdd.mapValues(lambda v: v.astype(dtype, casting=casting, copy=False))
         return self._constructor(nextRdd, dtype=str(dtype)).__finalize__(self)
 
-    def apply(self, func, keepdtype=False):
+    def apply(self, func, keepDtype=False, keepIndex=False):
         """ Apply arbitrary function to records of a Data object.
 
         This wraps the combined process of calling Spark's map operation on
@@ -314,15 +314,19 @@ class Data(object):
         func : function
             Function to apply to records.
 
-        keepdtype : boolean
+        keepDtype : boolean
             Whether to preserve the dtype, if false dtype will be set to none
             under the assumption that the function might change it
-        """
 
-        if keepdtype:
-            noprop = ()
-        else:
-            noprop = ('_dtype',)
+        keepIndex : boolean
+            Whether to preserve the index, if false index will be set to none
+            under the assumption that the function might change it
+        """
+        noprop = ()
+        if keepDtype is False:
+            noprop += ('_dtype',)
+        if keepIndex is False:
+            noprop += ('_index',)
         return self._constructor(self.rdd.map(func)).__finalize__(self, noPropagate=noprop)
 
     def applyKeys(self, func, **kwargs):
