@@ -190,6 +190,7 @@ def install_thunder(master, opts, spark_version_string):
     access, secret = get_s3_keys()
     filled = configstring.replace('ACCESS', access).replace('SECRET', secret)
     ssh(master, opts, "sed -i'f' 's,.*</configuration>.*,"+filled+"&,' /root/ephemeral-hdfs/conf/core-site.xml")
+    ssh(master, opts, "sed -i'f' 's,.*</configuration>.*,"+filled+"&,' /root/spark/conf/core-site.xml")
 
     # add AWS credentials to ~/.boto
     credentialstring = "[Credentials]\naws_access_key_id = ACCESS\naws_secret_access_key = SECRET\n"
