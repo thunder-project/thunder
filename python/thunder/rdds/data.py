@@ -265,7 +265,7 @@ class Data(object):
 
     def values(self):
         """
-        Return values, ignoring keys
+        Return rdd of values, ignoring keys
 
         This calls the Spark values() method on the underlying RDD.
         """
@@ -273,7 +273,7 @@ class Data(object):
 
     def keys(self):
         """
-        Return keys, ignoring values
+        Return rdd of keys, ignoring values
 
         This calls the Spark keys() method on the underlying RDD.
         """
@@ -361,7 +361,7 @@ class Data(object):
 
         return self.apply(lambda (k, v): (k, func(v)), **kwargs)
 
-    def collect(self):
+    def collect(self, sorting=False):
         """
         Return all records to the driver
 
@@ -369,43 +369,66 @@ class Data(object):
 
         This calls the Spark collect() method on the underlying RDD.
         """
-        return self.rdd.collect()
+        if sorting:
+            return self.sortByKey().rdd.collect()
+        else:
+            return self.rdd.collect()
 
-    def collectAsArray(self):
+    def collectAsArray(self, sorting=False):
         """
         Return all keys and values to the driver as a tuple of numpy arrays
 
         This will be slow for large datasets, and may exhaust the available memory on the driver.
         """
         from numpy import asarray
-        out = self.rdd.collect()
+        out = self.collect(sorting)
         keys = asarray(map(lambda (k, v): k, out))
         values = asarray(map(lambda (k, v): v, out))
         return keys, values
 
-    def collectValuesAsArray(self):
+    def collectValuesAsArray(self, sorting=False):
         """
         Return all records to the driver as a numpy array
 
         This will be slow for large datasets, and may exhaust the available memory on the driver.
         """
         from numpy import asarray
-        return asarray(self.rdd.values().collect())
+        if sorting:
+            rdd = self.sortByKey().rdd
+        else:
+            rdd = self.rdd
+        return asarray(rdd.values().collect())
 
-    def collectKeysAsArray(self):
+    def collectKeysAsArray(self, sorting=False):
         """
         Return all values to the driver as a numpy array
 
         This will be slow for large datasets, and may exhaust the available memory on the driver.
         """
         from numpy import asarray
-        return asarray(self.rdd.keys().collect())
+        if sorting:
+            rdd = self.sortByKey().rdd
+        else:
+            rdd = self.rdd
+        return asarray(rdd.keys().collect())
+
+    def sortByKey(self):
+        """
+        Sort records by keys.
+
+        This calls the Spark sortByKey() method on the underlying RDD, but reverse the order
+        of the key tuples before and after sorting so they are sorted according to the convention
+        that the first key varies fastest, then the second, then the third, etc.
+        """
+        newrdd = self.rdd.map(lambda (k, v): (k[::-1], v)).sortByKey().map(lambda (k, v): (k[::-1], v))
+        return self._constructor(newrdd).__finalize__(self)
 
     def count(self):
         """
         Calculates and returns the number of records in the RDD.
 
-        This calls the Spark count() method on the underlying RDD and updates the .nrecords metadata attribute.
+        This calls the Spark count() method on the underlying RDD and updates
+        the .nrecords metadata attribute.
         """
         count = self.rdd.count()
         self._nrecords = count
@@ -415,8 +438,8 @@ class Data(object):
         """
         Mean of values, ignoring keys
 
-        If dtype is not None, then the values will first be cast to the requested type before the operation is
-        performed. See Data.astype() for details.
+        If dtype is not None, then the values will first be cast to the requested
+        type before the operation is performed. See Data.astype() for details.
         """
         return self.stats('mean', dtype=dtype, casting=casting).mean()
 
