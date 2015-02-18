@@ -206,18 +206,21 @@ class ImagesLoader(object):
             if multipage.mode.startswith('I') and 'S' in multipage.mode:
                 # signed integer tiff file; use tifffile module to read
                 import thunder.rdds.fileio.tifffile as tifffile
-                fbuf.seek(0, )
+                fbuf.seek(0)  # reset pointer after read done by PIL
                 tfh = tifffile.TiffFile(fbuf)
-                ary = tfh.asarray()  # ary comes back with pages as first dimension, need to transpose
+                ary = tfh.asarray()  # ary comes back with pages as first dimension, will need to transpose
                 if nplanes is not None:
-                    values = [transpose(ary[i:(i+nplanes)]) for i in xrange(0, ary.shape[0], nplanes)]
+                    values = [ary[i:(i+nplanes)] for i in xrange(0, ary.shape[0], nplanes)]
                 else:
-                    values = [transpose(ary)]
+                    values = [ary]
                 tfh.close()
-                # squeeze out last dimension if singleton
-                values = [val.squeeze(-1) if val.shape[-1] == 1 else val for val in values]
+                # transpose Z dimension if any, leave X and Y in same order
+                if ary.ndim == 3:
+                    values = [val.transpose((1, 2, 0)) for val in values]
+                    # squeeze out last dimension if singleton
+                    values = [val.squeeze(-1) if val.shape[-1] == 1 else val for val in values]
             else:
-                # normal case; use PIL/Pillow for anything but unsigned ints
+                # normal case; use PIL/Pillow for anything but signed ints
                 pageIdx = 0
                 imgArys = []
                 npagesLeft = -1 if nplanes is None else nplanes  # counts number of planes remaining in image if positive
