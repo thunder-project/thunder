@@ -2,7 +2,7 @@
 """
 from matplotlib.pyplot import imread
 from io import BytesIO
-from numpy import array, dstack, frombuffer, ndarray, prod
+from numpy import array, dstack, frombuffer, ndarray, prod, transpose
 from thunder.rdds.fileio.readers import getParallelReaderForPath
 from thunder.rdds.images import Images
 
@@ -199,35 +199,52 @@ class ImagesLoader(object):
 
         def multitifReader(idxAndBuf):
             idx, buf = idxAndBuf
+            pageCount = -1
+            values = []
             fbuf = BytesIO(buf)
             multipage = Image.open(fbuf)
-            pageIdx = 0
-            imgArys = []
-            npagesLeft = -1 if nplanes is None else nplanes  # counts number of planes remaining in image if positive
-            values = []
-            while True:
-                try:
-                    multipage.seek(pageIdx)
-                    imgArys.append(conversionFcn(multipage))
-                    pageIdx += 1
-                    npagesLeft -= 1
-                    if npagesLeft == 0:
-                        # we have just finished an image from this file
-                        retAry = dstack(imgArys) if len(imgArys) > 1 else imgArys[0]
-                        values.append(retAry)
-                        # reset counters:
-                        npagesLeft = nplanes
-                        imgArys = []
-                except EOFError:
-                    # past last page in tif
-                    break
-            if imgArys:
-                retAry = dstack(imgArys) if len(imgArys) > 1 else imgArys[0]
-                values.append(retAry)
+            if multipage.mode.startswith('I') and 'S' in multipage.mode:
+                # signed integer tiff file; use tifffile module to read
+                import thunder.rdds.fileio.tifffile as tifffile
+                fbuf.seek(0, )
+                tfh = tifffile.TiffFile(fbuf)
+                ary = tfh.asarray()  # ary comes back with pages as first dimension, need to transpose
+                if nplanes is not None:
+                    values = [transpose(ary[i:(i+nplanes)]) for i in xrange(0, ary.shape[0], nplanes)]
+                else:
+                    values = [transpose(ary)]
+                tfh.close()
+                # squeeze out last dimension if singleton
+                values = [val.squeeze(-1) if val.shape[-1] == 1 else val for val in values]
+            else:
+                # normal case; use PIL/Pillow for anything but unsigned ints
+                pageIdx = 0
+                imgArys = []
+                npagesLeft = -1 if nplanes is None else nplanes  # counts number of planes remaining in image if positive
+                while True:
+                    try:
+                        multipage.seek(pageIdx)
+                        imgArys.append(conversionFcn(multipage))
+                        pageIdx += 1
+                        npagesLeft -= 1
+                        if npagesLeft == 0:
+                            # we have just finished an image from this file
+                            retAry = dstack(imgArys) if len(imgArys) > 1 else imgArys[0]
+                            values.append(retAry)
+                            # reset counters:
+                            npagesLeft = nplanes
+                            imgArys = []
+                    except EOFError:
+                        # past last page in tif
+                        break
+                pageCount = pageIdx
+                if imgArys:
+                    retAry = dstack(imgArys) if len(imgArys) > 1 else imgArys[0]
+                    values.append(retAry)
             # check for inappropriate nplanes that doesn't evenly divide num pages
-            if nplanes and (pageIdx % nplanes):
+            if nplanes and (pageCount % nplanes):
                 raise ValueError("nplanes '%d' does not evenly divide page count of multipage tif '%d'" %
-                                 (nplanes, pageIdx))
+                                 (nplanes, pageCount))
             nvals = len(values)
             keys = [idx*nvals + timepoint for timepoint in xrange(nvals)]
             return zip(keys, values)

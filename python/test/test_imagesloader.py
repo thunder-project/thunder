@@ -168,13 +168,13 @@ class TestImagesFileLoaders(PySparkTestCase):
         collectedTiffImages = tiffImages.collect()
 
         assert_equals(2, len(collectedTiffImages), "Expected2 images, got %d" % len(collectedTiffImages))
-        # expectedSums = [1140006, 1119161, 1098917]
+        expectedSums = [1973201, 2254767]
         expectedIdx = 0
         for idx, tiffAry in collectedTiffImages:
             assert_equals((120, 120), tiffAry.shape)
             assert_equals('int16', str(tiffAry.dtype))
             assert_equals(expectedIdx, idx)
-            # assert_equals(expectedSums[idx], tiffAry.ravel().sum())
+            assert_equals(expectedSums[idx], tiffAry.ravel().sum())
             expectedIdx += 1
 
 

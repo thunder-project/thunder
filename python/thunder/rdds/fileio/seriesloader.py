@@ -406,6 +406,9 @@ class SeriesLoader(object):
             conversionFcn = pil_to_array  # use our modified version of matplotlib's pil_to_array
 
         height, width, npages, dtype = SeriesLoader.__readMetadataFromFirstPageOfMultiTif(reader, filenames[0])
+        if dtype.startswith('int'):
+            raise ValueError('Signed integer tiff images are not supported in SeriesLoader (shuffle=False);' +
+                             ' please try loading as Images (shuffle=True)')
         pixelBytesize = dtypeFunc(dtype).itemsize
         if newDtype is None or str(newDtype) == '':
             newDtype = str(dtype)
