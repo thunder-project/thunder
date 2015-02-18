@@ -255,6 +255,7 @@ class TestSeriesGetters(PySparkTestCase):
         # passing a range that is completely out of bounds throws a KeyError
         assert_raises(KeyError, self.series.__getitem__, (slice(2, 3), slice(None, None)))
 
+
 class TestDataMethods(PySparkTestCase):
 
     def test_sortbykey(self):
@@ -282,7 +283,7 @@ class TestDataMethods(PySparkTestCase):
         out = data.sortByKey().keys().collect()
         assert(array_equal(out, [(0,), (1,), (2,)]))
 
-    def collect(self):
+    def test_collect(self):
 
         dataLocal = [
             ((0, 0), array([0])),
@@ -299,11 +300,11 @@ class TestDataMethods(PySparkTestCase):
 
         assert(array_equal(out, [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2]]))
 
-        out = data.collectKeysAsArray()
+        out = data.collectValuesAsArray()
 
-        assert(array_equal((out, [0, 1, 2, 3, 4, 5])))
+        assert(array_equal(out, [[0], [1], [2], [3], [4], [5]]))
 
-    def collect_with_sorting(self):
+    def test_collect_with_sorting(self):
 
         dataLocal = [
             ((0, 0), array([0])),
@@ -320,6 +321,8 @@ class TestDataMethods(PySparkTestCase):
 
         assert(array_equal(out, [[0, 0], [1, 0], [0, 1], [1, 1], [0, 2], [1, 2]]))
 
-        out = data.collectKeysAsArray()
+        out = data.collectValuesAsArray(sorting=True)
 
-        assert(array_equal((out, [0, 3, 1, 4, 2, 5])))
+        print(out)
+
+        assert(array_equal(out, [[0], [3], [1], [4], [2], [5]]))
