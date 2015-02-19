@@ -259,19 +259,19 @@ class TestLoadIrregularImages(PySparkTestCaseWithOutputDir):
     def _write_tiffs(self):
         import thunder.rdds.fileio.tifffile as tifffile
         writer1 = tifffile.TiffWriter(os.path.join(self.outputdir, "tif01.tif"))
-        writer1.save(self.ary[:8], photometric="minisblack")  # write out 8 pages
+        writer1.save(self.ary[:8].transpose((0, 2, 1)), photometric="minisblack")  # write out 8 pages
         writer1.close()
         del writer1
 
         writer2 = tifffile.TiffWriter(os.path.join(self.outputdir, "tif02.tif"))
-        writer2.save(self.ary, photometric="minisblack")  # write out all 16 pages
+        writer2.save(self.ary.transpose((0, 2, 1)), photometric="minisblack")  # write out all 16 pages
         writer2.close()
         del writer2
 
     def _write_stacks(self):
-        with open(os.path.join(self.outputdir, "stack01.bin")) as f:
+        with open(os.path.join(self.outputdir, "stack01.bin"), "w") as f:
             self.ary[:8].tofile(f)
-        with open(os.path.join(self.outputdir, "stack02.bin")) as f:
+        with open(os.path.join(self.outputdir, "stack02.bin"), "w") as f:
             self.ary.tofile(f)
 
     def _run_tst(self, imgType, dtype):
@@ -311,5 +311,8 @@ class TestLoadIrregularImages(PySparkTestCaseWithOutputDir):
     def test_loadMultipleUnsignedIntTifsAsSeries(self):
         self._run_tst('tif', 'uint16')
 
-    def test_loadMultipleBinaryStacksAsSeries(self):
-        self._run_tst('stack', 'uint16')
+    # can't currently have binary stack files of different sizes, since we have to specify a
+    # fixed `dims` for all stacks. leaving in place b/c it seems like something we might want
+    # to support soon.
+    # def test_loadMultipleBinaryStacksAsSeries(self):
+    #    self._run_tst('stack', 'uint16')
