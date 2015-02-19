@@ -159,6 +159,24 @@ class TestImagesFileLoaders(PySparkTestCase):
         # not the driver. But this is expected behavior.
         assert_raises(Exception, ImagesLoader(self.sc).fromTif(imagePath, nplanes=2).count)
 
+    def test_fromSignedIntTif(self):
+        imagePath = os.path.join(self.testResourcesDir, "multilayer_tif", "test_signed.tif")
+        tiffImages = ImagesLoader(self.sc).fromTif(imagePath, nplanes=1)
+        assert_equals(2, tiffImages.nrecords)
+        assert_equals('int16', tiffImages.dtype)
+
+        collectedTiffImages = tiffImages.collect()
+
+        assert_equals(2, len(collectedTiffImages), "Expected 2 images, got %d" % len(collectedTiffImages))
+        expectedSums = [1973201, 2254767]
+        expectedIdx = 0
+        for idx, tiffAry in collectedTiffImages:
+            assert_equals((120, 120), tiffAry.shape)
+            assert_equals('int16', str(tiffAry.dtype))
+            assert_equals(expectedIdx, idx)
+            assert_equals(expectedSums[idx], tiffAry.ravel().sum())
+            expectedIdx += 1
+
 
 class TestImagesLoaderUsingOutputDir(PySparkTestCaseWithOutputDir):
     def test_fromStack(self):
