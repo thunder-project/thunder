@@ -209,6 +209,7 @@ class ImagesLoader(object):
                 fbuf.seek(0)  # reset pointer after read done by PIL
                 tfh = tifffile.TiffFile(fbuf)
                 ary = tfh.asarray()  # ary comes back with pages as first dimension, will need to transpose
+                pageCount = ary.shape[0]  
                 if nplanes is not None:
                     values = [ary[i:(i+nplanes)] for i in xrange(0, ary.shape[0], nplanes)]
                 else:
