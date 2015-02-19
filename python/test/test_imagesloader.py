@@ -121,7 +121,9 @@ class TestImagesFileLoaders(PySparkTestCase):
     def test_fromMultiTimepointTif(self):
         imagePath = os.path.join(self.testResourcesDir, "multilayer_tif", "dotdotdot_lzw.tif")
         tiffImages = ImagesLoader(self.sc).fromTif(imagePath, nplanes=1)
-        assert_equals(3, tiffImages._nrecords)  # fix for issue #116 means we now have _nrecords after loading
+        # we don't expect to have nrecords cached, since the driver doesn't know how many images there are per file
+        assert_true(tiffImages._nrecords is None)
+        assert_equals(3, tiffImages.nrecords)
 
         collectedTiffImages = tiffImages.collect()
 
@@ -138,7 +140,8 @@ class TestImagesFileLoaders(PySparkTestCase):
         imagePath = os.path.join(self.testResourcesDir, "multilayer_tif", "dotdotdot_lzw*.tif")
 
         tiffImages = ImagesLoader(self.sc).fromTif(imagePath, nplanes=1)
-        assert_equals(6, tiffImages._nrecords)  # fix for issue #116 means we now have _nrecords after loading
+        assert_true(tiffImages._nrecords is None)
+        assert_equals(6, tiffImages.nrecords)
 
         collectedTiffImages = tiffImages.collect()
 
@@ -154,9 +157,7 @@ class TestImagesFileLoaders(PySparkTestCase):
         # 3 pages / file is not evenly divisible by 2 planes
         # note this will still log a big traceback, since the exception is in the executor,
         # not the driver. But this is expected behavior.
-        # with change to fix #116, fromTif is now evaluated eagerly when nplanes is passed,
-        # so exception happens in fromTif, rather than during subsequent count() as previously
-        assert_raises(Exception, ImagesLoader(self.sc).fromTif, imagePath, nplanes=2)
+        assert_raises(Exception, ImagesLoader(self.sc).fromTif(imagePath, nplanes=2).count)
 
     def test_fromSignedIntTif(self):
         imagePath = os.path.join(self.testResourcesDir, "multilayer_tif", "test_signed.tif")

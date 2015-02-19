@@ -127,48 +127,9 @@ class ImagesLoader(object):
         reader = getParallelReaderForPath(dataPath)(self.sc)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                 npartitions=npartitions)
-        # note that binary stack files currently must be uniform in size, unlike tifs
-        # this is because we specify only one `dims` parameter for all stack files
-        # this also means we don't currently have to worry about ensuring consistent image numbering
-        #   in the face of potentially differing numbers of images per file, as we do for tifs
         nrecords = reader.lastNRecs if nplanes is None else None
         newDims = tuple(list(dims[:-1]) + [nplanes]) if nplanes else dims
         return Images(readerRdd.flatMap(toArray), nrecords=nrecords, dims=newDims, dtype=dtype)
-
-    def __renumberImages(self, imageSequenceRdd):
-        """Takes an RDD of (file index, [sequence of arrays]) to an RDD of consecutively-numbered
-        (array index, array) pairs.
-
-        Returns pair of (new Rdd, total record count)
-        """
-        imageSequenceRdd.cache()
-        try:
-            # get map of (file index, num arrays) pairs
-            fileIdxToNArraysMap = imageSequenceRdd.mapValues(lambda arys: len(arys)).collectAsMap()
-            fileIdxToNArraysList = list(fileIdxToNArraysMap.iteritems())
-            fileIdxToNArraysList.sort()  # sort by file index
-
-            def cumSum(lst):
-                running = 0
-                for idx, count in lst:
-                    yield idx, running
-                    running += count  # update var *after* yield, yielding count *prior* to this index
-            fileIdxToCumulativeArysMap = dict(list(cumSum(fileIdxToNArraysList)))
-            totalRecords = reduce(lambda x, y: x + y, map(lambda (_, c): c, fileIdxToNArraysList), 0)
-            del fileIdxToNArraysMap, fileIdxToNArraysList
-
-            bcFileIdxToCumulativeArysMap = self.sc.broadcast(fileIdxToCumulativeArysMap)
-
-            def seqToIndividualIndices(fileIndexAndSeq):
-                fileIdx, seq = fileIndexAndSeq
-                offset = bcFileIdxToCumulativeArysMap.value[fileIdx]
-                for seqIdx, val in enumerate(seq):
-                    yield offset+seqIdx, val
-
-            return imageSequenceRdd.flatMap(seqToIndividualIndices), totalRecords
-
-        finally:
-            imageSequenceRdd.unpersist()
 
     def fromTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, nplanes=None,
                 npartitions=None):
@@ -288,19 +249,15 @@ class ImagesLoader(object):
             if nplanes and (pageCount % nplanes):
                 raise ValueError("nplanes '%d' does not evenly divide page count of multipage tif '%d'" %
                                  (nplanes, pageCount))
-            # return values are: (int index of input file, list of image arrays from file)
-            return idx, values
+            nvals = len(values)
+            keys = [idx*nvals + timepoint for timepoint in xrange(nvals)]
+            return zip(keys, values)
 
         reader = getParallelReaderForPath(dataPath)(self.sc)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                 npartitions=npartitions)
-        imageRdd = readerRdd.map(multitifReader)
-        if nplanes is None:
-            return Images(imageRdd.mapValues(lambda vseq: vseq[0]), nrecords=reader.lastNRecs)
-        else:
-            # need to calculate actual number of images per input file to get consistent keys
-            sequentialImageRdd, nrecs = self.__renumberImages(imageRdd)
-            return Images(sequentialImageRdd, nrecords=nrecs)
+        nrecords = reader.lastNRecs if nplanes is None else None
+        return Images(readerRdd.flatMap(multitifReader), nrecords=nrecords)
 
     def fromPng(self, dataPath, ext='png', startIdx=None, stopIdx=None, recursive=False, npartitions=None):
         """Load an Images object stored in a directory of png files
