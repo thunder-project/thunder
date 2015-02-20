@@ -297,13 +297,10 @@ class BotoS3ParallelReader(_BotoS3Client):
         return ["s3n:///%s/%s" % (bucketname, keyname) for keyname in keyNames]
 
     def _listFilesImpl(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
-        if recursive:
-            raise NotImplementedError("Recursive traversal of directories isn't yet implemented for S3 - sorry!")
         parse = _BotoS3Client.parseS3Query(dataPath)
-
         conn = boto.connect_s3()
         bucket = conn.get_bucket(parse[0])
-        keys = _BotoS3Client.retrieveKeys(bucket, parse[1], prefix=parse[2], postfix=parse[3])
+        keys = _BotoS3Client.retrieveKeys(bucket, parse[1], prefix=parse[2], postfix=parse[3], recursive=recursive)
         keyNameList = [key.name for key in keys]
         if ext:
             keyNameList = [keyname for keyname in keyNameList if keyname.endswith(ext)]
@@ -317,10 +314,8 @@ class BotoS3ParallelReader(_BotoS3Client):
 
         Returns RDD of <string s3 keyname, string buffer> k/v pairs.
         """
-        if recursive:
-            raise NotImplementedError("Recursive traversal of directories isn't yet implemented for S3 - sorry!")
         dataPath = appendExtensionToPathSpec(dataPath, ext)
-        bucketName, keyNameList = self._listFilesImpl(dataPath, startIdx=startIdx, stopIdx=stopIdx)
+        bucketName, keyNameList = self._listFilesImpl(dataPath, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
 
         if not keyNameList:
             raise FileNotFoundError("No S3 objects found for '%s'" % dataPath)
