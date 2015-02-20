@@ -468,12 +468,12 @@ class Series(Data):
         if not (dtype is None):
             out = out.astype(dtype, casting)
 
-        result = out.rdd.map(lambda (_, v): v).collect()
-        nout = size(result[0])
-
         if sorting is True:
-            keys = out.subToInd().rdd.map(lambda (k, _): int(k)).collect()
-            result = array([v for (k, v) in sorted(zip(keys, result), key=lambda (k, v): k)])
+            result = out.sortByKey().values().collect()
+        else:
+            result = out.rdd.values().collect()
+
+        nout = size(result[0])
 
         # reshape into a dense array of shape (b, x, y, z)  or (b, x, y) or (b, x)
         # where b is the number of outputs per record

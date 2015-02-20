@@ -254,3 +254,75 @@ class TestSeriesGetters(PySparkTestCase):
 
         # passing a range that is completely out of bounds throws a KeyError
         assert_raises(KeyError, self.series.__getitem__, (slice(2, 3), slice(None, None)))
+
+
+class TestDataMethods(PySparkTestCase):
+
+    def test_sortbykey(self):
+
+        dataLocal = [
+            ((0, 0), array([0])),
+            ((0, 1), array([0])),
+            ((0, 2), array([0])),
+            ((1, 0), array([0])),
+            ((1, 1), array([0])),
+            ((1, 2), array([0]))
+        ]
+
+        data = Data(self.sc.parallelize(dataLocal))
+        out = data.sortByKey().keys().collect()
+        assert(array_equal(out, [(0, 0), (1, 0), (0, 1), (1, 1), (0, 2), (1, 2)]))
+
+        dataLocal = [
+            ((0,), array([0])),
+            ((1,), array([0])),
+            ((2,), array([0]))
+        ]
+
+        data = Data(self.sc.parallelize(dataLocal))
+        out = data.sortByKey().keys().collect()
+        assert(array_equal(out, [(0,), (1,), (2,)]))
+
+    def test_collect(self):
+
+        dataLocal = [
+            ((0, 0), array([0])),
+            ((0, 1), array([1])),
+            ((0, 2), array([2])),
+            ((1, 0), array([3])),
+            ((1, 1), array([4])),
+            ((1, 2), array([5]))
+        ]
+
+        data = Data(self.sc.parallelize(dataLocal))
+
+        out = data.collectKeysAsArray()
+
+        assert(array_equal(out, [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2]]))
+
+        out = data.collectValuesAsArray()
+
+        assert(array_equal(out, [[0], [1], [2], [3], [4], [5]]))
+
+    def test_collect_with_sorting(self):
+
+        dataLocal = [
+            ((0, 0), array([0])),
+            ((0, 1), array([1])),
+            ((0, 2), array([2])),
+            ((1, 0), array([3])),
+            ((1, 1), array([4])),
+            ((1, 2), array([5]))
+        ]
+
+        data = Data(self.sc.parallelize(dataLocal))
+
+        out = data.collectKeysAsArray(sorting=True)
+
+        assert(array_equal(out, [[0, 0], [1, 0], [0, 1], [1, 1], [0, 2], [1, 2]]))
+
+        out = data.collectValuesAsArray(sorting=True)
+
+        print(out)
+
+        assert(array_equal(out, [[0], [3], [1], [4], [2], [5]]))
