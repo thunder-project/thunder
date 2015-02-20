@@ -342,7 +342,7 @@ class ThunderContext():
 
     def convertImagesToSeries(self, dataPath, outputDirPath, dims=None, inputFormat='stack', ext=None,
                               dtype='int16', blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,
-                              shuffle=False, overwrite=False, recursive=False, nplanes=None, npartitions=None,
+                              shuffle=True, overwrite=False, recursive=False, nplanes=None, npartitions=None,
                               renumber=False):
         """
         Write out Images data as Series data, saved in a flat binary format.
