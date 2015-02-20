@@ -86,7 +86,8 @@ class ThunderContext():
         return data
 
     def loadImages(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
-                   startIdx=None, stopIdx=None, recursive=False, nplanes=None, npartitions=None):
+                   startIdx=None, stopIdx=None, recursive=False, nplanes=None, npartitions=None,
+                   renumber=False):
         """
         Loads an Images object from data stored as a binary image stack, tif, or png files.
 
@@ -149,11 +150,18 @@ class ThunderContext():
             first nplane planes of the first file being record 0, the second nplane planes being record 1, etc,
             until the first file is exhausted and record ordering continues with the first nplane planes of the
             second file, and so on. With nplanes=None (the default), a single file will be considered as
-            representing a single record.
+            representing a single record. Keys are calculated assuming that all input files contain the same
+            number of records; if the number of records per file is not the same across all files,
+            then `renumber` should be set to True to ensure consistent keys.
 
         npartitions: positive int, optional
             If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
             partition per image file.
+
+        renumber: boolean, optional, default False
+            If renumber evaluates to True, then the keys for each record will be explicitly recalculated after
+            all images are loaded. This should only be necessary at load time when different files contain
+            different number of records. See Images.renumber().
 
         Returns
         -------
@@ -181,11 +189,15 @@ class ThunderContext():
             data = loader.fromPng(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
                                   recursive=recursive, npartitions=npartitions)
 
-        return data
+        if not renumber:
+            return data
+        else:
+            return data.renumber()
 
     def loadImagesAsSeries(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
                            blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,
-                           shuffle=True, recursive=False, nplanes=None, npartitions=None):
+                           shuffle=True, recursive=False, nplanes=None, npartitions=None,
+                           renumber=False):
         """
         Load Images data as Series data.
 
@@ -263,11 +275,20 @@ class ThunderContext():
             first nplane planes of the first file being record 0, the second nplane planes being record 1, etc,
             until the first file is exhausted and record ordering continues with the first nplane planes of the
             second file, and so on. With nplanes=None (the default), a single file will be considered as
-            representing a single record. nplanes is only supported for shuffle=True (the default).
+            representing a single record. Keys are calculated assuming that all input files contain the same
+            number of records; if the number of records per file is not the same across all files,
+            then `renumber` should be set to True to ensure consistent keys. nplanes is only supported for
+            shuffle=True (the default).
 
         npartitions: positive int, optional
             If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
             partition per image file. Only applies when shuffle=True.
+
+        renumber: boolean, optional, default False
+            If renumber evaluates to True, then the keys for each record will be explicitly recalculated after
+            all images are loaded. This should only be necessary at load time when different files contain
+            different number of records. renumber is only supported for shuffle=True (the default). See
+            Images.renumber().
 
         Returns
         -------
@@ -296,7 +317,9 @@ class ThunderContext():
             else:
                 # tif / tif stack
                 images = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
-                                                 recursive=recursive, nplanes=nplanes, npartitions=npartitions)
+                                        recursive=recursive, nplanes=nplanes, npartitions=npartitions)
+            if renumber:
+                images = images.renumber()
             return images.toBlocks(blockSize, units=blockSizeUnits).toSeries()
 
         else:
@@ -305,6 +328,8 @@ class ThunderContext():
                 raise NotImplementedError("nplanes is not supported with shuffle=False")
             if npartitions is not None:
                 raise NotImplementedError("npartitions is not supported with shuffle=False")
+            if renumber:
+                raise NotImplementedError("renumber is not supported with shuffle=False")
 
             loader = SeriesLoader(self._sc)
             if inputFormat.lower() == 'stack':
@@ -317,7 +342,8 @@ class ThunderContext():
 
     def convertImagesToSeries(self, dataPath, outputDirPath, dims=None, inputFormat='stack', ext=None,
                               dtype='int16', blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,
-                              shuffle=False, overwrite=False, recursive=False, nplanes=None, npartitions=None):
+                              shuffle=False, overwrite=False, recursive=False, nplanes=None, npartitions=None,
+                              renumber=False):
         """
         Write out Images data as Series data, saved in a flat binary format.
 
@@ -414,11 +440,20 @@ class ThunderContext():
             first nplane planes of the first file being record 0, the second nplane planes being record 1, etc,
             until the first file is exhausted and record ordering continues with the first nplane planes of the
             second file, and so on. With nplanes=None (the default), a single file will be considered as
-            representing a single record. nplanes is only supported for shuffle=True (the default).
+            representing a single record. Keys are calculated assuming that all input files contain the same
+            number of records; if the number of records per file is not the same across all files,
+            then `renumber` should be set to True to ensure consistent keys. nplanes is only supported for
+            shuffle=True (the default).
 
         npartitions: positive int, optional
             If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
             partition per image file. Only applies when shuffle=True.
+
+        renumber: boolean, optional, default False
+            If renumber evaluates to True, then the keys for each record will be explicitly recalculated after
+            all images are loaded. This should only be necessary at load time when different files contain
+            different number of records. renumber is only supported for shuffle=True (the default). See
+            Images.renumber().
         """
         checkParams(inputFormat, ['stack', 'tif', 'tif-stack'])
 
@@ -443,6 +478,8 @@ class ThunderContext():
                 # 'tif' or 'tif-stack'
                 images = loader.fromTif(dataPath, startIdx=startIdx, stopIdx=stopIdx,
                                         recursive=recursive, nplanes=nplanes, npartitions=npartitions)
+            if renumber:
+                images = images.renumber()
             images.toBlocks(blockSize, units=blockSizeUnits).saveAsBinarySeries(outputDirPath, overwrite=overwrite)
         else:
             from thunder.rdds.fileio.seriesloader import SeriesLoader
