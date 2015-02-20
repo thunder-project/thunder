@@ -472,11 +472,11 @@ class ThunderContext():
             from thunder.rdds.fileio.imagesloader import ImagesLoader
             loader = ImagesLoader(self._sc)
             if inputFormat.lower() == 'stack':
-                images = loader.fromStack(dataPath, dims, dtype=dtype, startIdx=startIdx, stopIdx=stopIdx,
+                images = loader.fromStack(dataPath, dims, ext=ext, dtype=dtype, startIdx=startIdx, stopIdx=stopIdx,
                                           recursive=recursive, nplanes=nplanes, npartitions=npartitions)
             else:
                 # 'tif' or 'tif-stack'
-                images = loader.fromTif(dataPath, startIdx=startIdx, stopIdx=stopIdx,
+                images = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
                                         recursive=recursive, nplanes=nplanes, npartitions=npartitions)
             if renumber:
                 images = images.renumber()
