@@ -243,14 +243,12 @@ class _BotoS3Client(object):
     @staticmethod
     def filterPredicate(key, post, inclusive=False):
         kname = key.name
-        retval = not inclusive
-        if kname.endswith(post):
-            retval = not retval
-
-        return retval
+        keyEndsWithPostfix = kname.endswith(post)
+        return keyEndsWithPostfix if inclusive else not keyEndsWithPostfix
 
     @staticmethod
-    def retrieveKeys(bucket, key, prefix='', postfix='', delim='/', excludeDirectories=True):
+    def retrieveKeys(bucket, key, prefix='', postfix='', delim='/', excludeDirectories=True,
+                     recursive=False):
         if key and prefix:
             assert key.endswith(delim)
 
@@ -264,7 +262,8 @@ class _BotoS3Client(object):
                 # found a directory; change path so that it explicitly refers to directory
                 keyPath += delim
 
-        results = bucket.list(prefix=keyPath, delimiter=delim)
+        listDelim = delim if not recursive else None
+        results = bucket.list(prefix=keyPath, delimiter=listDelim)
         if postfix:
             return itertools.ifilter(lambda k_: _BotoS3Client.filterPredicate(k_, postfix, inclusive=True), results)
         elif excludeDirectories:
@@ -414,7 +413,7 @@ class LocalFSFileReader(object):
 class BotoS3FileReader(_BotoS3Client):
     """File reader backed by the boto AWS client library.
     """
-    def __getMatchingKeys(self, dataPath, filename=None):
+    def __getMatchingKeys(self, dataPath, filename=None, excludeDirectories=True, recursive=False):
         parse = _BotoS3Client.parseS3Query(dataPath)
         conn = boto.connect_s3()
         bucketName = parse[0]
@@ -438,23 +437,16 @@ class BotoS3FileReader(_BotoS3Client):
                         keyName = ""
             keyName += filename
 
-        return _BotoS3Client.retrieveKeys(bucket, keyName, prefix=parse[2], postfix=parse[3])
+        return _BotoS3Client.retrieveKeys(bucket, keyName, prefix=parse[2], postfix=parse[3],
+                                          excludeDirectories=excludeDirectories, recursive=recursive)
 
-    def list(self, dataPath, filename=None, startIdx=None, stopIdx=None, recursive=False, includeDirectories=True):
+    def list(self, dataPath, filename=None, startIdx=None, stopIdx=None, recursive=False, includeDirectories=False):
         """List s3 objects specified by dataPath.
 
         Returns sorted list of 's3n://' URIs.
         """
-        # TODO: note that the default value for includeDirectories is here True, which reflects the current (and
-        # longstanding) behavior of this class. This *differs* from the local FS list() method, which by default
-        # filters out directories (which is definitely what we want if we're reading with recursive=True).
-        # These two need to be made more consistent.
-        if recursive:
-            raise NotImplementedError("Recursive traversal of directories isn't yet implemented for S3 - sorry!")
-        if not includeDirectories:
-            raise NotImplementedError("Filtering out directories is not yet implemented for S3 - sorry!")
-
-        keys = self.__getMatchingKeys(dataPath, filename=filename)
+        keys = self.__getMatchingKeys(dataPath, filename=filename, excludeDirectories=not includeDirectories,
+                                      recursive=recursive)
         keyNames = ["s3n:///" + key.bucket.name + "/" + key.name for key in keys]
         keyNames.sort()
         keyNames = selectByStartAndStopIndices(keyNames, startIdx, stopIdx)
