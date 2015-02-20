@@ -540,3 +540,11 @@ class Images(Data):
                                 'from images with dimension %s' % (str(val.shape), str(self.dims)))
 
         return self.applyValues(lambda x: x - val)
+
+    def renumber(self):
+        """Recalculates keys for this Images object.
+
+        New keys will be a sequence of consecutive integers, starting at 0 and ending at self.nrecords-1.
+        """
+        renumberedRdd = self.rdd.values().zipWithIndex().map(lambda (ary, idx): (idx, ary))
+        return self._constructor(renumberedRdd).__finalize__(self)
