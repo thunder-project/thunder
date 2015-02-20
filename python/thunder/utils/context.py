@@ -342,7 +342,7 @@ class ThunderContext():
 
     def convertImagesToSeries(self, dataPath, outputDirPath, dims=None, inputFormat='stack', ext=None,
                               dtype='int16', blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,
-                              shuffle=False, overwrite=False, recursive=False, nplanes=None, npartitions=None,
+                              shuffle=True, overwrite=False, recursive=False, nplanes=None, npartitions=None,
                               renumber=False):
         """
         Write out Images data as Series data, saved in a flat binary format.
@@ -472,11 +472,11 @@ class ThunderContext():
             from thunder.rdds.fileio.imagesloader import ImagesLoader
             loader = ImagesLoader(self._sc)
             if inputFormat.lower() == 'stack':
-                images = loader.fromStack(dataPath, dims, dtype=dtype, startIdx=startIdx, stopIdx=stopIdx,
+                images = loader.fromStack(dataPath, dims, ext=ext, dtype=dtype, startIdx=startIdx, stopIdx=stopIdx,
                                           recursive=recursive, nplanes=nplanes, npartitions=npartitions)
             else:
                 # 'tif' or 'tif-stack'
-                images = loader.fromTif(dataPath, startIdx=startIdx, stopIdx=stopIdx,
+                images = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
                                         recursive=recursive, nplanes=nplanes, npartitions=npartitions)
             if renumber:
                 images = images.renumber()
