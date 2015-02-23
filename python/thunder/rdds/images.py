@@ -164,8 +164,7 @@ class Images(Data):
         no return value
         """
         if not overwrite:
-            from thunder.utils.common import raiseErrorIfPathExists
-            raiseErrorIfPathExists(outputDirPath)
+            self._checkOverwrite(outputDirPath)
             overwrite = True  # prevent additional downstream checks for this path
 
         self.toBlocks(blockSizeSpec, units=units).saveAsBinarySeries(outputDirPath, overwrite=overwrite)
@@ -204,6 +203,7 @@ class Images(Data):
         from matplotlib.pyplot import imsave
         from io import BytesIO
         from thunder.rdds.fileio.writers import getParallelWriterForPath, getCollectedFileWriterForPath
+        from thunder.utils.common import AWSCredentials
 
         def toFilenameAndPngBuf(kv):
             key, img = kv
@@ -214,11 +214,14 @@ class Images(Data):
 
         bufRdd = self.rdd.map(toFilenameAndPngBuf)
 
+        awsCredentials = AWSCredentials.fromContext(self.rdd.ctx)
         if collectToDriver:
-            writer = getCollectedFileWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite)
+            writer = getCollectedFileWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite,
+                                                                  awsCredentialsOverride=awsCredentials)
             writer.writeCollectedFiles(bufRdd.collect())
         else:
-            writer = getParallelWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite)
+            writer = getParallelWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite,
+                                                             awsCredentialsOverride=awsCredentials)
             bufRdd.foreach(writer.writerFcn)
 
     def maxProjection(self, axis=2):

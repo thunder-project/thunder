@@ -18,7 +18,9 @@ class ImagesLoader(object):
         sparkcontext: SparkContext
             The pyspark SparkContext object used by the current Thunder environment.
         """
+        from thunder.utils.common import AWSCredentials
         self.sc = sparkContext
+        self.awsCredentialsOverride = AWSCredentials.fromContext(sparkContext)
 
     def fromArrays(self, arrays, npartitions=None):
         """Load Images data from passed sequence of numpy arrays.
@@ -124,7 +126,7 @@ class ImagesLoader(object):
                 slices = [slice(None)] * (ary.ndim - 1) + [slice(lastPlane, ary.shape[-1])]
                 yield idx*npoints + timepoint, ary[slices]
 
-        reader = getParallelReaderForPath(dataPath)(self.sc)
+        reader = getParallelReaderForPath(dataPath)(self.sc, awsCredentialsOverride=self.awsCredentialsOverride)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                 npartitions=npartitions)
         nrecords = reader.lastNRecs if nplanes is None else None
@@ -253,7 +255,7 @@ class ImagesLoader(object):
             keys = [idx*nvals + timepoint for timepoint in xrange(nvals)]
             return zip(keys, values)
 
-        reader = getParallelReaderForPath(dataPath)(self.sc)
+        reader = getParallelReaderForPath(dataPath)(self.sc, awsCredentialsOverride=self.awsCredentialsOverride)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                 npartitions=npartitions)
         nrecords = reader.lastNRecs if nplanes is None else None
@@ -292,7 +294,7 @@ class ImagesLoader(object):
             fbuf = BytesIO(buf)
             return imread(fbuf, format='png')
 
-        reader = getParallelReaderForPath(dataPath)(self.sc)
+        reader = getParallelReaderForPath(dataPath)(self.sc, awsCredentialsOverride=self.awsCredentialsOverride)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                 npartitions=npartitions)
         return Images(readerRdd.mapValues(readPngFromBuf), nrecords=reader.lastNRecs)

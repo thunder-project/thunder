@@ -4,7 +4,6 @@ Class with utilities for representing and working with matrices
 from numpy import dot, outer, shape, ndarray, add, subtract, multiply, zeros, divide, arange
 
 from thunder.rdds.series import Series
-from thunder.rdds.data import Data
 
 
 # TODO: right divide and left divide

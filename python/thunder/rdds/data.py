@@ -107,6 +107,13 @@ class Data(object):
         self._nrecords = None
         return self
 
+    def _checkOverwrite(self, outputDirPath):
+        """Checks for existence of outputDirPath, raising ValueError if it already exists
+        """
+        from thunder.utils.common import AWSCredentials, raiseErrorIfPathExists
+        awsCredentialOverride = AWSCredentials.fromContext(self.rdd.ctx)
+        raiseErrorIfPathExists(outputDirPath, awsCredentialsOverride=awsCredentialOverride)
+
     def first(self):
         """
         Return first record.
