@@ -677,7 +677,7 @@ class Series(Data):
 
         return (keyMean, valMean) if n > 0 else (None, None)
 
-    def meanByRegion(self, nestedKeys, validate=False):
+    def meanByRegions(self, nestedKeys, validate=False):
         """Takes the mean of Series values within groupings specified by the passed keys.
 
         Each sequence of keys passed specifies a "region" within which to calculate the mean. For instance,
