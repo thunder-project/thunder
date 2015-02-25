@@ -619,7 +619,6 @@ class ThunderContext():
         minPartitions : Int, optional, default = 1
             Number of partitions for RDD
         """
-
         checkParams(inputFormat, ['mat', 'npy'])
 
         from thunder.rdds.fileio.seriesloader import SeriesLoader
