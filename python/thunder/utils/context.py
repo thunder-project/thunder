@@ -635,7 +635,8 @@ class ThunderContext():
         return data
 
     def setAWSCredentials(self, awsAccessKeyId, awsSecretAccessKey):
-        """Manually set AWS access credentials to be used by Thunder.
+        """
+        Manually set AWS access credentials to be used by Thunder.
 
         This method is provided primarily for hosted environments that do not provide
         filesystem access (e.g. Databricks Cloud). Typically AWS credentials can be set
