@@ -161,7 +161,6 @@ class Series(Data):
             Criterion function to apply to indices, specific index value,
             or list of indices
         """
-
         import types
 
         # handle lists, strings, and ints
@@ -464,7 +463,6 @@ class Series(Data):
             and will pack into an array with shape (4, 64, 128). If transpose is true, the spatial dimensions
             will be reversed, so that in this example the shape of the returned array will be (4, 128, 64).
         """
-
         if selection:
             out = self.select(selection)
         else:
@@ -561,7 +559,6 @@ class Series(Data):
         values : array, shape (n, d) where d is the number of keys
             Averaged keys
         """
-
         if isinstance(inds, str):
             inds = loadMatVar(inds, var)[0]
         else:
@@ -664,7 +661,6 @@ class Series(Data):
         -------
         tuple of (tuple(mean of keys), array(mean value)), or (None, None) if no matching records are found
         """
-
         if isinstance(selection, ndarray):
             selection = self.__maskToKeys(selection, returnNested=False)
 

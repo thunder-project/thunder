@@ -86,7 +86,6 @@ def export(data, outputDirPath, outputFilename, outputFormat, sorting=False):
         Output format ("matlab", "npy", or "text")
 
     """
-
     from thunder.rdds.series import Series
     from scipy.io import savemat
 

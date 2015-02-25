@@ -58,7 +58,6 @@ def _indToSubConverter(dims, order='F', isOneBased=True):
     --------
     Series.indtosub
     """
-
     _checkOrder(order)
 
     def indToSub_InlineOneBased(k, dimProd_):
