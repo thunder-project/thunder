@@ -46,6 +46,40 @@ Imports should be grouped as follows: all third-party imports (e.g. ``numpy``, `
 
 Locally-scoped imports are strongly encouraged, and top-level imports discouraged, especially for modules with user-facing classes (anything imported in Thunder's top-level ``__init__.py``, which are those modules imported when calling ``from thunder import *``). This is to avoid a performance problem arising from how PySpark serializes inline functions, especially problematic for imports from large and complex libraries (e.g. ``matplotlib``). For user-facing modules, limit top-level imports to ``numpy``, and other ``thunder`` modules which themselves only import from ``numpy``, and otherwise use locally-scoped imports.
 
+Docstrings
+~~~~~~~~~~
+
+Thunder uses the `scipy` and `numpy` docstring formatting conventions. All user-facing classes and methods should have a description of what the method or class does, a list of any parameters, and optionally a list of returns. Single line docstrings should use this formatting:
+
+.. code-block:: python
+
+	""" This is a docstring """
+
+Multi line docstrings should instead use this formatting (note the initial line break):
+
+.. code-block:: python
+
+	""" 
+	This is the first line of the docstring.
+
+	This is further information, usually a more in-depth discussion
+	of what the method does.
+	"""
+
+Use the following conventions to specify parameters, including type and default value:
+
+.. code-block:: python
+
+	"""
+	Parameters
+	----------
+	parameter1 : type
+		Description of parameter
+
+	parameter2 : type, optional, default = something
+		Description of an optional parameters
+	"""
+
 Testing
 ~~~~~~~
 
