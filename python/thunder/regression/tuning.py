@@ -72,12 +72,11 @@ class TuningModel(object):
 
 
 class CircularTuningModel(TuningModel):
-    """
-    Circular tuning model fitting.
-    """
+    """ Circular tuning model fitting. """
 
     def get(self, y):
-        """Estimate the circular mean and variance ("kappa"),
+        """
+        Estimate the circular mean and variance ("kappa"),
         identical to the max likelihood estimates of the
         parameters of the best fitting von-mises function
         """
@@ -102,12 +101,11 @@ class CircularTuningModel(TuningModel):
 
 
 class GaussianTuningModel(TuningModel):
-    """
-    Gaussian tuning model fitting.
-    """
+    """ Gaussian tuning model fitting. """
 
     def get(self, y):
-        """Estimate the mean and variance,
+        """
+        Estimate the mean and variance,
         similar to the max likelihood estimates of the
         parameters of the best fitting gaussian
         but non-infinite supports may bias estimates

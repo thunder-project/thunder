@@ -1,10 +1,11 @@
 """ Thunder JSON object serialization utility """
+
 import abc
 import json
 
 
 def _isNamedTuple(obj):
-    """Heuristic check if an object is a namedtuple."""
+    """ Heuristic check if an object is a namedtuple. """
     return hasattr(obj, "_fields") and hasattr(obj, "_asdict") and callable(obj._asdict)
 
 
@@ -41,7 +42,8 @@ def _decode_dict(data):
 
 
 class Serializable(object):
-    """Mixin class that provides JSON serialization services to classes inheriting from it
+    """
+    Mixin class that provides JSON serialization services to classes inheriting from it
 
     Inheriting from Serializable makes it easy to store class instances in a human
     readable JSON format and then recover the original object instance. This abstract
@@ -223,7 +225,8 @@ class Serializable(object):
         raise TypeError("Type %s not data-serializable" % dataType)
 
     def serialize(self, numpyStorage='auto'):
-        """Serialize this object to a python dictionary that can easily be converted
+        """
+        Serialize this object to a python dictionary that can easily be converted
         to/from JSON using Python's standard JSON library.
 
         Parameters
@@ -260,7 +263,8 @@ class Serializable(object):
 
     @classmethod
     def deserialize(cls, serializedDict):
-        """Restore the object that has been converted to a python dictionary using an @serializable
+        """
+        Restore the object that has been converted to a python dictionary using an @serializable
         class's serialize() method.
 
         Parameters
@@ -373,7 +377,8 @@ class Serializable(object):
         return thawedObject
 
     def toJSON(self, numpyStorage='auto', **kwargs):
-        """Serialize this object to a JSON-formatted string
+        """
+        Serialize this object to a JSON-formatted string
 
         Parameters
         ----------
@@ -390,7 +395,8 @@ class Serializable(object):
         return json.dumps(self.serialize(numpyStorage=numpyStorage), **kwargs)
 
     def save(self, f, numpyStorage='auto', **kwargs):
-        """Serialize this object to a JSON file.
+        """
+        Serialize this object to a JSON file.
 
         Parameters
         ----------
@@ -411,7 +417,8 @@ class Serializable(object):
 
     @classmethod
     def fromJSON(cls, s):
-        """Deserialize object from the passed JSON string
+        """
+        Deserialize object from the passed JSON string
 
         Parameters
         ----------
@@ -421,7 +428,8 @@ class Serializable(object):
 
     @classmethod
     def load(cls, f):
-        """Deserialize object from a JSON file.
+        """
+        Deserialize object from a JSON file.
 
         Assumes a JSON formatted registration model, with keys 'regmethod' and 'transclass' specifying
         the registration method used and the transformation type as strings, and 'transformations'

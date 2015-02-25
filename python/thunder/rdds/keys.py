@@ -4,8 +4,7 @@ from numpy import mod, ceil, cumprod, append, size, inf, subtract
 
 
 class Dimensions(object):
-    """Class for estimating and storing dimensions of data
-    based on the keys"""
+    """ Class for estimating and storing dimensions of data based on the keys """
 
     def __init__(self, values=[], n=3):
         self.min = tuple(map(lambda i: inf, range(0, n)))
@@ -30,8 +29,7 @@ class Dimensions(object):
 
     @classmethod
     def fromTuple(cls, tup):
-        """Generates a Dimensions object from the passed tuple.
-        """
+        """ Generates a Dimensions object from the passed tuple. """
         mx = [v-1 for v in tup]
         mn = [0] * len(tup)
         return cls(values=[mx, mn], n=len(tup))
@@ -53,7 +51,8 @@ class Dimensions(object):
 
 
 def _indToSubConverter(dims, order='F', isOneBased=True):
-    """Converter for changing linear indexing to subscript indexing
+    """
+    Converter for changing linear indexing to subscript indexing
 
     See also
     --------
@@ -83,7 +82,8 @@ def _indToSubConverter(dims, order='F', isOneBased=True):
 
 
 def _subToIndConverter(dims, order='F', isOneBased=True):
-    """Converter for changing subscript indexing to linear indexing
+    """
+    Converter for changing subscript indexing to linear indexing
 
     See also
     --------

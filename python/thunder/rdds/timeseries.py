@@ -274,7 +274,8 @@ class TimeSeries(Series):
         return self.applyValues(func)
 
     def normalize(self, baseline='percentile', window=None, perc=20):
-        """ Normalize each time series by subtracting and dividing by a baseline.
+        """
+        Normalize each time series by subtracting and dividing by a baseline.
 
         Baseline can be derived from a global mean or percentile,
         or a smoothed percentile estimated within a rolling window.

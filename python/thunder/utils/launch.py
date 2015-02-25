@@ -1,8 +1,8 @@
-"""Functions used in the Thunder launch scripts in python/bin"""
+""" Functions used in the Thunder launch scripts in python/bin """
+
 import glob
 import os
 import subprocess
-import sys
 
 import thunder
 
@@ -33,7 +33,8 @@ def isEC2():
 
 
 def getEC2Master():
-    """Returns the cluster master URI, read from /root/spark-ec2/cluster-url.
+    """
+    Returns the cluster master URI, read from /root/spark-ec2/cluster-url.
 
     This file is expected to exist on EC2 clusters. An exception will be thrown if the file is missing.
     """
@@ -82,7 +83,8 @@ def getCommaSeparatedOptionsList(childOptionsFlag, commaSeparated, additionalDef
 
 
 def transformArguments(args):
-    """Modifies command line arguments passed to the thunder launch scripts
+    """
+    Modifies command line arguments passed to the thunder launch scripts
     by adding required jar and egg files (if not already present).
 
     The passed arguments will be modified as follows and returned in a new list:

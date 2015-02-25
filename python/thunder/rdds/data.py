@@ -1,3 +1,6 @@
+from numpy import asarray, maximum, minimum
+
+
 class Data(object):
     """
     Generic base class for data types in thunder.
@@ -106,6 +109,12 @@ class Data(object):
     def _resetCounts(self):
         self._nrecords = None
         return self
+
+    def _checkOverwrite(self, outputDirPath):
+        """ Checks for existence of outputDirPath, raising ValueError if it already exists """
+        from thunder.utils.common import AWSCredentials, raiseErrorIfPathExists
+        awsCredentialOverride = AWSCredentials.fromContext(self.rdd.ctx)
+        raiseErrorIfPathExists(outputDirPath, awsCredentialsOverride=awsCredentialOverride)
 
     def first(self):
         """
@@ -358,7 +367,6 @@ class Data(object):
         --------
         Series.apply
         """
-
         return self.apply(lambda (k, v): (k, func(v)), **kwargs)
 
     def collect(self, sorting=False):
@@ -380,7 +388,6 @@ class Data(object):
 
         This will be slow for large datasets, and may exhaust the available memory on the driver.
         """
-        from numpy import asarray
         out = self.collect(sorting)
         keys = asarray(map(lambda (k, v): k, out))
         values = asarray(map(lambda (k, v): v, out))
@@ -392,7 +399,6 @@ class Data(object):
 
         This will be slow for large datasets, and may exhaust the available memory on the driver.
         """
-        from numpy import asarray
         if sorting:
             rdd = self.sortByKey().rdd
         else:
@@ -405,7 +411,6 @@ class Data(object):
 
         This will be slow for large datasets, and may exhaust the available memory on the driver.
         """
-        from numpy import asarray
         if sorting:
             rdd = self.sortByKey().rdd
         else:
@@ -503,16 +508,12 @@ class Data(object):
 
     def max(self):
         """ Maximum of values, ignoring keys """
-        # keep using reduce(maximum) at present rather than stats('max') - stats method results in inadvertent
-        # cast to float64
-        from numpy import maximum
+        # NOTE: Does not use stats('max') to prevent cast to float64
         return self.rdd.values().reduce(maximum)
 
     def min(self):
         """ Minimum of values, ignoring keys """
-        # keep using reduce(minimum) at present rather than stats('min') - stats method results in inadvertent
-        # cast to float64
-        from numpy import minimum
+        # NOTE: Does not use stats('min') to prevent cast to float64
         return self.rdd.values().reduce(minimum)
 
     def coalesce(self, numPartitions):

@@ -47,7 +47,7 @@ MINIMUM_SPARK_VERSION = "1.1.0"
 
 
 def get_s3_keys():
-    """ Get user S3 keys from environmental variables"""
+    """ Get user S3 keys from environmental variables """
     if os.getenv('S3_AWS_ACCESS_KEY_ID') is not None:
         s3_access_key = os.getenv("S3_AWS_ACCESS_KEY_ID")
     else:
@@ -60,7 +60,8 @@ def get_s3_keys():
 
 
 def get_default_thunder_version():
-    """Returns 'HEAD' (current state of thunder master branch) if thunder is a _dev version, otherwise
+    """
+    Returns 'HEAD' (current state of thunder master branch) if thunder is a _dev version, otherwise
     return the current thunder version.
     """
     if "_dev" in THUNDER_VERSION:
@@ -69,7 +70,8 @@ def get_default_thunder_version():
 
 
 def get_spark_version_string(default_version):
-    """ Parses out the Spark version string from $SPARK_HOME/RELEASE, if present, or from pom.xml if not
+    """
+    Parses out the Spark version string from $SPARK_HOME/RELEASE, if present, or from pom.xml if not
 
     Returns version string from either of the above sources, or default_version if nothing else works
     """
@@ -105,7 +107,8 @@ SPARK_VERSIONS_TO_HASHES = {
 
 
 def remap_spark_version_to_hash(user_version_string):
-    """Replaces a user-specified Spark version string with a github hash if needed.
+    """
+    Replaces a user-specified Spark version string with a github hash if needed.
 
     Used to allow clusters to be deployed with Spark release candidates.
     """
@@ -113,7 +116,7 @@ def remap_spark_version_to_hash(user_version_string):
 
 
 def install_thunder(master, opts, spark_version_string):
-    """ Install Thunder and dependencies on a Spark EC2 cluster"""
+    """ Install Thunder and dependencies on a Spark EC2 cluster """
     print "Installing Thunder on the cluster..."
 
     # download and build thunder
@@ -251,7 +254,8 @@ def ssh(host, opts, command):
 
 
 def setup_cluster(conn, master_nodes, slave_nodes, opts, deploy_ssh_key):
-    """Modified version of the setup_cluster function (borrowed from spark-ec.py)
+    """
+    Modified version of the setup_cluster function (borrowed from spark-ec.py)
     in order to manually set the folder with the deploy code
     """
     master = master_nodes[0].public_dns_name
