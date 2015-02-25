@@ -496,7 +496,8 @@ class Series(Data):
         return out.squeeze()
 
     def subset(self, nsamples=100, thresh=None, stat='std'):
-        """Extract random subset of records from a Series,
+        """
+        Extract random subset of records from a Series,
         filtering on the standard deviation
 
         Parameters
@@ -684,7 +685,8 @@ class Series(Data):
         return (keyMean, valMean) if n > 0 else (None, None)
 
     def meanByRegions(self, nestedKeys, validate=False):
-        """Takes the mean of Series values within groupings specified by the passed keys.
+        """
+        Takes the mean of Series values within groupings specified by the passed keys.
 
         Each sequence of keys passed specifies a "region" within which to calculate the mean. For instance,
         series.meanByRegion([[(1,0), (2,0)]) would return the mean of the records in series with keys (1,0) and (2,0).
@@ -803,7 +805,6 @@ class Series(Data):
     def saveAsBinarySeries(self, outputDirPath, overwrite=False):
         """
         Writes out Series-formatted data.
-
 
         This method (Series.saveAsBinarySeries) writes out binary series files using the current partitioning
         of this Series object. (That is, if mySeries.rdd.getNumPartitions() == 5, then 5 files will be written
