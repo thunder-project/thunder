@@ -251,7 +251,7 @@ class _BotoS3Client(object):
         return keyEndsWithPostfix if inclusive else not keyEndsWithPostfix
 
     @staticmethod
-    def retrieveKeys(bucket, key, prefix='', postfix='', delim='/', excludeDirectories=True,
+    def retrieveKeys(bucket, key, prefix='', postfix='', delim='/', includeDirectories=False,
                      recursive=False):
         if key and prefix:
             assert key.endswith(delim)
@@ -270,7 +270,7 @@ class _BotoS3Client(object):
         results = bucket.list(prefix=keyPath, delimiter=listDelim)
         if postfix:
             return itertools.ifilter(lambda k_: _BotoS3Client.filterPredicate(k_, postfix, inclusive=True), results)
-        elif excludeDirectories:
+        elif not includeDirectories:
             return itertools.ifilter(lambda k_: _BotoS3Client.filterPredicate(k_, delim, inclusive=False), results)
         else:
             return results
@@ -424,7 +424,7 @@ class LocalFSFileReader(object):
 class BotoS3FileReader(_BotoS3Client):
     """File reader backed by the boto AWS client library.
     """
-    def __getMatchingKeys(self, dataPath, filename=None, excludeDirectories=True, recursive=False):
+    def __getMatchingKeys(self, dataPath, filename=None, includeDirectories=False, recursive=False):
         parse = _BotoS3Client.parseS3Query(dataPath)
         conn = boto.connect_s3(**self.awsCredentialsOverride.credentialsAsDict)
         bucketName = parse[0]
@@ -449,14 +449,14 @@ class BotoS3FileReader(_BotoS3Client):
             keyName += filename
 
         return _BotoS3Client.retrieveKeys(bucket, keyName, prefix=parse[2], postfix=parse[3],
-                                          excludeDirectories=excludeDirectories, recursive=recursive)
+                                          includeDirectories=includeDirectories, recursive=recursive)
 
     def list(self, dataPath, filename=None, startIdx=None, stopIdx=None, recursive=False, includeDirectories=False):
         """List s3 objects specified by dataPath.
 
         Returns sorted list of 's3n://' URIs.
         """
-        keys = self.__getMatchingKeys(dataPath, filename=filename, excludeDirectories=not includeDirectories,
+        keys = self.__getMatchingKeys(dataPath, filename=filename, includeDirectories=includeDirectories,
                                       recursive=recursive)
         keyNames = ["s3n:///" + key.bucket.name + "/" + key.name for key in keys]
         keyNames.sort()
