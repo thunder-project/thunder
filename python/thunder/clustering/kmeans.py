@@ -92,7 +92,8 @@ class KMeansModel(object):
 
 
 class KMeans(object):
-    """KMeans clustering algorithm.
+    """
+    KMeans clustering algorithm.
 
     Parameters
     ----------

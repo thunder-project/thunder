@@ -43,7 +43,8 @@ class PCA(object):
         self.comps = None
 
     def fit(self, data):
-        """Estimate principal components
+        """
+        Estimate principal components
 
         Parameters
         ----------
@@ -71,7 +72,8 @@ class PCA(object):
         return self
 
     def transform(self, data):
-        """Project data into principal component space
+        """
+        Project data into principal component space
 
         Parameters
         ----------

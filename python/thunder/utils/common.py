@@ -25,13 +25,14 @@ def isRdd(data):
 
 
 def checkParams(param, opts):
-    """ Check whether param is contained in opts (including lowercase), otherwise error"""
+    """ Check whether param is contained in opts (including lowercase), otherwise error """
     if not param.lower() in opts:
         raise ValueError("Option must be one of %s, got %s" % (str(opts)[1:-1], param))
 
 
 def selectByMatchingPrefix(param, opts):
-    """Given a string parameter and a sequence of possible options, returns an option that is uniquely
+    """
+    Given a string parameter and a sequence of possible options, returns an option that is uniquely
     specified by matching its prefix to the passed parameter.
 
     The match is checked without sensitivity to case.
@@ -53,7 +54,8 @@ def selectByMatchingPrefix(param, opts):
 
 
 def smallestFloatType(dtype):
-    """Returns the smallest floating point dtype to which the passed dtype can be safely cast.
+    """
+    Returns the smallest floating point dtype to which the passed dtype can be safely cast.
 
     For integers and unsigned ints, this will generally be next floating point type larger than the integer type. So
     for instance, smallest_float_type('uint8') -> dtype('float16'), smallest_float_type('int16') -> dtype('float32'),
@@ -149,7 +151,8 @@ def pil_to_array(pilImage):
 
 
 def parseMemoryString(memStr):
-    """Returns the size in bytes of memory represented by a Java-style 'memory string'
+    """
+    Returns the size in bytes of memory represented by a Java-style 'memory string'
 
     parseMemoryString("150k") -> 150000
     parseMemoryString("2M") -> 2000000
@@ -178,7 +181,8 @@ def parseMemoryString(memStr):
 
 
 def raiseErrorIfPathExists(path):
-    """Raises a ValueError if the passed path string is found to already exist.
+    """
+    Raises a ValueError if the passed path string is found to already exist.
 
     The ValueError message will suggest calling with overwrite=True; this function is expected to be
     called from the various output methods that accept an 'overwrite' keyword argument.

@@ -1,4 +1,3 @@
-
 from numpy import ndarray, arange, amax, amin, greater, size
 
 from thunder.rdds.data import Data
@@ -52,7 +51,8 @@ class Images(Data):
             raise Exception('Values must be ndarrays')
 
     def toBlocks(self, blockSizeSpec="150M", units="pixels", padding=0):
-        """Convert to Blocks, each representing a subdivision of the larger Images data.
+        """
+        Convert to Blocks, each representing a subdivision of the larger Images data.
 
         Parameters
         ----------
@@ -106,7 +106,8 @@ class Images(Data):
         return returntype(blockedvals, dims=self.dims, nimages=self.nrecords, dtype=self.dtype)
 
     def toSeries(self, blockSizeSpec="150M", units="pixels"):
-        """Converts this Images object to a Series object.
+        """
+        Converts this Images object to a Series object.
 
         This method is equivalent to images.toBlocks(blockSizeSpec).toSeries().
 
@@ -124,6 +125,7 @@ class Images(Data):
         units: string, either "pixels" or "splits" (or unique prefix of each, such as "s"), default "pixels"
             Specifies units to be used in interpreting a tuple passed as blockSizeSpec. If a string or a
             BlockingStrategy instance is passed as blockSizeSpec, this parameter has no effect.
+
         Returns
         -------
         new Series object
@@ -131,7 +133,8 @@ class Images(Data):
         return self.toBlocks(blockSizeSpec, units=units).toSeries()
 
     def saveAsBinarySeries(self, outputDirPath, blockSizeSpec="150M", units="pixels", overwrite=False):
-        """Writes this Images object to disk as binary Series data.
+        """
+        Writes this Images object to disk as binary Series data.
 
         This method is equivalent to images.toBlocks(blockSizeSpec).saveAsBinarySeries(outputdirname, overwrite)
 
@@ -164,8 +167,7 @@ class Images(Data):
         no return value
         """
         if not overwrite:
-            from thunder.utils.common import raiseErrorIfPathExists
-            raiseErrorIfPathExists(outputDirPath)
+            self._checkOverwrite(outputDirPath)
             overwrite = True  # prevent additional downstream checks for this path
 
         self.toBlocks(blockSizeSpec, units=units).saveAsBinarySeries(outputDirPath, overwrite=overwrite)
@@ -204,6 +206,7 @@ class Images(Data):
         from matplotlib.pyplot import imsave
         from io import BytesIO
         from thunder.rdds.fileio.writers import getParallelWriterForPath, getCollectedFileWriterForPath
+        from thunder.utils.common import AWSCredentials
 
         def toFilenameAndPngBuf(kv):
             key, img = kv
@@ -214,11 +217,14 @@ class Images(Data):
 
         bufRdd = self.rdd.map(toFilenameAndPngBuf)
 
+        awsCredentials = AWSCredentials.fromContext(self.rdd.ctx)
         if collectToDriver:
-            writer = getCollectedFileWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite)
+            writer = getCollectedFileWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite,
+                                                                  awsCredentialsOverride=awsCredentials)
             writer.writeCollectedFiles(bufRdd.collect())
         else:
-            writer = getParallelWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite)
+            writer = getParallelWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite,
+                                                             awsCredentialsOverride=awsCredentials)
             bufRdd.foreach(writer.writerFcn)
 
     def maxProjection(self, axis=2):
@@ -258,7 +264,8 @@ class Images(Data):
         return self._constructor(proj, dims=newDims).__finalize__(self)
 
     def subsample(self, sampleFactor):
-        """Downsample an image volume by an integer factor
+        """
+        Downsample an image volume by an integer factor
 
         Parameters
         ----------
@@ -406,7 +413,8 @@ class Images(Data):
         return self._constructor(newrdd, dims=newdims).__finalize__(self)
 
     def meanByRegions(self, selection):
-        """Reduces images to one or more spatially averaged values using the given selection, which can be
+        """
+        Reduces images to one or more spatially averaged values using the given selection, which can be
         either a mask array or sequence of indicies.
 
         A passed mask must be a numpy ndarray of the same shape as the individual arrays in this
@@ -448,7 +456,6 @@ class Images(Data):
             means = array([mean(ary[maskIdxs]) for maskIdxs in maskIdxsSeq], dtype=ary.dtype).reshape((1, -1))
             return key, means
 
-        nregions = -1
         # argument type checking
         if isinstance(selection, ndarray):
             # passed a numpy array mask
@@ -542,7 +549,8 @@ class Images(Data):
         return self.applyValues(lambda x: x - val)
 
     def renumber(self):
-        """Recalculates keys for this Images object.
+        """
+        Recalculates keys for this Images object.
 
         New keys will be a sequence of consecutive integers, starting at 0 and ending at self.nrecords-1.
         """
