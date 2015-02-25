@@ -800,14 +800,10 @@ class Series(Data):
         simpleBlocksRdd = groupedRdd.map(blockingStrategy.combiningFunction)
         return returnType(simpleBlocksRdd, dims=self.dims, nimages=len(self.index), dtype=self.dtype)
 
-<<<<<<< HEAD
-    def saveAsBinarySeries(self, outputdirname, overwrite=False):
+    def saveAsBinarySeries(self, outputDirPath, overwrite=False):
         """
         Writes out Series-formatted data.
-=======
-    def saveAsBinarySeries(self, outputDirPath, overwrite=False):
-        """Writes out Series-formatted data.
->>>>>>> origin/master
+
 
         This method (Series.saveAsBinarySeries) writes out binary series files using the current partitioning
         of this Series object. (That is, if mySeries.rdd.getNumPartitions() == 5, then 5 files will be written
