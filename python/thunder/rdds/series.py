@@ -792,7 +792,7 @@ class Series(Data):
         simpleBlocksRdd = groupedRdd.map(blockingStrategy.combiningFunction)
         return returnType(simpleBlocksRdd, dims=self.dims, nimages=len(self.index), dtype=self.dtype)
 
-    def saveAsBinarySeries(self, outputdirname, overwrite=False):
+    def saveAsBinarySeries(self, outputDirPath, overwrite=False):
         """Writes out Series-formatted data.
 
         This method (Series.saveAsBinarySeries) writes out binary series files using the current partitioning
@@ -808,7 +808,7 @@ class Series(Data):
 
         Parameters
         ----------
-        outputdirname : string path or URI to directory to be created
+        outputDirPath : string path or URI to directory to be created
             Output files will be written underneath outputdirname. This directory must not yet exist
             (unless overwrite is True), and must be no more than one level beneath an existing directory.
             It will be created as a result of this call.
@@ -822,10 +822,10 @@ class Series(Data):
         from thunder.rdds.imgblocks.blocks import SimpleBlocks
         from thunder.rdds.fileio.writers import getParallelWriterForPath
         from thunder.rdds.fileio.seriesloader import writeSeriesConfig
+        from thunder.utils.common import AWSCredentials
 
         if not overwrite:
-            from thunder.utils.common import raiseErrorIfPathExists
-            raiseErrorIfPathExists(outputdirname)
+            self._checkOverwrite(outputDirPath)
             overwrite = True  # prevent additional downstream checks for this path
 
         def partitionToBinarySeries(kvIter):
@@ -850,7 +850,9 @@ class Series(Data):
                 label = SimpleBlocks.getBinarySeriesNameForKey(firstKey) + ".bin"
                 return iter([(label, val)])
 
-        writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
+        awsCredentials = AWSCredentials.fromContext(self.rdd.ctx)
+        writer = getParallelWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite,
+                                                         awsCredentialsOverride=awsCredentials)
 
         binseriesrdd = self.rdd.mapPartitions(partitionToBinarySeries)
 
@@ -859,8 +861,8 @@ class Series(Data):
         # TODO: all we really need here are the number of keys and number of values, which could in principle
         # be cached in _nkeys and _nvals attributes, removing the need for this .first() call in most cases.
         firstKey, firstVal = self.first()
-        writeSeriesConfig(outputdirname, len(firstKey), len(firstVal), keyType='int16', valueType=self.dtype,
-                          overwrite=overwrite)
+        writeSeriesConfig(outputDirPath, len(firstKey), len(firstVal), keyType='int16', valueType=self.dtype,
+                          overwrite=overwrite, awsCredentialsOverride=awsCredentials)
 
     def toRowMatrix(self):
         """

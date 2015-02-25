@@ -110,19 +110,21 @@ class Blocks(Data):
         """
         from thunder.rdds.fileio.writers import getParallelWriterForPath
         from thunder.rdds.fileio.seriesloader import writeSeriesConfig
+        from thunder.utils.common import AWSCredentials
 
         if not overwrite:
-            from thunder.utils.common import raiseErrorIfPathExists
-            raiseErrorIfPathExists(outputDirPath)
+            self._checkOverwrite(outputDirPath)
             overwrite = True  # prevent additional downstream checks for this path
 
-        writer = getParallelWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite)
+        awsCredentialsOverride = AWSCredentials.fromContext(self.rdd.ctx)
+        writer = getParallelWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite,
+                                                         awsCredentialsOverride=awsCredentialsOverride)
 
         binseriesRdd = self.toBinarySeries()
 
         binseriesRdd.foreach(writer.writerFcn)
         writeSeriesConfig(outputDirPath, len(self.dims), self.nimages, keyType='int16', valueType=self.dtype,
-                          overwrite=overwrite)
+                          overwrite=overwrite, awsCredentialsOverride=awsCredentialsOverride)
 
 
 class SimpleBlocks(Blocks):
