@@ -1,5 +1,5 @@
 from numpy import ndarray, array, sum, mean, median, std, size, arange, percentile,\
-    asarray, maximum, zeros, corrcoef, where, true_divide, ceil
+    asarray, maximum, minimum, zeros, corrcoef, where, true_divide, ceil
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
@@ -497,8 +497,7 @@ class Series(Data):
 
     def subset(self, nsamples=100, thresh=None, stat='std'):
         """
-        Extract random subset of records from a Series,
-        filtering on the standard deviation
+        Extract random subset of records, filtering on a summary statistic.
 
         Parameters
         ----------
@@ -506,7 +505,7 @@ class Series(Data):
             The number of data points to sample
 
         thresh : float, optional, default = None
-            A threshold on standard deviation to use when picking points
+            A threshold on statistic to use when picking points
 
         stat : str, optional, default = 'std'
             Statistic to use for thresholding
@@ -517,19 +516,18 @@ class Series(Data):
             A local numpy array with the subset of points
         """
         from numpy.linalg import norm
-        from numpy.random import randint
 
-        statDict = {'std': std, 'norm': norm}
-        seed = randint(0, 2 ** 32 - 1)
+        statDict = {'mean': mean, 'std': std, 'max': maximum, 'min': minimum, 'norm': norm}
 
         if thresh is not None:
             func = statDict[stat]
-            result = array(self.rdd.values().filter(lambda x: func(x) > thresh).takeSample(False, nsamples, seed=seed))
+            result = array(self.rdd.values().filter(lambda x: func(x) > thresh).takeSample(False, nsamples))
         else:
-            result = array(self.rdd.values().takeSample(False, nsamples, seed=seed))
+            result = array(self.rdd.values().takeSample(False, nsamples))
 
         if size(result) == 0:
-            raise Exception('No records found, maybe threshold of %g is too high, try changing it?' % thresh)
+            raise Exception('No records found, maybe threshold on %s of %g is too high, try changing it?'
+                            % (stat, thresh))
 
         return result
 
