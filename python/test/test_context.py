@@ -1,5 +1,7 @@
 import os
 import unittest
+import json
+import tempfile
 from nose.tools import assert_equals, assert_true
 from numpy import arange, array, array_equal, mod
 from numpy import dtype as dtypeFunc
@@ -246,6 +248,57 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         assert_equals((6, 70, 75), rangeSeriesAry.shape)
         for idx in xrange(6):
             assert_true(array_equal(testimg_arys[idx % 3], rangeSeriesAry[idx]))
+
+    @staticmethod
+    def _tempFileWithPaths(f, blob):
+        f.write(blob)
+        f.flush()
+        return os.path.dirname(f.name), os.path.basename(f.name)
+
+    def test_loadParams(self):
+
+        params = json.dumps({"name": "test1", "value": [1, 2, 3]})
+
+        f = tempfile.NamedTemporaryFile()
+        path, file = TestContextLoading._tempFileWithPaths(f, params)
+
+        d = self.tsc.loadParams(path, file)
+
+        assert(d['name'].encode('ascii') == 'test1')
+        assert(d['value'] == [1, 2, 3])
+
+        params = json.dumps([{"name": "test0", "value": [1, 2, 3]},
+                             {"name": "test1", "value": [4, 5, 6]}])
+
+        f = tempfile.NamedTemporaryFile()
+        path, file = TestContextLoading._tempFileWithPaths(f, params)
+        d = self.tsc.loadParams(path, file)
+
+        assert(d[0]['name'].encode('ascii') == 'test0')
+        assert(d[1]['name'].encode('ascii') == 'test1')
+
+    def test_loadParamValues(self):
+
+        params = json.dumps([{"name": "test0", "value": [1, 2, 3]},
+                             {"name": "test1", "value": [4, 5, 6]}])
+
+        f = tempfile.NamedTemporaryFile()
+        path, file = TestContextLoading._tempFileWithPaths(f, params)
+        m = self.tsc.loadParamValues(path, file)
+
+        assert(array_equal(m, array([[1, 2, 3], [4, 5, 6]])))
+
+        m = self.tsc.loadParamValues(path, file, "test0")
+
+        assert(array_equal(m, array([1, 2, 3])))
+
+        m = self.tsc.loadParamValues(path, file, ["test0"])
+
+        assert(array_equal(m, array([1, 2, 3])))
+
+        m = self.tsc.loadParamValues(path, file, ["test0", "test1"])
+
+        assert(array_equal(m, array([[1, 2, 3], [4, 5, 6]])))
 
 
 class TestLoadIrregularImages(PySparkTestCaseWithOutputDir):

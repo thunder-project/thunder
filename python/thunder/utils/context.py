@@ -1,5 +1,7 @@
 """ Simple wrapper for a Spark Context to provide loading functionality """
 
+from numpy import asarray
+
 from thunder.utils.datasets import DataSets
 from thunder.utils.common import checkParams, raiseErrorIfPathExists
 
@@ -579,21 +581,84 @@ class ThunderContext():
             Parameters or metadata for dataset
         """
 
-        import json
-        from numpy import asarray
+    def loadParams(self, path, file):
+        """
+        Load a file with parameters from a local file system or S3.
 
-        if 'ec' not in self._sc.master:
-            raise Exception("must be running on EC2 to load this example data sets")
-        elif dataset == "zebrafish-optomotor-response":
-            path = 'zebrafish.datasets/optomotor-response/1/'
-            data = self.loadSeries("s3n://" + path + 'data/dat_plane*.txt', inputFormat='text', minPartitions=1000,
-                                   nkeys=3)
-            paramFile = self._sc.textFile("s3n://" + path + "params.json")
-            params = json.loads(paramFile.first())
-            modelFile = asarray(params['trials'])
-            return data, modelFile
+        Assumes file is JSON with basic types (strings, integers, doubles, lists),
+        in either a single dict or list of dict-likes.
+        Useful for loading generic meta data, parameters, covariates, etc.
+
+        Parameters
+        ----------
+        path : str
+            Path to file, can be on a local file system or an S3 bucket
+
+        file : str
+            Filename to load
+
+        Returns
+        -------
+        A dict or list with the parameters
+        """
+        import json
+        from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError
+
+        reader = getFileReaderForPath(path)(awsCredentialsOverride=self.awsCredentials)
+        try:
+            buffer = reader.read(path, filename=file)
+        except FileNotFoundError:
+            return {}
+
+        return json.loads(buffer)
+
+    def loadParamValues(self, path, file, names=None):
+        """
+        Load values from parameters, optionally given a set of names.
+
+        Assumes file is JSON with either a single dict-like or a list,
+        and each dict has a "name" field and a "value" field, where the
+        value is an array-like. Useful for loading covariates as numpy arrays.
+
+        Parameters
+        ----------
+        path : str
+            Path to file, can be on a local file system or an S3 bucket
+
+        file : str
+            Filename to load
+
+        Returns
+        -------
+        A numpy array, shape (k,n) or (n,), where k is the number of parameters
+        and n is the length of the values
+        """
+
+        params = self.loadParams(path, file)
+
+        if isinstance(params, list) and len(params) == 1:
+            params = params[0]
+
+        if names is None:
+            names = [p['name'] for p in params]
+        elif not isinstance(names, list):
+            names = [names]
+
+        out = []
+        if isinstance(params, dict):
+            if params['name'] in names:
+                out.append(params['value'])
+            else:
+                raise KeyError("No parameters with names %s found" % str(names))
         else:
-            raise NotImplementedError("dataset '%s' not availiable" % dataset)
+            for p in params:
+                if p['name'] in names:
+                    out.append(p['value'])
+
+        if len(out) < len(names):
+            raise KeyError("Only found values for %g of %g named parameters" % (len(out), len(names)))
+
+        return asarray(out).squeeze()
 
     def loadSeriesLocal(self, dataFilePath, inputFormat='npy', minPartitions=None, keyFilePath=None, varName=None):
         """
