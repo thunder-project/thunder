@@ -3,6 +3,13 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. meta::
+   :description: Official documentation for the Thunder library
+   :keywords: spark, big data, neuroscience, time series, image processing
+
+.. title::
+  thunder
+
 .. raw:: html
 
 	<h1>thunder: neural data analysis in spark</h1>
@@ -101,6 +108,7 @@
    :maxdepth: 1
 
    api
+   Gitter chatroom <https://gitter.im/thunder-project/thunder>
    Mailing list <https://groups.google.com/forum/?hl=en#!forum/thunder-user>
    Github repo <https://github.com/freeman-lab/thunder>
    Project page <http://thefreemanlab.com/thunder/>
