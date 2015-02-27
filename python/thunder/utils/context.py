@@ -586,9 +586,9 @@ class ThunderContext():
             raise Exception("Must be running on an EC2 cluster to load this example data set")
 
         DATASETS = {
-            'ahrens.lab.direction.selectivity': 'ahrens.lab/direction.selectivity/1/',
-            'ahrens.lab.optomotor.response': 'ahrens.lab/optomotor.response/1/',
-            'svoboda.lab.tactile.navigation': 'svoboda.lab/tactile.navigation/1/'
+            'ahrens.lab/direction.selectivity': 'ahrens.lab/direction.selectivity/1/',
+            'ahrens.lab/optomotor.response': 'ahrens.lab/optomotor.response/1/',
+            'svoboda.lab/tactile.navigation': 'svoboda.lab/tactile.navigation/1/'
         }
 
         checkParams(dataset, DATASETS.keys())
