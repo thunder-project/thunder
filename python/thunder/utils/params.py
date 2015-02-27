@@ -12,6 +12,12 @@ class Params(object):
     Assumes parameters are either a dictionary or a list of dictionaries,
     where each dictionary has a "name" field with a string,
     a "value" field, and potentially other optional fields.
+
+    Attributes
+    ----------
+    params : list of dicts
+        List of dictionaries each containing a parameter, where each
+        parameter has at least a "name" field and a "value" field
     """
     def __init__(self, params):
         if isinstance(params, dict):

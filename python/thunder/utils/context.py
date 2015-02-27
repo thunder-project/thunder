@@ -17,11 +17,10 @@ class ThunderContext():
     `_sc` : SparkContext
         Spark context for Spark functionality
 
-    awsAccessKeyId: None, or string
-    awsSecretAccessKey: None, or string
-        Public and private keys for AWS services. Typically the credentials should be accessible
-        through any of several different configuration files, and so should not have to be set
-        on the ThunderContext. See setAWSCredentials().
+    awsCredentials : AWSCredentials object, optional, default = None
+        Stores public and private keys for AWS services. Typically available through
+        configuration files, and but can optionally be set on the ThunderContext.
+        See setAWSCredentials().
     """
 
     def __init__(self, sparkcontext):
