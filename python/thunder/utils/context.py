@@ -563,9 +563,12 @@ class ThunderContext():
             raise NotImplementedError("Dataset '%s' not known; should be one of 'iris', 'fish-series', 'fish-images'"
                                       % dataset)
 
-    def loadExampleEC2(self, dataset):
+    def loadExampleS3(self, dataset):
         """
-        Load an example data set from EC2.
+        Load an example data set from S3.
+
+        Info on the included datasets can be found at the CodeNeuro data repository
+        (http://datasets.codeneuro.org/).
 
         Parameters
         ----------
@@ -574,12 +577,30 @@ class ThunderContext():
 
         Returns
         -------
-        data : RDD of (tuple, array) pairs
-            Generated dataset
+        data : a Data object (usually a Series or Images)
+            The dataset as one of Thunder's data objects
 
-        params : Tuple or numpy array
+        params : dict
             Parameters or metadata for dataset
         """
+        if 'local' in self._sc.master:
+            raise Exception("Must be running on an EC2 cluster to load this example data set")
+
+        DATASETS = {
+            'ahrens.lab.direction.selectivity': 'ahrens.lab/direction.selectivity/1/',
+            'ahrens.lab.optomotor.response': 'ahrens.lab/optomotor.response/1/',
+            'svoboda.lab.tactile.navigation': 'svoboda.lab/tactile.navigation/1/'
+        }
+
+        checkParams(dataset, DATASETS.keys())
+
+        basePath = 's3n://neuro.datasets/'
+        dataPath = DATASETS[dataset]
+
+        data = self.loadSeries(basePath + dataPath + 'series')
+        params = self.loadParamValues(basePath + dataPath + 'params', 'covariates.json')
+
+        return data, params
 
     def loadParams(self, path, file):
         """
