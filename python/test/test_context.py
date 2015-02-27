@@ -264,8 +264,8 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
 
         d = self.tsc.loadParams(path, file)
 
-        assert(d['name'].encode('ascii') == 'test1')
-        assert(d['value'] == [1, 2, 3])
+        assert(d.names() == ["test1"])
+        assert(array_equal(d.values(), [1, 2, 3]))
 
         params = json.dumps([{"name": "test0", "value": [1, 2, 3]},
                              {"name": "test1", "value": [4, 5, 6]}])
@@ -274,31 +274,9 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         path, file = TestContextLoading._tempFileWithPaths(f, params)
         d = self.tsc.loadParams(path, file)
 
-        assert(d[0]['name'].encode('ascii') == 'test0')
-        assert(d[1]['name'].encode('ascii') == 'test1')
-
-    def test_loadParamValues(self):
-
-        params = json.dumps([{"name": "test0", "value": [1, 2, 3]},
-                             {"name": "test1", "value": [4, 5, 6]}])
-
-        f = tempfile.NamedTemporaryFile()
-        path, file = TestContextLoading._tempFileWithPaths(f, params)
-        m = self.tsc.loadParamValues(path, file)
-
-        assert(array_equal(m, array([[1, 2, 3], [4, 5, 6]])))
-
-        m = self.tsc.loadParamValues(path, file, "test0")
-
-        assert(array_equal(m, array([1, 2, 3])))
-
-        m = self.tsc.loadParamValues(path, file, ["test0"])
-
-        assert(array_equal(m, array([1, 2, 3])))
-
-        m = self.tsc.loadParamValues(path, file, ["test0", "test1"])
-
-        assert(array_equal(m, array([[1, 2, 3], [4, 5, 6]])))
+        assert(d.names() == ["test0", "test1"])
+        assert(array_equal(d.values(), [[1, 2, 3],[4, 5, 6]]))
+        assert(array_equal(d.values("test0"), [1, 2, 3]))
 
 
 class TestLoadIrregularImages(PySparkTestCaseWithOutputDir):

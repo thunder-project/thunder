@@ -1,9 +1,8 @@
 """ Simple wrapper for a Spark Context to provide loading functionality """
 
-from numpy import asarray
-
-from thunder.utils.datasets import DataSets
 from thunder.utils.common import checkParams, raiseErrorIfPathExists
+from thunder.utils.datasets import DataSets
+from thunder.utils.params import Params
 
 
 class ThunderContext():
@@ -598,7 +597,7 @@ class ThunderContext():
         dataPath = DATASETS[dataset]
 
         data = self.loadSeries(basePath + dataPath + 'series')
-        params = self.loadParamValues(basePath + dataPath + 'params', 'covariates.json')
+        params = self.loadParams(basePath + dataPath + 'params', 'covariates.json').values()
 
         return data, params
 
@@ -607,7 +606,9 @@ class ThunderContext():
         Load a file with parameters from a local file system or S3.
 
         Assumes file is JSON with basic types (strings, integers, doubles, lists),
-        in either a single dict or list of dict-likes.
+        in either a single dict or list of dict-likes, and each dict has at least
+        a "name" field and a "value" field.
+
         Useful for loading generic meta data, parameters, covariates, etc.
 
         Parameters
@@ -631,55 +632,7 @@ class ThunderContext():
         except FileNotFoundError:
             return {}
 
-        return json.loads(buffer)
-
-    def loadParamValues(self, path, file, names=None):
-        """
-        Load values from parameters, optionally given a set of names.
-
-        Assumes file is JSON with either a single dict-like or a list,
-        and each dict has a "name" field and a "value" field, where the
-        value is an array-like. Useful for loading covariates as numpy arrays.
-
-        Parameters
-        ----------
-        path : str
-            Path to file, can be on a local file system or an S3 bucket
-
-        file : str
-            Filename to load
-
-        Returns
-        -------
-        A numpy array, shape (k,n) or (n,), where k is the number of parameters
-        and n is the length of the values
-        """
-
-        params = self.loadParams(path, file)
-
-        if isinstance(params, list) and len(params) == 1:
-            params = params[0]
-
-        if names is None:
-            names = [p['name'] for p in params]
-        elif not isinstance(names, list):
-            names = [names]
-
-        out = []
-        if isinstance(params, dict):
-            if params['name'] in names:
-                out.append(params['value'])
-            else:
-                raise KeyError("No parameters with names %s found" % str(names))
-        else:
-            for p in params:
-                if p['name'] in names:
-                    out.append(p['value'])
-
-        if len(out) < len(names):
-            raise KeyError("Only found values for %g of %g named parameters" % (len(out), len(names)))
-
-        return asarray(out).squeeze()
+        return Params(json.loads(buffer))
 
     def loadSeriesLocal(self, dataFilePath, inputFormat='npy', minPartitions=None, keyFilePath=None, varName=None):
         """
