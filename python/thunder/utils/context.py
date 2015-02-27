@@ -527,9 +527,13 @@ class ThunderContext():
 
         return DataSets.make(self._sc, dataset, **opts)
 
-    def loadExample(self, dataset):
+    def loadExample(self, dataset=None):
         """
         Load a local example data set for testing analyses.
+
+        Some of these data sets are extremely downsampled and should be considered
+        useful only for testing the API. If called with None,
+        will return list of available datasets.
 
         Parameters
         ----------
@@ -541,32 +545,46 @@ class ThunderContext():
         data : RDD of (tuple, array) pairs
             Generated dataset
         """
-
         import os
 
-        path = os.path.dirname(os.path.realpath(__file__))
+        DATASETS = {
+            'iris': 'data/iris/iris.bin',
+            'fish-series': 'data/fish/bin/',
+            'fish-images': 'data/fish/tif-stack/'
+        }
+
+        if dataset is None:
+            return DATASETS.keys()
+
+        checkParams(dataset, DATASETS.keys())
+
+        basePath = os.path.dirname(os.path.realpath(__file__))
         # this path might actually be inside an .egg file (appears to happen with Spark 1.2)
         # check whether data/ directory actually exists on the filesystem, and if not, try
         # a hardcoded path that should work on ec2 clusters launched via the thunder-ec2 script
-        if not os.path.isdir(os.path.join(path, 'data')):
-            path = "/root/thunder/python/thunder/utils"
+        if not os.path.isdir(os.path.join(basePath, 'data')):
+            basePath = "/root/thunder/python/thunder/utils"
+
+        dataPath = DATASETS[dataset]
+        fullPath = os.path.join(basePath, dataPath)
 
         if dataset == "iris":
-            return self.loadSeries(os.path.join(path, 'data/iris/iris.bin'))
+            return self.loadSeries(fullPath)
         elif dataset == "fish-series":
-            return self.loadSeries(os.path.join(path, 'data/fish/bin/')).astype('float')
+            return self.loadSeries(fullPath).astype('float')
         elif dataset == "fish-images":
-            return self.loadImages(os.path.join(path, 'data/fish/tif-stack'), inputFormat="tif")
+            return self.loadImages(fullPath, inputFormat="tif")
         else:
             raise NotImplementedError("Dataset '%s' not known; should be one of 'iris', 'fish-series', 'fish-images'"
                                       % dataset)
 
-    def loadExampleS3(self, dataset):
+    def loadExampleS3(self, dataset=None):
         """
         Load an example data set from S3.
 
         Info on the included datasets can be found at the CodeNeuro data repository
-        (http://datasets.codeneuro.org/).
+        (http://datasets.codeneuro.org/). If called with None, will return
+        list of available datasets.
 
         Parameters
         ----------
@@ -581,14 +599,17 @@ class ThunderContext():
         params : dict
             Parameters or metadata for dataset
         """
-        if 'local' in self._sc.master:
-            raise Exception("Must be running on an EC2 cluster to load this example data set")
-
         DATASETS = {
             'ahrens.lab/direction.selectivity': 'ahrens.lab/direction.selectivity/1/',
             'ahrens.lab/optomotor.response': 'ahrens.lab/optomotor.response/1/',
             'svoboda.lab/tactile.navigation': 'svoboda.lab/tactile.navigation/1/'
         }
+
+        if 'local' in self._sc.master:
+            raise Exception("Must be running on an EC2 cluster to load this example data set")
+
+        if dataset is None:
+            return DATASETS.keys()
 
         checkParams(dataset, DATASETS.keys())
 
@@ -685,8 +706,11 @@ class ThunderContext():
 
         Parameters
         ----------
-        awsAccessKeyId: string AWS public key, usually starts with "AKIA"
-        awsSecretAccessKey: string AWS private key
+        awsAccessKeyId : string
+             AWS public key, usually starts with "AKIA"
+
+        awsSecretAccessKey : string
+            AWS private key
         """
         from thunder.utils.common import AWSCredentials
         self.awsCredentials = AWSCredentials(awsAccessKeyId, awsSecretAccessKey)
