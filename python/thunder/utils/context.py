@@ -17,7 +17,7 @@ class ThunderContext():
     `_sc` : SparkContext
         Spark context for Spark functionality
 
-    awsCredentials : AWSCredentials object, optional, default = None
+    `_credentials` : AWSCredentials object, optional, default = None
         Stores public and private keys for AWS services. Typically available through
         configuration files, and but can optionally be set on the ThunderContext.
         See setAWSCredentials().
@@ -25,7 +25,7 @@ class ThunderContext():
 
     def __init__(self, sparkcontext):
         self._sc = sparkcontext
-        self.awsCredentials = None
+        self._credentials = None
 
     @classmethod
     def start(cls, *args, **kwargs):
@@ -469,7 +469,7 @@ class ThunderContext():
                              " ('stack' value for 'inputFormat' parameter)")
 
         if not overwrite:
-            raiseErrorIfPathExists(outputDirPath, awsCredentialsOverride=self.awsCredentials)
+            raiseErrorIfPathExists(outputDirPath, awsCredentialsOverride=self._credentials)
             overwrite = True  # prevent additional downstream checks for this path
 
         if not ext:
@@ -646,7 +646,7 @@ class ThunderContext():
         import json
         from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError
 
-        reader = getFileReaderForPath(path)(awsCredentialsOverride=self.awsCredentials)
+        reader = getFileReaderForPath(path)(awsCredentialsOverride=self._credentials)
         try:
             buffer = reader.read(path, filename=file)
         except FileNotFoundError:
@@ -713,8 +713,8 @@ class ThunderContext():
             AWS private key
         """
         from thunder.utils.common import AWSCredentials
-        self.awsCredentials = AWSCredentials(awsAccessKeyId, awsSecretAccessKey)
-        self.awsCredentials.setOnContext(self._sc)
+        self._credentials = AWSCredentials(awsAccessKeyId, awsSecretAccessKey)
+        self._credentials.setOnContext(self._sc)
 
 
 DEFAULT_EXTENSIONS = {
