@@ -296,15 +296,10 @@ class TestCasting(PySparkTestCase):
             else:
                 # the unsafe cast will return *something*, but we don't have any expectations as to what:
                 assert_is_not_none(downcasted)
-            if can_cast(origVal, 'float16', casting="safe"):
-                # numpy scalars might be safely downcastable, depending on value
-                # numpy arrays are assumed not to be safely downcastable, no value check is performed by can_cast
-                assert_true(allclose(origVal, data.astype('float16', casting="safe").first()[1], rtol=1e-03))
-            else:
-                # raises py4j.protocol.Py4JJavaError after a TypeError on workers:
-                # we're not importing py4j, and it seems like overkill to do so just for this one assertion,
-                # so just assert an Exception.
-                assert_raises(Exception, data.astype('float16', casting="safe").first)
+            # raises py4j.protocol.Py4JJavaError after a TypeError on workers:
+            # we're not importing py4j, and it seems like overkill to do so just for this one assertion,
+            # so just assert an Exception.
+            assert_raises(Exception, data.astype('float16', casting="safe").first)
 
 
 class TestDataMethods(PySparkTestCase):
