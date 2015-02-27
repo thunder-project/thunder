@@ -1,0 +1,268 @@
+
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Style guide</title>
+    
+    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootswatch-3.1.0/simplex/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/styles.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.5.0_dev',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="None" href="index.html" />
+    <link rel="next" title="F.A.Q." href="faq.html" />
+    <link rel="prev" title="Contributing" href="contributing.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html"><img src="_static/thunder_logo.png">
+           </a>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.0_dev</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            <li class="divider-vertical"></li>
+            
+                <li><a href="tutorials.html">Tutorials</a></li>
+                <li><a href="api.html">API</a></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction to Thunder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install_local.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install_ec2.html">Running on EC2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Style guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">F.A.Q.</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/freeman-lab/thunder/releases">Release notes</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/basic_usage.html">Basic usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/thunder_context.html">Thunder context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/input_formats.html">Input formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/images.html">Images</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/series.html">Series</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/clustering.html">Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/factorization.html">Factorization</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://gitter.im/thunder-project/thunder">Gitter chatroom</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://groups.google.com/forum/?hl=en#!forum/thunder-user">Mailing list</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/freeman-lab/thunder">Github repo</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://thefreemanlab.com/thunder/">Project page</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Style guide</a><ul>
+<li><a class="reference internal" href="#naming-conventions">Naming conventions</a></li>
+<li><a class="reference internal" href="#imports">Imports</a></li>
+<li><a class="reference internal" href="#docstrings">Docstrings</a></li>
+<li><a class="reference internal" href="#testing">Testing</a></li>
+<li><a class="reference internal" href="#design-principles">Design principles</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+            
+            
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <div class="section" id="style-guide">
+<span id="contributing"></span><h1>Style guide<a class="headerlink" href="#style-guide" title="Permalink to this headline">¶</a></h1>
+<p>Developers and contributors to Thunder should keep these style and programming conventions in mind.</p>
+<div class="section" id="naming-conventions">
+<h2>Naming conventions<a class="headerlink" href="#naming-conventions" title="Permalink to this headline">¶</a></h2>
+<p>Class names should be <tt class="docutils literal"><span class="pre">CapitalizedNames</span></tt>.</p>
+<p>Variables, attributes, methods, and function names should all be <tt class="docutils literal"><span class="pre">camelCased</span></tt>. This is primarily to maintain consistency with the Spark code base. The following are possible exceptions to the convention:</p>
+<ul class="simple">
+<li>variables storing counts beginning with <tt class="docutils literal"><span class="pre">n</span></tt> (e.g. <tt class="docutils literal"><span class="pre">nfeatures</span></tt>) should be in lower case</li>
+<li>compound words or words sometimes written as one can be in lowercase (e.g. <tt class="docutils literal"><span class="pre">filename</span></tt>, or <tt class="docutils literal"><span class="pre">pinv</span></tt> for pseudoinverse)</li>
+</ul>
+<p>Literal constants should be named in all caps, with underscores separating words (e.g. <tt class="docutils literal"><span class="pre">INIT_IFD_SIZE</span></tt>).</p>
+<p>If a method directly wraps a method from another library, under most circumstances the name of the external library should be used regardless of these conventions (e.g. the <tt class="docutils literal"><span class="pre">Data.astype</span></tt> method, which calls <tt class="docutils literal"><span class="pre">numpy.astype</span></tt>).</p>
+<p>Variable names may use abbreviations so long as their meaning is relatively clear, e.g. <tt class="docutils literal"><span class="pre">whtMat</span></tt> or <tt class="docutils literal"><span class="pre">whiteningMatrix</span></tt> would be acceptable. Single letter variable names are acceptable if following a known convention, e.g. <tt class="docutils literal"><span class="pre">w</span></tt> for weights, <tt class="docutils literal"><span class="pre">i</span></tt>, <tt class="docutils literal"><span class="pre">j</span></tt>, <tt class="docutils literal"><span class="pre">k</span></tt> for loop indices, <tt class="docutils literal"><span class="pre">n</span></tt> for counts, <tt class="docutils literal"><span class="pre">x</span></tt>, <tt class="docutils literal"><span class="pre">y</span></tt> for numeric values.</p>
+<p>Leading underscores may be used to indicate attributes not intended to be accessed outside of the object where they are defined. Double leading underscores may be used in method names for the same purpose. Trailing underscores may be used (sparingly) to avoid shadowing variables of the same name inside nested scopes, such as nested functions. A single underscore <tt class="docutils literal"><span class="pre">_</span></tt> in a function may be used to denote a dummy variable required for unpacking a tuple, as in a method return value, that will not be otherwise accessed, e.g. <tt class="docutils literal"><span class="pre">data.apply(lambda</span> <span class="pre">(_,</span> <span class="pre">v):</span> <span class="pre">(_,</span> <span class="pre">v</span> <span class="pre">*</span> <span class="pre">2)</span></tt>).</p>
+<p>A Spark broadcast variable may be denoted by initial lowercase letters <tt class="docutils literal"><span class="pre">bc</span></tt>, as in <tt class="docutils literal"><span class="pre">bcModel</span> <span class="pre">=</span> <span class="pre">sc.broadcast(model)</span></tt>.</p>
+</div>
+<div class="section" id="imports">
+<h2>Imports<a class="headerlink" href="#imports" title="Permalink to this headline">¶</a></h2>
+<p>All imports should be in the form <tt class="docutils literal"><span class="pre">from</span> <span class="pre">modulename</span> <span class="pre">import</span> <span class="pre">a,</span> <span class="pre">b,</span> <span class="pre">c</span></tt>. This includes <tt class="docutils literal"><span class="pre">numpy</span></tt>. Please do not use the convention of <tt class="docutils literal"><span class="pre">import</span> <span class="pre">numpy</span> <span class="pre">as</span> <span class="pre">np</span></tt>. Although there are some advantages to this approach, we find overall that it&#8217;s harder to read.</p>
+<p>Imports should be grouped as follows: all third-party imports (e.g. <tt class="docutils literal"><span class="pre">numpy</span></tt>, <tt class="docutils literal"><span class="pre">scipy</span></tt>), then all <tt class="docutils literal"><span class="pre">thunder</span></tt> imports, with alphabetical sorting by module within each group. And variables imported from a module should be listed in alphabetical order. For example</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">arange</span><span class="p">,</span> <span class="n">amax</span><span class="p">,</span> <span class="n">amin</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">greater</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">squeeze</span>
+
+<span class="kn">from</span> <span class="nn">thunder.rdds.data</span> <span class="kn">import</span> <span class="n">Data</span>
+<span class="kn">from</span> <span class="nn">thunder.rdds.keys</span> <span class="kn">import</span> <span class="n">Dimensions</span>
+<span class="kn">from</span> <span class="nn">thunder.utils.common</span> <span class="kn">import</span> <span class="n">parseMemoryString</span>
+</pre></div>
+</div>
+<p>Locally-scoped imports are strongly encouraged, and top-level imports discouraged, especially for modules with user-facing classes (anything imported in Thunder&#8217;s top-level <tt class="docutils literal"><span class="pre">__init__.py</span></tt>, which are those modules imported when calling <tt class="docutils literal"><span class="pre">from</span> <span class="pre">thunder</span> <span class="pre">import</span> <span class="pre">*</span></tt>). This is to avoid a performance problem arising from how PySpark serializes inline functions, especially problematic for imports from large and complex libraries (e.g. <tt class="docutils literal"><span class="pre">matplotlib</span></tt>). For user-facing modules, limit top-level imports to <tt class="docutils literal"><span class="pre">numpy</span></tt>, and other <tt class="docutils literal"><span class="pre">thunder</span></tt> modules which themselves only import from <tt class="docutils literal"><span class="pre">numpy</span></tt>, and otherwise use locally-scoped imports.</p>
+</div>
+<div class="section" id="docstrings">
+<h2>Docstrings<a class="headerlink" href="#docstrings" title="Permalink to this headline">¶</a></h2>
+<p>Thunder uses the <cite>scipy</cite> and <cite>numpy</cite> docstring formatting conventions. All user-facing classes and methods should have a description of what the method or class does, a list of any parameters, and optionally a list of returns. Single line docstrings should use this formatting:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot; This is a docstring &quot;&quot;&quot;</span>
+</pre></div>
+</div>
+<p>Multi line docstrings should instead use this formatting (note the initial line break):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This is the first line of the docstring.</span>
+
+<span class="sd">This is further information, usually a more in-depth discussion</span>
+<span class="sd">of what the method does.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+</pre></div>
+</div>
+<p>Use the following conventions to specify parameters, including type and default value:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Parameters</span>
+<span class="sd">----------</span>
+<span class="sd">parameter1 : type</span>
+<span class="sd">        Description of parameter</span>
+
+<span class="sd">parameter2 : type, optional, default = something</span>
+<span class="sd">        Description of an optional parameters</span>
+<span class="sd">&quot;&quot;&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="testing">
+<h2>Testing<a class="headerlink" href="#testing" title="Permalink to this headline">¶</a></h2>
+<p>Within the <tt class="docutils literal"><span class="pre">thunder/test</span></tt> folder, there are several files with names beginning with <tt class="docutils literal"><span class="pre">test_</span></tt> each containing unit tests for a corresponding package or module. Within each of these files, there are one or more test classes (usually derived from the base class <tt class="docutils literal"><span class="pre">PySparkTestCase</span></tt>), and each test class has as methods a set of individual tests.</p>
+<p>All new features should include appropriate unit tests. When adding a new feature, a good place to start is to find a piece of functionality similar to the one you are adding, find the existing test, and use it as as a starting point.</p>
+<p>See <a class="reference internal" href="contributing.html"><em>Contributing</em></a> for information on how to run the tests. All tests will be automatically run on any pull request, but you can save time by running tests locally and resolving any issues before submitting.</p>
+</div>
+<div class="section" id="design-principles">
+<h2>Design principles<a class="headerlink" href="#design-principles" title="Permalink to this headline">¶</a></h2>
+<p>Most functionality in Thunder is organized broadly into two parts: distributed data objects and their associated methods (e.g. <tt class="docutils literal"><span class="pre">Images</span></tt>, <tt class="docutils literal"><span class="pre">Series</span></tt>, etc.), and analysis packages (e.g. <tt class="docutils literal"><span class="pre">clustering</span></tt>, <tt class="docutils literal"><span class="pre">factorization</span></tt>, <tt class="docutils literal"><span class="pre">regression</span></tt>) that take these objects as inputs.</p>
+<p>Methods on data objects are designed to provide easy access to common data processing operations. For example, filtering or cropping images, or computing correlations on time series. Data object methods are not intended for complex analyses.</p>
+<p>Analysis packages are designed for more complex operations and model fitting workflows. Most are designed after the style of scikit-learn, with a single class or classes for each kind of model. These classes should usually have <tt class="docutils literal"><span class="pre">fit</span></tt> methods (for fitting the parameters of a model from a data object), and <tt class="docutils literal"><span class="pre">predict</span></tt> and/or <tt class="docutils literal"><span class="pre">transform</span></tt> methods (for applying the estimated model to new data).</p>
+<p>Data objects are extensible by design &#8211; see, for example, <tt class="docutils literal"><span class="pre">TimeSeries</span></tt> which is a subclass of <tt class="docutils literal"><span class="pre">Series</span></tt> &#8211; and some new features may be best implemented through a new class (for example, an <tt class="docutils literal"><span class="pre">EventTimeSeries</span></tt> for working with sparse time series data). To extend an existing data object, your subclass just needs to define a <tt class="docutils literal"><span class="pre">_constructor</span></tt> that returns the correct type, as in:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">_constructor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="k">return</span> <span class="n">TimeSeries</span>
+</pre></div>
+</div>
+<p>It can also optionally add metadata (and augment the <tt class="docutils literal"><span class="pre">__init__</span></tt> method accordingly), as in:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">metadata</span> <span class="o">=</span> <span class="n">Data</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">+</span> <span class="p">[</span><span class="s">&#39;_index&#39;</span><span class="p">,</span> <span class="s">&#39;_dims&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rdd</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+  <span class="nb">super</span><span class="p">(</span><span class="n">Series</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">rdd</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+  <span class="bp">self</span><span class="o">.</span><span class="n">_index</span> <span class="o">=</span> <span class="n">index</span>
+  <span class="bp">self</span><span class="o">.</span><span class="n">_dims</span> <span class="o">=</span> <span class="n">dims</span>
+</pre></div>
+</div>
+<p>All data objects in Thunder (e.g. <tt class="docutils literal"><span class="pre">Images</span></tt>, <tt class="docutils literal"><span class="pre">Series</span></tt>, etc.) are backed by RDDs. These objects do not expose all RDD operations, to provide users with a coherent and intuitive set of custom data manipulations. But as a developer, a common pattern is to call a sequence of arbitrary RDD operations on the object’s underlying RDD, and then reconstitute the class. In the case of a <tt class="docutils literal"><span class="pre">map</span></tt> operation, this can and should be performed using the <tt class="docutils literal"><span class="pre">apply</span></tt>, <tt class="docutils literal"><span class="pre">applyValues</span></tt>, or <tt class="docutils literal"><span class="pre">applyKeys</span></tt> methods, which combine that sequence into a single method. For other operations, you will need to perform that sequence as follows:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">newrdd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rdd</span><span class="o">.</span><span class="n">func1</span><span class="p">()</span><span class="o">.</span><span class="n">func2</span><span class="p">()</span> <span class="o">...</span>
+<span class="n">newdata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constructor</span><span class="p">(</span><span class="n">newrdd</span><span class="p">)</span><span class="o">.</span><span class="n">__finalize__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+<span class="k">return</span> <span class="n">newdata</span>
+</pre></div>
+</div>
+<p>Keep these design considereations in mind when planning to add a new feature. It&#8217;s also a great idea to post an <a class="reference external" href="https://github.com/freeman-lab/thunder/issues">issue</a>, or send a message to the <a class="reference external" href="https://gitter.im/thunder-project/thunder">gitter chatroom</a> or <a class="reference external" href="https://groups.google.com/forum/?hl=en#!forum/thunder-user">mailing list</a> with your idea, to solicit feedback from the community. We can help!</p>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+        <br/>
+        
+<div id="sourcelink">
+  <a href="_sources/style_guide.txt"
+     rel="nofollow">Source</a>
+</div>
+      
+    </p>
+    <p>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

@@ -1,0 +1,73 @@
+:mod:`thunder`.Series
+============================
+
+.. currentmodule:: thunder
+
+.. autoclass:: Series
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~Series.__init__
+      ~Series.apply
+      ~Series.applyKeys
+      ~Series.applyValues
+      ~Series.astype
+      ~Series.between
+      ~Series.cache
+      ~Series.center
+      ~Series.coalesce
+      ~Series.collect
+      ~Series.collectAsArray
+      ~Series.collectKeysAsArray
+      ~Series.collectValuesAsArray
+      ~Series.correlate
+      ~Series.count
+      ~Series.filter
+      ~Series.filterOnKeys
+      ~Series.filterOnValues
+      ~Series.first
+      ~Series.get
+      ~Series.getMany
+      ~Series.getRange
+      ~Series.indToSub
+      ~Series.keys
+      ~Series.max
+      ~Series.maxProject
+      ~Series.mean
+      ~Series.meanByRegions
+      ~Series.meanOfRegion
+      ~Series.min
+      ~Series.pack
+      ~Series.populateParamsFromFirstRecord
+      ~Series.query
+      ~Series.repartition
+      ~Series.saveAsBinarySeries
+      ~Series.select
+      ~Series.seriesMax
+      ~Series.seriesMean
+      ~Series.seriesMedian
+      ~Series.seriesMin
+      ~Series.seriesPercentile
+      ~Series.seriesStat
+      ~Series.seriesStats
+      ~Series.seriesStdev
+      ~Series.seriesSum
+      ~Series.sortByKey
+      ~Series.standardize
+      ~Series.stats
+      ~Series.stdev
+      ~Series.subToInd
+      ~Series.subset
+      ~Series.sum
+      ~Series.take
+      ~Series.toBlocks
+      ~Series.toRowMatrix
+      ~Series.toSpatialSeries
+      ~Series.toTimeSeries
+      ~Series.values
+      ~Series.variance
+      ~Series.zscore
+   
+
