@@ -1,5 +1,5 @@
-from nose.tools import assert_equals, assert_is_none, assert_raises, assert_true
-from numpy import array, array_equal
+from nose.tools import assert_equals, assert_is_none, assert_is_not_none, assert_raises, assert_true
+from numpy import allclose, array, array_equal, float32
 
 from thunder.rdds.data import Data
 from test_utils import PySparkTestCase
@@ -254,6 +254,46 @@ class TestSeriesGetters(PySparkTestCase):
 
         # passing a range that is completely out of bounds throws a KeyError
         assert_raises(KeyError, self.series.__getitem__, (slice(2, 3), slice(None, None)))
+
+
+class TestCasting(PySparkTestCase):
+    def setUp(self):
+        super(TestCasting, self).setUp()
+        # float16 max value is 6.55040e+04 (np.finfo(np.float16))
+        # "big" values are too large to cast safely down to float16s
+        DATA = [
+            ('float32Array', array([1.1, 2.2], dtype='float32')),
+            ('float32BigArray', array([1.1e+05, 2.2e+05], dtype='float32')),
+            ('float32Scalar', float32(1.1)),
+            ('float32BigScalar', float32(4.4e+05)),
+            ('pythonFloatScalar',  1.1),
+            ('pythonFloatBigScalar', 5.5e+05)
+        ]
+        for datum in DATA:
+            k, v = datum
+            rdd = self.sc.parallelize([(0,v)])
+            data = Data(rdd, nrecords=1, dtype='float32')
+            setattr(self, k, v)
+            setattr(self, k+"RDD", rdd)
+            setattr(self, k+"Data", data)
+
+    def test_arrayCasting(self):
+        """Tests casting of numpy arrays with Data.astype
+        """
+        def getAttrs(obj, name):
+            return getattr(obj, name), getattr(obj, name+"Data")
+        okToDowncast = {'float32Array': True, 'float32BigArray': False}
+        for caseName, downcastable in okToDowncast.iteritems():
+            expectedVal, data = getAttrs(self, caseName)
+            upcasted = data.astype('float64').first()[1]
+            downcasted = data.astype('float16', casting="unsafe").first()[1]
+            assert_true(allclose(expectedVal, upcasted, rtol=1e-03))
+            if downcastable:
+                assert_true(allclose(expectedVal, downcasted, rtol=1e-03))
+            else:
+                assert_is_not_none(downcasted)
+            # raises py4j.protocol.Py4JJavaError:
+            assert_raises(Exception, data.astype('float16', casting="safe").first)
 
 
 class TestDataMethods(PySparkTestCase):
