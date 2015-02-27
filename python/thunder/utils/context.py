@@ -630,7 +630,7 @@ class ThunderContext():
         try:
             buffer = reader.read(path, filename=file)
         except FileNotFoundError:
-            return {}
+            raise Exception("Cannot find file %s" % path + file)
 
         return Params(json.loads(buffer))
 
