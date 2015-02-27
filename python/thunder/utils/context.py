@@ -597,7 +597,7 @@ class ThunderContext():
         dataPath = DATASETS[dataset]
 
         data = self.loadSeries(basePath + dataPath + 'series')
-        params = self.loadParams(basePath + dataPath + 'params', 'covariates.json').values()
+        params = self.loadParams(basePath + dataPath + 'params', 'covariates.json')
 
         return data, params
 
