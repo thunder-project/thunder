@@ -66,7 +66,7 @@ def rescale(data):
 
 def export(data, outputDirPath, outputFilename, outputFormat, sorting=False):
     """
-    Export data to a variety of local formats.
+    Export array data to a variety of local formats.
 
     Can export local arrays or a Series. If passed a Series,
     it will first be packed into one or more local arrrays.
