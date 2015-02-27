@@ -313,12 +313,29 @@ class Data(object):
         """
         if dtype is None or dtype == '':
             return self
+        from numpy import can_cast, ndarray
+        from numpy import dtype as dtypeFunc
         if dtype == 'smallfloat':
             # get the smallest floating point type that can be safely cast to from our current type
             from thunder.utils.common import smallestFloatType
             dtype = smallestFloatType(self.dtype)
 
-        nextRdd = self.rdd.mapValues(lambda v: v.astype(dtype, casting=casting, copy=False))
+        def cast(v, dtype_, casting_):
+            if isinstance(v, ndarray):
+                return v.astype(dtype_, casting=casting_, copy=False)
+            elif can_cast(v, dtype_, casting=casting_):
+                if hasattr(v, 'astype'):
+                    # numpy scalars have an 'astype' method, but don't have the "casting" kwarg:
+                    return v.astype(dtype_)
+                else:
+                    # turn ourself into a numpy scalar of the appropriate type
+                    # despite the name, 'asarray' will return a scalar if a scalar is passed
+                    return asarray(v, dtype=dtype_)
+            else:
+                raise TypeError("Cannot cast value '%s' to dtype '%s' according to the rule '%s'" %
+                                (str(v), str(dtype_), casting_))
+
+        nextRdd = self.rdd.mapValues(lambda v: cast(v, dtypeFunc(dtype), casting))
         return self._constructor(nextRdd, dtype=str(dtype)).__finalize__(self)
 
     def apply(self, func, keepDtype=False, keepIndex=False):
