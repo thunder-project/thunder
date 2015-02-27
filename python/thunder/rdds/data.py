@@ -302,7 +302,7 @@ class Data(object):
         Parameters
         ----------
         dtype: numpy dtype or dtype specifier, or string 'smallfloat', or None
-            Data type to which RDD values are to be cast. Will return immediately, performing no cast, if None is passed.
+            Data type to which RDD values are to be cast. Will return without cast if None is passed.
 
         casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
             Casting method to pass on to numpy's astype() method; see numpy documentation for details.
