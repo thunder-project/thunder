@@ -617,11 +617,11 @@ class ThunderContext():
         dataPath = DATASETS[dataset]
 
         data = self.loadSeries(basePath + dataPath + 'series')
-        params = self.loadParams(basePath + dataPath + 'params', 'covariates.json')
+        params = self.loadParams(basePath + dataPath + 'params/covariates.json')
 
         return data, params
 
-    def loadParams(self, path, file):
+    def loadParams(self, path):
         """
         Load a file with parameters from a local file system or S3.
 
@@ -636,9 +636,6 @@ class ThunderContext():
         path : str
             Path to file, can be on a local file system or an S3 bucket
 
-        file : str
-            Filename to load
-
         Returns
         -------
         A dict or list with the parameters
@@ -648,9 +645,9 @@ class ThunderContext():
 
         reader = getFileReaderForPath(path)(awsCredentialsOverride=self._credentials)
         try:
-            buffer = reader.read(path, filename=file)
+            buffer = reader.read(path)
         except FileNotFoundError:
-            raise Exception("Cannot find file %s" % path + file)
+            raise Exception("Cannot find file %s" % path)
 
         return Params(json.loads(buffer))
 

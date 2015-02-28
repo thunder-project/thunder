@@ -253,16 +253,16 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
     def _tempFileWithPaths(f, blob):
         f.write(blob)
         f.flush()
-        return os.path.dirname(f.name), os.path.basename(f.name)
+        return f.name
 
     def test_loadParams(self):
 
         params = json.dumps({"name": "test1", "value": [1, 2, 3]})
 
         f = tempfile.NamedTemporaryFile()
-        path, file = TestContextLoading._tempFileWithPaths(f, params)
+        path = TestContextLoading._tempFileWithPaths(f, params)
 
-        d = self.tsc.loadParams(path, file)
+        d = self.tsc.loadParams(path)
 
         assert(d.names() == ["test1"])
         assert(array_equal(d.values(), [1, 2, 3]))
@@ -271,11 +271,11 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
                              {"name": "test1", "value": [4, 5, 6]}])
 
         f = tempfile.NamedTemporaryFile()
-        path, file = TestContextLoading._tempFileWithPaths(f, params)
-        d = self.tsc.loadParams(path, file)
+        path = TestContextLoading._tempFileWithPaths(f, params)
+        d = self.tsc.loadParams(path)
 
         assert(d.names() == ["test0", "test1"])
-        assert(array_equal(d.values(), [[1, 2, 3],[4, 5, 6]]))
+        assert(array_equal(d.values(), [[1, 2, 3], [4, 5, 6]]))
         assert(array_equal(d.values("test0"), [1, 2, 3]))
 
 
