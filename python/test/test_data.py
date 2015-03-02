@@ -1,5 +1,5 @@
-from nose.tools import assert_equals, assert_is_none, assert_raises, assert_true
-from numpy import array, array_equal
+from nose.tools import assert_equals, assert_is_none, assert_is_not_none, assert_raises, assert_true
+from numpy import allclose, array, array_equal, can_cast, float32
 
 from thunder.rdds.data import Data
 from test_utils import PySparkTestCase
@@ -254,6 +254,52 @@ class TestSeriesGetters(PySparkTestCase):
 
         # passing a range that is completely out of bounds throws a KeyError
         assert_raises(KeyError, self.series.__getitem__, (slice(2, 3), slice(None, None)))
+
+
+class TestCasting(PySparkTestCase):
+    def setUp(self):
+        super(TestCasting, self).setUp()
+        # float16 max value is 6.55040e+04 (np.finfo(np.float16))
+        # "*Big*" values are too large to cast safely down to float16s
+        DATA = [
+            ('float32Array', array([1.1, 2.2], dtype='float32')),
+            ('float32BigArray', array([1.1e+05, 2.2e+05], dtype='float32')),
+            ('float32Scalar', float32(1.1)),
+            ('float32BigScalar', float32(4.4e+05)),
+            ('pythonFloatScalar',  1.1),
+            ('pythonFloatBigScalar', 5.5e+05)
+        ]
+        for datum in DATA:
+            k, v = datum
+            rdd = self.sc.parallelize([(0, v)])
+            data = Data(rdd, nrecords=1, dtype='float32')
+            setattr(self, k, v)
+            setattr(self, k+"RDD", rdd)
+            setattr(self, k+"Data", data)
+        self.allCases = [datum[0] for datum in DATA]
+
+    def test_casting(self):
+        """Tests casting of numpy arrays, numpy scalars, and python scalars with Data.astype
+        """
+        isDowncastable = lambda name: 'Big' not in name
+
+        for caseName in self.allCases:
+            origVal, data = getattr(self, caseName), getattr(self, caseName+"Data")
+            upcasted = data.astype('float64').first()[1]
+            downcasted = data.astype('float16', casting="unsafe").first()[1]
+            # upcasting to float64 shouldn't be a problem
+            assert_true(allclose(origVal, upcasted, rtol=1e-05))
+            if isDowncastable(caseName):
+                # if the value is in range, we expect to get back something reasonably close to our original
+                # values after downcasting to float16
+                assert_true(allclose(origVal, downcasted, rtol=1e-03))
+            else:
+                # the unsafe cast will return *something*, but we don't have any expectations as to what:
+                assert_is_not_none(downcasted)
+            # raises py4j.protocol.Py4JJavaError after a TypeError on workers:
+            # we're not importing py4j, and it seems like overkill to do so just for this one assertion,
+            # so just assert an Exception.
+            assert_raises(Exception, data.astype('float16', casting="safe").first)
 
 
 class TestDataMethods(PySparkTestCase):

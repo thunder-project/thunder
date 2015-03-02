@@ -1,6 +1,8 @@
 """ Simple wrapper for a Spark Context to provide loading functionality """
 
-from thunder.utils.common import checkParams, raiseErrorIfPathExists
+import os
+
+from thunder.utils.common import checkParams, handleFormat, raiseErrorIfPathExists
 from thunder.utils.datasets import DataSets
 from thunder.utils.params import Params
 
@@ -545,8 +547,6 @@ class ThunderContext():
         data : RDD of (tuple, array) pairs
             Generated dataset
         """
-        import os
-
         DATASETS = {
             'iris': 'data/iris/iris.bin',
             'fish-series': 'data/fish/bin/',
@@ -617,11 +617,11 @@ class ThunderContext():
         dataPath = DATASETS[dataset]
 
         data = self.loadSeries(basePath + dataPath + 'series')
-        params = self.loadParams(basePath + dataPath + 'params', 'covariates.json')
+        params = self.loadParams(basePath + dataPath + 'params/covariates.json')
 
         return data, params
 
-    def loadParams(self, path, file):
+    def loadParams(self, path):
         """
         Load a file with parameters from a local file system or S3.
 
@@ -636,9 +636,6 @@ class ThunderContext():
         path : str
             Path to file, can be on a local file system or an S3 bucket
 
-        file : str
-            Filename to load
-
         Returns
         -------
         A dict or list with the parameters
@@ -648,9 +645,9 @@ class ThunderContext():
 
         reader = getFileReaderForPath(path)(awsCredentialsOverride=self._credentials)
         try:
-            buffer = reader.read(path, filename=file)
+            buffer = reader.read(path)
         except FileNotFoundError:
-            raise Exception("Cannot find file %s" % path + file)
+            raise Exception("Cannot find file %s" % path)
 
         return Params(json.loads(buffer))
 
@@ -692,6 +689,56 @@ class ThunderContext():
 
         return data
 
+    def export(self, data, filename, format=None, overwrite=False, varname=None):
+        """
+        Export local array data to a variety of formats.
+
+        Can write to a local file sytem or S3 (destination inferred from filename schema).
+        S3 writing useful for persisting arrays when working in an environment without
+        accessible local storage.
+
+        Parameters
+        ----------
+        data : array-like
+            The data to export
+
+        filename : str
+            Output location (path/to/file.ext)
+
+        format : str, optional, default = None
+            Ouput format ("npy", "mat", or "txt"), if not provided will
+            try to infer from file extension.
+
+        overwrite : boolean, optional, default = False
+            Whether to overwrite if directory or file already exists
+
+        varname : str, optional, default = None
+            Variable name for writing "mat" formatted files
+        """
+        from numpy import save, savetxt
+        from scipy.io import savemat
+        from StringIO import StringIO
+
+        from thunder.rdds.fileio.writers import getFileWriterForPath
+
+        path, file, format = handleFormat(filename, format)
+        checkParams(format, ["npy", "mat", "txt"])
+        clazz = getFileWriterForPath(filename)
+        writer = clazz(path, file, overwrite=overwrite, awsCredentialsOverride=self._credentials)
+
+        stream = StringIO()
+
+        if format == "mat":
+            varname = os.path.splitext(file)[0] if varname is None else varname
+            savemat(stream, mdict={varname: data}, oned_as='column', do_compression='true')
+        if format == "npy":
+            save(stream, data)
+        if format == "txt":
+            savetxt(stream, data)
+
+        stream.seek(0)
+        writer.writeFile(stream.buf)
+
     def setAWSCredentials(self, awsAccessKeyId, awsSecretAccessKey):
         """
         Manually set AWS access credentials to be used by Thunder.
@@ -721,5 +768,8 @@ DEFAULT_EXTENSIONS = {
     "stack": "stack",
     "tif": "tif",
     "tif-stack": "tif",
-    "png": "png"
+    "png": "png",
+    "mat": "mat",
+    "npy": "npy",
+    "txt": "txt"
 }
