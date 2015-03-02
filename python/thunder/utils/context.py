@@ -2,7 +2,7 @@
 
 import os
 
-from thunder.utils.common import checkParams, parseFormat, raiseErrorIfPathExists
+from thunder.utils.common import checkParams, handleFormat, raiseErrorIfPathExists
 from thunder.utils.datasets import DataSets
 from thunder.utils.params import Params
 
@@ -689,29 +689,29 @@ class ThunderContext():
 
         return data
 
-    def export(self, data, output, format=None, overwrite=False, varname=None):
+    def export(self, data, filename, format=None, overwrite=False, varname=None):
         """
         Export local array data to a variety of formats.
 
-        Can write to a local file sytem or S3.
+        Can write to a local file sytem or S3 (will infer from filename).
 
         Parameters
         ----------
         data : array-like
             The data to export
 
-        output : str
-            Output location (path/to/filename)
+        filename : str
+            Output location (path/to/file.ext)
 
         format : str, optional, default = None
             Ouput format ("npy", "mat", or "txt"), if not provided will
-            try to infer automatically from file extension.
+            try to infer from file extension.
 
         overwrite : boolean, optional, default = False
             Whether to overwrite if directory or file already exists
 
         varname : str, optional, default = None
-            Variable name for writing mat files
+            Variable name for writing "mat" formatted files
         """
         from numpy import save, savetxt
         from scipy.io import savemat
@@ -719,9 +719,9 @@ class ThunderContext():
 
         from thunder.rdds.fileio.writers import getFileWriterForPath
 
-        path, file, format = parseFormat(output, format)
+        path, file, format = handleFormat(filename, format)
         checkParams(format, ["npy", "mat", "txt"])
-        clazz = getFileWriterForPath(output)
+        clazz = getFileWriterForPath(filename)
         writer = clazz(path, file, overwrite=overwrite, awsCredentialsOverride=self._credentials)
 
         stream = StringIO()
@@ -768,5 +768,6 @@ DEFAULT_EXTENSIONS = {
     "tif-stack": "tif",
     "png": "png",
     "mat": "mat",
-    "npy": "npy"
+    "npy": "npy",
+    "txt": "txt"
 }

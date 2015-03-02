@@ -180,26 +180,26 @@ def parseMemoryString(memStr):
         return int(memStr)
 
 
-def parseFormat(output, format):
+def handleFormat(filename, format):
     """
-    Parse a string output specification and either
+    Given a string with filename, either:
 
-    (1) obtain format from the extension from the file name or
-    (2) use the specified format to append a file name extension
+    (1) obtain format from the filename's extension or
+    (2) use the specified format to append an extension to filename
 
     Returns the path to the file, the filename, and the inferred format
     """
     import os
     from thunder.utils.context import DEFAULT_EXTENSIONS
 
-    file = os.path.basename(output)
-    path = os.path.dirname(output)
+    file = os.path.basename(filename)
+    path = os.path.dirname(filename)
     parts = os.path.splitext(file)
     ext = parts[1][1:]
 
     if format is None:
         if len(ext) == 0:
-            raise Exception("Cannot infer file type from name %s" % output)
+            raise Exception("Cannot infer file type from name %s" % filename)
         else:
             format = ext
     else:
