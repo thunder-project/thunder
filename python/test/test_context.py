@@ -279,6 +279,66 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         assert(array_equal(d.values("test0"), [1, 2, 3]))
 
 
+class TestContextWriting(PySparkTestCaseWithOutputDir):
+
+    def setUp(self):
+        super(TestContextWriting, self).setUp()
+        self.tsc = ThunderContext(self.sc)
+
+    def test_export_npy(self):
+
+        from numpy import load
+
+        a = array([[1, 2], [2, 3]])
+
+        filename = self.outputdir + "/test.npy"
+        self.tsc.export(a, filename)
+        aa = load(filename)
+        assert(array_equal(aa, a))
+
+        filename = self.outputdir + "/test"
+        self.tsc.export(a, filename, format="npy", overwrite=True)
+        aa = load(filename + ".npy")
+        assert(array_equal(aa, a))
+
+    def test_export_mat(self):
+
+        from scipy.io import loadmat
+
+        a = array([[1, 2], [2, 3]])
+
+        filename = self.outputdir + "/test.mat"
+        self.tsc.export(a, filename)
+        aa = loadmat(filename)
+        assert(array_equal(aa['test'], a))
+
+        filename = self.outputdir + "/test"
+        self.tsc.export(a, filename, format="mat", overwrite=True)
+        aa = loadmat(filename + ".mat")
+        assert(array_equal(aa['test'], a))
+
+        filename = self.outputdir + "/test"
+        self.tsc.export(a, filename, format="mat", varname="tmp", overwrite=True)
+        aa = loadmat(filename + ".mat")
+        assert(array_equal(aa['tmp'], a))
+
+    def test_export_txt(self):
+
+        from numpy import loadtxt
+
+        a = array([[1, 2], [2, 3]])
+
+        filename = self.outputdir + "/test.txt"
+        self.tsc.export(a, filename)
+        aa = loadtxt(filename)
+        assert(array_equal(aa, a))
+
+        filename = self.outputdir + "/test"
+        self.tsc.export(a, filename, format="txt", overwrite=True)
+        aa = loadtxt(filename + ".txt")
+        assert(array_equal(aa, a))
+
+
 class TestLoadIrregularImages(PySparkTestCaseWithOutputDir):
     def setUp(self):
         super(TestLoadIrregularImages, self).setUp()
