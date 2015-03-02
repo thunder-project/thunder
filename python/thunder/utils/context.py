@@ -693,7 +693,9 @@ class ThunderContext():
         """
         Export local array data to a variety of formats.
 
-        Can write to a local file sytem or S3 (will infer from filename).
+        Can write to a local file sytem or S3 (destination inferred from filename schema).
+        S3 writing useful for persisting arrays when working in an environment without
+        accessible local storage.
 
         Parameters
         ----------
