@@ -17,6 +17,11 @@ class TestSeriesConversions(PySparkTestCase):
         assert(mat.nrows == 2)
         assert(mat.ncols == 4)
 
+        # check a basic operation from superclass
+        newmat = mat.applyValues(lambda x: x + 1)
+        out = newmat.collectValuesAsArray()
+        assert(array_equal(out, array([[5, 6, 7, 8], [9, 10, 11, 12]])))
+
     def test_toTimeSeries(self):
         from thunder.rdds.timeseries import TimeSeries
         rdd = self.sc.parallelize([(0, array([4, 5, 6, 7])), (1, array([8, 9, 10, 11]))])
