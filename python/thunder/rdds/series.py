@@ -127,6 +127,7 @@ class Series(Data):
                 raise Exception('Values must be 1d arrays')
 
     def _resetCounts(self):
+        self._nrecords = None
         self._dims = None
         return self
 
