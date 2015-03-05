@@ -219,10 +219,10 @@ class Series(Data):
             Which axis to center along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.applyValues(lambda x: x - mean(x))
+            return self.applyValues(lambda x: x - mean(x), keepIndex=True)
         elif axis == 1:
             meanVec = self.mean()
-            return self.applyValues(lambda x: x - meanVec)
+            return self.applyValues(lambda x: x - meanVec, keepIndex=True)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -237,10 +237,10 @@ class Series(Data):
             Which axis to standardize along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.applyValues(lambda x: x / std(x))
+            return self.applyValues(lambda x: x / std(x), keepIndex=True)
         elif axis == 1:
             stdvec = self.stdev()
-            return self.applyValues(lambda x: x / stdvec)
+            return self.applyValues(lambda x: x / stdvec, keepIndex=True)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -256,12 +256,12 @@ class Series(Data):
             Which axis to zscore along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.applyValues(lambda x: (x - mean(x)) / std(x))
+            return self.applyValues(lambda x: (x - mean(x)) / std(x), keepIndex=True)
         elif axis == 1:
             stats = self.stats()
             meanVec = stats.mean()
             stdVec = stats.stdev()
-            return self.applyValues(lambda x: (x - meanVec) / stdVec)
+            return self.applyValues(lambda x: (x - meanVec) / stdVec, keepIndex=True)
         else:
             raise Exception('Axis must be 0 or 1')
 
