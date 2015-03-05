@@ -61,6 +61,10 @@ class RowMatrix(Series):
     def _nrows(self):
         return self._nrecords
 
+    @_nrows.setter
+    def _nrows(self, value):
+        self._nrows = value
+
     @property
     def ncols(self):
         return len(self.index)
@@ -68,6 +72,10 @@ class RowMatrix(Series):
     @property
     def _ncols(self):
         return len(self._index) if self._index is not None else None
+
+    @_ncols.setter
+    def _ncols(self, value):
+        self._nrows = value
 
     @property
     def _constructor(self):
