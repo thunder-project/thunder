@@ -63,7 +63,7 @@ class RowMatrix(Series):
 
     @_nrows.setter
     def _nrows(self, value):
-        self._nrows = value
+        pass
 
     @property
     def ncols(self):
@@ -75,7 +75,7 @@ class RowMatrix(Series):
 
     @_ncols.setter
     def _ncols(self, value):
-        self._nrows = value
+        pass
 
     @property
     def _constructor(self):
