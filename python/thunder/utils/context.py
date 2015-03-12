@@ -191,7 +191,7 @@ class ThunderContext():
         loader = ImagesLoader(self._sc)
 
         # Checking StartIdx is smaller or equal to StopIdx
-        if startIdx!=None and stopIdx!=None and startIdx > StopIdx:
+        if startIdx!=None and stopIdx!=None and startIdx > stopIdx:
           raise Exception ( "Error. startIdx {} is larger than stopIdx {}".format(startIdx,stopIdx) )
 
         if not ext:
