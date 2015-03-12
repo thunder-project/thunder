@@ -114,7 +114,8 @@ class MassUnivariateClassifier(object):
 
 
 class GaussNaiveBayesClassifier(MassUnivariateClassifier):
-    """Classifier for Gaussian Naive Bayes classification.
+    """
+    Classifier for Gaussian Naive Bayes classification.
 
     Parameters
     ----------

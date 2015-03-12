@@ -30,6 +30,8 @@ import os
 import urllib
 import urlparse
 
+from thunder.utils.common import AWSCredentials
+
 _haveBoto = False
 try:
     import boto
@@ -122,7 +124,9 @@ def _localRead(filePath, startOffset=None, size=-1):
 class LocalFSParallelReader(object):
     """Parallel reader backed by python's native file() objects.
     """
-    def __init__(self, sparkContext):
+    def __init__(self, sparkContext, **kwargs):
+        # kwargs allow AWS credentials to be passed into generic Readers w/o exceptions being raised
+        # in this case kwargs are just ignored
         self.sc = sparkContext
         self.lastNRecs = None
 
@@ -175,17 +179,18 @@ class LocalFSParallelReader(object):
 
         return files
 
-    def read(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
+    def read(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False, npartitions=None):
         """Sets up Spark RDD across files specified by dataPath on local filesystem.
 
-        Returns RDD of <string filepath, string buffer> k/v pairs.
+        Returns RDD of <integer file index, string buffer> k/v pairs.
         """
         absPath = self.uriToPath(dataPath)
         filePaths = self.listFiles(absPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
 
         lfilepaths = len(filePaths)
         self.lastNRecs = lfilepaths
-        return self.sc.parallelize(enumerate(filePaths), lfilepaths).map(lambda (k, v): (k, _localRead(v)))
+        npartitions = min(npartitions, lfilepaths) if npartitions else lfilepaths
+        return self.sc.parallelize(enumerate(filePaths), npartitions).map(lambda (k, v): (k, _localRead(v)))
 
 
 class _BotoS3Client(object):
@@ -242,14 +247,12 @@ class _BotoS3Client(object):
     @staticmethod
     def filterPredicate(key, post, inclusive=False):
         kname = key.name
-        retval = not inclusive
-        if kname.endswith(post):
-            retval = not retval
-
-        return retval
+        keyEndsWithPostfix = kname.endswith(post)
+        return keyEndsWithPostfix if inclusive else not keyEndsWithPostfix
 
     @staticmethod
-    def retrieveKeys(bucket, key, prefix='', postfix='', delim='/', excludeDirectories=True):
+    def retrieveKeys(bucket, key, prefix='', postfix='', delim='/', includeDirectories=False,
+                     recursive=False):
         if key and prefix:
             assert key.endswith(delim)
 
@@ -263,31 +266,36 @@ class _BotoS3Client(object):
                 # found a directory; change path so that it explicitly refers to directory
                 keyPath += delim
 
-        results = bucket.list(prefix=keyPath, delimiter=delim)
+        listDelim = delim if not recursive else None
+        results = bucket.list(prefix=keyPath, delimiter=listDelim)
         if postfix:
             return itertools.ifilter(lambda k_: _BotoS3Client.filterPredicate(k_, postfix, inclusive=True), results)
-        elif excludeDirectories:
+        elif not includeDirectories:
             return itertools.ifilter(lambda k_: _BotoS3Client.filterPredicate(k_, delim, inclusive=False), results)
         else:
             return results
 
-    def __init__(self):
+    def __init__(self, awsCredentialsOverride=None):
         """Initialization; validates that AWS keys are available as environment variables.
 
         Will let boto library look up credentials itself according to its own rules - e.g. first looking for
         AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, then going through several possible config files and finally
         looking for a ~/.aws/credentials .ini-formatted file. See boto docs:
         http://boto.readthedocs.org/en/latest/boto_config_tut.html
+
+        However, if an AWSCredentials object is provided, its `awsAccessKeyId` and `awsSecretAccessKey` attributes
+        will be used instead of those found by the standard boto credential lookup process.
         """
         if not _haveBoto:
             raise ValueError("The boto package does not appear to be available; boto is required for BotoS3Reader")
+        self.awsCredentialsOverride = awsCredentialsOverride if awsCredentialsOverride else AWSCredentials()
 
 
 class BotoS3ParallelReader(_BotoS3Client):
     """Parallel reader backed by boto AWS client library.
     """
-    def __init__(self, sparkContext):
-        super(BotoS3ParallelReader, self).__init__()
+    def __init__(self, sparkContext, awsCredentialsOverride=None):
+        super(BotoS3ParallelReader, self).__init__(awsCredentialsOverride=awsCredentialsOverride)
         self.sc = sparkContext
         self.lastNRecs = None
 
@@ -297,13 +305,10 @@ class BotoS3ParallelReader(_BotoS3Client):
         return ["s3n:///%s/%s" % (bucketname, keyname) for keyname in keyNames]
 
     def _listFilesImpl(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
-        if recursive:
-            raise NotImplementedError("Recursive traversal of directories isn't yet implemented for S3 - sorry!")
         parse = _BotoS3Client.parseS3Query(dataPath)
-
-        conn = boto.connect_s3()
+        conn = boto.connect_s3(**self.awsCredentialsOverride.credentialsAsDict)
         bucket = conn.get_bucket(parse[0])
-        keys = _BotoS3Client.retrieveKeys(bucket, parse[1], prefix=parse[2], postfix=parse[3])
+        keys = _BotoS3Client.retrieveKeys(bucket, parse[1], prefix=parse[2], postfix=parse[3], recursive=recursive)
         keyNameList = [key.name for key in keys]
         if ext:
             keyNameList = [keyname for keyname in keyNameList if keyname.endswith(ext)]
@@ -312,27 +317,23 @@ class BotoS3ParallelReader(_BotoS3Client):
 
         return bucket.name, keyNameList
 
-    def read(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
+    def read(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False, npartitions=None):
         """Sets up Spark RDD across S3 objects specified by dataPath.
 
         Returns RDD of <string s3 keyname, string buffer> k/v pairs.
         """
-        if recursive:
-            raise NotImplementedError("Recursive traversal of directories isn't yet implemented for S3 - sorry!")
         dataPath = appendExtensionToPathSpec(dataPath, ext)
-        bucketName, keyNameList = self._listFilesImpl(dataPath, startIdx=startIdx, stopIdx=stopIdx)
+        bucketName, keyNameList = self._listFilesImpl(dataPath, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
 
         if not keyNameList:
             raise FileNotFoundError("No S3 objects found for '%s'" % dataPath)
 
-        # originally this was set up so as to try to conserve boto connections, with one boto connection
-        # d/ling multiple images - hence this being structured as a mapPartitions() function rather than
-        # a straight map. but it is probably better to maintain one partition per image. all of which is
-        # to say, there is no longer any good reason for this to be a mapPartitions() call rather than
-        # just a map(), since now the parallelize call below is setting number partitions equal to number
-        # images, but it works so I'm not yet messing with it.
+        # try to prevent self from getting pulled into the closure
+        awsAccessKeyIdOverride_, awsSecretAccessKeyOverride_ = self.awsCredentialsOverride.credentials
+
         def readSplitFromS3(kvIter):
-            conn = boto.connect_s3()
+            conn = boto.connect_s3(aws_access_key_id=awsAccessKeyIdOverride_,
+                                   aws_secret_access_key=awsSecretAccessKeyOverride_)
             bucket = conn.get_bucket(bucketName)
             for kv in kvIter:
                 idx, keyName = kv
@@ -340,15 +341,18 @@ class BotoS3ParallelReader(_BotoS3Client):
                 buf = key.get_contents_as_string()
                 yield idx, buf
 
-        # don't specify number of splits here - allow reuse of connections within partition
         self.lastNRecs = len(keyNameList)
-        # now set num partitions explicitly to num images - see comment on readSplitFromS3 above.
-        return self.sc.parallelize(enumerate(keyNameList), self.lastNRecs).mapPartitions(readSplitFromS3)
+        npartitions = min(npartitions, self.lastNRecs) if npartitions else self.lastNRecs
+        return self.sc.parallelize(enumerate(keyNameList), npartitions).mapPartitions(readSplitFromS3)
 
 
 class LocalFSFileReader(object):
     """File reader backed by python's native file() objects.
     """
+    def __init__(self, **kwargs):
+        # do nothing; allows AWS access keys to be passed in to a generic Reader instance w/o blowing up
+        pass
+
     def __listRecursive(self, dataPath):
         if os.path.isdir(dataPath):
             dirname = dataPath
@@ -420,9 +424,9 @@ class LocalFSFileReader(object):
 class BotoS3FileReader(_BotoS3Client):
     """File reader backed by the boto AWS client library.
     """
-    def __getMatchingKeys(self, dataPath, filename=None):
+    def __getMatchingKeys(self, dataPath, filename=None, includeDirectories=False, recursive=False):
         parse = _BotoS3Client.parseS3Query(dataPath)
-        conn = boto.connect_s3()
+        conn = boto.connect_s3(**self.awsCredentialsOverride.credentialsAsDict)
         bucketName = parse[0]
         keyName = parse[1]
         bucket = conn.get_bucket(bucketName)
@@ -444,23 +448,16 @@ class BotoS3FileReader(_BotoS3Client):
                         keyName = ""
             keyName += filename
 
-        return _BotoS3Client.retrieveKeys(bucket, keyName, prefix=parse[2], postfix=parse[3])
+        return _BotoS3Client.retrieveKeys(bucket, keyName, prefix=parse[2], postfix=parse[3],
+                                          includeDirectories=includeDirectories, recursive=recursive)
 
-    def list(self, dataPath, filename=None, startIdx=None, stopIdx=None, recursive=False, includeDirectories=True):
+    def list(self, dataPath, filename=None, startIdx=None, stopIdx=None, recursive=False, includeDirectories=False):
         """List s3 objects specified by dataPath.
 
         Returns sorted list of 's3n://' URIs.
         """
-        # TODO: note that the default value for includeDirectories is here True, which reflects the current (and
-        # longstanding) behavior of this class. This *differs* from the local FS list() method, which by default
-        # filters out directories (which is definitely what we want if we're reading with recursive=True).
-        # These two need to be made more consistent.
-        if recursive:
-            raise NotImplementedError("Recursive traversal of directories isn't yet implemented for S3 - sorry!")
-        if not includeDirectories:
-            raise NotImplementedError("Filtering out directories is not yet implemented for S3 - sorry!")
-
-        keys = self.__getMatchingKeys(dataPath, filename=filename)
+        keys = self.__getMatchingKeys(dataPath, filename=filename, includeDirectories=includeDirectories,
+                                      recursive=recursive)
         keyNames = ["s3n:///" + key.bucket.name + "/" + key.name for key in keys]
         keyNames.sort()
         keyNames = selectByStartAndStopIndices(keyNames, startIdx, stopIdx)

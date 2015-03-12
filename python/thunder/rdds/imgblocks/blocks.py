@@ -66,7 +66,7 @@ class Blocks(Data):
 
     @property
     def nimages(self):
-        """Number of images (time points) in the original Images data from which these Blocks were derived.
+        """Number of images (records) in the original Images data from which these Blocks were derived.
 
         positive int
         """
@@ -110,19 +110,21 @@ class Blocks(Data):
         """
         from thunder.rdds.fileio.writers import getParallelWriterForPath
         from thunder.rdds.fileio.seriesloader import writeSeriesConfig
+        from thunder.utils.common import AWSCredentials
 
         if not overwrite:
-            from thunder.utils.common import raiseErrorIfPathExists
-            raiseErrorIfPathExists(outputDirPath)
+            self._checkOverwrite(outputDirPath)
             overwrite = True  # prevent additional downstream checks for this path
 
-        writer = getParallelWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite)
+        awsCredentialsOverride = AWSCredentials.fromContext(self.rdd.ctx)
+        writer = getParallelWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite,
+                                                         awsCredentialsOverride=awsCredentialsOverride)
 
         binseriesRdd = self.toBinarySeries()
 
         binseriesRdd.foreach(writer.writerFcn)
         writeSeriesConfig(outputDirPath, len(self.dims), self.nimages, keyType='int16', valueType=self.dtype,
-                          overwrite=overwrite)
+                          overwrite=overwrite, awsCredentialsOverride=awsCredentialsOverride)
 
 
 class SimpleBlocks(Blocks):
@@ -130,8 +132,6 @@ class SimpleBlocks(Blocks):
 
     These Blocks will be contiguous, nonoverlapping subsections of the original Images arrays.
     """
-    _metadata = Data._metadata + ['_dims', '_nimages']
-
     @property
     def _constructor(self):
         return SimpleBlocks
@@ -219,7 +219,7 @@ class SimpleBlocks(Blocks):
         timeRdd = self.rdd.flatMap(lambda kv: SimpleBlocks._toTimeSlicedBlocksIter(kv[0], kv[1]))
         timeSortedRdd = timeRdd.groupBy(lambda (k, _): k.temporalKey).sortByKey()
         imagesRdd = timeSortedRdd.map(SimpleBlocks._combineTimeSlicedBlocks)
-        return Images(imagesRdd, dims=self._dims, nimages=self._nimages, dtype=self._dtype)
+        return Images(imagesRdd, dims=self._dims, nrecords=self._nimages, dtype=self._dtype)
 
     @staticmethod
     def getBinarySeriesNameForKey(blockKey):
@@ -285,9 +285,8 @@ class ImageReconstructionKey(BlockingKey):
         return tuple(self.imgSlices)
 
     def __repr__(self):
-        return "ImageReconstructionKey(timeIdx=%d, origShape=%s, imgSlices=%s)" % (self.timeIdx,
-                                                                                   self.origShape,
-                                                                                   self.imgSlices)
+        return "ImageReconstructionKey\ntimeIdx: %d\norigShape: %s\nimgSlices: %s" % \
+               (self.timeIdx, self.origShape, self.imgSlices)
 
 
 class BlockGroupingKey(BlockingKey):
@@ -383,7 +382,7 @@ class BlockGroupingKey(BlockingKey):
         return sliceToXRange(self.imgSlices[0], self.origShape[0])
 
     def __repr__(self):
-        return "BlockGroupingKey(origShape=%s, imgSlices=%s)" % (self.origShape, self.imgSlices)
+        return "BlockGroupingKey\norigShape: %s\nimgSlices: %s" % (self.origShape, self.imgSlices)
 
 
 class PaddedBlockGroupingKey(BlockGroupingKey):
@@ -470,5 +469,5 @@ class PaddedBlockGroupingKey(BlockGroupingKey):
         return ary[tpIdx][self.valSlices[1:]]
 
     def __repr__(self):
-        return "PaddedBlockGroupingKey(origShape=%s, padImgSlices=%s, imgSlices=%s, valShape=%s, valSlices=%s)" % \
+        return "PaddedBlockGroupingKey\norigShape: %s\npadImgSlices: %s\nimgSlices: %s\nvalShape: %s\nvalSlices: %s)" % \
                (self.origShape, self.padImgSlices, self.imgSlices, self.valShape, self.valSlices)

@@ -5,20 +5,28 @@ from numpy import ndarray
 from thunder.rdds.images import Images
 
 
-def computeReferenceMean(images, startidx, stopidx):
+def computeReferenceMean(images, startIdx=None, stopIdx=None, defaultNImages=20):
     """
     Compute a reference by taking the mean across images.
+
+    The default behavior is to take the mean across the center `defaultNImages` records
+    in the Images RDD. If startIdx or stopIdx is specified, then the mean will be
+    calculated across this range instead.
 
     Parameters
     ----------
     images : Images
-            An Images object containg the image / volumes to compute reference from
+            An Images object containing the image / volumes to compute reference from
 
-    startidx : int, optional, default = None
+    startIdx : int, optional, default = None
         Starting index if computing a mean over a specified range
 
-    stopidx : int, optional, default = None
-        Stopping index if computing a mean over a specified range
+    stopIdx : int, optional, default = None
+        Stopping index (exclusive) if computing a mean over a specified range
+
+    defaultNImages : int, optional, default = 20
+        Number of images across which to calculate the mean if neither startIdx nor stopIdx
+        is given.
 
     Returns
     -------
@@ -29,13 +37,30 @@ def computeReferenceMean(images, startidx, stopidx):
     if not (isinstance(images, Images)):
         raise Exception('Input data must be Images or a subclass')
 
-    if startidx is not None and stopidx is not None:
-        range = lambda x: startidx <= x < stopidx
-        n = stopidx - startidx
-        ref = images.filterOnKeys(range)
+    doFilter = True
+    if startIdx is None and stopIdx is None:
+        n = images.nrecords
+        if n <= defaultNImages:
+            doFilter = False
+        else:
+            ctrIdx = n / 2  # integer division
+            halfWindow = defaultNImages / 2  # integer division
+            parity = 1 if defaultNImages % 2 else 0
+            startIdx = ctrIdx - halfWindow
+            stopIdx = ctrIdx + halfWindow + parity
+            n = stopIdx - startIdx
+    else:
+        if startIdx is None:
+            startIdx = 0
+        if stopIdx is None:
+            stopIdx = images.nrecords
+        n = stopIdx - startIdx
+
+    if doFilter:
+        rangePredicate = lambda x: startIdx <= x < stopIdx
+        ref = images.filterOnKeys(rangePredicate)
     else:
         ref = images
-        n = images.nimages
 
     reference = (ref.sum() / float(n)).astype(images.dtype)
 
@@ -91,10 +116,11 @@ def computeDisplacement(arry1, arry2):
     c = abs(ifftn((f1 * f2.conjugate())))
 
     # find location of maximum
-    maxinds = unravel_index(argmax(c), c.shape)
+    maxInds = unravel_index(argmax(c), c.shape)
 
     # fix displacements that are greater than half the total size
-    pairs = zip(maxinds, arry1.shape)
-    adjusted = [d - n if d > n // 2 else d for (d, n) in pairs]
+    pairs = zip(maxInds, arry1.shape)
+    # cast to basic python int for serialization
+    adjusted = [int(d - n) if d > n // 2 else int(d) for (d, n) in pairs]
 
     return adjusted

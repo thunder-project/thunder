@@ -6,6 +6,7 @@ import scipy.linalg as LinAlg
 from thunder.factorization.ica import ICA
 from thunder.factorization.svd import SVD
 from thunder.factorization.nmf import NMF
+from thunder.factorization.pca import PCA
 from thunder.utils.datasets import DataSets
 from thunder.rdds.matrices import RowMatrix
 from test_utils import PySparkTestCase
@@ -19,6 +20,41 @@ class FactorizationTestCase(PySparkTestCase):
     def tearDown(self):
         super(FactorizationTestCase, self).tearDown()
         shutil.rmtree(self.outputdir)
+
+
+class TestPCA(FactorizationTestCase):
+    """
+    Test execution and accuracy of PCA
+
+    Compares against results using scikit learn, up to a sign flip
+
+    NOTE: to make the comparison we rescale the scores by the singular (latent) values
+    because by convention we normlize by latent values whereas scikit learn does not
+    """
+    def test_pca(self):
+        dataLocal = [
+            array([1.0, 1.0, 1.0, 5.0]),
+            array([2.0, 3.0, 4.0, 1.0]),
+            array([6.0, 0.0, 6.0, 6.0])
+        ]
+        data = self.sc.parallelize(zip(range(1, 4), dataLocal))
+        mat = RowMatrix(data)
+
+        pca1 = PCA(k=1, svdMethod='direct')
+        pca1.fit(mat)
+        out1_comps = pca1.comps
+        out1_scores = pca1.scores.collectValuesAsArray() * pca1.latent
+        out1_transform_scores = pca1.transform(mat).collectValuesAsArray() * pca1.latent
+
+        from sklearn.decomposition import PCA as skPCA
+        pca2 = skPCA(n_components=1)
+        pca2.fit(array(dataLocal))
+        out2_comps = pca2.components_
+        out2_scores = pca2.transform(array(dataLocal))
+
+        assert(allclose(out1_comps, out2_comps) | allclose(out1_comps, -out2_comps))
+        assert(allclose(out1_scores, out2_scores) | allclose(out1_scores, -out2_scores))
+        assert(allclose(out1_scores, out1_transform_scores))
 
 
 class TestSVD(FactorizationTestCase):

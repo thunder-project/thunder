@@ -1,10 +1,10 @@
 """
 Class with utilities for representing and working with matrices
 """
+
 from numpy import dot, outer, shape, ndarray, add, subtract, multiply, zeros, divide, arange
 
 from thunder.rdds.series import Series
-from thunder.rdds.data import Data
 
 
 # TODO: right divide and left divide
@@ -38,30 +38,44 @@ class RowMatrix(Series):
 
     """
 
-    _metadata = Data._metadata + ['_index', '_dims', '_ncols', '_nrows']
+    _metadata = Series._metadata + ['_ncols', '_nrows']
 
-    def __init__(self, rdd, index=None, dims=None, dtype=None, nrows=None, ncols=None):
-        super(RowMatrix, self).__init__(rdd, dtype=dtype)
-        self._index = index
-        self._dims = dims
-        self._nrows = nrows
-        self._ncols = ncols
+    def __init__(self, rdd, index=None, dims=None, dtype=None, nrows=None, ncols=None, nrecords=None):
+        if nrows is not None and nrecords is not None:
+            if nrows != nrecords:
+                raise ValueError("nrows and nrecords must be consistent, got %d and %d" % (nrows, nrecords))
+        nrecs = nrecords if nrecords is not None else nrows
+        if index is not None:
+            if ncols is not None and len(index) != ncols:
+                    raise ValueError("ncols and len(index) must be consistent, got %d and len(index)=%d" %
+                                     (ncols, len(index)))
+        elif ncols is not None:
+            index = arange(ncols)
+        super(RowMatrix, self).__init__(rdd, nrecords=nrecs, dtype=dtype, dims=dims, index=index)
 
     @property
     def nrows(self):
-        if self._nrows is None:
-            self._nrows = self.rdd.count()
-        return self._nrows
+        return self.nrecords
+
+    @property
+    def _nrows(self):
+        return self._nrecords
+
+    @_nrows.setter
+    def _nrows(self, value):
+        pass
 
     @property
     def ncols(self):
-        if self._ncols is None:
-            vec = self.rdd.first()[1]
-            if type(vec) is ndarray:
-                self._ncols = len(vec)
-            else:
-                self._ncols = 1
-        return self._ncols
+        return len(self.index)
+
+    @property
+    def _ncols(self):
+        return len(self._index) if self._index is not None else None
+
+    @_ncols.setter
+    def _ncols(self, value):
+        pass
 
     @property
     def _constructor(self):

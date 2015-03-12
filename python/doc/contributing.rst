@@ -55,7 +55,7 @@ Beyond existing issues, the following are fairly simple new features that would 
 - Implement shuffle / permutation tests for :class:`RegressionModel` analyses
 - Add more basic image processing routines to :class:`Images`, like blurring or blob detection
 
-These are more involved. It would be worth posting to the `mailing list <https://groups.google.com/forum/?hl=en#!forum/thunder-user>`_ before starting work on them to avoid duplcating other efforts.
+These are more involved. It would be worth posting to the `gitter chatroom <https://gitter.im/thunder-project/thunder>`_ or `mailing list <https://groups.google.com/forum/?hl=en#!forum/thunder-user>`_ before starting work on them to avoid duplcating other efforts.
 
 - A new EventSeries class and associated methods for working with event data
 - Add a linear discriminant analysis (including LDA for dimensionality reduction)
