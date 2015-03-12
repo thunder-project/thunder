@@ -86,7 +86,7 @@ class ThunderContext():
         return data
 
 
-    def loadImages(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16', startIdx=None, stopIdx=None, minBound=None, maxBound=None, resolution=None, recursive=False):
+    def loadImages(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16', startIdx=None, stopIdx=None, serverName='ocp.me', minBound=None, maxBound=None, resolution=None, recursive=False):
         """ Loads an Images object from data stored as a binary image stack, tif, or png files.
 
         Supports single files or multiple files, stored on a local file system, a networked file sytem
@@ -138,6 +138,15 @@ class ThunderContext():
         stopIdx: nonnegative int, optional
             See startIdx.
 
+        serverName: string. optional.
+            Name of the server in OCP which has the corresponding token. By default  this is always ocp.me but if you have an alternate server, you can set it here.
+
+        minBound, maxBound: tuple of nonnegative int. optional.
+            X,Y,Z bounds of the data you want to fetch from OCP. minBound contains   the (xMin,yMin,zMin) while maxBound contains (xMax,yMax,zMax)
+
+        resolution: nonnegative int
+            Resolution of the data in OCP
+            
         recursive: boolean, default False
             If true, will recursively descend directories rooted at dataPath, loading all files in the tree that
             have an appropriate extension. Recursive loading is currently only implemented for local filesystems
@@ -154,6 +163,10 @@ class ThunderContext():
         from thunder.rdds.fileio.imagesloader import ImagesLoader
         loader = ImagesLoader(self._sc)
 
+        # Checking StartIdx is smaller or equal to StopIdx
+        if startIdx!=None and stopIdx!=None and startIdx > StopIdx:
+          raise Exception ( "Error. startIdx {} is larger than stopIdx {}".format(startIdx,stopIdx) )
+
         if not ext:
             ext = DEFAULT_EXTENSIONS.get(inputFormat.lower(), None)
 
@@ -163,7 +176,7 @@ class ThunderContext():
         elif inputFormat.lower().startswith('tif'):
             data = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
         elif inputFormat.lower() == 'ocp':
-          data = loader.fromOCP(dataPath, startIdx=startIdx, stopIdx=stopIdx, minBound=minBound, maxBound=maxBound, resolution=resolution )
+          data = loader.fromOCP(dataPath, startIdx=startIdx, stopIdx=stopIdx, minBound=minBound, maxBound=maxBound, serverName=serverName, resolution=resolution )
         else:
             data = loader.fromPng(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
 

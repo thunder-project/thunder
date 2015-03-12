@@ -2,7 +2,7 @@
 """
 from matplotlib.pyplot import imread
 from io import BytesIO
-from numpy import array, dstack, frombuffer, ndarray, prod, load
+from numpy import array, dstack, frombuffer, ndarray, prod, load, swapaxes
 from thunder.rdds.fileio.readers import getParallelReaderForPath
 from thunder.rdds.images import Images
 
@@ -87,20 +87,38 @@ class ImagesLoader(object):
         return Images(readerRdd.mapValues(toArray), nimages=reader.lastNRecs, dims=dims,
                       dtype=dtype)
 
-    def fromOCP (self, dataPath, resolution, startIdx=None, stopIdx=None, minBound=None, maxBound=None ):
-      """Sets up a new Image object with data to read from OCP"""
+    def fromOCP (self, dataPath, resolution, serverName='ocp.me', startIdx=None, stopIdx=None, minBound=None, maxBound=None ):
+      """Sets up a new Image object with data to read from OCP
+      
+        Parameters
+        ----------
+        
+        dataPath: string
+            Name of the token/bucket in OCP. You can use the token name you created in OCP here. You can also access publicly avaliable data on OCP at this URL "http://ocp.me/ocp/ca/public_tokens/"
+        
+        resolution: nonnegative int
+            Resolution of the data in OCP
+
+        serverName: string. optional.
+            Name of the server in OCP which has the corresponding token. By default this is always ocp.me but if you have an alternate server, you can set it here.
+
+        startIdx, stopIdx: nonnegative int. optional.
+            Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching `datapath` and `ext`. Interpreted according to python slice indexing conventions. In OCP this is the starttime and endtime of your data.
+
+        minBound, maxBound: tuple of nonnegative int. optional.
+            X,Y,Z bounds of the data you want to fetch from OCP. minBound contains the (xMin,yMin,zMin) while maxBound contains (xMax,yMax,zMax)
+      """
       
       # Given a datapath/bucket Query JSON
       # Given bounds get a list of URI's
       import urllib2
       urlList=[]
-      url = '{}/info/'.format(dataPath)
+      url = 'http://{}/ocp/ca/{}/info/'.format(serverName,dataPath)
 
       try:
         f = urllib2.urlopen ( url )
       except urllib2.URLError, e:
-        print "Failed URL {}.".format(url)
-        raise
+        raise Exception ( "Faile URL {}".format(url) )
 
       import json
       projInfo = json.loads ( f.read() )
@@ -133,9 +151,8 @@ class ImagesLoader(object):
         raise Exception ( "minBound is incorrect {},{}".format( (0,0,zimageStart), (ximageSize,yimageSize,zimageStop) ) )
 
       for t in range(timageStart,timageStop,1):
-        urlList.append( "{}/npz/{},{}/{}/{},{}/{},{}/{},{}/".format(dataPath,t,t+1,resolution,minBound[0],maxBound[0],minBound[1],maxBound[1],minBound[2],maxBound[2]) )
+        urlList.append( "http://{}/ocp/ca/{}/npz/{},{}/{}/{},{}/{},{}/{},{}/".format(serverName,dataPath,t,t+1,resolution,minBound[0],maxBound[0],minBound[1],maxBound[1],minBound[2],maxBound[2]) )
       
-      print "Successful"
 
       def read (url):
         """Featch URL from the server"""
@@ -152,8 +169,11 @@ class ImagesLoader(object):
         import cStringIO
         pageStr = zlib.decompress ( imgData[:] )
         pageObj = cStringIO.StringIO ( pageStr )
+        data = load(pageObj)
+        # Data comes in as 4d numpy array in t,z,y,x order. Swapping axes and       removing the time dimension to give back a 3d numpy array in x,y,z order 
+        data = swapaxes(data[0,:,:,:],0,2)
 
-        return load(pageObj)
+        return data
       
       
       print urlList
