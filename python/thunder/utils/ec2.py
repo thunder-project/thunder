@@ -573,10 +573,12 @@ if __name__ == "__main__":
             try:
                 wait_for_cluster(conn, opts.wait, master_nodes, slave_nodes)
             except NameError:
-                wait_for_cluster_state(
-                    cluster_instances=(master_nodes + slave_nodes),
-                    cluster_state='ssh-ready',
-                    opts=opts)
+                if spark_home_loose_version >= LooseVersion("1.3.0"):
+                    wait_for_cluster_state(cluster_instances=(master_nodes + slave_nodes),
+                                           cluster_state='ssh-ready', opts=opts, conn=conn)
+                else:
+                    wait_for_cluster_state(cluster_instances=(master_nodes + slave_nodes),
+                                           cluster_state='ssh-ready', opts=opts)
             setup_cluster(conn, master_nodes, slave_nodes, opts, False)
             master = master_nodes[0].public_dns_name
             configure_spark(master, opts)
