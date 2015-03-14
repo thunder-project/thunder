@@ -1,7 +1,6 @@
 import shutil
 import tempfile
 import unittest
-import logging
 from numpy import vstack
 from pyspark import SparkContext
 
@@ -10,8 +9,9 @@ class PySparkTestCase(unittest.TestCase):
     def setUp(self):
         class_name = self.__class__.__name__
         self.sc = SparkContext('local', class_name)
+        self.sc._jvm.System.setProperty("spark.ui.showConsoleProgress", "false")
         log4j = self.sc._jvm.org.apache.log4j
-        log4j.LogManager.getRootLogger().setLevel(log4j.Level.ERROR)
+        log4j.LogManager.getRootLogger().setLevel(log4j.Level.FATAL)
 
     def tearDown(self):
         self.sc.stop()
