@@ -295,9 +295,8 @@ def setup_cluster(conn, master_nodes, slave_nodes, opts, deploy_ssh_key):
         modules.append('ganglia')
 
     if spark_home_loose_version >= LooseVersion("1.3.0"):
-        # TODO Point to official mesos/spark-ec2 repo once updated for 1.3
-        MESOS_SPARK_EC2_BRANCH = "spark-ec2-1.3"
-        ssh(master, opts, "rm -rf spark-ec2 && git clone https://github.com/freeman-lab/spark-ec2.git "
+        MESOS_SPARK_EC2_BRANCH = "branch-1.3"
+        ssh(master, opts, "rm -rf spark-ec2 && git clone https://github.com/mesos/spark-ec2.git "
                           "-b {b}".format(b=MESOS_SPARK_EC2_BRANCH))
     else:
         ssh(master, opts, "rm -rf spark-ec2 && git clone https://github.com/mesos/spark-ec2.git "
