@@ -198,7 +198,7 @@ def configure_spark(master, opts):
     print "Configuring Spark for Thunder usage..."
 
     # customize spark configuration parameters
-    ssh(master, opts, "echo 'spark.akka.frameSize=10000' >> /root/spark/conf/spark-defaults.conf")
+    ssh(master, opts, "echo 'spark.akka.frameSize=2047' >> /root/spark/conf/spark-defaults.conf")
     ssh(master, opts, "echo 'spark.kryoserializer.buffer.max.mb=1024' >> /root/spark/conf/spark-defaults.conf")
     ssh(master, opts, "echo 'spark.driver.maxResultSize=0' >> /root/spark/conf/spark-defaults.conf")
     ssh(master, opts, "echo 'export SPARK_DRIVER_MEMORY=20g' >> /root/spark/conf/spark-env.sh")
@@ -294,7 +294,14 @@ def setup_cluster(conn, master_nodes, slave_nodes, opts, deploy_ssh_key):
     if opts.ganglia:
         modules.append('ganglia')
 
-    ssh(master, opts, "rm -rf spark-ec2 && git clone https://github.com/mesos/spark-ec2.git -b v4")
+    if spark_home_loose_version >= LooseVersion("1.3.0"):
+        # TODO Point to official mesos/spark-ec2 repo once updated for 1.3
+        MESOS_SPARK_EC2_BRANCH = "spark-ec2-1.3"
+        ssh(master, opts, "rm -rf spark-ec2 && git clone https://github.com/freeman-lab/spark-ec2.git "
+                          "-b {b}".format(b=MESOS_SPARK_EC2_BRANCH))
+    else:
+        ssh(master, opts, "rm -rf spark-ec2 && git clone https://github.com/mesos/spark-ec2.git "
+                          "-b v4")
 
     print "Deploying files to master..."
     deploy_folder = os.path.join(os.environ['SPARK_HOME'], "ec2", "deploy.generic")
@@ -397,6 +404,14 @@ if __name__ == "__main__":
         parser.add_option("--copy-aws-credentials", action="store_true", default=False,
                           help="Add AWS credentials to hadoop configuration to allow Spark to access S3" +
                                " (only with Spark >= 1.2.0)")
+    if spark_home_loose_version >= LooseVersion("1.3.0"):
+        parser.add_option("--subnet-id", default=None,
+                          help="VPC subnet to launch instances in (only with Spark >= 1.3.0")
+        parser.add_option("--vpc-id", default=None,
+                          help="VPC to launch instances in (only with Spark >= 1.3.0)")
+        parser.add_option("--placement-group", type="string", default=None,
+                          help="Which placement group to try and launch instances into. Assumes placement "
+                               "group is already created.")
 
     (opts, args) = parser.parse_args()
     if len(args) != 2:
@@ -440,10 +455,12 @@ if __name__ == "__main__":
         try:
             wait_for_cluster(conn, opts.wait, master_nodes, slave_nodes)
         except NameError:
-            wait_for_cluster_state(
-                cluster_instances=(master_nodes + slave_nodes),
-                cluster_state='ssh-ready',
-                opts=opts)
+            if spark_home_loose_version >= LooseVersion("1.3.0"):
+                wait_for_cluster_state(cluster_instances=(master_nodes + slave_nodes),
+                                       cluster_state='ssh-ready', opts=opts, conn=conn)
+            else:
+                wait_for_cluster_state(cluster_instances=(master_nodes + slave_nodes),
+                                       cluster_state='ssh-ready', opts=opts)
         setup_cluster(conn, master_nodes, slave_nodes, opts, True)
         master = master_nodes[0].public_dns_name
         install_thunder(master, opts, spark_version_string)
