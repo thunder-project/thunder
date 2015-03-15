@@ -204,6 +204,10 @@ class ThunderContext():
             data = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                   nplanes=nplanes, npartitions=npartitions)
         elif inputFormat.lower() == 'ocp':
+            if nplanes:
+                raise NotImplementedError("nplanes argument is not implemented for ocp")
+            if npartitions:
+                raise NotImplementedError("npartitions argument is not implemented for ocp")
             data = loader.fromOCP(dataPath, startIdx=startIdx, stopIdx=stopIdx, minBound=minBound, maxBound=maxBound, serverName=serverName, resolution=resolution )
         else:
             if nplanes:
