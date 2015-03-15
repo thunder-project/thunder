@@ -3,7 +3,7 @@ Example standalone app for non-negative factorization
 """
 
 import optparse
-from thunder import ThunderContext, NMF, export
+from thunder import ThunderContext, NMF
 
 
 if __name__ == "__main__":
@@ -27,14 +27,14 @@ if __name__ == "__main__":
     tsc = ThunderContext.start(appName="nmf")
 
     data = tsc.loadSeries(datafile).cache()
-    nmf = NMF(k=k, method=opts.nmfmethod, maxiter=opts.maxiter, tol=opts.tol, w_hist=opts.w_hist,
-              recon_hist=opts.recon_hist)
+    nmf = NMF(k=k, method=opts.nmfmethod, maxIter=opts.maxiter, tol=opts.tol,
+              wHist=opts.w_hist, reconHist=opts.recon_hist)
     nmf.fit(data)
 
     outputdir += "-nmf"
-    export(nmf.w, outputdir, "w", "matlab")
-    export(nmf.h, outputdir, "h", "matlab")
+    tsc.export(nmf.w, outputdir, "w", "matlab")
+    tsc.export(nmf.h, outputdir, "h", "matlab")
     if opts.w_hist:
-        export(nmf.w_convergence, outputdir, "w_convergence", "matlab")
+        tsc.export(nmf.wConvergence, outputdir, "w_convergence", "matlab")
     if opts.recon_hist:
-        export(nmf.recon_err, outputdir, "rec_err", "matlab")
+        tsc.export(nmf.reconErr, outputdir, "rec_err", "matlab")

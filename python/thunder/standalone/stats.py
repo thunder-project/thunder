@@ -3,7 +3,7 @@ Example standalone app for calculating series statistics
 """
 
 import optparse
-from thunder import ThunderContext, export
+from thunder import ThunderContext
 
 
 if __name__ == "__main__":
@@ -26,4 +26,4 @@ if __name__ == "__main__":
     vals = data.seriesStat(mode)
 
     outputdir += "-stats"
-    export(vals, outputdir, "stats_" + mode, "matlab")
+    tsc.export(vals, outputdir, "stats_" + mode, "matlab")
