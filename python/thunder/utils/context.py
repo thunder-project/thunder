@@ -95,8 +95,9 @@ class ThunderContext():
         return data
 
 
-    def loadImages(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16', startIdx=None, stopIdx=None, serverName='ocp.me', minBound=None, maxBound=None, resolution=None, recursive=False, nplanes=None, npartitions=None,
-                   renumber=False):
+    def loadImages(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16', startIdx=None, stopIdx=None,
+                   serverName='ocp.me', minBound=None, maxBound=None, resolution=None, recursive=False, nplanes=None,
+                   npartitions=None, renumber=False):
         """
         Supports single files or multiple files, stored on a local file system, a networked file sytem
         (mounted and available on all nodes), or Amazon S3. HDFS is not currently supported for image file data.
@@ -147,10 +148,12 @@ class ThunderContext():
             See startIdx.
 
         serverName: string. optional.
-            Name of the server in OCP which has the corresponding token. By default  this is always ocp.me but if you have an alternate server, you can set it here.
+            Name of the server in OCP which has the corresponding token. By default  this is always ocp.me but if
+            you have an alternate server, you can set it here.
 
         minBound, maxBound: tuple of nonnegative int. optional.
-            X,Y,Z bounds of the data you want to fetch from OCP. minBound contains   the (xMin,yMin,zMin) while maxBound contains (xMax,yMax,zMax)
+            X,Y,Z bounds of the data you want to fetch from OCP. minBound contains   the (xMin,yMin,zMin) while
+            maxBound contains (xMax,yMax,zMax)
 
         resolution: nonnegative int
             Resolution of the data in OCP
@@ -191,7 +194,7 @@ class ThunderContext():
         loader = ImagesLoader(self._sc)
 
         # Checking StartIdx is smaller or equal to StopIdx
-        if startIdx!=None and stopIdx!=None and startIdx > stopIdx:
+        if startIdx is not None and stopIdx is not None and startIdx > stopIdx:
           raise Exception ( "Error. startIdx {} is larger than stopIdx {}".format(startIdx,stopIdx) )
 
         if not ext:
@@ -208,12 +211,13 @@ class ThunderContext():
                 raise NotImplementedError("nplanes argument is not implemented for ocp")
             if npartitions:
                 raise NotImplementedError("npartitions argument is not implemented for ocp")
-            data = loader.fromOCP(dataPath, startIdx=startIdx, stopIdx=stopIdx, minBound=minBound, maxBound=maxBound, serverName=serverName, resolution=resolution )
+            data = loader.fromOCP(dataPath, startIdx=startIdx, stopIdx=stopIdx, minBound=minBound, maxBound=maxBound,
+                                  serverName=serverName, resolution=resolution)
         else:
             if nplanes:
                 raise NotImplementedError("nplanes argument is not supported for png files")
-            data = loader.fromPng(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
-                                  recursive=recursive, npartitions=npartitions)
+            data = loader.fromPng(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
+                                  npartitions=npartitions)
 
         if not renumber:
             return data
