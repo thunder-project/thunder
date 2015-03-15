@@ -95,8 +95,7 @@ class ThunderContext():
         return data
 
 
-    def loadImages(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16', startIdx=None, stopIdx=None,
-                   serverName='ocp.me', minBound=None, maxBound=None, resolution=None, recursive=False, nplanes=None,
+    def loadImages(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16', startIdx=None, stopIdx=None, recursive=False, nplanes=None,
                    npartitions=None, renumber=False):
         """
         Supports single files or multiple files, stored on a local file system, a networked file sytem
@@ -147,17 +146,6 @@ class ThunderContext():
         stopIdx: nonnegative int, optional
             See startIdx.
 
-        serverName: string. optional.
-            Name of the server in OCP which has the corresponding token. By default  this is always ocp.me but if
-            you have an alternate server, you can set it here.
-
-        minBound, maxBound: tuple of nonnegative int. optional.
-            X,Y,Z bounds of the data you want to fetch from OCP. minBound contains   the (xMin,yMin,zMin) while
-            maxBound contains (xMax,yMax,zMax)
-
-        resolution: nonnegative int
-            Resolution of the data in OCP
-            
         recursive: boolean, default False
             If true, will recursively descend directories rooted at dataPath, loading all files in the tree that
             have an appropriate extension. Recursive loading is currently only implemented for local filesystems
@@ -188,7 +176,7 @@ class ThunderContext():
             A newly-created Images object, wrapping an RDD of <int index, numpy array> key-value pairs.
 
         """
-        checkParams(inputFormat, ['stack', 'png', 'tif', 'tif-stack', 'ocp'])
+        checkParams(inputFormat, ['stack', 'png', 'tif', 'tif-stack'])
 
         from thunder.rdds.fileio.imagesloader import ImagesLoader
         loader = ImagesLoader(self._sc)
@@ -206,13 +194,6 @@ class ThunderContext():
         elif inputFormat.lower().startswith('tif'):
             data = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                   nplanes=nplanes, npartitions=npartitions)
-        elif inputFormat.lower() == 'ocp':
-            if nplanes:
-                raise NotImplementedError("nplanes argument is not implemented for ocp")
-            if npartitions:
-                raise NotImplementedError("npartitions argument is not implemented for ocp")
-            data = loader.fromOCP(dataPath, startIdx=startIdx, stopIdx=stopIdx, minBound=minBound, maxBound=maxBound,
-                                  serverName=serverName, resolution=resolution)
         else:
             if nplanes:
                 raise NotImplementedError("nplanes argument is not supported for png files")
@@ -223,6 +204,52 @@ class ThunderContext():
             return data
         else:
             return data.renumber()
+
+    def loadImagesOCP(self, bucketName, resolution, serverName='ocp.me', startIdx=None, stopIdx=None, minBound=None, maxBound=None ):
+        """
+        Load Images from OCP
+        
+        Parameters
+        ----------
+        bucketName: string
+            Token name for the project in OCP. This token name should exist on the server you are reading the data from.
+        
+        serverName: string. optional.
+            Name of the server in OCP which has the corresponding token. By default  this is always ocp.me but if
+            you have an alternate server, you can set it here.
+        
+        startIdx: nonnegative int, optional
+            startIdx and stopIdx are convenience parameters to allow only a subset of timeseries data to be read. These parameters give the starting time (inclusive) and final time (exclusive) of the data files to be read from OCP.
+            after lexicographically sorting all input data files matching the dataPath argument. For example,
+            startIdx=None (the default) and stopIdx=10 will cause only the first 10 data files in dataPath to be read
+            in; startIdx=2 and stopIdx=3 will cause only the third file (zero-based index of 2) to be read in.
+
+        stopIdx: nonnegative int, optional
+            See startIdx.
+        
+        minBound, maxBound: tuple of nonnegative int. optional.
+            X,Y,Z bounds of the data you want to fetch from OCP. minBound contains   the (xMin,yMin,zMin) while
+            maxBound contains (xMax,yMax,zMax)
+
+        resolution: nonnegative int
+            Resolution of the data in OCP
+        
+        Returns
+        -------
+        data: thunder.rdds.Images
+            A newly-created Images object, wrapping an RDD of <int index, numpy array> key-value pairs.
+        """
+      
+        from thunder.rdds.fileio.imagesloader import ImagesLoader
+        loader = ImagesLoader(self._sc)
+        
+        # Checking StartIdx is smaller or equal to StopIdx
+        if startIdx is not None and stopIdx is not None and startIdx > stopIdx:
+          raise Exception ( "Error. startIdx {} is larger than stopIdx {}".format(startIdx,stopIdx) )
+        data = loader.fromOCP(bucketName, resolution=resolution, serverName=serverName, startIdx=startIdx, stopIdx=stopIdx, minBound=minBound, maxBound=maxBound)
+
+        return data
+
 
     def loadImagesAsSeries(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
                            blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,

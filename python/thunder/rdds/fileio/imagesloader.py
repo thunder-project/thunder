@@ -133,14 +133,14 @@ class ImagesLoader(object):
         newDims = tuple(list(dims[:-1]) + [nplanes]) if nplanes else dims
         return Images(readerRdd.flatMap(toArray), nrecords=nrecords, dims=newDims, dtype=dtype)
 
-    def fromOCP (self, dataPath, resolution, serverName='ocp.me', startIdx=None, stopIdx=None, minBound=None,
+    def fromOCP (self, bucketName, resolution, serverName='ocp.me', startIdx=None, stopIdx=None, minBound=None,
                  maxBound=None):
         """Sets up a new Image object with data to read from OCP
       
         Parameters
         ----------
         
-        dataPath: string
+        bucketName: string
             Name of the token/bucket in OCP. You can use the token name you created in OCP here. You can also access
             publicly available data on OCP at this URL "http://ocp.me/ocp/ca/public_tokens/"
         
@@ -165,7 +165,7 @@ class ImagesLoader(object):
         # Given bounds get a list of URI's
         import urllib2
         urlList = []
-        url = 'http://{}/ocp/ca/{}/info/'.format(serverName, dataPath)
+        url = 'http://{}/ocp/ca/{}/info/'.format(serverName, bucketName)
 
         try:
             f = urllib2.urlopen(url)
@@ -204,7 +204,7 @@ class ImagesLoader(object):
                                                                                        zimageStop)))
 
         for t in range(timageStart, timageStop, 1):
-            urlList.append("http://{}/ocp/ca/{}/npz/{},{}/{}/{},{}/{},{}/{},{}/".format(serverName, dataPath, t,
+            urlList.append("http://{}/ocp/ca/{}/npz/{},{}/{}/{},{}/{},{}/{},{}/".format(serverName, bucketName, t,
                                                                                         t + 1, resolution, minBound[0],
                                                                                         maxBound[0], minBound[1],
                                                                                         maxBound[1], minBound[2],
