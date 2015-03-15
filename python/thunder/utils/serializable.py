@@ -224,7 +224,7 @@ class Serializable(object):
 
         raise TypeError("Type %s not data-serializable" % dataType)
 
-    def serialize(self, numpyStorage='auto'):
+    def serialize(self, numpyStorage='auto', simplify=None):
         """
         Serialize this object to a python dictionary that can easily be converted
         to/from JSON using Python's standard JSON library.
@@ -259,10 +259,17 @@ class Serializable(object):
             # Otherwise, we handle the object as though it has a normal __dict__ containing its attributes.
             dct = self.__dict__
         # all object attribute names are strings, so no need to serialize those separately
-        return dict([(k, self.__serializeRecursively(v, numpyStorage)) for (k, v) in dct.iteritems()])
+        d = dict([(k, self.__serializeRecursively(v, numpyStorage)) for (k, v) in dct.iteritems()])
+
+        # Apply any custom simplification
+        if simplify is not None:
+            d = simplify(d)
+
+        return d
+
 
     @classmethod
-    def deserialize(cls, serializedDict):
+    def deserialize(cls, serializedDict, unsimplify=None):
         """
         Restore the object that has been converted to a python dictionary using an @serializable
         class's serialize() method.
@@ -352,6 +359,10 @@ class Serializable(object):
             # If no decoding scheme can be found, raise an exception
             raise TypeError("Could not de-serialize unknown type: \"%s\"" % dataKey)
 
+        # Undo any custom simplification
+        if unsimplify is not None:
+            serializedDict = unsimplify(serializedDict)
+
         # First we must restore the object's dictionary entries.  These are decoded recursively
         # using the helper function above.
         restoredDict = {}
@@ -376,7 +387,7 @@ class Serializable(object):
         # Return the re-constituted class
         return thawedObject
 
-    def toJSON(self, numpyStorage='auto', **kwargs):
+    def toJSON(self, numpyStorage='auto', simplify=None, **kwargs):
         """
         Serialize this object to a JSON-formatted string
 
@@ -392,9 +403,9 @@ class Serializable(object):
         -------
         JSON string representation of this object
         """
-        return json.dumps(self.serialize(numpyStorage=numpyStorage), **kwargs)
+        return json.dumps(self.serialize(numpyStorage=numpyStorage, simplify=simplify), **kwargs)
 
-    def save(self, f, numpyStorage='auto', **kwargs):
+    def save(self, f, numpyStorage='auto', simplify=None, **kwargs):
         """
         Serialize this object to a JSON file.
 
@@ -407,7 +418,7 @@ class Serializable(object):
             Additional keyword arguments to be passed on to json.dumps().
         """
         def saveImpl(fp, numpyStorage_):
-            json.dump(self.serialize(numpyStorage=numpyStorage_), fp, **kwargs)
+            json.dump(self.serialize(numpyStorage=numpyStorage_, simplify=simplify), fp, **kwargs)
         if isinstance(f, basestring):
             with open(f, 'w') as handle:
                 saveImpl(handle, numpyStorage)
@@ -416,7 +427,7 @@ class Serializable(object):
             saveImpl(f, numpyStorage)
 
     @classmethod
-    def fromJSON(cls, s):
+    def fromJSON(cls, s, unsimplify=None):
         """
         Deserialize object from the passed JSON string
 
@@ -424,10 +435,10 @@ class Serializable(object):
         ----------
         s: JSON-encoded string, as returned by toJSON()
         """
-        return cls.deserialize(json.loads(s, object_hook=_decode_dict))
+        return cls.deserialize(json.loads(s, object_hook=_decode_dict), unsimplify=unsimplify)
 
     @classmethod
-    def load(cls, f):
+    def load(cls, f, unsimplify=None):
         """
         Deserialize object from a JSON file.
 
@@ -448,7 +459,7 @@ class Serializable(object):
         """
         def loadImpl(fp):
             dct = json.load(fp, object_hook=_decode_dict)
-            return cls.deserialize(dct)
+            return cls.deserialize(dct, unsimplify=unsimplify)
 
         if isinstance(f, basestring):
             with open(f, 'r') as handle:
