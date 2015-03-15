@@ -234,7 +234,6 @@ class ImagesLoader(object):
         rdd = self.sc.parallelize(enumerate(urlList), len(urlList)).map(lambda (k, v): (k, read(v)))
         return Images(rdd, nrecords=len(urlList))
 
-
     def fromTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, nplanes=None,
                 npartitions=None):
         """Sets up a new Images object with data to be read from one or more tif files.

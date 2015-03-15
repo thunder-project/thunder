@@ -95,8 +95,8 @@ class ThunderContext():
         return data
 
 
-    def loadImages(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16', startIdx=None, stopIdx=None, recursive=False, nplanes=None,
-                   npartitions=None, renumber=False):
+    def loadImages(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16', startIdx=None,
+                   stopIdx=None, recursive=False, nplanes=None, npartitions=None, renumber=False):
         """
         Supports single files or multiple files, stored on a local file system, a networked file sytem
         (mounted and available on all nodes), or Amazon S3. HDFS is not currently supported for image file data.
@@ -183,7 +183,7 @@ class ThunderContext():
 
         # Checking StartIdx is smaller or equal to StopIdx
         if startIdx is not None and stopIdx is not None and startIdx > stopIdx:
-          raise Exception ( "Error. startIdx {} is larger than stopIdx {}".format(startIdx,stopIdx) )
+            raise Exception("Error. startIdx {} is larger than stopIdx {}".format(startIdx, stopIdx))
 
         if not ext:
             ext = DEFAULT_EXTENSIONS.get(inputFormat.lower(), None)
@@ -205,7 +205,8 @@ class ThunderContext():
         else:
             return data.renumber()
 
-    def loadImagesOCP(self, bucketName, resolution, serverName='ocp.me', startIdx=None, stopIdx=None, minBound=None, maxBound=None ):
+    def loadImagesOCP(self, bucketName, resolution, serverName='ocp.me', startIdx=None, stopIdx=None,
+                      minBound=None, maxBound=None):
         """
         Load Images from OCP
         
@@ -219,10 +220,11 @@ class ThunderContext():
             you have an alternate server, you can set it here.
         
         startIdx: nonnegative int, optional
-            startIdx and stopIdx are convenience parameters to allow only a subset of timeseries data to be read. These parameters give the starting time (inclusive) and final time (exclusive) of the data files to be read from OCP.
-            after lexicographically sorting all input data files matching the dataPath argument. For example,
-            startIdx=None (the default) and stopIdx=10 will cause only the first 10 data files in dataPath to be read
-            in; startIdx=2 and stopIdx=3 will cause only the third file (zero-based index of 2) to be read in.
+            startIdx and stopIdx are convenience parameters to allow only a subset of timeseries data to be read.
+            These parameters give the starting time (inclusive) and final time (exclusive) of the data files to
+            be read from OCP. For example, startIdx=None (the default) and stopIdx=10 will cause only the first
+            10 data files in dataPath to be read n; startIdx=2 and stopIdx=3 will cause only the third file
+            (zero-based index of 2) to be read in.
 
         stopIdx: nonnegative int, optional
             See startIdx.
@@ -245,8 +247,9 @@ class ThunderContext():
         
         # Checking StartIdx is smaller or equal to StopIdx
         if startIdx is not None and stopIdx is not None and startIdx > stopIdx:
-          raise Exception ( "Error. startIdx {} is larger than stopIdx {}".format(startIdx,stopIdx) )
-        data = loader.fromOCP(bucketName, resolution=resolution, serverName=serverName, startIdx=startIdx, stopIdx=stopIdx, minBound=minBound, maxBound=maxBound)
+            raise Exception("Error. startIdx {} is larger than stopIdx {}".format(startIdx, stopIdx))
+        data = loader.fromOCP(bucketName, resolution=resolution, serverName=serverName, startIdx=startIdx,
+                              stopIdx=stopIdx, minBound=minBound, maxBound=maxBound)
 
         return data
 
