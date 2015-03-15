@@ -20,4 +20,4 @@ export SPARK_CLASSPATH=$THUNDER_JAR
 export PYTHONPATH=$PYTHONPATH:$SPARK_HOME/python:../
 export PYTHONPATH=$PYTHONPATH:$PYFORJ
 
-nosetests $@
+nosetests $@ --verbosity 2 --rednose --nologcapture
