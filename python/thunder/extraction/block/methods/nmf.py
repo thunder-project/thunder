@@ -10,8 +10,8 @@ class BlockNMF(BlockMethod):
 
 class BlockNMFAlgorithm(BlockAlgorithm):
 
-    def __init__(self, threshold=10, **extra):
-        self.threshold = threshold
+    def __init__(self, maxIter=10, **extra):
+        self.maxIter = maxIter
 
     def extract(self, block):
-        return block.mean()
+        pass

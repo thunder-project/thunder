@@ -7,4 +7,4 @@ class BasicBlockMerger(BlockMerger):
         self.overlap = overlap
 
     def merge(self, sources, data=None):
-        return sources
+        pass

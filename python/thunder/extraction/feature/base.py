@@ -74,13 +74,13 @@ class FeatureMethod(object):
 
 class FeaturePreprocessor(object):
 
-    def preprocess(self, block):
+    def preprocess(self, data):
         raise NotImplementedError
 
 
 class FeatureAlgorithm(object):
 
-    def extract(self, block):
+    def extract(self, im):
         raise NotImplementedError
 
 

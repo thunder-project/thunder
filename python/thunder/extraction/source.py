@@ -29,9 +29,13 @@ class SourceModel(Serializable, object):
         self.sources = sources
 
     def transform(self, data):
-
+        """
+        Extract time series from data using a list of sources
+        """
         if not (isinstance(data, Images) or isinstance(data, Series)):
             raise Exception("Input must either be Images or Series (or a subclass)")
+
+        pass
 
     def save(self, f, numpyStorage='auto', **kwargs):
         """
