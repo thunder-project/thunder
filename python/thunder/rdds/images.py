@@ -174,7 +174,7 @@ class Images(Data):
 
         self.toBlocks(blockSizeSpec, units=units).saveAsBinarySeries(outputDirPath, overwrite=overwrite)
 
-    def exportAsPngs(self, outputDirPath, filePrefix="export", overwrite=False,
+    def exportAsPngs(self, outputDirPath, cmap=None, vmin=None, vmax=None, filePrefix="export", overwrite=False,
                      collectToDriver=True):
         """
         Write out basic png files for two-dimensional image data.
@@ -214,7 +214,7 @@ class Images(Data):
             key, img = kv
             fname = filePrefix+"%05d.png" % int(key)
             bytebuf = BytesIO()
-            imsave(bytebuf, img, format="png")
+            imsave(bytebuf, img, vmin, vmax, cmap=cmap, format="png")
             return fname, bytebuf.getvalue()
 
         bufRdd = self.rdd.map(toFilenameAndPngBuf)
