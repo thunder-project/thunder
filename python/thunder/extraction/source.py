@@ -39,19 +39,22 @@ class SourceModel(Serializable, object):
 
     def save(self, f, numpyStorage='auto', **kwargs):
         """
-        Custom save with simplier output
+        Custom save with simpler, more human-readable output
         """
+        self.sources = map(lambda s: s.tolist(), self.sources)
         simplify = lambda d: d['sources']['py/homogeneousList']['data']
-        super(SourceModel, self).save(f, numpyStorage, simplify=simplify, **kwargs)
+        super(SourceModel, self).save(f, numpyStorage='ascii', simplify=simplify, **kwargs)
 
     @classmethod
     def load(cls, f, numpyStorage='auto', **kwargs):
         """
-        Custom load to handle simplified output
+        Custom load to handle simplified, more human-readable output
         """
         unsimplify = lambda d: {'sources': {
             'py/homogeneousList': {'data': d, 'module': 'thunder.extraction.source', 'type': 'Source'}}}
-        return super(SourceModel, cls).load(f, unsimplify=unsimplify)
+        output = super(SourceModel, cls).load(f, unsimplify=unsimplify)
+        output.sources = map(lambda s: s.toarray(), output.sources)
+        return output
 
     def __repr__(self):
         s = self.__class__.__name__
