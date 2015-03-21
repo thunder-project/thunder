@@ -55,7 +55,7 @@ def findThunderEgg():
 def cleanThunderEgg():
     calldir = os.path.dirname(os.path.realpath(__file__))
     egg = 'thunder_python-' + str(thunder.__version__) + '*.egg'
-    existing = glob.glob(os.path.join(calldir, '..', '..', 'dist', egg))
+    existing = glob.glob(os.path.join(calldir, '..', '..', 'thunder/lib/', egg))
     for f in existing:
         os.remove(f)
 
