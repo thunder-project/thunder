@@ -1,4 +1,4 @@
-from numpy import ndarray, arange, amax, amin, greater, size
+from numpy import ndarray, arange, amax, amin, greater, size, asarray
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
@@ -491,6 +491,7 @@ class Images(Data):
                 # array([x0, x1, ... xN]), array([y0, y1, ... yN]), ... array([z0, z1, ... zN])
                 # this can be used directly in an array indexing expression: ary[regionSelect]
                 regionSelect = []
+                regionIdxs = asarray(regionIdxs).T.tolist()
                 for idxTuple in regionIdxs:
                     if len(idxTuple) != imgNDims:
                         raise ValueError("Image is %d-dimensional, but got %d dimensional index: %s" %

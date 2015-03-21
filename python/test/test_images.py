@@ -532,7 +532,7 @@ class TestImagesMeanByRegions(PySparkTestCase):
         assert_equals(16, collected[1][1].flat[1])
 
     def test_meanWithSingleRegionIndices(self):
-        indices = [[(0, 0), (0, 1)]]  # one region with two indices
+        indices = [[(1, 1), (0, 0)]]  # one region with two indices
         regionMeanImages = self.images.meanByRegions(indices)
         self.__checkAttrPropagation(regionMeanImages, (1, 1))
         collected = regionMeanImages.collect()
@@ -542,8 +542,8 @@ class TestImagesMeanByRegions(PySparkTestCase):
         assert_equals(0, collected[0][0])
         assert_equals(1, collected[1][0])
         # check values
-        assert_equals(4, collected[0][1][0])
-        assert_equals(14, collected[1][1][0])
+        assert_equals(5, collected[0][1][0])
+        assert_equals(15, collected[1][1][0])
 
     def test_meanWithMultipleRegionIndices(self):
         indices = [[(0, 0), (0, 1)], [(0, 1), (1, 0)]]  # two regions with two indices each
