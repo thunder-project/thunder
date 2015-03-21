@@ -94,9 +94,9 @@ class ThunderContext():
                                      keyType=keyType, valueType=valueType)
         return data
 
-    def loadImages(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
+    def loadImages(self, dataPath, dims=None, dtype=None, inputFormat='stack', ext=None,
                    startIdx=None, stopIdx=None, recursive=False, nplanes=None, npartitions=None,
-                   renumber=False):
+                   renumber=False, confFilename='conf.json'):
         """
         Loads an Images object from data stored as a binary image stack, tif, or png files.
 
@@ -187,8 +187,9 @@ class ThunderContext():
             ext = DEFAULT_EXTENSIONS.get(inputFormat.lower(), None)
 
         if inputFormat.lower() == 'stack':
-            data = loader.fromStack(dataPath, dims, dtype=dtype, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
-                                    recursive=recursive, nplanes=nplanes, npartitions=npartitions)
+            data = loader.fromStack(dataPath, dims=dims, dtype=dtype, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
+                                    recursive=recursive, nplanes=nplanes, npartitions=npartitions,
+                                    confFilename=confFilename)
         elif inputFormat.lower().startswith('tif'):
             data = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                   nplanes=nplanes, npartitions=npartitions)

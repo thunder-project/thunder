@@ -1,9 +1,11 @@
 """Provides ImagesLoader object and helpers, used to read Images data from disk or other filesystems.
 """
-from matplotlib.pyplot import imread
 from io import BytesIO
+import json
+from matplotlib.pyplot import imread
 from numpy import array, dstack, frombuffer, ndarray, prod, transpose
-from thunder.rdds.fileio.readers import getParallelReaderForPath
+
+from thunder.rdds.fileio.readers import getParallelReaderForPath, getFileReaderForPath, FileNotFoundError
 from thunder.rdds.images import Images
 
 
@@ -49,8 +51,8 @@ class ImagesLoader(object):
         return Images(self.sc.parallelize(enumerate(arrays), npartitions),
                       dims=shape, dtype=str(dtype), nrecords=narrays)
 
-    def fromStack(self, dataPath, dims, dtype='int16', ext='stack', startIdx=None, stopIdx=None, recursive=False,
-                  nplanes=None, npartitions=None):
+    def fromStack(self, dataPath, dims=None, dtype=None, ext='stack', startIdx=None, stopIdx=None, recursive=False,
+                  nplanes=None, npartitions=None, confFilename='conf.json'):
         """Load an Images object stored in a directory of flat binary files
 
         The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
@@ -92,8 +94,23 @@ class ImagesLoader(object):
             If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
             partition per image file.
         """
+        reader = getFileReaderForPath(dataPath)(awsCredentialsOverride=self.awsCredentialsOverride)
+        try:
+            jsonBuf = reader.read(dataPath, filename=confFilename)
+            params = json.loads(jsonBuf)
+        except FileNotFoundError:
+            params = {}
+
+        if 'dtype' in params.keys():
+            dtype = params['dtype']
+        if 'dims' in params.keys():
+            dims = params['dims']
+
         if not dims:
-            raise ValueError("Image dimensions must be specified if loading from binary stack data")
+            raise ValueError("Image dimensions must be specified either as argument or in a conf.json file")
+
+        if not dtype:
+            dtype = 'int16'
 
         if nplanes is not None:
             if nplanes <= 0:
