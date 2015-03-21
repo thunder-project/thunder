@@ -574,6 +574,17 @@ class TestImagesMeanByRegions(PySparkTestCase):
         indices = [[(0, 0), (0, 1, 0)]]  # too many indices
         assert_raises(ValueError, self.images.meanByRegions, indices)
 
+    def test_meanWithSingleRegionIndices3D(self):
+        ary1 = array([[[3, 5, 3], [6, 8, 6]], [[3, 5, 3], [6, 8, 6]]], dtype='int32')
+        ary2 = array([[[13, 15, 13], [16, 18, 16]], [[13, 15, 13], [16, 18, 16]]], dtype='int32')
+        images = ImagesLoader(self.sc).fromArrays([ary1, ary2])
+        indices = [[(1, 1, 1), (0, 0, 0)]]  # one region with two indices
+        regionMeanImages = images.meanByRegions(indices)
+        self.__checkAttrPropagation(regionMeanImages, (1, 1))
+        collected = regionMeanImages.collect()
+        # check values
+        assert_equals(5, collected[0][1][0])
+        assert_equals(15, collected[1][1][0])
 
 class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
