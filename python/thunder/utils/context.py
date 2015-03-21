@@ -563,16 +563,19 @@ class ThunderContext():
 
         checkParams(dataset, DATASETS.keys())
 
-        tmpdir = tempfile.mkdtemp()
-        atexit.register(shutil.rmtree, tmpdir)
+        if 'ec2' in self._sc.master:
+            tmpdir = os.path.join('/root/thunder/python/thunder/utils', DATASETS[dataset])
+        else:
+            tmpdir = tempfile.mkdtemp()
+            atexit.register(shutil.rmtree, tmpdir)
 
-        def copyLocal(target):
-            files = resource_listdir('thunder.utils.data', target)
-            for f in files:
-                path = resource_filename('thunder.utils.data', os.path.join(target, f))
-                shutil.copy(path, tmpdir)
+            def copyLocal(target):
+                files = resource_listdir('thunder.utils.data', target)
+                for f in files:
+                    path = resource_filename('thunder.utils.data', os.path.join(target, f))
+                    shutil.copy(path, tmpdir)
 
-        copyLocal(DATASETS[dataset])
+            copyLocal(DATASETS[dataset])
 
         if dataset == "iris":
             return self.loadSeries(tmpdir)
