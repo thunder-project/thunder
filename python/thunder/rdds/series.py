@@ -664,6 +664,8 @@ class Series(Data):
         """
         if isinstance(selection, ndarray):
             selection = self.__maskToKeys(selection, returnNested=False)
+        else:
+            selection = map(lambda p: tuple(p), selection)
 
         bcRegionKeys = self.rdd.context.broadcast(frozenset(selection))
         n, keyMean, valMean = self.rdd.filter(lambda (k, v): k in bcRegionKeys.value) \
