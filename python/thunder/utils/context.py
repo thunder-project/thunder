@@ -564,10 +564,10 @@ class ThunderContext():
         checkParams(dataset, DATASETS.keys())
 
         if 'ec2' in self._sc.master:
-            tmpdir = os.path.join('/root/thunder/python/thunder/utils', DATASETS[dataset])
+            tmpdir = os.path.join('/root/thunder/python/thunder/utils', 'data', DATASETS[dataset])
         else:
             tmpdir = tempfile.mkdtemp()
-            atexit.register(shutil.rmtree, 'data', tmpdir)
+            atexit.register(shutil.rmtree, tmpdir)
 
             def copyLocal(target):
                 files = resource_listdir('thunder.utils.data', target)
