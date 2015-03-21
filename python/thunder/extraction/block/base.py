@@ -12,7 +12,7 @@ class BlockMethod(SourceExtractionMethod):
     sources, and then merging sources across blocks. It requires three components:
     an algorithm (which extracts sources from a single block),
     a merger (which combines sources across blocks),
-    and a cleaner (which filters the output and removes bad sources).
+    and a cleaner (which filters the output and removes or fixes undesired sources).
 
     Parameters
     ----------
@@ -72,19 +72,25 @@ class BlockMethod(SourceExtractionMethod):
         algorithm = self.algorithm
 
         parts = blocks.rdd.mapValues(algorithm.extract).collect()
-        outputs = self.merger.merge(parts)
-        sources = self.cleaner.clean(outputs)
+        model = self.merger.merge(parts)
+        model = self.cleaner.clean(model)
 
-        return SourceModel(sources)
+        return model
 
 
 class BlockAlgorithm(object):
+    """
+    Exposes an algorithm for extracting sources from a single block.
+    """
 
     def extract(self, block):
         raise NotImplementedError
 
 
 class BlockMerger(object):
+    """
+    Exposes a method for merging sources across blocks
+    """
 
     def merge(self, sources, data=None):
         raise NotImplementedError

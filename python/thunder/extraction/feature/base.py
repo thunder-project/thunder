@@ -1,6 +1,5 @@
 from thunder.rdds.series import Series
 from thunder.rdds.images import Images
-from thunder.extraction.source import SourceModel
 
 from numpy import asarray
 
@@ -66,19 +65,24 @@ class FeatureMethod(object):
             except:
                 raise Exception("Cannot interpret input")
 
-        outputs = self.algorithm.extract(input)
-        sources = self.cleaner.clean(outputs)
+        model = self.algorithm.extract(input)
+        model = self.cleaner.clean(model)
 
-        return SourceModel(sources)
+        return model
 
 
 class FeaturePreprocessor(object):
-
+    """
+    Process a Series or Images object into an array on which to apply algorithm
+    """
     def preprocess(self, data):
         raise NotImplementedError
 
 
 class FeatureAlgorithm(object):
+    """
+    Extract sources from a 2D or 3D array
+    """
 
     def extract(self, im):
         raise NotImplementedError
