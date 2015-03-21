@@ -44,24 +44,24 @@ def getEC2Master():
 
 
 def findThunderEgg():
-    # get directory
-    calldir = os.path.dirname(os.path.realpath(__file__))
-    distdir = os.path.join(calldir, '..', '..', 'dist')
-
-    # check for egg
-    egg = glob.glob(os.path.join(distdir, "thunder_python-" + str(thunder.__version__) + "*.egg"))
+    thunderdir = os.path.dirname(os.path.realpath(thunder.__file__))
+    egg = glob.glob(os.path.join(thunderdir, 'lib', 'thunder_python-'+str(thunder.__version__)+'*.egg'))
     if len(egg) == 1:
         return egg[0]
-    if not egg:
+    elif len(egg) > 1:
+        raise Exception("Multiple .egg files found (%s), run 'python setup.py clean bdist_egg' to rebuild" % egg)
+    else:
         return None
-    raise Exception("Multiple Thunder .egg files found - please run 'python setup.py clean bdist_egg' to rebuild " +
-                    "the appropriate version. Found: %s" % egg)
 
 
 def buildThunderEgg():
+    import shutil
     calldir = os.path.dirname(os.path.realpath(__file__))
     pythondir = os.path.join(calldir, '..', '..')
     subprocess.check_call(["python", 'setup.py', 'clean', 'bdist_egg'], cwd=pythondir)
+    src = glob.glob(os.path.join(calldir, '..', '..', 'dist', 'thunder_python-' + str(thunder.__version__) + '*.egg'))
+    target = os.path.join(calldir, '..', '..', 'thunder/lib/')
+    shutil.copy(src[0], target)
     return findThunderEgg()
 
 
