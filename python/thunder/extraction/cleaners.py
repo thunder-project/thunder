@@ -1,3 +1,5 @@
+from thunder.extraction.source import SourceModel
+
 class Cleaner(object):
 
     def clean(self, sources):
@@ -5,9 +7,16 @@ class Cleaner(object):
 
 
 class BasicCleaner(Cleaner):
-
-    def __init__(self, minSize=10, **extra):
+    """
+    A simple cleaner that removes sources larger than a specified size.
+    """
+    def __init__(self, minSize=50, **extra):
         self.minSize = minSize
 
-    def clean(self, sources):
-        return filter(lambda x: len(x.coordinates) > self.minSize, sources)
+    def clean(self, model):
+
+        if not isinstance(model, SourceModel):
+            raise Exception("Input must be Source Model, got %s" % type(model))
+
+        new = filter(lambda s: len(s.coordinates) > self.minSize, model.sources)
+        return SourceModel(new)
