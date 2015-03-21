@@ -544,13 +544,18 @@ class ThunderContext():
 
         Returns
         -------
-        data : RDD of (tuple, array) pairs
-            Generated dataset
+        data : Data object
+            Generated dataset as a Thunder data objects (e.g Series or Images)
         """
+        import atexit
+        import shutil
+        import tempfile
+        from pkg_resources import resource_listdir, resource_filename
+
         DATASETS = {
-            'iris': 'data/iris/iris.bin',
-            'fish-series': 'data/fish/bin/',
-            'fish-images': 'data/fish/tif-stack/'
+            'iris': 'iris',
+            'fish-series': 'fish/bin',
+            'fish-images': 'fish/tif-stack'
         }
 
         if dataset is None:
@@ -558,25 +563,23 @@ class ThunderContext():
 
         checkParams(dataset, DATASETS.keys())
 
-        basePath = os.path.dirname(os.path.realpath(__file__))
-        # this path might actually be inside an .egg file (appears to happen with Spark 1.2)
-        # check whether data/ directory actually exists on the filesystem, and if not, try
-        # a hardcoded path that should work on ec2 clusters launched via the thunder-ec2 script
-        if not os.path.isdir(os.path.join(basePath, 'data')):
-            basePath = "/root/thunder/python/thunder/utils"
+        tmpdir = tempfile.mkdtemp()
+        atexit.register(shutil.rmtree, tmpdir)
 
-        dataPath = DATASETS[dataset]
-        fullPath = os.path.join(basePath, dataPath)
+        def copyLocal(target):
+            files = resource_listdir('thunder.utils.data', target)
+            for f in files:
+                path = resource_filename('thunder.utils.data', os.path.join(target, f))
+                shutil.copy(path, tmpdir)
+
+        copyLocal(DATASETS[dataset])
 
         if dataset == "iris":
-            return self.loadSeries(fullPath)
+            return self.loadSeries(tmpdir)
         elif dataset == "fish-series":
-            return self.loadSeries(fullPath).astype('float')
+            return self.loadSeries(tmpdir).astype('float')
         elif dataset == "fish-images":
-            return self.loadImages(fullPath, inputFormat="tif")
-        else:
-            raise NotImplementedError("Dataset '%s' not known; should be one of 'iris', 'fish-series', 'fish-images'"
-                                      % dataset)
+            return self.loadImages(tmpdir, inputFormat="tif")
 
     def loadExampleS3(self, dataset=None):
         """
