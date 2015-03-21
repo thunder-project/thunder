@@ -62,7 +62,7 @@ def buildThunderEgg():
     egg = 'thunder_python-' + str(thunder.__version__) + '*.egg'
     existing = glob.glob(os.path.join(calldir, '..', '..', 'dist', egg))
     for f in existing:
-        shutil.remove(f)
+        os.remove(f)
     src = glob.glob(os.path.join(calldir, '..', '..', 'dist', egg))
     target = os.path.join(calldir, '..', '..', 'thunder/lib/')
     shutil.copy(src[0], target)
