@@ -52,7 +52,10 @@ class Source(Serializable, object):
         mx = amax(self.coordinates, axis=0)
         return concatenate((mn, mx))
 
-    def compareCenters(self, other):
+    def distance(self, other):
+        """
+        Distance between the center of this source and another.
+        """
         return sqrt(sum((self.center - other.center) ** 2))
 
     def tolist(self):
