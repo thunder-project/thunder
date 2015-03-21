@@ -48,8 +48,6 @@ def findThunderEgg():
     egg = glob.glob(os.path.join(thunderdir, 'lib', 'thunder_python-'+str(thunder.__version__)+'*.egg'))
     if len(egg) == 1:
         return egg[0]
-    elif len(egg) > 1:
-        raise Exception("Multiple .egg files found (%s), run 'python setup.py clean bdist_egg' to rebuild" % egg)
     else:
         return None
 
