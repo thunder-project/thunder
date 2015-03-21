@@ -1,4 +1,4 @@
-from numpy import asarray, median, sqrt, ndarray, amin, amax, concatenate
+from numpy import asarray, mean, sqrt, ndarray, amin, amax, concatenate
 
 from thunder.utils.serializable import Serializable
 from thunder.rdds.images import Images
@@ -45,9 +45,18 @@ class Source(Serializable, object):
             self.bbox = self.findBox()
 
     def findCenter(self):
-        return median(self.coordinates, axis=0)
+        """
+        Find the region center using a median.
+        """
+        # TODO Add option to use weights
+        return mean(self.coordinates, axis=0)
 
     def findBox(self):
+        """
+        Find the bounding box.
+
+        Defined as a coordinate list with the lowest value for all axes followed by the highest
+        """
         mn = amin(self.coordinates, axis=0)
         mx = amax(self.coordinates, axis=0)
         return concatenate((mn, mx))
