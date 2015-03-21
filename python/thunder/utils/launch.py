@@ -54,15 +54,21 @@ def findThunderEgg():
         return None
 
 
-def buildThunderEgg():
-    import shutil
+def cleanThunderEgg():
     calldir = os.path.dirname(os.path.realpath(__file__))
-    pythondir = os.path.join(calldir, '..', '..')
-    subprocess.check_call(["python", 'setup.py', 'clean', 'bdist_egg'], cwd=pythondir)
     egg = 'thunder_python-' + str(thunder.__version__) + '*.egg'
     existing = glob.glob(os.path.join(calldir, '..', '..', 'dist', egg))
     for f in existing:
         os.remove(f)
+
+
+def buildThunderEgg():
+    import shutil
+    cleanThunderEgg()
+    calldir = os.path.dirname(os.path.realpath(__file__))
+    pythondir = os.path.join(calldir, '..', '..')
+    subprocess.check_call(["python", 'setup.py', 'clean', 'bdist_egg'], cwd=pythondir)
+    egg = 'thunder_python-' + str(thunder.__version__) + '*.egg'
     src = glob.glob(os.path.join(calldir, '..', '..', 'dist', egg))
     target = os.path.join(calldir, '..', '..', 'thunder/lib/')
     shutil.copy(src[0], target)
