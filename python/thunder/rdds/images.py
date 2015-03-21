@@ -1,4 +1,4 @@
-from numpy import ndarray, arange, amax, amin, greater, size
+from numpy import ndarray, arange, amax, amin, greater, size, asarray
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
@@ -490,11 +490,12 @@ class Images(Data):
                 # instead of sequence [(x0, y0, z0), (x1, y1, z1), ... (xN, yN, zN)], want:
                 # array([x0, x1, ... xN]), array([y0, y1, ... yN]), ... array([z0, z1, ... zN])
                 # this can be used directly in an array indexing expression: ary[regionSelect]
-                regionSelect = []
                 for idxTuple in regionIdxs:
                     if len(idxTuple) != imgNDims:
                         raise ValueError("Image is %d-dimensional, but got %d dimensional index: %s" %
                                          (imgNDims, len(idxTuple), str(idxTuple)))
+                regionSelect = []
+                regionIdxs = asarray(regionIdxs).T.tolist()
                 for idxDimNum, dimIdxs in enumerate(zip(regionIdxs)):
                     imgDimMax = self.dims.count[idxDimNum]
                     dimIdxAry = array(dimIdxs, dtype='uint16')

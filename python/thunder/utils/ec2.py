@@ -119,7 +119,7 @@ def install_thunder(master, opts, spark_version_string):
     """ Install Thunder and dependencies on a Spark EC2 cluster """
     print "Installing Thunder on the cluster..."
 
-    # download and build thunder
+    # download thunder
     ssh(master, opts, "rm -rf thunder && git clone https://github.com/freeman-lab/thunder.git")
     if opts.thunder_version.lower() != "head":
         tagOrHash = opts.thunder_version
@@ -127,8 +127,6 @@ def install_thunder(master, opts, spark_version_string):
             # we have something that looks like a version number. prepend 'v' to get a valid tag id.
             tagOrHash = 'v' + tagOrHash
         ssh(master, opts, "cd thunder && git checkout %s" % tagOrHash)
-    ssh(master, opts, "chmod u+x thunder/python/bin/build")
-    ssh(master, opts, "thunder/python/bin/build")
 
     # copy local data examples to all workers
     ssh(master, opts, "yum install -y pssh")
@@ -169,6 +167,10 @@ def install_thunder(master, opts, spark_version_string):
     ssh(master, opts, "echo 'export SPARK_HOME=/root/spark' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export PYTHONPATH=/root/thunder/python' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export IPYTHON=1' >> /root/.bash_profile")
+
+    # build thunder
+    ssh(master, opts, "chmod u+x thunder/python/bin/build")
+    ssh(master, opts, "source ~/.bash_profile && thunder/python/bin/build")
 
     # need to explicitly set PYSPARK_PYTHON with spark 1.2.0; otherwise fails with:
     # "IPython requires Python 2.7+; please install python2.7 or set PYSPARK_PYTHON"
