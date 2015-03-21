@@ -2,7 +2,8 @@
 Utilities for generating example datasets
 """
 
-from numpy import array, random, shape, floor, dot, linspace, sin, sign, c_
+from numpy import array, asarray, random, shape, floor, dot, linspace, \
+    sin, sign, c_, ceil, inf, clip, zeros
 
 from thunder.rdds.matrices import RowMatrix
 from thunder.rdds.series import Series
@@ -82,8 +83,39 @@ class ICAData(DataSets):
             return data
 
 
+class SourcesData(DataSets):
+
+    def generate(self, x=100, y=100, n=5, t=100, margin=35, sd=3, npartitions=1, seed=None):
+
+        from scipy.ndimage.filters import gaussian_filter
+        from thunder.rdds.fileio.imagesloader import ImagesLoader
+
+        random.seed(seed)
+        ts = [clip(random.randn(t), 0, inf) for i in range(0, n)]
+        xcenters = (x - margin) * random.random_sample(n) + margin/2
+        ycenters = (y - margin) * random.random_sample(n) + margin/2
+        centers = zip(xcenters, ycenters)
+        allframes = []
+        for tt in range(0, t):
+            frame = zeros((x, y))
+            for nn in range(0, n):
+                base = zeros((x, y))
+                base[centers[nn][0], centers[nn][1]] = 1
+                img = gaussian_filter(base, sd)
+                frame += img * ts[nn][tt]
+            allframes.append(frame)
+
+        data = ImagesLoader(self.sc).fromArrays(allframes, npartitions).astype('float')
+        if self.returnParams is True:
+            return data, ts, centers
+        else:
+            return data
+
+
+
 DATASET_MAKERS = {
     'kmeans': KMeansData,
     'pca': PCAData,
-    'ica': ICAData
+    'ica': ICAData,
+    'sources': SourcesData
 }

@@ -526,7 +526,8 @@ class ThunderContext():
             Generated dataset
 
         """
-        checkParams(dataset, ['kmeans', 'pca', 'ica'])
+        from thunder.utils.datasets import DATASET_MAKERS
+        checkParams(dataset, DATASET_MAKERS.keys())
 
         return DataSets.make(self._sc, dataset, **opts)
 
