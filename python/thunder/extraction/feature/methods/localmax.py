@@ -1,4 +1,4 @@
-from numpy import cos, sin, pi
+from numpy import cos, sin, pi, array
 
 from thunder.extraction.feature.base import FeatureMethod, FeatureAlgorithm
 from thunder.extraction.feature.creators import MeanFeatureCreator
@@ -70,11 +70,14 @@ class LocalMaxFeatureAlgorithm(FeatureAlgorithm):
         # convert row/col to x/y
         peaks = map(lambda p: p[::-1], peaks)
 
-        # estimate circles from points
-        def pointToCircle(center):
-            xy = [(cos(2 * pi/self.res * x) * self.radius + center[0],
-                   sin(2 * pi/self.res * x) * self.radius + center[1])
-                  for x in xrange(0, self.res+1)]
-            return xy
+        # estimate circular regions from peak points
+        def pointToCircle(center, radius):
+            cx = center[0]
+            cy = center[1]
+            r2 = radius * radius
+            xrange = range(center[0] - radius + 1, center[0] + radius)
+            yrange = range(center[1] - radius + 1, center[1] + radius)
+            pts = [[[x, y] for x in xrange if ((x - cx) ** 2 + (y - cy) ** 2 < r2)] for y in yrange]
+            return concatenate(array(pts))
 
-        return SourceModel([Source(pointToCircle(p)) for p in peaks])
+        return SourceModel([Source(pointToCircle(p, self.radius)) for p in peaks])
