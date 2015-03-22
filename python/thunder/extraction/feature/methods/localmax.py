@@ -43,20 +43,9 @@ class LocalMaxFeatureAlgorithm(FeatureAlgorithm):
         self.res = res
 
     def extract(self, im):
-        """
-        Extract sources from an image by finding local maxima.
-
-        Parameters
-        ----------
-        im : ndarray
-            The image or volume
-
-        Returns
-        -------
-        A SourceModel with circular regions.
-        """
         from numpy import ones, concatenate
         from skimage.feature import peak_local_max
+        from skimage.draw import circle
 
         # extract local peaks
         if im.ndim == 2:
@@ -67,19 +56,11 @@ class LocalMaxFeatureAlgorithm(FeatureAlgorithm):
                 tmp = peak_local_max(im[:, :, i], min_distance=self.minDistance, num_peaks=self.maxSources)
                 peaks = peaks.append(concatenate((tmp, ones((len(tmp), 1)) * i), axis=1))
 
-        # estimate circular regions from peak points
+        # construct circular regions from peak points
         def pointToCircle(center, radius):
-            ccol = center[0]
-            crow = center[1]
-            r2 = radius * radius
-            colrange = range(center[0] - radius + 1, center[0] + radius)
-            rowrange = range(center[1] - radius + 1, center[1] + radius)
-            pts = [[([c, r], radius - sqrt((c - ccol) ** 2 + (r - crow) ** 2))
-                    for c in colrange if ((c - ccol) ** 2 + (r - crow) ** 2 < r2)] for r in rowrange]
-            pts = concatenate(array(pts))
-            k = map(lambda p: p[0], pts)
-            v = map(lambda p: p[1], pts)
-            return k, v
+            rr, cc = circle(center[0], center[1], radius)
+            return array(zip(rr, cc))
 
-        sources = [pointToCircle(p, self.radius) for p in peaks]
-        return SourceModel([Source(s[0], s[1]) for s in sources])
+        # return circles as sources
+        circles = [pointToCircle(p, self.radius) for p in peaks]
+        return SourceModel([Source(c) for c in circles])
