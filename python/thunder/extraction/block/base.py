@@ -37,7 +37,7 @@ class BlockMethod(SourceExtractionMethod):
         self.cleaner = cleaner if cleaner is not None else BasicCleaner(**kwargs)
         self.algorithm = algorithm
 
-    def fit(self, blocks, size=(50, 50, 1), units="pixels", padding=0):
+    def fit(self, blocks, size=None, units="pixels", padding=0):
         """
         Fit the source extraction model to data
 
@@ -60,6 +60,8 @@ class BlockMethod(SourceExtractionMethod):
         Images.toBlocks
         """
         if isinstance(blocks, Images):
+            if size is None:
+                raise Exception("Must specify a size if images will be converted to blocks")
             blocks = blocks.toBlocks(size, units, padding)
 
         elif not (isinstance(blocks, Blocks) or isinstance(blocks, PaddedBlocks)):
@@ -70,8 +72,12 @@ class BlockMethod(SourceExtractionMethod):
 
         algorithm = self.algorithm
 
-        parts = blocks.rdd.mapValues(algorithm.extract).collect()
-        model = self.merger.merge(parts)
+        result = blocks.rdd.mapValues(algorithm.extract).collect()
+
+        keys = map(lambda x: x[0], result)
+        sources = map(lambda x: x[1], result)
+
+        model = self.merger.merge(sources, keys)
 
         if len(model.sources) < 1:
             raise Exception("No sources found, try changing parameters?")
@@ -83,17 +89,15 @@ class BlockMethod(SourceExtractionMethod):
 
 class BlockAlgorithm(object):
     """
-    Exposes an algorithm for extracting sources from a single block.
+    An algorithm for extracting sources from a single block.
     """
-
     def extract(self, block):
         raise NotImplementedError
 
 
 class BlockMerger(object):
     """
-    Exposes a method for merging sources across blocks
+    A method for merging sources across blocks
     """
-
-    def merge(self, sources, data=None):
+    def merge(self, sources, keys, data=None):
         raise NotImplementedError

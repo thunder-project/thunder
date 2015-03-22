@@ -4,7 +4,9 @@ from thunder.extraction.feature.base import FeatureCreator
 
 
 class MeanFeatureCreator(FeatureCreator):
-
+    """
+    Compute the mean across images for every pixel
+    """
     def create(self, data):
         if isinstance(data, Images):
             return data.mean()
@@ -13,7 +15,9 @@ class MeanFeatureCreator(FeatureCreator):
 
 
 class StdevFeatureCreator(FeatureCreator):
-
+    """
+    Compute the standard deviation across images for every pixel
+    """
     def create(self, data):
         if isinstance(data, Images):
             return data.stdev()

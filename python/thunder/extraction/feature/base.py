@@ -84,7 +84,16 @@ class FeatureCreator(object):
 
 class FeatureAlgorithm(object):
     """
-    Extract sources from a 2D or 3D array
+    An algorithm for extracting sources from a 2D or 3D array
+
+    Parameters
+    ----------
+    im : ndarray
+        The image or volume
+
+    Returns
+    -------
+    A SourceModel
     """
     def extract(self, im):
         raise NotImplementedError
