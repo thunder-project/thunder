@@ -72,6 +72,10 @@ class BlockMethod(SourceExtractionMethod):
 
         parts = blocks.rdd.mapValues(algorithm.extract).collect()
         model = self.merger.merge(parts)
+
+        if len(model.sources) < 1:
+            raise Exception("No sources found, try changing parameters?")
+
         model = self.cleaner.clean(model)
 
         return model

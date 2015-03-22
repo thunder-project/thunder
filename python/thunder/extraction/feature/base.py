@@ -65,6 +65,10 @@ class FeatureMethod(object):
                 raise Exception("Cannot interpret input")
 
         model = self.algorithm.extract(input)
+
+        if len(model.sources) < 1:
+            raise Exception("No sources found, try changing parameters?")
+
         model = self.cleaner.clean(model)
 
         return model
