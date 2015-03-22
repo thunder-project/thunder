@@ -1,4 +1,4 @@
-from numpy import asarray, mean, sqrt, ndarray, amin, amax, concatenate
+from numpy import asarray, mean, sqrt, ndarray, amin, amax, concatenate, roll, sum
 
 from thunder.utils.serializable import Serializable
 from thunder.rdds.images import Images
@@ -8,6 +8,10 @@ from thunder.rdds.series import Series
 class Source(Serializable, object):
     """
     A single source, represented as a list of coordinates and other optional specifications.
+
+    A source also has a set of lazily computed attributes useful for representing and comparing
+    its geometry, such as center, bounding box, and bounding polygon. These properties
+    will be computed lazily and made available as attributes when requested.
 
     Parameters
     ----------
@@ -20,13 +24,24 @@ class Source(Serializable, object):
     id : int or string
         Arbitrary specification per source, typically an index or string label
 
+    Attributes
+    ----------
+    center : list or array-like
+        The coordinates of the center of the source
+
+    polygon : list or array-like
+        The coordinates of a polygon bounding the region (a convex hull)
+
     bbox : list or array-like
         Boundaries of the source (with the lowest values for all axes followed by the highest values)
 
-    center : list or array-like
-        The coordinates of the center of the source
+    area : scalar
+        The area of the region
     """
-    def __init__(self, coordinates, values=None, id=None, center=None, bbox=None):
+
+    from zope.cachedescriptors import property
+
+    def __init__(self, coordinates, values=None, id=None):
         self.coordinates = asarray(coordinates)
 
         if self.coordinates.ndim == 1:
@@ -39,27 +54,56 @@ class Source(Serializable, object):
 
         if id is not None:
             self.id = id
-        if center is None:
-            self.center = self.findCenter()
-        if bbox is None:
-            self.bbox = self.findBox()
 
-    def findCenter(self):
+    @property.Lazy
+    def center(self):
         """
-        Find the region center using a median.
+        Find the region center using a mean.
         """
         # TODO Add option to use weights
         return mean(self.coordinates, axis=0)
 
-    def findBox(self):
+    @property.Lazy
+    def polygon(self):
+        """
+        Find the bounding polygon as a convex hull
+        """
+        # TODO Add option for simplification
+        from scipy.spatial import ConvexHull
+        if len(self.coordinates) >= 4:
+            inds = ConvexHull(self.coordinates).vertices
+            return self.coordinates[inds]
+        else:
+            return self.coordinates
+
+    @property.Lazy
+    def bbox(self):
         """
         Find the bounding box.
-
-        Defined as a coordinate list with the lowest value for all axes followed by the highest
         """
         mn = amin(self.coordinates, axis=0)
         mx = amax(self.coordinates, axis=0)
         return concatenate((mn, mx))
+
+    @property.Lazy
+    def area(self):
+        """
+        Find the region area.
+        """
+        return len(self.coordinates)
+
+    def restore(self, skip=None):
+        """
+        Remove all lazy properties, will force recomputation
+        """
+        if skip is None:
+            skip = []
+        elif isinstance(skip, str):
+            skip = [skip]
+        for prop in LAZY_ATTRIBUTES:
+            if prop in self.__dict__.keys() and prop not in skip:
+                del self.__dict__[prop]
+        return self
 
     def distance(self, other):
         """
@@ -69,25 +113,25 @@ class Source(Serializable, object):
 
     def tolist(self):
         """
-        Convert all array-like attributes to list
+        Convert array-like attributes to list
         """
         import copy
         new = copy.copy(self)
-        for prop in ["coordinates", "values", "center", "bbox"]:
-            if hasattr(new, prop):
-                val = getattr(new, prop)
+        for prop in ["coordinates", "values", "center", "bbox", "polygon"]:
+            if prop in self.__dict__.keys():
+                val = new.__getattribute__(prop)
                 if val is not None and not isinstance(val, list):
                     setattr(new, prop, val.tolist())
         return new
 
     def toarray(self):
         """
-        Convert all array-like attributes to ndarray
+        Convert array-like attributes to ndarray
         """
         import copy
         new = copy.copy(self)
-        for prop in ["coordinates", "values", "center", "bbox"]:
-            if hasattr(new, prop):
+        for prop in ["coordinates", "values", "center", "bbox", "polygon"]:
+            if prop in self.__dict__.keys():
                 val = new.__getattribute__(prop)
                 if val is not None and not isinstance(val, ndarray):
                     setattr(new, prop, asarray(val))
@@ -95,10 +139,7 @@ class Source(Serializable, object):
 
     def __repr__(self):
         s = self.__class__.__name__
-        c = self.coordinates
-        cs = c.tolist() if isinstance(c, ndarray) else c
-        s += '\ncoordinates: %s' % (repr(cs))
-        for opt in ["values", "id", "center", "bbox"]:
+        for opt in ["id", "center", "bbox"]:
             if hasattr(self, opt):
                 o = self.__getattribute__(opt)
                 os = o.tolist() if isinstance(o, ndarray) else o
@@ -146,6 +187,13 @@ class SourceModel(Serializable, object):
             all.append(s.center.tolist())
         return asarray(all)
 
+    @property
+    def polygons(self):
+        all = []
+        for s in self.sources:
+            all.append(s.polygon.tolist())
+        return asarray(all)
+
     def transform(self, data, collect=True):
         """
         Extract time series from data using a list of sources.
@@ -174,18 +222,25 @@ class SourceModel(Serializable, object):
         else:
             return output
 
-    def save(self, f, numpyStorage='auto', **kwargs):
+    def save(self, f, numpyStorage='auto', include=None, **kwargs):
         """
-        Custom save with simpler, more human-readable output
+        Custom save with simplified, human-readable output, and selection of lazy attributes.
         """
-        self.sources = map(lambda s: s.tolist(), self.sources)
+        import copy
+        output = copy.deepcopy(self)
+        if isinstance(include, str):
+            include = [include]
+        if include is not None:
+            for prop in include:
+                map(lambda s: getattr(s, prop), output.sources)
+        output.sources = map(lambda s: s.restore(include).tolist(), output.sources)
         simplify = lambda d: d['sources']['py/homogeneousList']['data']
-        super(SourceModel, self).save(f, numpyStorage='ascii', simplify=simplify, **kwargs)
+        super(SourceModel, output).save(f, numpyStorage='ascii', simplify=simplify, **kwargs)
 
     @classmethod
-    def load(cls, f, numpyStorage='auto', **kwargs):
+    def load(cls, f, **kwargs):
         """
-        Custom load to handle simplified, more human-readable output
+        Custom load to handle simplified, human-readable output
         """
         unsimplify = lambda d: {'sources': {
             'py/homogeneousList': {'data': d, 'module': 'thunder.extraction.source', 'type': 'Source'}}}
@@ -197,3 +252,5 @@ class SourceModel(Serializable, object):
         s = self.__class__.__name__
         s += '\n%g sources' % (len(self.sources))
         return s
+
+LAZY_ATTRIBUTES = ["center", "polygon", "bbox", "area"]
