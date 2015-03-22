@@ -38,7 +38,6 @@ class Source(Serializable, object):
     area : scalar
         The area of the region
     """
-
     from zope.cachedescriptors import property
 
     def __init__(self, coordinates, values=None, id=None):
@@ -158,10 +157,10 @@ class Source(Serializable, object):
             empty = zeros(dims)
             coords = self.coordinates
 
-        if self.values is None or binary is True:
-            empty[coords.T.tolist()] = 1
-        else:
+        if hasattr(self, 'values') and self.values is not None and binary is False:
             empty[coords.T.tolist()] = self.values
+        else:
+            empty[coords.T.tolist()] = 1
 
         return empty
 
