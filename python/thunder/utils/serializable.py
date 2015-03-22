@@ -2,6 +2,7 @@
 
 import abc
 import json
+import os
 
 
 def _isNamedTuple(obj):
@@ -420,6 +421,8 @@ class Serializable(object):
         def saveImpl(fp, numpyStorage_):
             json.dump(self.serialize(numpyStorage=numpyStorage_, simplify=simplify), fp, **kwargs)
         if isinstance(f, basestring):
+            if "~" in f:
+                f = os.path.expanduser(f)
             with open(f, 'w') as handle:
                 saveImpl(handle, numpyStorage)
         else:
@@ -462,8 +465,11 @@ class Serializable(object):
             return cls.deserialize(dct, unsimplify=unsimplify)
 
         if isinstance(f, basestring):
+            if "~" in f:
+                f = os.path.expanduser(f)
             with open(f, 'r') as handle:
                 return loadImpl(handle)
+
         else:
             # assume f is a file object
             return loadImpl(f)
