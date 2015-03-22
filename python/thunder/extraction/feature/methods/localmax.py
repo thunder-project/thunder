@@ -31,6 +31,8 @@ class LocalMaxAlgorithm(FeatureAlgorithm):
                 tmp = peak_local_max(im[:, :, i], min_distance=self.minDistance, num_peaks=self.numPeaks)
                 peaks = peaks.append(concatenate((tmp, ones((len(tmp), 1)) * i), axis=1))
 
+        # convert row/col to x/y
+        peaks = map(lambda p: p[::-1], peaks)
         def pointToCircle(center):
             xy = [(cos(2 * pi/res * x) * radius + center[0], sin(2 * pi/res * x) * radius + center[1])
                   for x in xrange(0, res+1)]
