@@ -1,4 +1,4 @@
-from numpy import asarray, mean, sqrt, ndarray, amin, amax, concatenate, roll, sum
+from numpy import asarray, mean, sqrt, ndarray, amin, amax, concatenate, sum, zeros, maximum
 
 from thunder.utils.serializable import Serializable
 from thunder.rdds.images import Images
@@ -137,6 +137,34 @@ class Source(Serializable, object):
                     setattr(new, prop, asarray(val))
         return new
 
+    def mask(self, dims=None, binary=True):
+        """
+        Construct a mask from a source, either locally or within a larger image.
+
+        Parameters
+        ----------
+        dims : list or tuple, optional, default = None
+            Dimensions of large image in which to draw mask. If none, will restrict
+            to the bounding box of the region.
+
+        binary : boolean, optional, deafult = True
+            Whether to incoporate values or only show a binary mask
+        """
+        if dims is None:
+            extent = self.bbox[len(self.center):] - self.bbox[0:len(self.center)] + 1
+            empty = zeros(extent)
+            coords = (self.coordinates - self.bbox[0:len(self.center)])
+        else:
+            empty = zeros(dims)
+            coords = self.coordinates
+
+        if self.values is None or binary is True:
+            empty[coords.T.tolist()] = 1
+        else:
+            empty[coords.T.tolist()] = self.values
+
+        return empty
+
     def __repr__(self):
         s = self.__class__.__name__
         for opt in ["id", "center", "bbox"]:
@@ -173,26 +201,61 @@ class SourceModel(Serializable, object):
             raise IndexError("Selection not recognized, must be Int, got %s" % type(entry))
         return self.sources[entry]
 
+    def combiner(self, prop, tolist=True):
+        combined = []
+        for s in self.sources:
+            p = getattr(s, prop)
+            if tolist:
+                p = p.tolist()
+            combined.append(p)
+        return combined
+
     @property
     def coordinates(self):
-        all = []
-        for s in self.sources:
-            all.append(s.coordinates.tolist())
-        return asarray(all)
+        """
+        List of coordinates combined across sources
+        """
+        return self.combiner('coordinates')
+
+    @property
+    def values(self):
+        """
+        List of coordinates combined across sources
+        """
+        return self.combiner('values')
 
     @property
     def centers(self):
-        all = []
-        for s in self.sources:
-            all.append(s.center.tolist())
-        return asarray(all)
+        """
+        Array of centers combined across sources
+        """
+        return asarray(self.combiner('center'))
 
     @property
     def polygons(self):
-        all = []
+        """
+        List of polygons combined across sources
+        """
+        return self.combiner('polygon')
+
+    @property
+    def areas(self):
+        """
+        List of areas combined across sources
+        """
+        return self.combiner('area', tolist=False)
+
+    def masks(self, dims=None, binary=True):
+        """
+        Composite mask combined across sources
+        """
+        if dims is None:
+            raise Exception("Must provide image dimensions for composite masks.")
+
+        combined = zeros(dims)
         for s in self.sources:
-            all.append(s.polygon.tolist())
-        return asarray(all)
+            combined = maximum(s.mask(dims, binary), combined)
+        return combined
 
     def transform(self, data, collect=True):
         """
@@ -212,6 +275,7 @@ class SourceModel(Serializable, object):
         if not (isinstance(data, Images) or isinstance(data, Series)):
             raise Exception("Input must either be Images or Series (or a subclass)")
 
+        # inversion converts x/y to row/col
         if isinstance(data, Images):
             output = data.meanByRegions(self.coordinates).toSeries()
         else:

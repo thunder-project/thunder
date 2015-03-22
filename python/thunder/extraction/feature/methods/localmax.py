@@ -1,4 +1,4 @@
-from numpy import cos, sin, pi, array
+from numpy import cos, sin, pi, array, sqrt
 
 from thunder.extraction.feature.base import FeatureMethod, FeatureAlgorithm
 from thunder.extraction.feature.creators import MeanFeatureCreator
@@ -67,17 +67,19 @@ class LocalMaxFeatureAlgorithm(FeatureAlgorithm):
                 tmp = peak_local_max(im[:, :, i], min_distance=self.minDistance, num_peaks=self.maxSources)
                 peaks = peaks.append(concatenate((tmp, ones((len(tmp), 1)) * i), axis=1))
 
-        # convert row/col to x/y
-        peaks = map(lambda p: p[::-1], peaks)
-
         # estimate circular regions from peak points
         def pointToCircle(center, radius):
-            cx = center[0]
-            cy = center[1]
+            ccol = center[0]
+            crow = center[1]
             r2 = radius * radius
-            xrange = range(center[0] - radius + 1, center[0] + radius)
-            yrange = range(center[1] - radius + 1, center[1] + radius)
-            pts = [[[x, y] for x in xrange if ((x - cx) ** 2 + (y - cy) ** 2 < r2)] for y in yrange]
-            return concatenate(array(pts))
+            colrange = range(center[0] - radius + 1, center[0] + radius)
+            rowrange = range(center[1] - radius + 1, center[1] + radius)
+            pts = [[([c, r], radius - sqrt((c - ccol) ** 2 + (r - crow) ** 2))
+                    for c in colrange if ((c - ccol) ** 2 + (r - crow) ** 2 < r2)] for r in rowrange]
+            pts = concatenate(array(pts))
+            k = map(lambda p: p[0], pts)
+            v = map(lambda p: p[1], pts)
+            return k, v
 
-        return SourceModel([Source(pointToCircle(p, self.radius)) for p in peaks])
+        sources = [pointToCircle(p, self.radius) for p in peaks]
+        return SourceModel([Source(s[0], s[1]) for s in sources])
