@@ -85,24 +85,24 @@ class ICAData(DataSets):
 
 class SourcesData(DataSets):
 
-    def generate(self, x=100, y=100, n=5, t=100, margin=35, sd=3, npartitions=1, seed=None):
+    def generate(self, w=100, h=100, n=5, t=100, margin=35, sd=3, noise=0.1, npartitions=1, seed=None):
 
         from scipy.ndimage.filters import gaussian_filter
         from thunder.rdds.fileio.imagesloader import ImagesLoader
 
         random.seed(seed)
         ts = [clip(random.randn(t), 0, inf) for i in range(0, n)]
-        xcenters = (x - margin) * random.random_sample(n) + margin/2
-        ycenters = (y - margin) * random.random_sample(n) + margin/2
+        xcenters = (w - margin) * random.random_sample(n) + margin/2
+        ycenters = (h - margin) * random.random_sample(n) + margin/2
         centers = zip(xcenters, ycenters)
         allframes = []
         for tt in range(0, t):
-            frame = zeros((x, y))
+            frame = zeros((h, w))
             for nn in range(0, n):
-                base = zeros((x, y))
-                base[centers[nn][0], centers[nn][1]] = 1
+                base = zeros((h, w))
+                base[centers[nn][1], centers[nn][0]] = 1
                 img = gaussian_filter(base, sd)
-                frame += img * ts[nn][tt]
+                frame += img * ts[nn][tt] + random.randn(h, w) * noise
             allframes.append(frame)
 
         data = ImagesLoader(self.sc).fromArrays(allframes, npartitions).astype('float')
