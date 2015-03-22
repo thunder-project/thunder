@@ -19,20 +19,20 @@ class FeatureMethod(object):
     algorithm : FeatureAlgorithm
         Which algorithm to use
 
-    preprocessor : FeatureProcessor
-        Which preprocessor to use
+    creator : FeatureCreator
+        Which feature creator to use
 
     kwargs : dict
         Any extra arguments will be passed to the algorithm, merger, and cleaner,
         useful for providing options to these components
     """
 
-    def __init__(self, algorithm=None, preprocessor=None, cleaner=None, **kwargs):
+    def __init__(self, algorithm=None, creator=None, cleaner=None, **kwargs):
 
         from thunder.extraction.cleaners import BasicCleaner
 
-        self.preprocessor = preprocessor
         self.algorithm = algorithm
+        self.creator = creator
         self.cleaner = cleaner if cleaner is not None else BasicCleaner(**kwargs)
 
     def fit(self, data):
@@ -48,16 +48,15 @@ class FeatureMethod(object):
         data : Images, Series, or array-like
             Data in either an images or series representation
         """
-
         if not isinstance(self.algorithm, FeatureAlgorithm):
             raise Exception("A FeatureAlgorithm must be specified")
 
         if isinstance(data, Images) or isinstance(data, Series):
 
-            if not isinstance(self.preprocessor, FeaturePreprocessor):
-                raise Exception("A FeaturePreprocessor must be specified")
+            if not isinstance(self.creator, FeatureCreator):
+                raise Exception("A FeatureCreator must be specified")
 
-            input = self.preprocessor.preprocess(data)
+            input = self.creator.create(data)
 
         else:
             try:
@@ -71,11 +70,11 @@ class FeatureMethod(object):
         return model
 
 
-class FeaturePreprocessor(object):
+class FeatureCreator(object):
     """
-    Process a Series or Images object into an array on which to apply algorithm
+    Create an array of features from a Series or Images object on which to apply algorithm
     """
-    def preprocess(self, data):
+    def create(self, data):
         raise NotImplementedError
 
 
@@ -83,7 +82,6 @@ class FeatureAlgorithm(object):
     """
     Extract sources from a 2D or 3D array
     """
-
     def extract(self, im):
         raise NotImplementedError
 

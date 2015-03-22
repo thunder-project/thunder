@@ -1,5 +1,4 @@
 from thunder.extraction.extraction import SourceExtractionMethod
-from thunder.extraction.source import SourceModel
 from thunder.rdds.images import Images
 from thunder.rdds.imgblocks.blocks import Blocks, PaddedBlocks
 

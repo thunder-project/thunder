@@ -1,5 +1,6 @@
 from thunder.extraction.source import SourceModel
 
+
 class Cleaner(object):
 
     def clean(self, sources):
