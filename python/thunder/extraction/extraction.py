@@ -3,7 +3,9 @@ from thunder.extraction.source import SourceModel
 
 
 class SourceExtraction(object):
-
+    """
+    Factory for constructing source extraction methods
+    """
     def __new__(cls, method, **kwargs):
 
         from thunder.extraction.block.methods.nmf import BlockNMF
@@ -19,7 +21,7 @@ class SourceExtraction(object):
 
     @staticmethod
     def load(file):
-        SourceModel.load(file)
+        return SourceModel.load(file)
 
 
 class SourceExtractionMethod(object):
