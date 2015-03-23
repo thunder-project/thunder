@@ -1,6 +1,7 @@
 import shutil
 import tempfile
 import unittest
+import os
 from numpy import vstack
 from pyspark import SparkContext
 
@@ -28,6 +29,15 @@ class PySparkTestCaseWithOutputDir(PySparkTestCase):
     def tearDown(self):
         super(PySparkTestCaseWithOutputDir, self).tearDown()
         shutil.rmtree(self.outputdir)
+
+
+class LocalTestCase(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
 
 
 def elementwiseMean(arys):
