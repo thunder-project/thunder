@@ -14,7 +14,7 @@ install:
   # Install Spark
   - wget http://d3kbcqa49mib13.cloudfront.net/spark-1.1.0-bin-hadoop1.tgz
   - tar -xzf spark-1.1.0-bin-hadoop1.tgz
-  - sudo apt-get install -qq build-dep python-numpy python-scipy python-sklearn
+  - sudo apt-get build-dep -qq python-numpy python-scipy python-sklearn
   - pip install -r python/requirements.txt
   # workaround for upgrading scipy version
   # http://stackoverflow.com/questions/19826271/error-using-convexhull-from-scipy
