@@ -1,10 +1,11 @@
+from thunder.extraction.extraction import SourceExtractionMethod
 from thunder.rdds.series import Series
 from thunder.rdds.images import Images
 
 from numpy import asarray
 
 
-class FeatureMethod(object):
+class FeatureMethod(SourceExtractionMethod):
     """
     Extract sources from spatiotemporal data using featue detection methods.
 

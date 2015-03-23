@@ -1,5 +1,3 @@
-from numpy import asarray, size
-
 from thunder.extraction.block.base import BlockMerger
 from thunder.extraction.source import SourceModel
 

@@ -3,7 +3,7 @@ Utilities for generating example datasets
 """
 
 from numpy import array, asarray, random, shape, floor, dot, linspace, \
-    sin, sign, c_, ceil, inf, clip, zeros
+    sin, sign, c_, ceil, inf, clip, zeros, max, size
 
 from thunder.rdds.matrices import RowMatrix
 from thunder.rdds.series import Series
@@ -85,24 +85,35 @@ class ICAData(DataSets):
 
 class SourcesData(DataSets):
 
-    def generate(self, w=100, h=100, n=5, t=100, margin=35, sd=3, noise=0.1, npartitions=1, seed=None):
+    def generate(self, dims=(100, 200), centers=5, t=100, margin=35, sd=3, noise=0.1, npartitions=1, seed=None):
 
         from scipy.ndimage.filters import gaussian_filter
         from thunder.rdds.fileio.imagesloader import ImagesLoader
 
         random.seed(seed)
+
+        if len(dims) != 2:
+            raise Exception("Can only generate for two-dimensional sources.")
+
+        if size(centers) == 1:
+            n = centers
+            xcenters = (dims[1] - margin) * random.random_sample(n) + margin/2
+            ycenters = (dims[0] - margin) * random.random_sample(n) + margin/2
+            centers = zip(xcenters, ycenters)
+        else:
+            centers = asarray(centers)
+            n = len(centers)
+
         ts = [clip(random.randn(t), 0, inf) for i in range(0, n)]
-        xcenters = (w - margin) * random.random_sample(n) + margin/2
-        ycenters = (h - margin) * random.random_sample(n) + margin/2
-        centers = zip(xcenters, ycenters)
         allframes = []
         for tt in range(0, t):
-            frame = zeros((h, w))
+            frame = zeros(dims)
             for nn in range(0, n):
-                base = zeros((h, w))
+                base = zeros(dims)
                 base[centers[nn][1], centers[nn][0]] = 1
                 img = gaussian_filter(base, sd)
-                frame += img * ts[nn][tt] + random.randn(h, w) * noise
+                img = img/max(img)
+                frame += img * ts[nn][tt] + random.randn(dims[0], dims[1]) * noise
             allframes.append(frame)
 
         data = ImagesLoader(self.sc).fromArrays(allframes, npartitions).astype('float')

@@ -74,6 +74,9 @@ class BlockMethod(SourceExtractionMethod):
 
         result = blocks.rdd.mapValues(algorithm.extract).collect()
 
+        if len(result) < 1:
+            raise Exception("No sources found, try changing parameters?")
+
         keys = map(lambda x: x[0], result)
         sources = map(lambda x: x[1], result)
 

@@ -108,7 +108,10 @@ class Source(Serializable, object):
         """
         Distance between the center of this source and another.
         """
-        return sqrt(sum((self.center - other.center) ** 2))
+        if isinstance(other, Source):
+            return sqrt(sum((self.center - other.center) ** 2))
+        elif isinstance(other, list) or isinstance(other, ndarray):
+            return sqrt(sum((self.center - asarray(other)) ** 2))
 
     def tolist(self):
         """
