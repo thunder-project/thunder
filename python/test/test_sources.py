@@ -1,5 +1,6 @@
 from numpy import meshgrid, ndarray, array_equal, array, sqrt
 from test_utils import LocalTestCase
+from nose.tools import nottest
 
 from thunder.extraction.source import Source
 
@@ -46,6 +47,7 @@ class TestSourceProperties(LocalTestCase):
         s = Source([[10, 10], [10, 20]], values=[1.0, 2.0])
         assert(s.area == 2.0)
 
+    @nottest
     def test_polygon(self):
         """
         (SourceProperties) polygon
