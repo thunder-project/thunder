@@ -897,7 +897,7 @@ class Series(Data):
 
     def _makeMasks(self, index=None, level=0):
         """
-        Internal function for generating masks for selecting values based on multi-index values
+        Internal function for generating masks for selecting values based on multi-index values.
     
         As all other multi-index functions will call this function, basic type-checking is also
         performed at this stage.
@@ -952,7 +952,7 @@ class Series(Data):
 
     def selectByIndex(self, val, level=0, squeeze=False, filter=False):
         """
-        Select or filter elements of the Series by index values (across levels, if multi-index)
+        Select or filter elements of the Series by index values (across levels, if multi-index).
 
         The index is a property of a Series object that assigns a value to each position within
         the arrays stored in the records of the Series. This function returns a new Series where,
