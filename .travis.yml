@@ -26,7 +26,7 @@ before_install:
 
 install:
   # Setup miniconda
-  - conda create --yes -q -n test-environment python=$TRAVIS_PYTHON_VERSION --file requirements.txt
+  - conda create --yes -q -n test-environment python=$TRAVIS_PYTHON_VERSION argparse numpy scipy scikit-learn scikit-image matplotlib nose rednose zope.cachedescriptors
   - source activate test-environment
   # Install Spark
   - wget http://d3kbcqa49mib13.cloudfront.net/spark-1.1.0-bin-hadoop1.tgz
