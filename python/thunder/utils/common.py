@@ -25,13 +25,14 @@ def isRdd(data):
 
 
 def checkParams(param, opts):
-    """ Check whether param is contained in opts (including lowercase), otherwise error"""
+    """ Check whether param is contained in opts (including lowercase), otherwise error """
     if not param.lower() in opts:
         raise ValueError("Option must be one of %s, got %s" % (str(opts)[1:-1], param))
 
 
 def selectByMatchingPrefix(param, opts):
-    """Given a string parameter and a sequence of possible options, returns an option that is uniquely
+    """
+    Given a string parameter and a sequence of possible options, returns an option that is uniquely
     specified by matching its prefix to the passed parameter.
 
     The match is checked without sensitivity to case.
@@ -53,7 +54,8 @@ def selectByMatchingPrefix(param, opts):
 
 
 def smallestFloatType(dtype):
-    """Returns the smallest floating point dtype to which the passed dtype can be safely cast.
+    """
+    Returns the smallest floating point dtype to which the passed dtype can be safely cast.
 
     For integers and unsigned ints, this will generally be next floating point type larger than the integer type. So
     for instance, smallest_float_type('uint8') -> dtype('float16'), smallest_float_type('int16') -> dtype('float32'),
@@ -149,7 +151,8 @@ def pil_to_array(pilImage):
 
 
 def parseMemoryString(memStr):
-    """Returns the size in bytes of memory represented by a Java-style 'memory string'
+    """
+    Returns the size in bytes of memory represented by a Java-style 'memory string'
 
     parseMemoryString("150k") -> 150000
     parseMemoryString("2M") -> 2000000
@@ -177,16 +180,83 @@ def parseMemoryString(memStr):
         return int(memStr)
 
 
-def raiseErrorIfPathExists(path):
-    """Raises a ValueError if the passed path string is found to already exist.
+def handleFormat(filename, format):
+    """
+    Given a string with filename, either:
 
+    (1) obtain format from the filename's extension or
+    (2) use the specified format to append an extension to filename
+
+    Returns the path to the file, the filename, and the inferred format
+    """
+    import os
+    from thunder.utils.context import DEFAULT_EXTENSIONS
+
+    file = os.path.basename(filename)
+    path = os.path.dirname(filename)
+    parts = os.path.splitext(file)
+    ext = parts[1][1:]
+
+    if format is None:
+        if len(ext) == 0:
+            raise Exception("Cannot infer file type from name %s" % filename)
+        else:
+            format = ext
+    else:
+        if len(ext) == 0:
+            file += "." + DEFAULT_EXTENSIONS[format]
+
+    return path, file, format
+
+
+def raiseErrorIfPathExists(path, awsCredentialsOverride=None):
+    """
     The ValueError message will suggest calling with overwrite=True; this function is expected to be
     called from the various output methods that accept an 'overwrite' keyword argument.
     """
     # check that specified output path does not already exist
     from thunder.rdds.fileio.readers import getFileReaderForPath
-    reader = getFileReaderForPath(path)()
+    reader = getFileReaderForPath(path)(awsCredentialsOverride=awsCredentialsOverride)
     existing = reader.list(path, includeDirectories=True)
     if existing:
         raise ValueError("Path %s appears to already exist. Specify a new directory, or call " % path +
                          "with overwrite=True to overwrite.")
+
+
+class AWSCredentials(object):
+    __slots__ = ('awsAccessKeyId', 'awsSecretAccessKey')
+
+    def __init__(self, awsAccessKeyId=None, awsSecretAccessKey=None):
+        self.awsAccessKeyId = awsAccessKeyId if awsAccessKeyId else None
+        self.awsSecretAccessKey = awsSecretAccessKey if awsSecretAccessKey else None
+
+    def __repr__(self):
+        def obfuscate(s):
+            return "None" if s is None else "<%d-char string>" % len(s)
+        return "AWSCredentials(accessKeyId: %s, secretAccessKey: %s)" % \
+               (obfuscate(self.awsAccessKeyId), obfuscate(self.awsSecretAccessKey))
+
+    def setOnContext(self, sparkContext):
+        sparkContext._jsc.hadoopConfiguration().set("fs.s3n.awsAccessKeyId", self.awsAccessKeyId)
+        sparkContext._jsc.hadoopConfiguration().set("fs.s3n.awsSecretAccessKey", self.awsSecretAccessKey)
+
+    @classmethod
+    def fromContext(cls, sparkContext):
+        if sparkContext:
+            awsAccessKeyId = sparkContext._jsc.hadoopConfiguration().get("fs.s3n.awsAccessKeyId", "")
+            awsSecretAccessKey = sparkContext._jsc.hadoopConfiguration().get("fs.s3n.awsSecretAccessKey", "")
+            return AWSCredentials(awsAccessKeyId, awsSecretAccessKey)
+        else:
+            return AWSCredentials()
+
+    @property
+    def credentials(self):
+        if self.awsAccessKeyId and self.awsSecretAccessKey:
+            return self.awsAccessKeyId, self.awsSecretAccessKey
+        else:
+            return None, None
+
+    @property
+    def credentialsAsDict(self):
+        access, secret = self.credentials
+        return {"aws_access_key_id": access, "aws_secret_access_key": secret}

@@ -1,9 +1,11 @@
 """Provides ImagesLoader object and helpers, used to read Images data from disk or other filesystems.
 """
-from matplotlib.pyplot import imread
 from io import BytesIO
-from numpy import array, dstack, frombuffer, ndarray, prod
-from thunder.rdds.fileio.readers import getParallelReaderForPath
+import json
+from matplotlib.pyplot import imread
+from numpy import array, dstack, frombuffer, ndarray, prod, transpose
+
+from thunder.rdds.fileio.readers import getParallelReaderForPath, getFileReaderForPath, FileNotFoundError
 from thunder.rdds.images import Images
 
 
@@ -18,7 +20,9 @@ class ImagesLoader(object):
         sparkcontext: SparkContext
             The pyspark SparkContext object used by the current Thunder environment.
         """
+        from thunder.utils.common import AWSCredentials
         self.sc = sparkContext
+        self.awsCredentialsOverride = AWSCredentials.fromContext(sparkContext)
 
     def fromArrays(self, arrays, npartitions=None):
         """Load Images data from passed sequence of numpy arrays.
@@ -47,8 +51,8 @@ class ImagesLoader(object):
         return Images(self.sc.parallelize(enumerate(arrays), npartitions),
                       dims=shape, dtype=str(dtype), nrecords=narrays)
 
-    def fromStack(self, dataPath, dims, dtype='int16', ext='stack', startIdx=None, stopIdx=None, recursive=False,
-                  nplanes=None, npartitions=None):
+    def fromStack(self, dataPath, dims=None, dtype=None, ext='stack', startIdx=None, stopIdx=None, recursive=False,
+                  nplanes=None, npartitions=None, confFilename='conf.json'):
         """Load an Images object stored in a directory of flat binary files
 
         The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
@@ -90,8 +94,23 @@ class ImagesLoader(object):
             If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
             partition per image file.
         """
+        reader = getFileReaderForPath(dataPath)(awsCredentialsOverride=self.awsCredentialsOverride)
+        try:
+            jsonBuf = reader.read(dataPath, filename=confFilename)
+            params = json.loads(jsonBuf)
+        except FileNotFoundError:
+            params = {}
+
+        if 'dtype' in params.keys():
+            dtype = params['dtype']
+        if 'dims' in params.keys():
+            dims = params['dims']
+
         if not dims:
-            raise ValueError("Image dimensions must be specified if loading from binary stack data")
+            raise ValueError("Image dimensions must be specified either as argument or in a conf.json file")
+
+        if not dtype:
+            dtype = 'int16'
 
         if nplanes is not None:
             if nplanes <= 0:
@@ -124,7 +143,7 @@ class ImagesLoader(object):
                 slices = [slice(None)] * (ary.ndim - 1) + [slice(lastPlane, ary.shape[-1])]
                 yield idx*npoints + timepoint, ary[slices]
 
-        reader = getParallelReaderForPath(dataPath)(self.sc)
+        reader = getParallelReaderForPath(dataPath)(self.sc, awsCredentialsOverride=self.awsCredentialsOverride)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                 npartitions=npartitions)
         nrecords = reader.lastNRecs if nplanes is None else None
@@ -199,40 +218,61 @@ class ImagesLoader(object):
 
         def multitifReader(idxAndBuf):
             idx, buf = idxAndBuf
+            pageCount = -1
+            values = []
             fbuf = BytesIO(buf)
             multipage = Image.open(fbuf)
-            pageIdx = 0
-            imgArys = []
-            npagesLeft = -1 if nplanes is None else nplanes  # counts number of planes remaining in image if positive
-            values = []
-            while True:
-                try:
-                    multipage.seek(pageIdx)
-                    imgArys.append(conversionFcn(multipage))
-                    pageIdx += 1
-                    npagesLeft -= 1
-                    if npagesLeft == 0:
-                        # we have just finished an image from this file
-                        retAry = dstack(imgArys) if len(imgArys) > 1 else imgArys[0]
-                        values.append(retAry)
-                        # reset counters:
-                        npagesLeft = nplanes
-                        imgArys = []
-                except EOFError:
-                    # past last page in tif
-                    break
-            if imgArys:
-                retAry = dstack(imgArys) if len(imgArys) > 1 else imgArys[0]
-                values.append(retAry)
+            if multipage.mode.startswith('I') and 'S' in multipage.mode:
+                # signed integer tiff file; use tifffile module to read
+                import thunder.rdds.fileio.tifffile as tifffile
+                fbuf.seek(0)  # reset pointer after read done by PIL
+                tfh = tifffile.TiffFile(fbuf)
+                ary = tfh.asarray()  # ary comes back with pages as first dimension, will need to transpose
+                pageCount = ary.shape[0]  
+                if nplanes is not None:
+                    values = [ary[i:(i+nplanes)] for i in xrange(0, ary.shape[0], nplanes)]
+                else:
+                    values = [ary]
+                tfh.close()
+                # transpose Z dimension if any, leave X and Y in same order
+                if ary.ndim == 3:
+                    values = [val.transpose((1, 2, 0)) for val in values]
+                    # squeeze out last dimension if singleton
+                    values = [val.squeeze(-1) if val.shape[-1] == 1 else val for val in values]
+            else:
+                # normal case; use PIL/Pillow for anything but signed ints
+                pageIdx = 0
+                imgArys = []
+                npagesLeft = -1 if nplanes is None else nplanes  # counts number of planes remaining in image if positive
+                while True:
+                    try:
+                        multipage.seek(pageIdx)
+                        imgArys.append(conversionFcn(multipage))
+                        pageIdx += 1
+                        npagesLeft -= 1
+                        if npagesLeft == 0:
+                            # we have just finished an image from this file
+                            retAry = dstack(imgArys) if len(imgArys) > 1 else imgArys[0]
+                            values.append(retAry)
+                            # reset counters:
+                            npagesLeft = nplanes
+                            imgArys = []
+                    except EOFError:
+                        # past last page in tif
+                        break
+                pageCount = pageIdx
+                if imgArys:
+                    retAry = dstack(imgArys) if len(imgArys) > 1 else imgArys[0]
+                    values.append(retAry)
             # check for inappropriate nplanes that doesn't evenly divide num pages
-            if nplanes and (pageIdx % nplanes):
+            if nplanes and (pageCount % nplanes):
                 raise ValueError("nplanes '%d' does not evenly divide page count of multipage tif '%d'" %
-                                 (nplanes, pageIdx))
+                                 (nplanes, pageCount))
             nvals = len(values)
             keys = [idx*nvals + timepoint for timepoint in xrange(nvals)]
             return zip(keys, values)
 
-        reader = getParallelReaderForPath(dataPath)(self.sc)
+        reader = getParallelReaderForPath(dataPath)(self.sc, awsCredentialsOverride=self.awsCredentialsOverride)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                 npartitions=npartitions)
         nrecords = reader.lastNRecs if nplanes is None else None
@@ -271,7 +311,7 @@ class ImagesLoader(object):
             fbuf = BytesIO(buf)
             return imread(fbuf, format='png')
 
-        reader = getParallelReaderForPath(dataPath)(self.sc)
+        reader = getParallelReaderForPath(dataPath)(self.sc, awsCredentialsOverride=self.awsCredentialsOverride)
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                 npartitions=npartitions)
         return Images(readerRdd.mapValues(readPngFromBuf), nrecords=reader.lastNRecs)

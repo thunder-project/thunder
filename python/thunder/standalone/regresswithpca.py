@@ -3,7 +3,7 @@ Example standalone app for mass-unvariate regression combined with PCA
 """
 
 import optparse
-from thunder import ThunderContext, RegressionModel, PCA, export
+from thunder import ThunderContext, RegressionModel, PCA
 
 
 if __name__ == "__main__":
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     traj = model.fit(data, pca.comps)  # get trajectories
 
     outputdir += "-regress"
-    export(pca.comps, outputdir, "comps", "matlab")
-    export(pca.latent, outputdir, "latent", "matlab")
-    export(pca.scores, outputdir, "scores", "matlab")
-    export(traj, outputdir, "traj", "matlab")
+    tsc.export(pca.comps, outputdir, "comps", "matlab")
+    tsc.export(pca.latent, outputdir, "latent", "matlab")
+    tsc.export(pca.scores, outputdir, "scores", "matlab")
+    tsc.export(traj, outputdir, "traj", "matlab")

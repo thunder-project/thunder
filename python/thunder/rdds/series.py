@@ -1,6 +1,6 @@
-from numpy import ndarray, array, sum, mean, median, std, size, arange, \
-    percentile, asarray, maximum, zeros, corrcoef, where, \
-    true_divide, ceil, unique, array_equal, concatenate, squeeze, delete, ravel, logical_not
+from numpy import ndarray, array, sum, mean, median, std, size, arange, percentile,\
+    asarray, maximum, minimum, zeros, corrcoef, where, true_divide, ceil,\
+    unique, array_equal, concatenate, squeeze, delete, ravel, logical_not
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
@@ -96,7 +96,8 @@ class Series(Data):
         return super(Series, self).dtype
 
     def populateParamsFromFirstRecord(self):
-        """Calls first() on the underlying rdd, using the returned record to determine appropriate attribute settings
+        """
+        Calls first() on the underlying rdd, using the returned record to determine appropriate attribute settings
         for this object (for instance, setting self.dtype to match the dtype of the underlying rdd records).
 
         Returns the result of calling self.rdd.first().
@@ -129,6 +130,7 @@ class Series(Data):
                 raise Exception('Values must be 1d arrays')
 
     def _resetCounts(self):
+        self._nrecords = None
         self._dims = None
         return self
 
@@ -163,7 +165,6 @@ class Series(Data):
             Criterion function to apply to indices, specific index value,
             or list of indices
         """
-
         import types
 
         # handle lists, strings, and ints
@@ -211,7 +212,8 @@ class Series(Data):
         return self._constructor(rdd, index=newIndex).__finalize__(self)
 
     def center(self, axis=0):
-        """ Center series data by subtracting the mean
+        """
+        Center series data by subtracting the mean
         either within or across records
 
         Parameters
@@ -220,15 +222,16 @@ class Series(Data):
             Which axis to center along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.applyValues(lambda x: x - mean(x))
+            return self.applyValues(lambda x: x - mean(x), keepIndex=True)
         elif axis == 1:
             meanVec = self.mean()
-            return self.applyValues(lambda x: x - meanVec)
+            return self.applyValues(lambda x: x - meanVec, keepIndex=True)
         else:
             raise Exception('Axis must be 0 or 1')
 
     def standardize(self, axis=0):
-        """ Standardize series data by dividing by the standard deviation
+        """
+        Standardize series data by dividing by the standard deviation
         either within or across records
 
         Parameters
@@ -237,15 +240,16 @@ class Series(Data):
             Which axis to standardize along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.applyValues(lambda x: x / std(x))
+            return self.applyValues(lambda x: x / std(x), keepIndex=True)
         elif axis == 1:
             stdvec = self.stdev()
-            return self.applyValues(lambda x: x / stdvec)
+            return self.applyValues(lambda x: x / stdvec, keepIndex=True)
         else:
             raise Exception('Axis must be 0 or 1')
 
     def zscore(self, axis=0):
-        """ Zscore series data by subtracting the mean and
+        """
+        Zscore series data by subtracting the mean and
         dividing by the standard deviation either
         within or across records
 
@@ -255,12 +259,12 @@ class Series(Data):
             Which axis to zscore along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.applyValues(lambda x: (x - mean(x)) / std(x))
+            return self.applyValues(lambda x: (x - mean(x)) / std(x), keepIndex=True)
         elif axis == 1:
             stats = self.stats()
             meanVec = stats.mean()
             stdVec = stats.stdev()
-            return self.applyValues(lambda x: (x - meanVec) / stdVec)
+            return self.applyValues(lambda x: (x - meanVec) / stdVec, keepIndex=True)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -323,11 +327,13 @@ class Series(Data):
         return self.seriesStat('median')
 
     def seriesPercentile(self, q):
-        """ Compute the value percentile of each record in a Series.
+        """
+        Compute the value percentile of each record in a Series.
         
         Parameters
-
-          q: a floating point number between 0 and 100 inclusive.
+        ----------
+        q : scalar
+            Floating point number between 0 and 100 inclusive, specifying percentile.
         """
         rdd = self.rdd.mapValues(lambda x: percentile(x, q))
         return self._constructor(rdd, index=q).__finalize__(self, noPropagate=('_dtype',))
@@ -337,7 +343,8 @@ class Series(Data):
         return self.seriesStat('stdev')
 
     def seriesStat(self, stat):
-        """ Compute a simple statistic for each record in a Series
+        """
+        Compute a simple statistic for each record in a Series
 
         Parameters
         ----------
@@ -359,7 +366,7 @@ class Series(Data):
 
     def seriesStats(self):
         """
-        Compute a collection of statistics for each record in a Series
+        Compute many statistics for each record in a Series
         """
         rdd = self.rdd.mapValues(lambda x: array([x.size, mean(x), std(x), max(x), min(x)]))
         return self._constructor(rdd, index=['count', 'mean', 'std', 'max', 'min'])\
@@ -367,7 +374,7 @@ class Series(Data):
 
     def maxProject(self, axis=0):
         """
-        Project along one of the keys
+        Project over one of the keys by taking a maximum
         """
         import copy
         dims = copy.copy(self.dims)
@@ -393,7 +400,6 @@ class Series(Data):
         """
         from thunder.rdds.keys import _subToIndConverter
 
-        # converter = _subtoind_converter(self.dims.max, order=order, onebased=onebased)
         converter = _subToIndConverter(self.dims.count, order=order, isOneBased=isOneBased)
         rdd = self.rdd.map(lambda (k, v): (converter(k), v))
         return self._constructor(rdd, index=self._index).__finalize__(self)
@@ -461,7 +467,6 @@ class Series(Data):
             and will pack into an array with shape (4, 64, 128). If transpose is true, the spatial dimensions
             will be reversed, so that in this example the shape of the returned array will be (4, 128, 64).
         """
-
         if selection:
             out = self.select(selection)
         else:
@@ -470,12 +475,12 @@ class Series(Data):
         if not (dtype is None):
             out = out.astype(dtype, casting)
 
-        result = out.rdd.map(lambda (_, v): v).collect()
-        nout = size(result[0])
-
         if sorting is True:
-            keys = out.subToInd().rdd.map(lambda (k, _): int(k)).collect()
-            result = array([v for (k, v) in sorted(zip(keys, result), key=lambda (k, v): k)])
+            result = out.sortByKey().values().collect()
+        else:
+            result = out.rdd.values().collect()
+
+        nout = size(result[0])
 
         # reshape into a dense array of shape (b, x, y, z)  or (b, x, y) or (b, x)
         # where b is the number of outputs per record
@@ -493,8 +498,8 @@ class Series(Data):
         return out.squeeze()
 
     def subset(self, nsamples=100, thresh=None, stat='std'):
-        """Extract random subset of records from a Series,
-        filtering on the standard deviation
+        """
+        Extract random subset of records, filtering on a summary statistic.
 
         Parameters
         ----------
@@ -502,7 +507,7 @@ class Series(Data):
             The number of data points to sample
 
         thresh : float, optional, default = None
-            A threshold on standard deviation to use when picking points
+            A threshold on statistic to use when picking points
 
         stat : str, optional, default = 'std'
             Statistic to use for thresholding
@@ -513,19 +518,18 @@ class Series(Data):
             A local numpy array with the subset of points
         """
         from numpy.linalg import norm
-        from numpy.random import randint
 
-        statDict = {'std': std, 'norm': norm}
-        seed = randint(0, 2 ** 32 - 1)
+        statDict = {'mean': mean, 'std': std, 'max': maximum, 'min': minimum, 'norm': norm}
 
         if thresh is not None:
             func = statDict[stat]
-            result = array(self.rdd.values().filter(lambda x: func(x) > thresh).takeSample(False, nsamples, seed=seed))
+            result = array(self.rdd.values().filter(lambda x: func(x) > thresh).takeSample(False, nsamples))
         else:
-            result = array(self.rdd.values().takeSample(False, nsamples, seed=seed))
+            result = array(self.rdd.values().takeSample(False, nsamples))
 
         if size(result) == 0:
-            raise Exception('No records found, maybe threshold of %g is too high, try changing it?' % thresh)
+            raise Exception('No records found, maybe threshold on %s of %g is too high, try changing it?'
+                            % (stat, thresh))
 
         return result
 
@@ -559,7 +563,6 @@ class Series(Data):
         values : array, shape (n, d) where d is the number of keys
             Averaged keys
         """
-
         if isinstance(inds, str):
             inds = loadMatVar(inds, var)[0]
         else:
@@ -585,7 +588,8 @@ class Series(Data):
         return keys, values
 
     def __maskToKeys(self, mask, returnNested=False):
-        """Helper method to validate and convert a binary mask to a set of keys for use in
+        """
+        Helper method to validate and convert a binary mask to a set of keys for use in
         mean of/by region(s).
 
         If returnNested is true, will return a sequence of sequences of keys, suitable for use
@@ -637,33 +641,34 @@ class Series(Data):
                 return keys
 
     def meanOfRegion(self, selection, validate=False):
-        """Takes the mean of Series values within a single region specified by the passed mask or keys.
+        """
+        Takes the mean of Series values within a single region specified by the passed mask or keys.
 
-        The region for which to take the mean may be specified either by a mask array, or directly by
+        The region, defined as a group of keys, may be specified either by a mask array, or directly by
         Series keys. If an ndarray is passed as `selection`, then the mean will be taken across all series
         records corresponding to nonzero elements of the passed mask. (The passed ndarray must have the
         same shape as series.dims.count, otherwise a ValueError will be thrown.)
 
-        If a sequence of series record keys is passed, the the mean will be taken across all records
+        If a sequence of record keys is passed, the the mean will be taken across all records
         with keys matching one of those in the passed selection sequence.
-
-        `validate` controls checking whether all requested records were included in the calculated mean. If True,
-        ValueError will be thrown if the number of records included in the region mean is not equal
-        to the number of records specified for that region by the selection. If False, no such checking is performed.
 
         Parameters
         ----------
-        selection: sequence of Series record keys, or ndarray mask
+        selection : sequence of tuples, or ndarray mask
+            The region over which to compute a mean as specified by a set of keys, or a ndarray mask.
 
-        checkCountMismatch: string "none"|"warn"|"error", or unambiguous prefix ("n","w","e")
+        validate : boolean, default False
+            Whether to check that all requested records were included in the mean. If True,
+            ValueError will be thrown if the number included is not equal to the number specified.
 
         Returns
         -------
         tuple of (tuple(mean of keys), array(mean value)), or (None, None) if no matching records are found
         """
-
         if isinstance(selection, ndarray):
             selection = self.__maskToKeys(selection, returnNested=False)
+        else:
+            selection = map(lambda p: tuple(p), selection)
 
         bcRegionKeys = self.rdd.context.broadcast(frozenset(selection))
         n, keyMean, valMean = self.rdd.filter(lambda (k, v): k in bcRegionKeys.value) \
@@ -679,8 +684,9 @@ class Series(Data):
 
         return (keyMean, valMean) if n > 0 else (None, None)
 
-    def meanByRegion(self, nestedKeys, validate=False):
-        """Takes the mean of Series values within groupings specified by the passed keys.
+    def meanByRegions(self, nestedKeys, validate=False):
+        """
+        Takes the mean of Series values within groupings specified by the passed keys.
 
         Each sequence of keys passed specifies a "region" within which to calculate the mean. For instance,
         series.meanByRegion([[(1,0), (2,0)]) would return the mean of the records in series with keys (1,0) and (2,0).
@@ -699,15 +705,15 @@ class Series(Data):
         keys within the region, while record values will be the mean of values in the region. The `dims` attribute on
         the new Series will not be set; all other attributes will be as in the source Series object.
 
-        `validate` controls checking whether all requested records were included in the calculated mean. If True,
-        exceptions will be thrown on the workers if the number of records included in the region mean is not equal
-        to the number of records specified for that region by the selection. If False, no such checking is performed.
-
         Parameters
         ----------
-        nestedKeys: sequence of sequences of Series record keys, or ndarray mask.
+        nestedKeys: sequence of sequences of Series record keys, or ndarray mask
+            Specification of regions over which to compute means.
 
         validate: boolean, default False
+            Whether to check that all requested records were included in the mean. If True,
+            exceptions will be thrown on workers if the number of records per region
+            is not equal to the number specificed by the selection.
 
         Returns
         -------
@@ -753,11 +759,13 @@ class Series(Data):
                                     (tuple(keyMean.astype('int16')), valMean))
         return self._constructor(data).__finalize__(self, noPropagate=('_dims',))
 
-    def toBlocks(self, blockSizeSpec="150M"):
+    def toBlocks(self, size="150M"):
         """
+        Converts Series to Blocks
+
         Parameters
         ----------
-        blockSizeSpec: string memory size, tuple of integer splits per dimension, or instance of BlockingStrategy
+        size: string memory size, tuple of integer splits per dimension, or instance of BlockingStrategy
             A string spec will be interpreted as a memory size string (e.g. "64M"). The resulting blocks will be
             generated by a SeriesBlockingStrategy to be close to the requested size.
             A tuple of positive ints will be interpreted as "splits per dimension". Only certain patterns of splits
@@ -770,13 +778,13 @@ class Series(Data):
         Blocks instance
         """
         from thunder.rdds.imgblocks.strategy import BlockingStrategy, SeriesBlockingStrategy
-        if isinstance(blockSizeSpec, SeriesBlockingStrategy):
-            blockingStrategy = blockSizeSpec
-        elif isinstance(blockSizeSpec, basestring) or isinstance(blockSizeSpec, int):
-            blockingStrategy = SeriesBlockingStrategy.generateFromBlockSize(self, blockSizeSpec)
+        if isinstance(size, SeriesBlockingStrategy):
+            blockingStrategy = size
+        elif isinstance(size, basestring) or isinstance(size, int):
+            blockingStrategy = SeriesBlockingStrategy.generateFromBlockSize(self, size)
         else:
             # assume it is a tuple of positive int specifying splits
-            blockingStrategy = SeriesBlockingStrategy(blockSizeSpec)
+            blockingStrategy = SeriesBlockingStrategy(size)
 
         blockingStrategy.setSource(self)
         avgSize = blockingStrategy.calcAverageBlockSize()
@@ -794,8 +802,9 @@ class Series(Data):
         simpleBlocksRdd = groupedRdd.map(blockingStrategy.combiningFunction)
         return returnType(simpleBlocksRdd, dims=self.dims, nimages=len(self.index), dtype=self.dtype)
 
-    def saveAsBinarySeries(self, outputdirname, overwrite=False):
-        """Writes out Series-formatted data.
+    def saveAsBinarySeries(self, outputDirPath, overwrite=False):
+        """
+        Writes out Series-formatted data.
 
         This method (Series.saveAsBinarySeries) writes out binary series files using the current partitioning
         of this Series object. (That is, if mySeries.rdd.getNumPartitions() == 5, then 5 files will be written
@@ -810,7 +819,7 @@ class Series(Data):
 
         Parameters
         ----------
-        outputdirname : string path or URI to directory to be created
+        outputDirPath : string path or URI to directory to be created
             Output files will be written underneath outputdirname. This directory must not yet exist
             (unless overwrite is True), and must be no more than one level beneath an existing directory.
             It will be created as a result of this call.
@@ -824,15 +833,14 @@ class Series(Data):
         from thunder.rdds.imgblocks.blocks import SimpleBlocks
         from thunder.rdds.fileio.writers import getParallelWriterForPath
         from thunder.rdds.fileio.seriesloader import writeSeriesConfig
+        from thunder.utils.common import AWSCredentials
 
         if not overwrite:
-            from thunder.utils.common import raiseErrorIfPathExists
-            raiseErrorIfPathExists(outputdirname)
+            self._checkOverwrite(outputDirPath)
             overwrite = True  # prevent additional downstream checks for this path
 
         def partitionToBinarySeries(kvIter):
-            """Collects all Series records in a partition into a single binary series record.
-            """
+            """ Collects all Series records in a partition into a single binary series record. """
             keypacker = None
             firstKey = None
             buf = StringIO.StringIO()
@@ -852,7 +860,9 @@ class Series(Data):
                 label = SimpleBlocks.getBinarySeriesNameForKey(firstKey) + ".bin"
                 return iter([(label, val)])
 
-        writer = getParallelWriterForPath(outputdirname)(outputdirname, overwrite=overwrite)
+        awsCredentials = AWSCredentials.fromContext(self.rdd.ctx)
+        writer = getParallelWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite,
+                                                         awsCredentialsOverride=awsCredentials)
 
         binseriesrdd = self.rdd.mapPartitions(partitionToBinarySeries)
 
@@ -861,8 +871,8 @@ class Series(Data):
         # TODO: all we really need here are the number of keys and number of values, which could in principle
         # be cached in _nkeys and _nvals attributes, removing the need for this .first() call in most cases.
         firstKey, firstVal = self.first()
-        writeSeriesConfig(outputdirname, len(firstKey), len(firstVal), keyType='int16', valueType=self.dtype,
-                          overwrite=overwrite)
+        writeSeriesConfig(outputDirPath, len(firstKey), len(firstVal), keyType='int16', valueType=self.dtype,
+                          overwrite=overwrite, awsCredentialsOverride=awsCredentials)
 
     def toRowMatrix(self):
         """

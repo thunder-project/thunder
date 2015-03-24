@@ -1,7 +1,10 @@
 """ Simple wrapper for a Spark Context to provide loading functionality """
 
+import os
+
+from thunder.utils.common import checkParams, handleFormat, raiseErrorIfPathExists
 from thunder.utils.datasets import DataSets
-from thunder.utils.common import checkParams, raiseErrorIfPathExists
+from thunder.utils.params import Params
 
 
 class ThunderContext():
@@ -15,10 +18,16 @@ class ThunderContext():
     ----------
     `_sc` : SparkContext
         Spark context for Spark functionality
+
+    `_credentials` : AWSCredentials object, optional, default = None
+        Stores public and private keys for AWS services. Typically available through
+        configuration files, and but can optionally be set on the ThunderContext.
+        See setAWSCredentials().
     """
 
     def __init__(self, sparkcontext):
         self._sc = sparkcontext
+        self._credentials = None
 
     @classmethod
     def start(cls, *args, **kwargs):
@@ -85,8 +94,9 @@ class ThunderContext():
                                      keyType=keyType, valueType=valueType)
         return data
 
-    def loadImages(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
-                   startIdx=None, stopIdx=None, recursive=False, nplanes=None, npartitions=None):
+    def loadImages(self, dataPath, dims=None, dtype=None, inputFormat='stack', ext=None,
+                   startIdx=None, stopIdx=None, recursive=False, nplanes=None, npartitions=None,
+                   renumber=False, confFilename='conf.json'):
         """
         Loads an Images object from data stored as a binary image stack, tif, or png files.
 
@@ -149,11 +159,18 @@ class ThunderContext():
             first nplane planes of the first file being record 0, the second nplane planes being record 1, etc,
             until the first file is exhausted and record ordering continues with the first nplane planes of the
             second file, and so on. With nplanes=None (the default), a single file will be considered as
-            representing a single record.
+            representing a single record. Keys are calculated assuming that all input files contain the same
+            number of records; if the number of records per file is not the same across all files,
+            then `renumber` should be set to True to ensure consistent keys.
 
         npartitions: positive int, optional
             If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
             partition per image file.
+
+        renumber: boolean, optional, default False
+            If renumber evaluates to True, then the keys for each record will be explicitly recalculated after
+            all images are loaded. This should only be necessary at load time when different files contain
+            different number of records. See Images.renumber().
 
         Returns
         -------
@@ -170,8 +187,9 @@ class ThunderContext():
             ext = DEFAULT_EXTENSIONS.get(inputFormat.lower(), None)
 
         if inputFormat.lower() == 'stack':
-            data = loader.fromStack(dataPath, dims, dtype=dtype, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
-                                    recursive=recursive, nplanes=nplanes, npartitions=npartitions)
+            data = loader.fromStack(dataPath, dims=dims, dtype=dtype, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
+                                    recursive=recursive, nplanes=nplanes, npartitions=npartitions,
+                                    confFilename=confFilename)
         elif inputFormat.lower().startswith('tif'):
             data = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                   nplanes=nplanes, npartitions=npartitions)
@@ -181,11 +199,15 @@ class ThunderContext():
             data = loader.fromPng(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
                                   recursive=recursive, npartitions=npartitions)
 
-        return data
+        if not renumber:
+            return data
+        else:
+            return data.renumber()
 
     def loadImagesAsSeries(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
                            blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,
-                           shuffle=True, recursive=False, nplanes=None, npartitions=None):
+                           shuffle=True, recursive=False, nplanes=None, npartitions=None,
+                           renumber=False):
         """
         Load Images data as Series data.
 
@@ -263,11 +285,20 @@ class ThunderContext():
             first nplane planes of the first file being record 0, the second nplane planes being record 1, etc,
             until the first file is exhausted and record ordering continues with the first nplane planes of the
             second file, and so on. With nplanes=None (the default), a single file will be considered as
-            representing a single record. nplanes is only supported for shuffle=True (the default).
+            representing a single record. Keys are calculated assuming that all input files contain the same
+            number of records; if the number of records per file is not the same across all files,
+            then `renumber` should be set to True to ensure consistent keys. nplanes is only supported for
+            shuffle=True (the default).
 
         npartitions: positive int, optional
             If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
             partition per image file. Only applies when shuffle=True.
+
+        renumber: boolean, optional, default False
+            If renumber evaluates to True, then the keys for each record will be explicitly recalculated after
+            all images are loaded. This should only be necessary at load time when different files contain
+            different number of records. renumber is only supported for shuffle=True (the default). See
+            Images.renumber().
 
         Returns
         -------
@@ -296,7 +327,9 @@ class ThunderContext():
             else:
                 # tif / tif stack
                 images = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
-                                                 recursive=recursive, nplanes=nplanes, npartitions=npartitions)
+                                        recursive=recursive, nplanes=nplanes, npartitions=npartitions)
+            if renumber:
+                images = images.renumber()
             return images.toBlocks(blockSize, units=blockSizeUnits).toSeries()
 
         else:
@@ -305,6 +338,8 @@ class ThunderContext():
                 raise NotImplementedError("nplanes is not supported with shuffle=False")
             if npartitions is not None:
                 raise NotImplementedError("npartitions is not supported with shuffle=False")
+            if renumber:
+                raise NotImplementedError("renumber is not supported with shuffle=False")
 
             loader = SeriesLoader(self._sc)
             if inputFormat.lower() == 'stack':
@@ -317,7 +352,8 @@ class ThunderContext():
 
     def convertImagesToSeries(self, dataPath, outputDirPath, dims=None, inputFormat='stack', ext=None,
                               dtype='int16', blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,
-                              shuffle=False, overwrite=False, recursive=False, nplanes=None, npartitions=None):
+                              shuffle=True, overwrite=False, recursive=False, nplanes=None, npartitions=None,
+                              renumber=False):
         """
         Write out Images data as Series data, saved in a flat binary format.
 
@@ -414,11 +450,20 @@ class ThunderContext():
             first nplane planes of the first file being record 0, the second nplane planes being record 1, etc,
             until the first file is exhausted and record ordering continues with the first nplane planes of the
             second file, and so on. With nplanes=None (the default), a single file will be considered as
-            representing a single record. nplanes is only supported for shuffle=True (the default).
+            representing a single record. Keys are calculated assuming that all input files contain the same
+            number of records; if the number of records per file is not the same across all files,
+            then `renumber` should be set to True to ensure consistent keys. nplanes is only supported for
+            shuffle=True (the default).
 
         npartitions: positive int, optional
             If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
             partition per image file. Only applies when shuffle=True.
+
+        renumber: boolean, optional, default False
+            If renumber evaluates to True, then the keys for each record will be explicitly recalculated after
+            all images are loaded. This should only be necessary at load time when different files contain
+            different number of records. renumber is only supported for shuffle=True (the default). See
+            Images.renumber().
         """
         checkParams(inputFormat, ['stack', 'tif', 'tif-stack'])
 
@@ -427,7 +472,7 @@ class ThunderContext():
                              " ('stack' value for 'inputFormat' parameter)")
 
         if not overwrite:
-            raiseErrorIfPathExists(outputDirPath)
+            raiseErrorIfPathExists(outputDirPath, awsCredentialsOverride=self._credentials)
             overwrite = True  # prevent additional downstream checks for this path
 
         if not ext:
@@ -437,12 +482,14 @@ class ThunderContext():
             from thunder.rdds.fileio.imagesloader import ImagesLoader
             loader = ImagesLoader(self._sc)
             if inputFormat.lower() == 'stack':
-                images = loader.fromStack(dataPath, dims, dtype=dtype, startIdx=startIdx, stopIdx=stopIdx,
+                images = loader.fromStack(dataPath, dims, ext=ext, dtype=dtype, startIdx=startIdx, stopIdx=stopIdx,
                                           recursive=recursive, nplanes=nplanes, npartitions=npartitions)
             else:
                 # 'tif' or 'tif-stack'
-                images = loader.fromTif(dataPath, startIdx=startIdx, stopIdx=stopIdx,
+                images = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
                                         recursive=recursive, nplanes=nplanes, npartitions=npartitions)
+            if renumber:
+                images = images.renumber()
             images.toBlocks(blockSize, units=blockSizeUnits).saveAsBinarySeries(outputDirPath, overwrite=overwrite)
         else:
             from thunder.rdds.fileio.seriesloader import SeriesLoader
@@ -483,10 +530,14 @@ class ThunderContext():
 
         return DataSets.make(self._sc, dataset, **opts)
 
-    def loadExample(self, dataset):
+    def loadExample(self, dataset=None):
         """
         Load a local example data set for testing analyses.
 
+        Some of these data sets are extremely downsampled and should be considered
+        useful only for testing the API. If called with None,
+        will return list of available datasets.
+
         Parameters
         ----------
         dataset : str
@@ -494,32 +545,53 @@ class ThunderContext():
 
         Returns
         -------
-        data : RDD of (tuple, array) pairs
-            Generated dataset
+        data : Data object
+            Generated dataset as a Thunder data objects (e.g Series or Images)
         """
+        import atexit
+        import shutil
+        import tempfile
+        from pkg_resources import resource_listdir, resource_filename
 
-        import os
+        DATASETS = {
+            'iris': 'iris',
+            'fish-series': 'fish/bin',
+            'fish-images': 'fish/tif-stack'
+        }
 
-        path = os.path.dirname(os.path.realpath(__file__))
-        # this path might actually be inside an .egg file (appears to happen with Spark 1.2)
-        # check whether data/ directory actually exists on the filesystem, and if not, try
-        # a hardcoded path that should work on ec2 clusters launched via the thunder-ec2 script
-        if not os.path.isdir(os.path.join(path, 'data')):
-            path = "/root/thunder/python/thunder/utils"
+        if dataset is None:
+            return DATASETS.keys()
+
+        checkParams(dataset, DATASETS.keys())
+
+        if 'ec2' in self._sc.master:
+            tmpdir = os.path.join('/root/thunder/python/thunder/utils', 'data', DATASETS[dataset])
+        else:
+            tmpdir = tempfile.mkdtemp()
+            atexit.register(shutil.rmtree, tmpdir)
+
+            def copyLocal(target):
+                files = resource_listdir('thunder.utils.data', target)
+                for f in files:
+                    path = resource_filename('thunder.utils.data', os.path.join(target, f))
+                    shutil.copy(path, tmpdir)
+
+            copyLocal(DATASETS[dataset])
 
         if dataset == "iris":
-            return self.loadSeries(os.path.join(path, 'data/iris/iris.bin'))
+            return self.loadSeries(tmpdir)
         elif dataset == "fish-series":
-            return self.loadSeries(os.path.join(path, 'data/fish/bin/')).astype('float')
+            return self.loadSeries(tmpdir).astype('float')
         elif dataset == "fish-images":
-            return self.loadImages(os.path.join(path, 'data/fish/tif-stack'), inputFormat="tif")
-        else:
-            raise NotImplementedError("Dataset '%s' not known; should be one of 'iris', 'fish-series', 'fish-images'"
-                                      % dataset)
+            return self.loadImages(tmpdir, inputFormat="tif")
 
-    def loadExampleEC2(self, dataset):
+    def loadExampleS3(self, dataset=None):
         """
-        Load an example data set from EC2.
+        Load an example data set from S3.
+
+        Info on the included datasets can be found at the CodeNeuro data repository
+        (http://datasets.codeneuro.org/). If called with None, will return
+        list of available datasets.
 
         Parameters
         ----------
@@ -528,28 +600,63 @@ class ThunderContext():
 
         Returns
         -------
-        data : RDD of (tuple, array) pairs
-            Generated dataset
+        data : a Data object (usually a Series or Images)
+            The dataset as one of Thunder's data objects
 
-        params : Tuple or numpy array
+        params : dict
             Parameters or metadata for dataset
         """
+        DATASETS = {
+            'ahrens.lab/direction.selectivity': 'ahrens.lab/direction.selectivity/1/',
+            'ahrens.lab/optomotor.response': 'ahrens.lab/optomotor.response/1/',
+            'svoboda.lab/tactile.navigation': 'svoboda.lab/tactile.navigation/1/'
+        }
 
+        if 'local' in self._sc.master:
+            raise Exception("Must be running on an EC2 cluster to load this example data set")
+
+        if dataset is None:
+            return DATASETS.keys()
+
+        checkParams(dataset, DATASETS.keys())
+
+        basePath = 's3n://neuro.datasets/'
+        dataPath = DATASETS[dataset]
+
+        data = self.loadSeries(basePath + dataPath + 'series')
+        params = self.loadParams(basePath + dataPath + 'params/covariates.json')
+
+        return data, params
+
+    def loadParams(self, path):
+        """
+        Load a file with parameters from a local file system or S3.
+
+        Assumes file is JSON with basic types (strings, integers, doubles, lists),
+        in either a single dict or list of dict-likes, and each dict has at least
+        a "name" field and a "value" field.
+
+        Useful for loading generic meta data, parameters, covariates, etc.
+
+        Parameters
+        ----------
+        path : str
+            Path to file, can be on a local file system or an S3 bucket
+
+        Returns
+        -------
+        A dict or list with the parameters
+        """
         import json
-        from numpy import asarray
+        from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError
 
-        if 'ec' not in self._sc.master:
-            raise Exception("must be running on EC2 to load this example data sets")
-        elif dataset == "zebrafish-optomotor-response":
-            path = 'zebrafish.datasets/optomotor-response/1/'
-            data = self.loadSeries("s3n://" + path + 'data/dat_plane*.txt', inputFormat='text', minPartitions=1000,
-                                   nkeys=3)
-            paramFile = self._sc.textFile("s3n://" + path + "params.json")
-            params = json.loads(paramFile.first())
-            modelFile = asarray(params['trials'])
-            return data, modelFile
-        else:
-            raise NotImplementedError("dataset '%s' not availiable" % dataset)
+        reader = getFileReaderForPath(path)(awsCredentialsOverride=self._credentials)
+        try:
+            buffer = reader.read(path)
+        except FileNotFoundError:
+            raise Exception("Cannot find file %s" % path)
+
+        return Params(json.loads(buffer))
 
     def loadSeriesLocal(self, dataFilePath, inputFormat='npy', minPartitions=None, keyFilePath=None, varName=None):
         """
@@ -575,7 +682,6 @@ class ThunderContext():
         minPartitions : Int, optional, default = 1
             Number of partitions for RDD
         """
-
         checkParams(inputFormat, ['mat', 'npy'])
 
         from thunder.rdds.fileio.seriesloader import SeriesLoader
@@ -590,9 +696,87 @@ class ThunderContext():
 
         return data
 
+    def export(self, data, filename, format=None, overwrite=False, varname=None):
+        """
+        Export local array data to a variety of formats.
+
+        Can write to a local file sytem or S3 (destination inferred from filename schema).
+        S3 writing useful for persisting arrays when working in an environment without
+        accessible local storage.
+
+        Parameters
+        ----------
+        data : array-like
+            The data to export
+
+        filename : str
+            Output location (path/to/file.ext)
+
+        format : str, optional, default = None
+            Ouput format ("npy", "mat", or "txt"), if not provided will
+            try to infer from file extension.
+
+        overwrite : boolean, optional, default = False
+            Whether to overwrite if directory or file already exists
+
+        varname : str, optional, default = None
+            Variable name for writing "mat" formatted files
+        """
+        from numpy import save, savetxt
+        from scipy.io import savemat
+        from StringIO import StringIO
+
+        from thunder.rdds.fileio.writers import getFileWriterForPath
+
+        path, file, format = handleFormat(filename, format)
+        checkParams(format, ["npy", "mat", "txt"])
+        clazz = getFileWriterForPath(filename)
+        writer = clazz(path, file, overwrite=overwrite, awsCredentialsOverride=self._credentials)
+
+        stream = StringIO()
+
+        if format == "mat":
+            varname = os.path.splitext(file)[0] if varname is None else varname
+            savemat(stream, mdict={varname: data}, oned_as='column', do_compression='true')
+        if format == "npy":
+            save(stream, data)
+        if format == "txt":
+            savetxt(stream, data)
+
+        stream.seek(0)
+        writer.writeFile(stream.buf)
+
+    def setAWSCredentials(self, awsAccessKeyId, awsSecretAccessKey):
+        """
+        Manually set AWS access credentials to be used by Thunder.
+
+        This method is provided primarily for hosted environments that do not provide
+        filesystem access (e.g. Databricks Cloud). Typically AWS credentials can be set
+        and read from core-site.xml (for Hadoop input format readers, such as Series
+        binary files), ~/.boto or other boto credential file locations, or the environment
+        variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY. These credentials should
+        be configured automatically in clusters launched by the thunder-ec2 script, and
+        so this method should not have to be called.
+
+        Parameters
+        ----------
+        awsAccessKeyId : string
+             AWS public key, usually starts with "AKIA"
+
+        awsSecretAccessKey : string
+            AWS private key
+        """
+        from thunder.utils.common import AWSCredentials
+        self._credentials = AWSCredentials(awsAccessKeyId, awsSecretAccessKey)
+        self._credentials.setOnContext(self._sc)
+
+
 DEFAULT_EXTENSIONS = {
     "stack": "stack",
     "tif": "tif",
     "tif-stack": "tif",
-    "png": "png"
+    "png": "png",
+    "mat": "mat",
+    "npy": "npy",
+    "txt": "txt"
 }

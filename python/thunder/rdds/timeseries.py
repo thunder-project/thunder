@@ -271,10 +271,11 @@ class TimeSeries(Series):
             yy = polyval(p, x)
             return y - yy
 
-        return self.applyValues(func)
+        return self.applyValues(func, keepIndex=True)
 
     def normalize(self, baseline='percentile', window=None, perc=20):
-        """ Normalize each time series by subtracting and dividing by a baseline.
+        """
+        Normalize each time series by subtracting and dividing by a baseline.
 
         Baseline can be derived from a global mean or percentile,
         or a smoothed percentile estimated within a rolling window.
@@ -321,5 +322,5 @@ class TimeSeries(Series):
             b = baseFunc(y)
             return (y - b) / (b + 0.1)
 
-        return self.applyValues(get)
+        return self.applyValues(get, keepIndex=True)
 

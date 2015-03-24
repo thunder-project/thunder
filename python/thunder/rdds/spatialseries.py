@@ -96,6 +96,5 @@ class SpatialSeries(Series):
         # get correlations
         corr = result.mapValues(lambda x: corrcoef(x[0], x[1])[0, 1])
 
-        # force sorting, but reverse keys for correct ordering
-        output = corr.map(lambda (k, v): (k[::-1], v)).sortByKey().map(lambda (k, v): (k[::-1], v))
-        return Series(output, index='correlation').__finalize__(self)
+        # sort output because we expect shuffling to change ordering
+        return Series(corr, index='correlation').__finalize__(self).sortByKey()

@@ -3,7 +3,7 @@ Example standalone app for mass-univariate regression
 """
 
 import optparse
-from thunder import ThunderContext, RegressionModel, export
+from thunder import ThunderContext, RegressionModel
 
 
 if __name__ == "__main__":
@@ -27,5 +27,5 @@ if __name__ == "__main__":
     result = RegressionModel.load(modelfile, opts.regressmode).fit(data)
 
     outputdir += "-regress"
-    export(result.select('stats'), outputdir, "stats", "matlab")
-    export(result.select('betas'), outputdir, "betas", "matlab")
+    tsc.export(result.select('stats'), outputdir, "stats", "matlab")
+    tsc.export(result.select('betas'), outputdir, "betas", "matlab")

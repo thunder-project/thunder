@@ -3,7 +3,7 @@ Example standalone app for principal component analysis
 """
 
 import optparse
-from thunder import ThunderContext, PCA, export
+from thunder import ThunderContext, PCA
 
 
 if __name__ == "__main__":
@@ -28,6 +28,6 @@ if __name__ == "__main__":
     model.fit(data)
 
     outputdir += "-pca"
-    export(model.comps, outputdir, "comps", "matlab")
-    export(model.latent, outputdir, "latent", "matlab")
-    export(model.scores, outputdir, "scores", "matlab")
+    tsc.export(model.comps, outputdir, "comps", "matlab")
+    tsc.export(model.latent, outputdir, "latent", "matlab")
+    tsc.export(model.scores, outputdir, "scores", "matlab")

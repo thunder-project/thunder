@@ -17,6 +17,11 @@ class TestSeriesConversions(PySparkTestCase):
         assert(mat.nrows == 2)
         assert(mat.ncols == 4)
 
+        # check a basic operation from superclass
+        newmat = mat.applyValues(lambda x: x + 1)
+        out = newmat.collectValuesAsArray()
+        assert(array_equal(out, array([[5, 6, 7, 8], [9, 10, 11, 12]])))
+
     def test_toTimeSeries(self):
         from thunder.rdds.timeseries import TimeSeries
         rdd = self.sc.parallelize([(0, array([4, 5, 6, 7])), (1, array([8, 9, 10, 11]))])
@@ -414,7 +419,7 @@ class TestSeriesRegionMeanMethods(PySparkTestCase):
     def test_meanByRegions_singleRegion(self):
         keys, expectedKeys, expected = self.__setup_meanByRegion()
 
-        actualSeries = self.series.meanByRegion([keys])
+        actualSeries = self.series.meanByRegions([keys])
         actual = actualSeries.collect()
         self.__checkReturnedSeriesAttributes(actualSeries)
         TestSeriesRegionMeanMethods.__checkNestedAsserts(1, [expectedKeys], [expected], actual)
@@ -424,7 +429,7 @@ class TestSeriesRegionMeanMethods(PySparkTestCase):
         keys += [(17, 25)]
 
         # check that we get a sensible value with validation turned off:
-        actualSeries = self.series.meanByRegion([keys])
+        actualSeries = self.series.meanByRegions([keys])
         actual = actualSeries.collect()
         self.__checkReturnedSeriesAttributes(actualSeries)
         TestSeriesRegionMeanMethods.__checkNestedAsserts(1, [expectedKeys], [expected], actual)
@@ -432,12 +437,12 @@ class TestSeriesRegionMeanMethods(PySparkTestCase):
         # throw an error on a partial match when validation turned on
         # this error will be on the workers, which propagates back to the driver
         # as something other than the ValueError that it started out life as
-        assert_raises(Exception, self.series.meanByRegion([keys], validate=True).count)
+        assert_raises(Exception, self.series.meanByRegions([keys], validate=True).count)
 
     def test_meanByRegions_singleRegionWithMask(self):
         mask, expectedKeys, expected = self.__setup_meanByRegion(True)
 
-        actualSeries = self.series.meanByRegion(mask)
+        actualSeries = self.series.meanByRegions(mask)
         actual = actualSeries.collect()
         self.__checkReturnedSeriesAttributes(actualSeries)
         TestSeriesRegionMeanMethods.__checkNestedAsserts(1, [expectedKeys], [expected], actual)
@@ -452,7 +457,7 @@ class TestSeriesRegionMeanMethods(PySparkTestCase):
             avgVals = vstack([self.dataLocal[idx][1] for idx in itemIdxs]).mean(axis=0)
             expected.append(avgVals)
 
-        actualSeries = self.series.meanByRegion(nestedKeys)
+        actualSeries = self.series.meanByRegions(nestedKeys)
         actual = actualSeries.collect()
         self.__checkReturnedSeriesAttributes(actualSeries)
         TestSeriesRegionMeanMethods.__checkNestedAsserts(2, expectedKeys, expected, actual)
@@ -467,7 +472,7 @@ class TestSeriesRegionMeanMethods(PySparkTestCase):
             avgVals = vstack([self.dataLocal[idx][1] for idx in itemIdxs]).mean(axis=0)
             expected.append(avgVals)
 
-        actualSeries = self.series.meanByRegion(mask)
+        actualSeries = self.series.meanByRegions(mask)
         actual = actualSeries.collect()
         self.__checkReturnedSeriesAttributes(actualSeries)
         TestSeriesRegionMeanMethods.__checkNestedAsserts(2, expectedKeys, expected, actual)

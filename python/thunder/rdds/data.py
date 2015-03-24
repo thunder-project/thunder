@@ -1,3 +1,6 @@
+from numpy import asarray, maximum, minimum
+
+
 class Data(object):
     """
     Generic base class for data types in thunder.
@@ -60,7 +63,8 @@ class Data(object):
         return self._dtype
 
     def populateParamsFromFirstRecord(self):
-        """Calls first() on the underlying rdd, using the returned record to determine appropriate attribute settings
+        """
+        Calls first() on the underlying rdd, using the returned record to determine appropriate attribute settings
         for this object (for instance, setting self.dtype to match the dtype of the underlying rdd records).
 
         This method is expected to be overridden by subclasses. Subclasses should first call
@@ -106,8 +110,15 @@ class Data(object):
         self._nrecords = None
         return self
 
+    def _checkOverwrite(self, outputDirPath):
+        """ Checks for existence of outputDirPath, raising ValueError if it already exists """
+        from thunder.utils.common import AWSCredentials, raiseErrorIfPathExists
+        awsCredentialOverride = AWSCredentials.fromContext(self.rdd.ctx)
+        raiseErrorIfPathExists(outputDirPath, awsCredentialsOverride=awsCredentialOverride)
+
     def first(self):
-        """ Return first record.
+        """
+        Return first record.
 
         This calls the Spark first() method on the underlying RDD. As a side effect, any attributes on this object that
         can be set based on the values of the first record will be set (see populateParamsFromFirstRecord).
@@ -115,7 +126,8 @@ class Data(object):
         return self.populateParamsFromFirstRecord()
 
     def take(self, *args, **kwargs):
-        """ Take samples.
+        """
+        Take samples.
 
         This calls the Spark take() method on the underlying RDD.
         """
@@ -139,7 +151,8 @@ class Data(object):
                                  "but actual keys are not (first key: '%s')" % str(actualKey))
 
     def get(self, key):
-        """Returns a single value matching the passed key, or None if no matching keys found.
+        """
+        Returns a single value matching the passed key, or None if no matching keys found.
 
         If multiple records are found with keys matching the passed key, a sequence of all matching
         values will be returned.
@@ -155,7 +168,8 @@ class Data(object):
             return filteredVals
 
     def getMany(self, keys):
-        """Returns a sequence of values corresponding to the passed sequence of keys.
+        """
+        Returns a sequence of values corresponding to the passed sequence of keys.
 
         The return value will be a sequence equal in length to the passed keys, with each
         value in the returned sequence corresponding to the key at the same position in the passed
@@ -180,7 +194,8 @@ class Data(object):
         return retVals
 
     def getRange(self, sliceOrSlices):
-        """Returns key/value pairs that fall within a range given by the passed slice or slices.
+        """
+        Returns key/value pairs that fall within a range given by the passed slice or slices.
 
         The return values will be a sorted list of key/value pairs of all records in the underlying
         RDD for which the key falls within the range given by the passed slice selectors. Note that
@@ -258,21 +273,24 @@ class Data(object):
         return result
 
     def values(self):
-        """ Return values, ignoring keys
+        """
+        Return rdd of values, ignoring keys
 
         This calls the Spark values() method on the underlying RDD.
         """
         return self.rdd.values()
 
     def keys(self):
-        """ Return keys, ignoring values
+        """
+        Return rdd of keys, ignoring values
 
         This calls the Spark keys() method on the underlying RDD.
         """
         return self.rdd.keys()
 
     def astype(self, dtype, casting='safe'):
-        """Cast values to specified numpy dtype.
+        """
+        Cast values to specified numpy dtype.
 
         If 'smallfloat' is passed, values will be cast to the smallest floating point representation
         to which they can be cast safely, as determined by the thunder.utils.common smallest_float_type function.
@@ -284,7 +302,7 @@ class Data(object):
         Parameters
         ----------
         dtype: numpy dtype or dtype specifier, or string 'smallfloat', or None
-            Data type to which RDD values are to be cast. Will return immediately, performing no cast, if None is passed.
+            Data type to which RDD values are to be cast. Will return without cast if None is passed.
 
         casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
             Casting method to pass on to numpy's astype() method; see numpy documentation for details.
@@ -295,16 +313,27 @@ class Data(object):
         """
         if dtype is None or dtype == '':
             return self
+        from numpy import ndarray
+        from numpy import dtype as dtypeFunc
         if dtype == 'smallfloat':
             # get the smallest floating point type that can be safely cast to from our current type
             from thunder.utils.common import smallestFloatType
             dtype = smallestFloatType(self.dtype)
 
-        nextRdd = self.rdd.mapValues(lambda v: v.astype(dtype, casting=casting, copy=False))
+        def cast(v, dtype_, casting_):
+            if isinstance(v, ndarray):
+                return v.astype(dtype_, casting=casting_, copy=False)
+            else:
+                # assume we are a scalar, either a numpy scalar or a python scalar
+                # turn ourself into a numpy scalar of the appropriate type
+                return asarray([v]).astype(dtype_, casting=casting_, copy=False)[0]
+
+        nextRdd = self.rdd.mapValues(lambda v: cast(v, dtypeFunc(dtype), casting))
         return self._constructor(nextRdd, dtype=str(dtype)).__finalize__(self)
 
-    def apply(self, func, keepdtype=False):
-        """ Apply arbitrary function to records of a Data object.
+    def apply(self, func, keepDtype=False, keepIndex=False):
+        """
+        Apply arbitrary function to records of a Data object.
 
         This wraps the combined process of calling Spark's map operation on
         the underlying RDD and returning a reconstructed Data object.
@@ -314,19 +343,24 @@ class Data(object):
         func : function
             Function to apply to records.
 
-        keepdtype : boolean
+        keepDtype : boolean
             Whether to preserve the dtype, if false dtype will be set to none
             under the assumption that the function might change it
-        """
 
-        if keepdtype:
-            noprop = ()
-        else:
-            noprop = ('_dtype',)
+        keepIndex : boolean
+            Whether to preserve the index, if false index will be set to none
+            under the assumption that the function might change it
+        """
+        noprop = ()
+        if keepDtype is False:
+            noprop += ('_dtype',)
+        if keepIndex is False:
+            noprop += ('_index',)
         return self._constructor(self.rdd.map(func)).__finalize__(self, noPropagate=noprop)
 
     def applyKeys(self, func, **kwargs):
-        """ Apply arbitrary function to the keys of a Data object, preserving the values.
+        """
+        Apply arbitrary function to the keys of a Data object, preserving the values.
 
         See also
         --------
@@ -336,70 +370,97 @@ class Data(object):
         return self.apply(lambda (k, v): (func(k), v), **kwargs)
 
     def applyValues(self, func, **kwargs):
-        """ Apply arbitrary function to the values of a Data object, preserving the keys.
+        """
+        Apply arbitrary function to the values of a Data object, preserving the keys.
 
         See also
         --------
         Series.apply
         """
-
         return self.apply(lambda (k, v): (k, func(v)), **kwargs)
 
-    def collect(self):
-        """ Return all records to the driver
+    def collect(self, sorting=False):
+        """
+        Return all records to the driver
 
         This will be slow for large datasets, and may exhaust the available memory on the driver.
 
         This calls the Spark collect() method on the underlying RDD.
         """
-        return self.rdd.collect()
+        if sorting:
+            return self.sortByKey().rdd.collect()
+        else:
+            return self.rdd.collect()
 
-    def collectAsArray(self):
-        """ Return all keys and values to the driver as a tuple of numpy arrays
+    def collectAsArray(self, sorting=False):
+        """
+        Return all keys and values to the driver as a tuple of numpy arrays
 
         This will be slow for large datasets, and may exhaust the available memory on the driver.
         """
-        from numpy import asarray
-        out = self.rdd.collect()
+        out = self.collect(sorting)
         keys = asarray(map(lambda (k, v): k, out))
         values = asarray(map(lambda (k, v): v, out))
         return keys, values
 
-    def collectValuesAsArray(self):
-        """ Return all records to the driver as a numpy array
+    def collectValuesAsArray(self, sorting=False):
+        """
+        Return all records to the driver as a numpy array
 
         This will be slow for large datasets, and may exhaust the available memory on the driver.
         """
-        from numpy import asarray
-        return asarray(self.rdd.values().collect())
+        if sorting:
+            rdd = self.sortByKey().rdd
+        else:
+            rdd = self.rdd
+        return asarray(rdd.values().collect())
 
-    def collectKeysAsArray(self):
-        """ Return all values to the driver as a numpy array
+    def collectKeysAsArray(self, sorting=False):
+        """
+        Return all values to the driver as a numpy array
 
         This will be slow for large datasets, and may exhaust the available memory on the driver.
         """
-        from numpy import asarray
-        return asarray(self.rdd.keys().collect())
+        if sorting:
+            rdd = self.sortByKey().rdd
+        else:
+            rdd = self.rdd
+        return asarray(rdd.keys().collect())
+
+    def sortByKey(self):
+        """
+        Sort records by keys.
+
+        This calls the Spark sortByKey() method on the underlying RDD, but reverse the order
+        of the key tuples before and after sorting so they are sorted according to the convention
+        that the first key varies fastest, then the second, then the third, etc.
+        """
+        newrdd = self.rdd.map(lambda (k, v): (k[::-1], v)).sortByKey().map(lambda (k, v): (k[::-1], v))
+        return self._constructor(newrdd).__finalize__(self)
 
     def count(self):
-        """Calculates and returns the number of records in the RDD.
+        """
+        Calculates and returns the number of records in the RDD.
 
-        This calls the Spark count() method on the underlying RDD and updates the .nrecords metadata attribute.
+        This calls the Spark count() method on the underlying RDD and updates
+        the .nrecords metadata attribute.
         """
         count = self.rdd.count()
         self._nrecords = count
         return count
 
     def mean(self, dtype='float64', casting='safe'):
-        """ Mean of values, ignoring keys
+        """
+        Mean of values, ignoring keys
 
-        If dtype is not None, then the values will first be cast to the requested type before the operation is
-        performed. See Data.astype() for details.
+        If dtype is not None, then the values will first be cast to the requested
+        type before the operation is performed. See Data.astype() for details.
         """
         return self.stats('mean', dtype=dtype, casting=casting).mean()
 
     def sum(self, dtype='float64', casting='safe'):
-        """ Sum of values, ignoring keys
+        """
+        Sum of values, ignoring keys
 
         If dtype is not None, then the values will first be cast to the requested type before the operation is
         performed. See Data.astype() for details.
@@ -410,7 +471,8 @@ class Data(object):
         return out.rdd.values().sum()
 
     def variance(self, dtype='float64', casting='safe'):
-        """ Variance of values, ignoring keys
+        """
+        Variance of values, ignoring keys
 
         If dtype is not None, then the values will first be cast to the requested type before the operation is
         performed. See Data.astype() for details.
@@ -418,7 +480,8 @@ class Data(object):
         return self.stats('variance', dtype=dtype, casting=casting).variance()
 
     def stdev(self, dtype='float64', casting='safe'):
-        """ Standard deviation of values, ignoring keys
+        """
+        Standard deviation of values, ignoring keys
 
         If dtype is not None, then the values will first be cast to the requested type before the operation is
         performed. See Data.astype() for details.
@@ -455,20 +518,17 @@ class Data(object):
 
     def max(self):
         """ Maximum of values, ignoring keys """
-        # keep using reduce(maximum) at present rather than stats('max') - stats method results in inadvertent
-        # cast to float64
-        from numpy import maximum
+        # NOTE: Does not use stats('max') to prevent cast to float64
         return self.rdd.values().reduce(maximum)
 
     def min(self):
         """ Minimum of values, ignoring keys """
-        # keep using reduce(minimum) at present rather than stats('min') - stats method results in inadvertent
-        # cast to float64
-        from numpy import minimum
+        # NOTE: Does not use stats('min') to prevent cast to float64
         return self.rdd.values().reduce(minimum)
 
     def coalesce(self, numPartitions):
-        """ Coalesce data (used to reduce number of partitions).
+        """
+        Coalesce data (used to reduce number of partitions).
 
         This calls the Spark coalesce() method on the underlying RDD.
 
@@ -485,7 +545,8 @@ class Data(object):
         return self
 
     def cache(self):
-        """ Enable in-memory caching.
+        """
+        Enable in-memory caching.
 
         This calls the Spark cache() method on the underlying RDD.
         """
@@ -493,7 +554,8 @@ class Data(object):
         return self
 
     def repartition(self, numPartitions):
-        """ Repartition data.
+        """
+        Repartition data.
 
         This calls the Spark repartition() method on the underlying RDD.
 
@@ -506,7 +568,8 @@ class Data(object):
         return self
 
     def filter(self, func):
-        """ Filter records by appliyng a function to each record.
+        """
+        Filter records by appliyng a function to each record.
 
         This calls the Spark filter() method on the underlying RDD.
         """

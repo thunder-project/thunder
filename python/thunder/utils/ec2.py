@@ -47,7 +47,7 @@ MINIMUM_SPARK_VERSION = "1.1.0"
 
 
 def get_s3_keys():
-    """ Get user S3 keys from environmental variables"""
+    """ Get user S3 keys from environmental variables """
     if os.getenv('S3_AWS_ACCESS_KEY_ID') is not None:
         s3_access_key = os.getenv("S3_AWS_ACCESS_KEY_ID")
     else:
@@ -60,7 +60,8 @@ def get_s3_keys():
 
 
 def get_default_thunder_version():
-    """Returns 'HEAD' (current state of thunder master branch) if thunder is a _dev version, otherwise
+    """
+    Returns 'HEAD' (current state of thunder master branch) if thunder is a _dev version, otherwise
     return the current thunder version.
     """
     if "_dev" in THUNDER_VERSION:
@@ -69,7 +70,8 @@ def get_default_thunder_version():
 
 
 def get_spark_version_string(default_version):
-    """ Parses out the Spark version string from $SPARK_HOME/RELEASE, if present, or from pom.xml if not
+    """
+    Parses out the Spark version string from $SPARK_HOME/RELEASE, if present, or from pom.xml if not
 
     Returns version string from either of the above sources, or default_version if nothing else works
     """
@@ -105,7 +107,8 @@ SPARK_VERSIONS_TO_HASHES = {
 
 
 def remap_spark_version_to_hash(user_version_string):
-    """Replaces a user-specified Spark version string with a github hash if needed.
+    """
+    Replaces a user-specified Spark version string with a github hash if needed.
 
     Used to allow clusters to be deployed with Spark release candidates.
     """
@@ -113,10 +116,10 @@ def remap_spark_version_to_hash(user_version_string):
 
 
 def install_thunder(master, opts, spark_version_string):
-    """ Install Thunder and dependencies on a Spark EC2 cluster"""
+    """ Install Thunder and dependencies on a Spark EC2 cluster """
     print "Installing Thunder on the cluster..."
 
-    # download and build thunder
+    # download thunder
     ssh(master, opts, "rm -rf thunder && git clone https://github.com/freeman-lab/thunder.git")
     if opts.thunder_version.lower() != "head":
         tagOrHash = opts.thunder_version
@@ -124,8 +127,6 @@ def install_thunder(master, opts, spark_version_string):
             # we have something that looks like a version number. prepend 'v' to get a valid tag id.
             tagOrHash = 'v' + tagOrHash
         ssh(master, opts, "cd thunder && git checkout %s" % tagOrHash)
-    ssh(master, opts, "chmod u+x thunder/python/bin/build")
-    ssh(master, opts, "thunder/python/bin/build")
 
     # copy local data examples to all workers
     ssh(master, opts, "yum install -y pssh")
@@ -167,17 +168,39 @@ def install_thunder(master, opts, spark_version_string):
     ssh(master, opts, "echo 'export PYTHONPATH=/root/thunder/python' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export IPYTHON=1' >> /root/.bash_profile")
 
+    # build thunder
+    ssh(master, opts, "chmod u+x thunder/python/bin/build")
+    ssh(master, opts, "source ~/.bash_profile && thunder/python/bin/build")
+
     # need to explicitly set PYSPARK_PYTHON with spark 1.2.0; otherwise fails with:
     # "IPython requires Python 2.7+; please install python2.7 or set PYSPARK_PYTHON"
     # should not do this with earlier versions, as it will lead to
     # "java.lang.IllegalArgumentException: port out of range" [SPARK-3772]
     # this logic doesn't work if we get a hash here; assume in this case it's a recent version of Spark
-    if (not '.' in spark_version_string) or LooseVersion(spark_version_string) >= LooseVersion("1.2.0"):
+    if ('.' not in spark_version_string) or LooseVersion(spark_version_string) >= LooseVersion("1.2.0"):
         ssh(master, opts, "echo 'export PYSPARK_PYTHON=/usr/bin/python' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export PATH=/root/thunder/python/bin:$PATH' >> /root/.bash_profile")
 
+    # add AWS credentials to ~/.boto
+    access, secret = get_s3_keys()
+    credentialstring = "[Credentials]\naws_access_key_id = ACCESS\naws_secret_access_key = SECRET\n"
+    credentialsfilled = credentialstring.replace('ACCESS', access).replace('SECRET', secret)
+    ssh(master, opts, "printf '"+credentialsfilled+"' > /root/.boto")
+    ssh(master, opts, "pscp.pssh -h /root/spark-ec2/slaves /root/.boto /root/.boto")
+
+    print "\n\n"
+    print "-------------------------------"
+    print "Thunder successfully installed!"
+    print "-------------------------------"
+    print "\n"
+
+
+def configure_spark(master, opts):
+    """ Configure Spark with useful settings for running Thunder """
+    print "Configuring Spark for Thunder usage..."
+
     # customize spark configuration parameters
-    ssh(master, opts, "echo 'spark.akka.frameSize=10000' >> /root/spark/conf/spark-defaults.conf")
+    ssh(master, opts, "echo 'spark.akka.frameSize=2047' >> /root/spark/conf/spark-defaults.conf")
     ssh(master, opts, "echo 'spark.kryoserializer.buffer.max.mb=1024' >> /root/spark/conf/spark-defaults.conf")
     ssh(master, opts, "echo 'spark.driver.maxResultSize=0' >> /root/spark/conf/spark-defaults.conf")
     ssh(master, opts, "echo 'export SPARK_DRIVER_MEMORY=20g' >> /root/spark/conf/spark-env.sh")
@@ -190,12 +213,7 @@ def install_thunder(master, opts, spark_version_string):
     access, secret = get_s3_keys()
     filled = configstring.replace('ACCESS', access).replace('SECRET', secret)
     ssh(master, opts, "sed -i'f' 's,.*</configuration>.*,"+filled+"&,' /root/ephemeral-hdfs/conf/core-site.xml")
-
-    # add AWS credentials to ~/.boto
-    credentialstring = "[Credentials]\naws_access_key_id = ACCESS\naws_secret_access_key = SECRET\n"
-    credentialsfilled = credentialstring.replace('ACCESS', access).replace('SECRET', secret)
-    ssh(master, opts, "printf '"+credentialsfilled+"' > /root/.boto")
-    ssh(master, opts, "pscp.pssh -h /root/spark-ec2/slaves /root/.boto /root/.boto")
+    ssh(master, opts, "sed -i'f' 's,.*</configuration>.*,"+filled+"&,' /root/spark/conf/core-site.xml")
 
     # configure requester pays
     ssh(master, opts, "touch /root/spark/conf/jets3t.properties")
@@ -203,9 +221,9 @@ def install_thunder(master, opts, spark_version_string):
     ssh(master, opts, "~/spark-ec2/copy-dir /root/spark/conf")
 
     print "\n\n"
-    print "-------------------------------"
-    print "Thunder successfully installed!"
-    print "-------------------------------"
+    print "------------------------------"
+    print "Spark successfully configured!"
+    print "------------------------------"
     print "\n"
 
 
@@ -250,7 +268,8 @@ def ssh(host, opts, command):
 
 
 def setup_cluster(conn, master_nodes, slave_nodes, opts, deploy_ssh_key):
-    """Modified version of the setup_cluster function (borrowed from spark-ec.py)
+    """
+    Modified version of the setup_cluster function (borrowed from spark-ec.py)
     in order to manually set the folder with the deploy code
     """
     master = master_nodes[0].public_dns_name
@@ -277,7 +296,13 @@ def setup_cluster(conn, master_nodes, slave_nodes, opts, deploy_ssh_key):
     if opts.ganglia:
         modules.append('ganglia')
 
-    ssh(master, opts, "rm -rf spark-ec2 && git clone https://github.com/mesos/spark-ec2.git -b v4")
+    if spark_home_loose_version >= LooseVersion("1.3.0"):
+        MESOS_SPARK_EC2_BRANCH = "branch-1.3"
+        ssh(master, opts, "rm -rf spark-ec2 && git clone https://github.com/mesos/spark-ec2.git "
+                          "-b {b}".format(b=MESOS_SPARK_EC2_BRANCH))
+    else:
+        ssh(master, opts, "rm -rf spark-ec2 && git clone https://github.com/mesos/spark-ec2.git "
+                          "-b v4")
 
     print "Deploying files to master..."
     deploy_folder = os.path.join(os.environ['SPARK_HOME'], "ec2", "deploy.generic")
@@ -380,6 +405,14 @@ if __name__ == "__main__":
         parser.add_option("--copy-aws-credentials", action="store_true", default=False,
                           help="Add AWS credentials to hadoop configuration to allow Spark to access S3" +
                                " (only with Spark >= 1.2.0)")
+    if spark_home_loose_version >= LooseVersion("1.3.0"):
+        parser.add_option("--subnet-id", default=None,
+                          help="VPC subnet to launch instances in (only with Spark >= 1.3.0")
+        parser.add_option("--vpc-id", default=None,
+                          help="VPC to launch instances in (only with Spark >= 1.3.0)")
+        parser.add_option("--placement-group", type="string", default=None,
+                          help="Which placement group to try and launch instances into. Assumes placement "
+                               "group is already created.")
 
     (opts, args) = parser.parse_args()
     if len(args) != 2:
@@ -423,14 +456,16 @@ if __name__ == "__main__":
         try:
             wait_for_cluster(conn, opts.wait, master_nodes, slave_nodes)
         except NameError:
-            wait_for_cluster_state(
-                cluster_instances=(master_nodes + slave_nodes),
-                cluster_state='ssh-ready',
-                opts=opts
-            )
+            if spark_home_loose_version >= LooseVersion("1.3.0"):
+                wait_for_cluster_state(cluster_instances=(master_nodes + slave_nodes),
+                                       cluster_state='ssh-ready', opts=opts, conn=conn)
+            else:
+                wait_for_cluster_state(cluster_instances=(master_nodes + slave_nodes),
+                                       cluster_state='ssh-ready', opts=opts)
         setup_cluster(conn, master_nodes, slave_nodes, opts, True)
         master = master_nodes[0].public_dns_name
         install_thunder(master, opts, spark_version_string)
+        configure_spark(master, opts)
         print "\n\n"
         print "-------------------------------"
         print "Cluster successfully launched!"
@@ -498,6 +533,7 @@ if __name__ == "__main__":
         # Install thunder on the cluster
         elif action == "install":
             install_thunder(master, opts, spark_version_string)
+            configure_spark(master, opts)
 
         # Stop a running cluster.  Storage on EBS volumes is
         # preserved, so you can restart the cluster in the same state
@@ -539,13 +575,15 @@ if __name__ == "__main__":
             try:
                 wait_for_cluster(conn, opts.wait, master_nodes, slave_nodes)
             except NameError:
-                wait_for_cluster_state(
-                    cluster_instances=(master_nodes + slave_nodes),
-                    cluster_state='ssh-ready',
-                    opts=opts
-            )
+                if spark_home_loose_version >= LooseVersion("1.3.0"):
+                    wait_for_cluster_state(cluster_instances=(master_nodes + slave_nodes),
+                                           cluster_state='ssh-ready', opts=opts, conn=conn)
+                else:
+                    wait_for_cluster_state(cluster_instances=(master_nodes + slave_nodes),
+                                           cluster_state='ssh-ready', opts=opts)
             setup_cluster(conn, master_nodes, slave_nodes, opts, False)
             master = master_nodes[0].public_dns_name
+            configure_spark(master, opts)
             print "\n\n"
             print "-------------------------------"
             print "Cluster successfully re-started!"
