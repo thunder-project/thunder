@@ -7,9 +7,6 @@ python:
 jdk:
   - openjdk7
 
-virtualenv:
-  system_site_packages: true
-
 before_install:
   # install miniconda
   - sudo apt-get update
