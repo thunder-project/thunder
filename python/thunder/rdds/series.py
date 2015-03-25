@@ -948,7 +948,7 @@ class Series(Data):
         index = array(ind)
         if len(index[0]) == 1:
             index = ravel(index)
-        return Series(newrdd, index=index).__finalize__(self, noPropagate=('_dtype',))
+        return Series(newrdd, index=index).__finalize__(self, noPropagate=('_dtype', '_index'))
 
     def selectByIndex(self, val, level=0, squeeze=False, filter=False):
         """
@@ -1068,7 +1068,7 @@ class Series(Data):
         # if we ever demand that Series elements are basic data types, this is the place to check the output
         # of the aggregating function returns a single value
 
-        return self._applyByIndex(function, level=level).applyValues(lambda v: array(v))
+        return self._applyByIndex(function, level=level).applyValues(lambda v: array(v), keepIndex=True)
 
     def seriesStatByIndex(self, stat, level=0):
         """
