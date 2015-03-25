@@ -1,0 +1,15 @@
+:mod:`thunder`.ICA
+=========================
+
+.. currentmodule:: thunder
+
+.. autoclass:: ICA
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~ICA.__init__
+      ~ICA.fit
+   
+

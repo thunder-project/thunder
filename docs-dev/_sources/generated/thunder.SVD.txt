@@ -1,0 +1,15 @@
+:mod:`thunder`.SVD
+=========================
+
+.. currentmodule:: thunder
+
+.. autoclass:: SVD
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~SVD.__init__
+      ~SVD.calc
+   
+

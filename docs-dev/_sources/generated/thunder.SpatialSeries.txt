@@ -1,0 +1,75 @@
+:mod:`thunder`.SpatialSeries
+===================================
+
+.. currentmodule:: thunder
+
+.. autoclass:: SpatialSeries
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~SpatialSeries.__init__
+      ~SpatialSeries.apply
+      ~SpatialSeries.applyKeys
+      ~SpatialSeries.applyValues
+      ~SpatialSeries.astype
+      ~SpatialSeries.between
+      ~SpatialSeries.cache
+      ~SpatialSeries.center
+      ~SpatialSeries.coalesce
+      ~SpatialSeries.collect
+      ~SpatialSeries.collectAsArray
+      ~SpatialSeries.collectKeysAsArray
+      ~SpatialSeries.collectValuesAsArray
+      ~SpatialSeries.correlate
+      ~SpatialSeries.count
+      ~SpatialSeries.filter
+      ~SpatialSeries.filterOnKeys
+      ~SpatialSeries.filterOnValues
+      ~SpatialSeries.first
+      ~SpatialSeries.get
+      ~SpatialSeries.getMany
+      ~SpatialSeries.getRange
+      ~SpatialSeries.indToSub
+      ~SpatialSeries.keys
+      ~SpatialSeries.localCorr
+      ~SpatialSeries.mapToNeighborhood
+      ~SpatialSeries.max
+      ~SpatialSeries.maxProject
+      ~SpatialSeries.mean
+      ~SpatialSeries.meanByRegions
+      ~SpatialSeries.meanOfRegion
+      ~SpatialSeries.min
+      ~SpatialSeries.pack
+      ~SpatialSeries.populateParamsFromFirstRecord
+      ~SpatialSeries.query
+      ~SpatialSeries.repartition
+      ~SpatialSeries.saveAsBinarySeries
+      ~SpatialSeries.select
+      ~SpatialSeries.seriesMax
+      ~SpatialSeries.seriesMean
+      ~SpatialSeries.seriesMedian
+      ~SpatialSeries.seriesMin
+      ~SpatialSeries.seriesPercentile
+      ~SpatialSeries.seriesStat
+      ~SpatialSeries.seriesStats
+      ~SpatialSeries.seriesStdev
+      ~SpatialSeries.seriesSum
+      ~SpatialSeries.sortByKey
+      ~SpatialSeries.standardize
+      ~SpatialSeries.stats
+      ~SpatialSeries.stdev
+      ~SpatialSeries.subToInd
+      ~SpatialSeries.subset
+      ~SpatialSeries.sum
+      ~SpatialSeries.take
+      ~SpatialSeries.toBlocks
+      ~SpatialSeries.toRowMatrix
+      ~SpatialSeries.toSpatialSeries
+      ~SpatialSeries.toTimeSeries
+      ~SpatialSeries.values
+      ~SpatialSeries.variance
+      ~SpatialSeries.zscore
+   
+
