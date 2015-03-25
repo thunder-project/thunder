@@ -220,7 +220,7 @@ class TestSeriesLoader(PySparkTestCase):
         assert_true(array_equal(testImgArys[2], seriesAry[:, :, 2]))
 
     def _run_fromFishTif(self, blocksize):
-        imagepath = TestSeriesLoader._findSourceTreeDir("utils/data/fish/tif-stack")
+        imagepath = TestSeriesLoader._findSourceTreeDir("utils/data/fish/images")
         series = SeriesLoader(self.sc).fromTif(imagepath, blockSize=blocksize)
         assert_equals('float16', series._dtype)
         seriesAry = series.pack()

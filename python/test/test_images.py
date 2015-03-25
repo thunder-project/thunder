@@ -240,7 +240,7 @@ class TestImages(PySparkTestCase):
             self.evaluateSeries(arys, series, sz)
 
     def _run_tst_roundtripThroughBlocks(self, strategy):
-        imagepath = findSourceTreeDir("utils/data/fish/tif-stack")
+        imagepath = findSourceTreeDir("utils/data/fish/images")
         images = ImagesLoader(self.sc).fromTif(imagepath)
         blockedimages = images.toBlocks(strategy)
         recombinedimages = blockedimages.toImages()
@@ -689,7 +689,7 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
         assert_true(array_equal(series_ary, converted_series_ary))
 
     def test_roundtripConvertToSeries(self):
-        imagepath = findSourceTreeDir("utils/data/fish/tif-stack")
+        imagepath = findSourceTreeDir("utils/data/fish/images")
 
         images = ImagesLoader(self.sc).fromTif(imagepath)
         strategy = SimpleBlockingStrategy.generateFromBlockSize(images, blockSize=76 * 20)
