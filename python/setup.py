@@ -26,7 +26,7 @@ setup(
               'thunder.utils.data',
               'thunder.viz'],
     scripts = ['bin/thunder', 'bin/thunder-submit', 'bin/thunder-ec2'],
-    package_data = {'thunder.utils': ['data/fish/bin/conf.json', 'data/fish/bin/*.bin', 'data/fish/tif-stack/*.tif', 'data/iris/conf.json', 'data/iris/iris.bin', 'data/iris/iris.mat', 'data/iris/iris.npy', 'data/iris/iris.txt'], 'thunder.lib': ['thunder_2.10-' + str(thunder.__version__) + '.jar']},
+    package_data = {'thunder.utils': ['data/fish/bin/conf.json', 'data/fish/bin/*.bin', 'data/fish/tif-stack/*.tif', 'data/iris/conf.json', 'data/iris/iris.bin', 'data/iris/iris.mat', 'data/iris/iris.npy', 'data/iris/iris.txt'], 'thunder.lib': ['thunder_2.10-' + str(thunder.__version__) + '.jar', 'thunder_python-' + str(thunder.__version__) + '-py2.7.egg']},
     long_description=open('README.rst').read(),
     install_requires=open('requirements.txt').read().split()
 )

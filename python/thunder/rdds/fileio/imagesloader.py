@@ -3,7 +3,7 @@
 from io import BytesIO
 import json
 from matplotlib.pyplot import imread
-from numpy import array, dstack, frombuffer, ndarray, prod, transpose
+from numpy import array, dstack, frombuffer, ndarray, prod
 
 from thunder.rdds.fileio.readers import getParallelReaderForPath, getFileReaderForPath, FileNotFoundError
 from thunder.rdds.images import Images
@@ -315,3 +315,24 @@ class ImagesLoader(object):
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                 npartitions=npartitions)
         return Images(readerRdd.mapValues(readPngFromBuf), nrecords=reader.lastNRecs)
+
+
+def writeBinaryImagesConfig(outputDirPath, dims, dtype='int16',
+                            confFilename="conf.json", overwrite=True, awsCredentialsOverride=None):
+    """
+    Helper function to write out a conf.json file with required information to load binary Image data.
+    """
+    from thunder.rdds.fileio.writers import getFileWriterForPath
+
+    filewriterClass = getFileWriterForPath(outputDirPath)
+
+    # write configuration file
+    conf = {'dims': dims, 'dtype': dtype}
+    confWriter = filewriterClass(outputDirPath, confFilename, overwrite=overwrite,
+                                 awsCredentialsOverride=awsCredentialsOverride)
+    confWriter.writeFile(json.dumps(conf, indent=2))
+
+    # touch "SUCCESS" file as final action
+    successWriter = filewriterClass(outputDirPath, "SUCCESS", overwrite=overwrite,
+                                    awsCredentialsOverride=awsCredentialsOverride)
+    successWriter.writeFile('')

@@ -174,14 +174,12 @@ class Images(Data):
 
         self.toBlocks(blockSizeSpec, units=units).saveAsBinarySeries(outputDirPath, overwrite=overwrite)
 
-    def exportAsPngs(self, outputDirPath, filePrefix="export", overwrite=False,
+    def saveAsPngs(self, outputDirPath, cmap=None, vmin=None, vmax=None, filePrefix="export", overwrite=False,
                      collectToDriver=True):
         """
         Write out basic png files for two-dimensional image data.
 
-        Files will be written into a newly-created directory on the local file system given by outputdirname.
-
-        All workers must be able to see the output directory via an NFS share or similar.
+        Files will be written into a newly-created directory given by outputdirname.
 
         Parameters
         ----------
@@ -190,7 +188,7 @@ class Images(Data):
             exists, unless overwrite is True. Directory must be one level below an existing directory.
 
         filePrefix : string
-            String to prepend to all filenames. Files will be named <fileprefix>00000.png, <fileprefix>00001.png, etc
+            String to prepend to all filenames. Files will be named <fileprefix>-00000.png, <fileprefix>-00001.png, etc
 
         overwrite : bool
             If true, the directory given by outputdirname will first be deleted if it already exists.
@@ -212,9 +210,9 @@ class Images(Data):
 
         def toFilenameAndPngBuf(kv):
             key, img = kv
-            fname = filePrefix+"%05d.png" % int(key)
+            fname = filePrefix+"-"+"%05d.png" % int(key)
             bytebuf = BytesIO()
-            imsave(bytebuf, img, format="png")
+            imsave(bytebuf, img, vmin, vmax, cmap=cmap, format="png")
             return fname, bytebuf.getvalue()
 
         bufRdd = self.rdd.map(toFilenameAndPngBuf)
@@ -228,6 +226,44 @@ class Images(Data):
             writer = getParallelWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite,
                                                              awsCredentialsOverride=awsCredentials)
             bufRdd.foreach(writer.writerFcn)
+
+    def saveAsBinaryImages(self, outputDirPath, filePrefix="export", overwrite=False):
+        """
+        Write out images or volumes as flat binary files.
+
+        Files will be written into a newly-created directory given by outputdirname.
+
+        Parameters
+        ----------
+        outputDirPath : string
+            Path to output directory to be created. Exception will be thrown if this directory already
+            exists, unless overwrite is True. Directory must be one level below an existing directory.
+
+        filePrefix : string
+            String to prepend to all filenames. Files will be named <fileprefix>-00000.bin, <fileprefix>-00001.bin, etc
+
+        overwrite : bool
+            If true, the directory given by outputdirname will first be deleted if it already exists.
+        """
+        from thunder.rdds.fileio.writers import getParallelWriterForPath
+        from thunder.rdds.fileio.imagesloader import writeBinaryImagesConfig
+        from thunder.utils.common import AWSCredentials
+
+        dimsTotal = list(asarray(self.dims.max)-asarray(self.dims.min)+1)
+
+        def toFilenameAndBinaryBuf(kv):
+            key, img = kv
+            fname = filePrefix+"-"+"%05d.bin" % int(key)
+            return fname, img.transpose().copy()
+
+        bufRdd = self.rdd.map(toFilenameAndBinaryBuf)
+
+        awsCredentials = AWSCredentials.fromContext(self.rdd.ctx)
+        writer = getParallelWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite,
+                                                         awsCredentialsOverride=awsCredentials)
+        bufRdd.foreach(writer.writerFcn)
+        writeBinaryImagesConfig(outputDirPath, dims=dimsTotal, dtype=self.dtype,
+                                overwrite=overwrite, awsCredentialsOverride=awsCredentials)
 
     def maxProjection(self, axis=2):
         """

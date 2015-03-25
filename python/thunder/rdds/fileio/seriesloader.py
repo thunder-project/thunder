@@ -780,7 +780,8 @@ class SeriesLoader(object):
 
 def writeSeriesConfig(outputDirPath, nkeys, nvalues, keyType='int16', valueType='int16',
                       confFilename="conf.json", overwrite=True, awsCredentialsOverride=None):
-    """Helper function to write out a conf.json file with required information to load Series binary data.
+    """
+    Helper function to write out a conf.json file with required information to load Series binary data.
     """
     import json
     from thunder.rdds.fileio.writers import getFileWriterForPath
