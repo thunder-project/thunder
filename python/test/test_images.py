@@ -586,6 +586,7 @@ class TestImagesMeanByRegions(PySparkTestCase):
         assert_equals(5, collected[0][1][0])
         assert_equals(15, collected[1][1][0])
 
+
 class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
     @staticmethod
@@ -725,6 +726,36 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
         # check that packing returns transpose of original array
         assert_true(array_equal(ary.T, seriesAry))
+
+    def test_saveAsBinaryImages(self):
+        narys = 3
+        arys, aryShape, _ = _generateTestArrays(narys)
+
+        outdir = os.path.join(self.outputdir, "binary-images")
+
+        images = ImagesLoader(self.sc).fromArrays(arys)
+        images.saveAsBinaryImages(outdir)
+
+        outFilenames = glob.glob(os.path.join(outdir, "*.bin"))
+        trueFilenames = map(lambda f: os.path.join(outdir, f),
+                            ['export-00000.bin', 'export-00001.bin', 'export-00002.bin'])
+        assert_true(os.path.isfile(os.path.join(outdir, 'SUCCESS')))
+        assert_true(os.path.isfile(os.path.join(outdir, "conf.json")))
+        assert_equals(outFilenames, trueFilenames)
+
+    def test_saveAsBinaryImagesRoundtrip(self):
+
+        def roundTrip(images, dtype):
+            outdir = os.path.join(self.outputdir, "binary-images-" + dtype)
+            images.astype(dtype).saveAsBinaryImages(outdir)
+            newimages = ImagesLoader(self.sc).fromStack(outdir, ext='bin')
+            array_equal(images.first()[1], newimages.first()[1])
+
+        narys = 3
+        arys, aryShape, _ = _generateTestArrays(narys)
+        images = ImagesLoader(self.sc).fromArrays(arys)
+
+        map(lambda d: roundTrip(images, d), ['int16', 'int32', 'float64'])
 
 if __name__ == "__main__":
     if not _have_image:
