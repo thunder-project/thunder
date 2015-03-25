@@ -736,7 +736,7 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
         images = ImagesLoader(self.sc).fromArrays(arys)
         images.saveAsBinaryImages(outdir)
 
-        outFilenames = glob.glob(os.path.join(outdir, "*.bin"))
+        outFilenames = sorted(glob.glob(os.path.join(outdir, "*.bin")))
         trueFilenames = map(lambda f: os.path.join(outdir, f),
                             ['export-00000.bin', 'export-00001.bin', 'export-00002.bin'])
         assert_true(os.path.isfile(os.path.join(outdir, 'SUCCESS')))
