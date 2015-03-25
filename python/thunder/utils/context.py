@@ -558,7 +558,8 @@ class ThunderContext():
             'fish-series': 'fish/series',
             'fish-images': 'fish/images',
             'mouse-series': 'mouse/series',
-            'mouse-images': 'mouse/images'
+            'mouse-images': 'mouse/images',
+            'mouse-params': 'mouse/params'
         }
 
         if dataset is None:
@@ -592,6 +593,8 @@ class ThunderContext():
             return self.loadSeries(tmpdir).astype('float')
         elif dataset == "mouse-images":
             return self.loadImages(tmpdir, ext="bin", npartitions=npartitions)
+        elif dataset == "mouse-params":
+            return self.loadParams(os.path.join(tmpdir, 'covariates.json'))
 
     def loadExampleS3(self, dataset=None):
         """
