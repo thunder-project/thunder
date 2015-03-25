@@ -24,6 +24,9 @@ class Params(object):
             params = [params]
         self._params = params
 
+    def __getitem__(self, names=None):
+        return self.values(names)
+
     def names(self):
         """ List the names of all parameters. """
         return [p['name'].encode('ascii') for p in self._params]
