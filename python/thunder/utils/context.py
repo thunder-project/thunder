@@ -555,8 +555,10 @@ class ThunderContext():
 
         DATASETS = {
             'iris': 'iris',
-            'fish-series': 'fish/bin',
-            'fish-images': 'fish/tif-stack'
+            'fish-series': 'fish/series',
+            'fish-images': 'fish/images',
+            'mouse-series': 'mouse/series',
+            'mouse-images': 'mouse/images'
         }
 
         if dataset is None:
@@ -578,12 +580,18 @@ class ThunderContext():
 
             copyLocal(DATASETS[dataset])
 
+        npartitions = self._sc.defaultParallelism
+
         if dataset == "iris":
             return self.loadSeries(tmpdir)
         elif dataset == "fish-series":
             return self.loadSeries(tmpdir).astype('float')
         elif dataset == "fish-images":
-            return self.loadImages(tmpdir, inputFormat="tif")
+            return self.loadImages(tmpdir, inputFormat="tif", npartitions=npartitions)
+        elif dataset == "mouse-series":
+            return self.loadSeries(tmpdir).astype('float')
+        elif dataset == "mouse-images":
+            return self.loadImages(tmpdir, ext="bin", npartitions=npartitions)
 
     def loadExampleS3(self, dataset=None):
         """
