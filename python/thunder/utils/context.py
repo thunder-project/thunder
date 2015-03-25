@@ -562,7 +562,7 @@ class ThunderContext():
         }
 
         if dataset is None:
-            return DATASETS.keys()
+            return sorted(DATASETS.keys())
 
         checkParams(dataset, DATASETS.keys())
 
