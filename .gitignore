@@ -17,4 +17,5 @@ python/doc/generated
 python/doc/tutorials/*.rst
 python/doc/tutorials/.ipynb*
 python/doc/tutorials/*_files
+python/thunder/lib/*.egg
 
