@@ -64,7 +64,7 @@ def get_default_thunder_version():
     Returns 'HEAD' (current state of thunder master branch) if thunder is a _dev version, otherwise
     return the current thunder version.
     """
-    if "_dev" in THUNDER_VERSION:
+    if ".dev" in THUNDER_VERSION:
         return 'HEAD'
     return THUNDER_VERSION
 
