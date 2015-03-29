@@ -19,7 +19,7 @@ class Colorize(object):
     ----------
     cmap : string, optional, default = rainbow
         The colormap to convert to, can be one of a special set of conversions
-        (rgb, hsv, polar, indexed), a matplotlib colormap object, or a string
+        (rgb, hsv, polar, angle, indexed), a matplotlib colormap object, or a string
         specification of a matplotlib colormap
 
     scale : float, optional, default = 1
@@ -116,7 +116,7 @@ class Colorize(object):
         dims = img.shape
         self._checkDims(dims)
 
-        if self.cmap != 'polar':
+        if self.cmap not in ['polar', 'angle']:
             norm = Normalize(vmin=self.vmin, vmax=self.vmax, clip=True)
             img = norm(img)
 
@@ -142,16 +142,26 @@ class Colorize(object):
             if img.ndim == 3:
                 out = hsv_to_rgb(dstack((img[0], img[1], img[2])))
 
+        elif self.cmap == 'angle':
+            theta = ((arctan2(-img[0], -img[1]) + pi/2) % (pi*2)) / (2 * pi)
+            saturation = ones((dims[1], dims[2])) * 0.8
+            rho = ones((dims[1], dims[2]))
+            if img.ndim == 4:
+                out = zeros((dims[1], dims[2], dims[3], 3))
+                for i in range(0, dims[3]):
+                    out[:, :, i, :] = hsv_to_rgb(dstack((theta[:, :, i], saturation, rho)))
+            if img.ndim == 3:
+                out = hsv_to_rgb(dstack((theta, saturation, rho)))
+
         elif self.cmap == 'polar':
             theta = ((arctan2(-img[0], -img[1]) + pi/2) % (pi*2)) / (2 * pi)
             rho = sqrt(img[0]**2 + img[1]**2)
+            saturation = ones((dims[1], dims[2]))
             if img.ndim == 4:
-                saturation = ones((dims[1], dims[2]))
                 out = zeros((dims[1], dims[2], dims[3], 3))
                 for i in range(0, dims[3]):
                     out[:, :, i, :] = hsv_to_rgb(dstack((theta[:, :, i], saturation, self.scale * rho[:, :, i])))
             if img.ndim == 3:
-                saturation = ones((dims[1], dims[2]))
                 out = hsv_to_rgb(dstack((theta, saturation, self.scale * rho)))
 
         elif self.cmap == 'indexed':
@@ -213,11 +223,11 @@ class Colorize(object):
 
         from matplotlib.colors import ListedColormap
 
-        if self.cmap in ['rgb', 'hsv', 'polar', 'indexed']:
+        if self.cmap in ['rgb', 'hsv', 'polar', 'angle', 'indexed']:
             if self.cmap in ['rgb', 'hsv']:
                 if dims[0] != 3:
                     raise Exception('First dimension must be 3 for %s conversion' % self.cmap)
-            if self.cmap in ['polar']:
+            if self.cmap in ['polar', 'angle']:
                 if dims[0] != 2:
                     raise Exception('First dimension must be 2 for %s conversion' % self.cmap)
             if self.cmap in ['indexed']:
@@ -233,7 +243,7 @@ class Colorize(object):
 
         from matplotlib.colors import ListedColormap
 
-        if self.cmap in ['rgb', 'hsv', 'polar', 'indexed']:
+        if self.cmap in ['rgb', 'hsv', 'polar', 'angle', 'indexed']:
             if not allclose(dims1, dims2[1:]):
                 raise Exception
 
