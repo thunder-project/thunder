@@ -116,8 +116,9 @@ class Colorize(object):
         dims = img.shape
         self._checkDims(dims)
 
-        norm = Normalize(vmin=self.vmin, vmax=self.vmax, clip=True)
-        img = norm(img)
+        if self.cmap != 'polar':
+            norm = Normalize(vmin=self.vmin, vmax=self.vmax, clip=True)
+            img = norm(img)
 
         if mask is not None:
             mask = self._prepareMask(mask)
