@@ -268,6 +268,18 @@ class Series(Data):
         else:
             raise Exception('Axis must be 0 or 1')
 
+    def squelch(self, threshold):
+        """
+        Set all records that do not exceed the given threhsold to 0
+
+        Parameters
+        ----------
+        threshold : scalar
+            Level below which to set records to zero
+        """
+        func = lambda x: zeros(x.shape) if max(x) < threshold else x
+        return self.applyValues(func, keepDtype=True, keepIndex=True)
+
     def correlate(self, signal, var='s'):
         """
         Correlate series data against one or many one-dimensional arrays

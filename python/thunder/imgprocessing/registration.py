@@ -146,6 +146,16 @@ class RegistrationModel(Serializable, object):
         self.regMethod = regMethod
         self.transClass = transClass
 
+    def toArray(self):
+        """
+        Return transformations as an array with shape (n,x1,x2,...)
+        where n is the number of images, and remaining dimensions depend
+        on the particular transformations
+        """
+        from numpy import asarray
+        collected = [x.toArray() for x in self.transformations.values()]
+        return asarray(collected)
+
     def transform(self, images):
         """
         Apply the transformation to an Images object.
