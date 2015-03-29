@@ -1,5 +1,6 @@
 from numpy import arctan2, sqrt, pi, abs, dstack, clip, transpose, inf, \
-    random, zeros, ones, asarray, corrcoef, allclose, maximum, add, multiply
+    random, zeros, ones, asarray, corrcoef, allclose, maximum, add, multiply, \
+    nan_to_num
 
 
 class Colorize(object):
@@ -43,7 +44,7 @@ class Colorize(object):
         self.vmax = vmax
 
     @staticmethod
-    def show(img, cmap='gray', bar=False):
+    def show(img, cmap='gray', bar=False, nans=True):
         """
         Streamlined display of images using matplotlib.
 
@@ -58,10 +59,16 @@ class Colorize(object):
         cmap : str or Colormap, optional, default = 'gray'
             A colormap to use, for non RGB images
 
+        nans : boolean, optional, deafult = True
+            Whether to replace NaNs, if True, will replace with 0s
+
         """
         from matplotlib.pyplot import imshow, axis, colorbar
 
-        if asarray(img).ndim == 3:
+        if nans is True:
+            img = nan_to_num(asarray(img))
+
+        if img.ndim == 3:
             if bar:
                 raise Exception("Cannot show meaningful colorbar for RGB images")
             if img.shape[2] != 3:
