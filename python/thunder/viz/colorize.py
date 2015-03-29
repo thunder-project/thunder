@@ -42,6 +42,43 @@ class Colorize(object):
         self.vmin = vmin
         self.vmax = vmax
 
+    @staticmethod
+    def show(img, cmap='gray', bar=False):
+        """
+        Streamlined display of images using matplotlib.
+
+        Parameters
+        ----------
+        img : ndarray, 2D or 3D
+            The image to display
+
+        bar : boolean, optional, default = False
+            Whether to append a colorbar
+
+        cmap : str or Colormap, optional, default = 'gray'
+            A colormap to use, for non RGB images
+
+        """
+        from matplotlib.pyplot import imshow, axis, colorbar
+
+        if asarray(img).ndim == 3:
+            if bar:
+                raise Exception("Cannot show meaningful colorbar for RGB images")
+            if img.shape[2] != 3:
+                raise Exception("Size of third dimension must be 3 for RGB images, got %g" % img.shape[2])
+            mn = img.min()
+            mx = img.max()
+            if mn < 0.0 or mx > 1.0:
+                raise Exception("Values must be between 0.0 and 1.0 for RGB images, got range (%g, %g)" % (mn, mx))
+            imshow(img, interpolation='none')
+        else:
+            imshow(img, cmap=cmap, interpolation='none')
+
+        if bar is True:
+            colorbar()
+
+        axis('off')
+
     def transform(self, img, mask=None, background=None):
         """
         Colorize numerical image data.
@@ -220,7 +257,6 @@ class Colorize(object):
         background = Normalize()(background)
 
         return background
-
 
     @classmethod
     def optimize(cls, mat, asCmap=False):
