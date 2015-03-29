@@ -168,6 +168,16 @@ class TestSeriesMethods(PySparkTestCase):
         assert(allclose(standardized.first()[1], array([1, 2]), atol=1e-3))
         assert(allclose(zscored.first()[1], array([-1, -1]), atol=1e-3))
 
+    def test_squelch(self):
+        rdd = self.sc.parallelize([(0, array([1, 2])), (0, array([3, 4]))])
+        data = Series(rdd)
+        squelched = data.squelch(5)
+        assert(allclose(squelched.collectValuesAsArray(), [[0, 0], [0, 0]]))
+        squelched = data.squelch(3)
+        assert(allclose(squelched.collectValuesAsArray(), [[0, 0], [3, 4]]))
+        squelched = data.squelch(1)
+        assert(allclose(squelched.collectValuesAsArray(), [[1, 2], [3, 4]]))
+
     def test_correlate(self):
         rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5], dtype='float16'))])
         data = Series(rdd, dtype='float16')
