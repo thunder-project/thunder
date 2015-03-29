@@ -50,7 +50,7 @@ class Params(object):
         if names is None:
             names = self.names()
         elif not isinstance(names, list):
-            names = [names]
+            names = list(names)
 
         out = []
         for p in self._params:
