@@ -29,6 +29,17 @@ class TestSeriesConversions(PySparkTestCase):
         ts = data.toTimeSeries()
         assert(isinstance(ts, TimeSeries))
 
+    def test_toImages(self):
+        from thunder.rdds.images import Images
+        rdd = self.sc.parallelize([((0, 0), array([1])), ((0, 1), array([2])),
+                                   ((1, 0), array([3])), ((1, 1), array([4]))])
+        data = Series(rdd)
+        imgs = data.toImages()
+        assert(isinstance(imgs, Images))
+
+        im = imgs.values().first()
+        assert(allclose(im, [[1, 2], [3, 4]]))
+
     def test_castToFloat(self):
         from numpy import arange
         shape = (3, 2, 2)
@@ -357,6 +368,7 @@ class TestSeriesMethods(PySparkTestCase):
         result = data.seriesSumByIndex(level=[0, 1])
         assert_true(array_equal(result.values().first(), array([1, 14, 13, 38])))
         assert_true(array_equal(result.index, array([[0,0], [0, 1], [1, 0], [1,1]])))
+
 
 class TestSeriesRegionMeanMethods(PySparkTestCase):
     def setUp(self):

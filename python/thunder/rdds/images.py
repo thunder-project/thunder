@@ -56,15 +56,15 @@ class Images(Data):
 
         Parameters
         ----------
-        size: string memory size, tuple of splits per dimension, or instance of BlockingStrategy
+        size : string memory size, tuple of splits per dimension, or instance of BlockingStrategy
             String interpreted as memory size (e.g. "64M"). Tuple of ints interpreted as
             "pixels per dimension" (default) or "splits per dimension", depending on units.
             Instance of BlockingStrategy can be passed directly.
 
-        units: string, either "pixels" or "splits", default = "pixels"
+        units : string, either "pixels" or "splits", default = "pixels"
             What units to use for a tuple size.
 
-        padding: non-negative integer or tuple of int, optional, default = 0
+        padding : non-negative integer or tuple of int, optional, default = 0
             Will generate blocks with extra `padding` voxels along each dimension.
             Padded voxels will overlap with those in neighboring blocks, but will not be included
             when converting blocks to Series or Images.
@@ -114,7 +114,7 @@ class Images(Data):
 
         Parameters
         ----------
-        size: string memory size
+        size: string memory size, optional, default = "150M"
             String interpreted as memory size (e.g. "64M").
 
         units: string, either "pixels" or "splits", default = "pixels"
@@ -138,7 +138,7 @@ class Images(Data):
 
         Parameters
         ----------
-        size: string memory size
+        size: string memory size, optional, default = "150M"
             String interpreted as memory size (e.g. "64M").
 
         Returns
