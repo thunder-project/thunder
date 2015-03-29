@@ -1,9 +1,12 @@
 from numpy import ndarray, array, sum, mean, median, std, size, arange, percentile,\
-    asarray, maximum, minimum, zeros, corrcoef, where, true_divide, ceil
+    asarray, maximum, minimum, zeros, corrcoef, where, true_divide, ceil,\
+    unique, array_equal, concatenate, squeeze, delete, ravel, logical_not
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
 from thunder.utils.common import loadMatVar
+
+from itertools import product
 
 
 class Series(Data):
@@ -891,6 +894,248 @@ class Series(Data):
         """
         from thunder.rdds.spatialseries import SpatialSeries
         return SpatialSeries(self.rdd).__finalize__(self)
+
+    def _makeMasks(self, index=None, level=0):
+        """
+        Internal function for generating masks for selecting values based on multi-index values.
+    
+        As all other multi-index functions will call this function, basic type-checking is also
+        performed at this stage.
+        """
+
+        if index is None:
+            index = self.index
+        
+        try:
+            dims = len(array(index).shape)
+            if dims == 1:
+                index = array(index, ndmin=2).T
+        except:
+            raise TypeError('For multi-index functionality: index must be convertible to a numpy ndarray')
+
+        try:
+            index = index[:, level]
+        except:
+            raise ValueError("Levels must be indices into individual elements of the index")
+
+        lenIdx = index.shape[0]
+        nlevels = index.shape[1]
+
+        combs = product(*[unique(index.T[i,:]) for i in xrange(nlevels)])
+        combs = array([l for l in combs])
+
+        masks = array([[array_equal(index[i], c) for i in xrange(lenIdx)] for c in combs])
+
+        return zip(*[(masks[x], combs[x]) for x in xrange(len(masks)) if masks[x].any()])
+
+    def _applyByIndex(self, function, level=0):
+        """
+        An internal function for applying a function to groups of values based on a multi-index
+
+        Elements of each record are grouped according to unique value combinations of the multi-
+        index across the given levels of the multi-index. Then the given function is applied
+        to to each of these groups separately. If this function is many-to-one, the result
+        can be recast as a Series indexed by the unique index values used for grouping.
+        """
+
+        if type(level) is int:
+            level = [level]
+
+        masks, ind = self._makeMasks(index=self.index, level=level)
+        bcMasks = self.rdd.ctx.broadcast(masks)
+        nMasks = len(masks)
+        newrdd = self.rdd.mapValues(lambda v: [array(function(v[bcMasks.value[x]])) for x in xrange(nMasks)])
+        index = array(ind)
+        if len(index[0]) == 1:
+            index = ravel(index)
+        return Series(newrdd, index=index).__finalize__(self, noPropagate=('_dtype',))
+
+    def selectByIndex(self, val, level=0, squeeze=False, filter=False):
+        """
+        Select or filter elements of the Series by index values (across levels, if multi-index).
+
+        The index is a property of a Series object that assigns a value to each position within
+        the arrays stored in the records of the Series. This function returns a new Series where,
+        within each record, only the elements indexed by a given value(s) are retained. An index
+        where each value is a list of a fixed length is referred to as a 'multi-index',
+        as it provides multiple labels for each index location. Each of the dimensions in these
+        sublists is a 'level' of the multi-index. If the index of the Series is a multi-index, then
+        the selection can proceed by first selecting one or more levels, and then selecting one
+        or more values at each level.
+
+        Parameters:
+        -----------
+        val: list of lists
+            Specifies the selected index values. List must contain one list for each level of the
+            multi-index used in the selection. For any singleton lists, the list may be replaced
+            with just the integer.
+
+        level: list of ints, optional, default=0
+            Specifies which levels in the multi-index to use when performing selection. If a single
+            level is selected, the list can be replaced with an integer. Must be the same length
+            as val.
+        
+        squeeze: bool, optional, default=False
+            If True, the multi-index of the resulting Series will drop any levels that contain
+            only a single value because of the selection. Useful if indices are used as unique
+            identifiers.
+
+        filter: bool, optional, default=False
+            If True, selection process is reversed and all index values EXCEPT those specified
+            are selected.
+        """
+
+        try:
+            level[0]
+        except:
+            level = [level]
+        try:
+            val[0]
+        except:
+            val = [val]
+        
+        remove = []
+        if len(level) == 1:
+            try:
+                val[0][0]
+            except:
+                val = [val]
+            if squeeze and not filter and len(val) == 1:
+                remove.append(level[0])
+        else:
+            for i in xrange(len(val)):
+                try:
+                    val[i][0]
+                except:
+                    val[i] = [val[i]]
+                if squeeze and not filter and len(val[i]) == 1:
+                    remove.append(level[i])
+                                
+        if len(level) != len(val):
+            raise ValueError("List of levels must be of same length as list of corresponding values")
+
+        p = product(*val)
+        selected = set([x for x in p])
+
+        #TODO: this could be more efficient if _makeMasks also accepted the desired values so that
+        #we not produce ALL possible masks which we must then filter down to the ones we want
+        masks, ind = self._makeMasks(index=self.index, level=level)
+        nmasks = len(masks)
+        masks = array([masks[x] for x in xrange(nmasks) if tuple(ind[x]) in selected])
+
+        finalMask = masks.any(axis=0)
+        if filter:
+            finalMask = logical_not(finalMask)
+        bcMask = self.rdd.ctx.broadcast(finalMask)
+        
+        newrdd = self.rdd.mapValues(lambda v: v[bcMask.value])
+        indFinal = array(self.index)
+        if len(indFinal.shape) == 1:
+            indFinal = array(indFinal, ndmin=2).T
+        indFinal = indFinal[finalMask]
+
+        if squeeze:
+            indFinal = delete(indFinal, remove, axis=1)
+
+        if len(indFinal[0]) == 1:
+            indFinal = ravel(indFinal)
+
+        elif len(indFinal[1]) == 0:
+            indFinal = arange(sum(finalMask))
+
+        return Series(newrdd, index=indFinal).__finalize__(self)
+
+    def seriesAggregateByIndex(self, function, level=0):
+        """
+        Aggregrate the data in each record, grouping by index values (across levels, if multi-index)
+        
+        For each unique value of the index, applies a function to the group of elements of the RDD indexed by that
+        value. Returns an RDD indexed by those unique values. For the result to be a valid Series object, the 
+        aggregating function should return a simple numeric type. Also allows selection of levels within a 
+        multi-index. See selectByIndex doc for more info on indices and multi-indices.
+        
+        Parameters:
+        -----------
+        function: function
+            Aggregating function to apply to Series values. Should take a list or ndarray as input and return
+            a simple numeric value.
+            
+        level: list of ints, optional, default=0
+            Specifies the levels of the multi-index to use when determining unique index values. If only a single
+            level is desired, can be an int.
+        """
+
+        # if we ever demand that Series elements are basic data types, this is the place to check the output
+        # of the aggregating function returns a single value
+
+        return self._applyByIndex(function, level=level).applyValues(lambda v: array(v), keepIndex=True)
+
+    def seriesStatByIndex(self, stat, level=0):
+        """
+        Compute the desired statistic for each uniue index values (across levels, if multi-index)
+
+        Parameters:
+        -----------
+        stat: string 
+            Statistic to be computed: sum, mean, median, stdev, max, min, count
+            
+        level: list of ints, optional, default=0
+            Specifies the levels of the multi-index to use when determining unique index values. If only a single
+            level is desired, can be an int.
+        """
+        STATS = {
+            'sum': sum,
+            'mean': mean,
+            'median': median,
+            'stdev': std,
+            'max': max,
+            'min': min,
+            'count': size
+        }
+        func = STATS[stat.lower()]
+        return self.seriesAggregateByIndex(level=level, function=func)
+
+    def seriesSumByIndex(self, level=0):
+        """
+        Compute sums of series elements for each unique index value (across levels, if multi-index)
+        """
+        return self.seriesStatByIndex(level=level, stat='sum')
+    
+    def seriesMeanByIndex(self, level=0):
+        """
+        Compute means of series elements for each unique index value (across levels, if multi-index)
+        """
+        return self.seriesStatByIndex(level=level, stat='mean')
+
+    def seriesMedianByIndex(self, level=0):
+        """
+        Compute medians of series elements for each unique index value (across levels, if multi-index)
+        """
+        return self.seriesStatByIndex(level=level, stat='median')
+
+    def seriesStdevByIndex(self, level=0):
+        """
+        Compute means of series elements for each unique index value (across levels, if multi-index)
+        """
+        return self.seriesStatByIndex(level=level, stat='stdev')
+
+    def seriesMaxByIndex(self, level=0):
+        """
+        Compute maximum values of series elements for each unique index value (across levels, if multi-index) 
+        """
+        return self.seriesStatByIndex(level=level, stat='max')
+
+    def seriesMinByIndex(self, level=0):
+        """
+        Compute minimum values of series elements for each unique index value (across level, if multi-index)
+        """
+        return self.seriesStatByIndex(level=level, stat='min')
+
+    def seriesCountByIndex(self, level=0):
+        """
+        Count the number of series elements for each unique index value (across levels, if multi-index)
+        """
+        return self.seriesStatByIndex(level=level, stat='count')
 
 
 class _MeanCombiner(object):
