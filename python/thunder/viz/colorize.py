@@ -85,7 +85,7 @@ class Colorize(object):
 
         Input can either be a single array or a list of arrays.
         Depending on the colorization option, each array must either be
-        2 or 3 dimensional, see parameters.
+        2 or 3 dimensional, see parameters for details.
 
         Parameters
         ----------
@@ -149,10 +149,10 @@ class Colorize(object):
                 saturation = ones((dims[1], dims[2]))
                 out = zeros((dims[1], dims[2], dims[3], 3))
                 for i in range(0, dims[3]):
-                    out[:, :, i, :] = hsv_to_rgb(dstack((theta[:, :, i], saturation, self.scale*rho[:, :, i])))
+                    out[:, :, i, :] = hsv_to_rgb(dstack((theta[:, :, i], saturation, self.scale * rho[:, :, i])))
             if img.ndim == 3:
                 saturation = ones((dims[1], dims[2]))
-                out = hsv_to_rgb(dstack((theta, saturation, self.scale*rho)))
+                out = hsv_to_rgb(dstack((theta, saturation, self.scale * rho)))
 
         elif self.cmap == 'indexed':
             if img.ndim == 4:
