@@ -27,9 +27,6 @@ class NMF(object):
     h0 : non-negative k x ncols array, optional
         Value at which H is initialized
 
-    w0 : RDD of nrows (tuple, array) pairs, each array of shape (k,), optional, default = None
-        Value at which W is initialized
-
     wHist : Bool, optional, default = False
         If true, keep track of convergence of w at each iteration
 
@@ -95,7 +92,7 @@ class NMF(object):
         self : returns an instance of self.
         """
 
-        from numpy import add, any, diag, dot, inf, maximum, outer, sqrt
+        from numpy import add, any, diag, dot, inf, maximum, outer, sqrt, apply_along_axis
         from numpy.linalg import inv, norm, pinv
         from numpy.random import rand
 
@@ -167,7 +164,7 @@ class NMF(object):
 
                 # normalize the rows of H
                 # noinspection PyUnresolvedReferences
-                h = dot(diag(1 / maximum(norm(h, axis=1), 0.001)), h)
+                h = dot(diag(1 / maximum(apply_along_axis(norm, 1, h), 0.001)), h)
 
                 # estimate convergence
                 hConvCurr = norm(h-hOld)

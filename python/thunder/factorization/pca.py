@@ -60,7 +60,7 @@ class PCA(object):
         if type(data) is not RowMatrix:
             data = data.toRowMatrix()
 
-        mat = data.center(0)
+        mat = data.center(1)
 
         svd = SVD(k=self.k, method=self.svdMethod)
         svd.calc(mat)
@@ -94,6 +94,6 @@ class PCA(object):
         if type(data) is not RowMatrix:
             data = RowMatrix(data)
 
-        mat = data.center(0)
+        mat = data.center(1)
         scores = mat.times(self.comps.T / self.latent)
         return scores

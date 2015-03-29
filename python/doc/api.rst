@@ -3,7 +3,7 @@
 API Reference
 =============
 
-Loading
+Context
 -------
 
 .. currentmodule:: thunder
@@ -97,17 +97,6 @@ Visualization
 	:template: class.rst
 
 	Colorize
-
-Utilities
--------------
-
-.. currentmodule:: thunder
-
-.. autosummary::
-	:toctree: generated/
-	:template: function.rst
-
-	export
 
 
 	

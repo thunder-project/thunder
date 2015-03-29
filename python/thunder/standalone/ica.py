@@ -3,7 +3,7 @@ Example standalone app for independent component analysis
 """
 
 import optparse
-from thunder import ThunderContext, ICA, export
+from thunder import ThunderContext, ICA
 
 
 if __name__ == "__main__":
@@ -27,9 +27,9 @@ if __name__ == "__main__":
     tsc = ThunderContext.start(appName="ica")
 
     data = tsc.loadSeries(datafile).cache()
-    model = ICA(k=k, c=c, svdmethod=opts.svdmethod, maxiter=opts.maxiter, tol=opts.tol, seed=opts.seed)
+    model = ICA(k=k, c=c, svdMethod=opts.svdmethod, maxIter=opts.maxiter, tol=opts.tol, seed=opts.seed)
     result = model.fit(data)
 
     outputdir += "-ica"
-    export(result.a, outputdir, "a", "matlab")
-    export(result.sigs, outputdir, "sigs", "matlab")
+    tsc.export(result.a, outputdir, "a", "matlab")
+    tsc.export(result.sigs, outputdir, "sigs", "matlab")

@@ -22,11 +22,21 @@ class Params(object):
     def __init__(self, params):
         if isinstance(params, dict):
             params = [params]
-        self.params = params
+        self._params = params
+
+    def __getitem__(self, names=None):
+        return self.values(names)
+
+    def __repr__(self):
+        s = self.__class__.__name__ + '\n'
+        s += 'names: ' + str(self.names())
+        return s
 
     def names(self):
-        """ List the names of all parameters. """
-        return [p['name'].encode('ascii') for p in self.params]
+        """
+        List the names of all parameters.
+        """
+        return [p['name'].encode('ascii') for p in self._params]
 
     def values(self, names=None):
         """
@@ -43,7 +53,7 @@ class Params(object):
             names = [names]
 
         out = []
-        for p in self.params:
+        for p in self._params:
             if p['name'] in names:
                 out.append(p['value'])
 

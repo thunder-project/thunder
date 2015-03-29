@@ -1,9 +1,11 @@
 """Provides ImagesLoader object and helpers, used to read Images data from disk or other filesystems.
 """
-from matplotlib.pyplot import imread
 from io import BytesIO
-from numpy import array, dstack, frombuffer, ndarray, prod, transpose
-from thunder.rdds.fileio.readers import getParallelReaderForPath
+import json
+from matplotlib.pyplot import imread
+from numpy import array, dstack, frombuffer, ndarray, prod
+
+from thunder.rdds.fileio.readers import getParallelReaderForPath, getFileReaderForPath, FileNotFoundError
 from thunder.rdds.images import Images
 
 
@@ -49,8 +51,8 @@ class ImagesLoader(object):
         return Images(self.sc.parallelize(enumerate(arrays), npartitions),
                       dims=shape, dtype=str(dtype), nrecords=narrays)
 
-    def fromStack(self, dataPath, dims, dtype='int16', ext='stack', startIdx=None, stopIdx=None, recursive=False,
-                  nplanes=None, npartitions=None):
+    def fromStack(self, dataPath, dims=None, dtype=None, ext='stack', startIdx=None, stopIdx=None, recursive=False,
+                  nplanes=None, npartitions=None, confFilename='conf.json'):
         """Load an Images object stored in a directory of flat binary files
 
         The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
@@ -92,8 +94,23 @@ class ImagesLoader(object):
             If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
             partition per image file.
         """
+        reader = getFileReaderForPath(dataPath)(awsCredentialsOverride=self.awsCredentialsOverride)
+        try:
+            jsonBuf = reader.read(dataPath, filename=confFilename)
+            params = json.loads(jsonBuf)
+        except FileNotFoundError:
+            params = {}
+
+        if 'dtype' in params.keys():
+            dtype = params['dtype']
+        if 'dims' in params.keys():
+            dims = params['dims']
+
         if not dims:
-            raise ValueError("Image dimensions must be specified if loading from binary stack data")
+            raise ValueError("Image dimensions must be specified either as argument or in a conf.json file")
+
+        if not dtype:
+            dtype = 'int16'
 
         if nplanes is not None:
             if nplanes <= 0:
@@ -298,3 +315,24 @@ class ImagesLoader(object):
         readerRdd = reader.read(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                 npartitions=npartitions)
         return Images(readerRdd.mapValues(readPngFromBuf), nrecords=reader.lastNRecs)
+
+
+def writeBinaryImagesConfig(outputDirPath, dims, dtype='int16',
+                            confFilename="conf.json", overwrite=True, awsCredentialsOverride=None):
+    """
+    Helper function to write out a conf.json file with required information to load binary Image data.
+    """
+    from thunder.rdds.fileio.writers import getFileWriterForPath
+
+    filewriterClass = getFileWriterForPath(outputDirPath)
+
+    # write configuration file
+    conf = {'dims': dims, 'dtype': dtype}
+    confWriter = filewriterClass(outputDirPath, confFilename, overwrite=overwrite,
+                                 awsCredentialsOverride=awsCredentialsOverride)
+    confWriter.writeFile(json.dumps(conf, indent=2))
+
+    # touch "SUCCESS" file as final action
+    successWriter = filewriterClass(outputDirPath, "SUCCESS", overwrite=overwrite,
+                                    awsCredentialsOverride=awsCredentialsOverride)
+    successWriter.writeFile('')

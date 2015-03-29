@@ -1,0 +1,7 @@
+{
+  "input": "/tier2/freeman/Freeman/svoboda.lab/tactile.navigation/1/series-downsampled/", 
+  "valuetype": "int16", 
+  "nvalues": 500, 
+  "keytype": "int16", 
+  "nkeys": 2
+}

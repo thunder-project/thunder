@@ -3,7 +3,7 @@ Example standalone app for kmeans clustering
 """
 
 import optparse
-from thunder import ThunderContext, KMeans, export
+from thunder import ThunderContext, KMeans
 
 if __name__ == "__main__":
     parser = optparse.OptionParser(description="do kmeans clustering",
@@ -26,5 +26,5 @@ if __name__ == "__main__":
     labels = model.predict(data)
 
     outputdir += "-kmeans"
-    export(model.centers, outputdir, "centers", "matlab")
-    export(labels, outputdir, "labels", "matlab")
+    tsc.export(model.centers, outputdir, "centers", "matlab")
+    tsc.export(labels, outputdir, "labels", "matlab")
