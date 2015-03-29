@@ -49,8 +49,10 @@ class Params(object):
         """
         if names is None:
             names = self.names()
-        elif not isinstance(names, list):
+        elif isinstance(names, basestring):
             names = [names]
+        elif not isinstance(names, list):
+            names = list(names)
 
         out = []
         for p in self._params:
