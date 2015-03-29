@@ -7,6 +7,8 @@ import itertools
 from nose.tools import assert_equals, assert_raises, assert_true
 import unittest
 
+from thunder.rdds.series import Series
+from thunder.rdds.timeseries import TimeSeries
 from thunder.rdds.fileio.imagesloader import ImagesLoader
 from thunder.rdds.fileio.seriesloader import SeriesLoader
 from thunder.rdds.imgblocks.strategy import PaddedBlockingStrategy, SimpleBlockingStrategy
@@ -61,6 +63,26 @@ class TestImages(PySparkTestCase):
         series = imageData.toBlocks((4, 1, 1), units="s").toSeries().collect()
 
         self.evaluateSeries(arys, series, sz)
+
+    def test_toSeriesDirect(self):
+        # create 3 arrays of 4x3x3 images (C-order), containing sequential integers
+        narys = 3
+        arys, sh, sz = _generateTestArrays(narys)
+
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
+        series = imageData.toSeries()
+
+        assert(isinstance(series, Series))
+
+    def test_toTimeSeries(self):
+        # create 3 arrays of 4x3x3 images (C-order), containing sequential integers
+        narys = 3
+        arys, sh, sz = _generateTestArrays(narys)
+
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
+        series = imageData.toTimeSeries()
+
+        assert(isinstance(series, TimeSeries))
 
     def test_toSeriesWithPack(self):
         ary = arange(8, dtype=dtypeFunc('int16')).reshape((2, 4))
