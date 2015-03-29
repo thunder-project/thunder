@@ -29,6 +29,7 @@ import os
 import random
 import subprocess
 import time
+from termcolor import colored
 from distutils.version import LooseVersion
 from sys import stderr
 from optparse import OptionParser
@@ -44,6 +45,39 @@ from thunder import __version__ as THUNDER_VERSION
 
 
 MINIMUM_SPARK_VERSION = "1.1.0"
+
+EXTRA_SSH_OPTS = ['-o', 'UserKnownHostsFile=/dev/null',
+                  '-o', 'CheckHostIP=no',
+                  '-o', 'LogLevel=quiet']
+
+
+def print_status(msg):
+    print("    [" + msg + "]")
+
+
+def print_success(msg="success"):
+    print("    [" + colored(msg, 'green') + "]")
+
+
+def print_error(msg="failed"):
+    print("    [" + colored(msg, 'red') + "]")
+
+
+class quiet(object):
+    """ Minmize stdout and stderr from external processes """
+    def __init__(self):
+        self.null_fds = [os.open(os.devnull, os.O_RDWR) for x in range(2)]
+        self.save_fds = (os.dup(1), os.dup(2))
+
+    def __enter__(self):
+        os.dup2(self.null_fds[0], 1)
+        os.dup2(self.null_fds[1], 2)
+
+    def __exit__(self, *_):
+        os.dup2(self.save_fds[0], 1)
+        os.dup2(self.save_fds[1], 2)
+        os.close(self.null_fds[0])
+        os.close(self.null_fds[1])
 
 
 def get_s3_keys():
@@ -117,7 +151,7 @@ def remap_spark_version_to_hash(user_version_string):
 
 def install_thunder(master, opts, spark_version_string):
     """ Install Thunder and dependencies on a Spark EC2 cluster """
-    print "Installing Thunder on the cluster..."
+    print_status("Installing Thunder")
 
     # download thunder
     ssh(master, opts, "rm -rf thunder && git clone https://github.com/freeman-lab/thunder.git")
@@ -188,16 +222,12 @@ def install_thunder(master, opts, spark_version_string):
     ssh(master, opts, "printf '"+credentialsfilled+"' > /root/.boto")
     ssh(master, opts, "pscp.pssh -h /root/spark-ec2/slaves /root/.boto /root/.boto")
 
-    print "\n\n"
-    print "-------------------------------"
-    print "Thunder successfully installed!"
-    print "-------------------------------"
-    print "\n"
+    print_success()
 
 
 def configure_spark(master, opts):
     """ Configure Spark with useful settings for running Thunder """
-    print "Configuring Spark for Thunder usage..."
+    print_status("Configuring Spark for Thunder")
 
     # customize spark configuration parameters
     ssh(master, opts, "echo 'spark.akka.frameSize=2047' >> /root/spark/conf/spark-defaults.conf")
@@ -220,11 +250,7 @@ def configure_spark(master, opts):
     ssh(master, opts, "echo 'httpclient.requester-pays-buckets-enabled = true' >> /root/spark/conf/jets3t.properties")
     ssh(master, opts, "~/spark-ec2/copy-dir /root/spark/conf")
 
-    print "\n\n"
-    print "------------------------------"
-    print "Spark successfully configured!"
-    print "------------------------------"
-    print "\n"
+    print_success()
 
 
 # This is a customized version of the spark_ec2 ssh() function that
@@ -233,8 +259,8 @@ def configure_spark(master, opts):
 # start/stop a cluster.  Lame to have to copy all this code over, but
 # this seemed the simplest way to add this necessary functionality.
 def ssh_args(opts):
-    parts = ['-o', 'StrictHostKeyChecking=no',
-             '-o', 'UserKnownHostsFile=/dev/null']  # Never store EC2 IPs in known hosts...
+    parts = ['-o', 'StrictHostKeyChecking=no'] + EXTRA_SSH_OPTS
+    # Never store EC2 IPs in known hosts...
     if opts.identity_file is not None:
         parts += ['-i', opts.identity_file]
     return parts
@@ -246,25 +272,20 @@ def ssh_command(opts):
 
 def ssh(host, opts, command):
     tries = 0
+    cmd = ssh_command(opts) + ['-t', '-t', '%s@%s' % (opts.user, host), stringify_command(command)]
     while True:
-        try:
-            return subprocess.check_call(
-                ssh_command(opts) + ['-t', '-t', '%s@%s' % (opts.user, host),
-                                     stringify_command(command)])
-        except subprocess.CalledProcessError as e:
-            if tries > 5:
-                # If this was an ssh failure, provide the user with hints.
-                if e.returncode == 255:
-                    raise IOError(
-                        "Failed to SSH to remote host {0}.\n" +
-                        "Please check that you have provided the correct --identity-file and " +
-                        "--key-pair parameters and try again.".format(host))
-                else:
-                    raise e
-            print >> stderr, \
-                "Error executing remote command, retrying after 30 seconds: {0}".format(e)
-            time.sleep(30)
-            tries = tries + 1
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        stdout = process.communicate()[0]
+        code = process.returncode
+        if code != 0:
+            if tries > 2:
+                print_error("SSH failure, returning error")
+                raise Exception(stdout)
+            else:
+                time.sleep(3)
+                tries += 1
+        else:
+            return
 
 
 def setup_cluster(conn, master_nodes, slave_nodes, opts, deploy_ssh_key):
@@ -274,18 +295,21 @@ def setup_cluster(conn, master_nodes, slave_nodes, opts, deploy_ssh_key):
     """
     master = master_nodes[0].public_dns_name
     if deploy_ssh_key:
-        print "Generating cluster's SSH key on master..."
+        print_status("Generating cluster's SSH key on master")
         key_setup = """
       [ -f ~/.ssh/id_rsa ] ||
         (ssh-keygen -q -t rsa -N '' -f ~/.ssh/id_rsa &&
          cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys)
         """
         ssh(master, opts, key_setup)
-        dot_ssh_tar = ssh_read(master, opts, ['tar', 'c', '.ssh'])
-        print "Transferring cluster's SSH key to slaves..."
-        for slave in slave_nodes:
-            print slave.public_dns_name
-            ssh_write(slave.public_dns_name, opts, ['tar', 'x'], dot_ssh_tar)
+        print_success()
+        with quiet():
+            dot_ssh_tar = ssh_read(master, opts, ['tar', 'c', '.ssh'])
+        print_status("Transferring cluster's SSH key to slaves")
+        with quiet():
+            for slave in slave_nodes:
+                ssh_write(slave.public_dns_name, opts, ['tar', 'x'], dot_ssh_tar)
+        print_success()
 
     modules = ['spark', 'shark', 'ephemeral-hdfs', 'persistent-hdfs',
                'mapreduce', 'spark-standalone', 'tachyon']
@@ -304,13 +328,15 @@ def setup_cluster(conn, master_nodes, slave_nodes, opts, deploy_ssh_key):
         ssh(master, opts, "rm -rf spark-ec2 && git clone https://github.com/mesos/spark-ec2.git "
                           "-b v4")
 
-    print "Deploying files to master..."
+    print_status("Deploying files to master")
     deploy_folder = os.path.join(os.environ['SPARK_HOME'], "ec2", "deploy.generic")
-    deploy_files(conn, deploy_folder, opts, master_nodes, slave_nodes, modules)
+    with quiet():
+        deploy_files(conn, deploy_folder, opts, master_nodes, slave_nodes, modules)
+    print_success()
 
-    print "Running setup on master..."
+    print_status("Installing Spark (may take several minutes)")
     setup_spark_cluster(master, opts)
-    print "Done!"
+    print_success()
 
 
 if __name__ == "__main__":
@@ -462,16 +488,19 @@ if __name__ == "__main__":
             else:
                 wait_for_cluster_state(cluster_instances=(master_nodes + slave_nodes),
                                        cluster_state='ssh-ready', opts=opts)
+        print("")
         setup_cluster(conn, master_nodes, slave_nodes, opts, True)
         master = master_nodes[0].public_dns_name
         install_thunder(master, opts, spark_version_string)
         configure_spark(master, opts)
-        print "\n\n"
-        print "-------------------------------"
-        print "Cluster successfully launched!"
-        print "Go to http://%s:8080 to see the web UI for your cluster" % master
-        print "-------------------------------"
-        print "\n"
+
+        print("")
+        print("Cluster successfully launched!")
+        print("")
+        print("Go to " + colored("http://%s:8080" % master, 'blue') + " to see the web UI for your cluster")
+        if opts.ganglia:
+            print("Go to " + colored("http://%s:5080/ganglia" % master, 'blue') + " to view ganglia monitor")
+        print("")
 
     if action != "launch":
         conn = ec2.connect_to_region(opts.region)
@@ -498,7 +527,7 @@ if __name__ == "__main__":
                 print ("\nSSH port forwarding requested.  Remote port " + ssh_ports[1] +
                        " will be accessible at http://localhost:" + ssh_ports[0] + '\n')
                 try:
-                    subprocess.check_call(ssh_command(opts) + proxy_opt +
+                    subprocess.check_call(ssh_command(opts) + proxy_opt + EXTRA_SSH_OPTS +
                                           ['-L', ssh_ports[0] +
                                            ':127.0.0.1:' + ssh_ports[1],
                                            '-o', 'ExitOnForwardFailure=yes',
@@ -510,8 +539,9 @@ if __name__ == "__main__":
                     sys.exit(1)
 
             else:
-                subprocess.check_call(ssh_command(opts) + proxy_opt +
-                                      ['-t', '-t', "%s@%s" % (opts.user, master)])
+                subprocess.check_call(ssh_command(opts) + proxy_opt + EXTRA_SSH_OPTS +
+                                      ['-t', '-t',
+                                       "%s@%s" % (opts.user, master)])
 
         elif action == "reboot-slaves":
             response = raw_input(
@@ -581,15 +611,14 @@ if __name__ == "__main__":
                 else:
                     wait_for_cluster_state(cluster_instances=(master_nodes + slave_nodes),
                                            cluster_state='ssh-ready', opts=opts)
+            print("")
             setup_cluster(conn, master_nodes, slave_nodes, opts, False)
             master = master_nodes[0].public_dns_name
             configure_spark(master, opts)
-            print "\n\n"
-            print "-------------------------------"
-            print "Cluster successfully re-started!"
-            print "Go to http://%s:8080 to see the web UI for your cluster" % master
-            print "-------------------------------"
-            print "\n"
+            print("")
+            print("Cluster successfully restarted!")
+            print("Go to " + colored("http://%s:8080" % master, 'blue') + " to see the web UI for your cluster")
+            print("")
 
         # Destroy the cluster
         elif action == "destroy":
