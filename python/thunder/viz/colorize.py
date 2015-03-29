@@ -86,7 +86,7 @@ class Colorize(object):
 
         axis('off')
 
-    def transform(self, img, mask=None, background=None):
+    def transform(self, img, mask=None, background=None, mixing=1.0):
         """
         Colorize numerical image data.
 
@@ -111,6 +111,10 @@ class Colorize(object):
             An additional image to display as a grayscale background.
             Must be of shape (x, y, z) or (x, y), and must match dimensions of images.
 
+        mixing : scalar
+            If adding a background image, mixing controls the relative scale.
+            Values larger than 1.0 will emphasize the background more.
+
         Returns
         -------
         Arrays with RGB values, with shape (x, y, z, 3) or (x, y, 3)
@@ -132,7 +136,7 @@ class Colorize(object):
             self._checkMixedDims(mask.shape, dims)
 
         if background is not None:
-            background = self._prepareMask(background)
+            background = self._prepareBackground(background, mixing)
             self._checkMixedDims(background.shape, dims)
 
         if self.cmap == 'rgb':
@@ -264,17 +268,17 @@ class Colorize(object):
         mask = asarray(mask)
         mask = clip(mask, 0, inf)
 
-        return mask
+        return mask / mask.max()
 
     @staticmethod
-    def _prepareBackground(background):
+    def _prepareBackground(background, mixing):
 
         from matplotlib.colors import Normalize
 
         background = asarray(background)
         background = Normalize()(background)
 
-        return background
+        return background * mixing
 
     @classmethod
     def optimize(cls, mat, asCmap=False):
