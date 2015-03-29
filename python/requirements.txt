@@ -5,3 +5,4 @@ scikit-learn
 matplotlib
 nose
 rednose
+termcolor
