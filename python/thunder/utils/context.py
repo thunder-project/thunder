@@ -98,6 +98,8 @@ class ThunderContext():
     def loadImages(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16', startIdx=None,
                    stopIdx=None, recursive=False, nplanes=None, npartitions=None, renumber=False):
         """
+        Loads an Images object from data stored as a binary image stack, tif, or png files.
+
         Supports single files or multiple files, stored on a local file system, a networked file sytem
         (mounted and available on all nodes), or Amazon S3. HDFS is not currently supported for image file data.
 
@@ -208,7 +210,10 @@ class ThunderContext():
     def loadImagesOCP(self, bucketName, resolution, serverName='ocp.me', startIdx=None, stopIdx=None,
                       minBound=None, maxBound=None):
         """
-        Load Images from OCP
+        Load Images from OCP.
+
+        OCP is the openconnectome project, a web service for access to EM brain images, automated annotations
+        and neural graphs. This web-service can be accessed at http://www.openconnectomeproject.org/.
         
         Parameters
         ----------
@@ -216,7 +221,7 @@ class ThunderContext():
             Token name for the project in OCP. This token name should exist on the server you are reading the data from.
         
         serverName: string. optional.
-            Name of the server in OCP which has the corresponding token. By default  this is always ocp.me but if
+            Name of the server in OCP which has the corresponding token. By default this is always ocp.me but if
             you have an alternate server, you can set it here.
         
         startIdx: nonnegative int, optional
