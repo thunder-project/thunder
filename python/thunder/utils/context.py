@@ -183,6 +183,10 @@ class ThunderContext():
         from thunder.rdds.fileio.imagesloader import ImagesLoader
         loader = ImagesLoader(self._sc)
 
+        # Checking StartIdx is smaller or equal to StopIdx
+        if startIdx is not None and stopIdx is not None and startIdx > stopIdx:
+            raise Exception("Error. startIdx {} is larger than stopIdx {}".format(startIdx, stopIdx))
+
         if not ext:
             ext = DEFAULT_EXTENSIONS.get(inputFormat.lower(), None)
 
@@ -196,13 +200,65 @@ class ThunderContext():
         else:
             if nplanes:
                 raise NotImplementedError("nplanes argument is not supported for png files")
-            data = loader.fromPng(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
-                                  recursive=recursive, npartitions=npartitions)
+            data = loader.fromPng(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
+                                  npartitions=npartitions)
 
         if not renumber:
             return data
         else:
             return data.renumber()
+
+    def loadImagesOCP(self, bucketName, resolution, serverName='ocp.me', startIdx=None, stopIdx=None,
+                      minBound=None, maxBound=None):
+        """
+        Load Images from OCP.
+
+        OCP is the openconnectome project, a web service for access to EM brain images, automated annotations
+        and neural graphs. This web-service can be accessed at http://www.openconnectomeproject.org/.
+        
+        Parameters
+        ----------
+        bucketName: string
+            Token name for the project in OCP. This token name should exist on the server you are reading the data from.
+        
+        serverName: string. optional.
+            Name of the server in OCP which has the corresponding token. By default this is always ocp.me but if
+            you have an alternate server, you can set it here.
+        
+        startIdx: nonnegative int, optional
+            startIdx and stopIdx are convenience parameters to allow only a subset of timeseries data to be read.
+            These parameters give the starting time (inclusive) and final time (exclusive) of the data files to
+            be read from OCP. For example, startIdx=None (the default) and stopIdx=10 will cause only the first
+            10 data files in dataPath to be read n; startIdx=2 and stopIdx=3 will cause only the third file
+            (zero-based index of 2) to be read in.
+
+        stopIdx: nonnegative int, optional
+            See startIdx.
+        
+        minBound, maxBound: tuple of nonnegative int. optional.
+            X,Y,Z bounds of the data you want to fetch from OCP. minBound contains   the (xMin,yMin,zMin) while
+            maxBound contains (xMax,yMax,zMax)
+
+        resolution: nonnegative int
+            Resolution of the data in OCP
+        
+        Returns
+        -------
+        data: thunder.rdds.Images
+            A newly-created Images object, wrapping an RDD of <int index, numpy array> key-value pairs.
+        """
+      
+        from thunder.rdds.fileio.imagesloader import ImagesLoader
+        loader = ImagesLoader(self._sc)
+        
+        # Checking StartIdx is smaller or equal to StopIdx
+        if startIdx is not None and stopIdx is not None and startIdx > stopIdx:
+            raise Exception("Error. startIdx {} is larger than stopIdx {}".format(startIdx, stopIdx))
+        data = loader.fromOCP(bucketName, resolution=resolution, serverName=serverName, startIdx=startIdx,
+                              stopIdx=stopIdx, minBound=minBound, maxBound=maxBound)
+
+        return data
+
 
     def loadImagesAsSeries(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
                            blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,
