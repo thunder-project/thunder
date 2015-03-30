@@ -1,4 +1,5 @@
 """ Transformations produced by registration methods """
+from numpy import asarray
 from thunder.utils.serializable import Serializable
 
 
@@ -24,6 +25,12 @@ class Displacement(Transformation, Serializable):
 
     def __init__(self, delta=None):
         self.delta = delta
+
+    def toArray(self):
+        """
+        Return transformation as an array
+        """
+        return asarray(self.delta)
 
     def apply(self, im):
         """
@@ -57,6 +64,12 @@ class PlanarDisplacement(Transformation, Serializable):
 
     def __init__(self, delta=None):
         self.delta = delta
+
+    def toArray(self):
+        """
+        Return transformation as an array
+        """
+        return asarray(self.delta)
 
     def apply(self, im):
         """

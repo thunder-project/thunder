@@ -89,7 +89,7 @@ If this is the first time you are logging in, you must run a script that configu
 
 .. code-block:: bash
 
-	setup-notebook
+	setup-notebook-ec2
 	source /root/.bash_profile
 
 During the script you will be asked to enter a password. Rememember what you give, as we'll need it again soon. At the end of the configuration you'll see the message ``iPython notebook successfully set up!`` followed by a link to a URL. If you now type:
@@ -117,7 +117,7 @@ If this is the first time you are logging in to your cluster, you must run a scr
 
 .. code-block:: bash
 
-	setup-notebook-sshtunnel
+	setup-notebook-ec2-sshtunnel
 
 Once you have done this, you are ready to run thunder!
 

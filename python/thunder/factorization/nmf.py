@@ -27,9 +27,6 @@ class NMF(object):
     h0 : non-negative k x ncols array, optional
         Value at which H is initialized
 
-    w0 : RDD of nrows (tuple, array) pairs, each array of shape (k,), optional, default = None
-        Value at which W is initialized
-
     wHist : Bool, optional, default = False
         If true, keep track of convergence of w at each iteration
 

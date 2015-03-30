@@ -7,6 +7,8 @@ import itertools
 from nose.tools import assert_equals, assert_raises, assert_true
 import unittest
 
+from thunder.rdds.series import Series
+from thunder.rdds.timeseries import TimeSeries
 from thunder.rdds.fileio.imagesloader import ImagesLoader
 from thunder.rdds.fileio.seriesloader import SeriesLoader
 from thunder.rdds.imgblocks.strategy import PaddedBlockingStrategy, SimpleBlockingStrategy
@@ -61,6 +63,26 @@ class TestImages(PySparkTestCase):
         series = imageData.toBlocks((4, 1, 1), units="s").toSeries().collect()
 
         self.evaluateSeries(arys, series, sz)
+
+    def test_toSeriesDirect(self):
+        # create 3 arrays of 4x3x3 images (C-order), containing sequential integers
+        narys = 3
+        arys, sh, sz = _generateTestArrays(narys)
+
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
+        series = imageData.toSeries()
+
+        assert(isinstance(series, Series))
+
+    def test_toTimeSeries(self):
+        # create 3 arrays of 4x3x3 images (C-order), containing sequential integers
+        narys = 3
+        arys, sh, sz = _generateTestArrays(narys)
+
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
+        series = imageData.toTimeSeries()
+
+        assert(isinstance(series, TimeSeries))
 
     def test_toSeriesWithPack(self):
         ary = arange(8, dtype=dtypeFunc('int16')).reshape((2, 4))
@@ -240,7 +262,7 @@ class TestImages(PySparkTestCase):
             self.evaluateSeries(arys, series, sz)
 
     def _run_tst_roundtripThroughBlocks(self, strategy):
-        imagepath = findSourceTreeDir("utils/data/fish/tif-stack")
+        imagepath = findSourceTreeDir("utils/data/fish/images")
         images = ImagesLoader(self.sc).fromTif(imagepath)
         blockedimages = images.toBlocks(strategy)
         recombinedimages = blockedimages.toImages()
@@ -532,7 +554,7 @@ class TestImagesMeanByRegions(PySparkTestCase):
         assert_equals(16, collected[1][1].flat[1])
 
     def test_meanWithSingleRegionIndices(self):
-        indices = [[(0, 0), (0, 1)]]  # one region with two indices
+        indices = [[(1, 1), (0, 0)]]  # one region with two indices
         regionMeanImages = self.images.meanByRegions(indices)
         self.__checkAttrPropagation(regionMeanImages, (1, 1))
         collected = regionMeanImages.collect()
@@ -542,8 +564,8 @@ class TestImagesMeanByRegions(PySparkTestCase):
         assert_equals(0, collected[0][0])
         assert_equals(1, collected[1][0])
         # check values
-        assert_equals(4, collected[0][1][0])
-        assert_equals(14, collected[1][1][0])
+        assert_equals(5, collected[0][1][0])
+        assert_equals(15, collected[1][1][0])
 
     def test_meanWithMultipleRegionIndices(self):
         indices = [[(0, 0), (0, 1)], [(0, 1), (1, 0)]]  # two regions with two indices each
@@ -573,6 +595,18 @@ class TestImagesMeanByRegions(PySparkTestCase):
 
         indices = [[(0, 0), (0, 1, 0)]]  # too many indices
         assert_raises(ValueError, self.images.meanByRegions, indices)
+
+    def test_meanWithSingleRegionIndices3D(self):
+        ary1 = array([[[3, 5, 3], [6, 8, 6]], [[3, 5, 3], [6, 8, 6]]], dtype='int32')
+        ary2 = array([[[13, 15, 13], [16, 18, 16]], [[13, 15, 13], [16, 18, 16]]], dtype='int32')
+        images = ImagesLoader(self.sc).fromArrays([ary1, ary2])
+        indices = [[(1, 1, 1), (0, 0, 0)]]  # one region with two indices
+        regionMeanImages = images.meanByRegions(indices)
+        self.__checkAttrPropagation(regionMeanImages, (1, 1))
+        collected = regionMeanImages.collect()
+        # check values
+        assert_equals(5, collected[0][1][0])
+        assert_equals(15, collected[1][1][0])
 
 
 class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
@@ -677,7 +711,7 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
         assert_true(array_equal(series_ary, converted_series_ary))
 
     def test_roundtripConvertToSeries(self):
-        imagepath = findSourceTreeDir("utils/data/fish/tif-stack")
+        imagepath = findSourceTreeDir("utils/data/fish/images")
 
         images = ImagesLoader(self.sc).fromTif(imagepath)
         strategy = SimpleBlockingStrategy.generateFromBlockSize(images, blockSize=76 * 20)
@@ -714,6 +748,36 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
         # check that packing returns transpose of original array
         assert_true(array_equal(ary.T, seriesAry))
+
+    def test_saveAsBinaryImages(self):
+        narys = 3
+        arys, aryShape, _ = _generateTestArrays(narys)
+
+        outdir = os.path.join(self.outputdir, "binary-images")
+
+        images = ImagesLoader(self.sc).fromArrays(arys)
+        images.saveAsBinaryImages(outdir)
+
+        outFilenames = sorted(glob.glob(os.path.join(outdir, "*.bin")))
+        trueFilenames = map(lambda f: os.path.join(outdir, f),
+                            ['export-00000.bin', 'export-00001.bin', 'export-00002.bin'])
+        assert_true(os.path.isfile(os.path.join(outdir, 'SUCCESS')))
+        assert_true(os.path.isfile(os.path.join(outdir, "conf.json")))
+        assert_equals(outFilenames, trueFilenames)
+
+    def test_saveAsBinaryImagesRoundtrip(self):
+
+        def roundTrip(images, dtype):
+            outdir = os.path.join(self.outputdir, "binary-images-" + dtype)
+            images.astype(dtype).saveAsBinaryImages(outdir)
+            newimages = ImagesLoader(self.sc).fromStack(outdir, ext='bin')
+            array_equal(images.first()[1], newimages.first()[1])
+
+        narys = 3
+        arys, aryShape, _ = _generateTestArrays(narys)
+        images = ImagesLoader(self.sc).fromArrays(arys)
+
+        map(lambda d: roundTrip(images, d), ['int16', 'int32', 'float64'])
 
 if __name__ == "__main__":
     if not _have_image:

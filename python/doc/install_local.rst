@@ -57,20 +57,22 @@ Along with Spark, Thunder depends on these Python libraries (by installing using
 
 We recommend using the `Anaconda distribution <https://store.continuum.io/cshop/anaconda/>`_, which includes these dependencies (and many other useful packages). Especially if you aren't already using Python for scientific computing, it's a great way to start. 
 
-iPython
+IPython
 ~~~~~~~
-Spark and Thunder work well alongside iPython and the iPython notebook. To use iPython, just set an environmental variable
+Spark and Thunder work very well alongside IPython and the IPython notebook. When calling `thunder`, adding the flag ``-i`` will launch using IPython, and the flag ``-n`` will launch in an IPython notebook.
+
+You can also use environmental variables to make these options more permanent. If you set
 
 .. code-block:: bash
 
 	export IPYTHON=1
 
-When you type ``thunder`` it will start in iPython. If you additionally set
+when you type ``thunder`` it will start in IPython. If you additionally set
 
 .. code-block:: bash
 
 	export IPYTHON_OPTS="notebook"
 
-it will use the iPython notebook. As before, you should add these lines to your bash profile.
+it will use the IPython notebook.
 
 
