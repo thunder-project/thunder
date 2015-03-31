@@ -51,16 +51,27 @@
       ~TimeSeries.repartition
       ~TimeSeries.saveAsBinarySeries
       ~TimeSeries.select
+      ~TimeSeries.selectByIndex
+      ~TimeSeries.seriesAggregateByIndex
+      ~TimeSeries.seriesCountByIndex
       ~TimeSeries.seriesMax
+      ~TimeSeries.seriesMaxByIndex
       ~TimeSeries.seriesMean
+      ~TimeSeries.seriesMeanByIndex
       ~TimeSeries.seriesMedian
+      ~TimeSeries.seriesMedianByIndex
       ~TimeSeries.seriesMin
+      ~TimeSeries.seriesMinByIndex
       ~TimeSeries.seriesPercentile
       ~TimeSeries.seriesStat
+      ~TimeSeries.seriesStatByIndex
       ~TimeSeries.seriesStats
       ~TimeSeries.seriesStdev
+      ~TimeSeries.seriesStdevByIndex
       ~TimeSeries.seriesSum
+      ~TimeSeries.seriesSumByIndex
       ~TimeSeries.sortByKey
+      ~TimeSeries.squelch
       ~TimeSeries.standardize
       ~TimeSeries.stats
       ~TimeSeries.stdev
@@ -70,6 +81,7 @@
       ~TimeSeries.sum
       ~TimeSeries.take
       ~TimeSeries.toBlocks
+      ~TimeSeries.toImages
       ~TimeSeries.toRowMatrix
       ~TimeSeries.toSpatialSeries
       ~TimeSeries.toTimeSeries

@@ -160,7 +160,7 @@ data both locally and from EC2.</p>
 <td>(SparkContext) Spark context for Spark functionality</td>
 </tr>
 <tr class="row-even"><td><cite>_credentials</cite></td>
-<td>(AWSCredentials object, optional, default = None) Stores public and private keys for AWS services. Typically available through configuration files, and but can optionally be set on the ThunderContext. See setAWSCredentials().</td>
+<td>(AWSCredentials object, optional, default = None) Stores public and private keys for AWS services. Typically available through configuration files, and but can optionally be set using <a class="reference internal" href="#thunder.ThunderContext.setAWSCredentials" title="thunder.ThunderContext.setAWSCredentials"><tt class="xref py py-func docutils literal"><span class="pre">ThunderContext.setAWSCredentials()</span></tt></a>.</td>
 </tr>
 </tbody>
 </table>
@@ -192,14 +192,14 @@ data both locally and from EC2.</p>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.ThunderContext.loadImagesAsSeries" title="thunder.ThunderContext.loadImagesAsSeries"><tt class="xref py py-obj docutils literal"><span class="pre">loadImagesAsSeries</span></tt></a>(dataPath[,&nbsp;dims,&nbsp;format,&nbsp;...])</td>
 <td>Load Images data as Series data.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.ThunderContext.loadParams" title="thunder.ThunderContext.loadParams"><tt class="xref py py-obj docutils literal"><span class="pre">loadParams</span></tt></a>(path)</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.ThunderContext.loadImagesOCP" title="thunder.ThunderContext.loadImagesOCP"><tt class="xref py py-obj docutils literal"><span class="pre">loadImagesOCP</span></tt></a>(bucketName,&nbsp;resolution[,&nbsp;...])</td>
+<td>Load Images from OCP (Open Connectome Project).</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.ThunderContext.loadParams" title="thunder.ThunderContext.loadParams"><tt class="xref py py-obj docutils literal"><span class="pre">loadParams</span></tt></a>(path)</td>
 <td>Load a file with parameters from a local file system or S3.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.ThunderContext.loadSeries" title="thunder.ThunderContext.loadSeries"><tt class="xref py py-obj docutils literal"><span class="pre">loadSeries</span></tt></a>(dataPath[,&nbsp;nkeys,&nbsp;nvalues,&nbsp;...])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.ThunderContext.loadSeries" title="thunder.ThunderContext.loadSeries"><tt class="xref py py-obj docutils literal"><span class="pre">loadSeries</span></tt></a>(dataPath[,&nbsp;nkeys,&nbsp;nvalues,&nbsp;...])</td>
 <td>Loads a Series object from data stored as binary, text, npy, or mat.</td>
-</tr>
-<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">ThunderContext.loadSeriesLocal</span></tt></td>
-<td></td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.ThunderContext.makeExample" title="thunder.ThunderContext.makeExample"><tt class="xref py py-obj docutils literal"><span class="pre">makeExample</span></tt></a>(dataset,&nbsp;**opts)</td>
 <td>Make an example data set for testing analyses.</td>

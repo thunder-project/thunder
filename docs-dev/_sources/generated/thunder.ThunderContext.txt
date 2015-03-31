@@ -16,9 +16,9 @@
       ~ThunderContext.loadExampleS3
       ~ThunderContext.loadImages
       ~ThunderContext.loadImagesAsSeries
+      ~ThunderContext.loadImagesOCP
       ~ThunderContext.loadParams
       ~ThunderContext.loadSeries
-      ~ThunderContext.loadSeriesLocal
       ~ThunderContext.makeExample
       ~ThunderContext.setAWSCredentials
       ~ThunderContext.start

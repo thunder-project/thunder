@@ -45,16 +45,27 @@
       ~Series.repartition
       ~Series.saveAsBinarySeries
       ~Series.select
+      ~Series.selectByIndex
+      ~Series.seriesAggregateByIndex
+      ~Series.seriesCountByIndex
       ~Series.seriesMax
+      ~Series.seriesMaxByIndex
       ~Series.seriesMean
+      ~Series.seriesMeanByIndex
       ~Series.seriesMedian
+      ~Series.seriesMedianByIndex
       ~Series.seriesMin
+      ~Series.seriesMinByIndex
       ~Series.seriesPercentile
       ~Series.seriesStat
+      ~Series.seriesStatByIndex
       ~Series.seriesStats
       ~Series.seriesStdev
+      ~Series.seriesStdevByIndex
       ~Series.seriesSum
+      ~Series.seriesSumByIndex
       ~Series.sortByKey
+      ~Series.squelch
       ~Series.standardize
       ~Series.stats
       ~Series.stdev
@@ -63,6 +74,7 @@
       ~Series.sum
       ~Series.take
       ~Series.toBlocks
+      ~Series.toImages
       ~Series.toRowMatrix
       ~Series.toSpatialSeries
       ~Series.toTimeSeries

@@ -54,6 +54,7 @@
       ~Images.take
       ~Images.toBlocks
       ~Images.toSeries
+      ~Images.toTimeSeries
       ~Images.values
       ~Images.variance
    

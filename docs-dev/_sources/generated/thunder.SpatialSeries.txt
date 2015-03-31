@@ -47,16 +47,27 @@
       ~SpatialSeries.repartition
       ~SpatialSeries.saveAsBinarySeries
       ~SpatialSeries.select
+      ~SpatialSeries.selectByIndex
+      ~SpatialSeries.seriesAggregateByIndex
+      ~SpatialSeries.seriesCountByIndex
       ~SpatialSeries.seriesMax
+      ~SpatialSeries.seriesMaxByIndex
       ~SpatialSeries.seriesMean
+      ~SpatialSeries.seriesMeanByIndex
       ~SpatialSeries.seriesMedian
+      ~SpatialSeries.seriesMedianByIndex
       ~SpatialSeries.seriesMin
+      ~SpatialSeries.seriesMinByIndex
       ~SpatialSeries.seriesPercentile
       ~SpatialSeries.seriesStat
+      ~SpatialSeries.seriesStatByIndex
       ~SpatialSeries.seriesStats
       ~SpatialSeries.seriesStdev
+      ~SpatialSeries.seriesStdevByIndex
       ~SpatialSeries.seriesSum
+      ~SpatialSeries.seriesSumByIndex
       ~SpatialSeries.sortByKey
+      ~SpatialSeries.squelch
       ~SpatialSeries.standardize
       ~SpatialSeries.stats
       ~SpatialSeries.stdev
@@ -65,6 +76,7 @@
       ~SpatialSeries.sum
       ~SpatialSeries.take
       ~SpatialSeries.toBlocks
+      ~SpatialSeries.toImages
       ~SpatialSeries.toRowMatrix
       ~SpatialSeries.toSpatialSeries
       ~SpatialSeries.toTimeSeries

@@ -53,16 +53,27 @@
       ~RowMatrix.rows
       ~RowMatrix.saveAsBinarySeries
       ~RowMatrix.select
+      ~RowMatrix.selectByIndex
+      ~RowMatrix.seriesAggregateByIndex
+      ~RowMatrix.seriesCountByIndex
       ~RowMatrix.seriesMax
+      ~RowMatrix.seriesMaxByIndex
       ~RowMatrix.seriesMean
+      ~RowMatrix.seriesMeanByIndex
       ~RowMatrix.seriesMedian
+      ~RowMatrix.seriesMedianByIndex
       ~RowMatrix.seriesMin
+      ~RowMatrix.seriesMinByIndex
       ~RowMatrix.seriesPercentile
       ~RowMatrix.seriesStat
+      ~RowMatrix.seriesStatByIndex
       ~RowMatrix.seriesStats
       ~RowMatrix.seriesStdev
+      ~RowMatrix.seriesStdevByIndex
       ~RowMatrix.seriesSum
+      ~RowMatrix.seriesSumByIndex
       ~RowMatrix.sortByKey
+      ~RowMatrix.squelch
       ~RowMatrix.standardize
       ~RowMatrix.stats
       ~RowMatrix.stdev
@@ -72,6 +83,7 @@
       ~RowMatrix.take
       ~RowMatrix.times
       ~RowMatrix.toBlocks
+      ~RowMatrix.toImages
       ~RowMatrix.toRowMatrix
       ~RowMatrix.toSpatialSeries
       ~RowMatrix.toTimeSeries

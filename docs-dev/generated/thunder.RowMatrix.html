@@ -320,23 +320,47 @@ can save computation to specify if known in advance</p>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.select" title="thunder.RowMatrix.select"><tt class="xref py py-obj docutils literal"><span class="pre">select</span></tt></a>(crit)</td>
 <td>Select subset of values that match a given index criterion</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.seriesMax" title="thunder.RowMatrix.seriesMax"><tt class="xref py py-obj docutils literal"><span class="pre">seriesMax</span></tt></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.selectByIndex" title="thunder.RowMatrix.selectByIndex"><tt class="xref py py-obj docutils literal"><span class="pre">selectByIndex</span></tt></a>(val[,&nbsp;level,&nbsp;squeeze,&nbsp;filter])</td>
+<td>Select or filter elements of the Series by index values (across levels, if multi-index).</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.seriesAggregateByIndex" title="thunder.RowMatrix.seriesAggregateByIndex"><tt class="xref py py-obj docutils literal"><span class="pre">seriesAggregateByIndex</span></tt></a>(function[,&nbsp;level])</td>
+<td>Aggregrate the data in each record, grouping by index values (across levels, if multi-index)</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.seriesCountByIndex" title="thunder.RowMatrix.seriesCountByIndex"><tt class="xref py py-obj docutils literal"><span class="pre">seriesCountByIndex</span></tt></a>([level])</td>
+<td>Count the number of series elements for each unique index value (across levels, if multi-index)</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.seriesMax" title="thunder.RowMatrix.seriesMax"><tt class="xref py py-obj docutils literal"><span class="pre">seriesMax</span></tt></a>()</td>
 <td>Compute the value maximum of each record in a Series</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.seriesMaxByIndex" title="thunder.RowMatrix.seriesMaxByIndex"><tt class="xref py py-obj docutils literal"><span class="pre">seriesMaxByIndex</span></tt></a>([level])</td>
+<td>Compute maximum values of series elements for each unique index value (across levels, if multi-index)</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.seriesMean" title="thunder.RowMatrix.seriesMean"><tt class="xref py py-obj docutils literal"><span class="pre">seriesMean</span></tt></a>()</td>
 <td>Compute the value mean of each record in a Series</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.seriesMedian" title="thunder.RowMatrix.seriesMedian"><tt class="xref py py-obj docutils literal"><span class="pre">seriesMedian</span></tt></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.seriesMeanByIndex" title="thunder.RowMatrix.seriesMeanByIndex"><tt class="xref py py-obj docutils literal"><span class="pre">seriesMeanByIndex</span></tt></a>([level])</td>
+<td>Compute means of series elements for each unique index value (across levels, if multi-index)</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.seriesMedian" title="thunder.RowMatrix.seriesMedian"><tt class="xref py py-obj docutils literal"><span class="pre">seriesMedian</span></tt></a>()</td>
 <td>Compute the value median of each record in a Series</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.seriesMedianByIndex" title="thunder.RowMatrix.seriesMedianByIndex"><tt class="xref py py-obj docutils literal"><span class="pre">seriesMedianByIndex</span></tt></a>([level])</td>
+<td>Compute medians of series elements for each unique index value (across levels, if multi-index)</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.seriesMin" title="thunder.RowMatrix.seriesMin"><tt class="xref py py-obj docutils literal"><span class="pre">seriesMin</span></tt></a>()</td>
 <td>Compute the value minimum of each record in a Series</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.seriesPercentile" title="thunder.RowMatrix.seriesPercentile"><tt class="xref py py-obj docutils literal"><span class="pre">seriesPercentile</span></tt></a>(q)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.seriesMinByIndex" title="thunder.RowMatrix.seriesMinByIndex"><tt class="xref py py-obj docutils literal"><span class="pre">seriesMinByIndex</span></tt></a>([level])</td>
+<td>Compute minimum values of series elements for each unique index value (across level, if multi-index)</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.seriesPercentile" title="thunder.RowMatrix.seriesPercentile"><tt class="xref py py-obj docutils literal"><span class="pre">seriesPercentile</span></tt></a>(q)</td>
 <td>Compute the value percentile of each record in a Series.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.seriesStat" title="thunder.RowMatrix.seriesStat"><tt class="xref py py-obj docutils literal"><span class="pre">seriesStat</span></tt></a>(stat)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.seriesStat" title="thunder.RowMatrix.seriesStat"><tt class="xref py py-obj docutils literal"><span class="pre">seriesStat</span></tt></a>(stat)</td>
 <td>Compute a simple statistic for each record in a Series</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.seriesStatByIndex" title="thunder.RowMatrix.seriesStatByIndex"><tt class="xref py py-obj docutils literal"><span class="pre">seriesStatByIndex</span></tt></a>(stat[,&nbsp;level])</td>
+<td>Compute the desired statistic for each uniue index values (across levels, if multi-index)</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.seriesStats" title="thunder.RowMatrix.seriesStats"><tt class="xref py py-obj docutils literal"><span class="pre">seriesStats</span></tt></a>()</td>
 <td>Compute many statistics for each record in a Series</td>
@@ -344,38 +368,50 @@ can save computation to specify if known in advance</p>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.seriesStdev" title="thunder.RowMatrix.seriesStdev"><tt class="xref py py-obj docutils literal"><span class="pre">seriesStdev</span></tt></a>()</td>
 <td>Compute the value std of each record in a Series</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.seriesSum" title="thunder.RowMatrix.seriesSum"><tt class="xref py py-obj docutils literal"><span class="pre">seriesSum</span></tt></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.seriesStdevByIndex" title="thunder.RowMatrix.seriesStdevByIndex"><tt class="xref py py-obj docutils literal"><span class="pre">seriesStdevByIndex</span></tt></a>([level])</td>
+<td>Compute means of series elements for each unique index value (across levels, if multi-index)</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.seriesSum" title="thunder.RowMatrix.seriesSum"><tt class="xref py py-obj docutils literal"><span class="pre">seriesSum</span></tt></a>()</td>
 <td>Compute the value sum of each record in a Series</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.seriesSumByIndex" title="thunder.RowMatrix.seriesSumByIndex"><tt class="xref py py-obj docutils literal"><span class="pre">seriesSumByIndex</span></tt></a>([level])</td>
+<td>Compute sums of series elements for each unique index value (across levels, if multi-index)</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.sortByKey" title="thunder.RowMatrix.sortByKey"><tt class="xref py py-obj docutils literal"><span class="pre">sortByKey</span></tt></a>()</td>
 <td>Sort records by keys.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.standardize" title="thunder.RowMatrix.standardize"><tt class="xref py py-obj docutils literal"><span class="pre">standardize</span></tt></a>([axis])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.squelch" title="thunder.RowMatrix.squelch"><tt class="xref py py-obj docutils literal"><span class="pre">squelch</span></tt></a>(threshold)</td>
+<td>Set all records that do not exceed the given threhsold to 0</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.standardize" title="thunder.RowMatrix.standardize"><tt class="xref py py-obj docutils literal"><span class="pre">standardize</span></tt></a>([axis])</td>
 <td>Standardize series data by dividing by the standard deviation</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.stats" title="thunder.RowMatrix.stats"><tt class="xref py py-obj docutils literal"><span class="pre">stats</span></tt></a>([requestedStats,&nbsp;dtype,&nbsp;casting])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.stats" title="thunder.RowMatrix.stats"><tt class="xref py py-obj docutils literal"><span class="pre">stats</span></tt></a>([requestedStats,&nbsp;dtype,&nbsp;casting])</td>
 <td>Return a L{StatCounter} object that captures all or some of the mean, variance, maximum, minimum, and count of the RDD&#8217;s elements in one operation.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.stdev" title="thunder.RowMatrix.stdev"><tt class="xref py py-obj docutils literal"><span class="pre">stdev</span></tt></a>([dtype,&nbsp;casting])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.stdev" title="thunder.RowMatrix.stdev"><tt class="xref py py-obj docutils literal"><span class="pre">stdev</span></tt></a>([dtype,&nbsp;casting])</td>
 <td>Standard deviation of values, ignoring keys</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.subToInd" title="thunder.RowMatrix.subToInd"><tt class="xref py py-obj docutils literal"><span class="pre">subToInd</span></tt></a>([order,&nbsp;isOneBased])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.subToInd" title="thunder.RowMatrix.subToInd"><tt class="xref py py-obj docutils literal"><span class="pre">subToInd</span></tt></a>([order,&nbsp;isOneBased])</td>
 <td>Convert subscript index keys to linear index keys</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.subset" title="thunder.RowMatrix.subset"><tt class="xref py py-obj docutils literal"><span class="pre">subset</span></tt></a>([nsamples,&nbsp;thresh,&nbsp;stat])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.subset" title="thunder.RowMatrix.subset"><tt class="xref py py-obj docutils literal"><span class="pre">subset</span></tt></a>([nsamples,&nbsp;thresh,&nbsp;stat])</td>
 <td>Extract random subset of records, filtering on a summary statistic.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.sum" title="thunder.RowMatrix.sum"><tt class="xref py py-obj docutils literal"><span class="pre">sum</span></tt></a>([dtype,&nbsp;casting])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.sum" title="thunder.RowMatrix.sum"><tt class="xref py py-obj docutils literal"><span class="pre">sum</span></tt></a>([dtype,&nbsp;casting])</td>
 <td>Sum of values, ignoring keys</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.take" title="thunder.RowMatrix.take"><tt class="xref py py-obj docutils literal"><span class="pre">take</span></tt></a>(*args,&nbsp;**kwargs)</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.take" title="thunder.RowMatrix.take"><tt class="xref py py-obj docutils literal"><span class="pre">take</span></tt></a>(*args,&nbsp;**kwargs)</td>
 <td>Take samples.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.times" title="thunder.RowMatrix.times"><tt class="xref py py-obj docutils literal"><span class="pre">times</span></tt></a>(other)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.times" title="thunder.RowMatrix.times"><tt class="xref py py-obj docutils literal"><span class="pre">times</span></tt></a>(other)</td>
 <td>Multiply a RowMatrix by another matrix.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.toBlocks" title="thunder.RowMatrix.toBlocks"><tt class="xref py py-obj docutils literal"><span class="pre">toBlocks</span></tt></a>([size])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.toBlocks" title="thunder.RowMatrix.toBlocks"><tt class="xref py py-obj docutils literal"><span class="pre">toBlocks</span></tt></a>([size])</td>
 <td>Converts Series to Blocks.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.toImages" title="thunder.RowMatrix.toImages"><tt class="xref py py-obj docutils literal"><span class="pre">toImages</span></tt></a>([size])</td>
+<td>Converts Series to Images.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.toRowMatrix" title="thunder.RowMatrix.toRowMatrix"><tt class="xref py py-obj docutils literal"><span class="pre">toRowMatrix</span></tt></a>()</td>
 <td>Convert Series to RowMatrix</td>
