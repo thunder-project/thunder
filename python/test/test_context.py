@@ -75,11 +75,11 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
 
     def __run_loadMultipleStacksAsSeries(self, shuffle):
         rangeAry = arange(64*128, dtype=dtypeFunc('int16'))
-        filePath = os.path.join(self.outputdir, "rangeary01.stack")
+        filePath = os.path.join(self.outputdir, "rangeary01.bin")
         rangeAry.tofile(filePath)
         expectedAry = rangeAry.reshape((128, 64), order='F')
         rangeAry2 = arange(64*128, 2*64*128, dtype=dtypeFunc('int16'))
-        filePath = os.path.join(self.outputdir, "rangeary02.stack")
+        filePath = os.path.join(self.outputdir, "rangeary02.bin")
         rangeAry2.tofile(filePath)
         expectedAry2 = rangeAry2.reshape((128, 64), order='F')
 
@@ -106,11 +106,11 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
 
     def test_loadMultipleMultipointStacksAsSeries(self):
         rangeAry = arange(64*128, dtype=dtypeFunc('int16'))
-        filePath = os.path.join(self.outputdir, "rangeary01.stack")
+        filePath = os.path.join(self.outputdir, "rangeary01.bin")
         rangeAry.tofile(filePath)
         expectedAry = rangeAry.reshape((32, 32, 8), order='F')
         rangeAry2 = arange(64*128, 2*64*128, dtype=dtypeFunc('int16'))
-        filePath = os.path.join(self.outputdir, "rangeary02.stack")
+        filePath = os.path.join(self.outputdir, "rangeary02.bin")
         rangeAry2.tofile(filePath)
         expectedAry2 = rangeAry2.reshape((32, 32, 8), order='F')
 

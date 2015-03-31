@@ -24,7 +24,6 @@ class ThunderContext():
         configuration files, and but can optionally be set on the ThunderContext.
         See setAWSCredentials().
     """
-
     def __init__(self, sparkcontext):
         self._sc = sparkcontext
         self._credentials = None
