@@ -37,8 +37,8 @@ class Registration(object):
 
         See also
         --------
-        RegisterModel.save : specification for saving registration models
-        RegisterModel.load : specifications for loading registration models
+        RegistrationModel.save : specification for saving registration models
+        RegistrationModel.load : specifications for loading registration models
         """
 
         return RegistrationModel.load(file)
@@ -80,7 +80,7 @@ class RegistrationMethod(object):
 
         See also
         --------
-        RegisterModel : model for applying transformations
+        RegistrationModel : model for applying transformations
         """
 
         if len(images.dims.count) not in set([2, 3]):
@@ -168,7 +168,7 @@ class RegistrationModel(Serializable, object):
 
         See also
         --------
-        Register : construct registration algorithms
+        Registration : construct registration algorithms
         """
 
         from thunder.rdds.images import Images
