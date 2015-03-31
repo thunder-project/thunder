@@ -21,8 +21,7 @@ class ThunderContext():
 
     `_credentials` : AWSCredentials object, optional, default = None
         Stores public and private keys for AWS services. Typically available through
-        configuration files, and but can optionally be set on the ThunderContext.
-        See setAWSCredentials().
+        configuration files, and but can optionally be set using :func:`ThunderContext.setAWSCredentials()`.
     """
     def __init__(self, sparkcontext):
         self._sc = sparkcontext
@@ -30,7 +29,9 @@ class ThunderContext():
 
     @classmethod
     def start(cls, *args, **kwargs):
-        """Starts a ThunderContext using the same arguments as SparkContext"""
+        """
+        Starts a ThunderContext using the same arguments as SparkContext
+        """
         from pyspark import SparkContext
         return ThunderContext(SparkContext(*args, **kwargs))
 
