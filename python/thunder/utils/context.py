@@ -9,7 +9,7 @@ from thunder.utils.params import Params
 
 class ThunderContext():
     """
-    Wrapper for a SparkContext that provides functionality for loading data.
+    Wrapper for a SparkContext that provides an entry point for loading and saving.
 
     Also supports creation of example datasets, and loading example
     data both locally and from EC2.
@@ -35,63 +35,76 @@ class ThunderContext():
         from pyspark import SparkContext
         return ThunderContext(SparkContext(*args, **kwargs))
 
-    def loadSeries(self, dataPath, nkeys=None, nvalues=None, inputFormat='binary', minPartitions=None,
-                   confFilename='conf.json', keyType=None, valueType=None):
+    def loadSeries(self, dataPath, nkeys=None, nvalues=None, format='binary', minPartitions=None,
+                   confFilename='conf.json', keyType=None, valueType=None, keyPath=None, varName=None):
         """
-        Loads a Series object from data stored as text or binary files.
+        Loads a Series object from data stored as binary, text, npy, or mat.
 
-        Supports single files or multiple files stored on a local file system, a networked file system (mounted
-        and available on all cluster nodes), Amazon S3, or HDFS.
+        For binary and text, supports single files or multiple files stored on a local file system,
+        a networked file system (mounted and available on all cluster nodes), Amazon S3, or HDFS.
+        For local formats (npy and mat) only local file systems currently supported.
 
         Parameters
         ----------
         dataPath: string
-            Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-            including scheme. A dataPath argument may include a single '*' wildcard character in the filename. Examples
-            of valid dataPaths include 'a/local/relative/directory/*.stack", "s3n:///my-s3-bucket/data/mydatafile.tif",
-            "/mnt/my/absolute/data/directory/", or "file:///mnt/another/data/directory/".
+            Path to data files or directory, as either a local filesystem path or a URI.
+            May include a single '*' wildcard in the filename. Examples of valid dataPaths include
+            'local/directory/*.stack", "s3n:///my-s3-bucket/data/", or "file:///mnt/another/directory/".
 
-        nkeys: int, optional (but required if `inputFormat` is 'text')
-            dimensionality of data keys. (For instance, (x,y,z) keyed data for 3-dimensional image timeseries data.)
-            For text data, number of keys must be specified in this parameter; for binary data, number of keys must be
-            specified either in this parameter or in a configuration file named by the 'conffile' argument if this
-            parameter is not set.
+        nkeys: int, optional (required if `inputFormat` is 'text'), default = None
+            Number of keys per record (e.g. 3 for (x, y, z) coordinate keys). Must be specified for
+            text data; can be specified here or in a configuration file for binary data.
 
-        nvalues: int, optional (but required if `inputFormat` is 'text')
-            Number of values expected to be read. For binary data, nvalues must be specified either in this parameter
-            or in a configuration file named by the 'conffile' argument if this parameter is not set.
+        nvalues: int, optional (required if `inputFormat` is 'text')
+            Number of values per record. Must be specified here or in a configuration file for binary data.
 
-        inputFormat: {'text', 'binary'}. optional, default 'binary'
+        format: {'text', 'binary', 'npy', 'mat'}. optional, default = 'binary'
             Format of data to be read.
 
-        minPartitions: int, optional
-            Explicitly specify minimum number of Spark partitions to be generated from this data. Used only for
-            text data. Default is to use minParallelism attribute of Spark context object.
+        minPartitions: int, optional, default = SparkContext.minParallelism
+            Minimum number of Spark partitions to use, only for text.
 
         confFilename: string, optional, default 'conf.json'
-            Path to JSON file with configuration options including 'nkeys', 'nvalues', 'keytype', and 'valuetype'.
-            If a file is not found at the given path, then the base directory given in 'datafile'
-            will also be checked. Parameters `nkeys` or `nvalues` that are specified as explicit arguments to this
-            method will take priority over those found in conffile if both are present.
+            Path to JSON file with configuration options including 'nkeys', 'nvalues',
+            'keyType', and 'valueType'. If a file is not found at the given path, then the base
+            directory in 'dataPath' will be checked. Parameters will override the conf file.
+
+        keyType: string or numpy dtype, optional, default = None
+            Numerical type of keys, will override conf file.
+
+        valueType: string or numpy dtype, optional, default = None
+            Numerical type of values, will override conf file.
+
+        keyPath: string, optional, default = None
+            Path to file with keys when loading from npy or mat.
+
+        varName : str, optional, default = None
+            Variable name to load (for MAT files only)
 
         Returns
         -------
         data: thunder.rdds.Series
-            A newly-created Series object, wrapping an RDD of series data. This RDD will have as keys an n-tuple
-            of int, with n given by `nkeys` or the configuration passed in `conffile`. RDD values will be a numpy
-            array of length `nvalues` (or as specified in the passed configuration file).
+            A Series object, wrapping an RDD, with (n-tuples of ints) : (numpy array) pairs
         """
-        checkParams(inputFormat, ['text', 'binary'])
+        checkParams(format, ['text', 'binary', 'npy', 'mat'])
 
         from thunder.rdds.fileio.seriesloader import SeriesLoader
         loader = SeriesLoader(self._sc, minPartitions=minPartitions)
 
-        if inputFormat.lower() == 'text':
-            data = loader.fromText(dataPath, nkeys=nkeys)
-        else:
-            # must be either 'text' or 'binary'
+        if format.lower() == 'binary':
             data = loader.fromBinary(dataPath, confFilename=confFilename, nkeys=nkeys, nvalues=nvalues,
                                      keyType=keyType, valueType=valueType)
+        elif format.lower() == 'text':
+            if nkeys is None:
+                raise Exception('Must provide number of keys per record for loading from text')
+            data = loader.fromText(dataPath, nkeys=nkeys)
+        elif format.lower() == 'npy':
+            data = loader.fromNpyLocal(dataPath, keyPath)
+        else:
+            if varName is None:
+                raise Exception('Must provide variable name for loading MAT files')
+            data = loader.fromMatLocal(dataPath, varName, keyPath)
+
         return data
 
     def loadImages(self, dataPath, dims=None, dtype=None, inputFormat='stack', ext=None,
@@ -724,44 +737,6 @@ class ThunderContext():
             raise Exception("Cannot find file %s" % path)
 
         return Params(json.loads(buffer))
-
-    def loadSeriesLocal(self, dataFilePath, inputFormat='npy', minPartitions=None, keyFilePath=None, varName=None):
-        """
-        Load a Series object from a local file (either npy or MAT format).
-
-        File should contain a 1d or 2d matrix, where each row
-        of the input matrix is a record.
-
-        Keys can be provided in a separate file (with variable name 'keys', for MAT files).
-        If not provided, linear indices will be used for keys.
-
-        Parameters
-        ----------
-        dataFilePath: str
-            File to import
-
-        varName : str, optional, default = None
-            Variable name to load (for MAT files only)
-
-        keyFilePath : str, optional, default = None
-            File containing the keys for each record as another 1d or 2d array
-
-        minPartitions : Int, optional, default = 1
-            Number of partitions for RDD
-        """
-        checkParams(inputFormat, ['mat', 'npy'])
-
-        from thunder.rdds.fileio.seriesloader import SeriesLoader
-        loader = SeriesLoader(self._sc, minPartitions=minPartitions)
-
-        if inputFormat.lower() == 'mat':
-            if varName is None:
-                raise Exception('Must provide variable name for loading MAT files')
-            data = loader.fromMatLocal(dataFilePath, varName, keyFilePath)
-        else:
-            data = loader.fromNpyLocal(dataFilePath, keyFilePath)
-
-        return data
 
     def export(self, data, filename, format=None, overwrite=False, varname=None):
         """
