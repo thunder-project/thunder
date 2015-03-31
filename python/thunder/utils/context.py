@@ -119,76 +119,59 @@ class ThunderContext():
         Parameters
         ----------
         dataPath: string
-            Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-            including scheme. A dataPath argument may include a single '*' wildcard character in the filename. Examples
-            of valid dataPaths include 'a/local/relative/directory/*.stack", "s3n:///my-s3-bucket/data/mydatafile.tif",
-            "/mnt/my/absolute/data/directory/", or "file:///mnt/another/data/directory/".
+            Path to data files or directory, as either a local filesystem path or a URI.
+            May include a single '*' wildcard in the filename. Examples of valid dataPaths include
+            'local/directory/*.stack", "s3n:///my-s3-bucket/data/", or "file:///mnt/another/directory/".
 
-        dims: tuple of positive int, optional (but required if inputFormat is 'stack')
-            Dimensions of input image data, similar to a numpy 'shape' parameter, for instance (1024, 1024, 48). Binary
-            stack data will be interpreted as coming from a multidimensional array of the specified dimensions. Stack
-            data should be stored in row-major order (Fortran or Matlab convention) rather than column-major order (C
-            or python/numpy convention), where the first dimension corresponds to that which is changing most rapidly
-            on disk. So for instance given dims of (x, y, z), the coordinates of the data in a binary stack file
-            should be ordered as [(x0, y0, z0), (x1, y0, zo), ..., (xN, y0, z0), (x0, y1, z0), (x1, y1, z0), ...,
-            (xN, yM, z0), (x0, y0, z1), ..., (xN, yM, zP)].
-            If inputFormat is 'png' or 'tif', the dims parameter (if any) will be ignored; data dimensions
-            will instead be read out from the image file headers.
+        dims: tuple of positive int, optional (required if inputFormat is 'stack')
+            Image dimensions. Binary stack data will be interpreted as a multidimensional array
+            with the given dimensions, and should be stored in row-major order (Fortran or Matlab convention),
+            where the first dimension changes most rapidly. For 'png' or 'tif' data dimensions
+            will be read from the image file headers.
 
-        inputFormat: {'stack', 'png', 'tif'}. optional, default 'stack'
-            Expected format of the input data. 'stack' indicates flat files of raw binary data. 'png' or 'tif' indicate
-            image files of the corresponding formats. Each page of a multipage tif file will be interpreted as a
-            separate z-plane. For all formats, separate files are interpreted as distinct time points, with ordering
+        inputFormat: str, optional, default = 'stack'
+            Expected format of the input data: 'stack', 'png', or 'tif'. 'stack' indicates flat binary stacks.
+            'png' or 'tif' indicate image formats. Page of a multipage tif file will be extend along
+            the third dimension. Separate files interpreted as distinct records, with ordering
             given by lexicographic sorting of file names.
 
-        ext: string, optional, default None
-            Extension required on data files to be loaded. By default will be "stack" if inputFormat=="stack", "tif" for
-            inputFormat=='tif', and 'png' for inputFormat="png".
+        ext: string, optional, default = None
+            File extension, default will be "bin" if inputFormat=="stack", "tif" for inputFormat=='tif',
+            and 'png' for inputFormat=="png".
 
-        dtype: string or numpy dtype. optional, default 'int16'
-            Data type of the image files to be loaded, specified as a numpy "dtype" string. If inputFormat is
-            'tif' or 'png', the dtype parameter (if any) will be ignored; data type will instead be read out from the
-            tif headers.
+        dtype: string or numpy dtype, optional, default = 'int16'
+            Data type of the image files to be loaded, specified as a numpy "dtype" string.
+            Ignored for 'tif' or 'png' (data will be inferred from image formats).
 
-        startIdx: nonnegative int, optional
-            startIdx and stopIdx are convenience parameters to allow only a subset of input files to be read in. These
-            parameters give the starting index (inclusive) and final index (exclusive) of the data files to be used
-            after lexicographically sorting all input data files matching the dataPath argument. For example,
-            startIdx=None (the default) and stopIdx=10 will cause only the first 10 data files in dataPath to be read
-            in; startIdx=2 and stopIdx=3 will cause only the third file (zero-based index of 2) to be read in. startIdx
-            and stopIdx use the python slice indexing convention (zero-based indexing with an exclusive final position).
+        startIdx: nonnegative int, optional, default = None
+            Convenience parameters to read only a subset of input files. Uses python slice conventions
+            (zero-based indexing with exclusive final position). These parameters give the starting
+            and final index after lexicographic sorting.
 
-        stopIdx: nonnegative int, optional
+        stopIdx: nonnegative int, optional, default = None
             See startIdx.
 
-        recursive: boolean, default False
-            If true, will recursively descend directories rooted at dataPath, loading all files in the tree that
-            have an appropriate extension. Recursive loading is currently only implemented for local filesystems
-            (not s3).
+        recursive: boolean, optional, default = False
+            If true, will recursively descend directories rooted at dataPath, loading all files
+            in the tree with an appropriate extension.
 
-        nplanes: positive integer, default None
-            If passed, will cause a single image file to be subdivided into multiple records. Every
-            `nplanes` z-planes (or multipage tif pages) in the file will be taken as a new record, with the
-            first nplane planes of the first file being record 0, the second nplane planes being record 1, etc,
-            until the first file is exhausted and record ordering continues with the first nplane planes of the
-            second file, and so on. With nplanes=None (the default), a single file will be considered as
-            representing a single record. Keys are calculated assuming that all input files contain the same
-            number of records; if the number of records per file is not the same across all files,
-            then `renumber` should be set to True to ensure consistent keys.
+        nplanes: positive integer, optional, default = None
+            Subdivide individual image files. Every `nplanes` from each file will be considered a new record.
+            With nplanes=None (the default), a single file will be considered as representing a single record.
+            If the number of records per file is not the same across all files, then `renumber` should be set
+            to True to ensure consistent keys.
 
-        npartitions: positive int, optional
-            If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
-            partition per image file.
+        npartitions: positive int, optional, default = None
+            Specify number of partitions for the RDD, if unspecified will use 1 partition per image.
 
-        renumber: boolean, optional, default False
-            If renumber evaluates to True, then the keys for each record will be explicitly recalculated after
-            all images are loaded. This should only be necessary at load time when different files contain
-            different number of records. See Images.renumber().
+        renumber: boolean, optional, default = False
+            Recalculate keys for records after images are loading. Only necessary if different files contain
+            different number of records (e.g. due to specifying nplanes). See Images.renumber().
 
         Returns
         -------
         data: thunder.rdds.Images
-            A newly-created Images object, wrapping an RDD of <int index, numpy array> key-value pairs.
+            An Images object, wrapping an RDD of with (int) : (numpy array) pairs
 
         """
         checkParams(inputFormat, ['stack', 'png', 'tif', 'tif-stack'])
@@ -224,41 +207,37 @@ class ThunderContext():
     def loadImagesOCP(self, bucketName, resolution, serverName='ocp.me', startIdx=None, stopIdx=None,
                       minBound=None, maxBound=None):
         """
-        Load Images from OCP.
+        Load Images from OCP (Open Connectome Project).
 
-        OCP is the openconnectome project, a web service for access to EM brain images, automated annotations
-        and neural graphs. This web-service can be accessed at http://www.openconnectomeproject.org/.
+        The OCP is a web service for access to EM brain images and other neural image data.
+        The web-service can be accessed at http://www.openconnectomeproject.org/.
         
         Parameters
         ----------
         bucketName: string
-            Token name for the project in OCP. This token name should exist on the server you are reading the data from.
+            Token name for the project in OCP. This name should exist on the server from which data is loaded.
+
+        resolution: nonnegative int
+            Resolution of the data in OCP
+
+        serverName: string, optional, default = 'ocp.me'
+            Name of the OCP server with the specified token.
         
-        serverName: string. optional.
-            Name of the server in OCP which has the corresponding token. By default this is always ocp.me but if
-            you have an alternate server, you can set it here.
-        
-        startIdx: nonnegative int, optional
-            startIdx and stopIdx are convenience parameters to allow only a subset of timeseries data to be read.
-            These parameters give the starting time (inclusive) and final time (exclusive) of the data files to
-            be read from OCP. For example, startIdx=None (the default) and stopIdx=10 will cause only the first
-            10 data files in dataPath to be read n; startIdx=2 and stopIdx=3 will cause only the third file
-            (zero-based index of 2) to be read in.
+        startIdx: nonnegative int, optional, default = None
+            Convenience parameters to read only a subset of input files. Uses python slice conventions
+            (zero-based indexing with exclusive final position).
 
         stopIdx: nonnegative int, optional
             See startIdx.
         
-        minBound, maxBound: tuple of nonnegative int. optional.
-            X,Y,Z bounds of the data you want to fetch from OCP. minBound contains   the (xMin,yMin,zMin) while
-            maxBound contains (xMax,yMax,zMax)
+        minBound, maxBound: tuple of nonnegative int, optional, default = None
+            X,Y,Z bounds of the data to fetch from OCP. minBound contains the (xMin,yMin,zMin) while
+            maxBound contains (xMax,yMax,zMax).
 
-        resolution: nonnegative int
-            Resolution of the data in OCP
-        
         Returns
         -------
         data: thunder.rdds.Images
-            A newly-created Images object, wrapping an RDD of <int index, numpy array> key-value pairs.
+             An Images object, wrapping an RDD of with (int) : (numpy array) pairs
         """
       
         from thunder.rdds.fileio.imagesloader import ImagesLoader
@@ -272,7 +251,6 @@ class ThunderContext():
 
         return data
 
-
     def loadImagesAsSeries(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
                            blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,
                            shuffle=True, recursive=False, nplanes=None, npartitions=None,
@@ -283,100 +261,74 @@ class ThunderContext():
         Parameters
         ----------
         dataPath: string
-            Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-            including scheme. A dataPath argument may include a single '*' wildcard character in the filename. Examples
-            of valid dataPaths include 'a/local/relative/directory/*.stack", "s3n:///my-s3-bucket/data/mydatafile.tif",
-            "/mnt/my/absolute/data/directory/", or "file:///mnt/another/data/directory/".
+            Path to data files or directory, as either a local filesystem path or a URI.
+            May include a single '*' wildcard in the filename. Examples of valid dataPaths include
+            'local/directory/*.stack", "s3n:///my-s3-bucket/data/", or "file:///mnt/another/directory/".
 
-        dims: tuple of positive int, optional (but required if inputFormat is 'stack')
-            Dimensions of input image data, for instance (1024, 1024, 48). Binary stack data will be interpreted as
-            coming from a multidimensional array of the specified dimensions.
+        dims: tuple of positive int, optional (required if inputFormat is 'stack')
+            Image dimensions. Binary stack data will be interpreted as a multidimensional array
+            with the given dimensions, and should be stored in row-major order (Fortran or Matlab convention),
+            where the first dimension changes most rapidly. For 'png' or 'tif' data dimensions
+            will be read from the image file headers.
 
-            The first dimension of the passed dims tuple should be the one that is changing most rapidly
-            on disk. So for instance given dims of (x, y, z), the coordinates of the data in a binary stack file
-            should be ordered as [(x0, y0, z0), (x1, y0, z0), ..., (xN, y0, z0), (x0, y1, z0), (x1, y1, z0), ...,
-            (xN, yM, z0), (x0, y0, z1), ..., (xN, yM, zP)]. This is the opposite convention from that used by numpy,
-            which by default has the fastest-changing dimension listed last (column-major convention). Thus, if loading
-            a numpy array `ary`, where `ary.shape == (z, y, x)`, written to disk by `ary.tofile("myarray.stack")`, the
-            corresponding dims parameter should be (x, y, z).
-            If inputFormat is 'tif', the dims parameter (if any) will be ignored; data dimensions will instead
-            be read out from the tif file headers.
+        inputFormat: str, optional, default = 'stack'
+            Expected format of the input data: 'stack', 'png', or 'tif'. 'stack' indicates flat binary stacks.
+            'png' or 'tif' indicate image formats. Page of a multipage tif file will be extend along
+            the third dimension. Separate files interpreted as distinct records, with ordering
+            given by lexicographic sorting of file names.
 
-        inputFormat: {'stack', 'tif'}. optional, default 'stack'
-            Expected format of the input data. 'stack' indicates flat files of raw binary data, while 'tif' indicates
-            greyscale / luminance TIF images. Each page of a multipage tif file will be interpreted as a separate
-            z-plane. For both stacks and tif stacks, separate files are interpreted as distinct time points, with
-            ordering given by lexicographic sorting of file names.
-
-        ext: string, optional, default None
-            Extension required on data files to be loaded. By default will be "stack" if inputFormat=="stack", "tif" for
-            inputFormat=='tif'.
+        ext: string, optional, default = None
+            File extension, default will be "bin" if inputFormat=="stack", "tif" for inputFormat=='tif',
+            and 'png' for inputFormat=="png".
 
         dtype: string or numpy dtype. optional, default 'int16'
-            Data type of the image files to be loaded, specified as a numpy "dtype" string. If inputFormat is
-            'tif', the dtype parameter (if any) will be ignored; data type will instead be read out from the
-            tif headers.
+            Data type of the image files to be loaded, specified as a numpy "dtype" string.
+            Ignored for 'tif' or 'png' (data will be inferred from image formats).
 
-        blockSize: string formatted as e.g. "64M", "512k", "2G", or positive int. optional, default "150M"
-            Requested size of individual output files in bytes (or kilobytes, megabytes, gigabytes). If shuffle=True,
-            blockSize can also be a tuple of int specifying either the number of pixels or of splits per dimension to
-            apply to the loaded images, or an instance of BlockingStrategy. Whether a tuple of int is interpreted as
-            pixels or as splits depends on the value of the blockSizeUnits parameter. blockSize also indirectly
-            controls the number of Spark partitions to be used, with one partition used per block created.
+        blockSize: string or positive int, optional, default "150M"
+            Requested size of blocks (e.g "64M", "512k", "2G"). If shuffle=True, can also be a
+            tuple of int specifying the number of pixels or splits per dimension. Indirectly
+            controls the number of Spark partitions, with one partition per block.
 
-        blockSizeUnits: string, either "pixels" or "splits" (or unique prefix of each, such as "s"), default "pixels"
-            Specifies units to be used in interpreting a tuple passed as blockSizeSpec when shuffle=True. If a string
-            or a BlockingStrategy instance is passed as blockSizeSpec, or if shuffle=False, this parameter has no
-            effect.
+        blockSizeUnits: string, either "pixels" or "splits", default "pixels"
+            Units for interpreting a tuple passed as blockSize when shuffle=True.
 
-        startIdx: nonnegative int, optional
-            startIdx and stopIdx are convenience parameters to allow only a subset of input files to be read in. These
-            parameters give the starting index (inclusive) and final index (exclusive) of the data files to be used
-            after lexicographically sorting all input data files matching the dataPath argument. For example,
-            startIdx=None (the default) and stopIdx=10 will cause only the first 10 data files in dataPath to be read
-            in; startIdx=2 and stopIdx=3 will cause only the third file (zero-based index of 2) to be read in. startIdx
-            and stopIdx use the python slice indexing convention (zero-based indexing with an exclusive final position).
+        startIdx: nonnegative int, optional, default = None
+            Convenience parameters to read only a subset of input files. Uses python slice conventions
+            (zero-based indexing with exclusive final position). These parameters give the starting
+            and final index after lexicographic sorting.
 
-        stopIdx: nonnegative int, optional
+        stopIdx: nonnegative int, optional, default = None
             See startIdx.
 
-        shuffle: boolean, optional, default True
-            Controls whether the conversion from Images to Series formats will make use of a Spark shuffle-based method.
+        shuffle: boolean, optional, default = True
+            Controls whether the conversion from Images to Series formats will use of a Spark shuffle-based method.
 
-        recursive: boolean, default False
-            If true, will recursively descend directories rooted at dataPath, loading all files in the tree that
-            have an appropriate extension. Recursive loading is currently only implemented for local filesystems
-            (not s3), and only with shuffle=True.
+        recursive: boolean, optional, default = False
+            If true, will recursively descend directories rooted at dataPath, loading all files
+            in the tree with an appropriate extension.
 
-        nplanes: positive integer, default None
-            If passed, will cause a single image file to be subdivided into multiple records. Every
-            `nplanes` z-planes (or multipage tif pages) in the file will be taken as a new record, with the
-            first nplane planes of the first file being record 0, the second nplane planes being record 1, etc,
-            until the first file is exhausted and record ordering continues with the first nplane planes of the
-            second file, and so on. With nplanes=None (the default), a single file will be considered as
-            representing a single record. Keys are calculated assuming that all input files contain the same
-            number of records; if the number of records per file is not the same across all files,
-            then `renumber` should be set to True to ensure consistent keys. nplanes is only supported for
-            shuffle=True (the default).
+        nplanes: positive integer, optional, default = None
+            Subdivide individual image files. Every `nplanes` from each file will be considered a new record.
+            With nplanes=None (the default), a single file will be considered as representing a single record.
+            If the number of records per file is not the same across all files, then `renumber` should be set
+            to True to ensure consistent keys.
 
-        npartitions: positive int, optional
-            If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
-            partition per image file. Only applies when shuffle=True.
+        npartitions: positive int, optional, default = None
+            Specify number of partitions for the RDD, if unspecified will use 1 partition per image.
 
-        renumber: boolean, optional, default False
-            If renumber evaluates to True, then the keys for each record will be explicitly recalculated after
-            all images are loaded. This should only be necessary at load time when different files contain
-            different number of records. renumber is only supported for shuffle=True (the default). See
-            Images.renumber().
+        renumber: boolean, optional, default = False
+            Recalculate keys for records after images are loading. Only necessary if different files contain
+            different number of records (e.g. due to specifying nplanes). See Images.renumber().
 
         Returns
         -------
         data: thunder.rdds.Series
-            A newly-created Series object, wrapping an RDD of timeseries data generated from the images in dataPath.
-            This RDD will have as keys an n-tuple of int, with n given by the dimensionality of the original images. The
-            keys will be the zero-based spatial index of the timeseries data in the RDD value. The value will be
-            a numpy array of length equal to the number of image files loaded. Each loaded image file will contribute
-            one point to this value array, with ordering as implied by the lexicographic ordering of image file names.
+            A Series object, wrapping an RDD, with (n-tuples of ints) : (numpy array) pairs.
+            Keys will be n-tuples of int, with n given by dimensionality of the images, and correspond
+            to indexes into the image arrays. Value will have length equal to the number of image files.
+            With each image contributing one point to this value array, with ordering given by
+            the lexicographic ordering of image file names.
         """
         checkParams(inputFormat, ['stack', 'tif', 'tif-stack'])
 
@@ -426,113 +378,83 @@ class ThunderContext():
         """
         Write out Images data as Series data, saved in a flat binary format.
 
-        The resulting Series data files may subsequently be read in using the loadSeries() method. The Series data
-        object that results will be equivalent to that which would be generated by loadImagesAsSeries(). It is expected
-        that loading Series data directly from the series flat binary format, using loadSeries(), will be faster than
-        converting image data to a Series object through loadImagesAsSeries().
+        The resulting files may subsequently be read in using ThunderContext.loadSeries().
+        Loading Series data directly will likely be faster than converting image data
+        to a Series object through loadImagesAsSeries().
 
         Parameters
         ----------
         dataPath: string
-            Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-            including scheme. A dataPath argument may include a single '*' wildcard character in the filename. Examples
-            of valid dataPaths include 'a/local/relative/directory/*.stack", "s3n:///my-s3-bucket/data/mydatafile.tif",
-            "/mnt/my/absolute/data/directory/", or "file:///mnt/another/data/directory/".
+            Path to data files or directory, as either a local filesystem path or a URI.
+            May include a single '*' wildcard in the filename. Examples of valid dataPaths include
+            'local/directory/*.stack", "s3n:///my-s3-bucket/data/", or "file:///mnt/another/directory/".
 
         outputDirPath: string
-            Path to a directory into which to write Series file output. An outputdir argument may be either a path
-            on the local file system or a URI-like format, as in dataPath. Examples of valid outputDirPaths include
-            "a/relative/directory/", "s3n:///my-s3-bucket/data/myoutput/", or "file:///mnt/a/new/directory/". If the
-            directory specified by outputDirPath already exists and the 'overwrite' parameter is False, this method
-            will throw a ValueError. If the directory exists and 'overwrite' is True, the existing directory and all
-            its contents will be deleted and overwritten.
+            Path to directory to write Series file output. May be either a path on the local file system
+            or a URI-like format, such as "local/directory", "s3n:///my-s3-bucket/data/",
+            or "file:///mnt/another/directory/". If the directory exists and 'overwrite' is True,
+            the existing directory and all its contents will be deleted and overwritten.
 
-        dims: tuple of positive int, optional (but required if inputFormat is 'stack')
-            Dimensions of input image data, for instance (1024, 1024, 48). Binary stack data will be interpreted as
-            coming from a multidimensional array of the specified dimensions.
+        dims: tuple of positive int, optional (required if inputFormat is 'stack')
+            Image dimensions. Binary stack data will be interpreted as a multidimensional array
+            with the given dimensions, and should be stored in row-major order (Fortran or Matlab convention),
+            where the first dimension changes most rapidly. For 'png' or 'tif' data dimensions
+            will be read from the image file headers.
 
-            The first dimension of the passed dims tuple should be the one that is changing most rapidly
-            on disk. So for instance given dims of (x, y, z), the coordinates of the data in a binary stack file
-            should be ordered as [(x0, y0, z0), (x1, y0, z0), ..., (xN, y0, z0), (x0, y1, z0), (x1, y1, z0), ...,
-            (xN, yM, z0), (x0, y0, z1), ..., (xN, yM, zP)]. This is the opposite convention from that used by numpy,
-            which by default has the fastest-changing dimension listed last (column-major convention). Thus, if loading
-            a numpy array `ary`, where `ary.shape == (z, y, x)`, written to disk by `ary.tofile("myarray.stack")`, the
-            corresponding dims parameter should be (x, y, z).
-            If inputFormat is 'tif', the dims parameter (if any) will be ignored; data dimensions will instead
-            be read out from the tif file headers.
+        inputFormat: str, optional, default = 'stack'
+            Expected format of the input data: 'stack', 'png', or 'tif'. 'stack' indicates flat binary stacks.
+            'png' or 'tif' indicate image formats. Page of a multipage tif file will be extend along
+            the third dimension. Separate files interpreted as distinct records, with ordering
+            given by lexicographic sorting of file names.
 
-        inputFormat: {'stack', 'tif'}. optional, default 'stack'
-            Expected format of the input data. 'stack' indicates flat files of raw binary data, while 'tif' indicates
-            greyscale / luminance TIF images. Each page of a multipage tif file will be interpreted as a separate
-            z-plane. For both stacks and tif stacks, separate files are interpreted as distinct time points, with
-            ordering given by lexicographic sorting of file names.
-
-        ext: string, optional, default None
-            Extension required on data files to be loaded. By default will be "stack" if inputFormat=="stack", "tif" for
-            inputFormat=='tif'.
+        ext: string, optional, default = None
+            File extension, default will be "bin" if inputFormat=="stack", "tif" for inputFormat=='tif',
+            and 'png' for inputFormat=="png".
 
         dtype: string or numpy dtype. optional, default 'int16'
-            Data type of the image files to be loaded, specified as a numpy "dtype" string. If inputFormat is
-            'tif', the dtype parameter (if any) will be ignored; data type will instead be read out from the
-            tif headers.
+            Data type of the image files to be loaded, specified as a numpy "dtype" string.
+            Ignored for 'tif' or 'png' (data will be inferred from image formats).
 
-        blockSize: string formatted as e.g. "64M", "512k", "2G", or positive int, tuple of positive int, or instance of
-                   BlockingStrategy. optional, default "150M"
-            Requested size of individual output files in bytes (or kilobytes, megabytes, gigabytes). blockSize can also
-            be an instance of blockingStrategy, or a tuple of int specifying either the number of pixels or of splits
-            per dimension to apply to the loaded images. Whether a tuple of int is interpreted as pixels or as splits
-            depends on the value of the blockSizeUnits parameter.  This parameter also indirectly controls the number
-            of Spark partitions to be used, with one partition used per block created.
+        blockSize: string or positive int, optional, default "150M"
+            Requested size of blocks (e.g "64M", "512k", "2G"). If shuffle=True, can also be a
+            tuple of int specifying the number of pixels or splits per dimension. Indirectly
+            controls the number of Spark partitions, with one partition per block.
 
-        blockSizeUnits: string, either "pixels" or "splits" (or unique prefix of each, such as "s"), default "pixels"
-            Specifies units to be used in interpreting a tuple passed as blockSizeSpec when shuffle=True. If a string
-            or a BlockingStrategy instance is passed as blockSizeSpec, or if shuffle=False, this parameter has no
-            effect.
+        blockSizeUnits: string, either "pixels" or "splits", default "pixels"
+            Units for interpreting a tuple passed as blockSize when shuffle=True.
 
-        startIdx: nonnegative int, optional
-            startIdx and stopIdx are convenience parameters to allow only a subset of input files to be read in. These
-            parameters give the starting index (inclusive) and final index (exclusive) of the data files to be used
-            after lexicographically sorting all input data files matching the dataPath argument. For example,
-            startIdx=None (the default) and stopIdx=10 will cause only the first 10 data files in dataPath to be read
-            in; startIdx=2 and stopIdx=3 will cause only the third file (zero-based index of 2) to be read in. startIdx
-            and stopIdx use the python slice indexing convention (zero-based indexing with an exclusive final position).
+        startIdx: nonnegative int, optional, default = None
+            Convenience parameters to read only a subset of input files. Uses python slice conventions
+            (zero-based indexing with exclusive final position). These parameters give the starting
+            and final index after lexicographic sorting.
 
-        stopIdx: nonnegative int, optional
+        stopIdx: nonnegative int, optional, default = None
             See startIdx.
 
-        shuffle: boolean, optional, default True
-            Controls whether the conversion from Images to Series formats will make use of a Spark shuffle-based method.
+        shuffle: boolean, optional, default = True
+            Controls whether the conversion from Images to Series formats will use of a Spark shuffle-based method.
 
         overwrite: boolean, optional, default False
-            If true, the directory specified by outputDirPath will first be deleted, along with all its contents, if it
-            already exists. (Use with caution.) If false, a ValueError will be thrown if outputDirPath is found to
-            already exist.
+            If true, the directory specified by outputDirPath will be deleted (recursively) if it
+            already exists. (Use with caution.)
 
-        recursive: boolean, default False
-            If true, will recursively descend directories rooted at dataPath, loading all files in the tree that
-            have an appropriate extension. Recursive loading is currently only implemented for local filesystems
-            (not s3), and only with shuffle=True.
+        recursive: boolean, optional, default = False
+            If true, will recursively descend directories rooted at dataPath, loading all files
+            in the tree with an appropriate extension.
 
-        nplanes: positive integer, default None
-            If passed, will cause a single image file to be subdivided into multiple records. Every
-            `nplanes` z-planes (or multipage tif pages) in the file will be taken as a new record, with the
-            first nplane planes of the first file being record 0, the second nplane planes being record 1, etc,
-            until the first file is exhausted and record ordering continues with the first nplane planes of the
-            second file, and so on. With nplanes=None (the default), a single file will be considered as
-            representing a single record. Keys are calculated assuming that all input files contain the same
-            number of records; if the number of records per file is not the same across all files,
-            then `renumber` should be set to True to ensure consistent keys. nplanes is only supported for
-            shuffle=True (the default).
+        nplanes: positive integer, optional, default = None
+            Subdivide individual image files. Every `nplanes` from each file will be considered a new record.
+            With nplanes=None (the default), a single file will be considered as representing a single record.
+            If the number of records per file is not the same across all files, then `renumber` should be set
+            to True to ensure consistent keys.
 
-        npartitions: positive int, optional
-            If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
-            partition per image file. Only applies when shuffle=True.
+        npartitions: positive int, optional, default = None
+            Specify number of partitions for the RDD, if unspecified will use 1 partition per image.
 
-        renumber: boolean, optional, default False
-            If renumber evaluates to True, then the keys for each record will be explicitly recalculated after
-            all images are loaded. This should only be necessary at load time when different files contain
-            different number of records. renumber is only supported for shuffle=True (the default). See
-            Images.renumber().
+        renumber: boolean, optional, default = False
+            Recalculate keys for records after images are loading. Only necessary if different files contain
+            different number of records (e.g. due to specifying nplanes). See Images.renumber().
+
         """
         checkParams(inputFormat, ['stack', 'tif', 'tif-stack'])
 
@@ -792,13 +714,9 @@ class ThunderContext():
         """
         Manually set AWS access credentials to be used by Thunder.
 
-        This method is provided primarily for hosted environments that do not provide
-        filesystem access (e.g. Databricks Cloud). Typically AWS credentials can be set
-        and read from core-site.xml (for Hadoop input format readers, such as Series
-        binary files), ~/.boto or other boto credential file locations, or the environment
-        variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY. These credentials should
-        be configured automatically in clusters launched by the thunder-ec2 script, and
-        so this method should not have to be called.
+        Provided for hosted cloud environments without filesystem access.
+        If launching a cluster using the thunder-ec2 script, credentials will be configured
+        automatically (inside core-site.xml and ~/.boto), so this method should not need to be called.
 
         Parameters
         ----------
