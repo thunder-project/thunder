@@ -77,7 +77,7 @@ class CrossCorr(RegistrationMethod):
 
 class PlanarCrossCorr(CrossCorr):
     """
-    Translation using cross correlation on each plane.
+    Translation using cross correlation on each plane of a volume.
     """
 
     def getTransform(self, im):
