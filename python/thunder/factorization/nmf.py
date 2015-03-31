@@ -34,6 +34,9 @@ class NMF(object):
         if 'none', reconstruction error is never computed. if 'all', it is computed at every iteration.
         if 'final', reconstruction error is computed on the final solution.
 
+    verbose : boolean, optional, default = False
+        Whether to print progress
+
     Attributes
     ----------
     `w` : RDD of nrows (tuple, array) pairs, each array of shape (k,)
@@ -52,7 +55,9 @@ class NMF(object):
         Output of the reconstruction error at the iterations specified by parameter recon_hist
     """
 
-    def __init__(self, k=5, method='als', maxIter=20, tol=0.001, h0=None, wHist=False, reconHist='none'):
+    def __init__(self, k=5, method='als', maxIter=20, tol=0.001, h0=None, wHist=False,
+                 reconHist='none', verbose=False):
+
         # initialize input variables
         self.k = int(k)
         self.method = method
@@ -60,6 +65,7 @@ class NMF(object):
         self.tol = tol
         self.h0 = h0
         self.reconHist = reconHist
+        self.verbose = verbose
 
         # initialize output variables
         self.h = None
@@ -118,7 +124,8 @@ class NMF(object):
         if self.method == "als":
 
             # initialize NMF and begin als algorithm
-            print "Initializing NMF"
+            if self.verbose:
+                print "Initializing NMF"
             alsIter = 0
             hConvCurr = 100
 
@@ -181,16 +188,18 @@ class NMF(object):
                     self.reconErr.append(rddFrobeniusNorm(mat, recData))
 
                 # report progress
-                print "finished als iteration %d with convergence = %.6f in H" % (alsIter, hConvCurr)
+                if self.verbose:
+                    print "finished als iteration %d with convergence = %.6f in H" % (alsIter, hConvCurr)
 
                 # increment count
                 alsIter += 1
 
             # report on convergence
-            if hConvCurr <= self.tol:
-                print "Converged to specified tolerance."
-            else:
-                print "Warning: reached maxiter without converging to specified tolerance."
+            if self.verbose:
+                if hConvCurr <= self.tol:
+                    print "Converged to specified tolerance."
+                else:
+                    print "Warning: reached maxiter without converging to specified tolerance."
 
             # calculate reconstruction error
             if self.reconHist == 'final':
@@ -203,6 +212,6 @@ class NMF(object):
             self.w = Series(w)
 
         else:
-            print "Error: %s is not a supported algorithm." % self.method
+            raise Exception("Algorithm %s is not supported" % self.method)
 
         return self
