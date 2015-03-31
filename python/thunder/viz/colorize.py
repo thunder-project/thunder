@@ -20,8 +20,8 @@ class Colorize(object):
     ----------
     cmap : string, optional, default = rainbow
         The colormap to convert to, can be one of a special set of conversions
-        (rgb, hsv, polar, angle, indexed), a matplotlib colormap object, or a string
-        specification of a matplotlib colormap
+        (rgb, hsv, hv, polar, angle, indexed), a matplotlib colormap object,
+        or a string specification of a matplotlib colormap
 
     scale : float, optional, default = 1
         How to scale amplitude during color conversion, controls brighthness
@@ -145,6 +145,15 @@ class Colorize(object):
             if img.ndim == 3:
                 out = transpose(img, [1, 2, 0])
 
+        elif self.cmap == 'hv':
+            saturation = ones((dims[1], dims[2])) * 0.8
+            if img.ndim == 4:
+                out = zeros((dims[1], dims[2], dims[3], 3))
+                for i in range(0, dims[3]):
+                    out[:, :, i, :] = hsv_to_rgb(dstack((img[0][:, :, i], saturation, img[2][:, :, i])))
+            if img.ndim == 3:
+                out = hsv_to_rgb(dstack((img[0], saturation, img[2])))
+
         elif self.cmap == 'hsv':
             if img.ndim == 4:
                 out = zeros((dims[1], dims[2], dims[3], 3))
@@ -234,11 +243,11 @@ class Colorize(object):
 
         from matplotlib.colors import ListedColormap
 
-        if self.cmap in ['rgb', 'hsv', 'polar', 'angle', 'indexed']:
+        if self.cmap in ['rgb', 'hsv', 'hv', 'polar', 'angle', 'indexed']:
             if self.cmap in ['rgb', 'hsv']:
                 if dims[0] != 3:
                     raise Exception('First dimension must be 3 for %s conversion' % self.cmap)
-            if self.cmap in ['polar', 'angle']:
+            if self.cmap in ['polar', 'angle', 'hv']:
                 if dims[0] != 2:
                     raise Exception('First dimension must be 2 for %s conversion' % self.cmap)
             if self.cmap in ['indexed']:
@@ -254,7 +263,7 @@ class Colorize(object):
 
         from matplotlib.colors import ListedColormap
 
-        if self.cmap in ['rgb', 'hsv', 'polar', 'angle', 'indexed']:
+        if self.cmap in ['rgb', 'hsv', 'hv', 'polar', 'angle', 'indexed']:
             if not allclose(dims1, dims2[1:]):
                 raise Exception
 
