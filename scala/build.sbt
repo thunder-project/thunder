@@ -1,6 +1,6 @@
 name := "thunder"
 
-version := "0.5.0.RC1"
+version := "0.5.0.RC3"
 
 scalaVersion := "2.10.3"
 
