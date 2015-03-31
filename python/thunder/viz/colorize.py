@@ -130,9 +130,16 @@ class Colorize(object):
         self._checkDims(dims)
 
         if self.cmap not in ['polar', 'angle']:
-            for i, im in enumerate(img):
+
+            if self.cmap in ['rgb', 'hv', 'hsv', 'indexed']:
+                img = copy(img)
+                for i, im in enumerate(img):
+                    norm = Normalize(vmin=self.vmin, vmax=self.vmax, clip=True)
+                    img[i] = norm(im)
+
+            if isinstance(self.cmap, ListedColormap) or isinstance(self.cmap, str):
                 norm = Normalize(vmin=self.vmin, vmax=self.vmax, clip=True)
-                img[i] = norm(im)
+                img = norm(copy(img))
 
         if mask is not None:
             mask = self._prepareMask(mask)
