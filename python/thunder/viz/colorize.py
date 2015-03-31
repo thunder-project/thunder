@@ -40,6 +40,8 @@ class Colorize(object):
         self.cmap = cmap
         self.scale = scale
         self.colors = colors
+        if self.cmap == 'index' and self.colors is None:
+            raise Exception("Must specify colors for indexed conversion")
         self.vmin = vmin
         self.vmax = vmax
 
@@ -128,8 +130,9 @@ class Colorize(object):
         self._checkDims(dims)
 
         if self.cmap not in ['polar', 'angle']:
-            norm = Normalize(vmin=self.vmin, vmax=self.vmax, clip=True)
-            img = norm(img)
+            for i, im in enumerate(img):
+                norm = Normalize(vmin=self.vmin, vmax=self.vmax, clip=True)
+                img[i] = norm(im)
 
         if mask is not None:
             mask = self._prepareMask(mask)
