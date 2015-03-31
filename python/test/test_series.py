@@ -1,5 +1,6 @@
 from numpy import allclose, amax, arange, array, array_equal
 from numpy import dtype as dtypeFunc
+from numpy.testing import assert_array_equal, assert_equal
 from nose.tools import assert_equals, assert_is_none, assert_is_not_none, assert_raises, assert_true
 
 from thunder.rdds.series import Series
@@ -201,6 +202,17 @@ class TestSeriesMethods(PySparkTestCase):
         corrs = data.correlate(sig12).values().collect()
         assert(allclose(corrs[0], [1, -1]))
 
+    def test_subset(self):
+        rdd = self.sc.parallelize([(0, array([1, 5], dtype='float16')),
+                                   (0, array([1, 10], dtype='float16')),
+                                   (0, array([1, 15], dtype='float16'))])
+        data = Series(rdd)
+        assert_equal(len(data.subset(3, stat='min', thresh=0)), 3)
+        assert_array_equal(data.subset(1, stat='max', thresh=10), [[1, 15]])
+        assert_array_equal(data.subset(1, stat='mean', thresh=6), [[1, 15]])
+        assert_array_equal(data.subset(1, stat='std', thresh=6), [[1, 15]])
+        assert_array_equal(data.subset(1, thresh=6), [[1, 15]])
+
     def test_query_subscripts(self):
         dataLocal = [
             ((1, 1), array([1.0, 2.0, 3.0])),
@@ -331,7 +343,7 @@ class TestSeriesMethods(PySparkTestCase):
         ]
         data.index = array(index).T
         
-        result = data.seriesAggregateByIndex(sum, level=[0,1])
+        result = data.seriesAggregateByIndex(sum, level=[0, 1])
         assert_true(array_equal(result.values().first(), array([1, 14, 13, 38])))
         assert_true(array_equal(result.index, array([[0, 0], [0, 1], [1, 0], [1, 1]])))
 
@@ -363,11 +375,11 @@ class TestSeriesMethods(PySparkTestCase):
 
         result = data.seriesStatByIndex('sum', level=[0, 1])
         assert_true(array_equal(result.values().first(), array([1, 14, 13, 38])))
-        assert_true(array_equal(result.index, array([[0,0], [0, 1], [1, 0], [1,1]])))
+        assert_true(array_equal(result.index, array([[0,0], [0, 1], [1, 0], [1, 1]])))
 
         result = data.seriesSumByIndex(level=[0, 1])
         assert_true(array_equal(result.values().first(), array([1, 14, 13, 38])))
-        assert_true(array_equal(result.index, array([[0,0], [0, 1], [1, 0], [1,1]])))
+        assert_true(array_equal(result.index, array([[0,0], [0, 1], [1, 0], [1, 1]])))
 
 
 class TestSeriesRegionMeanMethods(PySparkTestCase):

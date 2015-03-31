@@ -1,6 +1,6 @@
 from numpy import ndarray, array, sum, mean, median, std, size, arange, percentile,\
     asarray, maximum, minimum, zeros, corrcoef, where, true_divide, ceil,\
-    unique, array_equal, concatenate, squeeze, delete, ravel, logical_not
+    unique, array_equal, concatenate, squeeze, delete, ravel, logical_not, max, min
 
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
@@ -509,7 +509,7 @@ class Series(Data):
 
         return out.squeeze()
 
-    def subset(self, nsamples=100, thresh=None, stat='std'):
+    def subset(self, nsamples=100, thresh=None, stat='std', seed=None):
         """
         Extract random subset of records, filtering on a summary statistic.
 
@@ -530,14 +530,18 @@ class Series(Data):
             A local numpy array with the subset of points
         """
         from numpy.linalg import norm
+        from numpy import random
 
-        statDict = {'mean': mean, 'std': std, 'max': maximum, 'min': minimum, 'norm': norm}
+        statDict = {'mean': mean, 'std': std, 'max': max, 'min': min, 'norm': norm}
+
+        if seed is None:
+            seed = random.randint(0, 2 ** 32)
 
         if thresh is not None:
             func = statDict[stat]
-            result = array(self.rdd.values().filter(lambda x: func(x) > thresh).takeSample(False, nsamples))
+            result = array(self.rdd.values().filter(lambda x: func(x) > thresh).takeSample(False, nsamples, seed))
         else:
-            result = array(self.rdd.values().takeSample(False, nsamples))
+            result = array(self.rdd.values().takeSample(False, nsamples, seed))
 
         if size(result) == 0:
             raise Exception('No records found, maybe threshold on %s of %g is too high, try changing it?'
