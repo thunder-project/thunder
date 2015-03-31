@@ -124,10 +124,10 @@ Thunder models the data as:
 
 :math:`y=\beta X`
 
-where: + :math:`y` is a row-vector of measurements of the response
-variable + :math:`\beta` is a row-vector of regression coeffients, one
-for each regressor + :math:`X` is a design matrix with one row for each
-regressor and one column for each measurement
+where :math:`y` is a row-vector of measurements of the response
+variable, :math:`\beta` is a row-vector of regression coeffients, one
+for each regressor, and :math:`X` is a design matrix with one row for
+each regressor and one column for each measurement
 
 Since our data are time series, the columns of :math:`y` and :math:`X`
 represent measurements at different instants in time. Note: Thunder

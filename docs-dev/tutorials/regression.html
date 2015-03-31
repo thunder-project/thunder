@@ -238,10 +238,10 @@ correlations are blue.</p>
 viable optoin, so we turn to linear regression. Linear regression in
 Thunder models the data as:</p>
 <p><span class="math">\(y=\beta X\)</span></p>
-<p>where: + <span class="math">\(y\)</span> is a row-vector of measurements of the response
-variable + <span class="math">\(\beta\)</span> is a row-vector of regression coeffients, one
-for each regressor + <span class="math">\(X\)</span> is a design matrix with one row for each
-regressor and one column for each measurement</p>
+<p>where <span class="math">\(y\)</span> is a row-vector of measurements of the response
+variable, <span class="math">\(\beta\)</span> is a row-vector of regression coeffients, one
+for each regressor, and <span class="math">\(X\)</span> is a design matrix with one row for
+each regressor and one column for each measurement</p>
 <p>Since our data are time series, the columns of <span class="math">\(y\)</span> and <span class="math">\(X\)</span>
 represent measurements at different instants in time. Note: Thunder
 automatically adds a row of 1&#8217;s to the design matrix to model an
