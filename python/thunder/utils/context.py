@@ -35,7 +35,7 @@ class ThunderContext():
         from pyspark import SparkContext
         return ThunderContext(SparkContext(*args, **kwargs))
 
-    def loadSeries(self, dataPath, nkeys=None, nvalues=None, format='binary', minPartitions=None,
+    def loadSeries(self, dataPath, nkeys=None, nvalues=None, inputFormat='binary', minPartitions=None,
                    confFilename='conf.json', keyType=None, valueType=None, keyPath=None, varName=None):
         """
         Loads a Series object from data stored as binary, text, npy, or mat.
@@ -51,15 +51,15 @@ class ThunderContext():
             May include a single '*' wildcard in the filename. Examples of valid dataPaths include
             'local/directory/*.stack", "s3n:///my-s3-bucket/data/", or "file:///mnt/another/directory/".
 
-        nkeys: int, optional (required if `format` is 'text'), default = None
+        nkeys: int, optional (required if `inputFormat` is 'text'), default = None
             Number of keys per record (e.g. 3 for (x, y, z) coordinate keys). Must be specified for
             text data; can be specified here or in a configuration file for binary data.
 
-        nvalues: int, optional (required if `format` is 'text')
+        nvalues: int, optional (required if `inputFormat` is 'text')
             Number of values per record. Must be specified here or in a configuration file for binary data.
 
-        format: {'text', 'binary', 'npy', 'mat'}. optional, default = 'binary'
-            Format of data to be read.
+        inputFormat: {'text', 'binary', 'npy', 'mat'}. optional, default = 'binary'
+            inputFormat of data to be read.
 
         minPartitions: int, optional, default = SparkContext.minParallelism
             Minimum number of Spark partitions to use, only for text.
@@ -86,19 +86,19 @@ class ThunderContext():
         data: thunder.rdds.Series
             A Series object, wrapping an RDD, with (n-tuples of ints) : (numpy array) pairs
         """
-        checkParams(format, ['text', 'binary', 'npy', 'mat'])
+        checkParams(inputFormat, ['text', 'binary', 'npy', 'mat'])
 
         from thunder.rdds.fileio.seriesloader import SeriesLoader
         loader = SeriesLoader(self._sc, minPartitions=minPartitions)
 
-        if format.lower() == 'binary':
+        if inputFormat.lower() == 'binary':
             data = loader.fromBinary(dataPath, confFilename=confFilename, nkeys=nkeys, nvalues=nvalues,
                                      keyType=keyType, valueType=valueType)
-        elif format.lower() == 'text':
+        elif inputFormat.lower() == 'text':
             if nkeys is None:
                 raise Exception('Must provide number of keys per record for loading from text')
             data = loader.fromText(dataPath, nkeys=nkeys)
-        elif format.lower() == 'npy':
+        elif inputFormat.lower() == 'npy':
             data = loader.fromNpyLocal(dataPath, keyPath)
         else:
             if varName is None:
@@ -107,7 +107,7 @@ class ThunderContext():
 
         return data
 
-    def loadImages(self, dataPath, dims=None, dtype=None, format='stack', ext=None,
+    def loadImages(self, dataPath, dims=None, dtype=None, inputFormat='stack', ext=None,
                    startIdx=None, stopIdx=None, recursive=False, nplanes=None, npartitions=None,
                    renumber=False, confFilename='conf.json'):
         """
@@ -123,21 +123,21 @@ class ThunderContext():
             May include a single '*' wildcard in the filename. Examples of valid dataPaths include
             'local/directory/*.stack", "s3n:///my-s3-bucket/data/", or "file:///mnt/another/directory/".
 
-        dims: tuple of positive int, optional (required if format is 'stack')
+        dims: tuple of positive int, optional (required if inputFormat is 'stack')
             Image dimensions. Binary stack data will be interpreted as a multidimensional array
             with the given dimensions, and should be stored in row-major order (Fortran or Matlab convention),
             where the first dimension changes most rapidly. For 'png' or 'tif' data dimensions
             will be read from the image file headers.
 
-        format: str, optional, default = 'stack'
+        inputFormat: str, optional, default = 'stack'
             Expected format of the input data: 'stack', 'png', or 'tif'. 'stack' indicates flat binary stacks.
-            'png' or 'tif' indicate image formats. Page of a multipage tif file will be extend along
+            'png' or 'tif' indicate image format. Page of a multipage tif file will be extend along
             the third dimension. Separate files interpreted as distinct records, with ordering
             given by lexicographic sorting of file names.
 
         ext: string, optional, default = None
-            File extension, default will be "bin" if format=="stack", "tif" for format=='tif',
-            and 'png' for format=="png".
+            File extension, default will be "bin" if inputFormat=="stack", "tif" for inputFormat=='tif',
+            and 'png' for inputFormat=="png".
 
         dtype: string or numpy dtype, optional, default = 'int16'
             Data type of the image files to be loaded, specified as a numpy "dtype" string.
@@ -174,23 +174,23 @@ class ThunderContext():
             An Images object, wrapping an RDD of with (int) : (numpy array) pairs
 
         """
-        checkParams(format, ['stack', 'png', 'tif', 'tif-stack'])
+        checkParams(inputFormat, ['stack', 'png', 'tif', 'tif-stack'])
 
         from thunder.rdds.fileio.imagesloader import ImagesLoader
         loader = ImagesLoader(self._sc)
 
         # Checking StartIdx is smaller or equal to StopIdx
         if startIdx is not None and stopIdx is not None and startIdx > stopIdx:
-            raise Exception("Error. startIdx {} is larger than stopIdx {}".format(startIdx, stopIdx))
+            raise Exception("Error. startIdx {} is larger than stopIdx {}".inputFormat(startIdx, stopIdx))
 
         if not ext:
-            ext = DEFAULT_EXTENSIONS.get(format.lower(), None)
+            ext = DEFAULT_EXTENSIONS.get(inputFormat.lower(), None)
 
-        if format.lower() == 'stack':
+        if inputFormat.lower() == 'stack':
             data = loader.fromStack(dataPath, dims=dims, dtype=dtype, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
                                     recursive=recursive, nplanes=nplanes, npartitions=npartitions,
                                     confFilename=confFilename)
-        elif format.lower().startswith('tif'):
+        elif inputFormat.lower().startswith('tif'):
             data = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive,
                                   nplanes=nplanes, npartitions=npartitions)
         else:
@@ -251,7 +251,7 @@ class ThunderContext():
 
         return data
 
-    def loadImagesAsSeries(self, dataPath, dims=None, format='stack', ext=None, dtype='int16',
+    def loadImagesAsSeries(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
                            blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,
                            shuffle=True, recursive=False, nplanes=None, npartitions=None,
                            renumber=False):
@@ -265,21 +265,21 @@ class ThunderContext():
             May include a single '*' wildcard in the filename. Examples of valid dataPaths include
             'local/directory/*.stack", "s3n:///my-s3-bucket/data/", or "file:///mnt/another/directory/".
 
-        dims: tuple of positive int, optional (required if format is 'stack')
+        dims: tuple of positive int, optional (required if inputFormat is 'stack')
             Image dimensions. Binary stack data will be interpreted as a multidimensional array
             with the given dimensions, and should be stored in row-major order (Fortran or Matlab convention),
             where the first dimension changes most rapidly. For 'png' or 'tif' data dimensions
             will be read from the image file headers.
 
-        format: str, optional, default = 'stack'
+        inputFormat: str, optional, default = 'stack'
             Expected format of the input data: 'stack', 'png', or 'tif'. 'stack' indicates flat binary stacks.
             'png' or 'tif' indicate image formats. Page of a multipage tif file will be extend along
             the third dimension. Separate files interpreted as distinct records, with ordering
             given by lexicographic sorting of file names.
 
         ext: string, optional, default = None
-            File extension, default will be "bin" if format=="stack", "tif" for format=='tif',
-            and 'png' for format=="png".
+            File extension, default will be "bin" if inputFormat=="stack", "tif" for inputFormat=='tif',
+            and 'png' for inputFormat=="png".
 
         dtype: string or numpy dtype. optional, default 'int16'
             Data type of the image files to be loaded, specified as a numpy "dtype" string.
@@ -330,19 +330,19 @@ class ThunderContext():
             With each image contributing one point to this value array, with ordering given by
             the lexicographic ordering of image file names.
         """
-        checkParams(format, ['stack', 'tif', 'tif-stack'])
+        checkParams(inputFormat, ['stack', 'tif', 'tif-stack'])
 
-        if format.lower() == 'stack' and not dims:
+        if inputFormat.lower() == 'stack' and not dims:
             raise ValueError("Dimensions ('dims' parameter) must be specified if loading from binary image stack" +
-                             " ('stack' value for 'format' parameter)")
+                             " ('stack' value for 'inputFormat' parameter)")
 
         if not ext:
-            ext = DEFAULT_EXTENSIONS.get(format.lower(), None)
+            ext = DEFAULT_EXTENSIONS.get(inputFormat.lower(), None)
 
         if shuffle:
             from thunder.rdds.fileio.imagesloader import ImagesLoader
             loader = ImagesLoader(self._sc)
-            if format.lower() == 'stack':
+            if inputFormat.lower() == 'stack':
                 images = loader.fromStack(dataPath, dims, dtype=dtype, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
                                           recursive=recursive, nplanes=nplanes, npartitions=npartitions)
             else:
@@ -363,7 +363,7 @@ class ThunderContext():
                 raise NotImplementedError("renumber is not supported with shuffle=False")
 
             loader = SeriesLoader(self._sc)
-            if format.lower() == 'stack':
+            if inputFormat.lower() == 'stack':
                 return loader.fromStack(dataPath, dims, ext=ext, dtype=dtype, blockSize=blockSize,
                                         startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
             else:
@@ -371,7 +371,7 @@ class ThunderContext():
                 return loader.fromTif(dataPath, ext=ext, blockSize=blockSize,
                                       startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
 
-    def convertImagesToSeries(self, dataPath, outputDirPath, dims=None, format='stack', ext=None,
+    def convertImagesToSeries(self, dataPath, outputDirPath, dims=None, inputFormat='stack', ext=None,
                               dtype='int16', blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,
                               shuffle=True, overwrite=False, recursive=False, nplanes=None, npartitions=None,
                               renumber=False):
@@ -395,21 +395,21 @@ class ThunderContext():
             or "file:///mnt/another/directory/". If the directory exists and 'overwrite' is True,
             the existing directory and all its contents will be deleted and overwritten.
 
-        dims: tuple of positive int, optional (required if format is 'stack')
+        dims: tuple of positive int, optional (required if inputFormat is 'stack')
             Image dimensions. Binary stack data will be interpreted as a multidimensional array
             with the given dimensions, and should be stored in row-major order (Fortran or Matlab convention),
             where the first dimension changes most rapidly. For 'png' or 'tif' data dimensions
             will be read from the image file headers.
 
-        format: str, optional, default = 'stack'
+        inputFormat: str, optional, default = 'stack'
             Expected format of the input data: 'stack', 'png', or 'tif'. 'stack' indicates flat binary stacks.
             'png' or 'tif' indicate image formats. Page of a multipage tif file will be extend along
             the third dimension. Separate files interpreted as distinct records, with ordering
             given by lexicographic sorting of file names.
 
         ext: string, optional, default = None
-            File extension, default will be "bin" if format=="stack", "tif" for format=='tif',
-            and 'png' for format=="png".
+            File extension, default will be "bin" if inputFormat=="stack", "tif" for inputFormat=='tif',
+            and 'png' for inputFormat=="png".
 
         dtype: string or numpy dtype. optional, default 'int16'
             Data type of the image files to be loaded, specified as a numpy "dtype" string.
@@ -456,23 +456,23 @@ class ThunderContext():
             different number of records (e.g. due to specifying nplanes). See Images.renumber().
 
         """
-        checkParams(format, ['stack', 'tif', 'tif-stack'])
+        checkParams(inputFormat, ['stack', 'tif', 'tif-stack'])
 
-        if format.lower() == 'stack' and not dims:
+        if inputFormat.lower() == 'stack' and not dims:
             raise ValueError("Dimensions ('dims' parameter) must be specified if loading from binary image stack" +
-                             " ('stack' value for 'format' parameter)")
+                             " ('stack' value for 'inputFormat' parameter)")
 
         if not overwrite:
             raiseErrorIfPathExists(outputDirPath, awsCredentialsOverride=self._credentials)
             overwrite = True  # prevent additional downstream checks for this path
 
         if not ext:
-            ext = DEFAULT_EXTENSIONS.get(format.lower(), None)
+            ext = DEFAULT_EXTENSIONS.get(inputFormat.lower(), None)
 
         if shuffle:
             from thunder.rdds.fileio.imagesloader import ImagesLoader
             loader = ImagesLoader(self._sc)
-            if format.lower() == 'stack':
+            if inputFormat.lower() == 'stack':
                 images = loader.fromStack(dataPath, dims, ext=ext, dtype=dtype, startIdx=startIdx, stopIdx=stopIdx,
                                           recursive=recursive, nplanes=nplanes, npartitions=npartitions)
             else:
@@ -489,7 +489,7 @@ class ThunderContext():
             if npartitions is not None:
                 raise NotImplementedError("npartitions is not supported with shuffle=False")
             loader = SeriesLoader(self._sc)
-            if format.lower() == 'stack':
+            if inputFormat.lower() == 'stack':
                 loader.saveFromStack(dataPath, outputDirPath, dims, ext=ext, dtype=dtype,
                                      blockSize=blockSize, overwrite=overwrite, startIdx=startIdx,
                                      stopIdx=stopIdx, recursive=recursive)
@@ -579,7 +579,7 @@ class ThunderContext():
         elif dataset == "fish-series":
             return self.loadSeries(tmpdir).astype('float')
         elif dataset == "fish-images":
-            return self.loadImages(tmpdir, format="tif", npartitions=npartitions)
+            return self.loadImages(tmpdir, inputFormat="tif", npartitions=npartitions)
         elif dataset == "mouse-series":
             return self.loadSeries(tmpdir).astype('float')
         elif dataset == "mouse-images":
@@ -614,11 +614,11 @@ class ThunderContext():
             'svoboda.lab/tactile.navigation': 'svoboda.lab/tactile.navigation/1/'
         }
 
-        if 'local' in self._sc.master:
-            raise Exception("Must be running on an EC2 cluster to load this example data set")
-
         if dataset is None:
             return DATASETS.keys()
+
+        if 'local' in self._sc.master:
+            raise Exception("Must be running on an EC2 cluster to load this example data set")
 
         checkParams(dataset, DATASETS.keys())
 
@@ -660,7 +660,7 @@ class ThunderContext():
 
         return Params(json.loads(buffer))
 
-    def export(self, data, filename, format=None, overwrite=False, varname=None):
+    def export(self, data, filename, outputFormat=None, overwrite=False, varname=None):
         """
         Export local array data to a variety of formats.
 
@@ -676,7 +676,7 @@ class ThunderContext():
         filename : str
             Output location (path/to/file.ext)
 
-        format : str, optional, default = None
+        outputFormat : str, optional, default = None
             Ouput format ("npy", "mat", or "txt"), if not provided will
             try to infer from file extension.
 
@@ -686,25 +686,27 @@ class ThunderContext():
         varname : str, optional, default = None
             Variable name for writing "mat" formatted files
         """
-        from numpy import save, savetxt
+        from numpy import save, savetxt, asarray
         from scipy.io import savemat
         from StringIO import StringIO
 
         from thunder.rdds.fileio.writers import getFileWriterForPath
 
-        path, file, format = handleFormat(filename, format)
-        checkParams(format, ["npy", "mat", "txt"])
+        path, file, outputFormat = handleFormat(filename, outputFormat)
+        checkParams(outputFormat, ["npy", "mat", "txt"])
         clazz = getFileWriterForPath(filename)
         writer = clazz(path, file, overwrite=overwrite, awsCredentialsOverride=self._credentials)
 
         stream = StringIO()
 
-        if format == "mat":
+        if outputFormat == "mat":
             varname = os.path.splitext(file)[0] if varname is None else varname
             savemat(stream, mdict={varname: data}, oned_as='column', do_compression='true')
-        if format == "npy":
+        if outputFormat == "npy":
             save(stream, data)
-        if format == "txt":
+        if outputFormat == "txt":
+            if asarray(data).ndim > 2:
+                raise Exception("Cannot write data with more than two dimensions to text")
             savetxt(stream, data)
 
         stream.seek(0)

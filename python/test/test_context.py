@@ -139,7 +139,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         pilImg.save(filePath)
         del pilImg, tmpAry
 
-        rangeSeries = self.tsc.loadImagesAsSeries(self.outputdir, format="tif-stack", shuffle=shuffle)
+        rangeSeries = self.tsc.loadImagesAsSeries(self.outputdir, inputFormat="tif-stack", shuffle=shuffle)
         assert_equals('float16', rangeSeries._dtype)  # check before any potential first() calls update this val
         rangeSeriesAry = rangeSeries.pack()
 
@@ -168,7 +168,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         testimg_pil.seek(2)
         testimg_arys.append(array(testimg_pil))
 
-        rangeSeries = self.tsc.loadImagesAsSeries(imagePath, format="tif-stack", shuffle=shuffle)
+        rangeSeries = self.tsc.loadImagesAsSeries(imagePath, inputFormat="tif-stack", shuffle=shuffle)
         assert_true(rangeSeries._dtype.startswith("float"))
         rangeSeriesAry = rangeSeries.pack()
         rangeSeriesAry_xpose = rangeSeries.pack(transpose=True)
@@ -207,7 +207,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
 
         del pilImg, tmpAry
 
-        rangeSeries = self.tsc.loadImagesAsSeries(self.outputdir, format="tif-stack", shuffle=shuffle)
+        rangeSeries = self.tsc.loadImagesAsSeries(self.outputdir, inputFormat="tif-stack", shuffle=shuffle)
         assert_equals('float16', rangeSeries._dtype)
         rangeSeriesAry = rangeSeries.pack()
         rangeSeriesAry_xpose = rangeSeries.pack(transpose=True)
@@ -241,7 +241,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
             testimg_pil.seek(idx)
             testimg_arys.append(array(testimg_pil))
 
-        rangeSeries = self.tsc.loadImagesAsSeries(imagesPath, format="tif-stack", shuffle=True, nplanes=1)
+        rangeSeries = self.tsc.loadImagesAsSeries(imagesPath, inputFormat="tif-stack", shuffle=True, nplanes=1)
         assert_equals((70, 75), rangeSeries.dims.count)
 
         rangeSeriesAry = rangeSeries.pack()
@@ -297,7 +297,7 @@ class TestContextWriting(PySparkTestCaseWithOutputDir):
         assert(array_equal(aa, a))
 
         filename = self.outputdir + "/test"
-        self.tsc.export(a, filename, format="npy", overwrite=True)
+        self.tsc.export(a, filename, outputFormat="npy", overwrite=True)
         aa = load(filename + ".npy")
         assert(array_equal(aa, a))
 
@@ -313,12 +313,12 @@ class TestContextWriting(PySparkTestCaseWithOutputDir):
         assert(array_equal(aa['test'], a))
 
         filename = self.outputdir + "/test"
-        self.tsc.export(a, filename, format="mat", overwrite=True)
+        self.tsc.export(a, filename, outputFormat="mat", overwrite=True)
         aa = loadmat(filename + ".mat")
         assert(array_equal(aa['test'], a))
 
         filename = self.outputdir + "/test"
-        self.tsc.export(a, filename, format="mat", varname="tmp", overwrite=True)
+        self.tsc.export(a, filename, outputFormat="mat", varname="tmp", overwrite=True)
         aa = loadmat(filename + ".mat")
         assert(array_equal(aa['tmp'], a))
 
@@ -334,7 +334,7 @@ class TestContextWriting(PySparkTestCaseWithOutputDir):
         assert(array_equal(aa, a))
 
         filename = self.outputdir + "/test"
-        self.tsc.export(a, filename, format="txt", overwrite=True)
+        self.tsc.export(a, filename, outputFormat="txt", overwrite=True)
         aa = loadtxt(filename + ".txt")
         assert(array_equal(aa, a))
 
@@ -369,17 +369,17 @@ class TestLoadIrregularImages(PySparkTestCaseWithOutputDir):
         self._generate_array(dtype)
         if imgType.lower().startswith('tif'):
             self._write_tiffs()
-            format, ext, dims = "tif", "tif", None
+            inputFormat, ext, dims = "tif", "tif", None
         elif imgType.lower().startswith("stack"):
             self._write_stacks()
-            format, ext, dims = "stack", "bin", (16, 4, 4)
+            inputFormat, ext, dims = "stack", "bin", (16, 4, 4)
         else:
             raise ValueError("Unknown imgType: %s" % imgType)
 
         # with nplanes=2, this should yield a 12 record Images object, which after converting to
         # a series and packing should be a 12 x 4 x 4 x 2 array.
         # renumber=True is required in this case in order to ensure sensible results.
-        series = self.tsc.loadImagesAsSeries(self.outputdir, format=format, ext=ext,
+        series = self.tsc.loadImagesAsSeries(self.outputdir, inputFormat=inputFormat, ext=ext,
                                              blockSize=(2, 1, 1), blockSizeUnits="pixels",
                                              nplanes=2, dims=dims, renumber=True)
         packedAry = series.pack()
