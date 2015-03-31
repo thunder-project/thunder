@@ -70,8 +70,10 @@ class Colorize(object):
         """
         from matplotlib.pyplot import imshow, axis, colorbar
 
-        if nans is True:
-            img = nan_to_num(asarray(img))
+        img = asarray(img)
+
+        if (nans is True) and (img.dtype != bool):
+            img = nan_to_num(img)
 
         if img.ndim == 3:
             if bar:
