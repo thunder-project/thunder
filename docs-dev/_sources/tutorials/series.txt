@@ -26,6 +26,17 @@ record representing a time series from an outer corner of a
 value being an array representing the measurements at that point over
 the course of an experiment: [112, 110, 118, ..., 124].
 
+Setup plotting
+--------------
+
+.. code:: python
+
+    %matplotlib inline
+.. code:: python
+
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    sns.set_context('notebook')
 Loading series
 --------------
 
@@ -45,18 +56,11 @@ which thresholds based on the standard deviation:
 
 .. code:: python
 
-    %matplotlib inline
-.. code:: python
-
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    sns.set_context('notebook')
     examples = data.subset(nsamples=50, thresh=1)
-    # only plot the first twenty time points, for clarity
     plt.plot(examples.T[0:20,:]);
 
 
-.. image:: series_files/series_7_0.png
+.. image:: series_files/series_9_0.png
 
 
 Note the variation in raw intensity levels.
@@ -76,7 +80,7 @@ y-axis.
     plt.plot(examples.T[0:20,:]);
 
 
-.. image:: series_files/series_10_0.png
+.. image:: series_files/series_12_0.png
 
 
 .. code:: python
@@ -85,7 +89,7 @@ y-axis.
     plt.plot(examples.T[0:20,:]);
 
 
-.. image:: series_files/series_11_0.png
+.. image:: series_files/series_13_0.png
 
 
 Related methods include ``center``, ``standardize``, and ``detrend``.
@@ -111,13 +115,13 @@ For example, to select a range:
 
 .. code:: python
 
-    data.between(0,10).first()
+    data.between(0,8).first()
 
 
 
 .. parsed-literal::
 
-    ((0, 0, 0), array([26, 26, 26, 26, 26, 26, 26, 25, 26, 25, 25], dtype=uint8))
+    ((0, 0, 0), array([ 26.,  26.,  26.,  26.,  26.,  26.,  26.,  25.,  26.]))
 
 
 
@@ -125,13 +129,13 @@ Note that the index changes to reflect the subselected range:
 
 .. code:: python
 
-    data.between(0,10).index
+    data.between(0,8).index
 
 
 
 .. parsed-literal::
 
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    [0, 1, 2, 3, 4, 5, 6, 7, 8]
 
 
 
@@ -169,7 +173,7 @@ records. To summarize across records:
     plt.plot(data.toTimeSeries().normalize().min());
 
 
-.. image:: series_files/series_23_0.png
+.. image:: series_files/series_25_0.png
 
 
 To summarize within records:
@@ -211,7 +215,7 @@ expected, for a random signal, the correlation should be low.
 
 .. parsed-literal::
 
-    ((0, 0, 0), -0.0067443567595778164)
+    ((0, 0, 0), 0.039062227147807042)
 
 
 

@@ -156,12 +156,14 @@ in Thunder and visualize the results.</p>
 <div class="section" id="setup-plotting">
 <h2>Setup plotting<a class="headerlink" href="#setup-plotting" title="Permalink to this headline">¶</a></h2>
 <div class="code python highlight-python"><div class="highlight"><pre>%matplotlib inline
-import matplotlib.pyplot as plt
-import seaborn as sns
-from thunder import Colorize
-show = Colorize.show
-sns.set_context(&#39;notebook&#39;)
-sns.set_style(&#39;darkgrid&#39;)
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="kn">as</span> <span class="nn">sns</span>
+<span class="kn">from</span> <span class="nn">thunder</span> <span class="kn">import</span> <span class="n">Colorize</span>
+<span class="n">show</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">show</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;darkgrid&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -176,7 +178,7 @@ operations.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">show</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">()</span><span class="o">.</span><span class="n">first</span><span class="p">())</span>
 </pre></div>
 </div>
-<img alt="../_images/regression_9_0.png" src="../_images/regression_9_0.png" />
+<img alt="../_images/regression_10_0.png" src="../_images/regression_10_0.png" />
 <p>Convert the Images data to TimeSeries data, apply preprocessing, and
 cache the results. Here, the preprocessing does two things: squelches
 the data (to set all signals that do not exceed a threshold to 0, which
@@ -193,7 +195,7 @@ standard devaitions to avoid pixels with no activity).</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sample</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/regression_13_0.png" src="../_images/regression_13_0.png" />
+<img alt="../_images/regression_14_0.png" src="../_images/regression_14_0.png" />
 <p>Load in associated behavioral data to be used as explanatory variables
 (a.k.a regressors) in predicting the above time series.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">regressors</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;mouse-params&#39;</span><span class="p">)</span>
@@ -230,7 +232,7 @@ correlations are blue.</p>
 <span class="n">show</span><span class="p">(</span><span class="n">corrMat</span><span class="p">,</span> <span class="n">bar</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;RdBu_r&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/regression_20_0.png" src="../_images/regression_20_0.png" />
+<img alt="../_images/regression_21_0.png" src="../_images/regression_21_0.png" />
 </div>
 <div class="section" id="regression-analysis">
 <h2>Regression analysis<a class="headerlink" href="#regression-analysis" title="Permalink to this headline">¶</a></h2>
@@ -274,22 +276,25 @@ distribution across the image.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">show</span><span class="p">(</span><span class="n">rsq</span><span class="p">,</span> <span class="n">bar</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/regression_30_0.png" src="../_images/regression_30_0.png" />
+<img alt="../_images/regression_31_0.png" src="../_images/regression_31_0.png" />
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">b1map</span><span class="p">,</span> <span class="n">b2map</span> <span class="o">=</span> <span class="n">center</span><span class="p">(</span><span class="n">b1</span><span class="p">),</span> <span class="n">center</span><span class="p">(</span><span class="n">b2</span><span class="p">)</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span> <span class="p">,</span><span class="mi">10</span><span class="p">))</span>
+
 <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="n">show</span><span class="p">(</span><span class="n">b1map</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;RdBu_r&#39;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;b1&#39;</span><span class="p">)</span>
+
 <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">show</span><span class="p">(</span><span class="n">b2map</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;RdBu_r&#39;</span><span class="p">);</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;b2&#39;</span><span class="p">)</span>
+
 <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 <span class="n">show</span><span class="p">(</span><span class="n">rsq</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;r-squared&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/regression_31_0.png" src="../_images/regression_31_0.png" />
+<img alt="../_images/regression_32_0.png" src="../_images/regression_32_0.png" />
 <p>To combine these sources of information, we will make composite maps,
 one for the first regressor, one for the second, and one for both. In
 each map, we&#8217;ll pick a color to represent the regressor, and use the
@@ -302,6 +307,7 @@ as a mask, and use the mean image as a background to blend in.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">c</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="s">&#39;indexed&#39;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
+
 <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">c</span><span class="o">.</span><span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;green&#39;</span><span class="p">]</span>
 <span class="n">img</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">transform</span><span class="p">([</span><span class="nb">abs</span><span class="p">(</span><span class="n">b1</span><span class="p">)],</span> <span class="n">mask</span><span class="o">=</span><span class="n">rsq</span><span class="p">,</span> <span class="n">background</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="n">mixing</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
@@ -318,7 +324,7 @@ as a mask, and use the mean image as a background to blend in.</p>
 <span class="n">show</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/regression_34_0.png" src="../_images/regression_34_0.png" />
+<img alt="../_images/regression_35_0.png" src="../_images/regression_35_0.png" />
 </div>
 </div>
 

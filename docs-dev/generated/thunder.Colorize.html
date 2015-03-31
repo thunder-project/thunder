@@ -230,7 +230,7 @@ return a list of colors.</p>
 
 <dl class="staticmethod">
 <dt id="thunder.Colorize.show">
-<em class="property">static </em><tt class="descname">show</tt><big>(</big><em>img</em>, <em>cmap='gray'</em>, <em>bar=False</em>, <em>nans=True</em><big>)</big><a class="headerlink" href="#thunder.Colorize.show" title="Permalink to this definition">¶</a></dt>
+<em class="property">static </em><tt class="descname">show</tt><big>(</big><em>img</em>, <em>cmap='gray'</em>, <em>bar=False</em>, <em>nans=True</em>, <em>clim=None</em><big>)</big><a class="headerlink" href="#thunder.Colorize.show" title="Permalink to this definition">¶</a></dt>
 <dd><p>Streamlined display of images using matplotlib.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -249,8 +249,12 @@ return a list of colors.</p>
 <div><p>A colormap to use, for non RGB images</p>
 </div></blockquote>
 <p><strong>nans</strong> : boolean, optional, deafult = True</p>
-<blockquote class="last">
+<blockquote>
 <div><p>Whether to replace NaNs, if True, will replace with 0s</p>
+</div></blockquote>
+<p><strong>clim</strong> : tuple, optional, default = None</p>
+<blockquote class="last">
+<div><p>Limits for scaling image</p>
 </div></blockquote>
 </td>
 </tr>

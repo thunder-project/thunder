@@ -228,17 +228,17 @@ subselect, or otherwise reduce the size of your data before attempting
 to <tt class="docutils literal"><span class="pre">pack</span></tt> large image data sets! (See the <tt class="docutils literal"><span class="pre">Series</span></tt> tutorial for more
 on how to do this.) In this case, after taking the <tt class="docutils literal"><span class="pre">mean</span></tt> the example
 data set is quite small, so <tt class="docutils literal"><span class="pre">pack</span></tt>ing it is no problem.</p>
-<p>It&#8217;s easy to look at the result directly using <tt class="docutils literal"><span class="pre">matplotlib</span></tt>:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&quot;white&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&quot;gray&quot;</span><span class="p">);</span>
+<p>To look at this array as an image, we&#8217;ll use <tt class="docutils literal"><span class="pre">matplotlib</span></tt> via a helper
+function included with Thunder.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">thunder</span> <span class="kn">import</span> <span class="n">Colorize</span>
+<span class="n">show</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">show</span>
+<span class="n">show</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
 <img alt="../_images/basic_usage_19_01.png" src="../_images/basic_usage_19_01.png" />
-<p>It&#8217;s also easy to save the result to a <tt class="docutils literal"><span class="pre">numpy</span></tt> file, or to a <tt class="docutils literal"><span class="pre">MAT</span></tt>
-file if you do the rest of your analysis in Matlab.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">thunder.utils.export</span> <span class="kn">import</span> <span class="n">export</span>
-<span class="n">export</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="s">&quot;directory&quot;</span><span class="p">,</span> <span class="s">&quot;meanval&quot;</span><span class="p">,</span> <span class="s">&quot;npy&quot;</span><span class="p">)</span>
-<span class="n">export</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="s">&quot;directory&quot;</span><span class="p">,</span> <span class="s">&quot;meanval&quot;</span><span class="p">,</span> <span class="s">&quot;matlab&quot;</span><span class="p">)</span>
+<p>It&#8217;s also easy to export the result to a <tt class="docutils literal"><span class="pre">numpy</span></tt> or <tt class="docutils literal"><span class="pre">MAT</span></tt> file.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">tsc</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="s">&quot;directory&quot;</span><span class="p">,</span> <span class="s">&quot;npy&quot;</span><span class="p">)</span>
+<span class="n">tsc</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="s">&quot;directory&quot;</span><span class="p">,</span> <span class="s">&quot;mat&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>This will put a <tt class="docutils literal"><span class="pre">npy</span></tt> file or <tt class="docutils literal"><span class="pre">MAT</span></tt> file called <tt class="docutils literal"><span class="pre">meanval</span></tt> in the

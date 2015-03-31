@@ -11,15 +11,29 @@ spatio-temporal data, for example, to recover spatial patterns with
 similar temporal profiles. Here, we show how to use some of the
 factorization algorithms in Thunder and visualize the results.
 
+Setup plotting
+--------------
+
+.. code:: python
+
+    %matplotlib inline
+.. code:: python
+
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    sns.set_context('notebook')
+    sns.set_style('darkgrid')
+    from thunder import Colorize
+    show = Colorize.show
 PCA
 ---
 
 We start by performing PCA (principal component analysis), which finds
-patterns that capture most of the variance in the data.
+patterns that capture most of the variance in the data. First load toy
+example data, and cache it to speed up repeated queries.
 
 .. code:: python
 
-    # load example data, and cache it to speed up repeated queries
     rawdata = tsc.loadExample('fish-series')
     data = rawdata.toTimeSeries().normalize()
     data.cache()
@@ -39,19 +53,10 @@ plotting the components, the temporal basis functions.
 
 .. code:: python
 
-    %matplotlib inline
-.. code:: python
-
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    sns.set_context('notebook')
-.. code:: python
-
-    sns.set_style('darkgrid')
     plt.plot(model.comps.T);
 
 
-.. image:: factorization_files/factorization_10_0.png
+.. image:: factorization_files/factorization_11_0.png
 
 
 The scores are spatial basis functions. We can pack them into a local
@@ -59,10 +64,8 @@ array and look at them as images one by one.
 
 .. code:: python
 
-    # dimensions should be (k, x, y, z)
-    # where k is the number of components and x, y, z are spatial dimensions
     imgs = model.scores.pack()
-    imgs.shape
+    imgs.shape # dimensions should be (k, x, y, z) where k is the number of components
 
 
 
@@ -74,19 +77,18 @@ array and look at them as images one by one.
 
 .. code:: python
 
-    sns.set_style('white')
-    plt.imshow(imgs[0,:,:,0], clim=(-0.05,0.05));
+    show(imgs[0,:,:,0], clim=(-0.05,0.05))
 
 
-.. image:: factorization_files/factorization_13_0.png
+.. image:: factorization_files/factorization_14_0.png
 
 
 .. code:: python
 
-    plt.imshow(imgs[1,:,:,0], clim=(-0.05,0.05));
+    show(imgs[1,:,:,0], clim=(-0.05,0.05))
 
 
-.. image:: factorization_files/factorization_14_0.png
+.. image:: factorization_files/factorization_15_0.png
 
 
 Clearly there is some spatial structure to each component, but looking
@@ -97,16 +99,14 @@ components, and the brightness shows the total amplitude.
 
 .. code:: python
 
-    from thunder import Colorize
-    maps = Colorize(toType='polar', scale=20).images(imgs)
+    maps = Colorize(cmap='polar', scale=4).transform(imgs)
 .. code:: python
 
     from numpy import amax
-    sns.set_style('white')
-    plt.imshow(amax(maps,2));
+    show(amax(maps,2))
 
 
-.. image:: factorization_files/factorization_17_0.png
+.. image:: factorization_files/factorization_18_0.png
 
 
 To get more intuition for these colors, we can get the scores from a
@@ -122,12 +122,12 @@ map.
     pts = model.scores.subset(500, thresh=0.01, stat='norm')
 .. code:: python
 
-    sns.set_style('darkgrid')
-    clrs = Colorize(toType='polar', scale=50).points(pts[:,0:2])
+    from numpy import newaxis, squeeze
+    clrs = Colorize(cmap='polar', scale=4).transform([pts[:,0][:,newaxis], pts[:,1][:,newaxis]]).squeeze()
     plt.scatter(pts[:,0],pts[:,1], c=clrs, s=75, alpha=0.7);
 
 
-.. image:: factorization_files/factorization_20_0.png
+.. image:: factorization_files/factorization_21_0.png
 
 
 Recall that each of these points represents a single pixel. Another way
@@ -143,7 +143,7 @@ principal components.
     plt.plot(recon.T);
 
 
-.. image:: factorization_files/factorization_22_0.png
+.. image:: factorization_files/factorization_23_0.png
 
 
 NMF
@@ -167,11 +167,10 @@ contains the spatial basis functions. Let's look at both.
 
 .. code:: python
 
-    sns.set_style('darkgrid')
     plt.plot(model.h.T);
 
 
-.. image:: factorization_files/factorization_26_0.png
+.. image:: factorization_files/factorization_27_0.png
 
 
 .. code:: python
@@ -179,16 +178,7 @@ contains the spatial basis functions. Let's look at both.
     imgs = model.w.pack()
 .. code:: python
 
-    sns.set_style('white')
-    plt.imshow(imgs[0][:,:,0], cmap='gray');
-
-
-.. image:: factorization_files/factorization_28_0.png
-
-
-.. code:: python
-
-    plt.imshow(imgs[1][:,:,0], cmap='gray');
+    show(imgs[0][:,:,0])
 
 
 .. image:: factorization_files/factorization_29_0.png
@@ -196,10 +186,18 @@ contains the spatial basis functions. Let's look at both.
 
 .. code:: python
 
-    plt.imshow(imgs[2][:,:,0], cmap='gray');
+    show(imgs[1][:,:,0])
 
 
 .. image:: factorization_files/factorization_30_0.png
+
+
+.. code:: python
+
+    show(imgs[2][:,:,0])
+
+
+.. image:: factorization_files/factorization_31_0.png
 
 
 For NMF, a useful way to look at the basis functions is to encode each
@@ -210,11 +208,11 @@ factor which controls overall brightness.
 
 .. code:: python
 
-    maps = Colorize(toType='rgb', scale=0.5).images(imgs)
-    plt.imshow(maps[:,:,0,:]);
+    maps = Colorize(cmap='rgb', scale=1.0).transform(imgs)
+    show(maps[:,:,0,:])
 
 
-.. image:: factorization_files/factorization_32_0.png
+.. image:: factorization_files/factorization_33_0.png
 
 
 One problem with this way to look at NMF components is that the scale of
@@ -225,11 +223,11 @@ automatically normalizes the amplitude of each one.
 
 .. code:: python
 
-    maps = Colorize(toType='indexed', colors=[ "hotpink", "cornflowerblue", "mediumseagreen"], scale=2).images(imgs)
-    plt.imshow(maps[:,:,0,:]);
+    maps = Colorize(cmap='indexed', colors=[ "hotpink", "cornflowerblue", "mediumseagreen"], scale=1).transform(imgs)
+    show(maps[:,:,0,:])
 
 
-.. image:: factorization_files/factorization_34_0.png
+.. image:: factorization_files/factorization_35_0.png
 
 
 With these plots, it can be useful to add in a background image (for
@@ -238,14 +236,14 @@ how to select and colorize just two of the three image channels.
 
 .. code:: python
 
-    reference = rawdata.seriesMean().pack()
+    ref = rawdata.seriesMean().pack()
 .. code:: python
 
-    maps = Colorize(toType='indexed', colors=['red', 'blue'], scale=1).images(imgs[[0,2]], background=reference)
-    plt.imshow(maps[:,:,0,:]);
+    maps = Colorize(cmap='indexed', colors=['red', 'blue'], scale=1).transform(imgs[[0,2]], background=ref, mixing=0.5)
+    show(maps[:,:,0,:])
 
 
-.. image:: factorization_files/factorization_37_0.png
+.. image:: factorization_files/factorization_38_0.png
 
 
 ICA
@@ -268,7 +266,7 @@ sparse.
     plt.plot(model.a);
 
 
-.. image:: factorization_files/factorization_40_0.png
+.. image:: factorization_files/factorization_41_0.png
 
 
 Some signals will be positive and others negative. This is expected
@@ -280,10 +278,9 @@ when making maps.
     imgs = model.sigs.pack()
 .. code:: python
 
-    maps = Colorize(toType='indexed', colors=['red','green', 'blue'], scale=3).images(abs(imgs))
-    sns.set_style('white')
-    plt.imshow(maps[:,:,0,:]);
+    maps = Colorize(cmap='indexed', colors=['red','green', 'blue'], scale=2).transform(abs(imgs))
+    show(maps[:,:,0,:])
 
 
-.. image:: factorization_files/factorization_43_0.png
+.. image:: factorization_files/factorization_44_0.png
 

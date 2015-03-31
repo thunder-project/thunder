@@ -112,6 +112,7 @@
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">Series</a><ul>
+<li><a class="reference internal" href="#setup-plotting">Setup plotting</a></li>
 <li><a class="reference internal" href="#loading-series">Loading series</a></li>
 <li><a class="reference internal" href="#inspection">Inspection</a></li>
 <li><a class="reference internal" href="#preprocessing">Preprocessing</a></li>
@@ -169,6 +170,17 @@ record representing a time series from an outer corner of a
 3-dimensional imaged volume might have a key of (0, 0, 0), with the
 value being an array representing the measurements at that point over
 the course of an experiment: [112, 110, 118, ..., 124].</p>
+<div class="section" id="setup-plotting">
+<h2>Setup plotting<a class="headerlink" href="#setup-plotting" title="Permalink to this headline">¶</a></h2>
+<div class="code python highlight-python"><div class="highlight"><pre>%matplotlib inline
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="kn">as</span> <span class="nn">sns</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
 <div class="section" id="loading-series">
 <h2>Loading series<a class="headerlink" href="#loading-series" title="Permalink to this headline">¶</a></h2>
 <p>Series can be loaded from a <tt class="docutils literal"><span class="pre">ThunderContext</span></tt> using the <tt class="docutils literal"><span class="pre">loadSeries</span></tt>
@@ -183,18 +195,11 @@ data set:</p>
 <h2>Inspection<a class="headerlink" href="#inspection" title="Permalink to this headline">¶</a></h2>
 <p>Let&#8217;s plot a random subset of the data using the <tt class="docutils literal"><span class="pre">subset</span></tt> method,
 which thresholds based on the standard deviation:</p>
-<div class="code python highlight-python"><div class="highlight"><pre>%matplotlib inline
-</pre></div>
-</div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">seaborn</span> <span class="kn">as</span> <span class="nn">sns</span>
-<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
-<span class="n">examples</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">subset</span><span class="p">(</span><span class="n">nsamples</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="c"># only plot the first twenty time points, for clarity</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">examples</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">subset</span><span class="p">(</span><span class="n">nsamples</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">examples</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">20</span><span class="p">,:]);</span>
 </pre></div>
 </div>
-<img alt="../_images/series_7_01.png" src="../_images/series_7_01.png" />
+<img alt="../_images/series_9_0.png" src="../_images/series_9_0.png" />
 <p>Note the variation in raw intensity levels.</p>
 </div>
 <div class="section" id="preprocessing">
@@ -208,12 +213,12 @@ y-axis.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">examples</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">20</span><span class="p">,:]);</span>
 </pre></div>
 </div>
-<img alt="../_images/series_10_01.png" src="../_images/series_10_01.png" />
+<img alt="../_images/series_12_0.png" src="../_images/series_12_0.png" />
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">examples</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">toTimeSeries</span><span class="p">()</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="s">&#39;percentile&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">subset</span><span class="p">(</span><span class="n">nsamples</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">examples</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">20</span><span class="p">,:]);</span>
 </pre></div>
 </div>
-<img alt="../_images/series_11_01.png" src="../_images/series_11_01.png" />
+<img alt="../_images/series_13_0.png" src="../_images/series_13_0.png" />
 <p>Related methods include <tt class="docutils literal"><span class="pre">center</span></tt>, <tt class="docutils literal"><span class="pre">standardize</span></tt>, and <tt class="docutils literal"><span class="pre">detrend</span></tt>.</p>
 </div>
 <div class="section" id="selections">
@@ -226,17 +231,17 @@ y-axis.</p>
 </pre></div>
 </div>
 <p>For example, to select a range:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">8</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">array</span><span class="p">([</span><span class="mi">26</span><span class="p">,</span> <span class="mi">26</span><span class="p">,</span> <span class="mi">26</span><span class="p">,</span> <span class="mi">26</span><span class="p">,</span> <span class="mi">26</span><span class="p">,</span> <span class="mi">26</span><span class="p">,</span> <span class="mi">26</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">26</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">25</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">uint8</span><span class="p">))</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">array</span><span class="p">([</span> <span class="mf">26.</span><span class="p">,</span>  <span class="mf">26.</span><span class="p">,</span>  <span class="mf">26.</span><span class="p">,</span>  <span class="mf">26.</span><span class="p">,</span>  <span class="mf">26.</span><span class="p">,</span>  <span class="mf">26.</span><span class="p">,</span>  <span class="mf">26.</span><span class="p">,</span>  <span class="mf">25.</span><span class="p">,</span>  <span class="mf">26.</span><span class="p">]))</span>
 </pre></div>
 </div>
 <p>Note that the index changes to reflect the subselected range:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">index</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">8</span><span class="p">)</span><span class="o">.</span><span class="n">index</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>We can also select based on an arbitrary criterion function:</p>
@@ -262,7 +267,7 @@ records. To summarize across records:</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">toTimeSeries</span><span class="p">()</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span><span class="o">.</span><span class="n">min</span><span class="p">());</span>
 </pre></div>
 </div>
-<img alt="../_images/series_23_01.png" src="../_images/series_23_01.png" />
+<img alt="../_images/series_25_0.png" src="../_images/series_25_0.png" />
 <p>To summarize within records:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">seriesMean</span><span class="p">()</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
@@ -283,7 +288,7 @@ expected, for a random signal, the correlation should be low.</p>
 <span class="n">data</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="o">-</span><span class="mf">0.0067443567595778164</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mf">0.039062227147807042</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

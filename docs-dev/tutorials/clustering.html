@@ -112,6 +112,7 @@
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">Clustering</a><ul>
+<li><a class="reference internal" href="#setup-plotting">Setup plotting</a></li>
 <li><a class="reference internal" href="#inspect-the-data">Inspect the data</a></li>
 <li><a class="reference internal" href="#cluster">Cluster</a></li>
 <li><a class="reference internal" href="#smarter-color-selection">Smarter color selection</a></li>
@@ -154,31 +155,36 @@
 data, by finding groups of signals with similar response properties.
 Here, we show how to use clustering and how to inspect the results in
 the form of a spatial map.</p>
-<div class="section" id="inspect-the-data">
-<h2>Inspect the data<a class="headerlink" href="#inspect-the-data" title="Permalink to this headline">¶</a></h2>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="c"># load example data, and cache it to speed up repeated queries</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;fish-series&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">toTimeSeries</span><span class="p">()</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
-<span class="n">data</span><span class="o">.</span><span class="n">cache</span><span class="p">()</span>
-<span class="n">data</span><span class="o">.</span><span class="n">dims</span><span class="p">;</span>
-</pre></div>
-</div>
+<div class="section" id="setup-plotting">
+<h2>Setup plotting<a class="headerlink" href="#setup-plotting" title="Permalink to this headline">¶</a></h2>
 <div class="code python highlight-python"><div class="highlight"><pre>%matplotlib inline
 </pre></div>
 </div>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">seaborn</span> <span class="kn">as</span> <span class="nn">sns</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;darkgrid&#39;</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_palette</span><span class="p">(</span><span class="s">&#39;muted&#39;</span><span class="p">)</span>
 <span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">thunder</span> <span class="kn">import</span> <span class="n">Colorize</span>
+<span class="n">show</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">show</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="inspect-the-data">
+<h2>Inspect the data<a class="headerlink" href="#inspect-the-data" title="Permalink to this headline">¶</a></h2>
+<p>Load example data, and cache it to speed up repeated queries</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;fish-series&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">toTimeSeries</span><span class="p">()</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
+<span class="n">data</span><span class="o">.</span><span class="n">cache</span><span class="p">()</span>
+<span class="n">data</span><span class="o">.</span><span class="n">dims</span><span class="p">;</span>
 </pre></div>
 </div>
 <p>Extract some samples just to look at the typical structure of the time
 series:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">examples</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">subset</span><span class="p">(</span><span class="n">nsamples</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
-<span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;darkgrid&#39;</span><span class="p">)</span>
-<span class="n">sns</span><span class="o">.</span><span class="n">set_palette</span><span class="p">(</span><span class="s">&#39;muted&#39;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">examples</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/clustering_8_01.png" src="../_images/clustering_8_01.png" />
+<img alt="../_images/clustering_10_0.png" src="../_images/clustering_10_0.png" />
 </div>
 <div class="section" id="cluster">
 <h2>Cluster<a class="headerlink" href="#cluster" title="Permalink to this headline">¶</a></h2>
@@ -190,36 +196,33 @@ series:</p>
 <p>Plot the time series associated with each of the recovered clusters,
 with a fixed but arbitrary color scheme:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">matplotlib.colors</span> <span class="kn">import</span> <span class="n">ListedColormap</span>
-<span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;darkgrid&#39;</span><span class="p">)</span>
-<span class="n">cmap_cat</span> <span class="o">=</span> <span class="n">ListedColormap</span><span class="p">(</span><span class="n">sns</span><span class="o">.</span><span class="n">color_palette</span><span class="p">(</span><span class="s">&quot;hls&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;from_list&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">set_color_cycle</span><span class="p">(</span><span class="n">cmap_cat</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
+<span class="n">cmapCat</span> <span class="o">=</span> <span class="n">ListedColormap</span><span class="p">(</span><span class="n">sns</span><span class="o">.</span><span class="n">color_palette</span><span class="p">(</span><span class="s">&quot;hls&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;from_list&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">set_color_cycle</span><span class="p">(</span><span class="n">cmapCat</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">centers</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/clustering_12_01.png" src="../_images/clustering_12_01.png" />
+<img alt="../_images/clustering_14_0.png" src="../_images/clustering_14_0.png" />
 <p>Compute a predicted label for each pixel, and collect it as an image of
 labels:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">labels</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-<span class="n">img_labels</span> <span class="o">=</span> <span class="n">labels</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+<span class="n">imgLabels</span> <span class="o">=</span> <span class="n">labels</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>Look at the resulting map as an image, using the same color scheme as
 for plotting the cluster centers above:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;white&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img_labels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap_cat</span><span class="p">);</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">show</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmapCat</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/clustering_16_01.png" src="../_images/clustering_16_01.png" />
+<img alt="../_images/clustering_18_01.png" src="../_images/clustering_18_01.png" />
 <p>The same colorization can be performed using Thunder&#8217;s <tt class="docutils literal"><span class="pre">Colorize</span></tt>
 class. In this case the effect is the same as setting the color map in
 matplotlib&#8217;s <tt class="docutils literal"><span class="pre">imshow</span></tt>, but later <tt class="docutils literal"><span class="pre">Colorize</span></tt> will let us perform more
 complex operations.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">thunder</span> <span class="kn">import</span> <span class="n">Colorize</span>
-<span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">toType</span><span class="o">=</span><span class="n">cmap_cat</span><span class="p">)</span><span class="o">.</span><span class="n">images</span><span class="p">(</span><span class="n">img_labels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">brainmap</span><span class="p">);</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="n">cmapCat</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">show</span><span class="p">(</span><span class="n">brainmap</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/clustering_18_01.png" src="../_images/clustering_18_01.png" />
+<img alt="../_images/clustering_20_0.png" src="../_images/clustering_20_0.png" />
 </div>
 <div class="section" id="smarter-color-selection">
 <h2>Smarter color selection<a class="headerlink" href="#smarter-color-selection" title="Permalink to this headline">¶</a></h2>
@@ -232,25 +235,23 @@ choosen based on these relative similarities. The <tt class="docutils literal"><
 colors match similaries among an input array (in this case, the cluster
 centers). The optimization is non-unique, so you can run multiple times
 to generate different color schemes.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">newclrs</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">centers</span><span class="p">,</span> <span class="n">asCMap</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">newClrs</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">centers</span><span class="p">,</span> <span class="n">asCmap</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Note that centers that resemble one another have similar colors:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;darkgrid&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">set_color_cycle</span><span class="p">(</span><span class="n">newclrs</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">set_color_cycle</span><span class="p">(</span><span class="n">newClrs</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">centers</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/clustering_22_01.png" src="../_images/clustering_22_01.png" />
+<img alt="../_images/clustering_24_01.png" src="../_images/clustering_24_01.png" />
 <p>And if we look at the map, we now see that similar regions are colored
 similarly (e.g. top and bottom), which makes the spatial organization
 more clear.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;white&#39;</span><span class="p">)</span>
-<span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">toType</span><span class="o">=</span><span class="n">newclrs</span><span class="p">)</span><span class="o">.</span><span class="n">images</span><span class="p">(</span><span class="n">img_labels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">brainmap</span><span class="p">);</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="n">newClrs</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">show</span><span class="p">(</span><span class="n">brainmap</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/clustering_24_01.png" src="../_images/clustering_24_01.png" />
+<img alt="../_images/clustering_26_01.png" src="../_images/clustering_26_01.png" />
 </div>
 <div class="section" id="thresholding">
 <h2>Thresholding<a class="headerlink" href="#thresholding" title="Permalink to this headline">¶</a></h2>
@@ -262,13 +263,11 @@ subselecting pixels based on the standard deviation of their time
 series. First, let&#8217;s look at a map of the standard deviation, to find a
 reasonable threshold that preserves most of the relavant signal, but
 ignores the noise.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">std_map</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">seriesStdev</span><span class="p">()</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
-<span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;white&#39;</span><span class="p">)</span>
-<span class="c"># try different values of the threshold</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">std_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.05</span><span class="p">);</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">stdMap</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">seriesStdev</span><span class="p">()</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+<span class="n">show</span><span class="p">(</span><span class="n">stdMap</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.05</span><span class="p">)</span> <span class="c"># try different values of the threshold</span>
 </pre></div>
 </div>
-<img alt="../_images/clustering_26_01.png" src="../_images/clustering_26_01.png" />
+<img alt="../_images/clustering_28_0.png" src="../_images/clustering_28_0.png" />
 <p>Now perform clustering again after filtering the data based on standard
 deviation</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">std</span>
@@ -276,20 +275,18 @@ deviation</p>
 <span class="n">model</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">filtered</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">newclrs</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">centers</span><span class="p">,</span> <span class="n">asCMap</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;darkgrid&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">set_color_cycle</span><span class="p">(</span><span class="n">newclrs</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">newClrs</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">centers</span><span class="p">,</span> <span class="n">asCmap</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">set_color_cycle</span><span class="p">(</span><span class="n">newClrs</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">centers</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/clustering_29_01.png" src="../_images/clustering_29_01.png" />
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">img_labels</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
-<span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">toType</span><span class="o">=</span><span class="n">newclrs</span><span class="p">)</span><span class="o">.</span><span class="n">images</span><span class="p">(</span><span class="n">img_labels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;white&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">brainmap</span><span class="p">);</span>
+<img alt="../_images/clustering_31_0.png" src="../_images/clustering_31_0.png" />
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">imgLabels</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+<span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="n">newClrs</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">show</span><span class="p">(</span><span class="n">brainmap</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/clustering_30_01.png" src="../_images/clustering_30_01.png" />
+<img alt="../_images/clustering_32_0.png" src="../_images/clustering_32_0.png" />
 </div>
 <div class="section" id="adding-similarity">
 <h2>Adding similarity<a class="headerlink" href="#adding-similarity" title="Permalink to this headline">¶</a></h2>
@@ -298,30 +295,30 @@ threshold still end up colored as something. A final useful trick is to
 mask pixels based on how well they match the cluster they belong to. We
 can compute this using the <tt class="docutils literal"><span class="pre">similarity</span></tt> method of <tt class="docutils literal"><span class="pre">KMeansModel</span></tt>.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">sim</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">similarity</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-<span class="n">img_sim</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+<span class="n">imgSim</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img_sim</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">,</span><span class="n">clim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">));</span>
-</pre></div>
-</div>
-<img alt="../_images/clustering_33_01.png" src="../_images/clustering_33_01.png" />
-<p>We can then use this as a linear mask on the colorization output</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">toType</span><span class="o">=</span><span class="n">newclrs</span><span class="p">)</span><span class="o">.</span><span class="n">images</span><span class="p">(</span><span class="n">img_labels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">mask</span><span class="o">=</span><span class="n">img_sim</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">brainmap</span><span class="p">);</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">show</span><span class="p">(</span><span class="n">imgSim</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">,</span> <span class="n">clim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
 </pre></div>
 </div>
 <img alt="../_images/clustering_35_01.png" src="../_images/clustering_35_01.png" />
+<p>We can then use this as a linear mask on the colorization output</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="n">newClrs</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">mask</span><span class="o">=</span><span class="n">imgSim</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">show</span><span class="p">(</span><span class="n">brainmap</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/clustering_37_0.png" src="../_images/clustering_37_0.png" />
 <p>So far we&#8217;ve always been colorizing one plane, but we can apply the same
 operation to the full 3D volume (which in this case has just two
 planes), and then look at a maximum projection.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">toType</span><span class="o">=</span><span class="n">newclrs</span><span class="p">)</span><span class="o">.</span><span class="n">images</span><span class="p">(</span><span class="n">img_labels</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">img_sim</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="n">newClrs</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">imgSim</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">amax</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">amax</span><span class="p">(</span><span class="n">brainmap</span><span class="p">,</span><span class="mi">2</span><span class="p">));</span>
+<span class="n">show</span><span class="p">(</span><span class="n">amax</span><span class="p">(</span><span class="n">brainmap</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
 </div>
-<img alt="../_images/clustering_38_01.png" src="../_images/clustering_38_01.png" />
+<img alt="../_images/clustering_40_0.png" src="../_images/clustering_40_0.png" />
 </div>
 </div>
 

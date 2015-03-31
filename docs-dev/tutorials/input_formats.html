@@ -112,6 +112,7 @@
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">Input formats</a><ul>
+<li><a class="reference internal" href="#setup-plotting">Setup plotting</a></li>
 <li><a class="reference internal" href="#loading-images">Loading Images</a></li>
 <li><a class="reference internal" href="#loading-series">Loading Series</a></li>
 </ul>
@@ -149,6 +150,19 @@
 <h1>Input formats<a class="headerlink" href="#input-formats" title="Permalink to this headline">¶</a></h1>
 <p>Data can be loaded from a variety of sources, depending on the desired
 data type.</p>
+<div class="section" id="setup-plotting">
+<h2>Setup plotting<a class="headerlink" href="#setup-plotting" title="Permalink to this headline">¶</a></h2>
+<div class="code python highlight-python"><div class="highlight"><pre>%matplotlib inline
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="kn">as</span> <span class="nn">sns</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">thunder</span> <span class="kn">import</span> <span class="n">Colorize</span>
+<span class="n">show</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">show</span>
+</pre></div>
+</div>
+</div>
 <div class="section" id="loading-images">
 <h2>Loading Images<a class="headerlink" href="#loading-images" title="Permalink to this headline">¶</a></h2>
 <p>Images data are distributed collections of images or volumes.
@@ -158,27 +172,22 @@ volumes, or binary <tt class="docutils literal"><span class="pre">stack</span></
 of <tt class="docutils literal"><span class="pre">tif</span></tt> images by specifying a folder (note: these are small, highly
 downsampled images included with Thunder purely for demonstration and
 testing):</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="c"># find the location relative to the thunder installation</span>
-<span class="kn">import</span> <span class="nn">os.path</span> <span class="kn">as</span> <span class="nn">pth</span>
-<span class="n">imagepath</span> <span class="o">=</span> <span class="n">pth</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pth</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">pth</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">thunder</span><span class="o">.</span><span class="n">__file__</span><span class="p">)),</span> <span class="s">&#39;utils/data/fish/tif-stack&#39;</span><span class="p">)</span>
-
-<span class="c"># load the images</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadImages</span><span class="p">(</span><span class="n">imagepath</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;tif-stack&#39;</span><span class="p">)</span>
+<p>For these examples, first we find the location relative to the thunder
+installation</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">os.path</span> <span class="kn">as</span> <span class="nn">pth</span>
+<span class="n">imagepath</span> <span class="o">=</span> <span class="n">pth</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pth</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">pth</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">thunder</span><span class="o">.</span><span class="n">__file__</span><span class="p">)),</span> <span class="s">&#39;utils/data/fish/images&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now load the images</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadImages</span><span class="p">(</span><span class="n">imagepath</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;tif&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>To look at the first image:</p>
-<div class="code python highlight-python"><div class="highlight"><pre>%matplotlib inline
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">img</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">show</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">seaborn</span> <span class="kn">as</span> <span class="nn">sns</span>
-<span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;white&#39;</span><span class="p">)</span>
-<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
-<span class="n">img</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&quot;gray&quot;</span><span class="p">);</span>
-</pre></div>
-</div>
-<img alt="../_images/input_formats_7_01.png" src="../_images/input_formats_7_01.png" />
+<img alt="../_images/input_formats_12_0.png" src="../_images/input_formats_12_0.png" />
 <p>To check the dimensions of the images:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">dims</span><span class="o">.</span><span class="n">max</span>
 </pre></div>
@@ -187,7 +196,7 @@ testing):</p>
 </pre></div>
 </div>
 <p>And to check the total number of images:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">nimages</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">nrecords</span>
 </pre></div>
 </div>
 <div class="highlight-python"><div class="highlight"><pre><span class="mi">20</span>
@@ -201,10 +210,10 @@ scheme. For instance, data stored in an S3 bucket named &#8220;my-bucket&#8221;
 under keys named &#8220;my-data/fileN.stack&#8221; could be retrieved by passing
 &#8216;<tt class="docutils literal"><span class="pre">s3n://my-bucket/file*.stack</span></tt>&#8216; to <tt class="docutils literal"><span class="pre">loadImages</span></tt>.</p>
 <p>It&#8217;s easy to load only a subset of images:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadImages</span><span class="p">(</span><span class="n">imagepath</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;tif-stack&#39;</span><span class="p">,</span> <span class="n">startIdx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stopIdx</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadImages</span><span class="p">(</span><span class="n">imagepath</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;tif&#39;</span><span class="p">,</span> <span class="n">startIdx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stopIdx</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">nimages</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">nrecords</span>
 </pre></div>
 </div>
 <div class="highlight-python"><div class="highlight"><pre><span class="mi">10</span>
@@ -223,10 +232,7 @@ and subsequent numbers will be interpreted as values. The number of keys
 is user-specified. As before, we&#8217;ll load example series data from a
 small file included with Thunder purely for testing purposes (this is
 the <tt class="docutils literal"><span class="pre">iris</span></tt> dataset).</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="c"># find the location relative to the thunder installation</span>
-<span class="n">seriespath</span> <span class="o">=</span> <span class="n">pth</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pth</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">pth</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">thunder</span><span class="o">.</span><span class="n">__file__</span><span class="p">)),</span> <span class="s">&#39;utils/data/iris/&#39;</span><span class="p">)</span>
-
-<span class="c"># load the series data</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">seriespath</span> <span class="o">=</span> <span class="n">pth</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pth</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">pth</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">thunder</span><span class="o">.</span><span class="n">__file__</span><span class="p">)),</span> <span class="s">&#39;utils/data/iris/&#39;</span><span class="p">)</span>
 <span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeries</span><span class="p">(</span><span class="n">seriespath</span> <span class="o">+</span> <span class="s">&#39;iris.txt&#39;</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;text&#39;</span><span class="p">,</span> <span class="n">nkeys</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -305,14 +311,14 @@ intensive computations. In the latter case, the number of partitions
 should be set to approximately 2-3 times the number of cores avaialble
 on your cluster, so that different cores can work on different portions
 of the data.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeriesLocal</span><span class="p">(</span><span class="n">seriespath</span> <span class="o">+</span> <span class="s">&#39;/iris.mat&#39;</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;mat&#39;</span><span class="p">,</span> <span class="n">varName</span><span class="o">=</span><span class="s">&#39;data&#39;</span><span class="p">,</span> <span class="n">minPartitions</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeries</span><span class="p">(</span><span class="n">seriespath</span> <span class="o">+</span> <span class="s">&#39;/iris.mat&#39;</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;mat&#39;</span><span class="p">,</span> <span class="n">varName</span><span class="o">=</span><span class="s">&#39;data&#39;</span><span class="p">,</span> <span class="n">minPartitions</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
 </div>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">array</span><span class="p">([</span> <span class="mf">5.1</span><span class="p">,</span>  <span class="mf">3.5</span><span class="p">,</span>  <span class="mf">1.4</span><span class="p">,</span>  <span class="mf">0.2</span><span class="p">]))</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeriesLocal</span><span class="p">(</span><span class="n">seriespath</span> <span class="o">+</span> <span class="s">&#39;/iris.npy&#39;</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;npy&#39;</span><span class="p">,</span> <span class="n">minPartitions</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeries</span><span class="p">(</span><span class="n">seriespath</span> <span class="o">+</span> <span class="s">&#39;/iris.npy&#39;</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;npy&#39;</span><span class="p">,</span> <span class="n">minPartitions</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
 </div>

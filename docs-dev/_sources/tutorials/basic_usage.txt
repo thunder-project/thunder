@@ -129,24 +129,24 @@ to ``pack`` large image data sets! (See the ``Series`` tutorial for more
 on how to do this.) In this case, after taking the ``mean`` the example
 data set is quite small, so ``pack``\ ing it is no problem.
 
-It's easy to look at the result directly using ``matplotlib``:
+To look at this array as an image, we'll use ``matplotlib`` via a helper
+function included with Thunder.
 
 .. code:: python
 
-    sns.set_style("white")
-    plt.imshow(img[:,:,0], cmap="gray");
+    from thunder import Colorize
+    show = Colorize.show
+    show(img[:,:,0])
 
 
 .. image:: basic_usage_files/basic_usage_19_0.png
 
 
-It's also easy to save the result to a ``numpy`` file, or to a ``MAT``
-file if you do the rest of your analysis in Matlab.
+It's also easy to export the result to a ``numpy`` or ``MAT`` file.
 
 .. code:: python
 
-    from thunder.utils.export import export
-    export(img, "directory", "meanval", "npy")
-    export(img, "directory", "meanval", "matlab")
+    tsc.export(img, "directory", "npy")
+    tsc.export(img, "directory", "mat")
 This will put a ``npy`` file or ``MAT`` file called ``meanval`` in the
 folder ``directory`` in your current directory.

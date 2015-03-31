@@ -17,6 +17,8 @@ Setup plotting
 .. code:: python
 
     %matplotlib inline
+.. code:: python
+
     import matplotlib.pyplot as plt
     import seaborn as sns
     from thunder import Colorize
@@ -39,7 +41,7 @@ Take a look at the first image.
     show(data.values().first())
 
 
-.. image:: regression_files/regression_9_0.png
+.. image:: regression_files/regression_10_0.png
 
 
 Convert the Images data to TimeSeries data, apply preprocessing, and
@@ -62,7 +64,7 @@ standard devaitions to avoid pixels with no activity).
     plt.plot(sample.T);
 
 
-.. image:: regression_files/regression_13_0.png
+.. image:: regression_files/regression_14_0.png
 
 
 Load in associated behavioral data to be used as explanatory variables
@@ -112,7 +114,7 @@ correlations are blue.
     show(corrMat, bar=True, cmap='RdBu_r')
 
 
-.. image:: regression_files/regression_20_0.png
+.. image:: regression_files/regression_21_0.png
 
 
 Regression analysis
@@ -168,7 +170,7 @@ distribution across the image.
     show(rsq, bar=True)
 
 
-.. image:: regression_files/regression_30_0.png
+.. image:: regression_files/regression_31_0.png
 
 
 .. code:: python
@@ -176,18 +178,21 @@ distribution across the image.
     b1map, b2map = center(b1), center(b2)
     
     plt.subplots(1, 3, figsize=(15 ,10))
+    
     plt.subplot(1, 3, 1)
     show(b1map, cmap='RdBu_r')
     plt.title('b1')
+    
     plt.subplot(1, 3, 2)
     show(b2map, cmap='RdBu_r');
     plt.title('b2')
+    
     plt.subplot(1, 3, 3)
     show(rsq)
     plt.title('r-squared');
 
 
-.. image:: regression_files/regression_31_0.png
+.. image:: regression_files/regression_32_0.png
 
 
 To combine these sources of information, we will make composite maps,
@@ -205,6 +210,7 @@ as a mask, and use the mean image as a background to blend in.
     c = Colorize(cmap='indexed', scale=5)
     
     plt.figure(figsize=(20,10))
+    
     plt.subplot(1,3,1)
     c.colors = ['green']
     img = c.transform([abs(b1)], mask=rsq, background=m, mixing=0.75)
@@ -221,5 +227,5 @@ as a mask, and use the mean image as a background to blend in.
     show(img)
 
 
-.. image:: regression_files/regression_34_0.png
+.. image:: regression_files/regression_35_0.png
 

@@ -146,7 +146,7 @@
 <h1><tt class="xref py py-mod docutils literal"><span class="pre">thunder</span></tt>.NMF<a class="headerlink" href="#thunder-nmf" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="thunder.NMF">
-<em class="property">class </em><tt class="descclassname">thunder.</tt><tt class="descname">NMF</tt><big>(</big><em>k=5</em>, <em>method='als'</em>, <em>maxIter=20</em>, <em>tol=0.001</em>, <em>h0=None</em>, <em>wHist=False</em>, <em>reconHist='none'</em><big>)</big><a class="headerlink" href="#thunder.NMF" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">thunder.</tt><tt class="descname">NMF</tt><big>(</big><em>k=5</em>, <em>method='als'</em>, <em>maxIter=20</em>, <em>tol=0.001</em>, <em>h0=None</em>, <em>wHist=False</em>, <em>reconHist='none'</em>, <em>verbose=False</em><big>)</big><a class="headerlink" href="#thunder.NMF" title="Permalink to this definition">¶</a></dt>
 <dd><p>Non-negative matrix factorization on a distributed matrix.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -177,9 +177,13 @@
 <div><p>If true, keep track of convergence of w at each iteration</p>
 </div></blockquote>
 <p><strong>reconHist</strong> : str in {&#8216;none&#8217;, &#8216;final&#8217;, &#8216;all&#8217;}</p>
-<blockquote class="last">
+<blockquote>
 <div><p>if &#8216;none&#8217;, reconstruction error is never computed. if &#8216;all&#8217;, it is computed at every iteration.
 if &#8216;final&#8217;, reconstruction error is computed on the final solution.</p>
+</div></blockquote>
+<p><strong>verbose</strong> : boolean, optional, default = False</p>
+<blockquote class="last">
+<div><p>Whether to print progress</p>
 </div></blockquote>
 </td>
 </tr>

@@ -9,6 +9,19 @@ Input formats
 Data can be loaded from a variety of sources, depending on the desired
 data type.
 
+Setup plotting
+--------------
+
+.. code:: python
+
+    %matplotlib inline
+.. code:: python
+
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    sns.set_context('notebook')
+    from thunder import Colorize
+    show = Colorize.show
 Loading Images
 --------------
 
@@ -20,30 +33,27 @@ of ``tif`` images by specifying a folder (note: these are small, highly
 downsampled images included with Thunder purely for demonstration and
 testing):
 
+For these examples, first we find the location relative to the thunder
+installation
+
 .. code:: python
 
-    # find the location relative to the thunder installation
     import os.path as pth
-    imagepath = pth.join(pth.dirname(pth.realpath(thunder.__file__)), 'utils/data/fish/tif-stack')
-    
-    # load the images
-    data = tsc.loadImages(imagepath, inputFormat='tif-stack')
+    imagepath = pth.join(pth.dirname(pth.realpath(thunder.__file__)), 'utils/data/fish/images')
+Now load the images
+
+.. code:: python
+
+    data = tsc.loadImages(imagepath, inputFormat='tif')
 To look at the first image:
 
 .. code:: python
 
-    %matplotlib inline
-.. code:: python
-
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    sns.set_style('white')
-    sns.set_context('notebook')
     img = data.first()[1]
-    plt.imshow(img[:,:,0], cmap="gray");
+    show(img[:,:,0])
 
 
-.. image:: input_formats_files/input_formats_7_0.png
+.. image:: input_formats_files/input_formats_12_0.png
 
 
 To check the dimensions of the images:
@@ -64,7 +74,7 @@ And to check the total number of images:
 
 .. code:: python
 
-    data.nimages
+    data.nrecords
 
 
 
@@ -86,10 +96,10 @@ It's easy to load only a subset of images:
 
 .. code:: python
 
-    data = tsc.loadImages(imagepath, inputFormat='tif-stack', startIdx=0, stopIdx=10)
+    data = tsc.loadImages(imagepath, inputFormat='tif', startIdx=0, stopIdx=10)
 .. code:: python
 
-    data.nimages
+    data.nrecords
 
 
 
@@ -116,10 +126,7 @@ the ``iris`` dataset).
 
 .. code:: python
 
-    # find the location relative to the thunder installation
     seriespath = pth.join(pth.dirname(pth.realpath(thunder.__file__)), 'utils/data/iris/')
-    
-    # load the series data
     data = tsc.loadSeries(seriespath + 'iris.txt', inputFormat='text', nkeys=1)
 We could have also provided the folder name, rather than the file, and
 all file(s) of the given format would be loaded. Let's look at the first
@@ -237,7 +244,7 @@ of the data.
 
 .. code:: python
 
-    data = tsc.loadSeriesLocal(seriespath + '/iris.mat', inputFormat='mat', varName='data', minPartitions=5)
+    data = tsc.loadSeries(seriespath + '/iris.mat', inputFormat='mat', varName='data', minPartitions=5)
     data.first()
 
 
@@ -250,7 +257,7 @@ of the data.
 
 .. code:: python
 
-    data = tsc.loadSeriesLocal(seriespath + '/iris.npy', inputFormat='npy', minPartitions=5)
+    data = tsc.loadSeries(seriespath + '/iris.npy', inputFormat='npy', minPartitions=5)
     data.first()
 
 
