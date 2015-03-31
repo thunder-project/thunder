@@ -1,6 +1,6 @@
 from numpy import arctan2, sqrt, pi, abs, dstack, clip, transpose, inf, \
     random, zeros, ones, asarray, corrcoef, allclose, maximum, add, multiply, \
-    nan_to_num
+    nan_to_num, copy
 
 
 class Colorize(object):
@@ -46,7 +46,7 @@ class Colorize(object):
         self.vmax = vmax
 
     @staticmethod
-    def show(img, cmap='gray', bar=False, nans=True):
+    def show(img, cmap='gray', bar=False, nans=True, clim=None):
         """
         Streamlined display of images using matplotlib.
 
@@ -64,6 +64,9 @@ class Colorize(object):
         nans : boolean, optional, deafult = True
             Whether to replace NaNs, if True, will replace with 0s
 
+        clim : tuple, optional, default = None
+            Limits for scaling image
+
         """
         from matplotlib.pyplot import imshow, axis, colorbar
 
@@ -79,9 +82,9 @@ class Colorize(object):
             mx = img.max()
             if mn < 0.0 or mx > 1.0:
                 raise Exception("Values must be between 0.0 and 1.0 for RGB images, got range (%g, %g)" % (mn, mx))
-            imshow(img, interpolation='none')
+            imshow(img, interpolation='none', clim=clim)
         else:
-            imshow(img, cmap=cmap, interpolation='none')
+            imshow(img, cmap=cmap, interpolation='none', clim=clim)
 
         if bar is True:
             colorbar()
