@@ -1,0 +1,19 @@
+:mod:`thunder`.PlanarCrossCorr
+=====================================
+
+.. currentmodule:: thunder
+
+.. autoclass:: PlanarCrossCorr
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~PlanarCrossCorr.__init__
+      ~PlanarCrossCorr.fit
+      ~PlanarCrossCorr.getTransform
+      ~PlanarCrossCorr.isPrepared
+      ~PlanarCrossCorr.prepare
+      ~PlanarCrossCorr.run
+   
+

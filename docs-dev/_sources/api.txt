@@ -87,6 +87,20 @@ Clustering
 	KMeans
 	KMeansModel
 
+Registration
+-------------
+
+.. currentmodule:: thunder
+
+.. autosummary::
+	:toctree: generated/
+	:template: class.rst
+
+	Registration
+	RegistrationModel
+	CrossCorr
+	PlanarCrossCorr
+
 Visualization
 -------------
 
