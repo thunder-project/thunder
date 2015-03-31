@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.0_dev',
+        VERSION:     '0.5.0.dev',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -55,7 +55,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.0_dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.0.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -351,7 +351,7 @@ avoid computation if known in advance</p>
 <td>Take samples.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.Series.toBlocks" title="thunder.Series.toBlocks"><tt class="xref py py-obj docutils literal"><span class="pre">toBlocks</span></tt></a>([size])</td>
-<td>Converts Series to Blocks</td>
+<td>Converts Series to Blocks.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.Series.toRowMatrix" title="thunder.Series.toRowMatrix"><tt class="xref py py-obj docutils literal"><span class="pre">toRowMatrix</span></tt></a>()</td>
 <td>Convert Series to RowMatrix</td>
@@ -964,9 +964,45 @@ or list of indices</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="thunder.Series.selectByIndex">
+<tt class="descname">selectByIndex</tt><big>(</big><em>val</em>, <em>level=0</em>, <em>squeeze=False</em>, <em>filter=False</em><big>)</big><a class="headerlink" href="#thunder.Series.selectByIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Select or filter elements of the Series by index values (across levels, if multi-index).</p>
+<p>The index is a property of a Series object that assigns a value to each position within
+the arrays stored in the records of the Series. This function returns a new Series where,
+within each record, only the elements indexed by a given value(s) are retained. An index
+where each value is a list of a fixed length is referred to as a &#8216;multi-index&#8217;,
+as it provides multiple labels for each index location. Each of the dimensions in these
+sublists is a &#8216;level&#8217; of the multi-index. If the index of the Series is a multi-index, then
+the selection can proceed by first selecting one or more levels, and then selecting one
+or more values at each level.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Series.seriesAggregateByIndex">
+<tt class="descname">seriesAggregateByIndex</tt><big>(</big><em>function</em>, <em>level=0</em><big>)</big><a class="headerlink" href="#thunder.Series.seriesAggregateByIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Aggregrate the data in each record, grouping by index values (across levels, if multi-index)</p>
+<p>For each unique value of the index, applies a function to the group of elements of the RDD indexed by that
+value. Returns an RDD indexed by those unique values. For the result to be a valid Series object, the 
+aggregating function should return a simple numeric type. Also allows selection of levels within a 
+multi-index. See selectByIndex doc for more info on indices and multi-indices.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Series.seriesCountByIndex">
+<tt class="descname">seriesCountByIndex</tt><big>(</big><em>level=0</em><big>)</big><a class="headerlink" href="#thunder.Series.seriesCountByIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Count the number of series elements for each unique index value (across levels, if multi-index)</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="thunder.Series.seriesMax">
 <tt class="descname">seriesMax</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Series.seriesMax" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the value maximum of each record in a Series</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Series.seriesMaxByIndex">
+<tt class="descname">seriesMaxByIndex</tt><big>(</big><em>level=0</em><big>)</big><a class="headerlink" href="#thunder.Series.seriesMaxByIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute maximum values of series elements for each unique index value (across levels, if multi-index)</p>
 </dd></dl>
 
 <dl class="method">
@@ -976,15 +1012,33 @@ or list of indices</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="thunder.Series.seriesMeanByIndex">
+<tt class="descname">seriesMeanByIndex</tt><big>(</big><em>level=0</em><big>)</big><a class="headerlink" href="#thunder.Series.seriesMeanByIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute means of series elements for each unique index value (across levels, if multi-index)</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="thunder.Series.seriesMedian">
 <tt class="descname">seriesMedian</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Series.seriesMedian" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the value median of each record in a Series</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="thunder.Series.seriesMedianByIndex">
+<tt class="descname">seriesMedianByIndex</tt><big>(</big><em>level=0</em><big>)</big><a class="headerlink" href="#thunder.Series.seriesMedianByIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute medians of series elements for each unique index value (across levels, if multi-index)</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="thunder.Series.seriesMin">
 <tt class="descname">seriesMin</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Series.seriesMin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the value minimum of each record in a Series</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Series.seriesMinByIndex">
+<tt class="descname">seriesMinByIndex</tt><big>(</big><em>level=0</em><big>)</big><a class="headerlink" href="#thunder.Series.seriesMinByIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute minimum values of series elements for each unique index value (across level, if multi-index)</p>
 </dd></dl>
 
 <dl class="method">
@@ -1024,6 +1078,12 @@ or list of indices</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="thunder.Series.seriesStatByIndex">
+<tt class="descname">seriesStatByIndex</tt><big>(</big><em>stat</em>, <em>level=0</em><big>)</big><a class="headerlink" href="#thunder.Series.seriesStatByIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the desired statistic for each uniue index values (across levels, if multi-index)</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="thunder.Series.seriesStats">
 <tt class="descname">seriesStats</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Series.seriesStats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute many statistics for each record in a Series</p>
@@ -1036,9 +1096,21 @@ or list of indices</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="thunder.Series.seriesStdevByIndex">
+<tt class="descname">seriesStdevByIndex</tt><big>(</big><em>level=0</em><big>)</big><a class="headerlink" href="#thunder.Series.seriesStdevByIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute means of series elements for each unique index value (across levels, if multi-index)</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="thunder.Series.seriesSum">
 <tt class="descname">seriesSum</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Series.seriesSum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the value sum of each record in a Series</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Series.seriesSumByIndex">
+<tt class="descname">seriesSumByIndex</tt><big>(</big><em>level=0</em><big>)</big><a class="headerlink" href="#thunder.Series.seriesSumByIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute sums of series elements for each unique index value (across levels, if multi-index)</p>
 </dd></dl>
 
 <dl class="method">
@@ -1048,6 +1120,24 @@ or list of indices</p>
 <p>This calls the Spark sortByKey() method on the underlying RDD, but reverse the order
 of the key tuples before and after sorting so they are sorted according to the convention
 that the first key varies fastest, then the second, then the third, etc.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Series.squelch">
+<tt class="descname">squelch</tt><big>(</big><em>threshold</em><big>)</big><a class="headerlink" href="#thunder.Series.squelch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set all records that do not exceed the given threhsold to 0</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>threshold</strong> : scalar</p>
+<blockquote class="last">
+<div><p>Level below which to set records to zero</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -1179,23 +1269,42 @@ performed. See Data.astype() for details.</p>
 <dl class="method">
 <dt id="thunder.Series.toBlocks">
 <tt class="descname">toBlocks</tt><big>(</big><em>size='150M'</em><big>)</big><a class="headerlink" href="#thunder.Series.toBlocks" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts Series to Blocks</p>
+<dd><p>Converts Series to Blocks.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>size: string memory size, tuple of integer splits per dimension, or instance of BlockingStrategy</strong></p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>size</strong> : string memory size, tuple of splits per dimension, or instance of BlockingStrategy</p>
 <blockquote>
-<div><p>A string spec will be interpreted as a memory size string (e.g. &#8220;64M&#8221;). The resulting blocks will be
-generated by a SeriesBlockingStrategy to be close to the requested size.
-A tuple of positive ints will be interpreted as &#8220;splits per dimension&#8221;. Only certain patterns of splits
-are valid to convert Series back to Blocks; see docstring above. These splits will be passed into a
-SeriesBlockingStrategy that will be used to generate the returned blocks.
-If an instance of SeriesBlockingStrategy is passed, it will be used to generate the returned Blocks.</p>
+<div><p>String interpreted as memory size (e.g. &#8220;64M&#8221;). Tuple of ints interpreted as
+&#8220;pixels per dimension&#8221; (default) or &#8220;splits per dimension&#8221;, depending on units.
+Instance of BlockingStrategy can be passed directly.</p>
 </div></blockquote>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Blocks instance</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Series.toImages">
+<tt class="descname">toImages</tt><big>(</big><em>size='150M'</em><big>)</big><a class="headerlink" href="#thunder.Series.toImages" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts Series to Images.</p>
+<p>Equivalent to calling series.toBlocks(size).toImages()</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>size</strong> : string memory size, optional, default = &#8220;150M&#8221;</p>
+<blockquote>
+<div><p>String interpreted as memory size (e.g. &#8220;64M&#8221;).</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Images instance</p>
 </td>
 </tr>
 </tbody>

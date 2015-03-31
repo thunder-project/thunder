@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.5.0_dev',
+        VERSION:     '0.5.0.dev',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html"><img src="_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.0_dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.0.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -209,7 +209,7 @@ thunder-ec2 -k mykey -i ~/mykey.pem start &lt;cluster-name&gt;
 </pre></div>
 </div>
 <p>If this is the first time you are logging in, you must run a script that configures iPython notebook to run in SSL mode.  Type:</p>
-<div class="highlight-bash"><div class="highlight"><pre>setup-notebook
+<div class="highlight-bash"><div class="highlight"><pre>setup-notebook-ec2
 <span class="nb">source</span> /root/.bash_profile
 </pre></div>
 </div>
@@ -226,7 +226,7 @@ thunder-ec2 -k mykey -i ~/mykey.pem start &lt;cluster-name&gt;
 </div>
 <p>A typical choice for &lt;local_port&gt; is 8888.  However, you may need to choose another port if, for example, port 8888 is already in use by another process.</p>
 <p>If this is the first time you are logging in to your cluster, you must run a script that configures iPython notebook to run in SSH tunnel mode.  Type:</p>
-<div class="highlight-bash"><div class="highlight"><pre>setup-notebook-sshtunnel
+<div class="highlight-bash"><div class="highlight"><pre>setup-notebook-ec2-sshtunnel
 </pre></div>
 </div>
 <p>Once you have done this, you are ready to run thunder!</p>

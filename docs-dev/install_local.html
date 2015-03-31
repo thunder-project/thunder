@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.5.0_dev',
+        VERSION:     '0.5.0.dev',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html"><img src="_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.0_dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.0.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -114,7 +114,7 @@
 <li><a class="reference internal" href="#installing-spark">Installing Spark</a></li>
 <li><a class="reference internal" href="#installing-thunder">Installing Thunder</a></li>
 <li><a class="reference internal" href="#dependencies">Dependencies</a></li>
-<li><a class="reference internal" href="#ipython">iPython</a></li>
+<li><a class="reference internal" href="#ipython">IPython</a></li>
 </ul>
 </li>
 </ul>
@@ -187,16 +187,17 @@
 <p>We recommend using the <a class="reference external" href="https://store.continuum.io/cshop/anaconda/">Anaconda distribution</a>, which includes these dependencies (and many other useful packages). Especially if you aren&#8217;t already using Python for scientific computing, it&#8217;s a great way to start.</p>
 </div>
 <div class="section" id="ipython">
-<h2>iPython<a class="headerlink" href="#ipython" title="Permalink to this headline">¶</a></h2>
-<p>Spark and Thunder work well alongside iPython and the iPython notebook. To use iPython, just set an environmental variable</p>
+<h2>IPython<a class="headerlink" href="#ipython" title="Permalink to this headline">¶</a></h2>
+<p>Spark and Thunder work very well alongside IPython and the IPython notebook. When calling <cite>thunder</cite>, adding the flag <tt class="docutils literal"><span class="pre">-i</span></tt> will launch using IPython, and the flag <tt class="docutils literal"><span class="pre">-n</span></tt> will launch in an IPython notebook.</p>
+<p>You can also use environmental variables to make these options more permanent. If you set</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nb">export </span><span class="nv">IPYTHON</span><span class="o">=</span>1
 </pre></div>
 </div>
-<p>When you type <tt class="docutils literal"><span class="pre">thunder</span></tt> it will start in iPython. If you additionally set</p>
+<p>when you type <tt class="docutils literal"><span class="pre">thunder</span></tt> it will start in IPython. If you additionally set</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nb">export </span><span class="nv">IPYTHON_OPTS</span><span class="o">=</span><span class="s2">&quot;notebook&quot;</span>
 </pre></div>
 </div>
-<p>it will use the iPython notebook. As before, you should add these lines to your bash profile.</p>
+<p>it will use the IPython notebook.</p>
 </div>
 </div>
 

@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.0_dev',
+        VERSION:     '0.5.0.dev',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -55,7 +55,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.0_dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.0.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -146,7 +146,7 @@
 <dl class="class">
 <dt id="thunder.ThunderContext">
 <em class="property">class </em><tt class="descclassname">thunder.</tt><tt class="descname">ThunderContext</tt><big>(</big><em>sparkcontext</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext" title="Permalink to this definition">¶</a></dt>
-<dd><p>Wrapper for a SparkContext that provides functionality for loading data.</p>
+<dd><p>Wrapper for a SparkContext that provides an entry point for loading and saving.</p>
 <p>Also supports creation of example datasets, and loading example
 data both locally and from EC2.</p>
 <p class="rubric">Attributes</p>
@@ -186,20 +186,20 @@ data both locally and from EC2.</p>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.ThunderContext.loadExampleS3" title="thunder.ThunderContext.loadExampleS3"><tt class="xref py py-obj docutils literal"><span class="pre">loadExampleS3</span></tt></a>([dataset])</td>
 <td>Load an example data set from S3.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.ThunderContext.loadImages" title="thunder.ThunderContext.loadImages"><tt class="xref py py-obj docutils literal"><span class="pre">loadImages</span></tt></a>(dataPath[,&nbsp;dims,&nbsp;dtype,&nbsp;...])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.ThunderContext.loadImages" title="thunder.ThunderContext.loadImages"><tt class="xref py py-obj docutils literal"><span class="pre">loadImages</span></tt></a>(dataPath[,&nbsp;dims,&nbsp;dtype,&nbsp;format,&nbsp;...])</td>
 <td>Loads an Images object from data stored as a binary image stack, tif, or png files.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.ThunderContext.loadImagesAsSeries" title="thunder.ThunderContext.loadImagesAsSeries"><tt class="xref py py-obj docutils literal"><span class="pre">loadImagesAsSeries</span></tt></a>(dataPath[,&nbsp;dims,&nbsp;...])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.ThunderContext.loadImagesAsSeries" title="thunder.ThunderContext.loadImagesAsSeries"><tt class="xref py py-obj docutils literal"><span class="pre">loadImagesAsSeries</span></tt></a>(dataPath[,&nbsp;dims,&nbsp;format,&nbsp;...])</td>
 <td>Load Images data as Series data.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.ThunderContext.loadParams" title="thunder.ThunderContext.loadParams"><tt class="xref py py-obj docutils literal"><span class="pre">loadParams</span></tt></a>(path)</td>
 <td>Load a file with parameters from a local file system or S3.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.ThunderContext.loadSeries" title="thunder.ThunderContext.loadSeries"><tt class="xref py py-obj docutils literal"><span class="pre">loadSeries</span></tt></a>(dataPath[,&nbsp;nkeys,&nbsp;nvalues,&nbsp;...])</td>
-<td>Loads a Series object from data stored as text or binary files.</td>
+<td>Loads a Series object from data stored as binary, text, npy, or mat.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.ThunderContext.loadSeriesLocal" title="thunder.ThunderContext.loadSeriesLocal"><tt class="xref py py-obj docutils literal"><span class="pre">loadSeriesLocal</span></tt></a>(dataFilePath[,&nbsp;inputFormat,&nbsp;...])</td>
-<td>Load a Series object from a local file (either npy or MAT format).</td>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">ThunderContext.loadSeriesLocal</span></tt></td>
+<td></td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.ThunderContext.makeExample" title="thunder.ThunderContext.makeExample"><tt class="xref py py-obj docutils literal"><span class="pre">makeExample</span></tt></a>(dataset,&nbsp;**opts)</td>
 <td>Make an example data set for testing analyses.</td>
@@ -214,133 +214,101 @@ data both locally and from EC2.</p>
 </table>
 <dl class="method">
 <dt id="thunder.ThunderContext.convertImagesToSeries">
-<tt class="descname">convertImagesToSeries</tt><big>(</big><em>dataPath</em>, <em>outputDirPath</em>, <em>dims=None</em>, <em>inputFormat='stack'</em>, <em>ext=None</em>, <em>dtype='int16'</em>, <em>blockSize='150M'</em>, <em>blockSizeUnits='pixels'</em>, <em>startIdx=None</em>, <em>stopIdx=None</em>, <em>shuffle=True</em>, <em>overwrite=False</em>, <em>recursive=False</em>, <em>nplanes=None</em>, <em>npartitions=None</em>, <em>renumber=False</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.convertImagesToSeries" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">convertImagesToSeries</tt><big>(</big><em>dataPath</em>, <em>outputDirPath</em>, <em>dims=None</em>, <em>format='stack'</em>, <em>ext=None</em>, <em>dtype='int16'</em>, <em>blockSize='150M'</em>, <em>blockSizeUnits='pixels'</em>, <em>startIdx=None</em>, <em>stopIdx=None</em>, <em>shuffle=True</em>, <em>overwrite=False</em>, <em>recursive=False</em>, <em>nplanes=None</em>, <em>npartitions=None</em>, <em>renumber=False</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.convertImagesToSeries" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write out Images data as Series data, saved in a flat binary format.</p>
-<p>The resulting Series data files may subsequently be read in using the loadSeries() method. The Series data
-object that results will be equivalent to that which would be generated by loadImagesAsSeries(). It is expected
-that loading Series data directly from the series flat binary format, using loadSeries(), will be faster than
-converting image data to a Series object through loadImagesAsSeries().</p>
+<p>The resulting files may subsequently be read in using ThunderContext.loadSeries().
+Loading Series data directly will likely be faster than converting image data
+to a Series object through loadImagesAsSeries().</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>dataPath: string</strong></p>
 <blockquote>
-<div><p>Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-including scheme. A dataPath argument may include a single &#8216;*&#8217; wildcard character in the filename. Examples
-of valid dataPaths include &#8216;a/local/relative/directory/<a href="#id1"><span class="problematic" id="id2">*</span></a>.stack&#8221;, &#8220;s3n:///my-s3-bucket/data/mydatafile.tif&#8221;,
-&#8220;/mnt/my/absolute/data/directory/&#8221;, or &#8220;file:///mnt/another/data/directory/&#8221;.</p>
+<div><p>Path to data files or directory, as either a local filesystem path or a URI.
+May include a single &#8216;*&#8217; wildcard in the filename. Examples of valid dataPaths include
+&#8216;local/directory/<a href="#id1"><span class="problematic" id="id2">*</span></a>.stack&#8221;, &#8220;s3n:///my-s3-bucket/data/&#8221;, or &#8220;file:///mnt/another/directory/&#8221;.</p>
 </div></blockquote>
 <p><strong>outputDirPath: string</strong></p>
 <blockquote>
-<div><p>Path to a directory into which to write Series file output. An outputdir argument may be either a path
-on the local file system or a URI-like format, as in dataPath. Examples of valid outputDirPaths include
-&#8220;a/relative/directory/&#8221;, &#8220;s3n:///my-s3-bucket/data/myoutput/&#8221;, or &#8220;file:///mnt/a/new/directory/&#8221;. If the
-directory specified by outputDirPath already exists and the &#8216;overwrite&#8217; parameter is False, this method
-will throw a ValueError. If the directory exists and &#8216;overwrite&#8217; is True, the existing directory and all
-its contents will be deleted and overwritten.</p>
+<div><p>Path to directory to write Series file output. May be either a path on the local file system
+or a URI-like format, such as &#8220;local/directory&#8221;, &#8220;s3n:///my-s3-bucket/data/&#8221;,
+or &#8220;file:///mnt/another/directory/&#8221;. If the directory exists and &#8216;overwrite&#8217; is True,
+the existing directory and all its contents will be deleted and overwritten.</p>
 </div></blockquote>
-<p><strong>dims: tuple of positive int, optional (but required if inputFormat is &#8216;stack&#8217;)</strong></p>
+<p><strong>dims: tuple of positive int, optional (required if format is &#8216;stack&#8217;)</strong></p>
 <blockquote>
-<div><p>Dimensions of input image data, for instance (1024, 1024, 48). Binary stack data will be interpreted as
-coming from a multidimensional array of the specified dimensions.</p>
-<p>The first dimension of the passed dims tuple should be the one that is changing most rapidly
-on disk. So for instance given dims of (x, y, z), the coordinates of the data in a binary stack file
-should be ordered as [(x0, y0, z0), (x1, y0, z0), ..., (xN, y0, z0), (x0, y1, z0), (x1, y1, z0), ...,
-(xN, yM, z0), (x0, y0, z1), ..., (xN, yM, zP)]. This is the opposite convention from that used by numpy,
-which by default has the fastest-changing dimension listed last (column-major convention). Thus, if loading
-a numpy array <cite>ary</cite>, where <cite>ary.shape == (z, y, x)</cite>, written to disk by <cite>ary.tofile(&#8220;myarray.stack&#8221;)</cite>, the
-corresponding dims parameter should be (x, y, z).
-If inputFormat is &#8216;tif&#8217;, the dims parameter (if any) will be ignored; data dimensions will instead
-be read out from the tif file headers.</p>
+<div><p>Image dimensions. Binary stack data will be interpreted as a multidimensional array
+with the given dimensions, and should be stored in row-major order (Fortran or Matlab convention),
+where the first dimension changes most rapidly. For &#8216;png&#8217; or &#8216;tif&#8217; data dimensions
+will be read from the image file headers.</p>
 </div></blockquote>
-<p><strong>inputFormat: {&#8216;stack&#8217;, &#8216;tif&#8217;}. optional, default &#8216;stack&#8217;</strong></p>
+<p><strong>format: str, optional, default = &#8216;stack&#8217;</strong></p>
 <blockquote>
-<div><p>Expected format of the input data. &#8216;stack&#8217; indicates flat files of raw binary data, while &#8216;tif&#8217; indicates
-greyscale / luminance TIF images. Each page of a multipage tif file will be interpreted as a separate
-z-plane. For both stacks and tif stacks, separate files are interpreted as distinct time points, with
-ordering given by lexicographic sorting of file names.</p>
+<div><p>Expected format of the input data: &#8216;stack&#8217;, &#8216;png&#8217;, or &#8216;tif&#8217;. &#8216;stack&#8217; indicates flat binary stacks.
+&#8216;png&#8217; or &#8216;tif&#8217; indicate image formats. Page of a multipage tif file will be extend along
+the third dimension. Separate files interpreted as distinct records, with ordering
+given by lexicographic sorting of file names.</p>
 </div></blockquote>
-<p><strong>ext: string, optional, default None</strong></p>
+<p><strong>ext: string, optional, default = None</strong></p>
 <blockquote>
-<div><p>Extension required on data files to be loaded. By default will be &#8220;stack&#8221; if inputFormat==&#8221;stack&#8221;, &#8220;tif&#8221; for
-inputFormat==&#8217;tif&#8217;.</p>
+<div><p>File extension, default will be &#8220;bin&#8221; if format==&#8221;stack&#8221;, &#8220;tif&#8221; for format==&#8217;tif&#8217;,
+and &#8216;png&#8217; for format==&#8221;png&#8221;.</p>
 </div></blockquote>
 <p><strong>dtype: string or numpy dtype. optional, default &#8216;int16&#8217;</strong></p>
 <blockquote>
-<div><p>Data type of the image files to be loaded, specified as a numpy &#8220;dtype&#8221; string. If inputFormat is
-&#8216;tif&#8217;, the dtype parameter (if any) will be ignored; data type will instead be read out from the
-tif headers.</p>
+<div><p>Data type of the image files to be loaded, specified as a numpy &#8220;dtype&#8221; string.
+Ignored for &#8216;tif&#8217; or &#8216;png&#8217; (data will be inferred from image formats).</p>
 </div></blockquote>
-<p><strong>blockSize: string formatted as e.g. &#8220;64M&#8221;, &#8220;512k&#8221;, &#8220;2G&#8221;, or positive int, tuple of positive int, or instance of</strong></p>
+<p><strong>blockSize: string or positive int, optional, default &#8220;150M&#8221;</strong></p>
 <blockquote>
-<div><blockquote>
-<div><p>BlockingStrategy. optional, default &#8220;150M&#8221;</p>
+<div><p>Requested size of blocks (e.g &#8220;64M&#8221;, &#8220;512k&#8221;, &#8220;2G&#8221;). If shuffle=True, can also be a
+tuple of int specifying the number of pixels or splits per dimension. Indirectly
+controls the number of Spark partitions, with one partition per block.</p>
 </div></blockquote>
-<p>Requested size of individual output files in bytes (or kilobytes, megabytes, gigabytes). blockSize can also
-be an instance of blockingStrategy, or a tuple of int specifying either the number of pixels or of splits
-per dimension to apply to the loaded images. Whether a tuple of int is interpreted as pixels or as splits
-depends on the value of the blockSizeUnits parameter.  This parameter also indirectly controls the number
-of Spark partitions to be used, with one partition used per block created.</p>
-</div></blockquote>
-<p><strong>blockSizeUnits: string, either &#8220;pixels&#8221; or &#8220;splits&#8221; (or unique prefix of each, such as &#8220;s&#8221;), default &#8220;pixels&#8221;</strong></p>
+<p><strong>blockSizeUnits: string, either &#8220;pixels&#8221; or &#8220;splits&#8221;, default &#8220;pixels&#8221;</strong></p>
 <blockquote>
-<div><p>Specifies units to be used in interpreting a tuple passed as blockSizeSpec when shuffle=True. If a string
-or a BlockingStrategy instance is passed as blockSizeSpec, or if shuffle=False, this parameter has no
-effect.</p>
+<div><p>Units for interpreting a tuple passed as blockSize when shuffle=True.</p>
 </div></blockquote>
-<p><strong>startIdx: nonnegative int, optional</strong></p>
+<p><strong>startIdx: nonnegative int, optional, default = None</strong></p>
 <blockquote>
-<div><p>startIdx and stopIdx are convenience parameters to allow only a subset of input files to be read in. These
-parameters give the starting index (inclusive) and final index (exclusive) of the data files to be used
-after lexicographically sorting all input data files matching the dataPath argument. For example,
-startIdx=None (the default) and stopIdx=10 will cause only the first 10 data files in dataPath to be read
-in; startIdx=2 and stopIdx=3 will cause only the third file (zero-based index of 2) to be read in. startIdx
-and stopIdx use the python slice indexing convention (zero-based indexing with an exclusive final position).</p>
+<div><p>Convenience parameters to read only a subset of input files. Uses python slice conventions
+(zero-based indexing with exclusive final position). These parameters give the starting
+and final index after lexicographic sorting.</p>
 </div></blockquote>
-<p><strong>stopIdx: nonnegative int, optional</strong></p>
+<p><strong>stopIdx: nonnegative int, optional, default = None</strong></p>
 <blockquote>
 <div><p>See startIdx.</p>
 </div></blockquote>
-<p><strong>shuffle: boolean, optional, default True</strong></p>
+<p><strong>shuffle: boolean, optional, default = True</strong></p>
 <blockquote>
-<div><p>Controls whether the conversion from Images to Series formats will make use of a Spark shuffle-based method.</p>
+<div><p>Controls whether the conversion from Images to Series formats will use of a Spark shuffle-based method.</p>
 </div></blockquote>
 <p><strong>overwrite: boolean, optional, default False</strong></p>
 <blockquote>
-<div><p>If true, the directory specified by outputDirPath will first be deleted, along with all its contents, if it
-already exists. (Use with caution.) If false, a ValueError will be thrown if outputDirPath is found to
-already exist.</p>
+<div><p>If true, the directory specified by outputDirPath will be deleted (recursively) if it
+already exists. (Use with caution.)</p>
 </div></blockquote>
-<p><strong>recursive: boolean, default False</strong></p>
+<p><strong>recursive: boolean, optional, default = False</strong></p>
 <blockquote>
-<div><p>If true, will recursively descend directories rooted at dataPath, loading all files in the tree that
-have an appropriate extension. Recursive loading is currently only implemented for local filesystems
-(not s3), and only with shuffle=True.</p>
+<div><p>If true, will recursively descend directories rooted at dataPath, loading all files
+in the tree with an appropriate extension.</p>
 </div></blockquote>
-<p><strong>nplanes: positive integer, default None</strong></p>
+<p><strong>nplanes: positive integer, optional, default = None</strong></p>
 <blockquote>
-<div><p>If passed, will cause a single image file to be subdivided into multiple records. Every
-<cite>nplanes</cite> z-planes (or multipage tif pages) in the file will be taken as a new record, with the
-first nplane planes of the first file being record 0, the second nplane planes being record 1, etc,
-until the first file is exhausted and record ordering continues with the first nplane planes of the
-second file, and so on. With nplanes=None (the default), a single file will be considered as
-representing a single record. Keys are calculated assuming that all input files contain the same
-number of records; if the number of records per file is not the same across all files,
-then <cite>renumber</cite> should be set to True to ensure consistent keys. nplanes is only supported for
-shuffle=True (the default).</p>
+<div><p>Subdivide individual image files. Every <cite>nplanes</cite> from each file will be considered a new record.
+With nplanes=None (the default), a single file will be considered as representing a single record.
+If the number of records per file is not the same across all files, then <cite>renumber</cite> should be set
+to True to ensure consistent keys.</p>
 </div></blockquote>
-<p><strong>npartitions: positive int, optional</strong></p>
+<p><strong>npartitions: positive int, optional, default = None</strong></p>
 <blockquote>
-<div><p>If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
-partition per image file. Only applies when shuffle=True.</p>
+<div><p>Specify number of partitions for the RDD, if unspecified will use 1 partition per image.</p>
 </div></blockquote>
-<p><strong>renumber: boolean, optional, default False</strong></p>
+<p><strong>renumber: boolean, optional, default = False</strong></p>
 <blockquote class="last">
-<div><p>If renumber evaluates to True, then the keys for each record will be explicitly recalculated after
-all images are loaded. This should only be necessary at load time when different files contain
-different number of records. renumber is only supported for shuffle=True (the default). See
-Images.renumber().</p>
+<div><p>Recalculate keys for records after images are loading. Only necessary if different files contain
+different number of records (e.g. due to specifying nplanes). See Images.renumber().</p>
 </div></blockquote>
 </td>
 </tr>
@@ -446,7 +414,7 @@ list of available datasets.</p>
 
 <dl class="method">
 <dt id="thunder.ThunderContext.loadImages">
-<tt class="descname">loadImages</tt><big>(</big><em>dataPath</em>, <em>dims=None</em>, <em>dtype=None</em>, <em>inputFormat='stack'</em>, <em>ext=None</em>, <em>startIdx=None</em>, <em>stopIdx=None</em>, <em>recursive=False</em>, <em>nplanes=None</em>, <em>npartitions=None</em>, <em>renumber=False</em>, <em>confFilename='conf.json'</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadImages" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">loadImages</tt><big>(</big><em>dataPath</em>, <em>dims=None</em>, <em>dtype=None</em>, <em>format='stack'</em>, <em>ext=None</em>, <em>startIdx=None</em>, <em>stopIdx=None</em>, <em>recursive=False</em>, <em>nplanes=None</em>, <em>npartitions=None</em>, <em>renumber=False</em>, <em>confFilename='conf.json'</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadImages" title="Permalink to this definition">¶</a></dt>
 <dd><p>Loads an Images object from data stored as a binary image stack, tif, or png files.</p>
 <p>Supports single files or multiple files, stored on a local file system, a networked file sytem
 (mounted and available on all nodes), or Amazon S3. HDFS is not currently supported for image file data.</p>
@@ -456,87 +424,70 @@ list of available datasets.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>dataPath: string</strong></p>
 <blockquote>
-<div><p>Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-including scheme. A dataPath argument may include a single &#8216;*&#8217; wildcard character in the filename. Examples
-of valid dataPaths include &#8216;a/local/relative/directory/<a href="#id3"><span class="problematic" id="id4">*</span></a>.stack&#8221;, &#8220;s3n:///my-s3-bucket/data/mydatafile.tif&#8221;,
-&#8220;/mnt/my/absolute/data/directory/&#8221;, or &#8220;file:///mnt/another/data/directory/&#8221;.</p>
+<div><p>Path to data files or directory, as either a local filesystem path or a URI.
+May include a single &#8216;*&#8217; wildcard in the filename. Examples of valid dataPaths include
+&#8216;local/directory/<a href="#id3"><span class="problematic" id="id4">*</span></a>.stack&#8221;, &#8220;s3n:///my-s3-bucket/data/&#8221;, or &#8220;file:///mnt/another/directory/&#8221;.</p>
 </div></blockquote>
-<p><strong>dims: tuple of positive int, optional (but required if inputFormat is &#8216;stack&#8217;)</strong></p>
+<p><strong>dims: tuple of positive int, optional (required if format is &#8216;stack&#8217;)</strong></p>
 <blockquote>
-<div><p>Dimensions of input image data, similar to a numpy &#8216;shape&#8217; parameter, for instance (1024, 1024, 48). Binary
-stack data will be interpreted as coming from a multidimensional array of the specified dimensions. Stack
-data should be stored in row-major order (Fortran or Matlab convention) rather than column-major order (C
-or python/numpy convention), where the first dimension corresponds to that which is changing most rapidly
-on disk. So for instance given dims of (x, y, z), the coordinates of the data in a binary stack file
-should be ordered as [(x0, y0, z0), (x1, y0, zo), ..., (xN, y0, z0), (x0, y1, z0), (x1, y1, z0), ...,
-(xN, yM, z0), (x0, y0, z1), ..., (xN, yM, zP)].
-If inputFormat is &#8216;png&#8217; or &#8216;tif&#8217;, the dims parameter (if any) will be ignored; data dimensions
-will instead be read out from the image file headers.</p>
+<div><p>Image dimensions. Binary stack data will be interpreted as a multidimensional array
+with the given dimensions, and should be stored in row-major order (Fortran or Matlab convention),
+where the first dimension changes most rapidly. For &#8216;png&#8217; or &#8216;tif&#8217; data dimensions
+will be read from the image file headers.</p>
 </div></blockquote>
-<p><strong>inputFormat: {&#8216;stack&#8217;, &#8216;png&#8217;, &#8216;tif&#8217;}. optional, default &#8216;stack&#8217;</strong></p>
+<p><strong>format: str, optional, default = &#8216;stack&#8217;</strong></p>
 <blockquote>
-<div><p>Expected format of the input data. &#8216;stack&#8217; indicates flat files of raw binary data. &#8216;png&#8217; or &#8216;tif&#8217; indicate
-image files of the corresponding formats. Each page of a multipage tif file will be interpreted as a
-separate z-plane. For all formats, separate files are interpreted as distinct time points, with ordering
+<div><p>Expected format of the input data: &#8216;stack&#8217;, &#8216;png&#8217;, or &#8216;tif&#8217;. &#8216;stack&#8217; indicates flat binary stacks.
+&#8216;png&#8217; or &#8216;tif&#8217; indicate image formats. Page of a multipage tif file will be extend along
+the third dimension. Separate files interpreted as distinct records, with ordering
 given by lexicographic sorting of file names.</p>
 </div></blockquote>
-<p><strong>ext: string, optional, default None</strong></p>
+<p><strong>ext: string, optional, default = None</strong></p>
 <blockquote>
-<div><p>Extension required on data files to be loaded. By default will be &#8220;stack&#8221; if inputFormat==&#8221;stack&#8221;, &#8220;tif&#8221; for
-inputFormat==&#8217;tif&#8217;, and &#8216;png&#8217; for inputFormat=&#8221;png&#8221;.</p>
+<div><p>File extension, default will be &#8220;bin&#8221; if format==&#8221;stack&#8221;, &#8220;tif&#8221; for format==&#8217;tif&#8217;,
+and &#8216;png&#8217; for format==&#8221;png&#8221;.</p>
 </div></blockquote>
-<p><strong>dtype: string or numpy dtype. optional, default &#8216;int16&#8217;</strong></p>
+<p><strong>dtype: string or numpy dtype, optional, default = &#8216;int16&#8217;</strong></p>
 <blockquote>
-<div><p>Data type of the image files to be loaded, specified as a numpy &#8220;dtype&#8221; string. If inputFormat is
-&#8216;tif&#8217; or &#8216;png&#8217;, the dtype parameter (if any) will be ignored; data type will instead be read out from the
-tif headers.</p>
+<div><p>Data type of the image files to be loaded, specified as a numpy &#8220;dtype&#8221; string.
+Ignored for &#8216;tif&#8217; or &#8216;png&#8217; (data will be inferred from image formats).</p>
 </div></blockquote>
-<p><strong>startIdx: nonnegative int, optional</strong></p>
+<p><strong>startIdx: nonnegative int, optional, default = None</strong></p>
 <blockquote>
-<div><p>startIdx and stopIdx are convenience parameters to allow only a subset of input files to be read in. These
-parameters give the starting index (inclusive) and final index (exclusive) of the data files to be used
-after lexicographically sorting all input data files matching the dataPath argument. For example,
-startIdx=None (the default) and stopIdx=10 will cause only the first 10 data files in dataPath to be read
-in; startIdx=2 and stopIdx=3 will cause only the third file (zero-based index of 2) to be read in. startIdx
-and stopIdx use the python slice indexing convention (zero-based indexing with an exclusive final position).</p>
+<div><p>Convenience parameters to read only a subset of input files. Uses python slice conventions
+(zero-based indexing with exclusive final position). These parameters give the starting
+and final index after lexicographic sorting.</p>
 </div></blockquote>
-<p><strong>stopIdx: nonnegative int, optional</strong></p>
+<p><strong>stopIdx: nonnegative int, optional, default = None</strong></p>
 <blockquote>
 <div><p>See startIdx.</p>
 </div></blockquote>
-<p><strong>recursive: boolean, default False</strong></p>
+<p><strong>recursive: boolean, optional, default = False</strong></p>
 <blockquote>
-<div><p>If true, will recursively descend directories rooted at dataPath, loading all files in the tree that
-have an appropriate extension. Recursive loading is currently only implemented for local filesystems
-(not s3).</p>
+<div><p>If true, will recursively descend directories rooted at dataPath, loading all files
+in the tree with an appropriate extension.</p>
 </div></blockquote>
-<p><strong>nplanes: positive integer, default None</strong></p>
+<p><strong>nplanes: positive integer, optional, default = None</strong></p>
 <blockquote>
-<div><p>If passed, will cause a single image file to be subdivided into multiple records. Every
-<cite>nplanes</cite> z-planes (or multipage tif pages) in the file will be taken as a new record, with the
-first nplane planes of the first file being record 0, the second nplane planes being record 1, etc,
-until the first file is exhausted and record ordering continues with the first nplane planes of the
-second file, and so on. With nplanes=None (the default), a single file will be considered as
-representing a single record. Keys are calculated assuming that all input files contain the same
-number of records; if the number of records per file is not the same across all files,
-then <cite>renumber</cite> should be set to True to ensure consistent keys.</p>
+<div><p>Subdivide individual image files. Every <cite>nplanes</cite> from each file will be considered a new record.
+With nplanes=None (the default), a single file will be considered as representing a single record.
+If the number of records per file is not the same across all files, then <cite>renumber</cite> should be set
+to True to ensure consistent keys.</p>
 </div></blockquote>
-<p><strong>npartitions: positive int, optional</strong></p>
+<p><strong>npartitions: positive int, optional, default = None</strong></p>
 <blockquote>
-<div><p>If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
-partition per image file.</p>
+<div><p>Specify number of partitions for the RDD, if unspecified will use 1 partition per image.</p>
 </div></blockquote>
-<p><strong>renumber: boolean, optional, default False</strong></p>
+<p><strong>renumber: boolean, optional, default = False</strong></p>
 <blockquote>
-<div><p>If renumber evaluates to True, then the keys for each record will be explicitly recalculated after
-all images are loaded. This should only be necessary at load time when different files contain
-different number of records. See Images.renumber().</p>
+<div><p>Recalculate keys for records after images are loading. Only necessary if different files contain
+different number of records (e.g. due to specifying nplanes). See Images.renumber().</p>
 </div></blockquote>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">data: thunder.rdds.Images</p>
 <blockquote class="last">
-<div><p>A newly-created Images object, wrapping an RDD of &lt;int index, numpy array&gt; key-value pairs.</p>
+<div><p>An Images object, wrapping an RDD of with (int) : (numpy array) pairs</p>
 </div></blockquote>
 </td>
 </tr>
@@ -546,7 +497,7 @@ different number of records. See Images.renumber().</p>
 
 <dl class="method">
 <dt id="thunder.ThunderContext.loadImagesAsSeries">
-<tt class="descname">loadImagesAsSeries</tt><big>(</big><em>dataPath</em>, <em>dims=None</em>, <em>inputFormat='stack'</em>, <em>ext=None</em>, <em>dtype='int16'</em>, <em>blockSize='150M'</em>, <em>blockSizeUnits='pixels'</em>, <em>startIdx=None</em>, <em>stopIdx=None</em>, <em>shuffle=True</em>, <em>recursive=False</em>, <em>nplanes=None</em>, <em>npartitions=None</em>, <em>renumber=False</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadImagesAsSeries" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">loadImagesAsSeries</tt><big>(</big><em>dataPath</em>, <em>dims=None</em>, <em>format='stack'</em>, <em>ext=None</em>, <em>dtype='int16'</em>, <em>blockSize='150M'</em>, <em>blockSizeUnits='pixels'</em>, <em>startIdx=None</em>, <em>stopIdx=None</em>, <em>shuffle=True</em>, <em>recursive=False</em>, <em>nplanes=None</em>, <em>npartitions=None</em>, <em>renumber=False</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadImagesAsSeries" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load Images data as Series data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -554,113 +505,136 @@ different number of records. See Images.renumber().</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>dataPath: string</strong></p>
 <blockquote>
-<div><p>Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-including scheme. A dataPath argument may include a single &#8216;*&#8217; wildcard character in the filename. Examples
-of valid dataPaths include &#8216;a/local/relative/directory/<a href="#id5"><span class="problematic" id="id6">*</span></a>.stack&#8221;, &#8220;s3n:///my-s3-bucket/data/mydatafile.tif&#8221;,
-&#8220;/mnt/my/absolute/data/directory/&#8221;, or &#8220;file:///mnt/another/data/directory/&#8221;.</p>
+<div><p>Path to data files or directory, as either a local filesystem path or a URI.
+May include a single &#8216;*&#8217; wildcard in the filename. Examples of valid dataPaths include
+&#8216;local/directory/<a href="#id5"><span class="problematic" id="id6">*</span></a>.stack&#8221;, &#8220;s3n:///my-s3-bucket/data/&#8221;, or &#8220;file:///mnt/another/directory/&#8221;.</p>
 </div></blockquote>
-<p><strong>dims: tuple of positive int, optional (but required if inputFormat is &#8216;stack&#8217;)</strong></p>
+<p><strong>dims: tuple of positive int, optional (required if format is &#8216;stack&#8217;)</strong></p>
 <blockquote>
-<div><p>Dimensions of input image data, for instance (1024, 1024, 48). Binary stack data will be interpreted as
-coming from a multidimensional array of the specified dimensions.</p>
-<p>The first dimension of the passed dims tuple should be the one that is changing most rapidly
-on disk. So for instance given dims of (x, y, z), the coordinates of the data in a binary stack file
-should be ordered as [(x0, y0, z0), (x1, y0, z0), ..., (xN, y0, z0), (x0, y1, z0), (x1, y1, z0), ...,
-(xN, yM, z0), (x0, y0, z1), ..., (xN, yM, zP)]. This is the opposite convention from that used by numpy,
-which by default has the fastest-changing dimension listed last (column-major convention). Thus, if loading
-a numpy array <cite>ary</cite>, where <cite>ary.shape == (z, y, x)</cite>, written to disk by <cite>ary.tofile(&#8220;myarray.stack&#8221;)</cite>, the
-corresponding dims parameter should be (x, y, z).
-If inputFormat is &#8216;tif&#8217;, the dims parameter (if any) will be ignored; data dimensions will instead
-be read out from the tif file headers.</p>
+<div><p>Image dimensions. Binary stack data will be interpreted as a multidimensional array
+with the given dimensions, and should be stored in row-major order (Fortran or Matlab convention),
+where the first dimension changes most rapidly. For &#8216;png&#8217; or &#8216;tif&#8217; data dimensions
+will be read from the image file headers.</p>
 </div></blockquote>
-<p><strong>inputFormat: {&#8216;stack&#8217;, &#8216;tif&#8217;}. optional, default &#8216;stack&#8217;</strong></p>
+<p><strong>format: str, optional, default = &#8216;stack&#8217;</strong></p>
 <blockquote>
-<div><p>Expected format of the input data. &#8216;stack&#8217; indicates flat files of raw binary data, while &#8216;tif&#8217; indicates
-greyscale / luminance TIF images. Each page of a multipage tif file will be interpreted as a separate
-z-plane. For both stacks and tif stacks, separate files are interpreted as distinct time points, with
-ordering given by lexicographic sorting of file names.</p>
+<div><p>Expected format of the input data: &#8216;stack&#8217;, &#8216;png&#8217;, or &#8216;tif&#8217;. &#8216;stack&#8217; indicates flat binary stacks.
+&#8216;png&#8217; or &#8216;tif&#8217; indicate image formats. Page of a multipage tif file will be extend along
+the third dimension. Separate files interpreted as distinct records, with ordering
+given by lexicographic sorting of file names.</p>
 </div></blockquote>
-<p><strong>ext: string, optional, default None</strong></p>
+<p><strong>ext: string, optional, default = None</strong></p>
 <blockquote>
-<div><p>Extension required on data files to be loaded. By default will be &#8220;stack&#8221; if inputFormat==&#8221;stack&#8221;, &#8220;tif&#8221; for
-inputFormat==&#8217;tif&#8217;.</p>
+<div><p>File extension, default will be &#8220;bin&#8221; if format==&#8221;stack&#8221;, &#8220;tif&#8221; for format==&#8217;tif&#8217;,
+and &#8216;png&#8217; for format==&#8221;png&#8221;.</p>
 </div></blockquote>
 <p><strong>dtype: string or numpy dtype. optional, default &#8216;int16&#8217;</strong></p>
 <blockquote>
-<div><p>Data type of the image files to be loaded, specified as a numpy &#8220;dtype&#8221; string. If inputFormat is
-&#8216;tif&#8217;, the dtype parameter (if any) will be ignored; data type will instead be read out from the
-tif headers.</p>
+<div><p>Data type of the image files to be loaded, specified as a numpy &#8220;dtype&#8221; string.
+Ignored for &#8216;tif&#8217; or &#8216;png&#8217; (data will be inferred from image formats).</p>
 </div></blockquote>
-<p><strong>blockSize: string formatted as e.g. &#8220;64M&#8221;, &#8220;512k&#8221;, &#8220;2G&#8221;, or positive int. optional, default &#8220;150M&#8221;</strong></p>
+<p><strong>blockSize: string or positive int, optional, default &#8220;150M&#8221;</strong></p>
 <blockquote>
-<div><p>Requested size of individual output files in bytes (or kilobytes, megabytes, gigabytes). If shuffle=True,
-blockSize can also be a tuple of int specifying either the number of pixels or of splits per dimension to
-apply to the loaded images, or an instance of BlockingStrategy. Whether a tuple of int is interpreted as
-pixels or as splits depends on the value of the blockSizeUnits parameter. blockSize also indirectly
-controls the number of Spark partitions to be used, with one partition used per block created.</p>
+<div><p>Requested size of blocks (e.g &#8220;64M&#8221;, &#8220;512k&#8221;, &#8220;2G&#8221;). If shuffle=True, can also be a
+tuple of int specifying the number of pixels or splits per dimension. Indirectly
+controls the number of Spark partitions, with one partition per block.</p>
 </div></blockquote>
-<p><strong>blockSizeUnits: string, either &#8220;pixels&#8221; or &#8220;splits&#8221; (or unique prefix of each, such as &#8220;s&#8221;), default &#8220;pixels&#8221;</strong></p>
+<p><strong>blockSizeUnits: string, either &#8220;pixels&#8221; or &#8220;splits&#8221;, default &#8220;pixels&#8221;</strong></p>
 <blockquote>
-<div><p>Specifies units to be used in interpreting a tuple passed as blockSizeSpec when shuffle=True. If a string
-or a BlockingStrategy instance is passed as blockSizeSpec, or if shuffle=False, this parameter has no
-effect.</p>
+<div><p>Units for interpreting a tuple passed as blockSize when shuffle=True.</p>
 </div></blockquote>
-<p><strong>startIdx: nonnegative int, optional</strong></p>
+<p><strong>startIdx: nonnegative int, optional, default = None</strong></p>
 <blockquote>
-<div><p>startIdx and stopIdx are convenience parameters to allow only a subset of input files to be read in. These
-parameters give the starting index (inclusive) and final index (exclusive) of the data files to be used
-after lexicographically sorting all input data files matching the dataPath argument. For example,
-startIdx=None (the default) and stopIdx=10 will cause only the first 10 data files in dataPath to be read
-in; startIdx=2 and stopIdx=3 will cause only the third file (zero-based index of 2) to be read in. startIdx
-and stopIdx use the python slice indexing convention (zero-based indexing with an exclusive final position).</p>
+<div><p>Convenience parameters to read only a subset of input files. Uses python slice conventions
+(zero-based indexing with exclusive final position). These parameters give the starting
+and final index after lexicographic sorting.</p>
 </div></blockquote>
-<p><strong>stopIdx: nonnegative int, optional</strong></p>
+<p><strong>stopIdx: nonnegative int, optional, default = None</strong></p>
 <blockquote>
 <div><p>See startIdx.</p>
 </div></blockquote>
-<p><strong>shuffle: boolean, optional, default True</strong></p>
+<p><strong>shuffle: boolean, optional, default = True</strong></p>
 <blockquote>
-<div><p>Controls whether the conversion from Images to Series formats will make use of a Spark shuffle-based method.</p>
+<div><p>Controls whether the conversion from Images to Series formats will use of a Spark shuffle-based method.</p>
 </div></blockquote>
-<p><strong>recursive: boolean, default False</strong></p>
+<p><strong>recursive: boolean, optional, default = False</strong></p>
 <blockquote>
-<div><p>If true, will recursively descend directories rooted at dataPath, loading all files in the tree that
-have an appropriate extension. Recursive loading is currently only implemented for local filesystems
-(not s3), and only with shuffle=True.</p>
+<div><p>If true, will recursively descend directories rooted at dataPath, loading all files
+in the tree with an appropriate extension.</p>
 </div></blockquote>
-<p><strong>nplanes: positive integer, default None</strong></p>
+<p><strong>nplanes: positive integer, optional, default = None</strong></p>
 <blockquote>
-<div><p>If passed, will cause a single image file to be subdivided into multiple records. Every
-<cite>nplanes</cite> z-planes (or multipage tif pages) in the file will be taken as a new record, with the
-first nplane planes of the first file being record 0, the second nplane planes being record 1, etc,
-until the first file is exhausted and record ordering continues with the first nplane planes of the
-second file, and so on. With nplanes=None (the default), a single file will be considered as
-representing a single record. Keys are calculated assuming that all input files contain the same
-number of records; if the number of records per file is not the same across all files,
-then <cite>renumber</cite> should be set to True to ensure consistent keys. nplanes is only supported for
-shuffle=True (the default).</p>
+<div><p>Subdivide individual image files. Every <cite>nplanes</cite> from each file will be considered a new record.
+With nplanes=None (the default), a single file will be considered as representing a single record.
+If the number of records per file is not the same across all files, then <cite>renumber</cite> should be set
+to True to ensure consistent keys.</p>
 </div></blockquote>
-<p><strong>npartitions: positive int, optional</strong></p>
+<p><strong>npartitions: positive int, optional, default = None</strong></p>
 <blockquote>
-<div><p>If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
-partition per image file. Only applies when shuffle=True.</p>
+<div><p>Specify number of partitions for the RDD, if unspecified will use 1 partition per image.</p>
 </div></blockquote>
-<p><strong>renumber: boolean, optional, default False</strong></p>
+<p><strong>renumber: boolean, optional, default = False</strong></p>
 <blockquote>
-<div><p>If renumber evaluates to True, then the keys for each record will be explicitly recalculated after
-all images are loaded. This should only be necessary at load time when different files contain
-different number of records. renumber is only supported for shuffle=True (the default). See
-Images.renumber().</p>
+<div><p>Recalculate keys for records after images are loading. Only necessary if different files contain
+different number of records (e.g. due to specifying nplanes). See Images.renumber().</p>
 </div></blockquote>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">data: thunder.rdds.Series</p>
 <blockquote class="last">
-<div><p>A newly-created Series object, wrapping an RDD of timeseries data generated from the images in dataPath.
-This RDD will have as keys an n-tuple of int, with n given by the dimensionality of the original images. The
-keys will be the zero-based spatial index of the timeseries data in the RDD value. The value will be
-a numpy array of length equal to the number of image files loaded. Each loaded image file will contribute
-one point to this value array, with ordering as implied by the lexicographic ordering of image file names.</p>
+<div><p>A Series object, wrapping an RDD, with (n-tuples of ints) : (numpy array) pairs.
+Keys will be n-tuples of int, with n given by dimensionality of the images, and correspond
+to indexes into the image arrays. Value will have length equal to the number of image files.
+With each image contributing one point to this value array, with ordering given by
+the lexicographic ordering of image file names.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.ThunderContext.loadImagesOCP">
+<tt class="descname">loadImagesOCP</tt><big>(</big><em>bucketName</em>, <em>resolution</em>, <em>server='ocp.me'</em>, <em>startIdx=None</em>, <em>stopIdx=None</em>, <em>minBound=None</em>, <em>maxBound=None</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadImagesOCP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load Images from OCP (Open Connectome Project).</p>
+<p>The OCP is a web service for access to EM brain images and other neural image data.
+The web-service can be accessed at <a class="reference external" href="http://www.openconnectomeproject.org/">http://www.openconnectomeproject.org/</a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>bucketName: string</strong></p>
+<blockquote>
+<div><p>Token name for the project in OCP. This name should exist on the server from which data is loaded.</p>
+</div></blockquote>
+<p><strong>resolution: nonnegative int</strong></p>
+<blockquote>
+<div><p>Resolution of the data in OCP</p>
+</div></blockquote>
+<p><strong>server: string, optional, default = &#8216;ocp.me&#8217;</strong></p>
+<blockquote>
+<div><p>Name of the OCP server with the specified token.</p>
+</div></blockquote>
+<p><strong>startIdx: nonnegative int, optional, default = None</strong></p>
+<blockquote>
+<div><p>Convenience parameters to read only a subset of input files. Uses python slice conventions
+(zero-based indexing with exclusive final position).</p>
+</div></blockquote>
+<p><strong>stopIdx: nonnegative int, optional</strong></p>
+<blockquote>
+<div><p>See startIdx.</p>
+</div></blockquote>
+<p><strong>minBound, maxBound: tuple of nonnegative int, optional, default = None</strong></p>
+<blockquote>
+<div><p>X,Y,Z bounds of the data to fetch from OCP. minBound contains the (xMin,yMin,zMin) while
+maxBound contains (xMax,yMax,zMax).</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">data: thunder.rdds.Images</p>
+<blockquote class="last">
+<div><p>An Images object, wrapping an RDD of with (int) : (numpy array) pairs</p>
 </div></blockquote>
 </td>
 </tr>
@@ -695,90 +669,65 @@ a &#8220;name&#8221; field and a &#8220;value&#8221; field.</p>
 
 <dl class="method">
 <dt id="thunder.ThunderContext.loadSeries">
-<tt class="descname">loadSeries</tt><big>(</big><em>dataPath</em>, <em>nkeys=None</em>, <em>nvalues=None</em>, <em>inputFormat='binary'</em>, <em>minPartitions=None</em>, <em>confFilename='conf.json'</em>, <em>keyType=None</em>, <em>valueType=None</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadSeries" title="Permalink to this definition">¶</a></dt>
-<dd><p>Loads a Series object from data stored as text or binary files.</p>
-<p>Supports single files or multiple files stored on a local file system, a networked file system (mounted
-and available on all cluster nodes), Amazon S3, or HDFS.</p>
+<tt class="descname">loadSeries</tt><big>(</big><em>dataPath</em>, <em>nkeys=None</em>, <em>nvalues=None</em>, <em>format='binary'</em>, <em>minPartitions=None</em>, <em>confFilename='conf.json'</em>, <em>keyType=None</em>, <em>valueType=None</em>, <em>keyPath=None</em>, <em>varName=None</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadSeries" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads a Series object from data stored as binary, text, npy, or mat.</p>
+<p>For binary and text, supports single files or multiple files stored on a local file system,
+a networked file system (mounted and available on all cluster nodes), Amazon S3, or HDFS.
+For local formats (npy and mat) only local file systems currently supported.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>dataPath: string</strong></p>
 <blockquote>
-<div><p>Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-including scheme. A dataPath argument may include a single &#8216;*&#8217; wildcard character in the filename. Examples
-of valid dataPaths include &#8216;a/local/relative/directory/<a href="#id7"><span class="problematic" id="id8">*</span></a>.stack&#8221;, &#8220;s3n:///my-s3-bucket/data/mydatafile.tif&#8221;,
-&#8220;/mnt/my/absolute/data/directory/&#8221;, or &#8220;file:///mnt/another/data/directory/&#8221;.</p>
+<div><p>Path to data files or directory, as either a local filesystem path or a URI.
+May include a single &#8216;*&#8217; wildcard in the filename. Examples of valid dataPaths include
+&#8216;local/directory/<a href="#id7"><span class="problematic" id="id8">*</span></a>.stack&#8221;, &#8220;s3n:///my-s3-bucket/data/&#8221;, or &#8220;file:///mnt/another/directory/&#8221;.</p>
 </div></blockquote>
-<p><strong>nkeys: int, optional (but required if `inputFormat` is &#8216;text&#8217;)</strong></p>
+<p><strong>nkeys: int, optional (required if `format` is &#8216;text&#8217;), default = None</strong></p>
 <blockquote>
-<div><p>dimensionality of data keys. (For instance, (x,y,z) keyed data for 3-dimensional image timeseries data.)
-For text data, number of keys must be specified in this parameter; for binary data, number of keys must be
-specified either in this parameter or in a configuration file named by the &#8216;conffile&#8217; argument if this
-parameter is not set.</p>
+<div><p>Number of keys per record (e.g. 3 for (x, y, z) coordinate keys). Must be specified for
+text data; can be specified here or in a configuration file for binary data.</p>
 </div></blockquote>
-<p><strong>nvalues: int, optional (but required if `inputFormat` is &#8216;text&#8217;)</strong></p>
+<p><strong>nvalues: int, optional (required if `format` is &#8216;text&#8217;)</strong></p>
 <blockquote>
-<div><p>Number of values expected to be read. For binary data, nvalues must be specified either in this parameter
-or in a configuration file named by the &#8216;conffile&#8217; argument if this parameter is not set.</p>
+<div><p>Number of values per record. Must be specified here or in a configuration file for binary data.</p>
 </div></blockquote>
-<p><strong>inputFormat: {&#8216;text&#8217;, &#8216;binary&#8217;}. optional, default &#8216;binary&#8217;</strong></p>
+<p><strong>format: {&#8216;text&#8217;, &#8216;binary&#8217;, &#8216;npy&#8217;, &#8216;mat&#8217;}. optional, default = &#8216;binary&#8217;</strong></p>
 <blockquote>
 <div><p>Format of data to be read.</p>
 </div></blockquote>
-<p><strong>minPartitions: int, optional</strong></p>
+<p><strong>minPartitions: int, optional, default = SparkContext.minParallelism</strong></p>
 <blockquote>
-<div><p>Explicitly specify minimum number of Spark partitions to be generated from this data. Used only for
-text data. Default is to use minParallelism attribute of Spark context object.</p>
+<div><p>Minimum number of Spark partitions to use, only for text.</p>
 </div></blockquote>
 <p><strong>confFilename: string, optional, default &#8216;conf.json&#8217;</strong></p>
 <blockquote>
-<div><p>Path to JSON file with configuration options including &#8216;nkeys&#8217;, &#8216;nvalues&#8217;, &#8216;keytype&#8217;, and &#8216;valuetype&#8217;.
-If a file is not found at the given path, then the base directory given in &#8216;datafile&#8217;
-will also be checked. Parameters <cite>nkeys</cite> or <cite>nvalues</cite> that are specified as explicit arguments to this
-method will take priority over those found in conffile if both are present.</p>
+<div><p>Path to JSON file with configuration options including &#8216;nkeys&#8217;, &#8216;nvalues&#8217;,
+&#8216;keyType&#8217;, and &#8216;valueType&#8217;. If a file is not found at the given path, then the base
+directory in &#8216;dataPath&#8217; will be checked. Parameters will override the conf file.</p>
 </div></blockquote>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">data: thunder.rdds.Series</p>
-<blockquote class="last">
-<div><p>A newly-created Series object, wrapping an RDD of series data. This RDD will have as keys an n-tuple
-of int, with n given by <cite>nkeys</cite> or the configuration passed in <cite>conffile</cite>. RDD values will be a numpy
-array of length <cite>nvalues</cite> (or as specified in the passed configuration file).</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="thunder.ThunderContext.loadSeriesLocal">
-<tt class="descname">loadSeriesLocal</tt><big>(</big><em>dataFilePath</em>, <em>inputFormat='npy'</em>, <em>minPartitions=None</em>, <em>keyFilePath=None</em>, <em>varName=None</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadSeriesLocal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Load a Series object from a local file (either npy or MAT format).</p>
-<p>File should contain a 1d or 2d matrix, where each row
-of the input matrix is a record.</p>
-<p>Keys can be provided in a separate file (with variable name &#8216;keys&#8217;, for MAT files).
-If not provided, linear indices will be used for keys.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>dataFilePath: str</strong></p>
+<p><strong>keyType: string or numpy dtype, optional, default = None</strong></p>
 <blockquote>
-<div><p>File to import</p>
+<div><p>Numerical type of keys, will override conf file.</p>
+</div></blockquote>
+<p><strong>valueType: string or numpy dtype, optional, default = None</strong></p>
+<blockquote>
+<div><p>Numerical type of values, will override conf file.</p>
+</div></blockquote>
+<p><strong>keyPath: string, optional, default = None</strong></p>
+<blockquote>
+<div><p>Path to file with keys when loading from npy or mat.</p>
 </div></blockquote>
 <p><strong>varName</strong> : str, optional, default = None</p>
 <blockquote>
 <div><p>Variable name to load (for MAT files only)</p>
 </div></blockquote>
-<p><strong>keyFilePath</strong> : str, optional, default = None</p>
-<blockquote>
-<div><p>File containing the keys for each record as another 1d or 2d array</p>
-</div></blockquote>
-<p><strong>minPartitions</strong> : Int, optional, default = 1</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">data: thunder.rdds.Series</p>
 <blockquote class="last">
-<div><p>Number of partitions for RDD</p>
+<div><p>A Series object, wrapping an RDD, with (n-tuples of ints) : (numpy array) pairs</p>
 </div></blockquote>
 </td>
 </tr>
@@ -816,13 +765,9 @@ See thunder.utils.datasets for detailed options.</p>
 <dt id="thunder.ThunderContext.setAWSCredentials">
 <tt class="descname">setAWSCredentials</tt><big>(</big><em>awsAccessKeyId</em>, <em>awsSecretAccessKey</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.setAWSCredentials" title="Permalink to this definition">¶</a></dt>
 <dd><p>Manually set AWS access credentials to be used by Thunder.</p>
-<p>This method is provided primarily for hosted environments that do not provide
-filesystem access (e.g. Databricks Cloud). Typically AWS credentials can be set
-and read from core-site.xml (for Hadoop input format readers, such as Series
-binary files), ~/.boto or other boto credential file locations, or the environment
-variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY. These credentials should
-be configured automatically in clusters launched by the thunder-ec2 script, and
-so this method should not have to be called.</p>
+<p>Provided for hosted cloud environments without filesystem access.
+If launching a cluster using the thunder-ec2 script, credentials will be configured
+automatically (inside core-site.xml and ~/.boto), so this method should not need to be called.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
