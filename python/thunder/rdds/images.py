@@ -72,10 +72,6 @@ class Images(Data):
         Returns
         -------
         Blocks instance
-
-        See also
-        --------
-        thunder.rdds.imgblocks.strategy.PaddedBlockingStrategy
         """
         from thunder.rdds.imgblocks.strategy import BlockingStrategy, SimpleBlockingStrategy, PaddedBlockingStrategy
 
