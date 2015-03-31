@@ -21,6 +21,7 @@ Data types
 
    tutorials/images
    tutorials/series
+   tutorials/multi_index
 
 Analayses
 ---------

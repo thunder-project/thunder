@@ -94,6 +94,7 @@
    tutorials/input_formats
    tutorials/images
    tutorials/series
+   tutorials/multi_index
    tutorials/clustering
    tutorials/factorization
    tutorials/regression
