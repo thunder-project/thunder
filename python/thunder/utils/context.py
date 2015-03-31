@@ -35,7 +35,7 @@ class ThunderContext():
         from pyspark import SparkContext
         return ThunderContext(SparkContext(*args, **kwargs))
 
-    def loadSeries(self, dataPath, nkeys=None, nvalues=None, format='binary', minPartitions=None,
+    def loadSeries(self, dataPath, nkeys=None, nvalues=None, inputFormat='binary', minPartitions=None,
                    confFilename='conf.json', keyType=None, valueType=None, keyPath=None, varName=None):
         """
         Loads a Series object from data stored as binary, text, npy, or mat.
@@ -86,19 +86,19 @@ class ThunderContext():
         data: thunder.rdds.Series
             A Series object, wrapping an RDD, with (n-tuples of ints) : (numpy array) pairs
         """
-        checkParams(format, ['text', 'binary', 'npy', 'mat'])
+        checkParams(inputFormat, ['text', 'binary', 'npy', 'mat'])
 
         from thunder.rdds.fileio.seriesloader import SeriesLoader
         loader = SeriesLoader(self._sc, minPartitions=minPartitions)
 
-        if format.lower() == 'binary':
+        if inputFormat.lower() == 'binary':
             data = loader.fromBinary(dataPath, confFilename=confFilename, nkeys=nkeys, nvalues=nvalues,
                                      keyType=keyType, valueType=valueType)
-        elif format.lower() == 'text':
+        elif inputFormat.lower() == 'text':
             if nkeys is None:
                 raise Exception('Must provide number of keys per record for loading from text')
             data = loader.fromText(dataPath, nkeys=nkeys)
-        elif format.lower() == 'npy':
+        elif inputFormat.lower() == 'npy':
             data = loader.fromNpyLocal(dataPath, keyPath)
         else:
             if varName is None:
