@@ -29,4 +29,5 @@ Analayses
 
    tutorials/clustering
    tutorials/factorization
+   tutorials/regression
 
