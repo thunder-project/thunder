@@ -661,7 +661,7 @@ class ThunderContext():
         elif dataset == "mouse-series":
             return self.loadSeries(tmpdir).astype('float')
         elif dataset == "mouse-images":
-            return self.loadImages(tmpdir, ext="bin", npartitions=npartitions)
+            return self.loadImages(tmpdir, npartitions=npartitions)
         elif dataset == "mouse-params":
             return self.loadParams(os.path.join(tmpdir, 'covariates.json'))
 
@@ -814,7 +814,7 @@ class ThunderContext():
 
 
 DEFAULT_EXTENSIONS = {
-    "stack": "stack",
+    "stack": "bin",
     "tif": "tif",
     "tif-stack": "tif",
     "png": "png",
