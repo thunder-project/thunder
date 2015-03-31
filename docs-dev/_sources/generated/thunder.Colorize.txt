@@ -10,9 +10,9 @@
    .. autosummary::
    
       ~Colorize.__init__
-      ~Colorize.get
-      ~Colorize.images
+      ~Colorize.blend
       ~Colorize.optimize
-      ~Colorize.points
+      ~Colorize.show
+      ~Colorize.transform
    
 

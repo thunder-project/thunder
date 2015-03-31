@@ -1,10 +1,10 @@
 
-.. \_multi-indexing\_tutorial:
+.. \_multi\_indexing\_tutorial:
 
 .. currentmodule:: thunder
 
-Mulit-Index manipulations
-=========================
+Multi-indexing
+==============
 
 When dealing with series data, it is often useful to index each element
 of the series with multiple labels and then be able to select and
