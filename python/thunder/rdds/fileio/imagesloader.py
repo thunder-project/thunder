@@ -150,39 +150,37 @@ class ImagesLoader(object):
         newDims = tuple(list(dims[:-1]) + [nplanes]) if nplanes else dims
         return Images(readerRdd.flatMap(toArray), nrecords=nrecords, dims=newDims, dtype=dtype)
 
-    def fromOCP (self, bucketName, resolution, serverName='ocp.me', startIdx=None, stopIdx=None, minBound=None,
-                 maxBound=None):
-        """Sets up a new Image object with data to read from OCP
+    def fromOCP(self, bucketName, resolution, server='ocp.me', startIdx=None, stopIdx=None,
+                minBound=None, maxBound=None):
+        """
+        Creates up a new Image object with data read from OCP.
       
         Parameters
         ----------
-        
         bucketName: string
-            Name of the token/bucket in OCP. You can use the token name you created in OCP here. You can also access
-            publicly available data on OCP at this URL "http://ocp.me/ocp/ca/public_tokens/"
+            Name of the token/bucket in OCP. You can use the token name you created in OCP here.
+            You can also access publicly available data on OCP at this URL "http://ocp.me/ocp/ca/public_tokens/"
         
         resolution: nonnegative int
             Resolution of the data in OCP
 
-        serverName: string. optional.
-            Name of the server in OCP which has the corresponding token. By default this is always ocp.me but if you
-            have an alternate server, you can set it here.
+        server: string. optional.
+            Name of the server in OCP which has the corresponding token.
 
         startIdx, stopIdx: nonnegative int. optional.
             Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
-            `datapath` and `ext`. Interpreted according to python slice indexing conventions. In OCP this is the
-            starttime and endtime of your data.
+            `datapath` and `ext`. Interpreted according to python slice indexing conventions.
 
         minBound, maxBound: tuple of nonnegative int. optional.
-            X,Y,Z bounds of the data you want to fetch from OCP. minBound contains the (xMin,yMin,zMin) while maxBound
-            contains (xMax,yMax,zMax)
+            X,Y,Z bounds of the data you want to fetch from OCP. minBound contains
+            the (xMin,yMin,zMin) while maxBound contains (xMax,yMax,zMax)
         """
 
         # Given a data-path/bucket Query JSON
         # Given bounds get a list of URI's
         import urllib2
         urlList = []
-        url = 'http://{}/ocp/ca/{}/info/'.format(serverName, bucketName)
+        url = 'http://{}/ocp/ca/{}/info/'.format(server, bucketName)
 
         try:
             f = urllib2.urlopen(url)
@@ -221,11 +219,9 @@ class ImagesLoader(object):
                                                                                        zimageStop)))
 
         for t in range(timageStart, timageStop, 1):
-            urlList.append("http://{}/ocp/ca/{}/npz/{},{}/{}/{},{}/{},{}/{},{}/".format(serverName, bucketName, t,
-                                                                                        t + 1, resolution, minBound[0],
-                                                                                        maxBound[0], minBound[1],
-                                                                                        maxBound[1], minBound[2],
-                                                                                        maxBound[2]))
+            urlList.append("http://{}/ocp/ca/{}/npz/{},{}/{}/{},{}/{},{}/{},{}/".
+                           format(server, bucketName, t, t + 1, resolution, minBound[0],
+                                  maxBound[0], minBound[1], maxBound[1], minBound[2], maxBound[2]))
 
         def read(url):
             """Fetch URL from the server"""
