@@ -46,7 +46,7 @@ class Colorize(object):
         self.vmax = vmax
 
     @staticmethod
-    def show(img, cmap='gray', bar=False, nans=True, clim=None):
+    def image(img, cmap='gray', bar=False, nans=True, clim=None):
         """
         Streamlined display of images using matplotlib.
 
