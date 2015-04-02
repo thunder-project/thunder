@@ -74,33 +74,27 @@ class TestImagesGetters(PySparkTestCase):
 
         vals = self.images[0:1]
         assert_equals(1, len(vals))
-        assert_equals(0, vals[0][0])
-        assert_true(array_equal(self.ary1, vals[0][1]))
+        assert_true(array_equal(self.ary1, vals[0]))
 
         vals = self.images[:]
         assert_equals(2, len(vals))
-        assert_equals(0, vals[0][0])
-        assert_equals(1, vals[1][0])
-        assert_true(array_equal(self.ary1, vals[0][1]))
-        assert_true(array_equal(self.ary2, vals[1][1]))
+        assert_true(array_equal(self.ary1, vals[0]))
+        assert_true(array_equal(self.ary2, vals[1]))
 
         vals = self.images[1:4]
         assert_equals(1, len(vals))
-        assert_equals(1, vals[0][0])
-        assert_true(array_equal(self.ary2, vals[0][1]))
+        assert_true(array_equal(self.ary2, vals[0]))
 
         vals = self.images[1:]
         assert_equals(1, len(vals))
-        assert_equals(1, vals[0][0])
-        assert_true(array_equal(self.ary2, vals[0][1]))
+        assert_true(array_equal(self.ary2, vals[0]))
 
         vals = self.images[:1]
         assert_equals(1, len(vals))
-        assert_equals(0, vals[0][0])
-        assert_true(array_equal(self.ary1, vals[0][1]))
+        assert_true(array_equal(self.ary1, vals[0]))
 
         assert_raises(KeyError, self.images.__getitem__, 2)
-        assert_raises(KeyError, self.images.__getitem__, slice(2,3))
+        assert_raises(KeyError, self.images.__getitem__, slice(2, 3))
 
 
 class TestSeriesGetters(PySparkTestCase):
@@ -207,47 +201,36 @@ class TestSeriesGetters(PySparkTestCase):
         vals = self.series[0, 1]
         assert_true(array_equal(self.dataLocal[1][1], vals))
 
-        # if slices are passed, calls `getRange`, returns keys and values
+        # if slices are passed, calls `getRange`, returns values
         vals = self.series[0:1, 1:2]
         assert_equals(1, len(vals))
-        assert_equals(self.dataLocal[1][0], vals[0][0])
-        assert_true(array_equal(self.dataLocal[1][1], vals[0][1]))
+        assert_true(array_equal(self.dataLocal[1][1], vals[0]))
 
         # if slice extends out of bounds, return only the elements that are in bounds
         vals = self.series[:4, :1]
         assert_equals(2, len(vals))
-        assert_equals(self.dataLocal[0][0], vals[0][0])
-        assert_equals(self.dataLocal[2][0], vals[1][0])
-        assert_true(array_equal(self.dataLocal[0][1], vals[0][1]))
-        assert_true(array_equal(self.dataLocal[2][1], vals[1][1]))
+        assert_true(array_equal(self.dataLocal[0][1], vals[0]))
+        assert_true(array_equal(self.dataLocal[2][1], vals[1]))
 
         # empty slice works
         vals = self.series[:, 1:2]
         assert_equals(2, len(vals))
-        assert_equals(self.dataLocal[1][0], vals[0][0])
-        assert_equals(self.dataLocal[3][0], vals[1][0])
-        assert_true(array_equal(self.dataLocal[1][1], vals[0][1]))
-        assert_true(array_equal(self.dataLocal[3][1], vals[1][1]))
+        assert_true(array_equal(self.dataLocal[1][1], vals[0]))
+        assert_true(array_equal(self.dataLocal[3][1], vals[1]))
 
         # multiple empty slices work
         vals = self.series[:, :]
         assert_equals(4, len(vals))
-        assert_equals(self.dataLocal[0][0], vals[0][0])
-        assert_equals(self.dataLocal[1][0], vals[1][0])
-        assert_equals(self.dataLocal[2][0], vals[2][0])
-        assert_equals(self.dataLocal[3][0], vals[3][0])
-        assert_true(array_equal(self.dataLocal[0][1], vals[0][1]))
-        assert_true(array_equal(self.dataLocal[1][1], vals[1][1]))
-        assert_true(array_equal(self.dataLocal[2][1], vals[2][1]))
-        assert_true(array_equal(self.dataLocal[3][1], vals[3][1]))
+        assert_true(array_equal(self.dataLocal[0][1], vals[0]))
+        assert_true(array_equal(self.dataLocal[1][1], vals[1]))
+        assert_true(array_equal(self.dataLocal[2][1], vals[2]))
+        assert_true(array_equal(self.dataLocal[3][1], vals[3]))
 
         # mixing slices and individual indicies works:
         vals = self.series[0, :]
         assert_equals(2, len(vals))
-        assert_equals(self.dataLocal[0][0], vals[0][0])
-        assert_equals(self.dataLocal[1][0], vals[1][0])
-        assert_true(array_equal(self.dataLocal[0][1], vals[0][1]))
-        assert_true(array_equal(self.dataLocal[1][1], vals[1][1]))
+        assert_true(array_equal(self.dataLocal[0][1], vals[0]))
+        assert_true(array_equal(self.dataLocal[1][1], vals[1]))
 
         # trying to getitem a key that doesn't exist throws a KeyError
         assert_raises(KeyError, self.series.__getitem__, (25, 17))
