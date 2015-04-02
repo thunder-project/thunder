@@ -25,4 +25,4 @@ from thunder.viz.colorize import Colorize
 from thunder.utils.datasets import DataSets
 from thunder.utils.context import ThunderContext
 
-__version__ = "0.5.0dev"
+__version__ = "0.5.0.dev"
