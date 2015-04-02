@@ -190,7 +190,7 @@ scaled by its maximum and minimum values.</p>
 <td></td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.Colorize.blend" title="thunder.Colorize.blend"><tt class="xref py py-obj docutils literal"><span class="pre">blend</span></tt></a>(img,&nbsp;mask[,&nbsp;op])</td>
-<td>Blend two images together using the specified operator</td>
+<td>Blend two images together using the specified operator.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.Colorize.image" title="thunder.Colorize.image"><tt class="xref py py-obj docutils literal"><span class="pre">image</span></tt></a>(img[,&nbsp;cmap,&nbsp;bar,&nbsp;nans,&nbsp;clim])</td>
 <td>Streamlined display of images using matplotlib.</td>
@@ -206,7 +206,27 @@ scaled by its maximum and minimum values.</p>
 <dl class="staticmethod">
 <dt id="thunder.Colorize.blend">
 <em class="property">static </em><tt class="descname">blend</tt><big>(</big><em>img</em>, <em>mask</em>, <em>op=&lt;ufunc 'add'&gt;</em><big>)</big><a class="headerlink" href="#thunder.Colorize.blend" title="Permalink to this definition">¶</a></dt>
-<dd><p>Blend two images together using the specified operator</p>
+<dd><p>Blend two images together using the specified operator.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>img</strong> : array-like</p>
+<blockquote>
+<div><p>First image to blend</p>
+</div></blockquote>
+<p><strong>mask</strong> : array-like</p>
+<blockquote>
+<div><p>Second image to blend</p>
+</div></blockquote>
+<p><strong>op</strong> : func, optional, default = add</p>
+<blockquote class="last">
+<div><p>Operator to use for combining images</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="staticmethod">
