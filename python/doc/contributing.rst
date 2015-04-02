@@ -46,7 +46,7 @@ You should write a test for anything new that you develop, as well as make sure 
 
 Packaging a release
 ~~~~~~~~~~~~~~~~~~~
-(NOTE: this is primarily a reference for core Thunder committers). When we want to create a new major Thunder release, first create a branch with the major version number (e.g. "branch-0.6"). Change the version number in `python/thunder/__init__.py` by setting:
+(NOTE: this is primarily a reference for core Thunder committers). When we want to create a new major Thunder release, first create a branch with the major version number (e.g. "branch-0.6"). Change the version number in ``python/thunder/__init__.py`` by setting:
 
 .. code-block:: python
 
@@ -58,13 +58,13 @@ Also change the version in the `scala/build.sbt` file:
 
 	version := "0.6.0"
 
-Build the Scala jar by calling:
+Build the Scala jar by calling from within the ``scala`` folder:
 
 .. code-block:: bash
 
-	sbt package` 
+	sbt package
 
-from within the `scala` folder, and copy the jar it creates into `python/thunder/lib`. Finally, build and copy the Python egg file by calling:
+and copy the jar it creates into ``python/thunder/lib``. Build and copy the Python egg file by calling:
 
 .. code-block:: bash
 

@@ -9,7 +9,7 @@ setup(
     description='Large-scale neural data analysis in Spark',
     author='The Freeman Lab',
     author_email='the.freeman.lab@gmail.com',
-    url='https://github.com/freeman-lab/thunder',
+    url='https://github.com/thunder-project/thunder',
     packages=['thunder',
               'thunder.clustering',
               'thunder.decoding',
