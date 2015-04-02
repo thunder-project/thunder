@@ -9,4 +9,5 @@ notebooks:
 	python tools/nb_to_doc.py clustering; \
 	python tools/nb_to_doc.py factorization; \
 	python tools/nb_to_doc.py regression; \
-	python tools/nb_to_doc.py multi_index;
+	python tools/nb_to_doc.py multi_index; \
+	python tools/nb_to_doc.py image_registration;

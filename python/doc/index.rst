@@ -95,6 +95,7 @@
    tutorials/images
    tutorials/series
    tutorials/multi_index
+   tutorials/image_registration
    tutorials/clustering
    tutorials/factorization
    tutorials/regression
