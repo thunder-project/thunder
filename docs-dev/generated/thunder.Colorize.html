@@ -89,6 +89,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/images.html">Images</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/series.html">Series</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/multi_index.html">Multi-indexing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/image_registration.html">Image registration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/clustering.html">Clustering</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/factorization.html">Factorization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/regression.html">Regression</a></li>
@@ -188,20 +189,26 @@ scaled by its maximum and minimum values.</p>
 <tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>([cmap,&nbsp;scale,&nbsp;colors,&nbsp;vmin,&nbsp;vmax])</td>
 <td></td>
 </tr>
-<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">blend</span></tt>(img,&nbsp;mask[,&nbsp;op])</td>
-<td></td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Colorize.blend" title="thunder.Colorize.blend"><tt class="xref py py-obj docutils literal"><span class="pre">blend</span></tt></a>(img,&nbsp;mask[,&nbsp;op])</td>
+<td>Blend two images together using the specified operator</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.Colorize.optimize" title="thunder.Colorize.optimize"><tt class="xref py py-obj docutils literal"><span class="pre">optimize</span></tt></a>(mat[,&nbsp;asCmap])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Colorize.image" title="thunder.Colorize.image"><tt class="xref py py-obj docutils literal"><span class="pre">image</span></tt></a>(img[,&nbsp;cmap,&nbsp;bar,&nbsp;nans,&nbsp;clim])</td>
+<td>Streamlined display of images using matplotlib.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Colorize.optimize" title="thunder.Colorize.optimize"><tt class="xref py py-obj docutils literal"><span class="pre">optimize</span></tt></a>(mat[,&nbsp;asCmap])</td>
 <td>Optimal colors based on array data similarity.</td>
-</tr>
-<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">Colorize.show</span></tt></td>
-<td></td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.Colorize.transform" title="thunder.Colorize.transform"><tt class="xref py py-obj docutils literal"><span class="pre">transform</span></tt></a>(img[,&nbsp;mask,&nbsp;background,&nbsp;mixing])</td>
 <td>Colorize numerical image data.</td>
 </tr>
 </tbody>
 </table>
+<dl class="staticmethod">
+<dt id="thunder.Colorize.blend">
+<em class="property">static </em><tt class="descname">blend</tt><big>(</big><em>img</em>, <em>mask</em>, <em>op=&lt;ufunc 'add'&gt;</em><big>)</big><a class="headerlink" href="#thunder.Colorize.blend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blend two images together using the specified operator</p>
+</dd></dl>
+
 <dl class="staticmethod">
 <dt id="thunder.Colorize.image">
 <em class="property">static </em><tt class="descname">image</tt><big>(</big><em>img</em>, <em>cmap='gray'</em>, <em>bar=False</em>, <em>nans=True</em>, <em>clim=None</em><big>)</big><a class="headerlink" href="#thunder.Colorize.image" title="Permalink to this definition">¶</a></dt>
