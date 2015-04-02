@@ -1,6 +1,6 @@
 .. _tutorials:
 
-Thunder tutorials
+Tutorials
 =================
 
 Basics
