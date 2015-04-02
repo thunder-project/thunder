@@ -1,6 +1,6 @@
-.. figure:: https://travis-ci.org/freeman-lab/thunder.png
+.. figure:: https://travis-ci.org/thunder-project/thunder.png
    :align: left
-   :target: https://travis-ci.org/freeman-lab/thunder
+   :target: https://travis-ci.org/thunder-project/thunder
 
 Thunder
 =======
