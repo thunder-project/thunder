@@ -310,12 +310,14 @@ class BotoParallelReader(_BotoClient):
         parse = _BotoClient.parseQuery(dataPath)
 
         storageScheme = parse[0]
+        bucketName = parse[1]
+        
         if storageScheme == 's3' or storageScheme == 's3n':
             from boto.s3.connection import S3Connection
             conn = S3Connection(**self.awsCredentialsOverride.credentialsAsDict)
             bucket = conn.get_bucket(parse[1])
         elif storageScheme == 'gs':
-            conn = boto.storage_uri(parse[1] + '/' + parse[2], 'gs')
+            conn = boto.storage_uri(bucketName, 'gs')
             bucket = conn.get_bucket()
         else:
             raise NotImplementedError("No file reader implementation for URL scheme " + storageScheme)
@@ -350,7 +352,7 @@ class BotoParallelReader(_BotoClient):
                                     aws_secret_access_key=awsSecretAccessKeyOverride_)
                 bucket = conn.get_bucket(bucketName)
             elif storageScheme == 'gs':
-                conn = boto.storage_uri(parse[1] + '/' + parse[2], 'gs')
+                conn = boto.storage_uri(bucketName, 'gs')
                 bucket = conn.get_bucket()
             else:
                 raise NotImplementedError("No file reader implementation for URL scheme " + storageScheme)
@@ -456,7 +458,7 @@ class BotoFileReader(_BotoClient):
             conn = S3Connection(**self.awsCredentialsOverride.credentialsAsDict)
             bucket = conn.get_bucket(bucketName)
         elif storageScheme == 'gs':
-            conn = boto.storage_uri(parse[1] + '/' + parse[2], 'gs')
+            conn = boto.storage_uri(bucketName, 'gs')
             bucket = conn.get_bucket()
         else:
             raise NotImplementedError("No file reader implementation for URL scheme " + storageScheme)

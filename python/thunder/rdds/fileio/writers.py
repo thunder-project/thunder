@@ -92,7 +92,7 @@ class _BotoWriter(_BotoClient):
             conn = S3Connection(**self.awsCredentialsOverride.credentialsAsDict)
             bucket = conn.get_bucket(bucketName)
         elif storageScheme == 'gs':
-            conn = boto.storage_uri(parse[1] + '/' + parse[2], 'gs')
+            conn = boto.storage_uri(bucketName, 'gs')
             bucket = conn.get_bucket()
         else:
             raise NotImplementedError("No file reader implementation for URL scheme " + storageScheme)
