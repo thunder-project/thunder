@@ -3,7 +3,7 @@ Thunder
 =======
 
 <div class="row">
-  <a href="http://freeman-lab.github.io/thunder/">
+  <a href="http://thunder-project.org">
       <img src="http://thefreemanlab.com/thunder/docs/_static/thumbnail_row.png" width="800px" height="125px">
   </a>
 </div>
