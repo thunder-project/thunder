@@ -44,6 +44,38 @@ You must run the tests from within this folder. You can run just one set of test
 
 You should write a test for anything new that you develop, as well as make sure the existing tests still pass (automated testing will be performed on any pull request using Travis). If you're unsure how to write a new test, see the existing ones for examples.
 
+Packaging a release
+~~~~~~~~~~~~~~~~~~~
+(NOTE: this is primarily a reference for core Thunder committers). When we want to create a new major Thunder release, first create a branch with the major version number (e.g. "branch-0.6"). Change the version number in `python/thunder/__init__.py` by setting:
+
+.. code-block:: python
+
+	__version__ = "0.6.0"
+
+Also change the version in the `scala/build.sbt` file:
+
+.. code-block:: scala
+
+	version := "0.6.0"
+
+Build the Scala jar by calling:
+
+.. code-block:: bash
+
+	sbt package` 
+
+from within the `scala` folder, and copy the jar it creates into `python/thunder/lib`. Finally, build and copy the Python egg file by calling:
+
+.. code-block:: bash
+
+	python/bin/build
+
+Finally, from within the Python folder, submit to PyPi using:
+
+.. code-block:: bash
+
+	./setup.py sdist upload
+
 Ideas for contributions
 ~~~~~~~~~~~~~~~~~~~~~~~
 A good starting point is to check the `issue <https://github.com/freeman-lab/thunder/issues>`_ page. If there is an outstanding issue that appears unaddressed, add a comment that you are starting to work on it.
