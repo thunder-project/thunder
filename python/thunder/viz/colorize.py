@@ -244,7 +244,9 @@ class Colorize(object):
 
     @staticmethod
     def blend(img, mask, op=add):
-
+        """
+        Blend two images together using the specified operator
+        """
         if mask.ndim == 3:
             for i in range(0, 3):
                 img[:, :, :, i] = op(img[:, :, :, i], mask)
