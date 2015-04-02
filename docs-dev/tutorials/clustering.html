@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.0dev',
+        VERSION:     '0.5.0.dev',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.0dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.0.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -215,7 +215,7 @@ for plotting the cluster centers above:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmapCat</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/clustering_18_01.png" src="../_images/clustering_18_01.png" />
+<img alt="../_images/clustering_18_0.png" src="../_images/clustering_18_0.png" />
 <p>The same colorization can be performed using Thunder&#8217;s <tt class="docutils literal"><span class="pre">Colorize</span></tt>
 class. In this case the effect is the same as setting the color map in
 matplotlib&#8217;s <tt class="docutils literal"><span class="pre">imshow</span></tt>, but later <tt class="docutils literal"><span class="pre">Colorize</span></tt> will let us perform more
@@ -245,7 +245,7 @@ to generate different color schemes.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">centers</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/clustering_24_01.png" src="../_images/clustering_24_01.png" />
+<img alt="../_images/clustering_24_0.png" src="../_images/clustering_24_0.png" />
 <p>And if we look at the map, we now see that similar regions are colored
 similarly (e.g. top and bottom), which makes the spatial organization
 more clear.</p>
@@ -253,7 +253,7 @@ more clear.</p>
 <span class="n">image</span><span class="p">(</span><span class="n">brainmap</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/clustering_26_01.png" src="../_images/clustering_26_01.png" />
+<img alt="../_images/clustering_26_0.png" src="../_images/clustering_26_0.png" />
 </div>
 <div class="section" id="thresholding">
 <h2>Thresholding<a class="headerlink" href="#thresholding" title="Permalink to this headline">¶</a></h2>
@@ -303,7 +303,7 @@ can compute this using the <tt class="docutils literal"><span class="pre">simila
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">imgSim</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">,</span> <span class="n">clim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
 </pre></div>
 </div>
-<img alt="../_images/clustering_35_01.png" src="../_images/clustering_35_01.png" />
+<img alt="../_images/clustering_35_0.png" src="../_images/clustering_35_0.png" />
 <p>We can then use this as a linear mask on the colorization output</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="n">newClrs</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">mask</span><span class="o">=</span><span class="n">imgSim</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
 <span class="n">image</span><span class="p">(</span><span class="n">brainmap</span><span class="p">)</span>

@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.5.0dev',
+        VERSION:     '0.5.0.dev',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html"><img src="_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.0dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.0.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -116,6 +116,7 @@
 <li><a class="reference internal" href="#">Contributing</a><ul>
 <li><a class="reference internal" href="#setting-up">Setting up</a></li>
 <li><a class="reference internal" href="#running-the-tests">Running the tests</a></li>
+<li><a class="reference internal" href="#packaging-a-release">Packaging a release</a></li>
 <li><a class="reference internal" href="#ideas-for-contributions">Ideas for contributions</a></li>
 </ul>
 </li>
@@ -178,6 +179,29 @@
 </pre></div>
 </div>
 <p>You should write a test for anything new that you develop, as well as make sure the existing tests still pass (automated testing will be performed on any pull request using Travis). If you&#8217;re unsure how to write a new test, see the existing ones for examples.</p>
+</div>
+<div class="section" id="packaging-a-release">
+<h2>Packaging a release<a class="headerlink" href="#packaging-a-release" title="Permalink to this headline">¶</a></h2>
+<p>(NOTE: this is primarily a reference for core Thunder committers). When we want to create a new major Thunder release, first create a branch with the major version number (e.g. &#8220;branch-0.6&#8221;). Change the version number in <cite>python/thunder/__init__.py</cite> by setting:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">__version__</span> <span class="o">=</span> <span class="s">&quot;0.6.0&quot;</span>
+</pre></div>
+</div>
+<p>Also change the version in the <cite>scala/build.sbt</cite> file:</p>
+<div class="highlight-scala"><div class="highlight"><pre><span class="n">version</span> <span class="o">:=</span> <span class="s">&quot;0.6.0&quot;</span>
+</pre></div>
+</div>
+<p>Build the Scala jar by calling:</p>
+<div class="highlight-bash"><div class="highlight"><pre>sbt package<span class="sb">`</span>
+</pre></div>
+</div>
+<p>from within the <cite>scala</cite> folder, and copy the jar it creates into <cite>python/thunder/lib</cite>. Finally, build and copy the Python egg file by calling:</p>
+<div class="highlight-bash"><div class="highlight"><pre>python/bin/build
+</pre></div>
+</div>
+<p>Finally, from within the Python folder, submit to PyPi using:</p>
+<div class="highlight-bash"><div class="highlight"><pre>./setup.py sdist upload
+</pre></div>
+</div>
 </div>
 <div class="section" id="ideas-for-contributions">
 <h2>Ideas for contributions<a class="headerlink" href="#ideas-for-contributions" title="Permalink to this headline">¶</a></h2>
