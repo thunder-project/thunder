@@ -1,0 +1,364 @@
+
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>thunder.Colorize</title>
+    
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootswatch-3.1.0/simplex/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/styles.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.5.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="None" href="../index.html" />
+    <link rel="up" title="API Reference" href="../api.html" />
+    <link rel="prev" title="thunder.PlanarCrossCorr" href="thunder.PlanarCrossCorr.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
+           </a>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            <li class="divider-vertical"></li>
+            
+                <li><a href="../tutorials.html">Tutorials</a></li>
+                <li><a href="../api.html">API</a></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction to Thunder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install_local.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install_ec2.html">Running on EC2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../style_guide.html">Style guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">F.A.Q.</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/thunder-project/thunder/releases">Release notes</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/basic_usage.html">Basic usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/thunder_context.html">Thunder context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/input_formats.html">Input formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/images.html">Images</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/series.html">Series</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/multi_index.html">Multi-indexing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/image_registration.html">Image registration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/clustering.html">Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/factorization.html">Factorization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/regression.html">Regression</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://gitter.im/thunder-project/thunder">Gitter chatroom</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://groups.google.com/forum/?hl=en#!forum/thunder-user">Mailing list</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/thunder-project/thunder">Github repo</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://thunder-project.org">Project page</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">thunder</span></tt>.Colorize</a></li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+            
+            
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <div class="section" id="thunder-colorize">
+<h1><tt class="xref py py-mod docutils literal"><span class="pre">thunder</span></tt>.Colorize<a class="headerlink" href="#thunder-colorize" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="thunder.Colorize">
+<em class="property">class </em><tt class="descclassname">thunder.</tt><tt class="descname">Colorize</tt><big>(</big><em>cmap='rainbow'</em>, <em>scale=1</em>, <em>colors=None</em>, <em>vmin=None</em>, <em>vmax=None</em><big>)</big><a class="headerlink" href="#thunder.Colorize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for turning numerical data into colors.</p>
+<p>Supports a set of custom conversions (rgb, hsv, polar, and indexed)
+as well as conversions to standard matplotlib colormaps through
+either a passed colormap or a string specification.</p>
+<p>If vmax and vmin are not specified, numerical data will be automatically
+scaled by its maximum and minimum values.</p>
+<p>Supports two-dimensional and three-dimensional data.</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="3%" />
+<col width="97%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>cmap</td>
+<td>(string, optional, default = rainbow) The colormap to convert to, can be one of a special set of conversions (rgb, hsv, hv, polar, angle, indexed), a matplotlib colormap object, or a string specification of a matplotlib colormap</td>
+</tr>
+<tr class="row-even"><td>scale</td>
+<td>(float, optional, default = 1) How to scale amplitude during color conversion, controls brighthness</td>
+</tr>
+<tr class="row-odd"><td>colors</td>
+<td>(list, optional, default = None) List of colors for &#8216;indexed&#8217; option</td>
+</tr>
+<tr class="row-even"><td>vmin</td>
+<td>(scalar, optional, default = None) Numerical value to set to 0 during normalization, values below will be clipped</td>
+</tr>
+<tr class="row-odd"><td>vmax</td>
+<td>(scalar, optional, default = None) Numerical value to set to 1 during normalization, values above will be clipped.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>([cmap,&nbsp;scale,&nbsp;colors,&nbsp;vmin,&nbsp;vmax])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Colorize.blend" title="thunder.Colorize.blend"><tt class="xref py py-obj docutils literal"><span class="pre">blend</span></tt></a>(img,&nbsp;mask[,&nbsp;op])</td>
+<td>Blend two images together using the specified operator.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Colorize.image" title="thunder.Colorize.image"><tt class="xref py py-obj docutils literal"><span class="pre">image</span></tt></a>(img[,&nbsp;cmap,&nbsp;bar,&nbsp;nans,&nbsp;clim])</td>
+<td>Streamlined display of images using matplotlib.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Colorize.optimize" title="thunder.Colorize.optimize"><tt class="xref py py-obj docutils literal"><span class="pre">optimize</span></tt></a>(mat[,&nbsp;asCmap])</td>
+<td>Optimal colors based on array data similarity.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Colorize.transform" title="thunder.Colorize.transform"><tt class="xref py py-obj docutils literal"><span class="pre">transform</span></tt></a>(img[,&nbsp;mask,&nbsp;background,&nbsp;mixing])</td>
+<td>Colorize numerical image data.</td>
+</tr>
+</tbody>
+</table>
+<dl class="staticmethod">
+<dt id="thunder.Colorize.blend">
+<em class="property">static </em><tt class="descname">blend</tt><big>(</big><em>img</em>, <em>mask</em>, <em>op=&lt;ufunc 'add'&gt;</em><big>)</big><a class="headerlink" href="#thunder.Colorize.blend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blend two images together using the specified operator.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>img</strong> : array-like</p>
+<blockquote>
+<div><p>First image to blend</p>
+</div></blockquote>
+<p><strong>mask</strong> : array-like</p>
+<blockquote>
+<div><p>Second image to blend</p>
+</div></blockquote>
+<p><strong>op</strong> : func, optional, default = add</p>
+<blockquote class="last">
+<div><p>Operator to use for combining images</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="thunder.Colorize.image">
+<em class="property">static </em><tt class="descname">image</tt><big>(</big><em>img</em>, <em>cmap='gray'</em>, <em>bar=False</em>, <em>nans=True</em>, <em>clim=None</em><big>)</big><a class="headerlink" href="#thunder.Colorize.image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Streamlined display of images using matplotlib.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>img</strong> : ndarray, 2D or 3D</p>
+<blockquote>
+<div><p>The image to display</p>
+</div></blockquote>
+<p><strong>bar</strong> : boolean, optional, default = False</p>
+<blockquote>
+<div><p>Whether to append a colorbar</p>
+</div></blockquote>
+<p><strong>cmap</strong> : str or Colormap, optional, default = &#8216;gray&#8217;</p>
+<blockquote>
+<div><p>A colormap to use, for non RGB images</p>
+</div></blockquote>
+<p><strong>nans</strong> : boolean, optional, deafult = True</p>
+<blockquote>
+<div><p>Whether to replace NaNs, if True, will replace with 0s</p>
+</div></blockquote>
+<p><strong>clim</strong> : tuple, optional, default = None</p>
+<blockquote class="last">
+<div><p>Limits for scaling image</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="thunder.Colorize.optimize">
+<em class="property">classmethod </em><tt class="descname">optimize</tt><big>(</big><em>mat</em>, <em>asCmap=False</em><big>)</big><a class="headerlink" href="#thunder.Colorize.optimize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optimal colors based on array data similarity.</p>
+<p>Given an (n, m) data array with n m-dimensional data points,
+tries to find an optimal set of n colors such that the similarity
+between colors in 3-dimensional space is well-matched to the similarity
+between the data points in m-dimensional space.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>mat</strong> : array-like</p>
+<blockquote>
+<div><p>Array of data points to use for estimating similarity.</p>
+</div></blockquote>
+<p><strong>asCmap</strong> : boolean, optional, default = False</p>
+<blockquote class="last">
+<div><p>Whether to return a matplotlib colormap, if False will
+return a list of colors.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.Colorize.transform">
+<tt class="descname">transform</tt><big>(</big><em>img</em>, <em>mask=None</em>, <em>background=None</em>, <em>mixing=1.0</em><big>)</big><a class="headerlink" href="#thunder.Colorize.transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Colorize numerical image data.</p>
+<p>Input can either be a single array or a list of arrays.
+Depending on the colorization option, each array must either be
+2 or 3 dimensional, see parameters for details.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>img</strong> : array</p>
+<blockquote>
+<div><p>The image(s) to colorize. For rgb, hsv, polar, and indexed conversions,
+must be of shape (c, x, y, z) or (c, x, y), where c is the dimension
+containing the information for colorizing. For colormap conversions,
+must be of shape (x, y, z) or (x, y).</p>
+</div></blockquote>
+<p><strong>mask</strong> : array</p>
+<blockquote>
+<div><p>An additional image to mask the luminance channel of the first one.
+Must be of shape (x, y, z) or (x, y), and must match dimensions of images.
+Must be strictly positive (and will be clipped below at 0).</p>
+</div></blockquote>
+<p><strong>background</strong> : array</p>
+<blockquote>
+<div><p>An additional image to display as a grayscale background.
+Must be of shape (x, y, z) or (x, y), and must match dimensions of images.</p>
+</div></blockquote>
+<p><strong>mixing</strong> : scalar</p>
+<blockquote>
+<div><p>If adding a background image, mixing controls the relative scale.
+Values larger than 1.0 will emphasize the background more.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Arrays with RGB values, with shape (x, y, z, 3) or (x, y, 3)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+        <br/>
+        
+<div id="sourcelink">
+  <a href="../_sources/generated/thunder.Colorize.txt"
+     rel="nofollow">Source</a>
+</div>
+      
+    </p>
+    <p>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

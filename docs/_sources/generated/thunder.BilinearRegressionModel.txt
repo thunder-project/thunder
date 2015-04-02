@@ -1,0 +1,17 @@
+:mod:`thunder`.BilinearRegressionModel
+=============================================
+
+.. currentmodule:: thunder
+
+.. autoclass:: BilinearRegressionModel
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~BilinearRegressionModel.__init__
+      ~BilinearRegressionModel.fit
+      ~BilinearRegressionModel.get
+      ~BilinearRegressionModel.load
+   
+

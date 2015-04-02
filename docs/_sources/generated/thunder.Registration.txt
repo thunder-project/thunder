@@ -1,0 +1,14 @@
+:mod:`thunder`.Registration
+==================================
+
+.. currentmodule:: thunder
+
+.. autoclass:: Registration
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~Registration.load
+   
+

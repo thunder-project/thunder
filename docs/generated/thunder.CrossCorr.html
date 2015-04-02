@@ -1,0 +1,317 @@
+
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>thunder.CrossCorr</title>
+    
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootswatch-3.1.0/simplex/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/styles.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.5.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="None" href="../index.html" />
+    <link rel="up" title="API Reference" href="../api.html" />
+    <link rel="next" title="thunder.PlanarCrossCorr" href="thunder.PlanarCrossCorr.html" />
+    <link rel="prev" title="thunder.RegistrationModel" href="thunder.RegistrationModel.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
+           </a>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            <li class="divider-vertical"></li>
+            
+                <li><a href="../tutorials.html">Tutorials</a></li>
+                <li><a href="../api.html">API</a></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction to Thunder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install_local.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install_ec2.html">Running on EC2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../style_guide.html">Style guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">F.A.Q.</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/thunder-project/thunder/releases">Release notes</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/basic_usage.html">Basic usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/thunder_context.html">Thunder context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/input_formats.html">Input formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/images.html">Images</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/series.html">Series</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/multi_index.html">Multi-indexing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/image_registration.html">Image registration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/clustering.html">Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/factorization.html">Factorization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/regression.html">Regression</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://gitter.im/thunder-project/thunder">Gitter chatroom</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://groups.google.com/forum/?hl=en#!forum/thunder-user">Mailing list</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/thunder-project/thunder">Github repo</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://thunder-project.org">Project page</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">thunder</span></tt>.CrossCorr</a></li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+            
+            
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <div class="section" id="thunder-crosscorr">
+<h1><tt class="xref py py-mod docutils literal"><span class="pre">thunder</span></tt>.CrossCorr<a class="headerlink" href="#thunder-crosscorr" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="thunder.CrossCorr">
+<em class="property">class </em><tt class="descclassname">thunder.</tt><tt class="descname">CrossCorr</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#thunder.CrossCorr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Translation using cross correlation.</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>(*args,&nbsp;**kwargs)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.CrossCorr.fit" title="thunder.CrossCorr.fit"><tt class="xref py py-obj docutils literal"><span class="pre">fit</span></tt></a>(images)</td>
+<td>Compute registration parameters on a collection of images / volumes.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.CrossCorr.getTransform" title="thunder.CrossCorr.getTransform"><tt class="xref py py-obj docutils literal"><span class="pre">getTransform</span></tt></a>(im)</td>
+<td>Compute displacement between an image or volume and reference.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.CrossCorr.isPrepared" title="thunder.CrossCorr.isPrepared"><tt class="xref py py-obj docutils literal"><span class="pre">isPrepared</span></tt></a>(images)</td>
+<td>Check if cross correlation is prepared by checking the dimensions of the reference.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.CrossCorr.prepare" title="thunder.CrossCorr.prepare"><tt class="xref py py-obj docutils literal"><span class="pre">prepare</span></tt></a>(images[,&nbsp;startIdx,&nbsp;stopIdx,&nbsp;...])</td>
+<td>Prepare cross correlation by computing or specifying a reference image.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.CrossCorr.run" title="thunder.CrossCorr.run"><tt class="xref py py-obj docutils literal"><span class="pre">run</span></tt></a>(images)</td>
+<td>Compute and implement registration on a collection of images / volumes.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="thunder.CrossCorr.fit">
+<tt class="descname">fit</tt><big>(</big><em>images</em><big>)</big><a class="headerlink" href="#thunder.CrossCorr.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute registration parameters on a collection of images / volumes.</p>
+<p>Will return the estimated registration parameters to the driver in the form
+of a RegisterModel, which can then be used to transform Images data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>images</strong> : Images</p>
+<blockquote>
+<div><p>An Images object with the images / volumes to estimate registration for.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>model</strong> : RegisterModel</p>
+<blockquote class="last">
+<div><p>Registration params as a model that can be used to transform an Images object.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="thunder.RegistrationModel.html#thunder.RegistrationModel" title="thunder.RegistrationModel"><tt class="xref py py-obj docutils literal"><span class="pre">RegistrationModel</span></tt></a></dt>
+<dd>model for applying transformations</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.CrossCorr.getTransform">
+<tt class="descname">getTransform</tt><big>(</big><em>im</em><big>)</big><a class="headerlink" href="#thunder.CrossCorr.getTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute displacement between an image or volume and reference.</p>
+<p>Displacements are computed using the dimensionality of the inputs,
+so will be 2D for images and 3D for volumes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>im</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>The image or volume</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.CrossCorr.isPrepared">
+<tt class="descname">isPrepared</tt><big>(</big><em>images</em><big>)</big><a class="headerlink" href="#thunder.CrossCorr.isPrepared" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if cross correlation is prepared by checking the dimensions of the reference.</p>
+<p>See checkReference.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.CrossCorr.prepare">
+<tt class="descname">prepare</tt><big>(</big><em>images</em>, <em>startIdx=None</em>, <em>stopIdx=None</em>, <em>defaultNImages=20</em><big>)</big><a class="headerlink" href="#thunder.CrossCorr.prepare" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare cross correlation by computing or specifying a reference image.</p>
+<p><cite>images</cite> should be either a numpy ndarray or an Images object. If an ndarray
+is passed, it will be used as the reference; otherwise a reference image
+will be calculated as the mean of some subsection of the passed Images object.
+If startIdx or stopIdx are passed, then these will be used to determine
+the starting and ending points over which to calculate the reference mean.
+If neither startIdx nor stopIdx is passed, then the default behavior is to
+calculate a reference mean image over the center <cite>defaultNImages</cite> records
+of the Images object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>images</strong> : ndarray or Images object</p>
+<blockquote>
+<div><p>Images to compute reference from, or a single image to set as reference</p>
+</div></blockquote>
+<p class="last"><strong>See computeReferenceMean.</strong></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.CrossCorr.run">
+<tt class="descname">run</tt><big>(</big><em>images</em><big>)</big><a class="headerlink" href="#thunder.CrossCorr.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute and implement registration on a collection of images / volumes.</p>
+<p>This is a lazy operation that combines the estimation of registration
+with its implementaiton. It returns a new Images object with transformed
+images, and does not expose the registration parameters directly, see the
+&#8216;fit&#8217; method to obtain parameters directly.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>images</strong> : Images</p>
+<blockquote class="last">
+<div><p>An Images object with the images / volumes to apply registration to.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+        <br/>
+        
+<div id="sourcelink">
+  <a href="../_sources/generated/thunder.CrossCorr.txt"
+     rel="nofollow">Source</a>
+</div>
+      
+    </p>
+    <p>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

@@ -1,0 +1,61 @@
+:mod:`thunder`.Images
+============================
+
+.. currentmodule:: thunder
+
+.. autoclass:: Images
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~Images.__init__
+      ~Images.apply
+      ~Images.applyKeys
+      ~Images.applyValues
+      ~Images.astype
+      ~Images.cache
+      ~Images.coalesce
+      ~Images.collect
+      ~Images.collectAsArray
+      ~Images.collectKeysAsArray
+      ~Images.collectValuesAsArray
+      ~Images.count
+      ~Images.crop
+      ~Images.filter
+      ~Images.filterOnKeys
+      ~Images.filterOnValues
+      ~Images.first
+      ~Images.gaussianFilter
+      ~Images.get
+      ~Images.getMany
+      ~Images.getRange
+      ~Images.keys
+      ~Images.max
+      ~Images.maxProjection
+      ~Images.maxminProjection
+      ~Images.mean
+      ~Images.meanByRegions
+      ~Images.medianFilter
+      ~Images.min
+      ~Images.planes
+      ~Images.populateParamsFromFirstRecord
+      ~Images.renumber
+      ~Images.repartition
+      ~Images.saveAsBinaryImages
+      ~Images.saveAsBinarySeries
+      ~Images.saveAsPngs
+      ~Images.sortByKey
+      ~Images.stats
+      ~Images.stdev
+      ~Images.subsample
+      ~Images.subtract
+      ~Images.sum
+      ~Images.take
+      ~Images.toBlocks
+      ~Images.toSeries
+      ~Images.toTimeSeries
+      ~Images.values
+      ~Images.variance
+   
+

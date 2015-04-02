@@ -1,0 +1,262 @@
+
+.. \_input\_format\_tutorial:
+
+.. currentmodule:: thunder.utils.context
+
+Input formats
+=============
+
+Data can be loaded from a variety of sources, depending on the desired
+data type.
+
+Loading Images
+--------------
+
+Images data are distributed collections of images or volumes.
+Two-dimensional images can be loaded from ``png`` or ``tif`` files, and
+three-dimensional volumes can be loaded from multi-page ``tif-stack``
+volumes, or binary ``stack`` volumes. For an example, we'll load a set
+of ``tif`` images by specifying a folder (note: these are small, highly
+downsampled images included with Thunder purely for demonstration and
+testing):
+
+.. code:: python
+
+    # find the location relative to the thunder installation
+    import os.path as pth
+    imagepath = pth.join(pth.dirname(pth.realpath(thunder.__file__)), 'utils/data/fish/tif-stack')
+    
+    # load the images
+    data = tsc.loadImages(imagepath, inputFormat='tif-stack')
+To look at the first image:
+
+.. code:: python
+
+    %matplotlib inline
+.. code:: python
+
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    sns.set_style('white')
+    sns.set_context('notebook')
+    img = data.first()[1]
+    plt.imshow(img[:,:,0], cmap="gray");
+
+
+.. image:: input_formats_files/input_formats_7_0.png
+
+
+To check the dimensions of the images:
+
+.. code:: python
+
+    data.dims.max
+
+
+
+.. parsed-literal::
+
+    (75, 86, 1)
+
+
+
+And to check the total number of images:
+
+.. code:: python
+
+    data.nimages
+
+
+
+.. parsed-literal::
+
+    20
+
+
+
+For any of these image formats, the raw data can be stored on a local
+file system, a networked file system (accessible to all nodes of a
+cluster), or Amazon S3. To load images from S3, the location of the data
+must be specified as a URI, with "s3://" or "s3n://" given as the
+scheme. For instance, data stored in an S3 bucket named "my-bucket"
+under keys named "my-data/fileN.stack" could be retrieved by passing
+'``s3n://my-bucket/file*.stack``\ ' to ``loadImages``.
+
+It's easy to load only a subset of images:
+
+.. code:: python
+
+    data = tsc.loadImages(imagepath, inputFormat='tif-stack', startIdx=0, stopIdx=10)
+.. code:: python
+
+    data.nimages
+
+
+
+.. parsed-literal::
+
+    10
+
+
+
+Loading Series
+--------------
+
+A ``Series`` object is a distributed collection of one-dimensional
+arrays with simple integer key identifiers. All arrays in a ``Series``
+must have the same length. They can be loaded from flat text or binary
+files.
+
+Text files must contain a line for each record, with numbers separated
+by spaces. The first numbers of each line will be interpreted as keys,
+and subsequent numbers will be interpreted as values. The number of keys
+is user-specified. As before, we'll load example series data from a
+small file included with Thunder purely for testing purposes (this is
+the ``iris`` dataset).
+
+.. code:: python
+
+    # find the location relative to the thunder installation
+    seriespath = pth.join(pth.dirname(pth.realpath(thunder.__file__)), 'utils/data/iris/')
+    
+    # load the series data
+    data = tsc.loadSeries(seriespath + 'iris.txt', inputFormat='text', nkeys=1)
+We could have also provided the folder name, rather than the file, and
+all file(s) of the given format would be loaded. Let's look at the first
+entry of the ``Series``:
+
+.. code:: python
+
+    data.first()
+
+
+
+.. parsed-literal::
+
+    ((0,), array([ 5.1,  3.5,  1.4,  0.2]))
+
+
+
+The index is automatically calculated based on the length of the values
+array:
+
+.. code:: python
+
+    data.index
+
+
+
+.. parsed-literal::
+
+    array([0, 1, 2, 3])
+
+
+
+For comparison, you can look at the first raw line of the text file:
+
+.. code:: python
+
+    dataraw = sc.textFile(seriespath + 'iris.txt')
+    dataraw.first()
+
+
+
+.. parsed-literal::
+
+    u'0 5.1 3.5 1.4 0.2'
+
+
+
+Flat binary files must store each record as a contiguous sequence of
+bytes, with a fixed size in bytes for each record, including both keys
+and values. The number and numerical type of keys and records are most
+convieniently specified in a configuration file in the same directory as
+the data, but can also be specified as input arguments. Here, we show
+two ways of loading a binary version of the same ``iris`` data loaded
+previously.
+
+.. code:: python
+
+    data = tsc.loadSeries(seriespath + 'iris.bin', inputFormat='binary')
+    data.first()
+
+
+
+.. parsed-literal::
+
+    ((0,), array([ 5.1,  3.5,  1.4,  0.2]))
+
+
+
+In this case, the number of keys and number of values in each record,
+along with the data types of the keys and values, are automatically read
+out from a ``conf.json`` file located in the same directory as
+``iris.bin``. This file has a simple JSON format. But when a
+``conf.json`` file is unavailable, these parameters can also be passed
+as arguments to the ``loadSeries`` method:
+
+.. code:: python
+
+    data = tsc.loadSeries(seriespath + 'iris.bin', inputFormat='binary', nkeys=1, nvalues=4, keyType='float', valueType='float')
+    data.first()
+
+
+
+.. parsed-literal::
+
+    ((0,), array([ 5.1,  3.5,  1.4,  0.2]))
+
+
+
+Flat binary files are a particularly convienient format when exporting
+large data sets from other scientific computing environments, e.g.
+Matlab. For example, the data loaded above was written out from within
+Matlab using
+
+        f = fopen('iris.bin','w')
+
+        fwrite(f, [[0:149]' data]','double')
+
+Where ``data`` is a matrix containing the data, and we append a column
+for the indices. Note that the data must be transposed because of
+Matlab's ordering conventions.
+
+Both text and binary data can be loaded from a single file or multiple
+files, stored on a local file system, a networked file system, Amazon
+S3, or HDFS. To load multiple files at once, specify a directory as the
+filename, or a wildcard pattern.
+
+There is also a method for easily loading ``Series`` data from local
+arrays saved in either numpy ``npy`` or Matlab ``MAT`` format. This is
+not advised when working with large data sets, but may be convenient for
+local testing, or for distributing a smaller data set for performing
+intensive computations. In the latter case, the number of partitions
+should be set to approximately 2-3 times the number of cores avaialble
+on your cluster, so that different cores can work on different portions
+of the data.
+
+.. code:: python
+
+    data = tsc.loadSeriesLocal(seriespath + '/iris.mat', inputFormat='mat', varName='data', minPartitions=5)
+    data.first()
+
+
+
+.. parsed-literal::
+
+    (0, array([ 5.1,  3.5,  1.4,  0.2]))
+
+
+
+.. code:: python
+
+    data = tsc.loadSeriesLocal(seriespath + '/iris.npy', inputFormat='npy', minPartitions=5)
+    data.first()
+
+
+
+.. parsed-literal::
+
+    (0, array([ 5.1,  3.5,  1.4,  0.2]))
+
+

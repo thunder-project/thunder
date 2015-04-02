@@ -1,0 +1,351 @@
+
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Clustering</title>
+    
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootswatch-3.1.0/simplex/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/styles.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.5.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="None" href="../index.html" />
+    <link rel="next" title="Factorization" href="factorization.html" />
+    <link rel="prev" title="Image registration" href="image_registration.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
+           </a>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            <li class="divider-vertical"></li>
+            
+                <li><a href="../tutorials.html">Tutorials</a></li>
+                <li><a href="../api.html">API</a></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction to Thunder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install_local.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install_ec2.html">Running on EC2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../style_guide.html">Style guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">F.A.Q.</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/thunder-project/thunder/releases">Release notes</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="basic_usage.html">Basic usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="thunder_context.html">Thunder context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="input_formats.html">Input formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="images.html">Images</a></li>
+<li class="toctree-l1"><a class="reference internal" href="series.html">Series</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_index.html">Multi-indexing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="image_registration.html">Image registration</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="factorization.html">Factorization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="regression.html">Regression</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://gitter.im/thunder-project/thunder">Gitter chatroom</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://groups.google.com/forum/?hl=en#!forum/thunder-user">Mailing list</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/thunder-project/thunder">Github repo</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://thunder-project.org">Project page</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Clustering</a><ul>
+<li><a class="reference internal" href="#setup-plotting">Setup plotting</a></li>
+<li><a class="reference internal" href="#inspect-the-data">Inspect the data</a></li>
+<li><a class="reference internal" href="#cluster">Cluster</a></li>
+<li><a class="reference internal" href="#smarter-color-selection">Smarter color selection</a></li>
+<li><a class="reference internal" href="#thresholding">Thresholding</a></li>
+<li><a class="reference internal" href="#adding-similarity">Adding similarity</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+            
+            
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <div class="section" id="clustering">
+<h1>Clustering<a class="headerlink" href="#clustering" title="Permalink to this headline">¶</a></h1>
+<p>KMeans clustering is a simple way to explore structure in time series
+data, by finding groups of signals with similar response properties.
+Here, we show how to use clustering and how to inspect the results in
+the form of a spatial map.</p>
+<div class="section" id="setup-plotting">
+<h2>Setup plotting<a class="headerlink" href="#setup-plotting" title="Permalink to this headline">¶</a></h2>
+<div class="code python highlight-python"><div class="highlight"><pre>%matplotlib inline
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="kn">as</span> <span class="nn">sns</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;darkgrid&#39;</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_palette</span><span class="p">(</span><span class="s">&#39;muted&#39;</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">thunder</span> <span class="kn">import</span> <span class="n">Colorize</span>
+<span class="n">image</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">image</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="inspect-the-data">
+<h2>Inspect the data<a class="headerlink" href="#inspect-the-data" title="Permalink to this headline">¶</a></h2>
+<p>Load example data, and cache it to speed up repeated queries</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;fish-series&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">toTimeSeries</span><span class="p">()</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
+<span class="n">data</span><span class="o">.</span><span class="n">cache</span><span class="p">()</span>
+<span class="n">data</span><span class="o">.</span><span class="n">dims</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>Extract some samples just to look at the typical structure of the time
+series:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">examples</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">subset</span><span class="p">(</span><span class="n">nsamples</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">examples</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
+</pre></div>
+</div>
+<img alt="../_images/clustering_10_0.png" src="../_images/clustering_10_0.png" />
+</div>
+<div class="section" id="cluster">
+<h2>Cluster<a class="headerlink" href="#cluster" title="Permalink to this headline">¶</a></h2>
+<p>Perform KMeans clustering with 10 clusters:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">thunder</span> <span class="kn">import</span> <span class="n">KMeans</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Plot the time series associated with each of the recovered clusters,
+with a fixed but arbitrary color scheme:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">matplotlib.colors</span> <span class="kn">import</span> <span class="n">ListedColormap</span>
+<span class="n">cmapCat</span> <span class="o">=</span> <span class="n">ListedColormap</span><span class="p">(</span><span class="n">sns</span><span class="o">.</span><span class="n">color_palette</span><span class="p">(</span><span class="s">&quot;hls&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;from_list&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">set_color_cycle</span><span class="p">(</span><span class="n">cmapCat</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">centers</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
+</pre></div>
+</div>
+<img alt="../_images/clustering_14_0.png" src="../_images/clustering_14_0.png" />
+<p>Compute a predicted label for each pixel, and collect it as an image of
+labels:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">labels</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="n">imgLabels</span> <span class="o">=</span> <span class="n">labels</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Look at the resulting map as an image, using the same color scheme as
+for plotting the cluster centers above:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmapCat</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/clustering_18_0.png" src="../_images/clustering_18_0.png" />
+<p>The same colorization can be performed using Thunder&#8217;s <tt class="docutils literal"><span class="pre">Colorize</span></tt>
+class. In this case the effect is the same as setting the color map in
+matplotlib&#8217;s <tt class="docutils literal"><span class="pre">imshow</span></tt>, but later <tt class="docutils literal"><span class="pre">Colorize</span></tt> will let us perform more
+complex operations.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="n">cmapCat</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">image</span><span class="p">(</span><span class="n">brainmap</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/clustering_20_0.png" src="../_images/clustering_20_0.png" />
+</div>
+<div class="section" id="smarter-color-selection">
+<h2>Smarter color selection<a class="headerlink" href="#smarter-color-selection" title="Permalink to this headline">¶</a></h2>
+<p>Remember that the color assignments we used above were essentially an
+arbitrary mapping from cluster center to color. When we do clustering,
+however, it is often the case that some centers are more similar to one
+another, and it can be easier to interpret the results if the colors are
+choosen based on these relative similarities. The <tt class="docutils literal"><span class="pre">Colorize</span></tt> method
+<tt class="docutils literal"><span class="pre">optimize</span></tt> tries to find a set of colors such that similaries among
+colors match similaries among an input array (in this case, the cluster
+centers). The optimization is non-unique, so you can run multiple times
+to generate different color schemes.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">newClrs</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">centers</span><span class="p">,</span> <span class="n">asCmap</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that centers that resemble one another have similar colors:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">set_color_cycle</span><span class="p">(</span><span class="n">newClrs</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">centers</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
+</pre></div>
+</div>
+<img alt="../_images/clustering_24_0.png" src="../_images/clustering_24_0.png" />
+<p>And if we look at the map, we now see that similar regions are colored
+similarly (e.g. top and bottom), which makes the spatial organization
+more clear.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="n">newClrs</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">image</span><span class="p">(</span><span class="n">brainmap</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/clustering_26_0.png" src="../_images/clustering_26_0.png" />
+</div>
+<div class="section" id="thresholding">
+<h2>Thresholding<a class="headerlink" href="#thresholding" title="Permalink to this headline">¶</a></h2>
+<p>One problem with what we&#8217;ve done so far is that clustering was performed
+on all pixels, but many of them were purely noise (e.g. those outside
+the brain), and some of the resulting clusters capture these noise
+signals. A simple trick is to perform clustering after first
+subselecting pixels based on the standard deviation of their time
+series. First, let&#8217;s look at a map of the standard deviation, to find a
+reasonable threshold that preserves most of the relavant signal, but
+ignores the noise.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">stdMap</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">seriesStdev</span><span class="p">()</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+<span class="n">image</span><span class="p">(</span><span class="n">stdMap</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.05</span><span class="p">)</span> <span class="c"># try different values of the threshold</span>
+</pre></div>
+</div>
+<img alt="../_images/clustering_28_0.png" src="../_images/clustering_28_0.png" />
+<p>Now perform clustering again after filtering the data based on standard
+deviation</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">std</span>
+<span class="n">filtered</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">filterOnValues</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">std</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.05</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">filtered</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">newClrs</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">centers</span><span class="p">,</span> <span class="n">asCmap</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">set_color_cycle</span><span class="p">(</span><span class="n">newClrs</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">centers</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
+</pre></div>
+</div>
+<img alt="../_images/clustering_31_0.png" src="../_images/clustering_31_0.png" />
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">imgLabels</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+<span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="n">newClrs</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">image</span><span class="p">(</span><span class="n">brainmap</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/clustering_32_0.png" src="../_images/clustering_32_0.png" />
+</div>
+<div class="section" id="adding-similarity">
+<h2>Adding similarity<a class="headerlink" href="#adding-similarity" title="Permalink to this headline">¶</a></h2>
+<p>These maps are slightly odd because pixels that did not survive our
+threshold still end up colored as something. A final useful trick is to
+mask pixels based on how well they match the cluster they belong to. We
+can compute this using the <tt class="docutils literal"><span class="pre">similarity</span></tt> method of <tt class="docutils literal"><span class="pre">KMeansModel</span></tt>.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">sim</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">similarity</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="n">imgSim</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">imgSim</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">,</span> <span class="n">clim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+</pre></div>
+</div>
+<img alt="../_images/clustering_35_0.png" src="../_images/clustering_35_0.png" />
+<p>We can then use this as a linear mask on the colorization output</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="n">newClrs</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">mask</span><span class="o">=</span><span class="n">imgSim</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">image</span><span class="p">(</span><span class="n">brainmap</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/clustering_37_0.png" src="../_images/clustering_37_0.png" />
+<p>So far we&#8217;ve always been colorizing one plane, but we can apply the same
+operation to the full 3D volume (which in this case has just two
+planes), and then look at a maximum projection.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="n">newClrs</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">imgSim</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">amax</span>
+<span class="n">image</span><span class="p">(</span><span class="n">amax</span><span class="p">(</span><span class="n">brainmap</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+</pre></div>
+</div>
+<img alt="../_images/clustering_40_0.png" src="../_images/clustering_40_0.png" />
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+        <br/>
+        
+<div id="sourcelink">
+  <a href="../_sources/tutorials/clustering.txt"
+     rel="nofollow">Source</a>
+</div>
+      
+    </p>
+    <p>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
