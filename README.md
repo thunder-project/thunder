@@ -24,7 +24,7 @@ Thunder includes utilities for loading and saving different formats, classes for
 Documentation
 -------------
 
-This README contains info on installation and usage and how to get help. See the complete [documentation](http://thunder-project/thunder/docs/) for more details, tutorials, and API references. 
+This README contains info on installation and usage and how to get help. See the complete [documentation](http://thunder-project.org/thunder/docs) for more details, tutorials, and API references. 
 
 Quick start
 -----------
