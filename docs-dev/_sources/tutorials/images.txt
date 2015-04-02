@@ -175,6 +175,43 @@ Here's the second plane:
 .. image:: images_files/images_23_0.png
 
 
+As an example of 2D data, we can load another one of the examples
+
+.. code:: python
+
+    data = tsc.loadExample('mouse-images')
+    data.dims
+
+
+
+.. parsed-literal::
+
+    Dimensions(values=[(0, 0), (63, 63)], n=2)
+
+
+
+Look at the first image
+
+.. code:: python
+
+    img = data.first()[1]
+    image(img)
+
+
+.. image:: images_files/images_27_0.png
+
+
+Bracket notation makes it easy to grab images with particular indexes,
+by specifying the key in the bracket
+
+.. code:: python
+
+    image(data[10])
+
+
+.. image:: images_files/images_29_0.png
+
+
 Image manipulations
 -------------------
 
@@ -187,12 +224,13 @@ first one.
 
 .. code:: python
 
+    data = tsc.loadExample('fish-images')
     projs = data.maxProjection(axis=2)
     img = projs.first()[1]
     image(img)
 
 
-.. image:: images_files/images_26_0.png
+.. image:: images_files/images_32_0.png
 
 
 We can also subselect a set of planes, specifying the top and bottom of
@@ -205,7 +243,7 @@ the desired range:
     image(img)
 
 
-.. image:: images_files/images_28_0.png
+.. image:: images_files/images_34_0.png
 
 
 And we can subsample in space:
@@ -217,7 +255,7 @@ And we can subsample in space:
     image(img[:,:,0])
 
 
-.. image:: images_files/images_30_0.png
+.. image:: images_files/images_36_0.png
 
 
 Finally, we can perform operations that aggregate across images. For
@@ -229,7 +267,7 @@ example, computing the standard deviation:
     image(img[:,:,0])
 
 
-.. image:: images_files/images_32_0.png
+.. image:: images_files/images_38_0.png
 
 
 The result of distributed image operations can be saved by exporting
@@ -324,7 +362,7 @@ We can also quickly look at some example time series:
     plt.plot(samples.T);
 
 
-.. image:: images_files/images_44_0.png
+.. image:: images_files/images_50_0.png
 
 
 For a large data set that will be analyzed repeatedly as a ``Series``,

@@ -60,10 +60,10 @@ on loading and data types.
     datapath = pth.join(pth.dirname(pth.realpath(thunder.__file__)), 'utils/data/')
 .. code:: python
 
-    data = tsc.loadImages(datapath + '/fish/images/', inputFormat='tif', startIdx=0, stopIdx=10)
+    data = tsc.loadImages(datapath + '/mouse/images/', startIdx=0, stopIdx=10)
 .. code:: python
 
-    image(data.values().first()[:,:,0])
+    image(data.values().first())
 
 
 .. image:: thunder_context_files/thunder_context_13_0.png
@@ -152,10 +152,10 @@ more robust. ``shuffle=True`` is the current default.
 
 .. code:: python
 
-    data = tsc.loadImagesAsSeries(datapath + '/fish/images/', inputFormat='tif')
+    data = tsc.loadImagesAsSeries(datapath + '/mouse/images/', startIdx=0, stopIdx=10)
 .. code:: python
 
-    tsc.convertImagesToSeries(datapath + '/fish/images/', 'savelocation', inputFormat='tif')
+    tsc.convertImagesToSeries(datapath + '/mouse/images/', 'savelocation', startIdx=0, stopIdx=10)
     data = tsc.loadSeries('savelocation')
 Loading examples
 ----------------
@@ -183,6 +183,18 @@ represent anything meaningful about the data itself.
 
 .. code:: python
 
+    data = tsc.loadExample('mouse-images')
+    img = data[0]
+.. code:: python
+
+    image(img)
+
+
+.. image:: thunder_context_files/thunder_context_29_0.png
+
+
+.. code:: python
+
     data = tsc.loadExample('fish-series')
     img = data.seriesMean().pack()
 .. code:: python
@@ -190,7 +202,7 @@ represent anything meaningful about the data itself.
     image(img[:,:,0])
 
 
-.. image:: thunder_context_files/thunder_context_29_0.png
+.. image:: thunder_context_files/thunder_context_31_0.png
 
 
 You can easily see the list of avaiable example data sets:

@@ -198,10 +198,10 @@ on loading and data types.</p>
 <span class="n">datapath</span> <span class="o">=</span> <span class="n">pth</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pth</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">pth</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">thunder</span><span class="o">.</span><span class="n">__file__</span><span class="p">)),</span> <span class="s">&#39;utils/data/&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadImages</span><span class="p">(</span><span class="n">datapath</span> <span class="o">+</span> <span class="s">&#39;/fish/images/&#39;</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;tif&#39;</span><span class="p">,</span> <span class="n">startIdx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stopIdx</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadImages</span><span class="p">(</span><span class="n">datapath</span> <span class="o">+</span> <span class="s">&#39;/mouse/images/&#39;</span><span class="p">,</span> <span class="n">startIdx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stopIdx</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">()</span><span class="o">.</span><span class="n">first</span><span class="p">()[:,:,</span><span class="mi">0</span><span class="p">])</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">()</span><span class="o">.</span><span class="n">first</span><span class="p">())</span>
 </pre></div>
 </div>
 <img alt="../_images/thunder_context_13_0.png" src="../_images/thunder_context_13_0.png" />
@@ -263,10 +263,10 @@ If <tt class="docutils literal"><span class="pre">shuffle=False</span></tt> it w
 shuffle at the cost of increased file IO. In practice, <tt class="docutils literal"><span class="pre">shuffle=False</span></tt>
 will often be slower, but with versions of Spark before 1.2 it may be
 more robust. <tt class="docutils literal"><span class="pre">shuffle=True</span></tt> is the current default.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadImagesAsSeries</span><span class="p">(</span><span class="n">datapath</span> <span class="o">+</span> <span class="s">&#39;/fish/images/&#39;</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;tif&#39;</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadImagesAsSeries</span><span class="p">(</span><span class="n">datapath</span> <span class="o">+</span> <span class="s">&#39;/mouse/images/&#39;</span><span class="p">,</span> <span class="n">startIdx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stopIdx</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">tsc</span><span class="o">.</span><span class="n">convertImagesToSeries</span><span class="p">(</span><span class="n">datapath</span> <span class="o">+</span> <span class="s">&#39;/fish/images/&#39;</span><span class="p">,</span> <span class="s">&#39;savelocation&#39;</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;tif&#39;</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">tsc</span><span class="o">.</span><span class="n">convertImagesToSeries</span><span class="p">(</span><span class="n">datapath</span> <span class="o">+</span> <span class="s">&#39;/mouse/images/&#39;</span><span class="p">,</span> <span class="s">&#39;savelocation&#39;</span><span class="p">,</span> <span class="n">startIdx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stopIdx</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 <span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeries</span><span class="p">(</span><span class="s">&#39;savelocation&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -288,6 +288,14 @@ testing purposes, by calling methods from the <tt class="docutils literal"><span
 datasets. This are highly compressed and downsampled, and meant only to
 demonstrate basic functionality and help explore the API, not to
 represent anything meaningful about the data itself.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;mouse-images&#39;</span><span class="p">)</span>
+<span class="n">img</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/thunder_context_29_0.png" src="../_images/thunder_context_29_0.png" />
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;fish-series&#39;</span><span class="p">)</span>
 <span class="n">img</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">seriesMean</span><span class="p">()</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
 </pre></div>
@@ -295,7 +303,7 @@ represent anything meaningful about the data itself.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
-<img alt="../_images/thunder_context_29_0.png" src="../_images/thunder_context_29_0.png" />
+<img alt="../_images/thunder_context_31_0.png" src="../_images/thunder_context_31_0.png" />
 <p>You can easily see the list of avaiable example data sets:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">()</span>
 </pre></div>

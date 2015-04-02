@@ -259,6 +259,26 @@ to look at:</p>
 </pre></div>
 </div>
 <img alt="../_images/images_23_01.png" src="../_images/images_23_01.png" />
+<p>As an example of 2D data, we can load another one of the examples</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;mouse-images&#39;</span><span class="p">)</span>
+<span class="n">data</span><span class="o">.</span><span class="n">dims</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Dimensions</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">63</span><span class="p">,</span> <span class="mi">63</span><span class="p">)],</span> <span class="n">n</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Look at the first image</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">img</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/images_27_01.png" src="../_images/images_27_01.png" />
+<p>Bracket notation makes it easy to grab images with particular indexes,
+by specifying the key in the bracket</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">10</span><span class="p">])</span>
+</pre></div>
+</div>
+<img alt="../_images/images_29_0.png" src="../_images/images_29_0.png" />
 </div>
 <div class="section" id="image-manipulations">
 <h2>Image manipulations<a class="headerlink" href="#image-manipulations" title="Permalink to this headline">¶</a></h2>
@@ -267,12 +287,13 @@ to look at:</p>
 projection in depth. We can perform a maximum projection in parallel
 across all volumes. Here, we compute the projections, and then show the
 first one.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">projs</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">maxProjection</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;fish-images&#39;</span><span class="p">)</span>
+<span class="n">projs</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">maxProjection</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">img</span> <span class="o">=</span> <span class="n">projs</span><span class="o">.</span><span class="n">first</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
 <span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/images_26_0.png" src="../_images/images_26_0.png" />
+<img alt="../_images/images_32_0.png" src="../_images/images_32_0.png" />
 <p>We can also subselect a set of planes, specifying the top and bottom of
 the desired range:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">sub</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">planes</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
@@ -280,21 +301,21 @@ the desired range:</p>
 <span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/images_28_0.png" src="../_images/images_28_0.png" />
+<img alt="../_images/images_34_0.png" src="../_images/images_34_0.png" />
 <p>And we can subsample in space:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">sub</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">subsample</span><span class="p">([</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
 <span class="n">img</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">first</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
 <span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
-<img alt="../_images/images_30_0.png" src="../_images/images_30_0.png" />
+<img alt="../_images/images_36_0.png" src="../_images/images_36_0.png" />
 <p>Finally, we can perform operations that aggregate across images. For
 example, computing the standard deviation:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">img</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">stdev</span><span class="p">()</span>
 <span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
-<img alt="../_images/images_32_0.png" src="../_images/images_32_0.png" />
+<img alt="../_images/images_38_0.png" src="../_images/images_38_0.png" />
 <p>The result of distributed image operations can be saved by exporting
 each image to a <tt class="docutils literal"><span class="pre">png</span></tt> file. You can pass the same arguments as to the
 <tt class="docutils literal"><span class="pre">matplotlib</span></tt> function <tt class="docutils literal"><span class="pre">imshow</span></tt> (NOTE: This support is currently
@@ -356,7 +377,7 @@ dimensions of the original images.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/images_44_0.png" src="../_images/images_44_0.png" />
+<img alt="../_images/images_50_0.png" src="../_images/images_50_0.png" />
 <p>For a large data set that will be analyzed repeatedly as a <tt class="docutils literal"><span class="pre">Series</span></tt>,
 it will ultimately be faster and more convienient to save <tt class="docutils literal"><span class="pre">Images</span></tt>
 data to a collection of flat binary files on a distributed file system,
