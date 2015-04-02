@@ -7,11 +7,11 @@ Image registration
 ==================
 
 A common problem when working with large collections of related images
-is registrating those together, relative to some reference. Thunder
-implements a general architecture for image registration that makes it
-easy to support a variety of registration algorithms, and exposes them
-to the user through a simple API. Here, we generate data for
-registration, apply a registration algorithm, and show the results.
+is registrating them together, relative to a reference. Thunder
+implements an architecture for image registration that supports a
+variety of registration algorithms, and exposes them to the user through
+a simple API. Here, we generate data for registration, apply a
+registration algorithm, and show the results.
 
 If you are interested in contributing a new registration algorithm to
 Thunder, let us know in the
