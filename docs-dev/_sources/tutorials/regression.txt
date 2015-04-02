@@ -38,7 +38,7 @@ Take a look at the first image.
 
 .. code:: python
 
-    image(data.values().first())
+    image(data[0])
 
 
 .. image:: regression_files/regression_10_0.png
@@ -52,7 +52,7 @@ time series by a baseline).
 
 .. code:: python
 
-    series = data.toSeries().toTimeSeries().squelch(50).normalize()
+    series = data.toTimeSeries().squelch(50).normalize()
     series.cache()
     series.count();
 Take a look at the time series of a few pixels (selected to have large
@@ -82,6 +82,17 @@ Load in associated behavioral data to be used as explanatory variables
     Params
     names: ['runningSpeed', 'corridorPosition']
 
+
+
+We can also plot the regressors
+
+.. code:: python
+
+    plt.plot(regressors['runningSpeed']);
+    plt.plot(regressors['corridorPosition']);
+
+
+.. image:: regression_files/regression_18_0.png
 
 
 Correlation analysis
@@ -114,7 +125,7 @@ correlations are blue.
     image(corrMat, bar=True, cmap='RdBu_r')
 
 
-.. image:: regression_files/regression_21_0.png
+.. image:: regression_files/regression_23_0.png
 
 
 Regression analysis
@@ -171,7 +182,7 @@ distribution across the image.
     image(rsq, bar=True)
 
 
-.. image:: regression_files/regression_31_0.png
+.. image:: regression_files/regression_33_0.png
 
 
 .. code:: python
@@ -193,7 +204,7 @@ distribution across the image.
     plt.title('r-squared');
 
 
-.. image:: regression_files/regression_32_0.png
+.. image:: regression_files/regression_34_0.png
 
 
 To combine these sources of information, we will make composite maps,
@@ -228,5 +239,5 @@ as a mask, and use the mean image as a background to blend in.
     image(img)
 
 
-.. image:: regression_files/regression_35_0.png
+.. image:: regression_files/regression_37_0.png
 
