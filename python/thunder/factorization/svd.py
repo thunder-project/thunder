@@ -18,7 +18,7 @@ class SVD(object):
     k : int, optional, default = 3
         Number of singular vectors to estimate
 
-    method : string, optional, default "auto"
+    method : string, optional, default = "auto"
         Whether to use a direct or iterative method. If set to 'auto',
         will select preferred method based on dimensionality.
 
