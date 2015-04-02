@@ -17,6 +17,7 @@ Thunder includes utilties for loading and saving different formats, classes for 
 To learn more, follow these links to the primary documentation:
 
 - `Project page`_ 
+- `Documentation`_ 
 - `Github repo`_
 - `Gitter chatroom`_
 - `Mailing list`_
@@ -25,3 +26,4 @@ To learn more, follow these links to the primary documentation:
 .. _Mailing list: https://groups.google.com/forum/?hl=en#!forum/thunder-user
 .. _Github repo: http://github.com/thunder-project/thunder
 .. _Project page: http://thunder-project.org
+.. _Documentation: http://thunder-project.org/thunder/docs
