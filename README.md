@@ -10,9 +10,9 @@ Thunder
 
 Large-scale neural data analysis with Spark - [project page](http://thunder-project.org)
 
+[![Latest Version](https://pypip.in/version/thunder-python/badge.svg)](https://pypip.in/version/thunder-python/)
 [![Build Status](https://travis-ci.org/thunder-project/thunder.png?branch=master)](https://travis-ci.org/thunder-project/thunder) 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/thunder-project/thunder?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Stories in Ready](https://badge.waffle.io/thunder-project/thunder.png?label=ready&title=Ready)](https://waffle.io/thunder-project/thunder)
 
 About
 -----
