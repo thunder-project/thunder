@@ -148,7 +148,7 @@
 <h1><tt class="xref py py-mod docutils literal"><span class="pre">thunder</span></tt>.ICA<a class="headerlink" href="#thunder-ica" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="thunder.ICA">
-<em class="property">class </em><tt class="descclassname">thunder.</tt><tt class="descname">ICA</tt><big>(</big><em>c</em>, <em>k=None</em>, <em>svdMethod='direct'</em>, <em>maxIter=10</em>, <em>tol=1e-06</em>, <em>seed=0</em><big>)</big><a class="headerlink" href="#thunder.ICA" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">thunder.</tt><tt class="descname">ICA</tt><big>(</big><em>c</em>, <em>k=None</em>, <em>svdMethod='auto'</em>, <em>maxIter=10</em>, <em>tol=1e-06</em>, <em>seed=0</em><big>)</big><a class="headerlink" href="#thunder.ICA" title="Permalink to this definition">¶</a></dt>
 <dd><p>Independent component analysis on a distributed matrix.</p>
 <p>Initial dimensionality reduction performed via SVD</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -163,9 +163,10 @@
 <blockquote>
 <div><p>Number of independent components to estimate</p>
 </div></blockquote>
-<p><strong>svdMethod</strong> : string, optional, default = &#8220;direct&#8221;</p>
+<p><strong>svdMethod</strong> : string, optional, default = &#8220;auto&#8221;</p>
 <blockquote>
-<div><p>Which SVD method to use</p>
+<div><p>Which SVD method to use. If set to &#8216;auto&#8217;,
+will select preferred method based on dimensionality.</p>
 </div></blockquote>
 <p><strong>maxIter</strong> : Int, optional, default = 10</p>
 <blockquote>

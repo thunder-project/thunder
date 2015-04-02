@@ -148,7 +148,7 @@
 <h1><tt class="xref py py-mod docutils literal"><span class="pre">thunder</span></tt>.SVD<a class="headerlink" href="#thunder-svd" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="thunder.SVD">
-<em class="property">class </em><tt class="descclassname">thunder.</tt><tt class="descname">SVD</tt><big>(</big><em>k=3</em>, <em>method='direct'</em>, <em>maxIter=20</em>, <em>tol=1e-05</em><big>)</big><a class="headerlink" href="#thunder.SVD" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">thunder.</tt><tt class="descname">SVD</tt><big>(</big><em>k=3</em>, <em>method='auto'</em>, <em>maxIter=20</em>, <em>tol=1e-05</em><big>)</big><a class="headerlink" href="#thunder.SVD" title="Permalink to this definition">¶</a></dt>
 <dd><p>Singular value decomposiiton on a distributed matrix.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -158,9 +158,10 @@
 <blockquote>
 <div><p>Number of singular vectors to estimate</p>
 </div></blockquote>
-<p><strong>method</strong> : string, optional, default &#8220;direct&#8221;</p>
+<p><strong>method</strong> : string, optional, default &#8220;auto&#8221;</p>
 <blockquote>
-<div><p>Whether to use a direct or iterative method</p>
+<div><p>Whether to use a direct or iterative method. If set to &#8216;auto&#8217;,
+will select preferred method based on dimensionality.</p>
 </div></blockquote>
 <p><strong>maxIter</strong> : int, optional, default = 20</p>
 <blockquote>
