@@ -146,6 +146,11 @@ class RegistrationModel(Serializable, object):
         self.regMethod = regMethod
         self.transClass = transClass
 
+    def __getitem__(self, entry):
+        if not isinstance(entry, int):
+            raise IndexError("Selection not recognized, must be Int, got %s" % type(entry))
+        return self.transformations[entry]
+
     def toArray(self):
         """
         Return transformations as an array with shape (n,x1,x2,...)
@@ -181,10 +186,11 @@ class RegistrationModel(Serializable, object):
         return Images(newrdd).__finalize__(images)
 
     def __repr__(self):
-        out = "RegisterModel(method='%s', trans='%s', transformations=%s)" % \
-              (self.regMethod, self.transClass, self.transformations)
-        return out[0:120] + " ..."
-
+        s = self.__class__.__name__
+        s += '\n%g transformations' % (len(self.transformations))
+        s += '\nregistration method: ' + self.regMethod
+        s += '\ntransformation type: ' + self.transClass
+        return s
 
 
 
