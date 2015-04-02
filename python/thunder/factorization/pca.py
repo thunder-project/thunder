@@ -16,8 +16,9 @@ class PCA(object):
     k : int
         Number of principal components to estimate
 
-    svdMethod : str, optional, default = "direct"
-        Which method to use for performing the SVD
+    svdMethod : str, optional, default = "auto"
+        Which method to use for performing the SVD. If set to 'auto',
+        will select preferred method based on dimensionality.
 
     Attributes
     ----------
@@ -35,7 +36,7 @@ class PCA(object):
     SVD : singular value decomposition
     """
 
-    def __init__(self, k=3, svdMethod='direct'):
+    def __init__(self, k=3, svdMethod='auto'):
         self.k = k
         self.svdMethod = svdMethod
         self.scores = None
