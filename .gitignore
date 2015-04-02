@@ -11,4 +11,6 @@ python/dist
 python/build
 python/Thunder_python.egg-info
 python/doc/generated
+python/doc/tutorials
 python/doc/_build
+python/doc/_deploy
