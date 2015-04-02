@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.5.0dev',
+        VERSION:     '0.5.0.dev',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html"><img src="../../../../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.0dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.0.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -206,7 +206,7 @@ array and look at them as images one by one.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imgs</span><span class="p">[</span><span class="mi">1</span><span class="p">,:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">clim</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">0.05</span><span class="p">,</span><span class="mf">0.05</span><span class="p">));</span>
 </pre></div>
 </div>
-<img alt="../../../../_images/factorization_14_0.png" src="../../../../_images/factorization_14_0.png" />
+<img alt="../../../../_images/factorization_14_01.png" src="../../../../_images/factorization_14_01.png" />
 <p>Clearly there is some spatial structure to each component, but looking
 at them one by one can be difficult. A useful trick is to look at two
 components at once via a color code that converts the scores into polar
@@ -282,11 +282,11 @@ contains the spatial basis functions. Let&#8217;s look at both.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imgs</span><span class="p">[</span><span class="mi">1</span><span class="p">][:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../../../../_images/factorization_29_0.png" src="../../../../_images/factorization_29_0.png" />
+<img alt="../../../../_images/factorization_29_01.png" src="../../../../_images/factorization_29_01.png" />
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imgs</span><span class="p">[</span><span class="mi">2</span><span class="p">][:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../../../../_images/factorization_30_0.png" src="../../../../_images/factorization_30_0.png" />
+<img alt="../../../../_images/factorization_30_01.png" src="../../../../_images/factorization_30_01.png" />
 <p>For NMF, a useful way to look at the basis functions is to encode each
 one as a separate color channel. We can do that using colorization with
 an <tt class="docutils literal"><span class="pre">rgb</span></tt> conversion, which simply maps the spatial basis functions

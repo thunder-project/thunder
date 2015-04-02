@@ -182,7 +182,7 @@
 </div>
 <div class="section" id="packaging-a-release">
 <h2>Packaging a release<a class="headerlink" href="#packaging-a-release" title="Permalink to this headline">¶</a></h2>
-<p>(NOTE: this is primarily a reference for core Thunder committers). When we want to create a new major Thunder release, first create a branch with the major version number (e.g. &#8220;branch-0.6&#8221;). Change the version number in <cite>python/thunder/__init__.py</cite> by setting:</p>
+<p>(NOTE: this is primarily a reference for core Thunder committers). When we want to create a new major Thunder release, first create a branch with the major version number (e.g. &#8220;branch-0.6&#8221;). Change the version number in <tt class="docutils literal"><span class="pre">python/thunder/__init__.py</span></tt> by setting:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">__version__</span> <span class="o">=</span> <span class="s">&quot;0.6.0&quot;</span>
 </pre></div>
 </div>
@@ -190,11 +190,11 @@
 <div class="highlight-scala"><div class="highlight"><pre><span class="n">version</span> <span class="o">:=</span> <span class="s">&quot;0.6.0&quot;</span>
 </pre></div>
 </div>
-<p>Build the Scala jar by calling:</p>
-<div class="highlight-bash"><div class="highlight"><pre>sbt package<span class="sb">`</span>
+<p>Build the Scala jar by calling from within the <tt class="docutils literal"><span class="pre">scala</span></tt> folder:</p>
+<div class="highlight-bash"><div class="highlight"><pre>sbt package
 </pre></div>
 </div>
-<p>from within the <cite>scala</cite> folder, and copy the jar it creates into <cite>python/thunder/lib</cite>. Finally, build and copy the Python egg file by calling:</p>
+<p>and copy the jar it creates into <tt class="docutils literal"><span class="pre">python/thunder/lib</span></tt>. Build and copy the Python egg file by calling:</p>
 <div class="highlight-bash"><div class="highlight"><pre>python/bin/build
 </pre></div>
 </div>

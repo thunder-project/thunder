@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.5.0dev',
+        VERSION:     '0.5.0.dev',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html"><img src="../../../../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.0dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.0.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -242,7 +242,7 @@ first one.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../../../../_images/images_21_0.png" src="../../../../_images/images_21_0.png" />
+<img alt="../../../../_images/images_21_01.png" src="../../../../_images/images_21_01.png" />
 <p>We can also subselect a set of planes, specifying the top and bottom of
 the desired range:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">sub</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">planes</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
@@ -250,7 +250,7 @@ the desired range:</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../../../../_images/images_23_0.png" src="../../../../_images/images_23_0.png" />
+<img alt="../../../../_images/images_23_01.png" src="../../../../_images/images_23_01.png" />
 <p>And we can subsample in space:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">sub</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">subsample</span><span class="p">([</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
 <span class="n">img</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">first</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
@@ -264,7 +264,7 @@ example, computing the standard deviation:</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../../../../_images/images_27_0.png" src="../../../../_images/images_27_0.png" />
+<img alt="../../../../_images/images_27_01.png" src="../../../../_images/images_27_01.png" />
 <p>The result of distributed image operations can be saved by exporting
 each image to a <tt class="docutils literal"><span class="pre">png</span></tt> file. (NOTE: This support is currently limited
 to saving 2d image data.)</p>

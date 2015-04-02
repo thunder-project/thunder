@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.5.0dev',
+        VERSION:     '0.5.0.dev',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html"><img src="../../../../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.0dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.0.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -219,7 +219,7 @@ complex operations.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">brainmap</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../../../../_images/clustering_18_0.png" src="../../../../_images/clustering_18_0.png" />
+<img alt="../../../../_images/clustering_18_01.png" src="../../../../_images/clustering_18_01.png" />
 </div>
 <div class="section" id="smarter-color-selection">
 <h2>Smarter color selection<a class="headerlink" href="#smarter-color-selection" title="Permalink to this headline">¶</a></h2>
@@ -250,7 +250,7 @@ more clear.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">brainmap</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../../../../_images/clustering_24_0.png" src="../../../../_images/clustering_24_0.png" />
+<img alt="../../../../_images/clustering_24_01.png" src="../../../../_images/clustering_24_01.png" />
 </div>
 <div class="section" id="thresholding">
 <h2>Thresholding<a class="headerlink" href="#thresholding" title="Permalink to this headline">¶</a></h2>
@@ -268,7 +268,7 @@ ignores the noise.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">std_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.05</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../../../../_images/clustering_26_0.png" src="../../../../_images/clustering_26_0.png" />
+<img alt="../../../../_images/clustering_26_01.png" src="../../../../_images/clustering_26_01.png" />
 <p>Now perform clustering again after filtering the data based on standard
 deviation</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">std</span>
@@ -310,7 +310,7 @@ can compute this using the <tt class="docutils literal"><span class="pre">simila
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">brainmap</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../../../../_images/clustering_35_0.png" src="../../../../_images/clustering_35_0.png" />
+<img alt="../../../../_images/clustering_35_01.png" src="../../../../_images/clustering_35_01.png" />
 <p>So far we&#8217;ve always been colorizing one plane, but we can apply the same
 operation to the full 3D volume (which in this case has just two
 planes), and then look at a maximum projection.</p>

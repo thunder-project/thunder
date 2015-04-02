@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.5.0dev',
+        VERSION:     '0.5.0.dev',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html"><img src="../../../../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.0dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.0.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -197,7 +197,7 @@ this is entirely optional.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">examples</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../../../../_images/basic_usage_13_0.png" src="../../../../_images/basic_usage_13_0.png" />
+<img alt="../../../../_images/basic_usage_13_01.png" src="../../../../_images/basic_usage_13_01.png" />
 <p>We can also compute the mean value for each pixel using the
 <tt class="docutils literal"><span class="pre">seriesMean</span></tt> method:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">means</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">seriesMean</span><span class="p">()</span>
@@ -233,7 +233,7 @@ data set is quite small, so <tt class="docutils literal"><span class="pre">pack<
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&quot;gray&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../../../../_images/basic_usage_19_0.png" src="../../../../_images/basic_usage_19_0.png" />
+<img alt="../../../../_images/basic_usage_19_01.png" src="../../../../_images/basic_usage_19_01.png" />
 <p>It&#8217;s also easy to save the result to a <tt class="docutils literal"><span class="pre">numpy</span></tt> file, or to a <tt class="docutils literal"><span class="pre">MAT</span></tt>
 file if you do the rest of your analysis in Matlab.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">thunder.utils.export</span> <span class="kn">import</span> <span class="n">export</span>
