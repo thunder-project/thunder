@@ -24,7 +24,7 @@ Setup plotting
     sns.set_context('notebook')
     sns.set_style('darkgrid')
     from thunder import Colorize
-    show = Colorize.show
+    image = Colorize.image
 PCA
 ---
 
@@ -77,7 +77,7 @@ array and look at them as images one by one.
 
 .. code:: python
 
-    show(imgs[0,:,:,0], clim=(-0.05,0.05))
+    image(imgs[0,:,:,0], clim=(-0.05,0.05))
 
 
 .. image:: factorization_files/factorization_14_0.png
@@ -85,7 +85,7 @@ array and look at them as images one by one.
 
 .. code:: python
 
-    show(imgs[1,:,:,0], clim=(-0.05,0.05))
+    image(imgs[1,:,:,0], clim=(-0.05,0.05))
 
 
 .. image:: factorization_files/factorization_15_0.png
@@ -103,7 +103,7 @@ components, and the brightness shows the total amplitude.
 .. code:: python
 
     from numpy import amax
-    show(amax(maps,2))
+    image(amax(maps,2))
 
 
 .. image:: factorization_files/factorization_18_0.png
@@ -114,8 +114,8 @@ random subset of pixels. This will return two numbers per pixel, the
 projection onto the first and second principal component, and we
 threshold based on the norm so we are sure to retrieve pixels with at
 least some structure. Then we make a scatter plot of the two quantities
-against one another, using the same colormap as used to generate the
-map.
+against one another, using the same color conversion as used to generate
+the map.
 
 .. code:: python
 
@@ -178,7 +178,7 @@ contains the spatial basis functions. Let's look at both.
     imgs = model.w.pack()
 .. code:: python
 
-    show(imgs[0][:,:,0])
+    image(imgs[0][:,:,0])
 
 
 .. image:: factorization_files/factorization_29_0.png
@@ -186,7 +186,7 @@ contains the spatial basis functions. Let's look at both.
 
 .. code:: python
 
-    show(imgs[1][:,:,0])
+    image(imgs[1][:,:,0])
 
 
 .. image:: factorization_files/factorization_30_0.png
@@ -194,7 +194,7 @@ contains the spatial basis functions. Let's look at both.
 
 .. code:: python
 
-    show(imgs[2][:,:,0])
+    image(imgs[2][:,:,0])
 
 
 .. image:: factorization_files/factorization_31_0.png
@@ -209,7 +209,7 @@ factor which controls overall brightness.
 .. code:: python
 
     maps = Colorize(cmap='rgb', scale=1.0).transform(imgs)
-    show(maps[:,:,0,:])
+    image(maps[:,:,0,:])
 
 
 .. image:: factorization_files/factorization_33_0.png
@@ -224,7 +224,7 @@ automatically normalizes the amplitude of each one.
 .. code:: python
 
     maps = Colorize(cmap='indexed', colors=[ "hotpink", "cornflowerblue", "mediumseagreen"], scale=1).transform(imgs)
-    show(maps[:,:,0,:])
+    image(maps[:,:,0,:])
 
 
 .. image:: factorization_files/factorization_35_0.png
@@ -240,7 +240,7 @@ how to select and colorize just two of the three image channels.
 .. code:: python
 
     maps = Colorize(cmap='indexed', colors=['red', 'blue'], scale=1).transform(imgs[[0,2]], background=ref, mixing=0.5)
-    show(maps[:,:,0,:])
+    image(maps[:,:,0,:])
 
 
 .. image:: factorization_files/factorization_38_0.png
@@ -278,8 +278,8 @@ when making maps.
     imgs = model.sigs.pack()
 .. code:: python
 
-    maps = Colorize(cmap='indexed', colors=['red','green', 'blue'], scale=2).transform(abs(imgs))
-    show(maps[:,:,0,:])
+    maps = Colorize(cmap='indexed', colors=['red','green', 'blue'], scale=3).transform(abs(imgs))
+    image(maps[:,:,0,:])
 
 
 .. image:: factorization_files/factorization_44_0.png

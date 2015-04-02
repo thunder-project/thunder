@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.0.RC3',
+        VERSION:     '0.5.0dev',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -55,7 +55,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.0.RC3</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.0dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -265,7 +265,7 @@ can save computation to specify if known in advance</p>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.getMany" title="thunder.RowMatrix.getMany"><tt class="xref py py-obj docutils literal"><span class="pre">getMany</span></tt></a>(keys)</td>
 <td>Returns a sequence of values corresponding to the passed sequence of keys.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.getRange" title="thunder.RowMatrix.getRange"><tt class="xref py py-obj docutils literal"><span class="pre">getRange</span></tt></a>(sliceOrSlices)</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.getRange" title="thunder.RowMatrix.getRange"><tt class="xref py py-obj docutils literal"><span class="pre">getRange</span></tt></a>(sliceOrSlices[,&nbsp;keys])</td>
 <td>Returns key/value pairs that fall within a range given by the passed slice or slices.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.gramian" title="thunder.RowMatrix.gramian"><tt class="xref py py-obj docutils literal"><span class="pre">gramian</span></tt></a>([method])</td>
@@ -397,7 +397,7 @@ can save computation to specify if known in advance</p>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.subToInd" title="thunder.RowMatrix.subToInd"><tt class="xref py py-obj docutils literal"><span class="pre">subToInd</span></tt></a>([order,&nbsp;isOneBased])</td>
 <td>Convert subscript index keys to linear index keys</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.subset" title="thunder.RowMatrix.subset"><tt class="xref py py-obj docutils literal"><span class="pre">subset</span></tt></a>([nsamples,&nbsp;thresh,&nbsp;stat])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.RowMatrix.subset" title="thunder.RowMatrix.subset"><tt class="xref py py-obj docutils literal"><span class="pre">subset</span></tt></a>([nsamples,&nbsp;thresh,&nbsp;stat,&nbsp;seed])</td>
 <td>Extract random subset of records, filtering on a summary statistic.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.RowMatrix.sum" title="thunder.RowMatrix.sum"><tt class="xref py py-obj docutils literal"><span class="pre">sum</span></tt></a>([dtype,&nbsp;casting])</td>
@@ -758,7 +758,7 @@ If multiple values are found, a sequence containing all matching values will be 
 
 <dl class="method">
 <dt id="thunder.RowMatrix.getRange">
-<tt class="descname">getRange</tt><big>(</big><em>sliceOrSlices</em><big>)</big><a class="headerlink" href="#thunder.RowMatrix.getRange" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">getRange</tt><big>(</big><em>sliceOrSlices</em>, <em>keys=True</em><big>)</big><a class="headerlink" href="#thunder.RowMatrix.getRange" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns key/value pairs that fall within a range given by the passed slice or slices.</p>
 <p>The return values will be a sorted list of key/value pairs of all records in the underlying
 RDD for which the key falls within the range given by the passed slice selectors. Note that
@@ -773,6 +773,10 @@ is not supported and a alueError will be raised if passed.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>sliceOrSlices: slice object or sequence of slices</strong></p>
 <blockquote>
 <div><p>The passed slice or slices should be of the same cardinality as the keys of the underlying rdd.</p>
+</div></blockquote>
+<p><strong>keys: boolean, optional, default = True</strong></p>
+<blockquote>
+<div><p>Whether to return keys along with values, if false will just return an array of values.</p>
 </div></blockquote>
 </td>
 </tr>
@@ -1392,7 +1396,7 @@ performed. See Data.astype() for details.</p>
 
 <dl class="method">
 <dt id="thunder.RowMatrix.subset">
-<tt class="descname">subset</tt><big>(</big><em>nsamples=100</em>, <em>thresh=None</em>, <em>stat='std'</em><big>)</big><a class="headerlink" href="#thunder.RowMatrix.subset" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">subset</tt><big>(</big><em>nsamples=100</em>, <em>thresh=None</em>, <em>stat='std'</em>, <em>seed=None</em><big>)</big><a class="headerlink" href="#thunder.RowMatrix.subset" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extract random subset of records, filtering on a summary statistic.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />

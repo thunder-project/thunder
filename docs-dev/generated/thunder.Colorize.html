@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.0.RC3',
+        VERSION:     '0.5.0dev',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.0.RC3</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.0dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -194,44 +194,17 @@ scaled by its maximum and minimum values.</p>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.Colorize.optimize" title="thunder.Colorize.optimize"><tt class="xref py py-obj docutils literal"><span class="pre">optimize</span></tt></a>(mat[,&nbsp;asCmap])</td>
 <td>Optimal colors based on array data similarity.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.Colorize.show" title="thunder.Colorize.show"><tt class="xref py py-obj docutils literal"><span class="pre">show</span></tt></a>(img[,&nbsp;cmap,&nbsp;bar,&nbsp;nans,&nbsp;clim])</td>
-<td>Streamlined display of images using matplotlib.</td>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">Colorize.show</span></tt></td>
+<td></td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.Colorize.transform" title="thunder.Colorize.transform"><tt class="xref py py-obj docutils literal"><span class="pre">transform</span></tt></a>(img[,&nbsp;mask,&nbsp;background,&nbsp;mixing])</td>
 <td>Colorize numerical image data.</td>
 </tr>
 </tbody>
 </table>
-<dl class="classmethod">
-<dt id="thunder.Colorize.optimize">
-<em class="property">classmethod </em><tt class="descname">optimize</tt><big>(</big><em>mat</em>, <em>asCmap=False</em><big>)</big><a class="headerlink" href="#thunder.Colorize.optimize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Optimal colors based on array data similarity.</p>
-<p>Given an (n, m) data array with n m-dimensional data points,
-tries to find an optimal set of n colors such that the similarity
-between colors in 3-dimensional space is well-matched to the similarity
-between the data points in m-dimensional space.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>mat</strong> : array-like</p>
-<blockquote>
-<div><p>Array of data points to use for estimating similarity.</p>
-</div></blockquote>
-<p><strong>asCmap</strong> : boolean, optional, default = False</p>
-<blockquote class="last">
-<div><p>Whether to return a matplotlib colormap, if False will
-return a list of colors.</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
 <dl class="staticmethod">
-<dt id="thunder.Colorize.show">
-<em class="property">static </em><tt class="descname">show</tt><big>(</big><em>img</em>, <em>cmap='gray'</em>, <em>bar=False</em>, <em>nans=True</em>, <em>clim=None</em><big>)</big><a class="headerlink" href="#thunder.Colorize.show" title="Permalink to this definition">¶</a></dt>
+<dt id="thunder.Colorize.image">
+<em class="property">static </em><tt class="descname">image</tt><big>(</big><em>img</em>, <em>cmap='gray'</em>, <em>bar=False</em>, <em>nans=True</em>, <em>clim=None</em><big>)</big><a class="headerlink" href="#thunder.Colorize.image" title="Permalink to this definition">¶</a></dt>
 <dd><p>Streamlined display of images using matplotlib.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -256,6 +229,33 @@ return a list of colors.</p>
 <p><strong>clim</strong> : tuple, optional, default = None</p>
 <blockquote class="last">
 <div><p>Limits for scaling image</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="thunder.Colorize.optimize">
+<em class="property">classmethod </em><tt class="descname">optimize</tt><big>(</big><em>mat</em>, <em>asCmap=False</em><big>)</big><a class="headerlink" href="#thunder.Colorize.optimize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optimal colors based on array data similarity.</p>
+<p>Given an (n, m) data array with n m-dimensional data points,
+tries to find an optimal set of n colors such that the similarity
+between colors in 3-dimensional space is well-matched to the similarity
+between the data points in m-dimensional space.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>mat</strong> : array-like</p>
+<blockquote>
+<div><p>Array of data points to use for estimating similarity.</p>
+</div></blockquote>
+<p><strong>asCmap</strong> : boolean, optional, default = False</p>
+<blockquote class="last">
+<div><p>Whether to return a matplotlib colormap, if False will
+return a list of colors.</p>
 </div></blockquote>
 </td>
 </tr>

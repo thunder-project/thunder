@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.0.RC3',
+        VERSION:     '0.5.0dev',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -34,7 +34,7 @@
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
     <link rel="top" title="None" href="../index.html" />
     <link rel="next" title="Factorization" href="factorization.html" />
-    <link rel="prev" title="Multi-indexing" href="multi_index.html" />
+    <link rel="prev" title="Image registration" href="image_registration.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.0.RC3</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.0dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -89,6 +89,7 @@
 <li class="toctree-l1"><a class="reference internal" href="images.html">Images</a></li>
 <li class="toctree-l1"><a class="reference internal" href="series.html">Series</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi_index.html">Multi-indexing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="image_registration.html">Image registration</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">Clustering</a></li>
 <li class="toctree-l1"><a class="reference internal" href="factorization.html">Factorization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="regression.html">Regression</a></li>
@@ -167,7 +168,7 @@ the form of a spatial map.</p>
 <span class="n">sns</span><span class="o">.</span><span class="n">set_palette</span><span class="p">(</span><span class="s">&#39;muted&#39;</span><span class="p">)</span>
 <span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">thunder</span> <span class="kn">import</span> <span class="n">Colorize</span>
-<span class="n">show</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">show</span>
+<span class="n">image</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">image</span>
 </pre></div>
 </div>
 </div>
@@ -211,7 +212,7 @@ labels:</p>
 </div>
 <p>Look at the resulting map as an image, using the same color scheme as
 for plotting the cluster centers above:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">show</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmapCat</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmapCat</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/clustering_18_01.png" src="../_images/clustering_18_01.png" />
@@ -220,7 +221,7 @@ class. In this case the effect is the same as setting the color map in
 matplotlib&#8217;s <tt class="docutils literal"><span class="pre">imshow</span></tt>, but later <tt class="docutils literal"><span class="pre">Colorize</span></tt> will let us perform more
 complex operations.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="n">cmapCat</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">show</span><span class="p">(</span><span class="n">brainmap</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">brainmap</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/clustering_20_0.png" src="../_images/clustering_20_0.png" />
@@ -249,7 +250,7 @@ to generate different color schemes.</p>
 similarly (e.g. top and bottom), which makes the spatial organization
 more clear.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="n">newClrs</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">show</span><span class="p">(</span><span class="n">brainmap</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">brainmap</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/clustering_26_01.png" src="../_images/clustering_26_01.png" />
@@ -265,7 +266,7 @@ series. First, let&#8217;s look at a map of the standard deviation, to find a
 reasonable threshold that preserves most of the relavant signal, but
 ignores the noise.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">stdMap</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">seriesStdev</span><span class="p">()</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
-<span class="n">show</span><span class="p">(</span><span class="n">stdMap</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.05</span><span class="p">)</span> <span class="c"># try different values of the threshold</span>
+<span class="n">image</span><span class="p">(</span><span class="n">stdMap</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.05</span><span class="p">)</span> <span class="c"># try different values of the threshold</span>
 </pre></div>
 </div>
 <img alt="../_images/clustering_28_0.png" src="../_images/clustering_28_0.png" />
@@ -284,7 +285,7 @@ deviation</p>
 <img alt="../_images/clustering_31_0.png" src="../_images/clustering_31_0.png" />
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">imgLabels</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
 <span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="n">newClrs</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">show</span><span class="p">(</span><span class="n">brainmap</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">brainmap</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/clustering_32_0.png" src="../_images/clustering_32_0.png" />
@@ -299,13 +300,13 @@ can compute this using the <tt class="docutils literal"><span class="pre">simila
 <span class="n">imgSim</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">show</span><span class="p">(</span><span class="n">imgSim</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">,</span> <span class="n">clim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">imgSim</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">,</span> <span class="n">clim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
 </pre></div>
 </div>
 <img alt="../_images/clustering_35_01.png" src="../_images/clustering_35_01.png" />
 <p>We can then use this as a linear mask on the colorization output</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">brainmap</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="n">newClrs</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">imgLabels</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">mask</span><span class="o">=</span><span class="n">imgSim</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">show</span><span class="p">(</span><span class="n">brainmap</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">brainmap</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/clustering_37_0.png" src="../_images/clustering_37_0.png" />
@@ -316,7 +317,7 @@ planes), and then look at a maximum projection.</p>
 </pre></div>
 </div>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">amax</span>
-<span class="n">show</span><span class="p">(</span><span class="n">amax</span><span class="p">(</span><span class="n">brainmap</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+<span class="n">image</span><span class="p">(</span><span class="n">amax</span><span class="p">(</span><span class="n">brainmap</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
 </div>
 <img alt="../_images/clustering_40_0.png" src="../_images/clustering_40_0.png" />

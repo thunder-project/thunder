@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.0.RC3',
+        VERSION:     '0.5.0dev',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.0.RC3</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.0dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -89,6 +89,7 @@
 <li class="toctree-l1"><a class="reference internal" href="images.html">Images</a></li>
 <li class="toctree-l1"><a class="reference internal" href="series.html">Series</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi_index.html">Multi-indexing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="image_registration.html">Image registration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="clustering.html">Clustering</a></li>
 <li class="toctree-l1"><a class="reference internal" href="factorization.html">Factorization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="regression.html">Regression</a></li>
@@ -160,7 +161,7 @@
 <span class="kn">import</span> <span class="nn">seaborn</span> <span class="kn">as</span> <span class="nn">sns</span>
 <span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">thunder</span> <span class="kn">import</span> <span class="n">Colorize</span>
-<span class="n">show</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">show</span>
+<span class="n">image</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">image</span>
 </pre></div>
 </div>
 </div>
@@ -177,9 +178,10 @@ created from an existing instance of a <tt class="docutils literal"><span class=
 </pre></div>
 </div>
 <p>Or it can be created directly using the same arguments provided to a
-<tt class="docutils literal"><span class="pre">SparkContext</span></tt> (if you execute this line in this notebook you will get
-an error because you cannot run multiple <tt class="docutils literal"><span class="pre">SparkContexts</span></tt> at once):</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">tsc</span> <span class="o">=</span> <span class="n">ThunderContext</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">appName</span><span class="o">=</span><span class="s">&#39;myapp&#39;</span><span class="p">)</span>
+<tt class="docutils literal"><span class="pre">SparkContext</span></tt> (this line is commented out because executing it in the
+notebook will cause an error because you cannot run multiple
+<tt class="docutils literal"><span class="pre">SparkContexts</span></tt> at once):</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="c">#tsc = ThunderContext.start(appName=&#39;myapp&#39;)</span>
 </pre></div>
 </div>
 </div>
@@ -199,7 +201,7 @@ on loading and data types.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadImages</span><span class="p">(</span><span class="n">datapath</span> <span class="o">+</span> <span class="s">&#39;/fish/images/&#39;</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;tif&#39;</span><span class="p">,</span> <span class="n">startIdx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stopIdx</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">show</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">()</span><span class="o">.</span><span class="n">first</span><span class="p">()[:,:,</span><span class="mi">0</span><span class="p">])</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">()</span><span class="o">.</span><span class="n">first</span><span class="p">()[:,:,</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
 <img alt="../_images/thunder_context_13_0.png" src="../_images/thunder_context_13_0.png" />
@@ -290,7 +292,7 @@ represent anything meaningful about the data itself.</p>
 <span class="n">img</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">seriesMean</span><span class="p">()</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">show</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
 <img alt="../_images/thunder_context_29_0.png" src="../_images/thunder_context_29_0.png" />

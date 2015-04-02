@@ -135,8 +135,8 @@ function included with Thunder.
 .. code:: python
 
     from thunder import Colorize
-    show = Colorize.show
-    show(img[:,:,0])
+    image = Colorize.image
+    image(img[:,:,0])
 
 
 .. image:: basic_usage_files/basic_usage_19_0.png

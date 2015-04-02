@@ -25,7 +25,7 @@ Setup plotting
     sns.set_palette('muted')
     sns.set_context('notebook')
     from thunder import Colorize
-    show = Colorize.show
+    image = Colorize.image
 Inspect the data
 ----------------
 
@@ -83,7 +83,7 @@ for plotting the cluster centers above:
 
 .. code:: python
 
-    show(imgLabels[:,:,0], cmap=cmapCat)
+    image(imgLabels[:,:,0], cmap=cmapCat)
 
 
 .. image:: clustering_files/clustering_18_0.png
@@ -97,7 +97,7 @@ complex operations.
 .. code:: python
 
     brainmap = Colorize(cmap=cmapCat).transform(imgLabels[:,:,0])
-    show(brainmap)
+    image(brainmap)
 
 
 .. image:: clustering_files/clustering_20_0.png
@@ -137,7 +137,7 @@ more clear.
 .. code:: python
 
     brainmap = Colorize(cmap=newClrs).transform(imgLabels[:,:,0])
-    show(brainmap)
+    image(brainmap)
 
 
 .. image:: clustering_files/clustering_26_0.png
@@ -158,7 +158,7 @@ ignores the noise.
 .. code:: python
 
     stdMap = data.seriesStdev().pack()
-    show(stdMap[:,:,0] > 0.05) # try different values of the threshold
+    image(stdMap[:,:,0] > 0.05) # try different values of the threshold
 
 
 .. image:: clustering_files/clustering_28_0.png
@@ -186,7 +186,7 @@ deviation
 
     imgLabels = model.predict(data).pack()
     brainmap = Colorize(cmap=newClrs).transform(imgLabels[:,:,0])
-    show(brainmap)
+    image(brainmap)
 
 
 .. image:: clustering_files/clustering_32_0.png
@@ -206,7 +206,7 @@ can compute this using the ``similarity`` method of ``KMeansModel``.
     imgSim = sim.pack()
 .. code:: python
 
-    show(imgSim[:,:,0], cmap='gray', clim=(0,1))
+    image(imgSim[:,:,0], cmap='gray', clim=(0,1))
 
 
 .. image:: clustering_files/clustering_35_0.png
@@ -217,7 +217,7 @@ We can then use this as a linear mask on the colorization output
 .. code:: python
 
     brainmap = Colorize(cmap=newClrs).transform(imgLabels[:,:,0], mask=imgSim[:,:,0])
-    show(brainmap)
+    image(brainmap)
 
 
 .. image:: clustering_files/clustering_37_0.png
@@ -233,7 +233,7 @@ planes), and then look at a maximum projection.
 .. code:: python
 
     from numpy import amax
-    show(amax(brainmap,2))
+    image(amax(brainmap,2))
 
 
 .. image:: clustering_files/clustering_40_0.png

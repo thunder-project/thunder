@@ -23,7 +23,7 @@ Setup plotting
     sns.set_style('darkgrid')
     sns.set_context('notebook')
     from thunder import Colorize
-    show = Colorize.show
+    image = Colorize.image
 Loading images
 --------------
 
@@ -159,7 +159,7 @@ to look at:
 
 .. code:: python
 
-    show(img[:,:,0])
+    image(img[:,:,0])
 
 
 .. image:: images_files/images_21_0.png
@@ -169,7 +169,7 @@ Here's the second plane:
 
 .. code:: python
 
-    show(img[:,:,1])
+    image(img[:,:,1])
 
 
 .. image:: images_files/images_23_0.png
@@ -189,7 +189,7 @@ first one.
 
     projs = data.maxProjection(axis=2)
     img = projs.first()[1]
-    show(img)
+    image(img)
 
 
 .. image:: images_files/images_26_0.png
@@ -202,7 +202,7 @@ the desired range:
 
     sub = data.planes(0,0)
     img = sub.first()[1]
-    show(img)
+    image(img)
 
 
 .. image:: images_files/images_28_0.png
@@ -214,7 +214,7 @@ And we can subsample in space:
 
     sub = data.subsample([5,5,1])
     img = sub.first()[1]
-    show(img[:,:,0])
+    image(img[:,:,0])
 
 
 .. image:: images_files/images_30_0.png
@@ -226,7 +226,7 @@ example, computing the standard deviation:
 .. code:: python
 
     img = data.stdev()
-    show(img[:,:,0])
+    image(img[:,:,0])
 
 
 .. image:: images_files/images_32_0.png

@@ -21,7 +21,7 @@ Setup plotting
     import seaborn as sns
     sns.set_context('notebook')
     from thunder import Colorize
-    show = Colorize.show
+    image = Colorize.image
 Loading Images
 --------------
 
@@ -50,7 +50,7 @@ To look at the first image:
 .. code:: python
 
     img = data.first()[1]
-    show(img[:,:,0])
+    image(img[:,:,0])
 
 
 .. image:: input_formats_files/input_formats_12_0.png

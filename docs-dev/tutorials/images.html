@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.0.RC3',
+        VERSION:     '0.5.0dev',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><img src="../_static/thunder_logo.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.0.RC3</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.0dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -89,6 +89,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="">Images</a></li>
 <li class="toctree-l1"><a class="reference internal" href="series.html">Series</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi_index.html">Multi-indexing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="image_registration.html">Image registration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="clustering.html">Clustering</a></li>
 <li class="toctree-l1"><a class="reference internal" href="factorization.html">Factorization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="regression.html">Regression</a></li>
@@ -163,7 +164,7 @@ exporting image data, and conversion to other data formats.</p>
 <span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;darkgrid&#39;</span><span class="p">)</span>
 <span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">thunder</span> <span class="kn">import</span> <span class="n">Colorize</span>
-<span class="n">show</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">show</span>
+<span class="n">image</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">image</span>
 </pre></div>
 </div>
 </div>
@@ -249,12 +250,12 @@ numpy array:</p>
 </div>
 <p>We can look at it as an image. It&#8217;s three-dimensional, with two z-planes
 to look at:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">show</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
 <img alt="../_images/images_21_01.png" src="../_images/images_21_01.png" />
 <p>Here&#8217;s the second plane:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">show</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">1</span><span class="p">])</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">1</span><span class="p">])</span>
 </pre></div>
 </div>
 <img alt="../_images/images_23_01.png" src="../_images/images_23_01.png" />
@@ -268,7 +269,7 @@ across all volumes. Here, we compute the projections, and then show the
 first one.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">projs</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">maxProjection</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">img</span> <span class="o">=</span> <span class="n">projs</span><span class="o">.</span><span class="n">first</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
-<span class="n">show</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/images_26_0.png" src="../_images/images_26_0.png" />
@@ -276,21 +277,21 @@ first one.</p>
 the desired range:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">sub</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">planes</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">img</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">first</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
-<span class="n">show</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/images_28_0.png" src="../_images/images_28_0.png" />
 <p>And we can subsample in space:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">sub</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">subsample</span><span class="p">([</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
 <span class="n">img</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">first</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
-<span class="n">show</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
 <img alt="../_images/images_30_0.png" src="../_images/images_30_0.png" />
 <p>Finally, we can perform operations that aggregate across images. For
 example, computing the standard deviation:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">img</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">stdev</span><span class="p">()</span>
-<span class="n">show</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
 <img alt="../_images/images_32_0.png" src="../_images/images_32_0.png" />
