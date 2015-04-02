@@ -23,6 +23,14 @@ Data types
    tutorials/series
    tutorials/multi_index
 
+Image processing
+----------------
+
+.. toctree::
+   :maxdepth: 2
+
+   tutorials/image_regression
+
 Analayses
 ---------
 .. toctree::
