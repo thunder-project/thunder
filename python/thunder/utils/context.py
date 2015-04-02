@@ -168,6 +168,9 @@ class ThunderContext():
             Recalculate keys for records after images are loading. Only necessary if different files contain
             different number of records (e.g. due to specifying nplanes). See Images.renumber().
 
+        confFilename : string, optional, default = 'conf.json'
+            Name of conf file if using to specify parameters for binary stack data
+
         Returns
         -------
         data: thunder.rdds.Images
@@ -254,7 +257,7 @@ class ThunderContext():
     def loadImagesAsSeries(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
                            blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,
                            shuffle=True, recursive=False, nplanes=None, npartitions=None,
-                           renumber=False):
+                           renumber=False, confFilename='conf.json'):
         """
         Load Images data as Series data.
 
@@ -321,6 +324,9 @@ class ThunderContext():
             Recalculate keys for records after images are loading. Only necessary if different files contain
             different number of records (e.g. due to specifying nplanes). See Images.renumber().
 
+        confFilename : string, optional, default = 'conf.json'
+            Name of conf file if using to specify parameters for binary stack data
+
         Returns
         -------
         data: thunder.rdds.Series
@@ -332,10 +338,6 @@ class ThunderContext():
         """
         checkParams(inputFormat, ['stack', 'tif', 'tif-stack'])
 
-        if inputFormat.lower() == 'stack' and not dims:
-            raise ValueError("Dimensions ('dims' parameter) must be specified if loading from binary image stack" +
-                             " ('stack' value for 'inputFormat' parameter)")
-
         if not ext:
             ext = DEFAULT_EXTENSIONS.get(inputFormat.lower(), None)
 
@@ -344,7 +346,8 @@ class ThunderContext():
             loader = ImagesLoader(self._sc)
             if inputFormat.lower() == 'stack':
                 images = loader.fromStack(dataPath, dims, dtype=dtype, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
-                                          recursive=recursive, nplanes=nplanes, npartitions=npartitions)
+                                          recursive=recursive, nplanes=nplanes, npartitions=npartitions,
+                                          confFilename=confFilename)
             else:
                 # tif / tif stack
                 images = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
@@ -374,7 +377,7 @@ class ThunderContext():
     def convertImagesToSeries(self, dataPath, outputDirPath, dims=None, inputFormat='stack', ext=None,
                               dtype='int16', blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,
                               shuffle=True, overwrite=False, recursive=False, nplanes=None, npartitions=None,
-                              renumber=False):
+                              renumber=False, confFilename='conf.json'):
         """
         Write out Images data as Series data, saved in a flat binary format.
 
@@ -455,12 +458,11 @@ class ThunderContext():
             Recalculate keys for records after images are loading. Only necessary if different files contain
             different number of records (e.g. due to specifying nplanes). See Images.renumber().
 
+        confFilename : string, optional, default = 'conf.json'
+            Name of conf file if using to specify parameters for binary stack data
+
         """
         checkParams(inputFormat, ['stack', 'tif', 'tif-stack'])
-
-        if inputFormat.lower() == 'stack' and not dims:
-            raise ValueError("Dimensions ('dims' parameter) must be specified if loading from binary image stack" +
-                             " ('stack' value for 'inputFormat' parameter)")
 
         if not overwrite:
             raiseErrorIfPathExists(outputDirPath, awsCredentialsOverride=self._credentials)
@@ -474,7 +476,8 @@ class ThunderContext():
             loader = ImagesLoader(self._sc)
             if inputFormat.lower() == 'stack':
                 images = loader.fromStack(dataPath, dims, ext=ext, dtype=dtype, startIdx=startIdx, stopIdx=stopIdx,
-                                          recursive=recursive, nplanes=nplanes, npartitions=npartitions)
+                                          recursive=recursive, nplanes=nplanes, npartitions=npartitions,
+                                          confFilename=confFilename)
             else:
                 # 'tif' or 'tif-stack'
                 images = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
