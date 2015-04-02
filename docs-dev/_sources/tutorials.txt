@@ -29,7 +29,7 @@ Image processing
 .. toctree::
    :maxdepth: 2
 
-   tutorials/image_regression
+   tutorials/image_registration
 
 Analayses
 ---------
