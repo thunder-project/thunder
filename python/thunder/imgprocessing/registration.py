@@ -7,7 +7,7 @@ class Registration(object):
     """
     Class for constructing registration algorithms.
 
-    Construct a registration algorthm by specifying its name,
+    Construct a registration algorithm by specifying its name,
     and passing any additional keyword arguments. The algorithm
     can then be used to fit registration parameters on an Images object.
 
