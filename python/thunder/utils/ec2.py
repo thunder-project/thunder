@@ -95,7 +95,7 @@ def get_s3_keys():
 
 def get_default_thunder_version():
     """
-    Returns 'HEAD' (current state of thunder master branch) if thunder is a _dev version, otherwise
+    Returns 'HEAD' (current state of thunder master branch) if thunder is a dev version, otherwise
     return the current thunder version.
     """
     if ".dev" in THUNDER_VERSION:
