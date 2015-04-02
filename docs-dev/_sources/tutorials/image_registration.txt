@@ -303,6 +303,8 @@ in.
 .. code:: python
 
     modelreloaded = Registration.load('model.json')
+Inspect the reloaded model
+
 .. code:: python
 
     modelreloaded
