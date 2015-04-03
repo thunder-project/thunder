@@ -177,6 +177,9 @@ def install_anaconda(master, opts):
     ssh(master, opts, "/root/anaconda/bin/conda install --yes jsonschema pillow seaborn scikit-learn")
     print_success()
 
+    # add mistune (for notebook conversions)
+    ssh(master, opts, "pip install mistune")
+
     # copy to slaves
     print_status("Copying Anaconda to workers")
     ssh(master, opts, "/root/spark-ec2/copy-dir /root/anaconda")
