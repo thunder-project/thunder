@@ -7,7 +7,7 @@ class Registration(object):
     """
     Class for constructing registration algorithms.
 
-    Construct a registration algorthm by specifying its name,
+    Construct a registration algorithm by specifying its name,
     and passing any additional keyword arguments. The algorithm
     can then be used to fit registration parameters on an Images object.
 
@@ -37,8 +37,8 @@ class Registration(object):
 
         See also
         --------
-        RegisterModel.save : specification for saving registration models
-        RegisterModel.load : specifications for loading registration models
+        RegistrationModel.save : specification for saving registration models
+        RegistrationModel.load : specifications for loading registration models
         """
 
         return RegistrationModel.load(file)
@@ -80,7 +80,7 @@ class RegistrationMethod(object):
 
         See also
         --------
-        RegisterModel : model for applying transformations
+        RegistrationModel : model for applying transformations
         """
 
         if len(images.dims.count) not in set([2, 3]):
@@ -146,6 +146,21 @@ class RegistrationModel(Serializable, object):
         self.regMethod = regMethod
         self.transClass = transClass
 
+    def __getitem__(self, entry):
+        if not isinstance(entry, int):
+            raise IndexError("Selection not recognized, must be Int, got %s" % type(entry))
+        return self.transformations[entry]
+
+    def toArray(self):
+        """
+        Return transformations as an array with shape (n,x1,x2,...)
+        where n is the number of images, and remaining dimensions depend
+        on the particular transformations
+        """
+        from numpy import asarray
+        collected = [x.toArray() for x in self.transformations.values()]
+        return asarray(collected)
+
     def transform(self, images):
         """
         Apply the transformation to an Images object.
@@ -158,7 +173,7 @@ class RegistrationModel(Serializable, object):
 
         See also
         --------
-        Register : construct registration algorithms
+        Registration : construct registration algorithms
         """
 
         from thunder.rdds.images import Images
@@ -171,10 +186,11 @@ class RegistrationModel(Serializable, object):
         return Images(newrdd).__finalize__(images)
 
     def __repr__(self):
-        out = "RegisterModel(method='%s', trans='%s', transformations=%s)" % \
-              (self.regMethod, self.transClass, self.transformations)
-        return out[0:120] + " ..."
-
+        s = self.__class__.__name__
+        s += '\n%g transformations' % (len(self.transformations))
+        s += '\nregistration method: ' + self.regMethod
+        s += '\ntransformation type: ' + self.transClass
+        return s
 
 
 

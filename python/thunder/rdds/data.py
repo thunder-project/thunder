@@ -193,7 +193,7 @@ class Data(object):
             retVals.append(vals)
         return retVals
 
-    def getRange(self, sliceOrSlices):
+    def getRange(self, sliceOrSlices, keys=True):
         """
         Returns key/value pairs that fall within a range given by the passed slice or slices.
 
@@ -209,6 +209,9 @@ class Data(object):
         ----------
         sliceOrSlices: slice object or sequence of slices
             The passed slice or slices should be of the same cardinality as the keys of the underlying rdd.
+
+        keys: boolean, optional, default = True
+            Whether to return keys along with values, if false will just return an array of values.
 
         Returns
         -------
@@ -255,7 +258,12 @@ class Data(object):
 
         filteredRecs = self.rdd.filter(pFunc).collect()
         # default sort of tuples is by first item, which happens to be what we want
-        return sorted(filteredRecs)
+        output = sorted(filteredRecs)
+
+        if keys is True:
+            return output
+        else:
+            return map(lambda (k, v): v, output)
 
     def __getitem__(self, item):
         # should raise exception here when no matching items found
@@ -267,10 +275,10 @@ class Data(object):
             if any([isinstance(slise, slice) for slise in item]):
                 isRangeQuery = True
 
-        result = self.getRange(item) if isRangeQuery else self.get(item)
+        result = self.getRange(item, keys=False) if isRangeQuery else self.get(item)
         if (result is None) or (result == []):
             raise KeyError("No value found for key: %s" % str(item))
-        return result
+        return asarray(result)
 
     def values(self):
         """

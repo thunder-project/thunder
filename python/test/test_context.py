@@ -75,11 +75,11 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
 
     def __run_loadMultipleStacksAsSeries(self, shuffle):
         rangeAry = arange(64*128, dtype=dtypeFunc('int16'))
-        filePath = os.path.join(self.outputdir, "rangeary01.stack")
+        filePath = os.path.join(self.outputdir, "rangeary01.bin")
         rangeAry.tofile(filePath)
         expectedAry = rangeAry.reshape((128, 64), order='F')
         rangeAry2 = arange(64*128, 2*64*128, dtype=dtypeFunc('int16'))
-        filePath = os.path.join(self.outputdir, "rangeary02.stack")
+        filePath = os.path.join(self.outputdir, "rangeary02.bin")
         rangeAry2.tofile(filePath)
         expectedAry2 = rangeAry2.reshape((128, 64), order='F')
 
@@ -106,11 +106,11 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
 
     def test_loadMultipleMultipointStacksAsSeries(self):
         rangeAry = arange(64*128, dtype=dtypeFunc('int16'))
-        filePath = os.path.join(self.outputdir, "rangeary01.stack")
+        filePath = os.path.join(self.outputdir, "rangeary01.bin")
         rangeAry.tofile(filePath)
         expectedAry = rangeAry.reshape((32, 32, 8), order='F')
         rangeAry2 = arange(64*128, 2*64*128, dtype=dtypeFunc('int16'))
-        filePath = os.path.join(self.outputdir, "rangeary02.stack")
+        filePath = os.path.join(self.outputdir, "rangeary02.bin")
         rangeAry2.tofile(filePath)
         expectedAry2 = rangeAry2.reshape((32, 32, 8), order='F')
 
@@ -297,7 +297,7 @@ class TestContextWriting(PySparkTestCaseWithOutputDir):
         assert(array_equal(aa, a))
 
         filename = self.outputdir + "/test"
-        self.tsc.export(a, filename, format="npy", overwrite=True)
+        self.tsc.export(a, filename, outputFormat="npy", overwrite=True)
         aa = load(filename + ".npy")
         assert(array_equal(aa, a))
 
@@ -313,12 +313,12 @@ class TestContextWriting(PySparkTestCaseWithOutputDir):
         assert(array_equal(aa['test'], a))
 
         filename = self.outputdir + "/test"
-        self.tsc.export(a, filename, format="mat", overwrite=True)
+        self.tsc.export(a, filename, outputFormat="mat", overwrite=True)
         aa = loadmat(filename + ".mat")
         assert(array_equal(aa['test'], a))
 
         filename = self.outputdir + "/test"
-        self.tsc.export(a, filename, format="mat", varname="tmp", overwrite=True)
+        self.tsc.export(a, filename, outputFormat="mat", varname="tmp", overwrite=True)
         aa = loadmat(filename + ".mat")
         assert(array_equal(aa['tmp'], a))
 
@@ -334,7 +334,7 @@ class TestContextWriting(PySparkTestCaseWithOutputDir):
         assert(array_equal(aa, a))
 
         filename = self.outputdir + "/test"
-        self.tsc.export(a, filename, format="txt", overwrite=True)
+        self.tsc.export(a, filename, outputFormat="txt", overwrite=True)
         aa = loadtxt(filename + ".txt")
         assert(array_equal(aa, a))
 

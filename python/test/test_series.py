@@ -1,5 +1,6 @@
 from numpy import allclose, amax, arange, array, array_equal
 from numpy import dtype as dtypeFunc
+from numpy.testing import assert_array_equal, assert_equal
 from nose.tools import assert_equals, assert_is_none, assert_is_not_none, assert_raises, assert_true
 
 from thunder.rdds.series import Series
@@ -28,6 +29,17 @@ class TestSeriesConversions(PySparkTestCase):
         data = Series(rdd)
         ts = data.toTimeSeries()
         assert(isinstance(ts, TimeSeries))
+
+    def test_toImages(self):
+        from thunder.rdds.images import Images
+        rdd = self.sc.parallelize([((0, 0), array([1])), ((0, 1), array([2])),
+                                   ((1, 0), array([3])), ((1, 1), array([4]))])
+        data = Series(rdd)
+        imgs = data.toImages()
+        assert(isinstance(imgs, Images))
+
+        im = imgs.values().first()
+        assert(allclose(im, [[1, 2], [3, 4]]))
 
     def test_castToFloat(self):
         from numpy import arange
@@ -168,6 +180,16 @@ class TestSeriesMethods(PySparkTestCase):
         assert(allclose(standardized.first()[1], array([1, 2]), atol=1e-3))
         assert(allclose(zscored.first()[1], array([-1, -1]), atol=1e-3))
 
+    def test_squelch(self):
+        rdd = self.sc.parallelize([(0, array([1, 2])), (0, array([3, 4]))])
+        data = Series(rdd)
+        squelched = data.squelch(5)
+        assert(allclose(squelched.collectValuesAsArray(), [[0, 0], [0, 0]]))
+        squelched = data.squelch(3)
+        assert(allclose(squelched.collectValuesAsArray(), [[0, 0], [3, 4]]))
+        squelched = data.squelch(1)
+        assert(allclose(squelched.collectValuesAsArray(), [[1, 2], [3, 4]]))
+
     def test_correlate(self):
         rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5], dtype='float16'))])
         data = Series(rdd, dtype='float16')
@@ -179,6 +201,17 @@ class TestSeriesMethods(PySparkTestCase):
         sig12 = [[4, 5, 6, 7, 8], [8, 7, 6, 5, 4]]
         corrs = data.correlate(sig12).values().collect()
         assert(allclose(corrs[0], [1, -1]))
+
+    def test_subset(self):
+        rdd = self.sc.parallelize([(0, array([1, 5], dtype='float16')),
+                                   (0, array([1, 10], dtype='float16')),
+                                   (0, array([1, 15], dtype='float16'))])
+        data = Series(rdd)
+        assert_equal(len(data.subset(3, stat='min', thresh=0)), 3)
+        assert_array_equal(data.subset(1, stat='max', thresh=10), [[1, 15]])
+        assert_array_equal(data.subset(1, stat='mean', thresh=6), [[1, 15]])
+        assert_array_equal(data.subset(1, stat='std', thresh=6), [[1, 15]])
+        assert_array_equal(data.subset(1, thresh=6), [[1, 15]])
 
     def test_query_subscripts(self):
         dataLocal = [
@@ -253,6 +286,100 @@ class TestSeriesMethods(PySparkTestCase):
 
         assert_raises(ValueError, setIndex, data, 5)
         assert_raises(ValueError, setIndex, data, [1, 2])
+
+    def test_selectByIndex(self):
+        dataLocal = [((1,), arange(12))]
+        index = [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2]
+        data = Series(self.sc.parallelize(dataLocal), index=index)
+
+        result = data.selectByIndex(1)
+        assert_true(array_equal(result.values().first(), array([4, 5, 6, 7])))
+        assert_true(array_equal(result.index, array([1, 1, 1, 1])))
+
+        result = data.selectByIndex(1, squeeze=True)
+        assert_true(array_equal(result.index, array([0, 1, 2, 3])))
+
+        index = [
+            [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1],
+            [0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1],
+            [0, 1, 0, 1, 2, 3, 0, 1, 0, 1, 2, 3]
+        ]
+        data.index = array(index).T
+
+        result = data.selectByIndex(0, level=2)
+        assert_true(array_equal(result.values().first(), array([0, 2, 6, 8])))
+        assert_true(array_equal(result.index, array([[0, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 0]])))
+
+        result = data.selectByIndex(0, level=2, squeeze=True)
+        assert_true(array_equal(result.values().first(), array([0, 2, 6, 8])))
+        assert_true(array_equal(result.index, array([[0, 0], [0, 1], [1, 0], [1, 1]])))
+
+        result = data.selectByIndex([1, 0], level=[0, 1])
+        assert_true(array_equal(result.values().first(), array([6, 7])))
+        assert_true(array_equal(result.index, array([[1, 0, 0], [1, 0, 1]])))
+
+        result = data.selectByIndex(val=[0, [2,3]], level=[0, 2])
+        assert_true(array_equal(result.values().first(), array([4, 5])))
+        assert_true(array_equal(result.index, array([[0, 1, 2], [0, 1, 3]])))
+
+        result = data.selectByIndex(1, level=1, filter=True)
+        assert_true(array_equal(result.values().first(), array([0, 1, 6, 7])))
+        assert_true(array_equal(result.index, array([[0, 0, 0], [0, 0, 1], [1, 0, 0], [1, 0, 1]])))
+
+    def test_seriesAggregateByIndex(self):
+        dataLocal = [((1,), arange(12))]
+        index = [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2]
+        data = Series(self.sc.parallelize(dataLocal), index=index)
+
+        result = data.seriesAggregateByIndex(sum)
+        print result.values().first()
+        assert_true(array_equal(result.values().first(), array([6, 22, 38])))
+        assert_true(array_equal(result.index, array([0, 1, 2])))
+
+        index = [
+            [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1],
+            [0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1],
+            [0, 1, 0, 1, 2, 3, 0, 1, 0, 1, 2, 3]
+        ]
+        data.index = array(index).T
+        
+        result = data.seriesAggregateByIndex(sum, level=[0, 1])
+        assert_true(array_equal(result.values().first(), array([1, 14, 13, 38])))
+        assert_true(array_equal(result.index, array([[0, 0], [0, 1], [1, 0], [1, 1]])))
+
+    def test_seriesStatByIndex(self):
+        dataLocal = [((1,), arange(12))]
+        index = [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2]
+        data = Series(self.sc.parallelize(dataLocal), index=index)
+
+        assert_true(array_equal(data.seriesStatByIndex('sum').values().first(), array([6, 22, 38])))
+        assert_true(array_equal(data.seriesStatByIndex('mean').values().first(), array([1.5, 5.5, 9.5])))
+        assert_true(array_equal(data.seriesStatByIndex('min').values().first(), array([0, 4, 8])))
+        assert_true(array_equal(data.seriesStatByIndex('max').values().first(), array([3, 7, 11])))
+        assert_true(array_equal(data.seriesStatByIndex('count').values().first(), array([4, 4, 4])))
+        assert_true(array_equal(data.seriesStatByIndex('median').values().first(), array([1.5, 5.5, 9.5])))
+
+        assert_true(array_equal(data.seriesSumByIndex().values().first(), array([6, 22, 38])))
+        assert_true(array_equal(data.seriesMeanByIndex().values().first(), array([1.5, 5.5, 9.5])))
+        assert_true(array_equal(data.seriesMinByIndex().values().first(), array([0, 4, 8])))
+        assert_true(array_equal(data.seriesMaxByIndex().values().first(), array([3, 7, 11])))
+        assert_true(array_equal(data.seriesCountByIndex().values().first(), array([4, 4, 4])))
+        assert_true(array_equal(data.seriesMedianByIndex().values().first(), array([1.5, 5.5, 9.5])))
+
+        index = [
+            [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1],
+            [0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1],
+            [0, 1, 0, 1, 2, 3, 0, 1, 0, 1, 2, 3]
+        ]
+        data.index = array(index).T
+
+        result = data.seriesStatByIndex('sum', level=[0, 1])
+        assert_true(array_equal(result.values().first(), array([1, 14, 13, 38])))
+        assert_true(array_equal(result.index, array([[0,0], [0, 1], [1, 0], [1, 1]])))
+
+        result = data.seriesSumByIndex(level=[0, 1])
+        assert_true(array_equal(result.values().first(), array([1, 14, 13, 38])))
+        assert_true(array_equal(result.index, array([[0,0], [0, 1], [1, 0], [1, 1]])))
 
 
 class TestSeriesRegionMeanMethods(PySparkTestCase):

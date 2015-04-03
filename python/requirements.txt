@@ -6,4 +6,5 @@ scikit-image
 matplotlib
 nose
 rednose
+termcolor
 zope.cachedescriptors

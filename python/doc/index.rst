@@ -78,7 +78,7 @@
    contributing
    style_guide
    faq
-   Release notes <https://github.com/freeman-lab/thunder/releases>
+   Release notes <https://github.com/thunder-project/thunder/releases>
 
 .. raw:: html
 
@@ -94,6 +94,8 @@
    tutorials/input_formats
    tutorials/images
    tutorials/series
+   tutorials/multi_index
+   tutorials/image_registration
    tutorials/clustering
    tutorials/factorization
    tutorials/regression
@@ -110,8 +112,8 @@
    api
    Gitter chatroom <https://gitter.im/thunder-project/thunder>
    Mailing list <https://groups.google.com/forum/?hl=en#!forum/thunder-user>
-   Github repo <https://github.com/freeman-lab/thunder>
-   Project page <http://thefreemanlab.com/thunder/>
+   Github repo <https://github.com/thunder-project/thunder>
+   Project page <http://thunder-project.org>
 
 .. raw:: html
 

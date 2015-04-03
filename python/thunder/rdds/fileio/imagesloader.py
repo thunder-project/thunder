@@ -3,7 +3,7 @@
 from io import BytesIO
 import json
 from matplotlib.pyplot import imread
-from numpy import array, dstack, frombuffer, ndarray, prod
+from numpy import array, dstack, frombuffer, ndarray, prod, transpose, load, swapaxes
 
 from thunder.rdds.fileio.readers import getParallelReaderForPath, getFileReaderForPath, FileNotFoundError
 from thunder.rdds.images import Images
@@ -149,6 +149,103 @@ class ImagesLoader(object):
         nrecords = reader.lastNRecs if nplanes is None else None
         newDims = tuple(list(dims[:-1]) + [nplanes]) if nplanes else dims
         return Images(readerRdd.flatMap(toArray), nrecords=nrecords, dims=newDims, dtype=dtype)
+
+    def fromOCP(self, bucketName, resolution, server='ocp.me', startIdx=None, stopIdx=None,
+                minBound=None, maxBound=None):
+        """
+        Creates up a new Image object with data read from OCP.
+      
+        Parameters
+        ----------
+        bucketName: string
+            Name of the token/bucket in OCP. You can use the token name you created in OCP here.
+            You can also access publicly available data on OCP at this URL "http://ocp.me/ocp/ca/public_tokens/"
+        
+        resolution: nonnegative int
+            Resolution of the data in OCP
+
+        server: string. optional.
+            Name of the server in OCP which has the corresponding token.
+
+        startIdx, stopIdx: nonnegative int. optional.
+            Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
+            `datapath` and `ext`. Interpreted according to python slice indexing conventions.
+
+        minBound, maxBound: tuple of nonnegative int. optional.
+            X,Y,Z bounds of the data you want to fetch from OCP. minBound contains
+            the (xMin,yMin,zMin) while maxBound contains (xMax,yMax,zMax)
+        """
+
+        # Given a data-path/bucket Query JSON
+        # Given bounds get a list of URI's
+        import urllib2
+        urlList = []
+        url = 'http://{}/ocp/ca/{}/info/'.format(server, bucketName)
+
+        try:
+            f = urllib2.urlopen(url)
+        except urllib2.URLError:
+            raise Exception("Failed URL {}".format(url))
+
+        import json
+        projInfo = json.loads(f.read())
+
+        # Loading Information from JSON object
+        ximageSize, yimageSize = projInfo['dataset']['imagesize']['{}'.format(resolution)]
+        zimageStart, zimageStop = projInfo['dataset']['slicerange']
+        timageStart, timageStop = projInfo['dataset']['timerange']
+
+        # Checking if dimensions are within bounds
+        if startIdx is None:
+            startIdx = timageStart
+        elif startIdx < timageStart or startIdx > timageStop:
+            raise Exception("startIdx out of bounds {},{}".format(timageStart, timageStop))
+
+        if stopIdx is None:
+            stopIdx = timageStop
+        elif stopIdx < timageStart or stopIdx > timageStop:
+            raise Exception("startIdx out of bounds {},{}".format(timageStart, timageStop))
+
+        if minBound is None:
+            minBound = (0, 0, zimageStart)
+        elif minBound < (0, 0, zimageStart) or minBound > (ximageSize, yimageSize, zimageStop):
+            raise Exception("minBound is incorrect {},{}".format((0, 0, zimageStart),
+                                                                 (ximageSize, yimageSize, zimageStop)))
+
+        if maxBound is None:
+            maxBound = (ximageSize, yimageSize, zimageStop)
+        elif maxBound < (0, 0, zimageStart) or maxBound > (ximageSize, yimageSize, zimageStop):
+            raise Exception("minBound is incorrect {},{}".format((0, 0, zimageStart), (ximageSize, yimageSize,
+                                                                                       zimageStop)))
+
+        for t in range(timageStart, timageStop, 1):
+            urlList.append("http://{}/ocp/ca/{}/npz/{},{}/{}/{},{}/{},{}/{},{}/".
+                           format(server, bucketName, t, t + 1, resolution, minBound[0],
+                                  maxBound[0], minBound[1], maxBound[1], minBound[2], maxBound[2]))
+
+        def read(url):
+            """Fetch URL from the server"""
+
+            try:
+                npzFile = urllib2.urlopen(url)
+            except urllib2.URLError:
+                raise Exception("Failed URL {}.".format(url))
+
+            imgData = npzFile.read()
+        
+            import zlib
+            import cStringIO
+            pageStr = zlib.decompress(imgData[:])
+            pageObj = cStringIO.StringIO(pageStr)
+            data = load(pageObj)
+            # Data comes in as 4d numpy array in t,z,y,x order. Swapping axes and removing the time dimension
+            # to give back a 3d numpy array in x,y,z order
+            data = swapaxes(data[0, :, :, :], 0, 2)
+
+            return data
+      
+        rdd = self.sc.parallelize(enumerate(urlList), len(urlList)).map(lambda (k, v): (k, read(v)))
+        return Images(rdd, nrecords=len(urlList))
 
     def fromTif(self, dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, nplanes=None,
                 npartitions=None):

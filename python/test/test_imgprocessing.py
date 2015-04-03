@@ -2,7 +2,7 @@ import shutil
 import tempfile
 
 from test_utils import PySparkTestCase
-from numpy import allclose, dstack, mean, random
+from numpy import allclose, dstack, mean, random, ndarray
 from scipy.ndimage.interpolation import shift
 from nose.tools import assert_true
 
@@ -142,6 +142,18 @@ class TestCrossCorr(ImgprocessingTestCase):
         imOut = reg.prepare(ref).run(imIn).first()[1]
         assert_true(allclose(ref[2:, :-2], imOut[2:, :-2]))
         assert_true(allclose(paramOut, [-2, 2]))
+
+    def test_toarray(self):
+        random.seed(42)
+        ref = random.randn(25, 25)
+
+        reg = Registration('crosscorr')
+
+        im = shift(ref, [2, 0], mode='constant', order=0)
+        imIn = ImagesLoader(self.sc).fromArrays(im)
+        paramOut = reg.prepare(ref).fit(imIn).toArray()
+        assert_true(isinstance(paramOut, ndarray))
+        assert_true(allclose(paramOut, [[2, 0]]))
 
     def test_crosscorrVolume(self):
 

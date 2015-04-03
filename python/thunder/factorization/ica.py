@@ -21,8 +21,9 @@ class ICA(object):
     c : int
         Number of independent components to estimate
 
-    svdMethod : string, optional, default = "direct"
-        Which SVD method to use
+    svdMethod : string, optional, default = "auto"
+        Which SVD method to use. If set to 'auto',
+        will select preferred method based on dimensionality.
 
     maxIter : Int, optional, default = 10
         Maximum number of iterations
@@ -43,7 +44,7 @@ class ICA(object):
 
     """
 
-    def __init__(self, c, k=None, svdMethod="direct", maxIter=10, tol=0.000001, seed=0):
+    def __init__(self, c, k=None, svdMethod='auto', maxIter=10, tol=0.000001, seed=0):
         self.k = k
         self.c = c
         self.svdMethod = svdMethod
