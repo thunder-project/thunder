@@ -62,7 +62,7 @@ We also include a script for launching an Amazon EC2 cluster with Thunder preins
 Analyses
 --------
 
-Thunder currently includes two primary data types for distributed spatial and temporal data, and four main analysis packages: classification (decoding), clustering, factorization, and regression. It also provides an entry point for loading and converting a variety of raw data formats, and utilities for exporting or inspecting results. Scripts can be used to run standalone analyses, but the underlying classes and functions can be used from within the PySpark shell or an iPython notebook for easy interactive analysis.
+Thunder currently includes two primary data types for distributed spatial and temporal data, and five main analysis packages: classification (decoding), clustering, factorization, image processing, and regression. It also provides an entry point for loading and converting a variety of raw data formats, and utilities for exporting or visually inspecting results. Scripts can be used to run standalone analyses, but the underlying classes and functions can be used from within the PySpark shell or an iPython notebook for easy interactive analysis.
 
 Input and output
 ----------------
