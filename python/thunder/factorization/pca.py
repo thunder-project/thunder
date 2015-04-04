@@ -18,7 +18,7 @@ class PCA(object):
 
     svdMethod : str, optional, default = "auto"
         Which method to use for performing the SVD. If set to 'auto',
-        will select preferred method based on dimensionality.
+        will select preferred method based on dimensionality of input data.
 
     Attributes
     ----------

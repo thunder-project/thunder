@@ -11,7 +11,7 @@ from thunder.rdds.matrices import RowMatrix
 
 class SVD(object):
     """
-    Singular value decomposiiton on a distributed matrix.
+    Singular value decomposition on a distributed matrix.
 
     Parameters
     ----------
@@ -19,8 +19,10 @@ class SVD(object):
         Number of singular vectors to estimate
 
     method : string, optional, default = "auto"
-        Whether to use a direct or iterative method. If set to 'auto',
-        will select preferred method based on dimensionality.
+        Whether to use a direct or iterative method.
+        If set to 'direct', will compute the SVD directly.
+        If set to 'em', will approximate the SVD using iterative expectation-maximization algorithm.
+        If set to 'auto', will select preferred method based on dimensionality.
 
     maxIter : int, optional, default = 20
         Maximum number of iterations if using an iterative method
