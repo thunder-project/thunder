@@ -459,7 +459,8 @@ class Data(object):
 
     def mean(self, dtype='float64', casting='safe'):
         """
-        Mean of values across keys, returned as an ndarray.
+        Mean of values computed by aggregating across records, returned as an ndarray
+        with the same size as a single record.
 
         If dtype is not None, then the values will first be cast to the requested
         type before the operation is performed. See Data.astype() for details.
@@ -468,7 +469,8 @@ class Data(object):
 
     def sum(self, dtype='float64', casting='safe'):
         """
-        Sum of values across keys, returned as an ndarray.
+        Sum of values computed by aggregating across records, returned as an ndarray
+        with the same size as a single record.
 
         If dtype is not None, then the values will first be cast to the requested type before the operation is
         performed. See Data.astype() for details.
@@ -480,7 +482,8 @@ class Data(object):
 
     def variance(self, dtype='float64', casting='safe'):
         """
-        Variance of values across keys, returned as an ndarray.
+        Variance of values computed by aggregating across records, returned as an ndarray
+        with the same size as a single record.
 
         If dtype is not None, then the values will first be cast to the requested type before the operation is
         performed. See Data.astype() for details.
@@ -489,7 +492,8 @@ class Data(object):
 
     def stdev(self, dtype='float64', casting='safe'):
         """
-        Standard deviation of values across keys, returned as an ndarray.
+        Standard deviation of values computed by aggregating across records, returned as an ndarray
+        with the same size as a single record.
 
         If dtype is not None, then the values will first be cast to the requested type before the operation is
         performed. See Data.astype() for details.
