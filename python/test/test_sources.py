@@ -2,7 +2,7 @@ from numpy import meshgrid, ndarray, array_equal, array, sqrt
 from test_utils import LocalTestCase
 from nose.tools import nottest
 
-from thunder.extraction.source import Source
+from thunder.extraction.source import Source, SourceModel
 
 
 class TestSourceConstruction(LocalTestCase):
@@ -100,7 +100,7 @@ class TestSourceComparison(LocalTestCase):
 
     def test_distance_source(self):
         """
-        (SourceConversion) distance to source
+        (SourceComparison) distance to source
         """
         s1 = Source([[10, 10], [10, 20]], values=[1.0, 2.0])
         s2 = Source([[20, 20], [20, 30]], values=[1.0, 2.0])
@@ -108,8 +108,27 @@ class TestSourceComparison(LocalTestCase):
 
     def test_distance_array(self):
         """
-        (SourceConversion) distance to array
+        (SourceComparison) distance to array
         """
         s1 = Source([[10, 10], [10, 20]], values=[1.0, 2.0])
         assert(s1.distance([20, 25]) == sqrt(200))
         assert(s1.distance(array([20, 25])) == sqrt(200))
+
+
+class TestSourceModelComparison(LocalTestCase):
+
+    def test_match_sources(self):
+        """
+        (SourceModelComparison) matching sources
+        """
+        s1 = Source([[10, 10], [10, 20]])
+        s2 = Source([[20, 20], [20, 30]])
+        s3 = Source([[20, 20], [20, 30]])
+        s4 = Source([[10, 10], [10, 20]])
+        s5 = Source([[15, 15], [15, 20]])
+
+        sm1 = SourceModel([s1, s2])
+        sm2 = SourceModel([s3, s4, s5])
+
+        assert(sm1.match(sm2) == [1, 0])
+        assert(sm2.match(sm1) == [1, 0, 0])

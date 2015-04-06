@@ -1,4 +1,5 @@
-from numpy import asarray, mean, sqrt, ndarray, amin, amax, concatenate, sum, zeros, maximum
+from numpy import asarray, mean, sqrt, ndarray, amin, amax, concatenate, sum, zeros, maximum, \
+    argmin, newaxis
 
 from thunder.utils.serializable import Serializable
 from thunder.rdds.images import Images
@@ -258,6 +259,30 @@ class SourceModel(Serializable, object):
         for s in self.sources:
             combined = maximum(s.mask(dims, binary), combined)
         return combined
+
+    def match(self, other):
+        """
+        For each source in self, find the index of the closest source in other.
+
+        Uses euclidean distances between centers to determine distances.
+
+        Params
+        ------
+        other : SourceModel
+            The source model to match sources to
+
+        unique : boolean, optional, deafult = True
+            Whether to only return unique matches
+        """
+        from scipy.spatial.distance import cdist
+        from numpy import argmin, newaxis
+
+        target = other.centers
+        matches = []
+        for s in self.sources:
+            ind = argmin(cdist(target, s.center[newaxis]))
+            matches.append(ind)
+        return matches
 
     def transform(self, data, collect=True):
         """
