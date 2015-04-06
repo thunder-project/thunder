@@ -978,7 +978,7 @@ class Series(Data):
         index = array(ind)
         if len(index[0]) == 1:
             index = ravel(index)
-        return Series(newrdd, index=index).__finalize__(self, noPropagate=('_dtype',))
+        return self._constructor(newrdd, index=index).__finalize__(self, noPropagate=('_dtype',))
 
     def selectByIndex(self, val, level=0, squeeze=False, filter=False):
         """
@@ -1073,7 +1073,7 @@ class Series(Data):
         elif len(indFinal[1]) == 0:
             indFinal = arange(sum(finalMask))
 
-        return Series(newrdd, index=indFinal).__finalize__(self)
+        return self._constructor(newrdd, index=indFinal).__finalize__(self)
 
     def seriesAggregateByIndex(self, function, level=0):
         """
