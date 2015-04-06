@@ -178,7 +178,7 @@ def install_anaconda(master, opts):
     print_success()
 
     # add mistune (for notebook conversions)
-    ssh(master, opts, "pip install mistune")
+    ssh(master, opts, "source ~/.bash_profile && pip install mistune")
 
     # copy to slaves
     print_status("Copying Anaconda to workers")
@@ -203,6 +203,9 @@ def install_thunder(master, opts):
     ssh(master, opts, "yum install -y pssh")
     ssh(master, opts, "pssh -h /root/spark-ec2/slaves mkdir -p /root/thunder/python/thunder/utils/data/")
     ssh(master, opts, "~/spark-ec2/copy-dir /root/thunder/python/thunder/utils/data/")
+
+    # install requirements
+    ssh(master, opts, "source ~/.bash_profile && pip install -r /root/thunder/python/requirements.txt")
 
     # set environmental variables
     ssh(master, opts, "echo 'export SPARK_HOME=/root/spark' >> /root/.bash_profile")
