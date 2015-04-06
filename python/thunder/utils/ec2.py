@@ -204,6 +204,9 @@ def install_thunder(master, opts):
     ssh(master, opts, "pssh -h /root/spark-ec2/slaves mkdir -p /root/thunder/python/thunder/utils/data/")
     ssh(master, opts, "~/spark-ec2/copy-dir /root/thunder/python/thunder/utils/data/")
 
+    # install requirements
+    ssh(master, opts, 'pip install -r /root/thunder/python/requirements.txt')
+
     # set environmental variables
     ssh(master, opts, "echo 'export SPARK_HOME=/root/spark' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export PYTHONPATH=/root/thunder/python' >> /root/.bash_profile")
