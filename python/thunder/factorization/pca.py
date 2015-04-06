@@ -16,8 +16,10 @@ class PCA(object):
     k : int
         Number of principal components to estimate
 
-    svdMethod : str, optional, default = "direct"
-        Which method to use for performing the SVD
+    svdMethod : str, optional, default = "auto"
+        If set to 'direct', will compute the SVD with direct gramian matrix estimation and eigenvector decomposition.
+        If set to 'em', will approximate the SVD using iterative expectation-maximization algorithm.
+        If set to 'auto', will use 'em' if number of columns in input data exceeds 750, otherwise will use 'direct'.
 
     Attributes
     ----------
@@ -35,7 +37,7 @@ class PCA(object):
     SVD : singular value decomposition
     """
 
-    def __init__(self, k=3, svdMethod='direct'):
+    def __init__(self, k=3, svdMethod='auto'):
         self.k = k
         self.svdMethod = svdMethod
         self.scores = None

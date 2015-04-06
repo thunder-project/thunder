@@ -4,21 +4,27 @@ Class for performing Singular Value Decomposition
 
 from numpy import zeros, shape
 
+from thunder.utils.common import checkParams
 from thunder.rdds.series import Series
 from thunder.rdds.matrices import RowMatrix
 
 
 class SVD(object):
     """
-    Singular value decomposiiton on a distributed matrix.
+    Singular value decomposition on a distributed matrix.
 
     Parameters
     ----------
     k : int, optional, default = 3
         Number of singular vectors to estimate
 
-    method : string, optional, default "direct"
-        Whether to use a direct or iterative method
+    method : string, optional, default = "auto"
+        Whether to use a direct or iterative method.
+        If set to 'direct', will compute the SVD with direct gramian matrix estimation and eigenvector decomposition.
+        If set to 'em', will approximate the SVD using iterative expectation-maximization algorithm.
+        If set to 'auto', will use 'em' if number of columns in input data exceeds 750, otherwise will use 'direct'.
+
+
 
     maxIter : int, optional, default = 20
         Maximum number of iterations if using an iterative method
@@ -37,7 +43,7 @@ class SVD(object):
     `v` : array, shape (k, ncols)
         Right singular vectors
     """
-    def __init__(self, k=3, method="direct", maxIter=20, tol=0.00001):
+    def __init__(self, k=3, method="auto", maxIter=20, tol=0.00001):
         self.k = k
         self.method = method
         self.maxIter = maxIter
@@ -70,7 +76,17 @@ class SVD(object):
         if not (isinstance(mat, RowMatrix)):
             mat = mat.toRowMatrix()
 
-        if self.method == "direct":
+        checkParams(self.method, ['auto', 'direct', 'em'])
+
+        if self.method == 'auto':
+            if len(mat.index) < 750:
+                method = 'direct'
+            else:
+                method = 'em'
+        else:
+            method = self.method
+
+        if method == 'direct':
 
             # get the normalized gramian matrix
             cov = mat.gramian() / mat.nrows
@@ -88,7 +104,7 @@ class SVD(object):
             self.s = s
             self.v = v
 
-        if self.method == "em":
+        if method == 'em':
 
             # initialize random matrix
             c = random.rand(self.k, mat.ncols)

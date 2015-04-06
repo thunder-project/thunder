@@ -95,7 +95,7 @@ def get_s3_keys():
 
 def get_default_thunder_version():
     """
-    Returns 'HEAD' (current state of thunder master branch) if thunder is a _dev version, otherwise
+    Returns 'HEAD' (current state of thunder master branch) if thunder is a dev version, otherwise
     return the current thunder version.
     """
     if ".dev" in THUNDER_VERSION:
@@ -176,6 +176,9 @@ def install_anaconda(master, opts):
     ssh(master, opts, "/root/anaconda/bin/conda update --yes numpy scipy ipython")
     ssh(master, opts, "/root/anaconda/bin/conda install --yes jsonschema pillow seaborn scikit-learn")
     print_success()
+
+    # add mistune (for notebook conversions)
+    ssh(master, opts, "pip install mistune")
 
     # copy to slaves
     print_status("Copying Anaconda to workers")

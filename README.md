@@ -3,16 +3,16 @@ Thunder
 =======
 
 <div class="row">
-  <a href="http://freeman-lab.github.io/thunder/">
-      <img src="http://thefreemanlab.com/thunder/docs/_static/thumbnail_row.png" width="800px" height="125px">
+  <a href="http://thunder-project.org">
+      <img src="http://thunder-project.org/thunder/docs/_static/thumbnail_row.png" width="800px" height="125px">
   </a>
 </div>
 
-Large-scale neural data analysis with Spark - [project page](http://freeman-lab.github.io/thunder/)
+Large-scale neural data analysis with Spark - [project page](http://thunder-project.org)
 
+[![Latest Version](https://pypip.in/version/thunder-python/badge.svg)](https://pypip.in/version/thunder-python/)
 [![Build Status](https://travis-ci.org/thunder-project/thunder.png?branch=master)](https://travis-ci.org/thunder-project/thunder) 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/thunder-project/thunder?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Stories in Ready](https://badge.waffle.io/thunder-project/thunder.png?label=ready&title=Ready)](https://waffle.io/thunder-project/thunder)
 
 About
 -----
@@ -24,7 +24,7 @@ Thunder includes utilities for loading and saving different formats, classes for
 Documentation
 -------------
 
-This README contains info on installation and usage and how to get help. See the complete [documentation](http://thefreemanlab.com/thunder/docs/) for more details, tutorials, and API references. 
+This README contains basic info on installation and usage and how to get help. See the complete [documentation](http://thunder-project.org/thunder/docs) for more details, tutorials, and API references. We also maintain  separate [development documentation](http://thunder-project.org/thunder/docs-dev) for reference if you are running on Thunder's master branch. 
 
 Quick start
 -----------
@@ -62,18 +62,22 @@ We also include a script for launching an Amazon EC2 cluster with Thunder preins
 Analyses
 --------
 
-Thunder currently includes two primary data types for distributed spatial and temporal data, and four main analysis packages: classification (decoding), clustering, factorization, and regression. It also provides an entry point for loading and converting a variety of raw data formats, and utilities for exporting or inspecting results. Scripts can be used to run standalone analyses, but the underlying classes and functions can be used from within the PySpark shell or an iPython notebook for easy interactive analysis.
+Thunder currently includes two primary data types for distributed spatial and temporal data, and five main analysis packages: classification (decoding), clustering, factorization, image processing, and regression. It also provides an entry point for loading and converting a variety of raw data formats, and utilities for exporting or visually inspecting results. Scripts can be used to run standalone analyses, but the underlying classes and functions can be used from within the PySpark shell or an iPython notebook for easy interactive analysis.
 
 Input and output
 ----------------
 
-The primary data types in Thunder — Images and Series — can each be loaded from a variety of raw input formats, including text or flat binary files (for Series) and tif or pngs (for Images). Files can be stored locally, on a networked file system, on Amazon's S3, or in HDFS. Where needed, metadata (e.g. model parameters) can be provided as numpy arrays or loaded from MAT files. Results can be visualized directly from the python shell or in iPython notebook, or saved to external formats.
+The primary data types in Thunder — Images and Series — can each be loaded from a variety of raw input formats, including text or flat binary files (for Series) and binary, tifs, or pngs (for Images). Files can be stored locally, on a networked file system, on Amazon's S3, or in HDFS. Where needed, metadata (e.g. model parameters) can be provided as numpy arrays or loaded from JSON or MAT files. Results can be visualized directly from the python shell or in iPython notebook using matplotlib, seaborn, or a new interactive visualization library we are developing called [lightning](http://lightning-viz.org)
 
 Help
 ------------
-We maintain a [chatroom](https://gitter.im/thunder-project/thunder?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) on gitter. You can also post questions or ideas to the [mailing list](https://groups.google.com/forum/?hl=en#!forum/thunder-user). If you find a reproducible bug, submit an [issue](https://github.com/freeman-lab/thunder/issues). If posting an issue, please provide information about your environment (e.g. local usage or EC2, operating system) and instructions for reproducing the error.
+We maintain a [chatroom](https://gitter.im/thunder-project/thunder?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) on gitter. You can also post questions or ideas to the [mailing list](https://groups.google.com/forum/?hl=en#!forum/thunder-user). If you find a reproducible bug, submit an [issue](https://github.com/thunder-project/thunder/issues). If posting an issue, please provide information about your environment (e.g. local usage or EC2, operating system) and instructions for reproducing the error.
 
 
 Contributions
 -------------
+Thunder is a community effort, and thus far features contributions from the following individuals:
+
+Andrew Osheroff, Ben Poole, Chris Stock, Davis Bennett, Jascha Swisher, Jason Wittenbach, Jeremy Freeman, Josh Rosen, Kunal Lillaney, Matt Conlen, Michael Broxton, Noah Young, Ognen Duzlevski, Ted Fujimoto, Tom Sainsbury, Uri Laseron
+
 If you have ideas or want to contribute, submit an issue or pull request, or reach out to us on gitter, twitter (@thefreemanlab), or the [mailing list](https://groups.google.com/forum/?hl=en#!forum/thunder-user).

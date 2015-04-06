@@ -46,7 +46,7 @@ class Colorize(object):
         self.vmax = vmax
 
     @staticmethod
-    def show(img, cmap='gray', bar=False, nans=True, clim=None):
+    def image(img, cmap='gray', bar=False, nans=True, clim=None):
         """
         Streamlined display of images using matplotlib.
 
@@ -244,7 +244,20 @@ class Colorize(object):
 
     @staticmethod
     def blend(img, mask, op=add):
+        """
+        Blend two images together using the specified operator.
 
+        Parameters
+        ----------
+        img : array-like
+            First image to blend
+
+        mask : array-like
+            Second image to blend
+
+        op : func, optional, default = add
+            Operator to use for combining images
+        """
         if mask.ndim == 3:
             for i in range(0, 3):
                 img[:, :, :, i] = op(img[:, :, :, i], mask)

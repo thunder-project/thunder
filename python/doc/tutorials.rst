@@ -1,6 +1,6 @@
 .. _tutorials:
 
-thunder tutorials
+Tutorials
 =================
 
 Basics
@@ -22,6 +22,14 @@ Data types
    tutorials/images
    tutorials/series
    tutorials/multi_index
+
+Image processing
+----------------
+
+.. toctree::
+   :maxdepth: 2
+
+   tutorials/image_registration
 
 Analayses
 ---------

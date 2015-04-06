@@ -1,6 +1,6 @@
 name := "thunder"
 
-version := "0.5.0.RC3"
+version := "0.6.0.dev"
 
 scalaVersion := "2.10.3"
 
@@ -8,13 +8,17 @@ ivyXML := <dependency org="org.eclipse.jetty.orbit" name="javax.servlet" rev="3.
 <artifact name="javax.servlet" type="orbit" ext="jar"/>
 </dependency>
 
+net.virtualvoid.sbt.graph.Plugin.graphSettings
+
 libraryDependencies += "org.apache.hadoop" % "hadoop-client" % "1.0.4"
 
-libraryDependencies += "org.apache.spark" %% "spark-core" % "1.1.0"
+libraryDependencies += "org.apache.spark" %% "spark-core" % "1.2.1" excludeAll(
+  ExclusionRule(organization = "org.apache.hadoop")
+  )
 
-libraryDependencies += "org.apache.spark" %% "spark-streaming" % "1.1.0"
-
-libraryDependencies += "org.apache.spark" % "spark-mllib_2.10" % "1.1.0"
+libraryDependencies += "org.apache.spark" %% "spark-mllib" % "1.2.1" excludeAll(
+  ExclusionRule(organization = "org.apache.hadoop")
+  )
 
 libraryDependencies += "org.scalatest" % "scalatest_2.10" % "2.0" % "test"
 
