@@ -459,7 +459,8 @@ class Data(object):
 
     def mean(self, dtype='float64', casting='safe'):
         """
-        Mean of values, ignoring keys
+        Mean of values computed by aggregating across records, returned as an ndarray
+        with the same size as a single record.
 
         If dtype is not None, then the values will first be cast to the requested
         type before the operation is performed. See Data.astype() for details.
@@ -468,7 +469,8 @@ class Data(object):
 
     def sum(self, dtype='float64', casting='safe'):
         """
-        Sum of values, ignoring keys
+        Sum of values computed by aggregating across records, returned as an ndarray
+        with the same size as a single record.
 
         If dtype is not None, then the values will first be cast to the requested type before the operation is
         performed. See Data.astype() for details.
@@ -480,7 +482,8 @@ class Data(object):
 
     def variance(self, dtype='float64', casting='safe'):
         """
-        Variance of values, ignoring keys
+        Variance of values computed by aggregating across records, returned as an ndarray
+        with the same size as a single record.
 
         If dtype is not None, then the values will first be cast to the requested type before the operation is
         performed. See Data.astype() for details.
@@ -489,7 +492,8 @@ class Data(object):
 
     def stdev(self, dtype='float64', casting='safe'):
         """
-        Standard deviation of values, ignoring keys
+        Standard deviation of values computed by aggregating across records, returned as an ndarray
+        with the same size as a single record.
 
         If dtype is not None, then the values will first be cast to the requested type before the operation is
         performed. See Data.astype() for details.
@@ -525,12 +529,12 @@ class Data(object):
         return out.values().mapPartitions(lambda i: [StatCounter(i, stats=requestedStats)]).reduce(redFunc)
 
     def max(self):
-        """ Maximum of values, ignoring keys """
+        """ Maximum of values across keys, returned as an ndarray. """
         # NOTE: Does not use stats('max') to prevent cast to float64
         return self.rdd.values().reduce(maximum)
 
     def min(self):
-        """ Minimum of values, ignoring keys """
+        """ Minimum of values across keys, returned as an ndarray. """
         # NOTE: Does not use stats('min') to prevent cast to float64
         return self.rdd.values().reduce(minimum)
 
@@ -577,7 +581,7 @@ class Data(object):
 
     def filter(self, func):
         """
-        Filter records by appliyng a function to each record.
+        Filter records by applying a function to each record.
 
         This calls the Spark filter() method on the underlying RDD.
         """

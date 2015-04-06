@@ -17,8 +17,9 @@ class PCA(object):
         Number of principal components to estimate
 
     svdMethod : str, optional, default = "auto"
-        Which method to use for performing the SVD. If set to 'auto',
-        will select preferred method based on dimensionality.
+        If set to 'direct', will compute the SVD with direct gramian matrix estimation and eigenvector decomposition.
+        If set to 'em', will approximate the SVD using iterative expectation-maximization algorithm.
+        If set to 'auto', will use 'em' if number of columns in input data exceeds 750, otherwise will use 'direct'.
 
     Attributes
     ----------
