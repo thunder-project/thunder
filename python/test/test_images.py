@@ -760,7 +760,7 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
         outFilenames = sorted(glob.glob(os.path.join(outdir, "*.bin")))
         trueFilenames = map(lambda f: os.path.join(outdir, f),
-                            ['export-00000.bin', 'export-00001.bin', 'export-00002.bin'])
+                            ['image-00000.bin', 'image-00001.bin', 'image-00002.bin'])
         assert_true(os.path.isfile(os.path.join(outdir, 'SUCCESS')))
         assert_true(os.path.isfile(os.path.join(outdir, "conf.json")))
         assert_equals(outFilenames, trueFilenames)
