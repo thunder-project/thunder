@@ -436,6 +436,41 @@ class Images(Data):
 
         return self.filter(func=lambda x: median_filter(x, size))
 
+    def localCorr(self, neighborhood=2):
+        """
+        Correlate every pixel to the average of its local neighborhood.
+
+        This algorithm computes, for every spatial record, the correlation coefficient
+        between that record's series, and the average series of all records within
+        a local neighborhood with a size defined by the neighborhood parameter.
+        For data with three spatial keys, only neighborhoods in x and y
+        currently supported.
+
+        parameters
+        ----------
+        neighborhood: int, optional, default=2
+            Size of the correlation neighborhood in pixels. A sequence is interpreted
+            as the neighborhood size for each axis. For three-dimensional data, a single
+            scalar is intrepreted as the neighborhood in x and y, with no filtering in z.
+        """
+        from numpy import corrcoef
+
+        nrecords = self.nrecords
+
+        # Spatially average the original image set over the specified neighborhood
+        blurred = self.uniformFilter((neighborhood * 2) + 1)
+
+        # Union the averaged images with the originals to create an Images object containing 2N images (where
+        # N is the original number of images), ordered such that the first N images are the averaged ones.
+        combined = self.rdd.union(blurred.rdd)
+        combinedImages = self._constructor(combined).__finalize__(self).renumber()
+
+        # Correlate the first N (averaged) records with the last N (original) records
+        series = combinedImages.toSeries()
+        corr = series.applyValues(lambda x: corrcoef(x[:nrecords], x[nrecords:])(0, 1))
+
+        return corr
+
     def crop(self, minbound, maxbound):
         """
         Crop a spatial region from 2D or 3D data.
