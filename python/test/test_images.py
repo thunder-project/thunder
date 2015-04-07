@@ -384,6 +384,11 @@ class TestImagesMethods(PySparkTestCase):
         from thunder.rdds.images import Images
         self._run_tst_filter(Images.medianFilter, median_filter)
 
+    def test_uniformFilter3d(self):
+        from scipy.ndimage.filters import uniform_filter
+        from thunder.rdds.images import Images
+        self._run_tst_filter(Images.uniformFilter, uniform_filter)
+
     def _run_tst_crop(self, minBounds, maxBounds):
         dims = (2, 2, 4)
         sz = reduce(lambda x, y: x*y, dims)

@@ -365,9 +365,7 @@ class Images(Data):
         order : choice of 0 / 1 / 2 / 3 or sequence from same set, optional, default = 0
             Order of the gaussian kernel, 0 is a gaussian, higher numbers correspond
             to derivatives of a gaussian.
-            is given for each axis. A single number
         """
-
         from scipy.ndimage.filters import gaussian_filter
 
         dims = self.dims
@@ -378,6 +376,46 @@ class Images(Data):
 
         return self._constructor(
             self.rdd.mapValues(lambda v: gaussian_filter(v, sigma, order))).__finalize__(self)
+
+    def filter(self, size=2, func=None):
+        """
+        Generic function for applying a filtering operation to images or volumes.
+        """
+        from numpy import isscalar
+
+        dims = self.dims
+        ndims = len(dims)
+
+        if ndims == 3 and isscalar(size) == 1:
+            def filter_(im):
+                im.setflags(write=True)
+                for z in arange(0, dims[2]):
+                    im[:, :, z] = func(im[:, :, z])
+                return im
+        else:
+            filter_ = lambda x: func(x)
+
+        return self._constructor(
+            self.rdd.mapValues(lambda v: filter_(v))).__finalize__(self)
+
+    def uniformFilter(self, size=2):
+        """
+        Spatially filter images using a uniform filter.
+
+        Filtering will be applied to every image in the collection and can be applied
+        to either images or volumes. For volumes, if an single scalar neighborhood is passed,
+        it will be interpreted as the filter size in x and y, with no filtering in z.
+
+        parameters
+        ----------
+        size: int, optional, default=2
+            Size of the filter neighbourhood in pixels. A sequence is interpreted
+            as the neighborhood size for each axis. For three-dimensional data, a single
+            scalar is intrepreted as the neighborhood in x and y, with no filtering in z.
+        """
+        from scipy.ndimage.filters import uniform_filter
+
+        return self.filter(func=lambda x: uniform_filter(x, size))
 
     def medianFilter(self, size=2):
         """
@@ -394,25 +432,9 @@ class Images(Data):
             as the neighborhood size for each axis. For three-dimensional data, a single
             scalar is intrepreted as the neighborhood in x and y, with no filtering in z.
         """
-
         from scipy.ndimage.filters import median_filter
-        from numpy import isscalar
 
-        dims = self.dims
-        ndims = len(dims)
-
-        if ndims == 3 and isscalar(size) == 1:
-            # improved performance applying separately to each plane
-            def filter_(im):
-                im.setflags(write=True)
-                for z in arange(0, dims[2]):
-                    im[:, :, z] = median_filter(im[:, :, z], size)
-                return im
-        else:
-            filter_ = lambda im: median_filter(im, size)
-
-        return self._constructor(
-            self.rdd.mapValues(lambda v: filter_(v))).__finalize__(self)
+        return self.filter(func=lambda x: median_filter(x, size))
 
     def crop(self, minbound, maxbound):
         """
