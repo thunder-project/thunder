@@ -240,7 +240,7 @@ class Images(Data):
                                                              awsCredentialsOverride=awsCredentials)
             bufRdd.foreach(writer.writerFcn)
 
-    def saveAsBinaryImages(self, outputDirPath, filePrefix="export", overwrite=False):
+    def saveAsBinaryImages(self, outputDirPath, prefix="image", overwrite=False):
         """
         Write out images or volumes as flat binary files.
 
@@ -252,7 +252,7 @@ class Images(Data):
             Path to output directory to be created. Exception will be thrown if this directory already
             exists, unless overwrite is True. Directory must be one level below an existing directory.
 
-        filePrefix : string
+        prefix : string
             String to prepend to all filenames. Files will be named <fileprefix>-00000.bin, <fileprefix>-00001.bin, etc
 
         overwrite : bool
@@ -266,7 +266,7 @@ class Images(Data):
 
         def toFilenameAndBinaryBuf(kv):
             key, img = kv
-            fname = filePrefix+"-"+"%05d.bin" % int(key)
+            fname = prefix+"-"+"%05d.bin" % int(key)
             return fname, img.transpose().copy()
 
         bufRdd = self.rdd.map(toFilenameAndBinaryBuf)
