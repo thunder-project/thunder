@@ -455,7 +455,7 @@ class Images(Data):
         """
         from numpy import corrcoef
 
-        nrecords = self.nrecords
+        nimages = self.nrecords
 
         # Spatially average the original image set over the specified neighborhood
         blurred = self.uniformFilter((neighborhood * 2) + 1)
@@ -463,11 +463,12 @@ class Images(Data):
         # Union the averaged images with the originals to create an Images object containing 2N images (where
         # N is the original number of images), ordered such that the first N images are the averaged ones.
         combined = self.rdd.union(blurred.rdd)
-        combinedImages = self._constructor(combined).__finalize__(self).renumber()
+        combinedImages = self._constructor(combined, nrecords=(2 * nimages)).__finalize__(self).renumber()
+        #combinedImages = Images(combined).renumber()
 
         # Correlate the first N (averaged) records with the last N (original) records
         series = combinedImages.toSeries()
-        corr = series.applyValues(lambda x: corrcoef(x[:nrecords], x[nrecords:])(0, 1))
+        corr = series.applyValues(lambda x: corrcoef(x[:nimages], x[nimages:])[0, 1])
 
         return corr
 
