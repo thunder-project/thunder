@@ -464,7 +464,6 @@ class Images(Data):
         # N is the original number of images), ordered such that the first N images are the averaged ones.
         combined = self.rdd.union(blurred.rdd)
         combinedImages = self._constructor(combined, nrecords=(2 * nimages)).__finalize__(self).renumber()
-        #combinedImages = Images(combined).renumber()
 
         # Correlate the first N (averaged) records with the last N (original) records
         series = combinedImages.toSeries()
