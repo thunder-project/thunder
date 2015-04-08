@@ -377,27 +377,6 @@ class Images(Data):
         return self._constructor(
             self.rdd.mapValues(lambda v: gaussian_filter(v, sigma, order))).__finalize__(self)
 
-    def filter(self, size=2, func=None):
-        """
-        Generic function for applying a filtering operation to images or volumes.
-        """
-        from numpy import isscalar
-
-        dims = self.dims
-        ndims = len(dims)
-
-        if ndims == 3 and isscalar(size) == 1:
-            def filter_(im):
-                im.setflags(write=True)
-                for z in arange(0, dims[2]):
-                    im[:, :, z] = func(im[:, :, z])
-                return im
-        else:
-            filter_ = lambda x: func(x)
-
-        return self._constructor(
-            self.rdd.mapValues(lambda v: filter_(v))).__finalize__(self)
-
     def uniformFilter(self, size=2):
         """
         Spatially filter images using a uniform filter.
@@ -413,13 +392,11 @@ class Images(Data):
             as the neighborhood size for each axis. For three-dimensional data, a single
             scalar is intrepreted as the neighborhood in x and y, with no filtering in z.
         """
-        from scipy.ndimage.filters import uniform_filter
-
-        return self.filter(func=lambda x: uniform_filter(x, size))
+        return self._imageFilter(filter='uniform', size=size)
 
     def medianFilter(self, size=2):
         """
-        Spatially smooth images using a median filter.
+        Spatially filter images using a median filter.
 
         Filtering will be applied to every image in the collection and can be applied
         to either images or volumes. For volumes, if an single scalar neighborhood is passed,
@@ -432,9 +409,41 @@ class Images(Data):
             as the neighborhood size for each axis. For three-dimensional data, a single
             scalar is intrepreted as the neighborhood in x and y, with no filtering in z.
         """
-        from scipy.ndimage.filters import median_filter
+        return self._imageFilter(filter='median', size=size)
 
-        return self.filter(func=lambda x: median_filter(x, size))
+    def _imageFilter(self, filter=None, size=2):
+        """
+        Generic function for applying a filtering operation to images or volumes.
+
+        See also
+        --------
+        Images.uniformFilter
+        Images.medianFilter
+        """
+        from numpy import isscalar
+        from scipy.ndimage.filters import median_filter, uniform_filter
+
+        FILTERS = {
+            'median': median_filter,
+            'uniform': uniform_filter
+        }
+
+        func = FILTERS[filter]
+
+        dims = self.dims
+        ndims = len(dims)
+
+        if ndims == 3 and isscalar(size) == 1:
+            def filter_(im):
+                im.setflags(write=True)
+                for z in arange(0, dims[2]):
+                    im[:, :, z] = func(im[:, :, z], size)
+                return im
+        else:
+            filter_ = lambda x: func(x, size)
+
+        return self._constructor(
+            self.rdd.mapValues(lambda v: filter_(v))).__finalize__(self)
 
     def crop(self, minbound, maxbound):
         """
