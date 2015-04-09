@@ -8,6 +8,7 @@ from nose.tools import assert_equals, assert_raises, assert_true
 import unittest
 
 from thunder.rdds.series import Series
+from thunder.rdds.images import Images
 from thunder.rdds.timeseries import TimeSeries
 from thunder.rdds.fileio.imagesloader import ImagesLoader
 from thunder.rdds.fileio.seriesloader import SeriesLoader
@@ -623,9 +624,9 @@ class TestImagesLocalCorr(PySparkTestCase):
     and for both 2D and 3D data
     """
 
-    def get_local_corr(self, data, neighborhood):
-        ser = Series(self.sc.parallelize(data))
-        imgs = ser.toImages()
+    def get_local_corr(self, data, neighborhood, images=False):
+        rdd = self.sc.parallelize(data)
+        imgs = Images(rdd) if images else Series(rdd).toImages()
         return imgs.localCorr(neighborhood=neighborhood)
 
     def test_localCorr_0Indexing_2D(self):
@@ -649,7 +650,7 @@ class TestImagesLocalCorr(PySparkTestCase):
 
         corr = self.get_local_corr(dataLocal, 1)
 
-        assert(allclose(corr.collect()[4][1], truth))
+        assert(allclose(corr[4][1], truth))
 
     def test_localCorr_0Indexing_3D(self):
 
@@ -672,7 +673,51 @@ class TestImagesLocalCorr(PySparkTestCase):
 
         corr = self.get_local_corr(dataLocal, 1)
 
-        assert(allclose(corr.collect()[4][1], truth))
+        assert(allclose(corr[4][1], truth))
+
+    def test_localCorr_Images_2D(self):
+        """
+        Test the localCorr without converting from Series to Images (using self.get_local_corr) first.
+        """
+
+        dataLocal = [
+            (0, array([[1.0, 2.0, 9.0], [5.0, 4.0, 5.0], [4.0, 6.0, 0.0]])),
+            (1, array([[2.0, 2.0, 2.0], [2.0, 2.0, 4.0], [2.0, 3.0, 2.0]])),
+            (2, array([[3.0, 4.0, 1.0], [5.0, 8.0, 1.0], [6.0, 2.0, 1.0]]))
+        ]
+
+        from scipy.ndimage.filters import uniform_filter
+        imgs = map(lambda x: x[1], dataLocal)
+        # Blur each image and extract the center pixel
+        mn = map(lambda img: uniform_filter(img, 3)[1,1], imgs)
+        truth = corrcoef(mn, array([4.0, 2.0, 8.0]))[0, 1]
+
+        corr = self.get_local_corr(dataLocal, 1, images=True)
+
+        assert(allclose(corr[4][1], truth))
+
+    def test_localCorr_Images_3D(self):
+        """
+        Test the localCorr without converting from Series to Images (using self.get_local_corr) first.
+        """
+
+        #TODO
+
+        dataLocal = [
+            (0, array([[1.0, 2.0, 9.0], [5.0, 4.0, 5.0], [4.0, 6.0, 0.0]])),
+            (1, array([[2.0, 2.0, 2.0], [2.0, 2.0, 4.0], [2.0, 3.0, 2.0]])),
+            (2, array([[3.0, 4.0, 1.0], [5.0, 8.0, 1.0], [6.0, 2.0, 1.0]]))
+        ]
+
+        from scipy.ndimage.filters import uniform_filter
+        imgs = map(lambda x: x[1], dataLocal)
+        # Blur each image and extract the center pixel
+        mn = map(lambda img: uniform_filter(img, 3)[1,1], imgs)
+        truth = corrcoef(mn, array([4.0, 2.0, 8.0]))[0, 1]
+
+        corr = self.get_local_corr(dataLocal, 1, images=True)
+
+        assert(allclose(corr[4][1], truth))
 
 
 class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):

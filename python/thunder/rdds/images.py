@@ -16,6 +16,7 @@ class Images(Data):
 
     def __init__(self, rdd, dims=None, nrecords=None, dtype=None):
         super(Images, self).__init__(rdd, nrecords=nrecords, dtype=dtype)
+        print rdd.first()
         if dims and not isinstance(dims, Dimensions):
             try:
                 dims = Dimensions.fromTuple(dims)
@@ -443,16 +444,18 @@ class Images(Data):
         This algorithm computes, for every spatial record, the correlation coefficient
         between that record's series, and the average series of all records within
         a local neighborhood with a size defined by the neighborhood parameter.
-        For data with three spatial keys, only neighborhoods in x and y
-        currently supported.
+        The neighborhood is currently required to be a single integer, which represents the neighborhood
+        size in both x and y.
 
         parameters
         ----------
         neighborhood: int, optional, default=2
-            Size of the correlation neighborhood in pixels. A sequence is interpreted
-            as the neighborhood size for each axis. For three-dimensional data, a single
-            scalar is intrepreted as the neighborhood in x and y, with no filtering in z.
+            Size of the correlation neighborhood (in both the x and y directions), in pixels.
         """
+
+        if not isinstance(neighborhood, int):
+            raise ValueError("The neighborhood must be specified as an integer.")
+
         from numpy import corrcoef
 
         nimages = self.nrecords
@@ -462,14 +465,14 @@ class Images(Data):
 
         # Union the averaged images with the originals to create an Images object containing 2N images (where
         # N is the original number of images), ordered such that the first N images are the averaged ones.
-        combined = self.rdd.union(blurred.rdd)
-        combinedImages = self._constructor(combined, nrecords=(2 * nimages)).__finalize__(self).renumber()
+        combined = self.rdd.union(blurred.applyKeys(lambda k: k + nimages).rdd)
+        combinedImages = self._constructor(combined, nrecords=(2 * nimages)).__finalize__(self)
 
         # Correlate the first N (averaged) records with the last N (original) records
         series = combinedImages.toSeries()
         corr = series.applyValues(lambda x: corrcoef(x[:nimages], x[nimages:])[0, 1])
 
-        return corr
+        return corr.pack()
 
     def crop(self, minbound, maxbound):
         """
