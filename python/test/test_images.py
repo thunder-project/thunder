@@ -1,7 +1,7 @@
 import glob
 import struct
 import os
-from numpy import allclose, arange, array, array_equal, prod, squeeze, zeros, mean, corrcoef
+from numpy import allclose, arange, array, array_equal, prod, squeeze, zeros, size
 from numpy import dtype as dtypeFunc
 import itertools
 from nose.tools import assert_equals, assert_raises, assert_true
@@ -349,7 +349,7 @@ class TestImagesMethods(PySparkTestCase):
 
     @staticmethod
     def _run_filter(ary, filterFunc, radius):
-        if ary.ndim <= 2:
+        if ary.ndim <= 2 or size(radius) > 1:
             return filterFunc(ary, radius)
         else:
             cpy = zeros(ary.shape, dtype=ary.dtype)
@@ -375,20 +375,40 @@ class TestImagesMethods(PySparkTestCase):
         assert_equals(str(arys[0].dtype), str(filtered[0][1].dtype))
         assert_equals(str(filtered[0][1].dtype), filteredData._dtype)
 
+    def _run_tst_filter_3d_sigma(self, dataFunc, filterFunc):
+        narys = 3
+        arys, sh, sz = _generateTestArrays(narys)
+        sigma = [2, 2, 2]
+
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
+        filteredData = dataFunc(imageData, sigma)
+        filtered = filteredData.collect()
+        expectedArys = map(lambda ary: TestImagesMethods._run_filter(ary, filterFunc, sigma), arys)
+        for actual, expected in zip(filtered, expectedArys):
+            assert_true(allclose(expected, actual[1]))
+
+        assert_equals(tuple(expectedArys[0].shape), filtered[0][1].shape)
+        assert_equals(tuple(expectedArys[0].shape), filteredData._dims.count)
+        assert_equals(str(arys[0].dtype), str(filtered[0][1].dtype))
+        assert_equals(str(filtered[0][1].dtype), filteredData._dtype)
+
     def test_gaussFilter3d(self):
         from scipy.ndimage.filters import gaussian_filter
         from thunder.rdds.images import Images
         self._run_tst_filter(Images.gaussianFilter, gaussian_filter)
+        self._run_tst_filter_3d_sigma(Images.gaussianFilter, gaussian_filter)
 
     def test_medianFilter3d(self):
         from scipy.ndimage.filters import median_filter
         from thunder.rdds.images import Images
         self._run_tst_filter(Images.medianFilter, median_filter)
+        self._run_tst_filter_3d_sigma(Images.medianFilter, median_filter)
 
     def test_uniformFilter3d(self):
         from scipy.ndimage.filters import uniform_filter
         from thunder.rdds.images import Images
         self._run_tst_filter(Images.uniformFilter, uniform_filter)
+        self._run_tst_filter_3d_sigma(Images.uniformFilter, uniform_filter)
 
     def _run_tst_crop(self, minBounds, maxBounds):
         dims = (2, 2, 4)
