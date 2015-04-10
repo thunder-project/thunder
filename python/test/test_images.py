@@ -1,13 +1,14 @@
 import glob
 import struct
 import os
-from numpy import allclose, arange, array, array_equal, prod, squeeze, zeros, size
+from numpy import allclose, arange, array, array_equal, prod, squeeze, zeros, size, mean, corrcoef
 from numpy import dtype as dtypeFunc
 import itertools
 from nose.tools import assert_equals, assert_raises, assert_true
 import unittest
 
 from thunder.rdds.series import Series
+from thunder.rdds.images import Images
 from thunder.rdds.timeseries import TimeSeries
 from thunder.rdds.fileio.imagesloader import ImagesLoader
 from thunder.rdds.fileio.seriesloader import SeriesLoader
@@ -632,6 +633,101 @@ class TestImagesMeanByRegions(PySparkTestCase):
         # check values
         assert_equals(5, collected[0][1][0])
         assert_equals(15, collected[1][1][0])
+
+class TestImagesLocalCorr(PySparkTestCase):
+    """Test accuracy for local correlation
+    by comparison to known result
+    (verified by directly computing
+    result with numpy's mean and corrcoef)
+
+    Test with indexing from both 0 and 1,
+    and for both 2D and 3D data
+    """
+
+    def get_local_corr(self, data, neighborhood, images=False):
+        rdd = self.sc.parallelize(data)
+        imgs = Images(rdd) if images else Series(rdd).toImages()
+        return imgs.localCorr(neighborhood=neighborhood)
+
+    def test_localCorr_0Indexing_2D(self):
+
+        dataLocal = [
+            ((0, 0), array([1.0, 2.0, 3.0])),
+            ((0, 1), array([2.0, 2.0, 4.0])),
+            ((0, 2), array([9.0, 2.0, 1.0])),
+            ((1, 0), array([5.0, 2.0, 5.0])),
+            ((2, 0), array([4.0, 2.0, 6.0])),
+            ((1, 1), array([4.0, 2.0, 8.0])),
+            ((1, 2), array([5.0, 4.0, 1.0])),
+            ((2, 1), array([6.0, 3.0, 2.0])),
+            ((2, 2), array([0.0, 2.0, 1.0]))
+        ]
+
+        # get ground truth by correlating mean with the center
+        ts = map(lambda x: x[1], dataLocal)
+        mn = mean(ts, axis=0)
+        truth = corrcoef(mn, array([4.0, 2.0, 8.0]))[0, 1]
+
+        corr = self.get_local_corr(dataLocal, 1)
+
+        assert(allclose(corr[1][1], truth))
+
+    def test_localCorr_0Indexing_3D(self):
+
+        dataLocal = [
+            ((0, 0, 0), array([1.0, 2.0, 3.0])),
+            ((0, 1, 0), array([2.0, 2.0, 4.0])),
+            ((0, 2, 0), array([9.0, 2.0, 1.0])),
+            ((1, 0, 0), array([5.0, 2.0, 5.0])),
+            ((2, 0, 0), array([4.0, 2.0, 6.0])),
+            ((1, 1, 0), array([4.0, 2.0, 8.0])),
+            ((1, 2, 0), array([5.0, 4.0, 1.0])),
+            ((2, 1, 0), array([6.0, 3.0, 2.0])),
+            ((2, 2, 0), array([0.0, 2.0, 1.0]))
+        ]
+
+        # get ground truth by correlating mean with the center
+        ts = map(lambda x: x[1], dataLocal)
+        mn = mean(ts, axis=0)
+        truth = corrcoef(mn, array([4.0, 2.0, 8.0]))[0, 1]
+
+        corr = self.get_local_corr(dataLocal, 1)
+
+        assert(allclose(corr[1][1], truth))
+
+    def test_localCorr_Images_2D(self):
+
+        dataLocal = [
+            (0, array([[1.0, 2.0, 9.0], [5.0, 4.0, 5.0], [4.0, 6.0, 0.0]])),
+            (1, array([[2.0, 2.0, 2.0], [2.0, 2.0, 4.0], [2.0, 3.0, 2.0]])),
+            (2, array([[3.0, 4.0, 1.0], [5.0, 8.0, 1.0], [6.0, 2.0, 1.0]]))
+        ]
+
+        imgs = map(lambda x: x[1], dataLocal)
+        # Blur each image and extract the center pixel
+        mn = map(lambda img: mean(img), imgs)
+        truth = corrcoef(mn, array([4.0, 2.0, 8.0]))[0, 1]
+
+        corr = self.get_local_corr(dataLocal, 1, images=True)
+
+        assert(allclose(corr[1][1], truth))
+
+    def test_localCorr_Images_3D(self):
+
+        dataLocal = [
+            (0, array([[1.0, 2.0, 9.0], [5.0, 4.0, 5.0], [4.0, 6.0, 0.0]])),
+            (1, array([[2.0, 2.0, 2.0], [2.0, 2.0, 4.0], [2.0, 3.0, 2.0]])),
+            (2, array([[3.0, 4.0, 1.0], [5.0, 8.0, 1.0], [6.0, 2.0, 1.0]]))
+        ]
+
+        imgs = map(lambda x: x[1], dataLocal)
+        # Blur each image and extract the center pixel
+        mn = map(lambda img: mean(img), imgs)
+        truth = corrcoef(mn, array([4.0, 2.0, 8.0]))[0, 1]
+
+        corr = self.get_local_corr(dataLocal, 1, images=True)
+
+        assert(allclose(corr[1][1], truth))
 
 
 class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):

@@ -445,6 +445,43 @@ class Images(Data):
         return self._constructor(
             self.rdd.mapValues(lambda v: filter_(v))).__finalize__(self)
 
+    def localCorr(self, neighborhood=2):
+        """
+        Correlate every pixel to the average of its local neighborhood.
+
+        This algorithm computes, for every spatial record, the correlation coefficient
+        between that record's series, and the average series of all records within
+        a local neighborhood with a size defined by the neighborhood parameter.
+        The neighborhood is currently required to be a single integer, which represents the neighborhood
+        size in both x and y.
+
+        parameters
+        ----------
+        neighborhood: int, optional, default=2
+            Size of the correlation neighborhood (in both the x and y directions), in pixels.
+        """
+
+        if not isinstance(neighborhood, int):
+            raise ValueError("The neighborhood must be specified as an integer.")
+
+        from numpy import corrcoef
+
+        nimages = self.nrecords
+
+        # Spatially average the original image set over the specified neighborhood
+        blurred = self.uniformFilter((neighborhood * 2) + 1)
+
+        # Union the averaged images with the originals to create an Images object containing 2N images (where
+        # N is the original number of images), ordered such that the first N images are the averaged ones.
+        combined = self.rdd.union(blurred.applyKeys(lambda k: k + nimages).rdd)
+        combinedImages = self._constructor(combined, nrecords=(2 * nimages)).__finalize__(self)
+
+        # Correlate the first N (averaged) records with the last N (original) records
+        series = combinedImages.toSeries()
+        corr = series.applyValues(lambda x: corrcoef(x[:nimages], x[nimages:])[0, 1])
+
+        return corr.pack()
+
     def crop(self, minbound, maxbound):
         """
         Crop a spatial region from 2D or 3D data.
