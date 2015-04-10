@@ -650,7 +650,7 @@ class TestImagesLocalCorr(PySparkTestCase):
 
         corr = self.get_local_corr(dataLocal, 1)
 
-        assert(allclose(corr[4][1], truth))
+        assert(allclose(corr[1][1], truth))
 
     def test_localCorr_0Indexing_3D(self):
 
@@ -673,12 +673,9 @@ class TestImagesLocalCorr(PySparkTestCase):
 
         corr = self.get_local_corr(dataLocal, 1)
 
-        assert(allclose(corr[4][1], truth))
+        assert(allclose(corr[1][1], truth))
 
     def test_localCorr_Images_2D(self):
-        """
-        Test the localCorr without converting from Series to Images (using self.get_local_corr) first.
-        """
 
         dataLocal = [
             (0, array([[1.0, 2.0, 9.0], [5.0, 4.0, 5.0], [4.0, 6.0, 0.0]])),
@@ -694,14 +691,9 @@ class TestImagesLocalCorr(PySparkTestCase):
 
         corr = self.get_local_corr(dataLocal, 1, images=True)
 
-        assert(allclose(corr[4][1], truth))
+        assert(allclose(corr[1][1], truth))
 
     def test_localCorr_Images_3D(self):
-        """
-        Test the localCorr without converting from Series to Images (using self.get_local_corr) first.
-        """
-
-        #TODO
 
         dataLocal = [
             (0, array([[1.0, 2.0, 9.0], [5.0, 4.0, 5.0], [4.0, 6.0, 0.0]])),
@@ -717,7 +709,7 @@ class TestImagesLocalCorr(PySparkTestCase):
 
         corr = self.get_local_corr(dataLocal, 1, images=True)
 
-        assert(allclose(corr[4][1], truth))
+        assert(allclose(corr[1][1], truth))
 
 
 class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
