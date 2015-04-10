@@ -9,9 +9,9 @@ class Cleaner(object):
 
 class BasicCleaner(Cleaner):
     """
-    A simple cleaner that just removes sources larger or smaller than specified sizes.
+    A simple cleaner that removes sources larger or smaller than specified sizes.
     """
-    def __init__(self, minArea=0, maxArea=200, **extra):
+    def __init__(self, minArea=0, maxArea=200):
         self.minArea = minArea
         self.maxArea = maxArea
 

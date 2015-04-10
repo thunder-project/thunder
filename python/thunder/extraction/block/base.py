@@ -8,10 +8,9 @@ class BlockMethod(SourceExtractionMethod):
     Extract sources from spatiotemporal data by independently processing blocks.
 
     A block method extracts sources by applying a function to each block to recover
-    sources, and then merging sources across blocks. It requires three components:
-    an algorithm (which extracts sources from a single block),
-    a merger (which combines sources across blocks),
-    and a cleaner (which filters the output and removes or fixes undesired sources).
+    sources, and then merging sources across blocks. It requires two components:
+    an algorithm (which extracts sources from a single block) and
+    a merger (which combines sources across blocks)
 
     Parameters
     ----------
@@ -21,20 +20,15 @@ class BlockMethod(SourceExtractionMethod):
     merger : BlockMerger, optional, default = BasicBlockMerger
         Which merger to use
 
-    cleaner : Cleaner, optional, deafault = BasicCleaner
-        Which cleaner to use
-
     kwargs : dict
-        Any extra arguments will be passed to the algorithm, merger, and cleaner,
+        Any extra arguments to be passed to the algorithm or merger,
         useful for providing options to these components
     """
-    def __init__(self, algorithm=None, merger=None, cleaner=None, **kwargs):
+    def __init__(self, algorithm=None, merger=None, **kwargs):
 
         from thunder.extraction.block.mergers import BasicBlockMerger
-        from thunder.extraction.cleaners import BasicCleaner
 
         self.merger = merger if merger is not None else BasicBlockMerger(**kwargs)
-        self.cleaner = cleaner if cleaner is not None else BasicCleaner(**kwargs)
         self.algorithm = algorithm
 
     def fit(self, blocks, size=None, units="pixels", padding=0):
@@ -84,8 +78,6 @@ class BlockMethod(SourceExtractionMethod):
 
         if len(model.sources) < 1:
             raise Exception("No sources found, try changing parameters?")
-
-        model = self.cleaner.clean(model)
 
         return model
 

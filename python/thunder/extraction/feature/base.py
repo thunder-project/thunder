@@ -10,10 +10,9 @@ class FeatureMethod(SourceExtractionMethod):
     Extract sources from spatiotemporal data using featue detection methods.
 
     A feature method first process the raw data to compute a single image or volume,
-    and then uses an algorithm to extract sources. It requires three components:
-    a preprocessor (which process the raw data)
+    and then uses an algorithm to extract sources. It requires two components:
+    a creator (which creates features from the raw data) and
     an algorithm (which extracts sources from the resulting image or volume)
-    and a cleaner (which filters the output and removes bad sources)
 
     Parameters
     ----------
@@ -24,17 +23,14 @@ class FeatureMethod(SourceExtractionMethod):
         Which feature creator to use
 
     kwargs : dict
-        Any extra arguments will be passed to the algorithm, merger, and cleaner,
+        Any extra arguments to be passed to the algorithm or merger,
         useful for providing options to these components
     """
 
-    def __init__(self, algorithm=None, creator=None, cleaner=None, **kwargs):
-
-        from thunder.extraction.cleaners import BasicCleaner
+    def __init__(self, algorithm=None, creator=None, **kwargs):
 
         self.algorithm = algorithm
         self.creator = creator
-        self.cleaner = cleaner if cleaner is not None else BasicCleaner(**kwargs)
 
     def fit(self, data):
         """
@@ -69,8 +65,6 @@ class FeatureMethod(SourceExtractionMethod):
 
         if len(model.sources) < 1:
             raise Exception("No sources found, try changing parameters?")
-
-        model = self.cleaner.clean(model)
 
         return model
 

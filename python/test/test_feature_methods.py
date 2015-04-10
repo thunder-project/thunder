@@ -2,6 +2,7 @@ from numpy import array_equal
 
 from thunder import ThunderContext
 from thunder import SourceExtraction
+from thunder.extraction.cleaners import BasicCleaner
 
 from test_utils import PySparkTestCase
 

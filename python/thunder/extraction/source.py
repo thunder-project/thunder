@@ -479,6 +479,36 @@ class SourceModel(Serializable, object):
         else:
             return output
 
+    def clean(self, cleaners=None):
+        """
+        Apply one or more cleaners to sources, returning filtered sources
+
+        Parameters
+        ----------
+        cleaners : Cleaner or list of Cleaners, optional, default = None
+            Which cleaners to apply, if None, will apply BasicCleaner with defaults
+        """
+        from thunder.extraction.cleaners import Cleaner, BasicCleaner
+        from copy import copy
+
+        if isinstance(cleaners, list):
+            for c in cleaners:
+                if not isinstance(c, Cleaner):
+                    raise Exception("List must only contain Cleaners")
+        elif isinstance(cleaners, Cleaner):
+            cleaners = [cleaners]
+        elif cleaners is None:
+            cleaners = [BasicCleaner()]
+        else:
+            raise Exception("Must provide Cleaner or list of Cleaners, got %s" % type(cleaners))
+
+        newmodel = copy(self)
+
+        for c in cleaners:
+            newmodel = c.clean(newmodel)
+
+        return newmodel
+
     def save(self, f, numpyStorage='auto', include=None, **kwargs):
         """
         Custom save with simplified, human-readable output, and selection of lazy attributes.
