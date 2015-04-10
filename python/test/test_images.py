@@ -1,7 +1,7 @@
 import glob
 import struct
 import os
-from numpy import allclose, arange, array, array_equal, prod, squeeze, zeros, size
+from numpy import allclose, arange, array, array_equal, prod, squeeze, zeros, size, mean, corrcoef
 from numpy import dtype as dtypeFunc
 import itertools
 from nose.tools import assert_equals, assert_raises, assert_true
@@ -703,10 +703,9 @@ class TestImagesLocalCorr(PySparkTestCase):
             (2, array([[3.0, 4.0, 1.0], [5.0, 8.0, 1.0], [6.0, 2.0, 1.0]]))
         ]
 
-        from scipy.ndimage.filters import uniform_filter
         imgs = map(lambda x: x[1], dataLocal)
         # Blur each image and extract the center pixel
-        mn = map(lambda img: uniform_filter(img, 3)[1, 1], imgs)
+        mn = map(lambda img: mean(img), imgs)
         truth = corrcoef(mn, array([4.0, 2.0, 8.0]))[0, 1]
 
         corr = self.get_local_corr(dataLocal, 1, images=True)
@@ -721,10 +720,9 @@ class TestImagesLocalCorr(PySparkTestCase):
             (2, array([[3.0, 4.0, 1.0], [5.0, 8.0, 1.0], [6.0, 2.0, 1.0]]))
         ]
 
-        from scipy.ndimage.filters import uniform_filter
         imgs = map(lambda x: x[1], dataLocal)
         # Blur each image and extract the center pixel
-        mn = map(lambda img: uniform_filter(img, 3)[1, 1], imgs)
+        mn = map(lambda img: mean(img), imgs)
         truth = corrcoef(mn, array([4.0, 2.0, 8.0]))[0, 1]
 
         corr = self.get_local_corr(dataLocal, 1, images=True)
