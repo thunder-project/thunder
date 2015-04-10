@@ -16,7 +16,6 @@ class Images(Data):
 
     def __init__(self, rdd, dims=None, nrecords=None, dtype=None):
         super(Images, self).__init__(rdd, nrecords=nrecords, dtype=dtype)
-        print rdd.first()
         if dims and not isinstance(dims, Dimensions):
             try:
                 dims = Dimensions.fromTuple(dims)
