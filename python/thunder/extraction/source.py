@@ -1,7 +1,8 @@
 from numpy import asarray, mean, sqrt, ndarray, amin, amax, concatenate, sum, zeros, maximum, \
-    argmin, newaxis
+    argmin, newaxis, ones, delete, NaN, inf, isnan
 
 from thunder.utils.serializable import Serializable
+from thunder.utils.common import checkParams
 from thunder.rdds.images import Images
 from thunder.rdds.series import Series
 
@@ -140,7 +141,36 @@ class Source(Serializable, object):
                     setattr(new, prop, asarray(val))
         return new
 
-    def mask(self, dims=None, binary=True):
+    def transform(self, data, collect=True):
+        """
+        Extract series from data using a list of sources.
+
+        Currently only supports averaging over coordinates.
+
+        Params
+        ------
+        data : Images or Series object
+            The data from which to extract
+
+        collect : boolean, optional, default = True
+            Whether to collect to local array or keep as a Series
+        """
+
+        if not (isinstance(data, Images) or isinstance(data, Series)):
+            raise Exception("Input must either be Images or Series (or a subclass)")
+
+        # TODO add support for weighting
+        if isinstance(data, Images):
+            output = data.meanByRegions([self.coordinates]).toSeries()
+        else:
+            output = data.meanOfRegion(self.coordinates)
+
+        if collect:
+            return output.collectValuesAsArray()
+        else:
+            return output
+
+    def mask(self, dims=None, binary=True, outline=False):
         """
         Construct a mask from a source, either locally or within a larger image.
 
@@ -152,21 +182,29 @@ class Source(Serializable, object):
 
         binary : boolean, optional, deafult = True
             Whether to incoporate values or only show a binary mask
+
+        outline : boolean, optional, deafult = False
+            Whether to only show outlines (derived using binary dilation)
         """
+        coords = self.coordinates
+
         if dims is None:
             extent = self.bbox[len(self.center):] - self.bbox[0:len(self.center)] + 1
-            empty = zeros(extent)
-            coords = (self.coordinates - self.bbox[0:len(self.center)])
+            m = zeros(extent)
+            coords = (coords - self.bbox[0:len(self.center)])
         else:
-            empty = zeros(dims)
-            coords = self.coordinates
+            m = zeros(dims)
 
         if hasattr(self, 'values') and self.values is not None and binary is False:
-            empty[coords.T.tolist()] = self.values
+            m[coords.T.tolist()] = self.values
         else:
-            empty[coords.T.tolist()] = 1
+            m[coords.T.tolist()] = 1
 
-        return empty
+        if outline:
+            from skimage.morphology import binary_dilation
+            m = binary_dilation(m, ones((3, 3))) - m
+
+        return m
 
     def __repr__(self):
         s = self.__class__.__name__
@@ -196,8 +234,13 @@ class SourceModel(Serializable, object):
             self.sources = [sources]
         elif isinstance(sources, list) and isinstance(sources[0], Source):
             self.sources = sources
+        elif isinstance(sources, list):
+            self.sources = []
+            for ss in sources:
+                self.sources.append(Source(ss))
         else:
-            raise Exception("Input type not recognized, must be Source or list of Sources, got %s" % type(sources))
+            raise Exception("Input type not recognized, must be Source, list of Sources, "
+                            "or list of coordinates, got %s" % type(sources))
 
     def __getitem__(self, entry):
         if not isinstance(entry, int):
@@ -248,23 +291,65 @@ class SourceModel(Serializable, object):
         """
         return self.combiner('area', tolist=False)
 
-    def masks(self, dims=None, binary=True):
+    def masks(self, dims=None, binary=True, outline=False, base=None):
         """
-        Composite mask combined across sources
+        Composite masks combined across sources as an iamge.
+
+        Parameters
+        ----------
+        dims : list or tuple, optional, default = None
+            Dimensions of image in which to create masks, must either provide
+            these or provide a base image
+
+        binary : boolean, optional, deafult = True
+            Whether to incoporate values or only show a binary mask
+
+        outline : boolean, optional, deafult = False
+            Whether to only show outlines (derived using binary dilation)
+
+        base : array-like, optional, deafult = None
+            Base background image on which to put masks.
         """
-        if dims is None:
-            raise Exception("Must provide image dimensions for composite masks.")
+        from thunder import Colorize
+
+        if dims is None and base is None:
+            raise Exception("Must provide image dimensions for composite masks "
+                            "or provide a base image.")
+
+        if base is not None and isinstance(base, SourceModel):
+            outline = True
+
+        if dims is None and base is not None:
+            dims = asarray(base).shape
 
         combined = zeros(dims)
         for s in self.sources:
-            combined = maximum(s.mask(dims, binary), combined)
+            combined = maximum(s.mask(dims, binary, outline), combined)
+
+        if base is not None:
+            if isinstance(base, SourceModel):
+                base = base.masks(dims)
+                baseColor = 'silver'
+            else:
+                baseColor = 'white'
+            clr = Colorize(cmap='indexed', colors=[baseColor, 'deeppink'])
+            combined = clr.transform([base, combined])
+
         return combined
 
-    def match(self, other):
+    def match(self, other, unique=False, minDistance=inf):
         """
         For each source in self, find the index of the closest source in other.
 
         Uses euclidean distances between centers to determine distances.
+
+        Can select nearest matches with or without enforcing uniqueness;
+        if unique is False, will return the closest source in other for
+        each source in self, possibly repeating sources multiple times
+        if unique is True, will only allow each source in other to be matched
+        with a single source in self, as determined by a greedy selection procedure.
+        The minDistance parameter can be used to prevent far-away sources from being
+        chosen during greedy selection.
 
         Params
         ------
@@ -273,28 +358,109 @@ class SourceModel(Serializable, object):
 
         unique : boolean, optional, deafult = True
             Whether to only return unique matches
+
+        minDistance : scalar, optiona, default = inf
+            Minimum distance to use when selecting matches
         """
         from scipy.spatial.distance import cdist
-        from numpy import argmin, newaxis
 
-        target = other.centers
+        targets = other.centers
+        targetInds = range(0, len(targets))
         matches = []
         for s in self.sources:
-            ind = argmin(cdist(target, s.center[newaxis]))
-            matches.append(ind)
+            update = 1
+
+            # skip if no targets left, otherwise update
+            if len(targets) == 0:
+                update = 0
+            else:
+                dists = cdist(targets, s.center[newaxis])
+                if dists.min() < minDistance:
+                    ind = argmin(dists)
+                else:
+                    update = 0
+
+            # apply updates, otherwise add a nan
+            if update == 1:
+                matches.append(targetInds[ind])
+                if unique is True:
+                    targets = delete(targets, ind, axis=0)
+                    targetInds = delete(targetInds, ind)
+            else:
+                matches.append(NaN)
+
         return matches
+
+    def distance(self, other, minDistance=inf):
+        """
+        Compute the distance between each source in self and other.
+
+        First estimates a matching source from other for each source
+        in self, then computes the distance between the two sources.
+        The matches are unique, using a greedy procedure,
+        and minDistance can be used to prevent outliers during matching.
+
+        Parameters
+        ----------
+        other : SourceModel
+            The sources to compute distances to
+
+        minDistance : scalar, optiona, default = inf
+            Minimum distance to use when selecting matches
+        """
+
+        inds = self.match(other, unique=True, minDistance=minDistance)
+        d = []
+        for jj, ii in enumerate(inds):
+            if ii is not NaN:
+                d.append(self[jj].distance(other[ii]))
+            else:
+                d.append(NaN)
+        return asarray(d)
+
+    def similarity(self, other, metric='distance', thresh=5):
+        """
+        Estimate similarity between sources in self and other.
+
+        Will compute the fraction of sources in self that are found
+        in other, based on a given distance metric and a threshold.
+        The fraction is estimated as the number of sources in self
+        found in other, divided by the total number of sources in self.
+
+        Parameters
+        ----------
+        other : SourceModel
+            The sources to compare to
+
+        metric : str, optional, default = "distance"
+            Metric to use when computing distances
+
+        thresh : scalar, optional, default = 5
+            The distance below which a source is considered found
+        """
+
+        checkParams(metric, ['distance'])
+
+        if metric == 'distance':
+            vals = self.distance(other, minDistance=thresh)
+            vals[isnan(vals)] = inf
+        else:
+            raise Exception("Metric not recognized")
+
+        hits = sum(vals < thresh) / float(len(self.sources))
+
+        return hits
 
     def transform(self, data, collect=True):
         """
-        Extract time series from data using a list of sources.
+        Extract series from data using a list of sources.
 
         Currently only supports simple averaging over coordinates.
-        TODO add support for weighting
 
         Params
         ------
         data : Images or Series object
-            The data to extract
+            The data from which to extract signals
 
         collect : boolean, optional, default = True
             Whether to collect to local array or keep as a Series
@@ -302,7 +468,7 @@ class SourceModel(Serializable, object):
         if not (isinstance(data, Images) or isinstance(data, Series)):
             raise Exception("Input must either be Images or Series (or a subclass)")
 
-        # inversion converts x/y to row/col
+        # TODO add support for weighting
         if isinstance(data, Images):
             output = data.meanByRegions(self.coordinates).toSeries()
         else:
