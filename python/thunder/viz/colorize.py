@@ -165,9 +165,9 @@ class Colorize(object):
             if img.ndim == 4:
                 out = zeros((dims[1], dims[2], dims[3], 3))
                 for i in range(0, dims[3]):
-                    out[:, :, i, :] = hsv_to_rgb(dstack((img[0][:, :, i], saturation, img[2][:, :, i])))
+                    out[:, :, i, :] = hsv_to_rgb(dstack((img[0][:, :, i], saturation, img[1][:, :, i])))
             if img.ndim == 3:
-                out = hsv_to_rgb(dstack((img[0], saturation, img[2])))
+                out = hsv_to_rgb(dstack((img[0], saturation, img[1])))
 
         elif self.cmap == 'hsv':
             if img.ndim == 4:

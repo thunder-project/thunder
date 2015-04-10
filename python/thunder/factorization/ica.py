@@ -22,8 +22,10 @@ class ICA(object):
         Number of independent components to estimate
 
     svdMethod : string, optional, default = "auto"
-        Which SVD method to use. If set to 'auto',
-        will select preferred method based on dimensionality.
+        Which SVD method to use.
+        If set to 'direct', will compute the SVD with direct gramian matrix estimation and eigenvector decomposition.
+        If set to 'em', will approximate the SVD using iterative expectation-maximization algorithm.
+        If set to 'auto', will use 'em' if number of columns in input data exceeds 750, otherwise will use 'direct'.
 
     maxIter : Int, optional, default = 10
         Maximum number of iterations
@@ -42,6 +44,10 @@ class ICA(object):
     `sigs` : RowMatrix, nrows, each array of shape (c,)
         Estimated independent components
 
+    See also
+    --------
+    SVD : singular value decomposition
+    PCA: principal components analysis
     """
 
     def __init__(self, c, k=None, svdMethod='auto', maxIter=10, tol=0.000001, seed=0):
