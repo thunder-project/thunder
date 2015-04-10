@@ -686,7 +686,7 @@ class TestImagesLocalCorr(PySparkTestCase):
         from scipy.ndimage.filters import uniform_filter
         imgs = map(lambda x: x[1], dataLocal)
         # Blur each image and extract the center pixel
-        mn = map(lambda img: uniform_filter(img, 3)[1,1], imgs)
+        mn = map(lambda img: uniform_filter(img, 3)[1, 1], imgs)
         truth = corrcoef(mn, array([4.0, 2.0, 8.0]))[0, 1]
 
         corr = self.get_local_corr(dataLocal, 1, images=True)
@@ -704,7 +704,7 @@ class TestImagesLocalCorr(PySparkTestCase):
         from scipy.ndimage.filters import uniform_filter
         imgs = map(lambda x: x[1], dataLocal)
         # Blur each image and extract the center pixel
-        mn = map(lambda img: uniform_filter(img, 3)[1,1], imgs)
+        mn = map(lambda img: uniform_filter(img, 3)[1, 1], imgs)
         truth = corrcoef(mn, array([4.0, 2.0, 8.0]))[0, 1]
 
         corr = self.get_local_corr(dataLocal, 1, images=True)
