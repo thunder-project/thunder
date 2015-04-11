@@ -701,7 +701,7 @@ class ThunderContext():
         from thunder import SourceExtraction
 
         blob = self.loadJSON(path)
-        return SourceExtraction.fromJSON(blob)
+        return SourceExtraction.deserialize(blob)
 
     def export(self, data, filename, outputFormat=None, overwrite=False, varname=None):
         """

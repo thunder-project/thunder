@@ -24,8 +24,8 @@ class SourceExtraction(object):
         return SourceModel.load(file)
 
     @staticmethod
-    def fromJSON(file):
-        return SourceModel.fromJSON(file)
+    def deserialize(file):
+        return SourceModel.deserialize(file)
 
 
 class SourceExtractionMethod(object):

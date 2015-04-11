@@ -536,13 +536,13 @@ class SourceModel(Serializable, object):
         return output
 
     @classmethod
-    def fromJSON(cls, s, **kwargs):
+    def deserialize(cls, d, **kwargs):
         """
         Custom load from JSON to handle simplified, human-readable output
         """
         unsimplify = lambda d: {'sources': {
             'py/homogeneousList': {'data': d, 'module': 'thunder.extraction.source', 'type': 'Source'}}}
-        output = super(SourceModel, cls).fromJSON(s, unsimplify=unsimplify)
+        output = super(SourceModel, cls).deserialize(d, unsimplify=unsimplify)
         output.sources = map(lambda s: s.toarray(), output.sources)
         return output
 
