@@ -511,7 +511,7 @@ class SourceModel(Serializable, object):
 
     def save(self, f, numpyStorage='auto', include=None, **kwargs):
         """
-        Custom save with simplified, human-readable output, and selection of lazy attributes.
+        Custom save to file with simplified, human-readable output, and selection of lazy attributes.
         """
         import copy
         output = copy.deepcopy(self)
@@ -527,11 +527,22 @@ class SourceModel(Serializable, object):
     @classmethod
     def load(cls, f, **kwargs):
         """
-        Custom load to handle simplified, human-readable output
+        Custom load from file to handle simplified, human-readable output
         """
         unsimplify = lambda d: {'sources': {
             'py/homogeneousList': {'data': d, 'module': 'thunder.extraction.source', 'type': 'Source'}}}
         output = super(SourceModel, cls).load(f, unsimplify=unsimplify)
+        output.sources = map(lambda s: s.toarray(), output.sources)
+        return output
+
+    @classmethod
+    def fromJSON(cls, s, **kwargs):
+        """
+        Custom load from JSON to handle simplified, human-readable output
+        """
+        unsimplify = lambda d: {'sources': {
+            'py/homogeneousList': {'data': d, 'module': 'thunder.extraction.source', 'type': 'Source'}}}
+        output = super(SourceModel, cls).fromJSON(s, unsimplify=unsimplify)
         output.sources = map(lambda s: s.toarray(), output.sources)
         return output
 

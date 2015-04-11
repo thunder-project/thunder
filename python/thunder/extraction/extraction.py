@@ -23,6 +23,10 @@ class SourceExtraction(object):
     def load(file):
         return SourceModel.load(file)
 
+    @staticmethod
+    def fromJSON(file):
+        return SourceModel.fromJSON(file)
+
 
 class SourceExtractionMethod(object):
 

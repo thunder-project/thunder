@@ -634,6 +634,31 @@ class ThunderContext():
 
         return data, params
 
+    def loadJSON(self, path):
+        """
+        Generic function for loading JSON from a path, handling local file systems and S3
+
+        Parameters
+        ----------
+        path : str
+            Path to a file, can be on a local file system or an S3 bucket
+
+        Returns
+        -------
+        A string with the JSON
+        """
+
+        import json
+        from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError
+
+        reader = getFileReaderForPath(path)(awsCredentialsOverride=self._credentials)
+        try:
+            buffer = reader.read(path)
+        except FileNotFoundError:
+            raise Exception("Cannot find file %s" % path)
+
+        return json.loads(buffer)
+
     def loadParams(self, path):
         """
         Load a file with parameters from a local file system or S3.
@@ -653,16 +678,30 @@ class ThunderContext():
         -------
         A dict or list with the parameters
         """
-        import json
-        from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError
+        blob = self.loadJSON(path)
+        return Params(blob)
 
-        reader = getFileReaderForPath(path)(awsCredentialsOverride=self._credentials)
-        try:
-            buffer = reader.read(path)
-        except FileNotFoundError:
-            raise Exception("Cannot find file %s" % path)
+    def loadSources(self, path):
+        """
+        Load a file with sources from a local file system or S3.
 
-        return Params(json.loads(buffer))
+        Parameters
+        ----------
+        path : str
+            Path to file, can be on a local file system or an S3 bucket
+
+        Returns
+        -------
+        A SourceModel
+
+        See also
+        --------
+        thunder.SourceExtraction
+        """
+        from thunder import SourceExtraction
+
+        blob = self.loadJSON(path)
+        return SourceExtraction.fromJSON(blob)
 
     def export(self, data, filename, outputFormat=None, overwrite=False, varname=None):
         """
