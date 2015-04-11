@@ -240,7 +240,7 @@ class Images(Data):
                                                              awsCredentialsOverride=awsCredentials)
             bufRdd.foreach(writer.writerFcn)
 
-    def saveAsBinaryImages(self, outputDirPath, filePrefix="export", overwrite=False):
+    def saveAsBinaryImages(self, outputDirPath, prefix="image", overwrite=False):
         """
         Write out images or volumes as flat binary files.
 
@@ -252,7 +252,7 @@ class Images(Data):
             Path to output directory to be created. Exception will be thrown if this directory already
             exists, unless overwrite is True. Directory must be one level below an existing directory.
 
-        filePrefix : string
+        prefix : string
             String to prepend to all filenames. Files will be named <fileprefix>-00000.bin, <fileprefix>-00001.bin, etc
 
         overwrite : bool
@@ -266,7 +266,7 @@ class Images(Data):
 
         def toFilenameAndBinaryBuf(kv):
             key, img = kv
-            fname = filePrefix+"-"+"%05d.bin" % int(key)
+            fname = prefix+"-"+"%05d.bin" % int(key)
             return fname, img.transpose().copy()
 
         bufRdd = self.rdd.map(toFilenameAndBinaryBuf)
@@ -365,9 +365,7 @@ class Images(Data):
         order : choice of 0 / 1 / 2 / 3 or sequence from same set, optional, default = 0
             Order of the gaussian kernel, 0 is a gaussian, higher numbers correspond
             to derivatives of a gaussian.
-            is given for each axis. A single number
         """
-
         from scipy.ndimage.filters import gaussian_filter
 
         dims = self.dims
@@ -379,9 +377,9 @@ class Images(Data):
         return self._constructor(
             self.rdd.mapValues(lambda v: gaussian_filter(v, sigma, order))).__finalize__(self)
 
-    def medianFilter(self, size=2):
+    def uniformFilter(self, size=2):
         """
-        Spatially smooth images using a median filter.
+        Spatially filter images using a uniform filter.
 
         Filtering will be applied to every image in the collection and can be applied
         to either images or volumes. For volumes, if an single scalar neighborhood is passed,
@@ -394,25 +392,95 @@ class Images(Data):
             as the neighborhood size for each axis. For three-dimensional data, a single
             scalar is intrepreted as the neighborhood in x and y, with no filtering in z.
         """
+        return self._imageFilter(filter='uniform', size=size)
 
-        from scipy.ndimage.filters import median_filter
+    def medianFilter(self, size=2):
+        """
+        Spatially filter images using a median filter.
+
+        Filtering will be applied to every image in the collection and can be applied
+        to either images or volumes. For volumes, if an single scalar neighborhood is passed,
+        it will be interpreted as the filter size in x and y, with no filtering in z.
+
+        parameters
+        ----------
+        size: int, optional, default=2
+            Size of the filter neighbourhood in pixels. A sequence is interpreted
+            as the neighborhood size for each axis. For three-dimensional data, a single
+            scalar is intrepreted as the neighborhood in x and y, with no filtering in z.
+        """
+        return self._imageFilter(filter='median', size=size)
+
+    def _imageFilter(self, filter=None, size=2):
+        """
+        Generic function for applying a filtering operation to images or volumes.
+
+        See also
+        --------
+        Images.uniformFilter
+        Images.medianFilter
+        """
         from numpy import isscalar
+        from scipy.ndimage.filters import median_filter, uniform_filter
+
+        FILTERS = {
+            'median': median_filter,
+            'uniform': uniform_filter
+        }
+
+        func = FILTERS[filter]
 
         dims = self.dims
         ndims = len(dims)
 
         if ndims == 3 and isscalar(size) == 1:
-            # improved performance applying separately to each plane
             def filter_(im):
                 im.setflags(write=True)
                 for z in arange(0, dims[2]):
-                    im[:, :, z] = median_filter(im[:, :, z], size)
+                    im[:, :, z] = func(im[:, :, z], size)
                 return im
         else:
-            filter_ = lambda im: median_filter(im, size)
+            filter_ = lambda x: func(x, size)
 
         return self._constructor(
             self.rdd.mapValues(lambda v: filter_(v))).__finalize__(self)
+
+    def localCorr(self, neighborhood=2):
+        """
+        Correlate every pixel to the average of its local neighborhood.
+
+        This algorithm computes, for every spatial record, the correlation coefficient
+        between that record's series, and the average series of all records within
+        a local neighborhood with a size defined by the neighborhood parameter.
+        The neighborhood is currently required to be a single integer, which represents the neighborhood
+        size in both x and y.
+
+        parameters
+        ----------
+        neighborhood: int, optional, default=2
+            Size of the correlation neighborhood (in both the x and y directions), in pixels.
+        """
+
+        if not isinstance(neighborhood, int):
+            raise ValueError("The neighborhood must be specified as an integer.")
+
+        from numpy import corrcoef
+
+        nimages = self.nrecords
+
+        # Spatially average the original image set over the specified neighborhood
+        blurred = self.uniformFilter((neighborhood * 2) + 1)
+
+        # Union the averaged images with the originals to create an Images object containing 2N images (where
+        # N is the original number of images), ordered such that the first N images are the averaged ones.
+        combined = self.rdd.union(blurred.applyKeys(lambda k: k + nimages).rdd)
+        combinedImages = self._constructor(combined, nrecords=(2 * nimages)).__finalize__(self)
+
+        # Correlate the first N (averaged) records with the last N (original) records
+        series = combinedImages.toSeries()
+        corr = series.applyValues(lambda x: corrcoef(x[:nimages], x[nimages:])[0, 1])
+
+        return corr.pack()
 
     def crop(self, minbound, maxbound):
         """

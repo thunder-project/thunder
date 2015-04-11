@@ -2,7 +2,8 @@
 Utilities for generating example datasets
 """
 
-from numpy import array, random, shape, floor, dot, linspace, sin, sign, c_
+from numpy import array, asarray, random, shape, floor, dot, linspace, \
+    sin, sign, c_, ceil, inf, clip, zeros, max, size, sqrt, log
 
 from thunder.rdds.matrices import RowMatrix
 from thunder.rdds.series import Series
@@ -82,8 +83,60 @@ class ICAData(DataSets):
             return data
 
 
+class SourcesData(DataSets):
+
+    def generate(self, dims=(100, 200), centers=5, t=100, margin=35, sd=3, noise=0.1, npartitions=1, seed=None):
+
+        from scipy.ndimage.filters import gaussian_filter
+        from skimage.draw import circle
+        from thunder.rdds.fileio.imagesloader import ImagesLoader
+        from thunder.extraction.source import SourceModel
+
+        random.seed(seed)
+
+        if len(dims) != 2:
+            raise Exception("Can only generate for two-dimensional sources.")
+
+        if size(centers) == 1:
+            n = centers
+            xcenters = (dims[1] - margin) * random.random_sample(n) + margin/2
+            ycenters = (dims[0] - margin) * random.random_sample(n) + margin/2
+            centers = zip(xcenters, ycenters)
+        else:
+            centers = asarray(centers)
+            n = len(centers)
+
+        ts = [clip(random.randn(t), 0, inf) for i in range(0, n)]
+        allframes = []
+        for tt in range(0, t):
+            frame = zeros(dims)
+            for nn in range(0, n):
+                base = zeros(dims)
+                base[centers[nn][1], centers[nn][0]] = 1
+                img = gaussian_filter(base, sd)
+                img = img/max(img)
+                frame += img * ts[nn][tt]
+            frame += random.randn(dims[0], dims[1]) * noise
+            allframes.append(frame)
+
+        def pointToCircle(center, radius):
+            rr, cc = circle(center[0], center[1], radius)
+            return array(zip(rr, cc))
+
+        r = round(sd * 1.5)
+        sources = SourceModel([pointToCircle(c[::-1], r) for c in centers])
+
+        data = ImagesLoader(self.sc).fromArrays(allframes, npartitions).astype('float')
+        if self.returnParams is True:
+            return data, ts, sources
+        else:
+            return data
+
+
+
 DATASET_MAKERS = {
     'kmeans': KMeansData,
     'pca': PCAData,
-    'ica': ICAData
+    'ica': ICAData,
+    'sources': SourcesData
 }

@@ -12,6 +12,7 @@ from thunder.regression.tuning import TuningModel
 from thunder.regression.tuning import GaussianTuningModel, CircularTuningModel
 from thunder.imgprocessing.registration import Registration, RegistrationModel
 from thunder.imgprocessing.regmethods.crosscorr import CrossCorr, PlanarCrossCorr
+from thunder.extraction.extraction import SourceExtraction
 
 # data types
 from thunder.rdds.series import Series
