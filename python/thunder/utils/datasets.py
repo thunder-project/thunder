@@ -87,7 +87,7 @@ class SourcesData(DataSets):
 
     def generate(self, dims=(100, 200), centers=5, t=100, margin=35, sd=3, noise=0.1, npartitions=1, seed=None):
 
-        from scipy.ndimage.filters import gaussian_filter
+        from scipy.ndimage.filters import gaussian_filter, gaussian_filter1d
         from skimage.draw import circle
         from thunder.rdds.fileio.imagesloader import ImagesLoader
         from thunder.extraction.source import SourceModel
@@ -107,6 +107,7 @@ class SourcesData(DataSets):
             n = len(centers)
 
         ts = [clip(random.randn(t), 0, inf) for i in range(0, n)]
+        ts = [gaussian_filter1d(vec, 10) for vec in ts] * 5
         allframes = []
         for tt in range(0, t):
             frame = zeros(dims)
@@ -131,7 +132,6 @@ class SourcesData(DataSets):
             return data, ts, sources
         else:
             return data
-
 
 
 DATASET_MAKERS = {
