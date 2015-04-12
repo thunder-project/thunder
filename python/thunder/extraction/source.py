@@ -1,6 +1,9 @@
 from numpy import asarray, mean, sqrt, ndarray, amin, amax, concatenate, sum, zeros, maximum, \
     argmin, newaxis, ones, delete, NaN, inf, isnan
 
+import numpy.linalg as la
+from scipy.stats import spearmanr
+
 from thunder.utils.serializable import Serializable
 from thunder.utils.common import checkParams
 from thunder.rdds.images import Images
@@ -106,18 +109,66 @@ class Source(Serializable, object):
                 del self.__dict__[prop]
         return self
 
-    def distance(self, other):
+    def distance(self, other, method='l1'):
         """
         Distance between the center of this source and another.
+
+        Parameters
+        ----------
+        method : str
+            Specify a distance measure to used for spatial distance between source
+            centers. Current options include Euclidean distance ('euclidean') and 
+            L1-norm ('l1'). 
+
         """
+        if method == 'euclidean':
+            order = 2
+        elif method == 'l1':
+            order = 1
+        else:
+            raise ValueError('Given distance method not supported.')
+
         if isinstance(other, Source):
-            return sqrt(sum((self.center - other.center) ** 2))
+            return la.norm(self.center - other.center, ord=order)
         elif isinstance(other, list) or isinstance(other, ndarray):
-            return sqrt(sum((self.center - asarray(other)) ** 2))
+            return la.norm(self.center - asarray(other), ord=order)
+
+    def overlap(self, other, method='support',counts=False):
+        """
+        Compute the overlap between current source and 'other' source, in terms 
+        of either support or similarity of coefficients. 
+
+        Parameters
+        ----------
+        method : str
+            Compare either support of source coefficients ('support'), or the 
+            source spatial filters (not yet implemented).
+
+        """
+        if isinstance(self.coordinates, ndarray):
+            self.coordinates = self.coordinates.tolist()
+        if isinstance(other.coordinates, ndarray):
+            other.coordinates = other.coordinates.tolist()
+        intersection = [a for a in self.coordinates if a in other.coordinates]
+        complement = [a for a in self.coordinates if a not in intersection]
+        if method == 'support':
+            hits = len(intersection)
+            misses = len(complement)
+            if counts:
+                return (hits,misses)
+            else:
+                return hits/float(hits+misses)
+        elif method == 'corr':
+            #TODO: this is actually a bit complicated, as support size can matter... we
+            # could use a fixed box size or the union of source supports?
+            raise NotImplementedError()
+        else:
+            raise ValueError('Given method is not supported.')
 
     def tolist(self):
         """
         Convert array-like attributes to list
+
         """
         import copy
         new = copy.copy(self)
@@ -418,38 +469,36 @@ class SourceModel(Serializable, object):
                 d.append(NaN)
         return asarray(d)
 
-    def similarity(self, other, metric='distance', thresh=5):
+    def overlap(self, other, method='support', minDistance=inf):
         """
-        Estimate similarity between sources in self and other.
+        Estimate overlap between sources in self and other.
 
-        Will compute the fraction of sources in self that are found
-        in other, based on a given distance metric and a threshold.
-        The fraction is estimated as the number of sources in self
-        found in other, divided by the total number of sources in self.
+        Will compute the similarity of sources in self that are found
+        in other, based on either source pixel overlap or correlation.
 
         Parameters
         ----------
         other : SourceModel
             The sources to compare to
 
-        metric : str, optional, default = "distance"
-            Metric to use when computing distances
+        method : str, optional, default = "support"
+            Method to use when computing overlap between sources.
+            Currently only 'support', which operates on binarized pixel masks, is supported.
 
-        thresh : scalar, optional, default = 5
-            The distance below which a source is considered found
         """
-
-        checkParams(metric, ['distance'])
-
-        if metric == 'distance':
-            vals = self.distance(other, minDistance=thresh)
-            vals[isnan(vals)] = inf
+        if method == 'support':
+            inds = self.match(other, unique=True, minDistance=minDistance)
+            d = []
+            for jj, ii in enumerate(inds):
+                if ii is not NaN:
+                    d.append(self[jj].overlap(other[ii],method=method))
+                else:
+                    d.append(NaN)
+            return d
         else:
-            raise Exception("Metric not recognized")
+            raise Exception("Method not recognized")
 
-        hits = sum(vals < thresh) / float(len(self.sources))
-
-        return hits
+        return d
 
     def transform(self, data, collect=True):
         """
