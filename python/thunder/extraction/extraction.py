@@ -9,11 +9,13 @@ class SourceExtraction(object):
     def __new__(cls, method, **kwargs):
 
         from thunder.extraction.block.methods.nmf import BlockNMF
+        from thunder.extraction.block.methods.sima import BlockSIMA
         from thunder.extraction.feature.methods.localmax import LocalMax
 
         EXTRACTION_METHODS = {
             'nmf': BlockNMF,
-            'localmax': LocalMax
+            'localmax': LocalMax,
+            'sima': BlockSIMA
         }
 
         checkParams(method, EXTRACTION_METHODS.keys())
