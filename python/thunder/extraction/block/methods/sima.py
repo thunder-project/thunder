@@ -1,3 +1,5 @@
+from numpy import array, asarray, where
+
 from thunder.extraction.block.base import BlockMethod, BlockAlgorithm
 from thunder.extraction.source import Source
 
@@ -15,7 +17,7 @@ class SIMABlockAlgorithm(BlockAlgorithm):
 
     Parameters
     ----------
-    sima_strategy : sima.segment.SegmentationStrategy
+    simaStrategy : sima.segment.SegmentationStrategy
         The particular strategy from SIMA to be used.
     """
     def __init__(self, simaStrategy, **extra):
@@ -23,7 +25,6 @@ class SIMABlockAlgorithm(BlockAlgorithm):
 
     def extract(self, block):
         import sima
-        import numpy
 
         # reshape the block to (t, z, y, x, c)
         dims = block.shape
@@ -39,7 +40,7 @@ class SIMABlockAlgorithm(BlockAlgorithm):
         rois = self.strategy.segment(dataset)
 
         # convert the coordinates between the SIMA and thunder conventions
-        coords = [numpy.asarray(numpy.where(numpy.array(roi))).T for roi in rois]
+        coords = [asarray(where(array(roi))).T for roi in rois]
         if len(dims) == 3:
             coords = [c[:, 1:] for c in coords]
         coords = [c[:, ::-1] for c in coords]
