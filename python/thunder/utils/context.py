@@ -701,7 +701,7 @@ class ThunderContext():
 
         See also
         --------
-        thunder.SourceExtraction
+        SourceExtraction
         """
         from thunder import SourceExtraction
 
