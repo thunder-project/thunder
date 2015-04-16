@@ -63,7 +63,7 @@ class PCAData(DataSets):
         else:
             return data
 
-class FAData(DataSets):
+class FactorAnalysisData(DataSets):
 
     def generate(self, q=1, p=3, nrows=50, npartitions=10, sigmas=None, seed=None):
         """
@@ -71,14 +71,15 @@ class FAData(DataSets):
 
         Parameters
         ----------
-        q : int
+        q : int, optional, default = 1
           The number of factors generating this data
-        p : int
+        p : int, optios, default = 3
           The number of observed factors (p >= q)
-        nrows : int
+        nrows : int, optional, default = 50
           Number of observations we have
-        sigmas = 1 x p ndarray
-          Scale of the noise to add
+        sigmas = 1 x p ndarray, optional, default = None
+          Scale of the noise to add, randomly generated
+          from standard normal distribution if not given
         """
         random.seed(seed)
         # Generate factor loadings (n x q)
@@ -175,7 +176,7 @@ class SourcesData(DataSets):
 DATASET_MAKERS = {
     'kmeans': KMeansData,
     'pca': PCAData,
-    'fa': FAData,
+    'factor': FactorAnalysisData,
     'ica': ICAData,
     'sources': SourcesData
 }
