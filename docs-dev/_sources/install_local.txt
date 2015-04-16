@@ -9,7 +9,7 @@ To follow along with the instructions below, you'll just need a command line (e.
 
 Installing Spark 
 ~~~~~~~~~~~~~~~~
-First you need a working installation of Spark. We strongly recommend `downloading <http://spark.apache.org/downloads.html>`_ the pre-built versions (pick the one labeled Hadoop 1.X). Follow this `direct download <http://d3kbcqa49mib13.cloudfront.net/spark-1.3.0-bin-hadoop1.tgz>`_ link to download Spark 1.3 now. If you are interested in Spark development, you can instead download the sources and follow `these instructions <http://spark.apache.org/docs/latest/building-spark.html>`_ to build from source.
+First you need a working installation of Spark. We strongly recommend `downloading <http://spark.apache.org/downloads.html>`_ a pre-built version (pick the one labeled Hadoop 1.X). Follow this `direct download <http://d3kbcqa49mib13.cloudfront.net/spark-1.3.0-bin-hadoop1.tgz>`_ link to download the latest version (Spark 1.3) now. If you are interested in Spark development, you can instead download the sources and follow `these instructions <http://spark.apache.org/docs/latest/building-spark.html>`_ to build from source.
 
 Once you have downloaded Spark, set an environmental variable by typing the following into the terminal (here we assume you downloaded a pre-built version and put it in your downloads folder)
 
