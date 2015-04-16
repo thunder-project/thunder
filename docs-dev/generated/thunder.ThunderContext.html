@@ -705,7 +705,7 @@ a &#8220;name&#8221; field and a &#8220;value&#8221; field.</p>
 
 <dl class="method">
 <dt id="thunder.ThunderContext.loadSeries">
-<tt class="descname">loadSeries</tt><big>(</big><em>dataPath</em>, <em>nkeys=None</em>, <em>nvalues=None</em>, <em>inputFormat='binary'</em>, <em>minPartitions=None</em>, <em>confFilename='conf.json'</em>, <em>keyType=None</em>, <em>valueType=None</em>, <em>keyPath=None</em>, <em>varName=None</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadSeries" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">loadSeries</tt><big>(</big><em>dataPath</em>, <em>nkeys=None</em>, <em>nvalues=None</em>, <em>inputFormat='binary'</em>, <em>minPartitions=None</em>, <em>maxPartitionSize='32mb'</em>, <em>confFilename='conf.json'</em>, <em>keyType=None</em>, <em>valueType=None</em>, <em>keyPath=None</em>, <em>varName=None</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadSeries" title="Permalink to this definition">¶</a></dt>
 <dd><p>Loads a Series object from data stored as binary, text, npy, or mat.</p>
 <p>For binary and text, supports single files or multiple files stored on a local file system,
 a networked file system (mounted and available on all cluster nodes), Amazon S3, or HDFS.
@@ -736,6 +736,11 @@ text data; can be specified here or in a configuration file for binary data.</p>
 <p><strong>minPartitions: int, optional, default = SparkContext.minParallelism</strong></p>
 <blockquote>
 <div><p>Minimum number of Spark partitions to use, only for text.</p>
+</div></blockquote>
+<p><strong>maxPartitionSize</strong> : int, optional, default = &#8216;32mb&#8217;</p>
+<blockquote>
+<div><p>Maximum size of partitions as a Java-style memory string, e.g. &#8216;32mb&#8217; or &#8216;64mb&#8217;,
+indirectly controls the number of Spark partitions, only for binary.</p>
 </div></blockquote>
 <p><strong>confFilename: string, optional, default &#8216;conf.json&#8217;</strong></p>
 <blockquote>
