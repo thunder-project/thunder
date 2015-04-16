@@ -14,6 +14,7 @@ Setup plotting
 .. code:: python
 
     %matplotlib inline
+
 .. code:: python
 
     import matplotlib.pyplot as plt
@@ -21,6 +22,7 @@ Setup plotting
     sns.set_context('notebook')
     from thunder import Colorize
     image = Colorize.image
+
 Construction
 ------------
 
@@ -35,6 +37,7 @@ created from an existing instance of a ``SparkContext``:
 
     from thunder import ThunderContext
     tsc = ThunderContext(sc)
+
 Or it can be created directly using the same arguments provided to a
 ``SparkContext`` (this line is commented out because executing it in the
 notebook will cause an error because you cannot run multiple
@@ -43,6 +46,7 @@ notebook will cause an error because you cannot run multiple
 .. code:: python
 
     #tsc = ThunderContext.start(appName='myapp')
+
 Loading data
 ------------
 
@@ -58,12 +62,15 @@ on loading and data types.
 
     import os.path as pth
     datapath = pth.join(pth.dirname(pth.realpath(thunder.__file__)), 'utils/data/')
+
 .. code:: python
 
     data = tsc.loadImages(datapath + '/mouse/images/', startIdx=0, stopIdx=10)
+
 .. code:: python
 
     image(data.values().first())
+
 
 
 .. image:: thunder_context_files/thunder_context_13_0.png
@@ -73,6 +80,7 @@ on loading and data types.
 
     data = tsc.loadSeries(datapath + '/iris/iris.bin', inputFormat='binary')
     data.first()
+
 
 
 
@@ -105,6 +113,7 @@ work on different portions of the data.
 
 
 
+
 .. parsed-literal::
 
     (0, array([ 5.1,  3.5,  1.4,  0.2]))
@@ -115,6 +124,7 @@ work on different portions of the data.
 
     data = tsc.loadSeries(datapath + '/iris/iris.npy', inputFormat='npy', minPartitions=5)
     data.first()
+
 
 
 
@@ -153,10 +163,12 @@ more robust. ``shuffle=True`` is the current default.
 .. code:: python
 
     data = tsc.loadImagesAsSeries(datapath + '/mouse/images/', startIdx=0, stopIdx=10)
+
 .. code:: python
 
     tsc.convertImagesToSeries(datapath + '/mouse/images/', 'savelocation', startIdx=0, stopIdx=10)
     data = tsc.loadSeries('savelocation')
+
 Loading examples
 ----------------
 
@@ -166,11 +178,13 @@ testing purposes, by calling methods from the ``DataSets`` class:
 .. code:: python
 
     data = tsc.makeExample('kmeans', k=2, ndims=10, nrecords=10, noise=0.5)
+
 .. code:: python
 
     from numpy import asarray
     ts = data.collectValuesAsArray()
     plt.plot(ts.T);
+
 
 
 .. image:: thunder_context_files/thunder_context_26_0.png
@@ -185,9 +199,11 @@ represent anything meaningful about the data itself.
 
     data = tsc.loadExample('mouse-images')
     img = data[0]
+
 .. code:: python
 
     image(img)
+
 
 
 .. image:: thunder_context_files/thunder_context_29_0.png
@@ -197,9 +213,11 @@ represent anything meaningful about the data itself.
 
     data = tsc.loadExample('fish-series')
     img = data.seriesMean().pack()
+
 .. code:: python
 
     image(img[:,:,0])
+
 
 
 .. image:: thunder_context_files/thunder_context_31_0.png
@@ -210,6 +228,7 @@ You can easily see the list of avaiable example data sets:
 .. code:: python
 
     tsc.loadExample()
+
 
 
 
@@ -232,11 +251,13 @@ that are returned alongside the data, as in
 .. code:: python
 
     data, params = tsc.loadExampleS3('zebrafish-optomotor-response')
+
 You can also check the available data sets:
 
 .. code:: python
 
     tsc.loadExampleS3()
+
 
 
 

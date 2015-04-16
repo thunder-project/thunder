@@ -17,6 +17,7 @@ Setup plotting
 .. code:: python
 
     %matplotlib inline
+
 .. code:: python
 
     import matplotlib.pyplot as plt
@@ -25,6 +26,7 @@ Setup plotting
     image = Colorize.image
     sns.set_context('notebook')
     sns.set_style('darkgrid')
+
 Load and convert data
 ---------------------
 
@@ -34,11 +36,13 @@ operations.
 .. code:: python
 
     data = tsc.loadExample('mouse-images')
+
 Take a look at the first image.
 
 .. code:: python
 
     image(data[0])
+
 
 
 .. image:: regression_files/regression_10_0.png
@@ -55,6 +59,7 @@ time series by a baseline).
     series = data.toTimeSeries().squelch(50).normalize()
     series.cache()
     series.count();
+
 Take a look at the time series of a few pixels (selected to have large
 standard devaitions to avoid pixels with no activity).
 
@@ -62,6 +67,7 @@ standard devaitions to avoid pixels with no activity).
 
     sample = series.subset(100, thresh=0.8)
     plt.plot(sample.T);
+
 
 
 .. image:: regression_files/regression_14_0.png
@@ -74,6 +80,7 @@ Load in associated behavioral data to be used as explanatory variables
 
     regressors = tsc.loadExample('mouse-params')
     regressors
+
 
 
 
@@ -92,6 +99,7 @@ We can also plot the regressors
     plt.plot(regressors['corridorPosition']);
 
 
+
 .. image:: regression_files/regression_18_0.png
 
 
@@ -108,6 +116,7 @@ activity from each pixel with one of our explanatory variables.
 
     x = regressors['runningSpeed']
     corrs = series.correlate(x)
+
 We can pack these correlation coefficients back into an arrary and
 visualize the results. We center the values of the correlation
 coefficients so that positive correlations are red and negative
@@ -123,6 +132,7 @@ correlations are blue.
     
     corrMat = center(corrs.pack())
     image(corrMat, bar=True, cmap='RdBu_r')
+
 
 
 .. image:: regression_files/regression_23_0.png
@@ -150,6 +160,7 @@ intercept term.
 .. code:: python
 
     X = regressors[['runningSpeed', 'corridorPosition']]
+
 Unlike the correlation coefficient, linear regression is sensitive to
 the scale of the regressor. Thus, we standardize our regressors so that
 the resulting regression coefficients can be compared on the same scale.
@@ -159,6 +170,7 @@ This will be useful later for visualization of the results.
 
     from scipy.stats.mstats import zscore
     X = zscore(X, axis=1)
+
 For each pixel/series fit a linear regression model that predicts the
 pixel values from our regressors
 
@@ -166,6 +178,7 @@ pixel values from our regressors
 
     from thunder import RegressionModel
     results = RegressionModel.load(X, 'linear').fit(series)
+
 The result is a Series with three indices: "betas" (the regression
 coefficients), "stats" (the :math:`R^2` value), and "resid" (the
 residuals)
@@ -177,9 +190,11 @@ distribution across the image.
 
     b1, b2 = results.select('betas').pack()
     rsq = results.select('stats').pack()
+
 .. code:: python
 
     image(rsq, bar=True)
+
 
 
 .. image:: regression_files/regression_33_0.png
@@ -204,6 +219,7 @@ distribution across the image.
     plt.title('r-squared');
 
 
+
 .. image:: regression_files/regression_34_0.png
 
 
@@ -217,6 +233,7 @@ as a mask, and use the mean image as a background to blend in.
 .. code:: python
 
     m = data.mean()
+
 .. code:: python
 
     c = Colorize(cmap='indexed', scale=5)
@@ -237,6 +254,7 @@ as a mask, and use the mean image as a background to blend in.
     c.colors = ['green', 'red']
     img = c.transform([abs(b1), abs(b2)], mask=rsq, background=m, mixing=0.75)
     image(img)
+
 
 
 .. image:: regression_files/regression_37_0.png

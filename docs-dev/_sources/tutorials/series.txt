@@ -32,11 +32,13 @@ Setup plotting
 .. code:: python
 
     %matplotlib inline
+
 .. code:: python
 
     import matplotlib.pyplot as plt
     import seaborn as sns
     sns.set_context('notebook')
+
 Loading series
 --------------
 
@@ -48,6 +50,7 @@ data set:
 .. code:: python
 
     data = tsc.loadExample('fish-series')
+
 Inspection
 ----------
 
@@ -58,6 +61,7 @@ which thresholds based on the standard deviation:
 
     examples = data.subset(nsamples=50, thresh=1)
     plt.plot(examples.T[0:20,:]);
+
 
 
 .. image:: series_files/series_9_0.png
@@ -80,6 +84,7 @@ y-axis.
     plt.plot(examples.T[0:20,:]);
 
 
+
 .. image:: series_files/series_12_0.png
 
 
@@ -87,6 +92,7 @@ y-axis.
 
     examples = data.toTimeSeries().normalize(baseline='percentile').subset(nsamples=50, thresh=0.1)
     plt.plot(examples.T[0:20,:]);
+
 
 
 .. image:: series_files/series_13_0.png
@@ -105,6 +111,7 @@ A ``Series`` has a 1d index, which can be used to subselect values.
 
 
 
+
 .. parsed-literal::
 
     (240,)
@@ -116,6 +123,7 @@ For example, to select a range:
 .. code:: python
 
     data.between(0,8).first()
+
 
 
 
@@ -133,6 +141,7 @@ Note that the index changes to reflect the subselected range:
 
 
 
+
 .. parsed-literal::
 
     [0, 1, 2, 3, 4, 5, 6, 7, 8]
@@ -144,6 +153,7 @@ We can also select based on an arbitrary criterion function:
 .. code:: python
 
     data.select(lambda x: x < 5).index
+
 
 
 
@@ -173,6 +183,7 @@ records. To summarize across records:
     plt.plot(data.toTimeSeries().normalize().min());
 
 
+
 .. image:: series_files/series_25_0.png
 
 
@@ -181,6 +192,7 @@ To summarize within records:
 .. code:: python
 
     data.seriesMean().first()
+
 
 
 
@@ -193,6 +205,7 @@ To summarize within records:
 .. code:: python
 
     data.seriesStdev().first()
+
 
 
 
@@ -210,6 +223,7 @@ expected, for a random signal, the correlation should be low.
     from numpy import random
     signal = random.randn(240)
     data.correlate(signal).first()
+
 
 
 
@@ -238,6 +252,7 @@ recomputation.
 
 
 
+
 .. parsed-literal::
 
     (75, 86, 1)
@@ -247,6 +262,7 @@ recomputation.
 .. code:: python
 
     data.dims.min
+
 
 
 
@@ -265,6 +281,7 @@ currently onebased subscript indexing, so we need to set ``onebased`` to
 .. code:: python
 
     data.keys().take(10)
+
 
 
 
@@ -289,6 +306,7 @@ currently onebased subscript indexing, so we need to set ``onebased`` to
 
 
 
+
 .. parsed-literal::
 
     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -298,6 +316,7 @@ currently onebased subscript indexing, so we need to set ``onebased`` to
 .. code:: python
 
     data.subToInd(isOneBased=False).indToSub(isOneBased=False).keys().take(10)
+
 
 
 
@@ -323,9 +342,11 @@ the provided index lists.
 .. code:: python
 
     keys, values = data.query(inds=[[100,101],[200]], isOneBased=False)
+
 .. code:: python
 
     keys
+
 
 
 
@@ -339,6 +360,7 @@ the provided index lists.
 .. code:: python
 
     values.shape
+
 
 
 
@@ -361,6 +383,7 @@ with data.
 
 
 
+
 .. parsed-literal::
 
     (76, 87, 2)
@@ -371,6 +394,7 @@ with data.
 
     out = data.between(0,2).pack()
     out.shape
+
 
 
 
@@ -397,6 +421,7 @@ statistics of a Fourier transform:
 
 
 
+
 .. parsed-literal::
 
     ['coherence', 'phase']
@@ -406,6 +431,7 @@ statistics of a Fourier transform:
 .. code:: python
 
     fr.select('coherence').first()
+
 
 
 
@@ -421,9 +447,11 @@ distributed matrices and matrix operations:
 .. code:: python
 
     mat = data.toRowMatrix()
+
 .. code:: python
 
     mat.cov().shape
+
 
 
 

@@ -19,6 +19,7 @@ We'll start by loading some example data:
 .. code:: python
 
     data = tsc.loadExample('fish-series')
+
 ``data`` is a distributed collection of key-value records, each
 containing a coordinate identifier and the time series of a single
 voxel. We can look at the first record by using ``first()``. It's a
@@ -29,9 +30,11 @@ one-dimensional array:
 .. code:: python
 
     key, value = data.first()
+
 .. code:: python
 
     key
+
 
 
 
@@ -48,6 +51,7 @@ the volume.
 .. code:: python
 
     value.shape
+
 
 
 
@@ -68,16 +72,19 @@ this is entirely optional.
 .. code:: python
 
     %matplotlib inline
+
 .. code:: python
 
     import matplotlib.pyplot as plt
     import seaborn as sns
     sns.set_context("notebook")
+
 .. code:: python
 
     examples = data.toTimeSeries().normalize().subset(50, thresh=0.05)
     sns.set_style('darkgrid')
     plt.plot(examples.T);
+
 
 
 .. image:: basic_usage_files/basic_usage_13_0.png
@@ -90,6 +97,7 @@ We can also compute the mean value for each pixel using the
 
     means = data.seriesMean()
     means.first()
+
 
 
 
@@ -112,6 +120,7 @@ cluster. In this case, the result is 3d, with two planes:
 
     img = means.pack()
     img.shape
+
 
 
 
@@ -139,6 +148,7 @@ function included with Thunder.
     image(img[:,:,0])
 
 
+
 .. image:: basic_usage_files/basic_usage_19_0.png
 
 
@@ -148,5 +158,6 @@ It's also easy to export the result to a ``numpy`` or ``MAT`` file.
 
     tsc.export(img, "directory", "npy")
     tsc.export(img, "directory", "mat")
+
 This will put a ``npy`` file or ``MAT`` file called ``meanval`` in the
 folder ``directory`` in your current directory.

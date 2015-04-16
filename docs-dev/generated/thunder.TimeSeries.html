@@ -247,7 +247,7 @@ avoid computation if known in advance.</p>
 <td>Detrend time series data with linear or nonlinear detrending</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.filter" title="thunder.TimeSeries.filter"><tt class="xref py py-obj docutils literal"><span class="pre">filter</span></tt></a>(func)</td>
-<td>Filter records by appliyng a function to each record.</td>
+<td>Filter records by applying a function to each record.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.filterOnKeys" title="thunder.TimeSeries.filterOnKeys"><tt class="xref py py-obj docutils literal"><span class="pre">filterOnKeys</span></tt></a>(func)</td>
 <td>Filter records by applying a function to keys</td>
@@ -277,13 +277,13 @@ avoid computation if known in advance.</p>
 <td>Return rdd of keys, ignoring values</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.max" title="thunder.TimeSeries.max"><tt class="xref py py-obj docutils literal"><span class="pre">max</span></tt></a>()</td>
-<td>Maximum of values, ignoring keys</td>
+<td>Maximum of values across keys, returned as an ndarray.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.maxProject" title="thunder.TimeSeries.maxProject"><tt class="xref py py-obj docutils literal"><span class="pre">maxProject</span></tt></a>([axis])</td>
 <td>Project over one of the keys by taking a maximum</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.mean" title="thunder.TimeSeries.mean"><tt class="xref py py-obj docutils literal"><span class="pre">mean</span></tt></a>([dtype,&nbsp;casting])</td>
-<td>Mean of values, ignoring keys</td>
+<td>Mean of values computed by aggregating across records, returned as an ndarray with the same size as a single record.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.meanByRegions" title="thunder.TimeSeries.meanByRegions"><tt class="xref py py-obj docutils literal"><span class="pre">meanByRegions</span></tt></a>(nestedKeys[,&nbsp;validate])</td>
 <td>Takes the mean of Series values within groupings specified by the passed keys.</td>
@@ -292,7 +292,7 @@ avoid computation if known in advance.</p>
 <td>Takes the mean of Series values within a single region specified by the passed mask or keys.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.min" title="thunder.TimeSeries.min"><tt class="xref py py-obj docutils literal"><span class="pre">min</span></tt></a>()</td>
-<td>Minimum of values, ignoring keys</td>
+<td>Minimum of values across keys, returned as an ndarray.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.normalize" title="thunder.TimeSeries.normalize"><tt class="xref py py-obj docutils literal"><span class="pre">normalize</span></tt></a>([baseline,&nbsp;window,&nbsp;perc])</td>
 <td>Normalize each time series by subtracting and dividing by a baseline.</td>
@@ -385,7 +385,7 @@ avoid computation if known in advance.</p>
 <td>Return a L{StatCounter} object that captures all or some of the mean, variance, maximum, minimum, and count of the RDD&#8217;s elements in one operation.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.stdev" title="thunder.TimeSeries.stdev"><tt class="xref py py-obj docutils literal"><span class="pre">stdev</span></tt></a>([dtype,&nbsp;casting])</td>
-<td>Standard deviation of values, ignoring keys</td>
+<td>Standard deviation of values computed by aggregating across records, returned as an ndarray with the same size as a single record.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.subToInd" title="thunder.TimeSeries.subToInd"><tt class="xref py py-obj docutils literal"><span class="pre">subToInd</span></tt></a>([order,&nbsp;isOneBased])</td>
 <td>Convert subscript index keys to linear index keys</td>
@@ -397,7 +397,7 @@ avoid computation if known in advance.</p>
 <td>Extract random subset of records, filtering on a summary statistic.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.sum" title="thunder.TimeSeries.sum"><tt class="xref py py-obj docutils literal"><span class="pre">sum</span></tt></a>([dtype,&nbsp;casting])</td>
-<td>Sum of values, ignoring keys</td>
+<td>Sum of values computed by aggregating across records, returned as an ndarray with the same size as a single record.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.take" title="thunder.TimeSeries.take"><tt class="xref py py-obj docutils literal"><span class="pre">take</span></tt></a>(*args,&nbsp;**kwargs)</td>
 <td>Take samples.</td>
@@ -424,7 +424,7 @@ avoid computation if known in advance.</p>
 <td>Return rdd of values, ignoring keys</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.variance" title="thunder.TimeSeries.variance"><tt class="xref py py-obj docutils literal"><span class="pre">variance</span></tt></a>([dtype,&nbsp;casting])</td>
-<td>Variance of values, ignoring keys</td>
+<td>Variance of values computed by aggregating across records, returned as an ndarray with the same size as a single record.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.zscore" title="thunder.TimeSeries.zscore"><tt class="xref py py-obj docutils literal"><span class="pre">zscore</span></tt></a>([axis])</td>
 <td>Zscore series data by subtracting the mean and</td>
@@ -741,7 +741,7 @@ Preserve intercept so that subsequent steps can adjust the baseline</p>
 <dl class="method">
 <dt id="thunder.TimeSeries.filter">
 <tt class="descname">filter</tt><big>(</big><em>func</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.filter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Filter records by appliyng a function to each record.</p>
+<dd><p>Filter records by applying a function to each record.</p>
 <p>This calls the Spark filter() method on the underlying RDD.</p>
 </dd></dl>
 
@@ -868,7 +868,7 @@ is not supported and a alueError will be raised if passed.</p>
 <dl class="method">
 <dt id="thunder.TimeSeries.max">
 <tt class="descname">max</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.TimeSeries.max" title="Permalink to this definition">¶</a></dt>
-<dd><p>Maximum of values, ignoring keys</p>
+<dd><p>Maximum of values across keys, returned as an ndarray.</p>
 </dd></dl>
 
 <dl class="method">
@@ -880,7 +880,8 @@ is not supported and a alueError will be raised if passed.</p>
 <dl class="method">
 <dt id="thunder.TimeSeries.mean">
 <tt class="descname">mean</tt><big>(</big><em>dtype='float64'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.mean" title="Permalink to this definition">¶</a></dt>
-<dd><p>Mean of values, ignoring keys</p>
+<dd><p>Mean of values computed by aggregating across records, returned as an ndarray
+with the same size as a single record.</p>
 <p>If dtype is not None, then the values will first be cast to the requested
 type before the operation is performed. See Data.astype() for details.</p>
 </dd></dl>
@@ -961,7 +962,7 @@ ValueError will be thrown if the number included is not equal to the number spec
 <dl class="method">
 <dt id="thunder.TimeSeries.min">
 <tt class="descname">min</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.TimeSeries.min" title="Permalink to this definition">¶</a></dt>
-<dd><p>Minimum of values, ignoring keys</p>
+<dd><p>Minimum of values across keys, returned as an ndarray.</p>
 </dd></dl>
 
 <dl class="method">
@@ -1394,7 +1395,8 @@ and count of the RDD&#8217;s elements in one operation.</p>
 <dl class="method">
 <dt id="thunder.TimeSeries.stdev">
 <tt class="descname">stdev</tt><big>(</big><em>dtype='float64'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.stdev" title="Permalink to this definition">¶</a></dt>
-<dd><p>Standard deviation of values, ignoring keys</p>
+<dd><p>Standard deviation of values computed by aggregating across records, returned as an ndarray
+with the same size as a single record.</p>
 <p>If dtype is not None, then the values will first be cast to the requested type before the operation is
 performed. See Data.astype() for details.</p>
 <p>obj.stdev() is equivalent to obj.astype(dtype, casting).rdd.values().stdev().</p>
@@ -1471,7 +1473,8 @@ performed. See Data.astype() for details.</p>
 <dl class="method">
 <dt id="thunder.TimeSeries.sum">
 <tt class="descname">sum</tt><big>(</big><em>dtype='float64'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.sum" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sum of values, ignoring keys</p>
+<dd><p>Sum of values computed by aggregating across records, returned as an ndarray
+with the same size as a single record.</p>
 <p>If dtype is not None, then the values will first be cast to the requested type before the operation is
 performed. See Data.astype() for details.</p>
 <p>obj.sum() is equivalent to obj.astype(dtype, casting).rdd.values().sum().</p>
@@ -1580,7 +1583,8 @@ considering a range of lags before and after the event</p>
 <dl class="method">
 <dt id="thunder.TimeSeries.variance">
 <tt class="descname">variance</tt><big>(</big><em>dtype='float64'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.variance" title="Permalink to this definition">¶</a></dt>
-<dd><p>Variance of values, ignoring keys</p>
+<dd><p>Variance of values computed by aggregating across records, returned as an ndarray
+with the same size as a single record.</p>
 <p>If dtype is not None, then the values will first be cast to the requested type before the operation is
 performed. See Data.astype() for details.</p>
 </dd></dl>

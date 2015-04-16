@@ -199,7 +199,7 @@ is an identifier and the value is a two or three-dimensional array.</p>
 <td>Crop a spatial region from 2D or 3D data.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.Images.filter" title="thunder.Images.filter"><tt class="xref py py-obj docutils literal"><span class="pre">filter</span></tt></a>(func)</td>
-<td>Filter records by appliyng a function to each record.</td>
+<td>Filter records by applying a function to each record.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.filterOnKeys" title="thunder.Images.filterOnKeys"><tt class="xref py py-obj docutils literal"><span class="pre">filterOnKeys</span></tt></a>(func)</td>
 <td>Filter records by applying a function to keys</td>
@@ -226,7 +226,7 @@ is an identifier and the value is a two or three-dimensional array.</p>
 <td>Return rdd of keys, ignoring values</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.max" title="thunder.Images.max"><tt class="xref py py-obj docutils literal"><span class="pre">max</span></tt></a>()</td>
-<td>Maximum of values, ignoring keys</td>
+<td>Maximum of values across keys, returned as an ndarray.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.Images.maxProjection" title="thunder.Images.maxProjection"><tt class="xref py py-obj docutils literal"><span class="pre">maxProjection</span></tt></a>([axis])</td>
 <td>Compute maximum projections of images / volumes along the specified dimension.</td>
@@ -235,16 +235,16 @@ is an identifier and the value is a two or three-dimensional array.</p>
 <td>Compute maximum-minimum projections of images / volumes along the specified dimension.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.Images.mean" title="thunder.Images.mean"><tt class="xref py py-obj docutils literal"><span class="pre">mean</span></tt></a>([dtype,&nbsp;casting])</td>
-<td>Mean of values, ignoring keys</td>
+<td>Mean of values computed by aggregating across records, returned as an ndarray with the same size as a single record.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.meanByRegions" title="thunder.Images.meanByRegions"><tt class="xref py py-obj docutils literal"><span class="pre">meanByRegions</span></tt></a>(selection)</td>
 <td>Reduces images to one or more spatially averaged values using the given selection, which can be either a mask array or sequence of indicies.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.Images.medianFilter" title="thunder.Images.medianFilter"><tt class="xref py py-obj docutils literal"><span class="pre">medianFilter</span></tt></a>([size])</td>
-<td>Spatially smooth images using a median filter.</td>
+<td>Spatially filter images using a median filter.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.min" title="thunder.Images.min"><tt class="xref py py-obj docutils literal"><span class="pre">min</span></tt></a>()</td>
-<td>Minimum of values, ignoring keys</td>
+<td>Minimum of values across keys, returned as an ndarray.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.Images.planes" title="thunder.Images.planes"><tt class="xref py py-obj docutils literal"><span class="pre">planes</span></tt></a>(startidz,&nbsp;stopidz)</td>
 <td>Subselect planes from 3D image data.</td>
@@ -258,7 +258,7 @@ is an identifier and the value is a two or three-dimensional array.</p>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.repartition" title="thunder.Images.repartition"><tt class="xref py py-obj docutils literal"><span class="pre">repartition</span></tt></a>(numPartitions)</td>
 <td>Repartition data.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.saveAsBinaryImages" title="thunder.Images.saveAsBinaryImages"><tt class="xref py py-obj docutils literal"><span class="pre">saveAsBinaryImages</span></tt></a>(outputDirPath[,&nbsp;...])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.Images.saveAsBinaryImages" title="thunder.Images.saveAsBinaryImages"><tt class="xref py py-obj docutils literal"><span class="pre">saveAsBinaryImages</span></tt></a>(outputDirPath[,&nbsp;prefix,&nbsp;...])</td>
 <td>Write out images or volumes as flat binary files.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.saveAsBinarySeries" title="thunder.Images.saveAsBinarySeries"><tt class="xref py py-obj docutils literal"><span class="pre">saveAsBinarySeries</span></tt></a>(outputDirPath[,&nbsp;...])</td>
@@ -274,7 +274,7 @@ is an identifier and the value is a two or three-dimensional array.</p>
 <td>Return a L{StatCounter} object that captures all or some of the mean, variance, maximum, minimum, and count of the RDD&#8217;s elements in one operation.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.stdev" title="thunder.Images.stdev"><tt class="xref py py-obj docutils literal"><span class="pre">stdev</span></tt></a>([dtype,&nbsp;casting])</td>
-<td>Standard deviation of values, ignoring keys</td>
+<td>Standard deviation of values computed by aggregating across records, returned as an ndarray with the same size as a single record.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.Images.subsample" title="thunder.Images.subsample"><tt class="xref py py-obj docutils literal"><span class="pre">subsample</span></tt></a>(sampleFactor)</td>
 <td>Downsample an image volume by an integer factor</td>
@@ -283,7 +283,7 @@ is an identifier and the value is a two or three-dimensional array.</p>
 <td>Subtract a constant value or an image / volume from all images / volumes in the data set.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.Images.sum" title="thunder.Images.sum"><tt class="xref py py-obj docutils literal"><span class="pre">sum</span></tt></a>([dtype,&nbsp;casting])</td>
-<td>Sum of values, ignoring keys</td>
+<td>Sum of values computed by aggregating across records, returned as an ndarray with the same size as a single record.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.Images.take" title="thunder.Images.take"><tt class="xref py py-obj docutils literal"><span class="pre">take</span></tt></a>(*args,&nbsp;**kwargs)</td>
 <td>Take samples.</td>
@@ -301,7 +301,7 @@ is an identifier and the value is a two or three-dimensional array.</p>
 <td>Return rdd of values, ignoring keys</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.Images.variance" title="thunder.Images.variance"><tt class="xref py py-obj docutils literal"><span class="pre">variance</span></tt></a>([dtype,&nbsp;casting])</td>
-<td>Variance of values, ignoring keys</td>
+<td>Variance of values computed by aggregating across records, returned as an ndarray with the same size as a single record.</td>
 </tr>
 </tbody>
 </table>
@@ -476,7 +476,7 @@ the .nrecords metadata attribute.</p>
 <dl class="method">
 <dt id="thunder.Images.filter">
 <tt class="descname">filter</tt><big>(</big><em>func</em><big>)</big><a class="headerlink" href="#thunder.Images.filter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Filter records by appliyng a function to each record.</p>
+<dd><p>Filter records by applying a function to each record.</p>
 <p>This calls the Spark filter() method on the underlying RDD.</p>
 </dd></dl>
 
@@ -520,8 +520,7 @@ scalar is interpreted as the standard deviation in x and y, with no filtering in
 <p><strong>order</strong> : choice of 0 / 1 / 2 / 3 or sequence from same set, optional, default = 0</p>
 <blockquote class="last">
 <div><p>Order of the gaussian kernel, 0 is a gaussian, higher numbers correspond
-to derivatives of a gaussian.
-is given for each axis. A single number</p>
+to derivatives of a gaussian.</p>
 </div></blockquote>
 </td>
 </tr>
@@ -586,9 +585,32 @@ is not supported and a alueError will be raised if passed.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="thunder.Images.localCorr">
+<tt class="descname">localCorr</tt><big>(</big><em>neighborhood=2</em><big>)</big><a class="headerlink" href="#thunder.Images.localCorr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Correlate every pixel to the average of its local neighborhood.</p>
+<p>This algorithm computes, for every spatial record, the correlation coefficient
+between that record&#8217;s series, and the average series of all records within
+a local neighborhood with a size defined by the neighborhood parameter.
+The neighborhood is currently required to be a single integer, which represents the neighborhood
+size in both x and y.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>neighborhood: int, optional, default=2</strong></p>
+<blockquote class="last">
+<div><p>Size of the correlation neighborhood (in both the x and y directions), in pixels.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="thunder.Images.max">
 <tt class="descname">max</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.max" title="Permalink to this definition">¶</a></dt>
-<dd><p>Maximum of values, ignoring keys</p>
+<dd><p>Maximum of values across keys, returned as an ndarray.</p>
 </dd></dl>
 
 <dl class="method">
@@ -633,7 +655,8 @@ of the maximum and minimum values along the given dimension.</p>
 <dl class="method">
 <dt id="thunder.Images.mean">
 <tt class="descname">mean</tt><big>(</big><em>dtype='float64'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.Images.mean" title="Permalink to this definition">¶</a></dt>
-<dd><p>Mean of values, ignoring keys</p>
+<dd><p>Mean of values computed by aggregating across records, returned as an ndarray
+with the same size as a single record.</p>
 <p>If dtype is not None, then the values will first be cast to the requested
 type before the operation is performed. See Data.astype() for details.</p>
 </dd></dl>
@@ -670,7 +693,7 @@ regionMeanImages.toSeries().collect().</p>
 <dl class="method">
 <dt id="thunder.Images.medianFilter">
 <tt class="descname">medianFilter</tt><big>(</big><em>size=2</em><big>)</big><a class="headerlink" href="#thunder.Images.medianFilter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Spatially smooth images using a median filter.</p>
+<dd><p>Spatially filter images using a median filter.</p>
 <p>Filtering will be applied to every image in the collection and can be applied
 to either images or volumes. For volumes, if an single scalar neighborhood is passed,
 it will be interpreted as the filter size in x and y, with no filtering in z.</p>
@@ -693,7 +716,7 @@ scalar is intrepreted as the neighborhood in x and y, with no filtering in z.</p
 <dl class="method">
 <dt id="thunder.Images.min">
 <tt class="descname">min</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.min" title="Permalink to this definition">¶</a></dt>
-<dd><p>Minimum of values, ignoring keys</p>
+<dd><p>Minimum of values across keys, returned as an ndarray.</p>
 </dd></dl>
 
 <dl class="method">
@@ -746,7 +769,7 @@ scalar is intrepreted as the neighborhood in x and y, with no filtering in z.</p
 
 <dl class="method">
 <dt id="thunder.Images.saveAsBinaryImages">
-<tt class="descname">saveAsBinaryImages</tt><big>(</big><em>outputDirPath</em>, <em>filePrefix='export'</em>, <em>overwrite=False</em><big>)</big><a class="headerlink" href="#thunder.Images.saveAsBinaryImages" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">saveAsBinaryImages</tt><big>(</big><em>outputDirPath</em>, <em>prefix='image'</em>, <em>overwrite=False</em><big>)</big><a class="headerlink" href="#thunder.Images.saveAsBinaryImages" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write out images or volumes as flat binary files.</p>
 <p>Files will be written into a newly-created directory given by outputdirname.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -758,7 +781,7 @@ scalar is intrepreted as the neighborhood in x and y, with no filtering in z.</p
 <div><p>Path to output directory to be created. Exception will be thrown if this directory already
 exists, unless overwrite is True. Directory must be one level below an existing directory.</p>
 </div></blockquote>
-<p><strong>filePrefix</strong> : string</p>
+<p><strong>prefix</strong> : string</p>
 <blockquote>
 <div><p>String to prepend to all filenames. Files will be named &lt;fileprefix&gt;-00000.bin, &lt;fileprefix&gt;-00001.bin, etc</p>
 </div></blockquote>
@@ -890,7 +913,8 @@ and count of the RDD&#8217;s elements in one operation.</p>
 <dl class="method">
 <dt id="thunder.Images.stdev">
 <tt class="descname">stdev</tt><big>(</big><em>dtype='float64'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.Images.stdev" title="Permalink to this definition">¶</a></dt>
-<dd><p>Standard deviation of values, ignoring keys</p>
+<dd><p>Standard deviation of values computed by aggregating across records, returned as an ndarray
+with the same size as a single record.</p>
 <p>If dtype is not None, then the values will first be cast to the requested type before the operation is
 performed. See Data.astype() for details.</p>
 <p>obj.stdev() is equivalent to obj.astype(dtype, casting).rdd.values().stdev().</p>
@@ -939,7 +963,8 @@ all images / volumes in the data set.</p>
 <dl class="method">
 <dt id="thunder.Images.sum">
 <tt class="descname">sum</tt><big>(</big><em>dtype='float64'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.Images.sum" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sum of values, ignoring keys</p>
+<dd><p>Sum of values computed by aggregating across records, returned as an ndarray
+with the same size as a single record.</p>
 <p>If dtype is not None, then the values will first be cast to the requested type before the operation is
 performed. See Data.astype() for details.</p>
 <p>obj.sum() is equivalent to obj.astype(dtype, casting).rdd.values().sum().</p>
@@ -1042,6 +1067,29 @@ when converting blocks to Series or Images.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="thunder.Images.uniformFilter">
+<tt class="descname">uniformFilter</tt><big>(</big><em>size=2</em><big>)</big><a class="headerlink" href="#thunder.Images.uniformFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Spatially filter images using a uniform filter.</p>
+<p>Filtering will be applied to every image in the collection and can be applied
+to either images or volumes. For volumes, if an single scalar neighborhood is passed,
+it will be interpreted as the filter size in x and y, with no filtering in z.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>size: int, optional, default=2</strong></p>
+<blockquote class="last">
+<div><p>Size of the filter neighbourhood in pixels. A sequence is interpreted
+as the neighborhood size for each axis. For three-dimensional data, a single
+scalar is intrepreted as the neighborhood in x and y, with no filtering in z.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="thunder.Images.values">
 <tt class="descname">values</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.Images.values" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return rdd of values, ignoring keys</p>
@@ -1051,7 +1099,8 @@ when converting blocks to Series or Images.</p>
 <dl class="method">
 <dt id="thunder.Images.variance">
 <tt class="descname">variance</tt><big>(</big><em>dtype='float64'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.Images.variance" title="Permalink to this definition">¶</a></dt>
-<dd><p>Variance of values, ignoring keys</p>
+<dd><p>Variance of values computed by aggregating across records, returned as an ndarray
+with the same size as a single record.</p>
 <p>If dtype is not None, then the values will first be cast to the requested type before the operation is
 performed. See Data.astype() for details.</p>
 </dd></dl>

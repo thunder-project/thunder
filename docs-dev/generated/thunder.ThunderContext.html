@@ -658,6 +658,27 @@ maxBound contains (xMax,yMax,zMax).</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="thunder.ThunderContext.loadJSON">
+<tt class="descname">loadJSON</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadJSON" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generic function for loading JSON from a path, handling local file systems and S3</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>path</strong> : str</p>
+<blockquote>
+<div><p>Path to a file, can be on a local file system or an S3 bucket</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A string with the JSON</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="thunder.ThunderContext.loadParams">
 <tt class="descname">loadParams</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadParams" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load a file with parameters from a local file system or S3.</p>
@@ -748,6 +769,31 @@ directory in &#8216;dataPath&#8217; will be checked. Parameters will override th
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.ThunderContext.loadSources">
+<tt class="descname">loadSources</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadSources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a file with sources from a local file system or S3.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>path</strong> : str</p>
+<blockquote>
+<div><p>Path to file, can be on a local file system or an S3 bucket</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A SourceModel</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><tt class="xref py py-obj docutils literal"><span class="pre">thunder.SourceExtraction</span></tt></p>
+</div>
 </dd></dl>
 
 <dl class="method">

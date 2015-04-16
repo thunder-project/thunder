@@ -235,7 +235,7 @@ can avoid computation if known in advance</p>
 <td>Calculates and returns the number of records in the RDD.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.SpatialSeries.filter" title="thunder.SpatialSeries.filter"><tt class="xref py py-obj docutils literal"><span class="pre">filter</span></tt></a>(func)</td>
-<td>Filter records by appliyng a function to each record.</td>
+<td>Filter records by applying a function to each record.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.SpatialSeries.filterOnKeys" title="thunder.SpatialSeries.filterOnKeys"><tt class="xref py py-obj docutils literal"><span class="pre">filterOnKeys</span></tt></a>(func)</td>
 <td>Filter records by applying a function to keys</td>
@@ -268,13 +268,13 @@ can avoid computation if known in advance</p>
 <td>Flat map records to key-value pairs where the</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.SpatialSeries.max" title="thunder.SpatialSeries.max"><tt class="xref py py-obj docutils literal"><span class="pre">max</span></tt></a>()</td>
-<td>Maximum of values, ignoring keys</td>
+<td>Maximum of values across keys, returned as an ndarray.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.SpatialSeries.maxProject" title="thunder.SpatialSeries.maxProject"><tt class="xref py py-obj docutils literal"><span class="pre">maxProject</span></tt></a>([axis])</td>
 <td>Project over one of the keys by taking a maximum</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.SpatialSeries.mean" title="thunder.SpatialSeries.mean"><tt class="xref py py-obj docutils literal"><span class="pre">mean</span></tt></a>([dtype,&nbsp;casting])</td>
-<td>Mean of values, ignoring keys</td>
+<td>Mean of values computed by aggregating across records, returned as an ndarray with the same size as a single record.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.SpatialSeries.meanByRegions" title="thunder.SpatialSeries.meanByRegions"><tt class="xref py py-obj docutils literal"><span class="pre">meanByRegions</span></tt></a>(nestedKeys[,&nbsp;validate])</td>
 <td>Takes the mean of Series values within groupings specified by the passed keys.</td>
@@ -283,7 +283,7 @@ can avoid computation if known in advance</p>
 <td>Takes the mean of Series values within a single region specified by the passed mask or keys.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.SpatialSeries.min" title="thunder.SpatialSeries.min"><tt class="xref py py-obj docutils literal"><span class="pre">min</span></tt></a>()</td>
-<td>Minimum of values, ignoring keys</td>
+<td>Minimum of values across keys, returned as an ndarray.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.SpatialSeries.pack" title="thunder.SpatialSeries.pack"><tt class="xref py py-obj docutils literal"><span class="pre">pack</span></tt></a>([selection,&nbsp;sorting,&nbsp;transpose,&nbsp;dtype,&nbsp;...])</td>
 <td>Pack a Series into a local array (e.g.</td>
@@ -373,7 +373,7 @@ can avoid computation if known in advance</p>
 <td>Return a L{StatCounter} object that captures all or some of the mean, variance, maximum, minimum, and count of the RDD&#8217;s elements in one operation.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.SpatialSeries.stdev" title="thunder.SpatialSeries.stdev"><tt class="xref py py-obj docutils literal"><span class="pre">stdev</span></tt></a>([dtype,&nbsp;casting])</td>
-<td>Standard deviation of values, ignoring keys</td>
+<td>Standard deviation of values computed by aggregating across records, returned as an ndarray with the same size as a single record.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.SpatialSeries.subToInd" title="thunder.SpatialSeries.subToInd"><tt class="xref py py-obj docutils literal"><span class="pre">subToInd</span></tt></a>([order,&nbsp;isOneBased])</td>
 <td>Convert subscript index keys to linear index keys</td>
@@ -382,7 +382,7 @@ can avoid computation if known in advance</p>
 <td>Extract random subset of records, filtering on a summary statistic.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.SpatialSeries.sum" title="thunder.SpatialSeries.sum"><tt class="xref py py-obj docutils literal"><span class="pre">sum</span></tt></a>([dtype,&nbsp;casting])</td>
-<td>Sum of values, ignoring keys</td>
+<td>Sum of values computed by aggregating across records, returned as an ndarray with the same size as a single record.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.SpatialSeries.take" title="thunder.SpatialSeries.take"><tt class="xref py py-obj docutils literal"><span class="pre">take</span></tt></a>(*args,&nbsp;**kwargs)</td>
 <td>Take samples.</td>
@@ -406,7 +406,7 @@ can avoid computation if known in advance</p>
 <td>Return rdd of values, ignoring keys</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.SpatialSeries.variance" title="thunder.SpatialSeries.variance"><tt class="xref py py-obj docutils literal"><span class="pre">variance</span></tt></a>([dtype,&nbsp;casting])</td>
-<td>Variance of values, ignoring keys</td>
+<td>Variance of values computed by aggregating across records, returned as an ndarray with the same size as a single record.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.SpatialSeries.zscore" title="thunder.SpatialSeries.zscore"><tt class="xref py py-obj docutils literal"><span class="pre">zscore</span></tt></a>([axis])</td>
 <td>Zscore series data by subtracting the mean and</td>
@@ -627,7 +627,7 @@ the .nrecords metadata attribute.</p>
 <dl class="method">
 <dt id="thunder.SpatialSeries.filter">
 <tt class="descname">filter</tt><big>(</big><em>func</em><big>)</big><a class="headerlink" href="#thunder.SpatialSeries.filter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Filter records by appliyng a function to each record.</p>
+<dd><p>Filter records by applying a function to each record.</p>
 <p>This calls the Spark filter() method on the underlying RDD.</p>
 </dd></dl>
 
@@ -767,7 +767,7 @@ key is neighborhood identifier</p>
 <dl class="method">
 <dt id="thunder.SpatialSeries.max">
 <tt class="descname">max</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.SpatialSeries.max" title="Permalink to this definition">¶</a></dt>
-<dd><p>Maximum of values, ignoring keys</p>
+<dd><p>Maximum of values across keys, returned as an ndarray.</p>
 </dd></dl>
 
 <dl class="method">
@@ -779,7 +779,8 @@ key is neighborhood identifier</p>
 <dl class="method">
 <dt id="thunder.SpatialSeries.mean">
 <tt class="descname">mean</tt><big>(</big><em>dtype='float64'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.SpatialSeries.mean" title="Permalink to this definition">¶</a></dt>
-<dd><p>Mean of values, ignoring keys</p>
+<dd><p>Mean of values computed by aggregating across records, returned as an ndarray
+with the same size as a single record.</p>
 <p>If dtype is not None, then the values will first be cast to the requested
 type before the operation is performed. See Data.astype() for details.</p>
 </dd></dl>
@@ -860,7 +861,7 @@ ValueError will be thrown if the number included is not equal to the number spec
 <dl class="method">
 <dt id="thunder.SpatialSeries.min">
 <tt class="descname">min</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.SpatialSeries.min" title="Permalink to this definition">¶</a></dt>
-<dd><p>Minimum of values, ignoring keys</p>
+<dd><p>Minimum of values across keys, returned as an ndarray.</p>
 </dd></dl>
 
 <dl class="method">
@@ -1265,7 +1266,8 @@ and count of the RDD&#8217;s elements in one operation.</p>
 <dl class="method">
 <dt id="thunder.SpatialSeries.stdev">
 <tt class="descname">stdev</tt><big>(</big><em>dtype='float64'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.SpatialSeries.stdev" title="Permalink to this definition">¶</a></dt>
-<dd><p>Standard deviation of values, ignoring keys</p>
+<dd><p>Standard deviation of values computed by aggregating across records, returned as an ndarray
+with the same size as a single record.</p>
 <p>If dtype is not None, then the values will first be cast to the requested type before the operation is
 performed. See Data.astype() for details.</p>
 <p>obj.stdev() is equivalent to obj.astype(dtype, casting).rdd.values().stdev().</p>
@@ -1328,7 +1330,8 @@ performed. See Data.astype() for details.</p>
 <dl class="method">
 <dt id="thunder.SpatialSeries.sum">
 <tt class="descname">sum</tt><big>(</big><em>dtype='float64'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.SpatialSeries.sum" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sum of values, ignoring keys</p>
+<dd><p>Sum of values computed by aggregating across records, returned as an ndarray
+with the same size as a single record.</p>
 <p>If dtype is not None, then the values will first be cast to the requested type before the operation is
 performed. See Data.astype() for details.</p>
 <p>obj.sum() is equivalent to obj.astype(dtype, casting).rdd.values().sum().</p>
@@ -1414,7 +1417,8 @@ Instance of BlockingStrategy can be passed directly.</p>
 <dl class="method">
 <dt id="thunder.SpatialSeries.variance">
 <tt class="descname">variance</tt><big>(</big><em>dtype='float64'</em>, <em>casting='safe'</em><big>)</big><a class="headerlink" href="#thunder.SpatialSeries.variance" title="Permalink to this definition">¶</a></dt>
-<dd><p>Variance of values, ignoring keys</p>
+<dd><p>Variance of values computed by aggregating across records, returned as an ndarray
+with the same size as a single record.</p>
 <p>If dtype is not None, then the values will first be cast to the requested type before the operation is
 performed. See Data.astype() for details.</p>
 </dd></dl>

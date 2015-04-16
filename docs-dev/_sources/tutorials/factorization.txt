@@ -17,6 +17,7 @@ Setup plotting
 .. code:: python
 
     %matplotlib inline
+
 .. code:: python
 
     import matplotlib.pyplot as plt
@@ -25,6 +26,7 @@ Setup plotting
     sns.set_style('darkgrid')
     from thunder import Colorize
     image = Colorize.image
+
 PCA
 ---
 
@@ -38,12 +40,14 @@ example data, and cache it to speed up repeated queries.
     data = rawdata.toTimeSeries().normalize()
     data.cache()
     data.dims;
+
 Run PCA with three components
 
 .. code:: python
 
     from thunder import PCA
     model = PCA(k=2).fit(data)
+
 Fitting PCA adds two attributes to ``model``: ``comps``, which are the
 principal components, and ``scores``, which are the data represented in
 principal component space. In this case, the input data were
@@ -54,6 +58,7 @@ plotting the components, the temporal basis functions.
 .. code:: python
 
     plt.plot(model.comps.T);
+
 
 
 .. image:: factorization_files/factorization_11_0.png
@@ -69,6 +74,7 @@ array and look at them as images one by one.
 
 
 
+
 .. parsed-literal::
 
     (2, 76, 87, 2)
@@ -80,12 +86,14 @@ array and look at them as images one by one.
     image(imgs[0,:,:,0], clim=(-0.05,0.05))
 
 
+
 .. image:: factorization_files/factorization_14_0.png
 
 
 .. code:: python
 
     image(imgs[1,:,:,0], clim=(-0.05,0.05))
+
 
 
 .. image:: factorization_files/factorization_15_0.png
@@ -100,10 +108,12 @@ components, and the brightness shows the total amplitude.
 .. code:: python
 
     maps = Colorize(cmap='polar', scale=4).transform(imgs)
+
 .. code:: python
 
     from numpy import amax
     image(amax(maps,2))
+
 
 
 .. image:: factorization_files/factorization_18_0.png
@@ -120,11 +130,13 @@ the map.
 .. code:: python
 
     pts = model.scores.subset(500, thresh=0.01, stat='norm')
+
 .. code:: python
 
     from numpy import newaxis, squeeze
     clrs = Colorize(cmap='polar', scale=4).transform([pts[:,0][:,newaxis], pts[:,1][:,newaxis]]).squeeze()
     plt.scatter(pts[:,0],pts[:,1], c=clrs, s=75, alpha=0.7);
+
 
 
 .. image:: factorization_files/factorization_21_0.png
@@ -141,6 +153,7 @@ principal components.
     recon = asarray(map(lambda x: (x[0] * model.comps[0, :] + x[1] * model.comps[1, :]).tolist(), pts))
     plt.gca().set_color_cycle(clrs)
     plt.plot(recon.T);
+
 
 
 .. image:: factorization_files/factorization_23_0.png
@@ -161,6 +174,7 @@ functions it recovers.
 
     from thunder import NMF
     model = NMF(k=3, maxIter=20).fit(data)
+
 After fitting, ``model`` will have two attributes, ``h`` and ``w``. For
 these data, ``h`` contains the temporal basis functions, and ``w``
 contains the spatial basis functions. Let's look at both.
@@ -170,15 +184,18 @@ contains the spatial basis functions. Let's look at both.
     plt.plot(model.h.T);
 
 
+
 .. image:: factorization_files/factorization_27_0.png
 
 
 .. code:: python
 
     imgs = model.w.pack()
+
 .. code:: python
 
     image(imgs[0][:,:,0])
+
 
 
 .. image:: factorization_files/factorization_29_0.png
@@ -189,12 +206,14 @@ contains the spatial basis functions. Let's look at both.
     image(imgs[1][:,:,0])
 
 
+
 .. image:: factorization_files/factorization_30_0.png
 
 
 .. code:: python
 
     image(imgs[2][:,:,0])
+
 
 
 .. image:: factorization_files/factorization_31_0.png
@@ -212,6 +231,7 @@ factor which controls overall brightness.
     image(maps[:,:,0,:])
 
 
+
 .. image:: factorization_files/factorization_33_0.png
 
 
@@ -227,6 +247,7 @@ automatically normalizes the amplitude of each one.
     image(maps[:,:,0,:])
 
 
+
 .. image:: factorization_files/factorization_35_0.png
 
 
@@ -237,10 +258,12 @@ how to select and colorize just two of the three image channels.
 .. code:: python
 
     ref = rawdata.seriesMean().pack()
+
 .. code:: python
 
     maps = Colorize(cmap='indexed', colors=['red', 'blue'], scale=1).transform(imgs[[0,2]], background=ref, mixing=0.5)
     image(maps[:,:,0,:])
+
 
 
 .. image:: factorization_files/factorization_38_0.png
@@ -260,10 +283,12 @@ sparse.
 
     from thunder import ICA
     model = ICA(k=10,c=3).fit(data)
+
 .. code:: python
 
     sns.set_style('darkgrid')
     plt.plot(model.a);
+
 
 
 .. image:: factorization_files/factorization_41_0.png
@@ -276,10 +301,12 @@ when making maps.
 .. code:: python
 
     imgs = model.sigs.pack()
+
 .. code:: python
 
     maps = Colorize(cmap='indexed', colors=['red','green', 'blue'], scale=3).transform(abs(imgs))
     image(maps[:,:,0,:])
+
 
 
 .. image:: factorization_files/factorization_44_0.png

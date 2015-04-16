@@ -160,8 +160,9 @@
 </div></blockquote>
 <p><strong>svdMethod</strong> : str, optional, default = &#8220;auto&#8221;</p>
 <blockquote class="last">
-<div><p>Which method to use for performing the SVD. If set to &#8216;auto&#8217;,
-will select preferred method based on dimensionality.</p>
+<div><p>If set to &#8216;direct&#8217;, will compute the SVD with direct gramian matrix estimation and eigenvector decomposition.
+If set to &#8216;em&#8217;, will approximate the SVD using iterative expectation-maximization algorithm.
+If set to &#8216;auto&#8217;, will use &#8216;em&#8217; if number of columns in input data exceeds 750, otherwise will use &#8216;direct&#8217;.</p>
 </div></blockquote>
 </td>
 </tr>

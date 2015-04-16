@@ -159,25 +159,25 @@
 <tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>(transformations[,&nbsp;regMethod,&nbsp;...])</td>
 <td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.RegistrationModel.deserialize" title="thunder.RegistrationModel.deserialize"><tt class="xref py py-obj docutils literal"><span class="pre">deserialize</span></tt></a>(serializedDict)</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.RegistrationModel.deserialize" title="thunder.RegistrationModel.deserialize"><tt class="xref py py-obj docutils literal"><span class="pre">deserialize</span></tt></a>(serializedDict[,&nbsp;unsimplify])</td>
 <td>Restore the object that has been converted to a python dictionary using an &#64;serializable class&#8217;s serialize() method.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.RegistrationModel.fromJSON" title="thunder.RegistrationModel.fromJSON"><tt class="xref py py-obj docutils literal"><span class="pre">fromJSON</span></tt></a>(s)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.RegistrationModel.fromJSON" title="thunder.RegistrationModel.fromJSON"><tt class="xref py py-obj docutils literal"><span class="pre">fromJSON</span></tt></a>(s[,&nbsp;unsimplify])</td>
 <td>Deserialize object from the passed JSON string</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.RegistrationModel.load" title="thunder.RegistrationModel.load"><tt class="xref py py-obj docutils literal"><span class="pre">load</span></tt></a>(f)</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.RegistrationModel.load" title="thunder.RegistrationModel.load"><tt class="xref py py-obj docutils literal"><span class="pre">load</span></tt></a>(f[,&nbsp;unsimplify])</td>
 <td>Deserialize object from a JSON file.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.RegistrationModel.save" title="thunder.RegistrationModel.save"><tt class="xref py py-obj docutils literal"><span class="pre">save</span></tt></a>(f[,&nbsp;numpyStorage])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.RegistrationModel.save" title="thunder.RegistrationModel.save"><tt class="xref py py-obj docutils literal"><span class="pre">save</span></tt></a>(f[,&nbsp;numpyStorage,&nbsp;simplify])</td>
 <td>Serialize this object to a JSON file.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.RegistrationModel.serialize" title="thunder.RegistrationModel.serialize"><tt class="xref py py-obj docutils literal"><span class="pre">serialize</span></tt></a>([numpyStorage])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.RegistrationModel.serialize" title="thunder.RegistrationModel.serialize"><tt class="xref py py-obj docutils literal"><span class="pre">serialize</span></tt></a>([numpyStorage,&nbsp;simplify])</td>
 <td>Serialize this object to a python dictionary that can easily be converted to/from JSON using Python&#8217;s standard JSON library.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.RegistrationModel.toArray" title="thunder.RegistrationModel.toArray"><tt class="xref py py-obj docutils literal"><span class="pre">toArray</span></tt></a>()</td>
 <td>Return transformations as an array with shape (n,x1,x2,...)</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.RegistrationModel.toJSON" title="thunder.RegistrationModel.toJSON"><tt class="xref py py-obj docutils literal"><span class="pre">toJSON</span></tt></a>([numpyStorage])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.RegistrationModel.toJSON" title="thunder.RegistrationModel.toJSON"><tt class="xref py py-obj docutils literal"><span class="pre">toJSON</span></tt></a>([numpyStorage,&nbsp;simplify])</td>
 <td>Serialize this object to a JSON-formatted string</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.RegistrationModel.transform" title="thunder.RegistrationModel.transform"><tt class="xref py py-obj docutils literal"><span class="pre">transform</span></tt></a>(images)</td>
@@ -187,7 +187,7 @@
 </table>
 <dl class="classmethod">
 <dt id="thunder.RegistrationModel.deserialize">
-<em class="property">classmethod </em><tt class="descname">deserialize</tt><big>(</big><em>serializedDict</em><big>)</big><a class="headerlink" href="#thunder.RegistrationModel.deserialize" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><tt class="descname">deserialize</tt><big>(</big><em>serializedDict</em>, <em>unsimplify=None</em><big>)</big><a class="headerlink" href="#thunder.RegistrationModel.deserialize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Restore the object that has been converted to a python dictionary using an &#64;serializable
 class&#8217;s serialize() method.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -204,7 +204,7 @@ class&#8217;s serialize() method.</p>
 
 <dl class="classmethod">
 <dt id="thunder.RegistrationModel.fromJSON">
-<em class="property">classmethod </em><tt class="descname">fromJSON</tt><big>(</big><em>s</em><big>)</big><a class="headerlink" href="#thunder.RegistrationModel.fromJSON" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><tt class="descname">fromJSON</tt><big>(</big><em>s</em>, <em>unsimplify=None</em><big>)</big><a class="headerlink" href="#thunder.RegistrationModel.fromJSON" title="Permalink to this definition">¶</a></dt>
 <dd><p>Deserialize object from the passed JSON string</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -218,7 +218,7 @@ class&#8217;s serialize() method.</p>
 
 <dl class="classmethod">
 <dt id="thunder.RegistrationModel.load">
-<em class="property">classmethod </em><tt class="descname">load</tt><big>(</big><em>f</em><big>)</big><a class="headerlink" href="#thunder.RegistrationModel.load" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><tt class="descname">load</tt><big>(</big><em>f</em>, <em>unsimplify=None</em><big>)</big><a class="headerlink" href="#thunder.RegistrationModel.load" title="Permalink to this definition">¶</a></dt>
 <dd><p>Deserialize object from a JSON file.</p>
 <p>Assumes a JSON formatted registration model, with keys &#8216;regmethod&#8217; and &#8216;transclass&#8217; specifying
 the registration method used and the transformation type as strings, and &#8216;transformations&#8217;
@@ -244,7 +244,7 @@ Images object, and the values are arguments for reconstructing each transformati
 
 <dl class="method">
 <dt id="thunder.RegistrationModel.save">
-<tt class="descname">save</tt><big>(</big><em>f</em>, <em>numpyStorage='auto'</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#thunder.RegistrationModel.save" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">save</tt><big>(</big><em>f</em>, <em>numpyStorage='auto'</em>, <em>simplify=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#thunder.RegistrationModel.save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Serialize this object to a JSON file.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -266,7 +266,7 @@ Images object, and the values are arguments for reconstructing each transformati
 
 <dl class="method">
 <dt id="thunder.RegistrationModel.serialize">
-<tt class="descname">serialize</tt><big>(</big><em>numpyStorage='auto'</em><big>)</big><a class="headerlink" href="#thunder.RegistrationModel.serialize" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">serialize</tt><big>(</big><em>numpyStorage='auto'</em>, <em>simplify=None</em><big>)</big><a class="headerlink" href="#thunder.RegistrationModel.serialize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Serialize this object to a python dictionary that can easily be converted
 to/from JSON using Python&#8217;s standard JSON library.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -302,7 +302,7 @@ on the particular transformations</p>
 
 <dl class="method">
 <dt id="thunder.RegistrationModel.toJSON">
-<tt class="descname">toJSON</tt><big>(</big><em>numpyStorage='auto'</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#thunder.RegistrationModel.toJSON" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">toJSON</tt><big>(</big><em>numpyStorage='auto'</em>, <em>simplify=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#thunder.RegistrationModel.toJSON" title="Permalink to this definition">¶</a></dt>
 <dd><p>Serialize this object to a JSON-formatted string</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />

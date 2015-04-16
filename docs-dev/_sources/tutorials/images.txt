@@ -16,6 +16,7 @@ Setup plotting
 .. code:: python
 
     %matplotlib inline
+
 .. code:: python
 
     import matplotlib.pyplot as plt
@@ -24,6 +25,7 @@ Setup plotting
     sns.set_context('notebook')
     from thunder import Colorize
     image = Colorize.image
+
 Loading images
 --------------
 
@@ -34,12 +36,14 @@ load example image data.
 .. code:: python
 
     data = tsc.loadExample('fish-images')
+
 We can inspect the object to see basic properties, like the number of
 records (which here are images):
 
 .. code:: python
 
     data
+
 
 
 
@@ -61,6 +65,7 @@ haven't computed them yet.
 
 
 
+
 .. parsed-literal::
 
     (75, 86, 1)
@@ -73,6 +78,7 @@ haven't computed them yet.
 
 
 
+
 .. parsed-literal::
 
     (0, 0, 0)
@@ -82,6 +88,7 @@ haven't computed them yet.
 .. code:: python
 
     data.dims.count
+
 
 
 
@@ -103,6 +110,7 @@ we need it again.
 
 
 
+
 .. parsed-literal::
 
     Images
@@ -119,6 +127,7 @@ so it is 0).
 .. code:: python
 
     data.first()[0]
+
 
 
 
@@ -148,6 +157,7 @@ numpy array:
 
 
 
+
 .. parsed-literal::
 
     (76, 87, 2)
@@ -162,6 +172,7 @@ to look at:
     image(img[:,:,0])
 
 
+
 .. image:: images_files/images_21_0.png
 
 
@@ -170,6 +181,7 @@ Here's the second plane:
 .. code:: python
 
     image(img[:,:,1])
+
 
 
 .. image:: images_files/images_23_0.png
@@ -181,6 +193,7 @@ As an example of 2D data, we can load another one of the examples
 
     data = tsc.loadExample('mouse-images')
     data.dims
+
 
 
 
@@ -198,6 +211,7 @@ Look at the first image
     image(img)
 
 
+
 .. image:: images_files/images_27_0.png
 
 
@@ -207,6 +221,7 @@ by specifying the key in the bracket
 .. code:: python
 
     image(data[10])
+
 
 
 .. image:: images_files/images_29_0.png
@@ -230,6 +245,7 @@ first one.
     image(img)
 
 
+
 .. image:: images_files/images_32_0.png
 
 
@@ -241,6 +257,7 @@ the desired range:
     sub = data.planes(0,0)
     img = sub.first()[1]
     image(img)
+
 
 
 .. image:: images_files/images_34_0.png
@@ -255,6 +272,7 @@ And we can subsample in space:
     image(img[:,:,0])
 
 
+
 .. image:: images_files/images_36_0.png
 
 
@@ -265,6 +283,7 @@ example, computing the standard deviation:
 
     img = data.stdev()
     image(img[:,:,0])
+
 
 
 .. image:: images_files/images_38_0.png
@@ -278,6 +297,7 @@ limited to saving 2D image data.)
 .. code:: python
 
     data.maxProjection().saveAsPngs('directory', vmin=0, vmax=200, cmap='gray')
+
 Conversions
 -----------
 
@@ -300,6 +320,7 @@ and convert it to a ``Series``.
     data = tsc.loadExample('fish-images')
     ts = data.toSeries()
     ts.cache();
+
 Let's check some properties of the resulting ``Series`` to make sure the
 conversion we did makes sense. We have twenty images, so there should be
 twenty time points, and the dimensions of the keys should match the
@@ -308,6 +329,7 @@ dimensions of the original images.
 .. code:: python
 
     ts.index
+
 
 
 
@@ -324,6 +346,7 @@ dimensions of the original images.
 
 
 
+
 .. parsed-literal::
 
     (75, 86, 1)
@@ -333,6 +356,7 @@ dimensions of the original images.
 .. code:: python
 
     ts.dims.min
+
 
 
 
@@ -348,6 +372,7 @@ dimensions of the original images.
 
 
 
+
 .. parsed-literal::
 
     (76, 87, 2)
@@ -360,6 +385,7 @@ We can also quickly look at some example time series:
 
     samples = ts.toTimeSeries().normalize().subset(nsamples=50, thresh=0.05)
     plt.plot(samples.T);
+
 
 
 .. image:: images_files/images_50_0.png

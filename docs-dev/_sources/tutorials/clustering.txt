@@ -17,6 +17,7 @@ Setup plotting
 .. code:: python
 
     %matplotlib inline
+
 .. code:: python
 
     import matplotlib.pyplot as plt
@@ -26,6 +27,7 @@ Setup plotting
     sns.set_context('notebook')
     from thunder import Colorize
     image = Colorize.image
+
 Inspect the data
 ----------------
 
@@ -36,6 +38,7 @@ Load example data, and cache it to speed up repeated queries
     data = tsc.loadExample('fish-series').toTimeSeries().normalize()
     data.cache()
     data.dims;
+
 Extract some samples just to look at the typical structure of the time
 series:
 
@@ -43,6 +46,7 @@ series:
 
     examples = data.subset(nsamples=50, thresh=0.1)
     plt.plot(examples.T);
+
 
 
 .. image:: clustering_files/clustering_10_0.png
@@ -57,6 +61,7 @@ Perform KMeans clustering with 10 clusters:
 
     from thunder import KMeans
     model = KMeans(k=10).fit(data)
+
 Plot the time series associated with each of the recovered clusters,
 with a fixed but arbitrary color scheme:
 
@@ -66,6 +71,7 @@ with a fixed but arbitrary color scheme:
     cmapCat = ListedColormap(sns.color_palette("hls", 10), name='from_list')
     plt.gca().set_color_cycle(cmapCat.colors)
     plt.plot(model.centers.T);
+
 
 
 .. image:: clustering_files/clustering_14_0.png
@@ -78,12 +84,14 @@ labels:
 
     labels = model.predict(data)
     imgLabels = labels.pack()
+
 Look at the resulting map as an image, using the same color scheme as
 for plotting the cluster centers above:
 
 .. code:: python
 
     image(imgLabels[:,:,0], cmap=cmapCat)
+
 
 
 .. image:: clustering_files/clustering_18_0.png
@@ -98,6 +106,7 @@ complex operations.
 
     brainmap = Colorize(cmap=cmapCat).transform(imgLabels[:,:,0])
     image(brainmap)
+
 
 
 .. image:: clustering_files/clustering_20_0.png
@@ -119,12 +128,14 @@ to generate different color schemes.
 .. code:: python
 
     newClrs = Colorize.optimize(model.centers, asCmap=True)
+
 Note that centers that resemble one another have similar colors:
 
 .. code:: python
 
     plt.gca().set_color_cycle(newClrs.colors)
     plt.plot(model.centers.T);
+
 
 
 .. image:: clustering_files/clustering_24_0.png
@@ -138,6 +149,7 @@ more clear.
 
     brainmap = Colorize(cmap=newClrs).transform(imgLabels[:,:,0])
     image(brainmap)
+
 
 
 .. image:: clustering_files/clustering_26_0.png
@@ -161,6 +173,7 @@ ignores the noise.
     image(stdMap[:,:,0] > 0.05) # try different values of the threshold
 
 
+
 .. image:: clustering_files/clustering_28_0.png
 
 
@@ -172,11 +185,13 @@ deviation
     from numpy import std
     filtered = data.filterOnValues(lambda x: std(x) > 0.05)
     model = KMeans(k=10).fit(filtered)
+
 .. code:: python
 
     newClrs = Colorize.optimize(model.centers, asCmap=True)
     plt.gca().set_color_cycle(newClrs.colors)
     plt.plot(model.centers.T);
+
 
 
 .. image:: clustering_files/clustering_31_0.png
@@ -187,6 +202,7 @@ deviation
     imgLabels = model.predict(data).pack()
     brainmap = Colorize(cmap=newClrs).transform(imgLabels[:,:,0])
     image(brainmap)
+
 
 
 .. image:: clustering_files/clustering_32_0.png
@@ -204,9 +220,11 @@ can compute this using the ``similarity`` method of ``KMeansModel``.
 
     sim = model.similarity(data)
     imgSim = sim.pack()
+
 .. code:: python
 
     image(imgSim[:,:,0], cmap='gray', clim=(0,1))
+
 
 
 .. image:: clustering_files/clustering_35_0.png
@@ -220,6 +238,7 @@ We can then use this as a linear mask on the colorization output
     image(brainmap)
 
 
+
 .. image:: clustering_files/clustering_37_0.png
 
 
@@ -230,10 +249,12 @@ planes), and then look at a maximum projection.
 .. code:: python
 
     brainmap = Colorize(cmap=newClrs).transform(imgLabels, mask=imgSim)
+
 .. code:: python
 
     from numpy import amax
     image(amax(brainmap,2))
+
 
 
 .. image:: clustering_files/clustering_40_0.png

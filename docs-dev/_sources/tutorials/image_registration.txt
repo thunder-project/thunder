@@ -23,6 +23,7 @@ Setup plotting
 .. code:: python
 
     %matplotlib inline
+
 .. code:: python
 
     import seaborn as sns
@@ -31,6 +32,7 @@ Setup plotting
     image = Colorize.image
     sns.set_style('darkgrid')
     sns.set_context('notebook')
+
 Generating data
 ---------------
 
@@ -43,6 +45,7 @@ data.
 
     data = tsc.loadExample('mouse-images')
     data
+
 
 
 
@@ -67,10 +70,12 @@ varies slowly over time, which will be easier to look at.
     t = 500
     dx = gaussian_filter(random.randn(t), 50) * 25
     dy = gaussian_filter(random.randn(t), 50) * 25
+
 .. code:: python
 
     plt.plot(dx);
     plt.plot(dy);
+
 
 
 .. image:: image_registration_files/image_registration_11_0.png
@@ -85,6 +90,7 @@ corresponding entry in our list of shifts.
 
     from scipy.ndimage import shift
     shifted = data.apply(lambda (k, v): (k, shift(v, (dx[k], dy[k]), mode='nearest', order=0)))
+
 Look at the first entry of both the original images and the shifted
 images, and their difference
 
@@ -103,6 +109,7 @@ images, and their difference
     sns.set_context('notebook')
 
 
+
 .. image:: image_registration_files/image_registration_15_0.png
 
 
@@ -119,6 +126,7 @@ images, the mean of the shifted images should be much more blurry!
     sns.set_context('notebook')
 
 
+
 .. image:: image_registration_files/image_registration_17_0.png
 
 
@@ -132,6 +140,7 @@ its name (current options include 'crosscorr' and 'planarcrosscorr')
 
     from thunder import Registration
     reg = Registration('crosscorr')
+
 This method computes a cross-correlation in parallel between every image
 and a reference. To compute that reference, we can use the ``prepare``
 method, and either give it a reference, or have it compute one for us.
@@ -141,12 +150,14 @@ specified range. We call:
 .. code:: python
 
     reg.prepare(shifted, startIdx=0, stopIdx=500);
+
 This adds a ``reference`` attribute to the ``reg`` object, which we can
 look at
 
 .. code:: python
 
     image(reg.reference)
+
 
 
 .. image:: image_registration_files/image_registration_24_0.png
@@ -162,6 +173,7 @@ mean, or any other calculation) and passed it as an argument
     image(reg.reference)
 
 
+
 .. image:: image_registration_files/image_registration_26_0.png
 
 
@@ -171,11 +183,13 @@ data, returning a fitted ``RegistrationModel``
 .. code:: python
 
     model = reg.fit(shifted)
+
 Inspect the model
 
 .. code:: python
 
     model
+
 
 
 
@@ -193,6 +207,7 @@ The model represents a list of transformations. You can inspect them:
 .. code:: python
 
     model[0]
+
 
 
 
@@ -216,6 +231,7 @@ similar.
     plt.plot(dy, color=clrs[1]);
 
 
+
 .. image:: image_registration_files/image_registration_34_0.png
 
 
@@ -229,6 +245,7 @@ compute a reference from the original, unshifted data.
 
     reg.prepare(data, startIdx=0, stopIdx=500)
     model = reg.fit(shifted)
+
 Now the estimates should be exact (up to rounding error)! But note that
 this is sort of cheating, because in general we don't know the ground
 truth.
@@ -239,6 +256,7 @@ truth.
     plt.plot(dx, color=clrs[0])
     plt.plot(model.toArray()[:,1], color=clrs[1])
     plt.plot(dy, color=clrs[1]);
+
 
 
 .. image:: image_registration_files/image_registration_38_0.png
@@ -254,6 +272,7 @@ thing.
 .. code:: python
 
     corrected = model.transform(shifted)
+
 Let's again look at the first image from the orignal and corrected, and
 their difference. Whereas before they were different, now they should be
 the same, except for minor near the boundaries (where the image has been
@@ -274,6 +293,7 @@ replaced with its nearest neighbors).
     sns.set_context('notebook')
 
 
+
 .. image:: image_registration_files/image_registration_42_0.png
 
 
@@ -291,6 +311,7 @@ much sharper.
     sns.set_context('notebook')
 
 
+
 .. image:: image_registration_files/image_registration_44_0.png
 
 
@@ -300,14 +321,17 @@ in.
 .. code:: python
 
     model.save('model.json')
+
 .. code:: python
 
     modelreloaded = Registration.load('model.json')
+
 Inspect the reloaded model
 
 .. code:: python
 
     modelreloaded
+
 
 
 
