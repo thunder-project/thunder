@@ -36,7 +36,8 @@ class ThunderContext():
         return ThunderContext(SparkContext(*args, **kwargs))
 
     def loadSeries(self, dataPath, nkeys=None, nvalues=None, inputFormat='binary', minPartitions=None,
-                   confFilename='conf.json', keyType=None, valueType=None, keyPath=None, varName=None):
+                   maxPartitionSize='32mb', confFilename='conf.json', keyType=None, valueType=None, keyPath=None,
+                   varName=None):
         """
         Loads a Series object from data stored as binary, text, npy, or mat.
 
@@ -63,6 +64,10 @@ class ThunderContext():
 
         minPartitions: int, optional, default = SparkContext.minParallelism
             Minimum number of Spark partitions to use, only for text.
+
+        maxPartitionSize : int, optional, default = '32mb'
+            Maximum size of partitions as a Java-style memory string, e.g. '32mb' or '64mb',
+            indirectly controls the number of Spark partitions, only for binary.
 
         confFilename: string, optional, default 'conf.json'
             Path to JSON file with configuration options including 'nkeys', 'nvalues',
@@ -93,7 +98,7 @@ class ThunderContext():
 
         if inputFormat.lower() == 'binary':
             data = loader.fromBinary(dataPath, confFilename=confFilename, nkeys=nkeys, nvalues=nvalues,
-                                     keyType=keyType, valueType=valueType)
+                                     keyType=keyType, valueType=valueType, maxPartitionSize=maxPartitionSize)
         elif inputFormat.lower() == 'text':
             if nkeys is None:
                 raise Exception('Must provide number of keys per record for loading from text')
