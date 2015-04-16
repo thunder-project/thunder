@@ -1,6 +1,10 @@
 import thunder
 from thunder.utils.context import ThunderContext
-from termcolor import colored
+
+try:
+	from termcolor import colored
+except ImportError:
+	colored = lambda x, y: x
 
 tsc = ThunderContext(sc)
 
