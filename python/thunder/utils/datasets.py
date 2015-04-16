@@ -3,7 +3,7 @@ Utilities for generating example datasets
 """
 
 from numpy import array, asarray, random, shape, floor, dot, linspace, \
-    sin, sign, c_, ceil, inf, clip, zeros, max, size, sqrt, log
+    sin, sign, c_, ceil, inf, clip, zeros, max, size, sqrt, log, matrix
 
 from thunder.rdds.matrices import RowMatrix
 from thunder.rdds.series import Series
@@ -60,6 +60,44 @@ class PCAData(DataSets):
         data = RowMatrix(self.sc.parallelize(appendKeys(a), npartitions))
         if self.returnParams is True:
             return data, u, v
+        else:
+            return data
+
+class FAData(DataSets):
+
+    def generate(self, q=1, p=3, nrows=50, npartitions=10, sigmas=None, seed=None):
+        """
+        Generate data from a factor analysis model
+
+        Parameters
+        ----------
+        q : int
+          The number of factors generating this data
+        p : int
+          The number of observed factors (p >= q)
+        nrows : int
+          Number of observations we have
+        sigmas = 1 x p ndarray
+          Scale of the noise to add
+        """
+        random.seed(seed)
+        # Generate factor loadings (n x q)
+        F = matrix(random.randn(nrows, q))
+        # Generate factor scores (q x p)
+        w = matrix(random.randn(q, p))
+        # Generate non-zero the error covariances (1 x p)
+        if sigmas is None:
+          sigmas = random.randn(1, p)
+        # Generate the error terms (n x p)
+        # (each row gets scaled by our sigmas)
+        epsilon = random.randn(nrows, p) * sigmas
+        # Combine this to get our actual data (n x p)
+        x = (F * w) + epsilon
+        # Put the data in an RDD
+        data = RowMatrix(self.sc.parallelize(appendKeys(x), npartitions))
+
+        if self.returnParams is True:
+            return data, F, w, epsilon
         else:
             return data
 
@@ -137,6 +175,7 @@ class SourcesData(DataSets):
 DATASET_MAKERS = {
     'kmeans': KMeansData,
     'pca': PCAData,
+    'fa': FAData,
     'ica': ICAData,
     'sources': SourcesData
 }
