@@ -30,7 +30,7 @@ Finally, manually install Thunder's dependencies (if neccessary) by callling
 
 To avoid confusion, if you had previously installed the release version of Thunder using ``pip install thunder-python``, we recommend uninstalling it first using ``pip uninstall thunder-python`` before performing the steps above.
 
-Using an IDE for development is highly recommended, many of us use `PyCharm <http://www.jetbrains.com/pycharm/>`_ for Python and `IntelliJ <http://www.jetbrains.com/idea/>`_ for Scala. If you are new to contributing to open source software, here's an `article <https://gun.io/blog/how-to-github-fork-branch-and-pull-request/>`_ on how to send a pull request to a project, and also check out the `gitgoing <https://github.com/CodeNeuro/gitgoing>`_ tutorial.
+Using an IDE for development is highly recommended, many of us use `PyCharm <http://www.jetbrains.com/pycharm/>`_ for Python and `IntelliJ <http://www.jetbrains.com/idea/>`_ for Scala. If you are new to contributing to open source software, here's an `article <https://gun.io/blog/how-to-github-fork-branch-and-pull-request/>`_ on how to create a pull request, and also check out the `gitgoing <https://github.com/CodeNeuro/gitgoing>`_ tutorial.
 
 Running the tests 
 ~~~~~~~~~~~~~~~~~
