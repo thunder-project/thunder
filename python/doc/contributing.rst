@@ -24,6 +24,8 @@ Then set two additional environmental variables to make sure the code and execut
 
 To avoid confusion, if you had already installed Thunder previously using ``pip``, we recommend uninstalling it first using ``pip uninstall thunder-python``. 
 
+Finally, install Thunder's dependencies manually by callling `pip install -r ~/code/thunder/python/requirements.txt` (you may have many of these already).
+
 Using an IDE for development is highly recommended, we use `PyCharm <http://www.jetbrains.com/pycharm/>`_ for Python and `IntelliJ <http://www.jetbrains.com/idea/>`_ for Scala. And here's a good `article <https://gun.io/blog/how-to-github-fork-branch-and-pull-request/>`_ on how to contribute a pull request to a project using github.
 
 Running the tests 
