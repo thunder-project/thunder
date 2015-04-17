@@ -22,17 +22,12 @@ class DataSets(object):
         except KeyError:
             raise NotImplementedError("no dataset generator for '%s'" % name)
 
-
-# eliminate this
-def appendKeys(data):
-
-    data = array(data)
-    n = shape(data)[0]
-    x = (random.rand(n) * n).astype(int)
-    y = (random.rand(n) * n).astype(int)
-    z = (random.rand(n) * n).astype(int)
-    dataZipped = zip(x, y, z, data)
-    return map(lambda (k1, k2, k3, v): ((k1, k2, k3), v), dataZipped)
+    @staticmethod
+    def appendKeys(data):
+        data = array(data)
+        n = shape(data)[0]
+        x = (random.rand(n) * n).astype(int)
+        return zip(x, data)
 
 
 class KMeansData(DataSets):
@@ -42,7 +37,7 @@ class KMeansData(DataSets):
         centers = random.randn(k, ndims)
         genFunc = lambda i: centers[int(floor(random.rand(1, 1) * k))] + noise*random.rand(ndims)
         dataLocal = map(genFunc, range(0, nrecords))
-        data = Series(self.sc.parallelize(appendKeys(dataLocal), npartitions))
+        data = Series(self.sc.parallelize(self.appendKeys(dataLocal), npartitions))
         if self.returnParams is True:
             return data, centers
         else:
@@ -57,7 +52,7 @@ class PCAData(DataSets):
         v = random.randn(k, ncols)
         a = dot(u, v)
         a += random.randn(shape(a)[0], shape(a)[1])
-        data = RowMatrix(self.sc.parallelize(appendKeys(a), npartitions))
+        data = RowMatrix(self.sc.parallelize(self.appendKeys(a), npartitions))
         if self.returnParams is True:
             return data, u, v
         else:
@@ -95,7 +90,7 @@ class FactorAnalysisData(DataSets):
         # Combine this to get our actual data (n x p)
         x = (F * w) + epsilon
         # Put the data in an RDD
-        data = RowMatrix(self.sc.parallelize(appendKeys(x), npartitions))
+        data = RowMatrix(self.sc.parallelize(self.appendKeys(x), npartitions))
 
         if self.returnParams is True:
             return data, F, w, epsilon
@@ -115,7 +110,7 @@ class ICAData(DataSets):
         s /= s.std(axis=0)
         a = array([[1, 1], [0.5, 2]])
         x = dot(s, a.T)
-        data = RowMatrix(self.sc.parallelize(appendKeys(x), npartitions))
+        data = RowMatrix(self.sc.parallelize(self.appendKeys(x), npartitions))
         if self.returnParams is True:
             return data, s, a
         else:
