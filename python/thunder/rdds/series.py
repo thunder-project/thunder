@@ -47,7 +47,7 @@ class Series(Data):
         super(Series, self).__init__(rdd, nrecords=nrecords, dtype=dtype)
         self._index = None
         if index is not None:
-            self.index = index
+            self._index = index
         if dims and not isinstance(dims, Dimensions):
             try:
                 dims = Dimensions.fromTuple(dims)

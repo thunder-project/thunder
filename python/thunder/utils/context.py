@@ -36,7 +36,8 @@ class ThunderContext():
         return ThunderContext(SparkContext(*args, **kwargs))
 
     def loadSeries(self, dataPath, nkeys=None, nvalues=None, inputFormat='binary', minPartitions=None,
-                   confFilename='conf.json', keyType=None, valueType=None, keyPath=None, varName=None):
+                   maxPartitionSize='32mb', confFilename='conf.json', keyType=None, valueType=None, keyPath=None,
+                   varName=None):
         """
         Loads a Series object from data stored as binary, text, npy, or mat.
 
@@ -63,6 +64,10 @@ class ThunderContext():
 
         minPartitions: int, optional, default = SparkContext.minParallelism
             Minimum number of Spark partitions to use, only for text.
+
+        maxPartitionSize : int, optional, default = '32mb'
+            Maximum size of partitions as a Java-style memory string, e.g. '32mb' or '64mb',
+            indirectly controls the number of Spark partitions, only for binary.
 
         confFilename: string, optional, default 'conf.json'
             Path to JSON file with configuration options including 'nkeys', 'nvalues',
@@ -93,7 +98,7 @@ class ThunderContext():
 
         if inputFormat.lower() == 'binary':
             data = loader.fromBinary(dataPath, confFilename=confFilename, nkeys=nkeys, nvalues=nvalues,
-                                     keyType=keyType, valueType=valueType)
+                                     keyType=keyType, valueType=valueType, maxPartitionSize=maxPartitionSize)
         elif inputFormat.lower() == 'text':
             if nkeys is None:
                 raise Exception('Must provide number of keys per record for loading from text')
@@ -506,7 +511,7 @@ class ThunderContext():
         """
         Make an example data set for testing analyses.
 
-        Options include 'pca', 'kmeans', and 'ica'.
+        Options include 'pca', 'factor', 'kmeans', and 'ica'.
         See thunder.utils.datasets for detailed options.
 
         Parameters
@@ -520,7 +525,8 @@ class ThunderContext():
             Generated dataset
 
         """
-        checkParams(dataset, ['kmeans', 'pca', 'ica'])
+        from thunder.utils.datasets import DATASET_MAKERS
+        checkParams(dataset, DATASET_MAKERS.keys())
 
         return DataSets.make(self._sc, dataset, **opts)
 
@@ -633,6 +639,31 @@ class ThunderContext():
 
         return data, params
 
+    def loadJSON(self, path):
+        """
+        Generic function for loading JSON from a path, handling local file systems and S3
+
+        Parameters
+        ----------
+        path : str
+            Path to a file, can be on a local file system or an S3 bucket
+
+        Returns
+        -------
+        A string with the JSON
+        """
+
+        import json
+        from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError
+
+        reader = getFileReaderForPath(path)(awsCredentialsOverride=self._credentials)
+        try:
+            buffer = reader.read(path)
+        except FileNotFoundError:
+            raise Exception("Cannot find file %s" % path)
+
+        return json.loads(buffer)
+
     def loadParams(self, path):
         """
         Load a file with parameters from a local file system or S3.
@@ -652,16 +683,30 @@ class ThunderContext():
         -------
         A dict or list with the parameters
         """
-        import json
-        from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError
+        blob = self.loadJSON(path)
+        return Params(blob)
 
-        reader = getFileReaderForPath(path)(awsCredentialsOverride=self._credentials)
-        try:
-            buffer = reader.read(path)
-        except FileNotFoundError:
-            raise Exception("Cannot find file %s" % path)
+    def loadSources(self, path):
+        """
+        Load a file with sources from a local file system or S3.
 
-        return Params(json.loads(buffer))
+        Parameters
+        ----------
+        path : str
+            Path to file, can be on a local file system or an S3 bucket
+
+        Returns
+        -------
+        A SourceModel
+
+        See also
+        --------
+        SourceExtraction
+        """
+        from thunder import SourceExtraction
+
+        blob = self.loadJSON(path)
+        return SourceExtraction.deserialize(blob)
 
     def export(self, data, filename, outputFormat=None, overwrite=False, varname=None):
         """

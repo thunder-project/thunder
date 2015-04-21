@@ -39,7 +39,7 @@ class TestRegress(RegressionTestCase):
         # check indexing of outputs
         assert(allclose(result.select('betas').index, array([0, 1])))
         assert(allclose(result.select('resid').index, array([0, 1, 2, 3, 4, 5])))
-        assert(result.select('stats').index == ['stats'])
+        assert(result.select('stats').index == 'stats')
 
     def test_bilinearRegress(self):
         data = Series(self.sc.parallelize([(1, array([1.5, 2.3, 6.2, 5.1, 3.4, 2.1]))]))

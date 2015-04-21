@@ -1,13 +1,14 @@
 import glob
 import struct
 import os
-from numpy import allclose, arange, array, array_equal, prod, squeeze, zeros
+from numpy import allclose, arange, array, array_equal, prod, squeeze, zeros, size, mean, corrcoef
 from numpy import dtype as dtypeFunc
 import itertools
 from nose.tools import assert_equals, assert_raises, assert_true
 import unittest
 
 from thunder.rdds.series import Series
+from thunder.rdds.images import Images
 from thunder.rdds.timeseries import TimeSeries
 from thunder.rdds.fileio.imagesloader import ImagesLoader
 from thunder.rdds.fileio.seriesloader import SeriesLoader
@@ -348,7 +349,7 @@ class TestImagesMethods(PySparkTestCase):
 
     @staticmethod
     def _run_filter(ary, filterFunc, radius):
-        if ary.ndim <= 2:
+        if ary.ndim <= 2 or size(radius) > 1:
             return filterFunc(ary, radius)
         else:
             cpy = zeros(ary.shape, dtype=ary.dtype)
@@ -374,15 +375,40 @@ class TestImagesMethods(PySparkTestCase):
         assert_equals(str(arys[0].dtype), str(filtered[0][1].dtype))
         assert_equals(str(filtered[0][1].dtype), filteredData._dtype)
 
+    def _run_tst_filter_3d_sigma(self, dataFunc, filterFunc):
+        narys = 3
+        arys, sh, sz = _generateTestArrays(narys)
+        sigma = [2, 2, 2]
+
+        imageData = ImagesLoader(self.sc).fromArrays(arys)
+        filteredData = dataFunc(imageData, sigma)
+        filtered = filteredData.collect()
+        expectedArys = map(lambda ary: TestImagesMethods._run_filter(ary, filterFunc, sigma), arys)
+        for actual, expected in zip(filtered, expectedArys):
+            assert_true(allclose(expected, actual[1]))
+
+        assert_equals(tuple(expectedArys[0].shape), filtered[0][1].shape)
+        assert_equals(tuple(expectedArys[0].shape), filteredData._dims.count)
+        assert_equals(str(arys[0].dtype), str(filtered[0][1].dtype))
+        assert_equals(str(filtered[0][1].dtype), filteredData._dtype)
+
     def test_gaussFilter3d(self):
         from scipy.ndimage.filters import gaussian_filter
         from thunder.rdds.images import Images
         self._run_tst_filter(Images.gaussianFilter, gaussian_filter)
+        self._run_tst_filter_3d_sigma(Images.gaussianFilter, gaussian_filter)
 
     def test_medianFilter3d(self):
         from scipy.ndimage.filters import median_filter
         from thunder.rdds.images import Images
         self._run_tst_filter(Images.medianFilter, median_filter)
+        self._run_tst_filter_3d_sigma(Images.medianFilter, median_filter)
+
+    def test_uniformFilter3d(self):
+        from scipy.ndimage.filters import uniform_filter
+        from thunder.rdds.images import Images
+        self._run_tst_filter(Images.uniformFilter, uniform_filter)
+        self._run_tst_filter_3d_sigma(Images.uniformFilter, uniform_filter)
 
     def _run_tst_crop(self, minBounds, maxBounds):
         dims = (2, 2, 4)
@@ -608,6 +634,101 @@ class TestImagesMeanByRegions(PySparkTestCase):
         assert_equals(5, collected[0][1][0])
         assert_equals(15, collected[1][1][0])
 
+class TestImagesLocalCorr(PySparkTestCase):
+    """Test accuracy for local correlation
+    by comparison to known result
+    (verified by directly computing
+    result with numpy's mean and corrcoef)
+
+    Test with indexing from both 0 and 1,
+    and for both 2D and 3D data
+    """
+
+    def get_local_corr(self, data, neighborhood, images=False):
+        rdd = self.sc.parallelize(data)
+        imgs = Images(rdd) if images else Series(rdd).toImages()
+        return imgs.localCorr(neighborhood=neighborhood)
+
+    def test_localCorr_0Indexing_2D(self):
+
+        dataLocal = [
+            ((0, 0), array([1.0, 2.0, 3.0])),
+            ((0, 1), array([2.0, 2.0, 4.0])),
+            ((0, 2), array([9.0, 2.0, 1.0])),
+            ((1, 0), array([5.0, 2.0, 5.0])),
+            ((2, 0), array([4.0, 2.0, 6.0])),
+            ((1, 1), array([4.0, 2.0, 8.0])),
+            ((1, 2), array([5.0, 4.0, 1.0])),
+            ((2, 1), array([6.0, 3.0, 2.0])),
+            ((2, 2), array([0.0, 2.0, 1.0]))
+        ]
+
+        # get ground truth by correlating mean with the center
+        ts = map(lambda x: x[1], dataLocal)
+        mn = mean(ts, axis=0)
+        truth = corrcoef(mn, array([4.0, 2.0, 8.0]))[0, 1]
+
+        corr = self.get_local_corr(dataLocal, 1)
+
+        assert(allclose(corr[1][1], truth))
+
+    def test_localCorr_0Indexing_3D(self):
+
+        dataLocal = [
+            ((0, 0, 0), array([1.0, 2.0, 3.0])),
+            ((0, 1, 0), array([2.0, 2.0, 4.0])),
+            ((0, 2, 0), array([9.0, 2.0, 1.0])),
+            ((1, 0, 0), array([5.0, 2.0, 5.0])),
+            ((2, 0, 0), array([4.0, 2.0, 6.0])),
+            ((1, 1, 0), array([4.0, 2.0, 8.0])),
+            ((1, 2, 0), array([5.0, 4.0, 1.0])),
+            ((2, 1, 0), array([6.0, 3.0, 2.0])),
+            ((2, 2, 0), array([0.0, 2.0, 1.0]))
+        ]
+
+        # get ground truth by correlating mean with the center
+        ts = map(lambda x: x[1], dataLocal)
+        mn = mean(ts, axis=0)
+        truth = corrcoef(mn, array([4.0, 2.0, 8.0]))[0, 1]
+
+        corr = self.get_local_corr(dataLocal, 1)
+
+        assert(allclose(corr[1][1], truth))
+
+    def test_localCorr_Images_2D(self):
+
+        dataLocal = [
+            (0, array([[1.0, 2.0, 9.0], [5.0, 4.0, 5.0], [4.0, 6.0, 0.0]])),
+            (1, array([[2.0, 2.0, 2.0], [2.0, 2.0, 4.0], [2.0, 3.0, 2.0]])),
+            (2, array([[3.0, 4.0, 1.0], [5.0, 8.0, 1.0], [6.0, 2.0, 1.0]]))
+        ]
+
+        imgs = map(lambda x: x[1], dataLocal)
+        # Blur each image and extract the center pixel
+        mn = map(lambda img: mean(img), imgs)
+        truth = corrcoef(mn, array([4.0, 2.0, 8.0]))[0, 1]
+
+        corr = self.get_local_corr(dataLocal, 1, images=True)
+
+        assert(allclose(corr[1][1], truth))
+
+    def test_localCorr_Images_3D(self):
+
+        dataLocal = [
+            (0, array([[1.0, 2.0, 9.0], [5.0, 4.0, 5.0], [4.0, 6.0, 0.0]])),
+            (1, array([[2.0, 2.0, 2.0], [2.0, 2.0, 4.0], [2.0, 3.0, 2.0]])),
+            (2, array([[3.0, 4.0, 1.0], [5.0, 8.0, 1.0], [6.0, 2.0, 1.0]]))
+        ]
+
+        imgs = map(lambda x: x[1], dataLocal)
+        # Blur each image and extract the center pixel
+        mn = map(lambda img: mean(img), imgs)
+        truth = corrcoef(mn, array([4.0, 2.0, 8.0]))[0, 1]
+
+        corr = self.get_local_corr(dataLocal, 1, images=True)
+
+        assert(allclose(corr[1][1], truth))
+
 
 class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
@@ -760,7 +881,7 @@ class TestImagesUsingOutputDir(PySparkTestCaseWithOutputDir):
 
         outFilenames = sorted(glob.glob(os.path.join(outdir, "*.bin")))
         trueFilenames = map(lambda f: os.path.join(outdir, f),
-                            ['export-00000.bin', 'export-00001.bin', 'export-00002.bin'])
+                            ['image-00000.bin', 'image-00001.bin', 'image-00002.bin'])
         assert_true(os.path.isfile(os.path.join(outdir, 'SUCCESS')))
         assert_true(os.path.isfile(os.path.join(outdir, "conf.json")))
         assert_equals(outFilenames, trueFilenames)
