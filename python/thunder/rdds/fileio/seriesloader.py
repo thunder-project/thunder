@@ -173,25 +173,28 @@ class SeriesLoader(object):
 
     def fromBinary(self, dataPath, ext='bin', confFilename='conf.json',
                    nkeys=None, nvalues=None, keyType=None, valueType=None,
-                   newDtype='smallfloat', casting='safe'):
+                   newDtype='smallfloat', casting='safe', maxPartitionSize='32mb'):
         """
         Load a Series object from a directory of binary files.
 
         Parameters
         ----------
 
-        dataPath: string URI or local filesystem path
+        dataPath : string URI or local filesystem path
             Specifies the directory or files to be loaded. May be formatted as a URI string with scheme (e.g. "file://",
             "s3n://". If no scheme is present, will be interpreted as a path on the local filesystem. This path
             must be valid on all workers. Datafile may also refer to a single file, or to a range of files specified
             by a glob-style expression using a single wildcard character '*'.
 
-        newDtype: dtype or dtype specifier or string 'smallfloat' or None, optional, default 'smallfloat'
+        newDtype : dtype or dtype specifier or string 'smallfloat' or None, optional, default 'smallfloat'
             Numpy dtype of output series data. Most methods expect Series data to be floating-point. Input data will be
             cast to the requested `newdtype` if not None - see Data `astype()` method.
 
-        casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
+        casting : 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
             Casting method to pass on to numpy's `astype()` method; see numpy documentation for details.
+
+        maxPartitionSize : str, optional, default = '32mb'
+            Maximum size of partitions as Java-style memory, will indirectly control the number of partitions
 
         """
 
@@ -206,10 +209,17 @@ class SeriesLoader(object):
         keySize = paramsObj.nkeys * keyDtype.itemsize
         recordSize = keySize + paramsObj.nvalues * valDtype.itemsize
 
+        from thunder.utils.common import parseMemoryString
+        if isinstance(maxPartitionSize, basestring):
+            size = parseMemoryString(maxPartitionSize)
+        else:
+            raise Exception("Invalid size specification")
+        hadoopConf = {'recordLength': str(recordSize), 'mapred.max.split.size': str(size)}
+
         lines = self.sc.newAPIHadoopFile(dataPath, 'thunder.util.io.hadoop.FixedLengthBinaryInputFormat',
                                          'org.apache.hadoop.io.LongWritable',
                                          'org.apache.hadoop.io.BytesWritable',
-                                         conf={'recordLength': str(recordSize)})
+                                         conf=hadoopConf)
 
         data = lines.map(lambda (_, v):
                          (tuple(int(x) for x in frombuffer(buffer(v, 0, keySize), dtype=keyDtype)),

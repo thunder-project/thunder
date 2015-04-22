@@ -1,12 +1,20 @@
 #!/usr/bin/env python
-try:
-    import thunder
-except ImportError:
-    thunder = None
-    raise Exception("Unable to import Thunder. Please make sure that the Thunder installation directory is listed in " +
-                    "the PYTHONPATH environment variable. Also check that your build of Thunder is functional and it can be imported.")
 import os
 import sys
+
+try:
+    import thunder
+except ImportError as e:
+    thunder = None
+    print("Unable to import Thunder, this is likely due to an incorrect PYTHONPATH or missing dependencies.\nGot the following error during import:\n%s" % e)
+    sys.exit()
+except SyntaxError as e:
+    thunder = None
+    print("Unable to import Thunder, got the following syntax error:\n%s" % e)
+    sys.exit()
+except:
+    print("Unable to import Thunder for unknown reasons, got the following error:\n%s" % e)
+    sys.exit()
 
 from thunder.utils.launch import getFilteredHelpMessage, getSparkHome, transformArguments
 
