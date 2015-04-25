@@ -1,7 +1,6 @@
 from numpy import asarray, mean, sqrt, ndarray, amin, amax, concatenate, sum, zeros, maximum, \
     argmin, newaxis, ones, delete, NaN, inf, isnan
 
-import numpy.linalg as la
 from scipy.stats import spearmanr
 
 from thunder.utils.serializable import Serializable
@@ -109,7 +108,7 @@ class Source(Serializable, object):
                 del self.__dict__[prop]
         return self
 
-    def distance(self, other, method='l1'):
+    def distance(self, other, method='euclidean'):
         """
         Distance between the center of this source and another.
 
@@ -121,17 +120,17 @@ class Source(Serializable, object):
             L1-norm ('l1'). 
 
         """
+        from numpy.linalg import norm
         if method == 'euclidean':
             order = 2
         elif method == 'l1':
             order = 1
         else:
             raise ValueError('Given distance method not supported.')
-
         if isinstance(other, Source):
-            return la.norm(self.center - other.center, ord=order)
+            return norm(self.center - other.center, ord=order)
         elif isinstance(other, list) or isinstance(other, ndarray):
-            return la.norm(self.center - asarray(other), ord=order)
+            return norm(self.center - asarray(other), ord=order)
 
     def overlap(self, other, method='support',counts=False):
         """
@@ -151,24 +150,25 @@ class Source(Serializable, object):
             other.coordinates = other.coordinates.tolist()
         intersection = [a for a in self.coordinates if a in other.coordinates]
         complement = [a for a in self.coordinates if a not in intersection]
+        hits = len(intersection)
+        misses = len(complement)
         if method == 'support':
-            hits = len(intersection)
-            misses = len(complement)
             if counts:
-                return (hits,misses)
+                return (hits, misses)
             else:
                 return hits/float(hits+misses)
         elif method == 'corr':
-            #TODO: this is actually a bit complicated, as support size can matter... we
-            # could use a fixed box size or the union of source supports?
-            raise NotImplementedError()
+            if len(intersection) > 0:
+                rho, _ = spearmanr(self.values[intersection],other.values[intersection])
+            else:
+                rho = 0.0
+            return (rho*hits)/float(hits+misses)
         else:
             raise ValueError('Given method is not supported.')
 
     def tolist(self):
         """
         Convert array-like attributes to list
-
         """
         import copy
         new = copy.copy(self)
@@ -499,6 +499,34 @@ class SourceModel(Serializable, object):
             raise Exception("Method not recognized")
 
         return d
+
+    def similarity(self, other, metric='distance', thresh=5):
+        """
+        Estimate similarity between sources in self and other.
+        Will compute the fraction of sources in self that are found
+        in other, based on a given distance metric and a threshold.
+        The fraction is estimated as the number of sources in self
+        found in other, divided by the total number of sources in self.
+        Parameters
+        ----------
+        other : SourceModel
+            The sources to compare to
+        metric : str, optional, default = "distance"
+            Metric to use when computing distances
+        thresh : scalar, optional, default = 5
+            The distance below which a source is considered found
+        """
+        checkParams(metric, ['distance'])
+
+        if metric == 'distance':
+            vals = self.distance(other, minDistance=thresh)
+            vals[isnan(vals)] = inf
+        else:
+            raise Exception("Metric not recognized")
+
+        hits = sum(vals < thresh) / float(len(self.sources))
+
+        return hits
 
     def transform(self, data, collect=True):
         """
