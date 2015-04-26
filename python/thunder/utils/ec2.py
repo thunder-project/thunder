@@ -208,7 +208,6 @@ def install_thunder(master, opts):
 
     # install requirements
     ssh(master, opts, "source ~/.bash_profile && pip install -r /root/thunder/python/requirements.txt")
-    ssh(master, opts, "pssh -h /root/spark-ec2/slaves 'source ~/.bash_profile && pip install zope.cachedescriptors'")
 
     # set environmental variables
     ssh(master, opts, "echo 'export SPARK_HOME=/root/spark' >> /root/.bash_profile")
