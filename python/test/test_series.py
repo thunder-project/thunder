@@ -306,9 +306,10 @@ class TestSeriesMethods(PySparkTestCase):
         ]
         data.index = array(index).T
 
-        result = data.selectByIndex(0, level=2)
+        result, mask = data.selectByIndex(0, level=2, returnMask=True)
         assert_true(array_equal(result.values().first(), array([0, 2, 6, 8])))
         assert_true(array_equal(result.index, array([[0, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 0]])))
+        assert_true(array_equal(mask, array([1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0])))
 
         result = data.selectByIndex(0, level=2, squeeze=True)
         assert_true(array_equal(result.values().first(), array([0, 2, 6, 8])))
