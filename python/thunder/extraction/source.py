@@ -114,6 +114,9 @@ class Source(Serializable, object):
 
         Parameters
         ----------
+        other : Source, or array-like
+            Either another source, or the center coordinates of another source
+
         method : str
             Specify a distance measure to used for spatial distance between source
             centers. Current options include Euclidean distance ('euclidean') and 
@@ -121,50 +124,71 @@ class Source(Serializable, object):
 
         """
         from numpy.linalg import norm
-        if method == 'euclidean':
-            order = 2
-        elif method == 'l1':
+
+        checkParams(method, ['euclidean', 'l1'])
+
+        if method == 'l1':
             order = 1
         else:
-            raise ValueError('Given distance method not supported.')
+            order = 2
+
         if isinstance(other, Source):
             return norm(self.center - other.center, ord=order)
         elif isinstance(other, list) or isinstance(other, ndarray):
             return norm(self.center - asarray(other), ord=order)
 
-    def overlap(self, other, method='support',counts=False):
+    def overlap(self, other, method='support', counts=False):
         """
-        Compute the overlap between current source and 'other' source, in terms 
-        of either support or similarity of coefficients. 
+        Compute the overlap between this source and other, in terms
+        of either support or similarity of coefficients.
+
+        Support computes the number of overlapping pixels relative
+        to the union of both sources. Correlation computes the similarity
+        of the weights (not defined for binary masks).
 
         Parameters
         ----------
+        other : Source
+            The source to compute overlap with.
+
         method : str
             Compare either support of source coefficients ('support'), or the 
             source spatial filters (not yet implemented).
 
+        counts : boolean, optional, default = True
+            Whether to return raw counts when computing support, otherwise
+            return a fraction.
+
         """
+        checkParams(method, ['support', 'corr'])
+
         if isinstance(self.coordinates, ndarray):
-            self.coordinates = self.coordinates.tolist()
+            coordsSelf = self.coordinates.tolist()
         if isinstance(other.coordinates, ndarray):
-            other.coordinates = other.coordinates.tolist()
-        intersection = [a for a in self.coordinates if a in other.coordinates]
-        complement = [a for a in self.coordinates if a not in intersection]
+            coordsOther = other.coordinates.tolist()
+
+        intersection = [a for a in coordsSelf if a in coordsOther]
+        complement = [a for a in coordsSelf if a not in intersection]
         hits = len(intersection)
         misses = len(complement)
+
         if method == 'support':
             if counts:
-                return (hits, misses)
+                return hits, misses
             else:
                 return hits/float(hits+misses)
-        elif method == 'corr':
+
+        if method == 'corr':
+            if not (hasattr(self, 'values') and hasattr(other, 'values')):
+                raise Exception('Sources must have values to compute correlation')
+            else:
+                valuesSelf = self.values.tolist()
+                valuesOther = other.values.tolist()
             if len(intersection) > 0:
-                rho, _ = spearmanr(self.values[intersection],other.values[intersection])
+                rho, _ = spearmanr(valuesSelf[intersection], valuesOther[intersection])
             else:
                 rho = 0.0
-            return (rho*hits)/float(hits+misses)
-        else:
-            raise ValueError('Given method is not supported.')
+            return (rho * hits)/float(hits + misses)
 
     def tolist(self):
         """
@@ -342,6 +366,13 @@ class SourceModel(Serializable, object):
         """
         return self.combiner('area', tolist=False)
 
+    @property
+    def count(self):
+        """
+        Number of sources
+        """
+        return len(self.sources)
+
     def masks(self, dims=None, binary=True, outline=False, base=None):
         """
         Composite masks combined across sources as an iamge.
@@ -457,7 +488,7 @@ class SourceModel(Serializable, object):
             The sources to compute distances to
 
         minDistance : scalar, optiona, default = inf
-            Minimum distance to use when selecting matches
+            Minimum distance to use when matching indices
         """
 
         inds = self.match(other, unique=True, minDistance=minDistance)
@@ -483,44 +514,60 @@ class SourceModel(Serializable, object):
 
         method : str, optional, default = "support"
             Method to use when computing overlap between sources.
-            Currently only 'support', which operates on binarized pixel masks, is supported.
+            Options include 'support' and 'correlation'
 
+        minDistance : scalar, optional, default = inf
+            Minimum distance to use when matching indices
         """
-        if method == 'support':
-            inds = self.match(other, unique=True, minDistance=minDistance)
-            d = []
-            for jj, ii in enumerate(inds):
-                if ii is not NaN:
-                    d.append(self[jj].overlap(other[ii],method=method))
-                else:
-                    d.append(NaN)
-            return d
-        else:
-            raise Exception("Method not recognized")
 
-        return d
+        inds = self.match(other, unique=True, minDistance=minDistance)
+        d = []
+        for jj, ii in enumerate(inds):
+            if ii is not NaN:
+                d.append(self[jj].overlap(other[ii], method=method))
+            else:
+                d.append(NaN)
+        return asarray(d)
 
-    def similarity(self, other, metric='distance', thresh=5):
+    def similarity(self, other, metric='distance', thresh=5, minDistance=inf):
         """
         Estimate similarity between sources in self and other.
+
         Will compute the fraction of sources in self that are found
         in other, based on a given distance metric and a threshold.
         The fraction is estimated as the number of sources in self
         found in other, divided by the total number of sources in self.
+
+        Before computing metrics, all sources in self are matched to other,
+        and a minimum distance can be set to control matching.
+
         Parameters
         ----------
         other : SourceModel
             The sources to compare to
+
         metric : str, optional, default = "distance"
-            Metric to use when computing distances
+            Metric to use when computing distances,
+            options include 'distance' and 'overlap'
+
         thresh : scalar, optional, default = 5
             The distance below which a source is considered found
+
+        minDistance : scalar, optional, default = inf
+            Minimum distance to use when matching indices
         """
-        checkParams(metric, ['distance'])
+        checkParams(metric, ['distance', 'overlap'])
 
         if metric == 'distance':
-            vals = self.distance(other, minDistance=thresh)
+            # when evaluating distances,
+            # minimum distance should be the threshold
+            if minDistance == inf:
+                minDistance = thresh
+            vals = self.distance(other, minDistance=minDistance)
             vals[isnan(vals)] = inf
+        elif metric == 'overlap':
+            vals = self.overlap(other, method='support', minDistance=minDistance)
+            vals[isnan(vals)] = 0
         else:
             raise Exception("Metric not recognized")
 
