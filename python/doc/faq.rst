@@ -50,7 +50,7 @@ Basic usage
 
 *I'm getting "java.lang.OutOfMemoryError: Java heap space errors" during usage on a local machine. What should I do?*
 	
-	This error indicates that the JAVA heap space is being exceeded by Thunder. One solution is to set JAVA runtime options to use more heap space. To make this change permanent when calling JAVA, open your bash profile (e.g. ``~/.bashrc`` on Ubuntu) and add a line similar to ``export _JAVA_OPTIONS="-Xms512m -Xmx4g"``. In this example, the initial heap space is set to 512mb and the max heap space is set to 4gb. Note here to use ``_JAVA_OPTIONS`` and not ``JAVA_OPTS``. ``JAVA_OPTS`` is not an environment variable that JDK recognizes on its own, but is used by other apps while running JAVA.  
+	This error indicates that the JAVA heap space is being exceeded by Spark. One solution is to set JAVA runtime options to use more heap space. To make this change permanent when calling any applications using JAVA, open your bash profile (e.g. ``~/.bash_profile`` on Mac OS X or ``~/.bashrc`` on Ubuntu) and add a line similar to ``export _JAVA_OPTIONS="-Xms512m -Xmx4g"`` (or ``set _JAVA_OPTIONS=-Xms512m -Xmx4g on Windows``). In this example, the initial heap space is set to 512mb and the max heap space is set to 4gb. Note here to use ``_JAVA_OPTIONS`` and not ``JAVA_OPTS``. ``JAVA_OPTS`` is not an environment variable that JDK recognizes on its own, but is used by other apps while running JAVA.  
 
 Configuration and installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
