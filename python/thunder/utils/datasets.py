@@ -97,6 +97,26 @@ class FactorAnalysisData(DataSets):
         else:
             return data
 
+class RandomData(DataSets):
+
+    def generate(self, nrows=50, ncols=50, npartitions=10, seed=None):
+        """
+        Generate a matrix where every element is i.i.d. and drawn from a
+        standard normal distribution
+
+        Parameters
+        ----------
+        nrows : int, optional, default = 50
+          Number of columns in the generated matrix
+        nrows : int, optional, default = 50
+          Number of rows in the generated matrix
+        """
+        random.seed(seed)
+        # Generate the data
+        x = matrix(random.randn(nrows, ncols))
+        # Put the data into an RDD
+        data = RowMatrix(self.sc.parallelize(self.appendKeys(x), npartitions))
+        return data
 
 class ICAData(DataSets):
 
@@ -172,6 +192,7 @@ DATASET_MAKERS = {
     'kmeans': KMeansData,
     'pca': PCAData,
     'factor': FactorAnalysisData,
+    'rand': RandomData,
     'ica': ICAData,
     'sources': SourcesData
 }
