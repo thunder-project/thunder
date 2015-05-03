@@ -68,10 +68,13 @@ class FactorAnalysisData(DataSets):
         ----------
         q : int, optional, default = 1
           The number of factors generating this data
+
         p : int, optios, default = 3
           The number of observed factors (p >= q)
+
         nrows : int, optional, default = 50
           Number of observations we have
+
         sigmas = 1 x p ndarray, optional, default = None
           Scale of the noise to add, randomly generated
           from standard normal distribution if not given
@@ -108,6 +111,7 @@ class RandomData(DataSets):
         ----------
         nrows : int, optional, default = 50
           Number of columns in the generated matrix
+
         nrows : int, optional, default = 50
           Number of rows in the generated matrix
         """
