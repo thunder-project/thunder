@@ -13,6 +13,7 @@ except ImportError:
 else:
     _have_sima = True
 
+
 class TestBlockMethod(PySparkTestCase):
 
     def test_nmf(self):
