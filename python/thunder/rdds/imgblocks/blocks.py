@@ -423,6 +423,12 @@ class PaddedBlockGroupingKey(BlockGroupingKey):
         self.valShape = valShape
         self.valSlices = valSlices
 
+    @property
+    def padding(self):
+        start = [self.imgSlices[i].start - self.padImgSlices[i].start for i in range(1, len(self.origShape))]
+        stop = [self.padImgSlices[i].stop - self.imgSlices[i].stop for i in range(1, len(self.origShape))]
+        return start, stop
+
     def asTemporallyConcatenatedKey(self):
         """Returns a new key that is a copy of self, except that the new temporal range is from 0 to the total number
         of time points.
