@@ -10,8 +10,8 @@ Thunder
 
 Large-scale neural data analysis with Spark - [project page](http://thunder-project.org)
 
-[![Latest Version](https://pypip.in/version/thunder-python/badge.svg)](https://pypip.in/version/thunder-python/)
-[![Build Status](https://travis-ci.org/thunder-project/thunder.png?branch=master)](https://travis-ci.org/thunder-project/thunder) 
+[![Latest Version](https://img.shields.io/pypi/v/thunder-python.svg)](https://pypi.python.org/pypi/thunder-python)
+[![Build Status](https://img.shields.io/travis/thunder-project/thunder/master.svg)](https://travis-ci.org/thunder-project/thunder) 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/thunder-project/thunder?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 About
@@ -78,6 +78,6 @@ Contributions
 -------------
 Thunder is a community effort, and thus far features contributions from the following individuals:
 
-Andrew Osheroff, Ben Poole, Chris Stock, Davis Bennett, Jascha Swisher, Jason Wittenbach, Jeremy Freeman, Josh Rosen, Kunal Lillaney, Matt Conlen, Michael Broxton, Noah Young, Ognen Duzlevski, Ted Fujimoto, Tom Sainsbury, Uri Laseron
+Andrew Osheroff, Ben Poole, Chris Stock, Davis Bennett, Jascha Swisher, Jason Wittenbach, Jeremy Freeman, Josh Rosen, Kunal Lillaney, Logan Grosenick, Matt Conlen, Michael Broxton, Noah Young, Ognen Duzlevski, Richard Hofer, Ted Fujimoto, Tom Sainsbury, Uri Laseron
 
 If you have ideas or want to contribute, submit an issue or pull request, or reach out to us on [gitter](https://gitter.im/thunder-project/thunder), [twitter](https://twitter.com/thefreemanlab), or the [mailing list](https://groups.google.com/forum/?hl=en#!forum/thunder-user).

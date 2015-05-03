@@ -980,7 +980,7 @@ class Series(Data):
             index = ravel(index)
         return self._constructor(newrdd, index=index).__finalize__(self, noPropagate=('_dtype',))
 
-    def selectByIndex(self, val, level=0, squeeze=False, filter=False):
+    def selectByIndex(self, val, level=0, squeeze=False, filter=False, returnMask=False):
         """
         Select or filter elements of the Series by index values (across levels, if multi-index).
 
@@ -1013,6 +1013,9 @@ class Series(Data):
         filter: bool, optional, default=False
             If True, selection process is reversed and all index values EXCEPT those specified
             are selected.
+
+        returnMask: bool, optional, default=False
+            If True, return the mask used to implement the selection.
         """
 
         try:
@@ -1073,7 +1076,12 @@ class Series(Data):
         elif len(indFinal[1]) == 0:
             indFinal = arange(sum(finalMask))
 
-        return self._constructor(newrdd, index=indFinal).__finalize__(self)
+        result = self._constructor(newrdd, index=indFinal).__finalize__(self)
+
+        if returnMask:
+            return result, finalMask
+        else:
+            return result
 
     def seriesAggregateByIndex(self, function, level=0):
         """

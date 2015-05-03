@@ -156,6 +156,7 @@ class RowMatrix(Series):
         Multiply a RowMatrix by another matrix.
 
         Other matrix can be either another RowMatrix or a local matrix.
+        NOTE: A.times(B) computes A^T * B
         NOTE: If multiplying two RowMatrices, they must have the same
         number of partitions and number of records per partition,
         e.g. because one was created through a map of the other,
