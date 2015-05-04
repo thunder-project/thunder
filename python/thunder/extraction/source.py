@@ -4,7 +4,7 @@ from numpy import asarray, mean, sqrt, ndarray, amin, amax, concatenate, sum, ze
 from scipy.stats import spearmanr
 
 from thunder.utils.serializable import Serializable
-from thunder.utils.common import checkParams
+from thunder.utils.common import checkParams, aslist
 from thunder.rdds.images import Images
 from thunder.rdds.series import Series
 
@@ -162,10 +162,8 @@ class Source(Serializable, object):
         """
         checkParams(method, ['support', 'corr'])
 
-        if isinstance(self.coordinates, ndarray):
-            coordsSelf = self.coordinates.tolist()
-        if isinstance(other.coordinates, ndarray):
-            coordsOther = other.coordinates.tolist()
+        coordsSelf = aslist(self.coordinates)
+        coordsOther = aslist(other.coordinates)
 
         intersection = [a for a in coordsSelf if a in coordsOther]
         complement = [a for a in coordsSelf if a not in intersection]
@@ -182,8 +180,8 @@ class Source(Serializable, object):
             if not (hasattr(self, 'values') and hasattr(other, 'values')):
                 raise Exception('Sources must have values to compute correlation')
             else:
-                valuesSelf = self.values.tolist()
-                valuesOther = other.values.tolist()
+                valuesSelf = aslist(self.values)
+                valuesOther = aslist(other.values)
             if len(intersection) > 0:
                 rho, _ = spearmanr(valuesSelf[intersection], valuesOther[intersection])
             else:
