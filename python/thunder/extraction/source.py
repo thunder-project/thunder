@@ -255,7 +255,7 @@ class Source(Serializable, object):
         else:
             return output
 
-    def mask(self, dims=None, binary=True, outline=False):
+    def mask(self, dims=None, binary=True, outline=False, color=None):
         """
         Construct a mask from a source, either locally or within a larger image.
 
@@ -270,7 +270,12 @@ class Source(Serializable, object):
 
         outline : boolean, optional, deafult = False
             Whether to only show outlines (derived using binary dilation)
+
+        color : str or array-like
+            RGB triplet (from 0 to 1) or named color (e.g. 'red', 'blue')
         """
+        from thunder import Colorize
+
         coords = self.coordinates
 
         if dims is None:
@@ -288,6 +293,9 @@ class Source(Serializable, object):
         if outline:
             from skimage.morphology import binary_dilation
             m = binary_dilation(m, ones((3, 3))) - m
+
+        if color is not None:
+            m = Colorize(cmap='indexed', colors=[color]).transform([m])
 
         return m
 
@@ -383,9 +391,9 @@ class SourceModel(Serializable, object):
         """
         return len(self.sources)
 
-    def masks(self, dims=None, binary=True, outline=False, base=None):
+    def masks(self, dims=None, binary=True, outline=False, base=None, color=None):
         """
-        Composite masks combined across sources as an iamge.
+        Composite masks combined across sources as an image.
 
         Parameters
         ----------
@@ -399,10 +407,12 @@ class SourceModel(Serializable, object):
         outline : boolean, optional, deafult = False
             Whether to only show outlines (derived using binary dilation)
 
-        base : array-like, optional, deafult = None
-            Base background image on which to put masks.
+        base : SourceModel or array-like, optional, deafult = None
+            Base background image on which to put masks,
+            or another set of sources (usually for comparisons).
         """
         from thunder import Colorize
+        from matplotlib.cm import get_cmap
 
         if dims is None and base is None:
             raise Exception("Must provide image dimensions for composite masks "
@@ -414,18 +424,31 @@ class SourceModel(Serializable, object):
         if dims is None and base is not None:
             dims = asarray(base).shape
 
-        combined = zeros(dims)
-        for s in self.sources:
-            combined = maximum(s.mask(dims, binary, outline), combined)
+        if isinstance(base, SourceModel):
+            base = base.masks(dims, color='silver')
+
+        if isinstance(base, ndarray):
+            base = Colorize(cmap='indexed', colors=['white']).transform([base])
+
+        if base is not None and color is None:
+            color = 'deeppink'
+
+        if color == 'random':
+            combined = zeros(list(dims) + [3])
+            ncolors = min(self.count, 20)
+            colors = get_cmap('rainbow', ncolors)(range(0, ncolors, 1))[:, 0:3]
+            for i, s in enumerate(self.sources):
+                combined = maximum(s.mask(dims, binary, outline, colors[i % len(colors)]), combined)
+        else:
+            combined = zeros(dims)
+            for s in self.sources:
+                combined = maximum(s.mask(dims, binary, outline), combined)
+
+        if color is not None and color != 'random':
+            combined = Colorize(cmap='indexed', colors=[color]).transform([combined])
 
         if base is not None:
-            if isinstance(base, SourceModel):
-                base = base.masks(dims)
-                baseColor = 'silver'
-            else:
-                baseColor = 'white'
-            clr = Colorize(cmap='indexed', colors=[baseColor, 'deeppink'])
-            combined = clr.transform([base, combined])
+            combined = maximum(base, combined)
 
         return combined
 
