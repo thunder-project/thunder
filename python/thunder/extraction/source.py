@@ -189,6 +189,17 @@ class Source(Serializable, object):
                 rho = 0.0
             return (rho * hits)/float(hits + misses)
 
+    def merge(self, other):
+        """
+        Combine this source with other
+        """
+        self.coordinates = concatenate((self.coordinates, other.coordinates))
+
+        if hasattr(self, 'values'):
+            self.values = concatenate((self.values, other.values))
+
+        return self
+
     def tolist(self):
         """
         Convert array-like attributes to list
