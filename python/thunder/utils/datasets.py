@@ -171,7 +171,7 @@ class SourcesData(DataSets):
             frame = zeros(dims)
             for nn in range(0, n):
                 base = zeros(dims)
-                base[centers[nn][1], centers[nn][0]] = 1
+                base[centers[nn][0], centers[nn][1]] = 1
                 img = gaussian_filter(base, sd)
                 img = img/max(img)
                 frame += img * ts[nn][tt]
