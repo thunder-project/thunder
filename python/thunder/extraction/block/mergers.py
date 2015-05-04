@@ -27,11 +27,3 @@ class BasicBlockMerger(BlockMerger):
         sources = list(chain)
 
         return SourceModel(sources)
-
-
-class PaddedBlockMerger(BlockMerger):
-
-    def __init__(self, overlap=0.5, **extra):
-        self.overlap = overlap
-
-    def merge(self, blocks, keys, data=None):
