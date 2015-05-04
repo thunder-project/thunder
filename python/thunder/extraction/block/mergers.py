@@ -7,15 +7,23 @@ class BasicBlockMerger(BlockMerger):
     def __init__(self, **extra):
         pass
 
-    def merge(self, sources, keys, data=None):
+    def merge(self, blocks, keys, data=None):
         import itertools
+        from thunder.rdds.imgblocks.blocks import PaddedBlockGroupingKey
 
         # recenter coordinates using the spatial key from each block
-        for (i, sourceBlock) in enumerate(sources):
-            for source in sourceBlock:
+        # also subtract off initial padding if blocks were padded
+        for i, blk in enumerate(blocks):
+
+            for source in blk:
                 source.coordinates += keys[i].spatialKey
 
+            if isinstance(keys[0], PaddedBlockGroupingKey):
+                for source in blk:
+                    source.coordinates -= keys[i].padding[0]
+
         # flatten list of sources
-        chain = itertools.chain.from_iterable(sources)
+        chain = itertools.chain.from_iterable(blocks)
         sources = list(chain)
+
         return SourceModel(sources)
