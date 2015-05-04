@@ -1,7 +1,5 @@
 from numpy import asarray, mean, sqrt, ndarray, amin, amax, concatenate, sum, zeros, maximum, \
-    argmin, newaxis, ones, delete, NaN, inf, isnan
-
-from scipy.stats import spearmanr
+    argmin, newaxis, ones, delete, NaN, inf, isnan, clip
 
 from thunder.utils.serializable import Serializable
 from thunder.utils.common import checkParams, aslist
@@ -178,6 +176,8 @@ class Source(Serializable, object):
                 return hits/float(hits+misses)
 
         if method == 'corr':
+            from scipy.stats import spearmanr
+
             if not (hasattr(self, 'values') and hasattr(other, 'values')):
                 raise Exception('Sources must have values to compute correlation')
             else:
