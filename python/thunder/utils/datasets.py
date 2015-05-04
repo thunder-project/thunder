@@ -58,6 +58,7 @@ class PCAData(DataSets):
         else:
             return data
 
+
 class FactorAnalysisData(DataSets):
 
     def generate(self, q=1, p=3, nrows=50, npartitions=10, sigmas=None, seed=None):
@@ -100,6 +101,7 @@ class FactorAnalysisData(DataSets):
         else:
             return data
 
+
 class RandomData(DataSets):
 
     def generate(self, nrows=50, ncols=50, npartitions=10, seed=None):
@@ -121,6 +123,7 @@ class RandomData(DataSets):
         # Put the data into an RDD
         data = RowMatrix(self.sc.parallelize(self.appendKeys(x), npartitions))
         return data
+
 
 class ICAData(DataSets):
 
@@ -164,8 +167,10 @@ class SourcesData(DataSets):
             centers = asarray(centers)
             n = len(centers)
 
-        ts = [clip(random.randn(t), 0, inf) for i in range(0, n)]
-        ts = [gaussian_filter1d(vec, 10) for vec in ts] * 5
+        ts = [random.randn(t) for i in range(0, n)]
+        ts = clip(asarray([gaussian_filter1d(vec, 5) for vec in ts]), 0, 1)
+        for ii, tt in enumerate(ts):
+            ts[ii] = (tt / tt.max()) * 2
         allframes = []
         for tt in range(0, t):
             frame = zeros(dims)
@@ -175,7 +180,7 @@ class SourcesData(DataSets):
                 img = gaussian_filter(base, sd)
                 img = img/max(img)
                 frame += img * ts[nn][tt]
-            frame += random.randn(dims[0], dims[1]) * noise
+            frame += clip(random.randn(dims[0], dims[1]) * noise, 0, inf)
             allframes.append(frame)
 
         def pointToCircle(center, radius):
