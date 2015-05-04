@@ -52,7 +52,6 @@ class SIMABlockAlgorithm(BlockAlgorithm):
         coords = [asarray(where(array(roi))).T for roi in rois]
         if len(dims) == 3:
             coords = [c[:, 1:] for c in coords]
-        coords = [c[:, ::-1] for c in coords]
 
         # format the sources
         sources = [Source(c) for c in coords]
