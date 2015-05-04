@@ -166,9 +166,10 @@ class Source(Serializable, object):
         coordsOther = aslist(other.coordinates)
 
         intersection = [a for a in coordsSelf if a in coordsOther]
-        complement = [a for a in coordsSelf if a not in intersection]
+        complementLeft = [a for a in coordsSelf if a not in intersection]
+        complementRight = [a for a in coordsOther if a not in intersection]
         hits = len(intersection)
-        misses = len(complement)
+        misses = len(complementLeft + complementRight)
 
         if method == 'support':
             if counts:
