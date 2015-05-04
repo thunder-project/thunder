@@ -26,15 +26,19 @@ class NMFBlockAlgorithm(BlockAlgorithm):
     componentsPerBlock : int, optional, deafut = 3
         Number of components to find per block
     """
-    def __init__(self, maxIter=10, componentsPerBlock=3, percentile=75, minArea=50, maxArea="block", **extra):
+    def __init__(self, maxIter=10, componentsPerBlock=3, percentile=75,
+                 minArea=50, maxArea="block", medFilter=2, overlap=0.4, **extra):
         self.maxIter = maxIter
         self.componentsPerBlock = componentsPerBlock
         self.percentile = percentile
         self.minArea = minArea
         self.maxArea = maxArea
+        self.medFilter = medFilter if medFilter is not None and medFilter > 0 else None
+        self.overlap = overlap if overlap is not None and overlap > 0 else None
 
     def extract(self, block):
-        from numpy import clip, inf, percentile, asarray, where, size, prod
+        from numpy import clip, inf, percentile, asarray, where, size, prod, unique
+        from scipy.ndimage import median_filter
         from sklearn.decomposition import NMF
         from skimage.measure import label
         from skimage.morphology import remove_small_objects
@@ -60,14 +64,43 @@ class NMFBlockAlgorithm(BlockAlgorithm):
         comps = model.components_.reshape((n,) + dims)
 
         # convert from basis functions into shape
-        # by finding connected components and removing small objects
+        # by median filtering (optional), applying a threshold,
+        # finding connected components and removing small objects
         combined = []
         for c in comps:
             tmp = c > percentile(c, self.percentile)
-            shape = remove_small_objects(label(tmp), min_size=self.minArea)
-            coords = asarray(where(shape)).T
-            if (size(coords) > 0) and (size(coords) < maxArea):
-                combined.append(Source(coords))
+            regions = remove_small_objects(label(tmp), min_size=self.minArea)
+            ids = unique(regions)
+            ids = ids[ids > 0]
+            for ii in ids:
+                r = regions == ii
+                if self.medFilter is not None:
+                    r = median_filter(r, self.medFilter)
+                coords = asarray(where(r)).T
+                if (size(coords) > 0) and (size(coords) < maxArea):
+                    combined.append(Source(coords))
+
+        # merge overlapping sources
+        if self.overlap is not None:
+
+            # iterate over source pairs and find a pair to merge
+            def merge(sources):
+                for i1, s1 in enumerate(sources):
+                    for i2, s2 in enumerate(sources[i1+1:]):
+                        if s1.overlap(s2) > self.overlap:
+                            return i1, i1 + 1 + i2
+                return None
+
+            # merge pairs until none left to merge
+            pair = merge(combined)
+            testing = True
+            while testing:
+                if pair is None:
+                    testing = False
+                else:
+                    combined[pair[0]].merge(combined[pair[1]])
+                    del combined[pair[1]]
+                    pair = merge(combined)
 
         return combined
 
