@@ -117,12 +117,19 @@ class RandomData(DataSets):
         nrows : int, optional, default = 50
           Number of rows in the generated matrix
         """
-        random.seed(seed)
-        # Generate the data
-        x = matrix(random.randn(nrows, ncols))
-        # Put the data into an RDD
-        data = RowMatrix(self.sc.parallelize(self.appendKeys(x), npartitions))
-        return data
+        rdd = self.sc.parallelize(self.appendKeys(xrange(nrows)), npartitions)
+
+        if seed is not None:
+            seed = hash(seed)
+            def f((k, v)):
+                random.seed(seed + v)
+                return (k, random.randn(ncols))
+        else:
+            def f((k, v)):
+                return (k, random.randn(ncols))
+
+        rdd = rdd.map(f)
+        return RowMatrix(rdd)
 
 
 class ICAData(DataSets):
