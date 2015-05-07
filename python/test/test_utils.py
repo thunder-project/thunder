@@ -1,7 +1,6 @@
 import shutil
 import tempfile
 import unittest
-import os
 from numpy import vstack
 from pyspark import SparkContext
 
