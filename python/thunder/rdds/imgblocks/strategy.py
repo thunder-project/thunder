@@ -238,7 +238,8 @@ class SimpleBlockingStrategy(BlockingStrategy):
         val = expand_dims(imgAry[blockSlices], axis=0)
         origShape = [numTimepoints] + list(imgAry.shape)
         imgSlices = [slice(timepoint, timepoint+1, 1)] + list(blockSlices)
-        return BlockGroupingKey(origShape, imgSlices), val
+        pixelsPerDim = self.pixelsPerDim
+        return BlockGroupingKey(origShape, imgSlices, pixelsPerDim), val
 
     def blockingFunction(self, timePointIdxAndImageArray):
         tpIdx, imgAry = timePointIdxAndImageArray
@@ -489,7 +490,8 @@ class PaddedBlockingStrategy(SimpleBlockingStrategy):
         origShape = [numTimepoints] + list(imgAry.shape)
         imgSlices = [slice(timepoint, timepoint+1, 1)] + list(blockSlices)
         padSlices = [slice(timepoint, timepoint+1, 1)] + padSlices
-        return PaddedBlockGroupingKey(origShape, padSlices, imgSlices, tuple(val.shape), coreValSlices), val
+        return PaddedBlockGroupingKey(origShape, padSlices, imgSlices, tuple(val.shape),
+                                      coreValSlices, self.pixelsPerDim), val
 
 
 def _normDimsToShapeTuple(dims):
