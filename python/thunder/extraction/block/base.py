@@ -53,6 +53,9 @@ class BlockMethod(SourceExtractionMethod):
         --------
         Images.toBlocks
         """
+
+        # TODO Set default merger here based on whether it's blocks
+
         if isinstance(blocks, Images):
             if size is None:
                 raise Exception("Must specify a size if images will be converted to blocks")
@@ -94,5 +97,5 @@ class BlockMerger(object):
     """
     A method for merging sources across blocks
     """
-    def merge(self, sources, keys, data=None):
+    def merge(self, sources, keys):
         raise NotImplementedError
