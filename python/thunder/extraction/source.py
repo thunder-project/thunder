@@ -395,7 +395,7 @@ class SourceModel(Serializable, object):
         """
         return len(self.sources)
 
-    def masks(self, dims=None, binary=True, outline=False, base=None, color=None):
+    def masks(self, dims=None, binary=True, outline=False, base=None, color=None, inds=None):
         """
         Composite masks combined across sources as an image.
 
@@ -414,9 +414,18 @@ class SourceModel(Serializable, object):
         base : SourceModel or array-like, optional, deafult = None
             Base background image on which to put masks,
             or another set of sources (usually for comparisons).
+
+        color : str, optional, deafult = None
+            Color to assign regions, will assign randomly if 'random'
+
+        inds : array-like, optional, deafult = None
+            List of indices if only showing a subset
         """
         from thunder import Colorize
         from matplotlib.cm import get_cmap
+
+        if inds is None:
+            inds = range(0, self.count)
 
         if dims is None and base is None:
             raise Exception("Must provide image dimensions for composite masks "
@@ -441,12 +450,12 @@ class SourceModel(Serializable, object):
             combined = zeros(list(dims) + [3])
             ncolors = min(self.count, 20)
             colors = get_cmap('rainbow', ncolors)(range(0, ncolors, 1))[:, 0:3]
-            for i, s in enumerate(self.sources):
-                combined = maximum(s.mask(dims, binary, outline, colors[i % len(colors)]), combined)
+            for i in inds:
+                combined = maximum(self.sources[i].mask(dims, binary, outline, colors[i % len(colors)]), combined)
         else:
             combined = zeros(dims)
-            for s in self.sources:
-                combined = maximum(s.mask(dims, binary, outline), combined)
+            for i in inds:
+                combined = maximum(self.sources[i].mask(dims, binary, outline), combined)
 
         if color is not None and color != 'random':
             combined = Colorize(cmap='indexed', colors=[color]).transform([combined])
