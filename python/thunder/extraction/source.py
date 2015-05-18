@@ -1,5 +1,5 @@
 from numpy import asarray, mean, sqrt, ndarray, amin, amax, concatenate, sum, zeros, maximum, \
-    argmin, newaxis, ones, delete, NaN, inf, isnan, clip
+    argmin, newaxis, ones, delete, NaN, inf, isnan, clip, logical_or
 
 from thunder.utils.serializable import Serializable
 from thunder.utils.common import checkParams, aslist
@@ -302,6 +302,25 @@ class Source(Serializable, object):
             m = Colorize(cmap='indexed', colors=[color]).transform([m])
 
         return m
+
+    def inbounds(self, minBound, maxBound):
+        """
+        Check what fraction of coordinates are inside given bounds
+
+        Parameters
+        ----------
+        minBound : list or tuple
+            Minimum bounds
+
+        maxBounds : list or tuple
+            Maximum bounds
+        """
+
+        minCheck = sum(self.coordinates < minBound, axis=1) > 0
+        maxCheck = sum(self.coordinates > maxBound, axis=1) > 0
+        fraction = 1 - sum(logical_or(minCheck, maxCheck)) / float(len(self.coordinates))
+
+        return fraction
 
     def __repr__(self):
         s = self.__class__.__name__
