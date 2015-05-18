@@ -135,7 +135,7 @@ class Source(Serializable, object):
         elif isinstance(other, list) or isinstance(other, ndarray):
             return norm(self.center - asarray(other), ord=order)
 
-    def overlap(self, other, method='support', counts=False):
+    def overlap(self, other, method='support', counts=False, symmetric=True):
         """
         Compute the overlap between this source and other, in terms
         of either support or similarity of coefficients.
@@ -167,7 +167,11 @@ class Source(Serializable, object):
         complementLeft = [a for a in coordsSelf if a not in intersection]
         complementRight = [a for a in coordsOther if a not in intersection]
         hits = len(intersection)
-        misses = len(complementLeft + complementRight)
+
+        if symmetric is True:
+            misses = len(complementLeft + complementRight)
+        else:
+            misses = len(complementLeft)
 
         if method == 'support':
             if counts:
