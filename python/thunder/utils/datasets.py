@@ -167,8 +167,8 @@ class SourcesData(DataSets):
 
         if size(centers) == 1:
             n = centers
-            xcenters = (dims[1] - margin) * random.random_sample(n) + margin/2
-            ycenters = (dims[0] - margin) * random.random_sample(n) + margin/2
+            xcenters = (dims[0] - margin) * random.random_sample(n) + margin/2
+            ycenters = (dims[1] - margin) * random.random_sample(n) + margin/2
             centers = zip(xcenters, ycenters)
         else:
             centers = asarray(centers)
