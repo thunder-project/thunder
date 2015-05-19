@@ -355,3 +355,41 @@ class TestDataMethods(PySparkTestCase):
         print(out)
 
         assert(array_equal(out, [[0], [3], [1], [4], [2], [5]]))
+
+    def test_range_int_key(self):
+
+        dataLocal = [
+            (0, array([0])),
+            (1, array([1])),
+            (2, array([2])),
+            (3, array([3])),
+            (4, array([4])),
+            (5, array([5]))
+        ]
+
+        data = Data(self.sc.parallelize(dataLocal))
+
+        out = data.range(0, 2).collectKeysAsArray()
+        assert(array_equal(out, [0, 1]))
+
+        out = data.range(0, 5).collectKeysAsArray()
+        assert(array_equal(out, [0, 1, 2, 3, 4]))
+
+        out = data.range(0, 6).collectKeysAsArray()
+        assert(array_equal(out, [0, 1, 2, 3, 4, 5]))
+
+    def test_range_tuple_key(self):
+
+        dataLocal = [
+            ((0, 0), array([0])),
+            ((0, 1), array([1])),
+            ((0, 2), array([2])),
+            ((1, 0), array([3])),
+            ((1, 1), array([4])),
+            ((1, 2), array([5]))
+        ]
+
+        data = Data(self.sc.parallelize(dataLocal))
+
+        out = data.range((0, 0), (1, 1)).collectKeysAsArray()
+        assert(array_equal(out, [(0, 0), (0, 1), (0, 2), (1, 0)]))

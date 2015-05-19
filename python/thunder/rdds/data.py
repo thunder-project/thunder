@@ -152,10 +152,10 @@ class Data(object):
 
     def get(self, key):
         """
-        Returns a single value matching the passed key, or None if no matching keys found.
+        Returns single value locally to driver that matches the passed key
 
         If multiple records are found with keys matching the passed key, a sequence of all matching
-        values will be returned.
+        values will be returned. If no records found, will return None
         """
         firstKey = self.first()[0]
         Data.__getKeyTypeCheck(firstKey, key)
@@ -169,7 +169,7 @@ class Data(object):
 
     def getMany(self, keys):
         """
-        Returns a sequence of values corresponding to the passed sequence of keys.
+        Returns values locally to driver that correspond to the passed sequence of keys.
 
         The return value will be a sequence equal in length to the passed keys, with each
         value in the returned sequence corresponding to the key at the same position in the passed
@@ -195,7 +195,7 @@ class Data(object):
 
     def getRange(self, sliceOrSlices, keys=True):
         """
-        Returns key/value pairs that fall within a range given by the passed slice or slices.
+        Returns key/value pairs locally to driver that fall within a given range.
 
         The return values will be a sorted list of key/value pairs of all records in the underlying
         RDD for which the key falls within the range given by the passed slice selectors. Note that
@@ -372,7 +372,7 @@ class Data(object):
 
         See also
         --------
-        Series.apply
+        Data.apply
         """
 
         return self.apply(lambda (k, v): (func(k), v), **kwargs)
@@ -383,13 +383,13 @@ class Data(object):
 
         See also
         --------
-        Series.apply
+        Data.apply
         """
         return self.apply(lambda (k, v): (k, func(v)), **kwargs)
 
     def collect(self, sorting=False):
         """
-        Return all records to the driver
+        Return all records locally to the driver
 
         This will be slow for large datasets, and may exhaust the available memory on the driver.
 
@@ -402,7 +402,7 @@ class Data(object):
 
     def collectAsArray(self, sorting=False):
         """
-        Return all keys and values to the driver as a tuple of numpy arrays
+        Return all keys and values locally to the driver as a tuple of numpy arrays
 
         This will be slow for large datasets, and may exhaust the available memory on the driver.
         """
@@ -425,7 +425,7 @@ class Data(object):
 
     def collectKeysAsArray(self, sorting=False):
         """
-        Return all values to the driver as a numpy array
+        Return all values locally to the driver as a numpy array
 
         This will be slow for large datasets, and may exhaust the available memory on the driver.
         """
@@ -584,13 +584,46 @@ class Data(object):
         Filter records by applying a function to each record.
 
         This calls the Spark filter() method on the underlying RDD.
+
+        Parameters
+        ----------
+        func : function
+            The function to compute on each record, should evaluate to Boolean
         """
         return self._constructor(self.rdd.filter(lambda d: func(d))).__finalize__(self)._resetCounts()
 
     def filterOnKeys(self, func):
-        """ Filter records by applying a function to keys """
+        """
+        Filter records by applying a function to keys
+
+        See also
+        --------
+        Data.filter
+        """
         return self._constructor(self.rdd.filter(lambda (k, v): func(k))).__finalize__(self)._resetCounts()
 
     def filterOnValues(self, func):
-        """ Filter records by applying a function to values """
+        """
+        Filter records by applying a function to values
+
+        See also
+        --------
+        Data.filter
+        """
         return self._constructor(self.rdd.filter(lambda (k, v): func(v))).__finalize__(self)._resetCounts()
+
+    def range(self, start, stop):
+        """
+        Extract records with keys that fall inside a range
+
+        Returns another Data object, unlike
+        getRange which returns a local array to the driver
+
+        See also
+        --------
+        Data.filterOnKeys
+        """
+        if start >= stop:
+            raise ValueError("Start (%g) is greater than or equal to stop (%g), result will be empty" % (start, stop))
+
+        return self.filterOnKeys(lambda k: start <= k < stop)
