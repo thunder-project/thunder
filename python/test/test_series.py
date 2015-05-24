@@ -376,11 +376,39 @@ class TestSeriesMethods(PySparkTestCase):
 
         result = data.seriesStatByIndex('sum', level=[0, 1])
         assert_true(array_equal(result.values().first(), array([1, 14, 13, 38])))
-        assert_true(array_equal(result.index, array([[0,0], [0, 1], [1, 0], [1, 1]])))
+        assert_true(array_equal(result.index, array([[0, 0], [0, 1], [1, 0], [1, 1]])))
 
         result = data.seriesSumByIndex(level=[0, 1])
         assert_true(array_equal(result.values().first(), array([1, 14, 13, 38])))
-        assert_true(array_equal(result.index, array([[0,0], [0, 1], [1, 0], [1, 1]])))
+        assert_true(array_equal(result.index, array([[0, 0], [0, 1], [1, 0], [1, 1]])))
+
+    def test_groupByFixedLength(self):
+        rdd = self.sc.parallelize([((0,), array([0, 1, 2, 3, 4, 5, 6, 7], dtype='float16'))])
+        data = Series(rdd)
+
+        test1 = data.groupByFixedLength(4)
+        assert(test1.keys().collect() == [(0, 0), (0, 1)])
+        assert(allclose(test1.index, array([0, 1, 2, 3])))
+        assert(allclose(test1.values().collect(), [[0, 1, 2, 3], [4, 5, 6, 7]]))
+
+        test2 = data.groupByFixedLength(2)
+        assert(test2.keys().collect() == [(0, 0), (0, 1), (0, 2), (0, 3)])
+        assert(allclose(test2.index, array([0, 1])))
+        assert(allclose(test2.values().collect(), [[0, 1], [2, 3], [4, 5], [6, 7]]))
+
+    def test_meanByFixedLength(self):
+        rdd = self.sc.parallelize([((0,), array([0, 1, 2, 3, 4, 5, 6, 7], dtype='float16'))])
+        data = Series(rdd)
+
+        test1 = data.meanByFixedLength(4)
+        assert(test1.keys().collect() == [(0,)])
+        assert(allclose(test1.index, array([0, 1, 2, 3])))
+        assert(allclose(test1.values().collect(), [[2, 3, 4, 5]]))
+
+        test2 = data.meanByFixedLength(2)
+        assert(test2.keys().collect() == [(0,)])
+        assert(allclose(test2.index, array([0, 1])))
+        assert(allclose(test2.values().collect(), [[3, 4]]))
 
 
 class TestSeriesRegionMeanMethods(PySparkTestCase):
