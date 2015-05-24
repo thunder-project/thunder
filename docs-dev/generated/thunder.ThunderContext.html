@@ -195,14 +195,26 @@ data both locally and from EC2.</p>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.ThunderContext.loadImagesAsSeries" title="thunder.ThunderContext.loadImagesAsSeries"><tt class="xref py py-obj docutils literal"><span class="pre">loadImagesAsSeries</span></tt></a>(dataPath[,&nbsp;dims,&nbsp;...])</td>
 <td>Load Images data as Series data.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.ThunderContext.loadImagesOCP" title="thunder.ThunderContext.loadImagesOCP"><tt class="xref py py-obj docutils literal"><span class="pre">loadImagesOCP</span></tt></a>(bucketName,&nbsp;resolution[,&nbsp;...])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.ThunderContext.loadImagesFromArray" title="thunder.ThunderContext.loadImagesFromArray"><tt class="xref py py-obj docutils literal"><span class="pre">loadImagesFromArray</span></tt></a>(values[,&nbsp;npartitions])</td>
+<td>Load Images data from a local array</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.ThunderContext.loadImagesOCP" title="thunder.ThunderContext.loadImagesOCP"><tt class="xref py py-obj docutils literal"><span class="pre">loadImagesOCP</span></tt></a>(bucketName,&nbsp;resolution[,&nbsp;...])</td>
 <td>Load Images from OCP (Open Connectome Project).</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.ThunderContext.loadJSON" title="thunder.ThunderContext.loadJSON"><tt class="xref py py-obj docutils literal"><span class="pre">loadJSON</span></tt></a>(path)</td>
+<td>Generic function for loading JSON from a path, handling local file systems and S3</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.ThunderContext.loadParams" title="thunder.ThunderContext.loadParams"><tt class="xref py py-obj docutils literal"><span class="pre">loadParams</span></tt></a>(path)</td>
 <td>Load a file with parameters from a local file system or S3.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.ThunderContext.loadSeries" title="thunder.ThunderContext.loadSeries"><tt class="xref py py-obj docutils literal"><span class="pre">loadSeries</span></tt></a>(dataPath[,&nbsp;nkeys,&nbsp;nvalues,&nbsp;...])</td>
 <td>Loads a Series object from data stored as binary, text, npy, or mat.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.ThunderContext.loadSeriesFromArray" title="thunder.ThunderContext.loadSeriesFromArray"><tt class="xref py py-obj docutils literal"><span class="pre">loadSeriesFromArray</span></tt></a>(values[,&nbsp;index,&nbsp;npartitions])</td>
+<td>Load Series data from a local array</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.ThunderContext.loadSources" title="thunder.ThunderContext.loadSources"><tt class="xref py py-obj docutils literal"><span class="pre">loadSources</span></tt></a>(path)</td>
+<td>Load a file with sources from a local file system or S3.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.ThunderContext.makeExample" title="thunder.ThunderContext.makeExample"><tt class="xref py py-obj docutils literal"><span class="pre">makeExample</span></tt></a>(dataset,&nbsp;**opts)</td>
 <td>Make an example data set for testing analyses.</td>
@@ -610,6 +622,30 @@ the lexicographic ordering of image file names.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="thunder.ThunderContext.loadImagesFromArray">
+<tt class="descname">loadImagesFromArray</tt><big>(</big><em>values</em>, <em>npartitions=None</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadImagesFromArray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load Images data from a local array</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>values</strong> : list or ndarray</p>
+<blockquote>
+<div><p>A list of 2d or 3d numpy arrays,
+or a single 3d or 4d numpy array</p>
+</div></blockquote>
+<p><strong>npartitions</strong> : position int, optional, default = None</p>
+<blockquote class="last">
+<div><p>Number of partitions for RDD, if unspecified will use
+default parallelism.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="thunder.ThunderContext.loadImagesOCP">
 <tt class="descname">loadImagesOCP</tt><big>(</big><em>bucketName</em>, <em>resolution</em>, <em>server='ocp.me'</em>, <em>startIdx=None</em>, <em>stopIdx=None</em>, <em>minBound=None</em>, <em>maxBound=None</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadImagesOCP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load Images from OCP (Open Connectome Project).</p>
@@ -777,6 +813,33 @@ directory in &#8216;dataPath&#8217; will be checked. Parameters will override th
 </dd></dl>
 
 <dl class="method">
+<dt id="thunder.ThunderContext.loadSeriesFromArray">
+<tt class="descname">loadSeriesFromArray</tt><big>(</big><em>values</em>, <em>index=None</em>, <em>npartitions=None</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadSeriesFromArray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load Series data from a local array</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>values</strong> : list or ndarray</p>
+<blockquote>
+<div><p>A list of 1d numpy arrays, or a single 2d numpy array</p>
+</div></blockquote>
+<p><strong>index</strong> : array-like, optional, deafult = None</p>
+<blockquote>
+<div><p>Index to set for Series object, if None will use linear indices.</p>
+</div></blockquote>
+<p><strong>npartitions</strong> : position int, optional, default = None</p>
+<blockquote class="last">
+<div><p>Number of partitions for RDD, if unspecified will use
+default parallelism.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="thunder.ThunderContext.loadSources">
 <tt class="descname">loadSources</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadSources" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load a file with sources from a local file system or S3.</p>
@@ -805,7 +868,7 @@ directory in &#8216;dataPath&#8217; will be checked. Parameters will override th
 <dt id="thunder.ThunderContext.makeExample">
 <tt class="descname">makeExample</tt><big>(</big><em>dataset</em>, <em>**opts</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.makeExample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Make an example data set for testing analyses.</p>
-<p>Options include &#8216;pca&#8217;, &#8216;kmeans&#8217;, and &#8216;ica&#8217;.
+<p>Options include &#8216;pca&#8217;, &#8216;factor&#8217;, &#8216;kmeans&#8217;, and &#8216;ica&#8217;.
 See thunder.utils.datasets for detailed options.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />

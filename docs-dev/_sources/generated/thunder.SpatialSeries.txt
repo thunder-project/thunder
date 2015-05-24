@@ -31,6 +31,7 @@
       ~SpatialSeries.get
       ~SpatialSeries.getMany
       ~SpatialSeries.getRange
+      ~SpatialSeries.groupByFixedLength
       ~SpatialSeries.indToSub
       ~SpatialSeries.keys
       ~SpatialSeries.localCorr
@@ -38,12 +39,14 @@
       ~SpatialSeries.max
       ~SpatialSeries.maxProject
       ~SpatialSeries.mean
+      ~SpatialSeries.meanByFixedLength
       ~SpatialSeries.meanByRegions
       ~SpatialSeries.meanOfRegion
       ~SpatialSeries.min
       ~SpatialSeries.pack
       ~SpatialSeries.populateParamsFromFirstRecord
       ~SpatialSeries.query
+      ~SpatialSeries.range
       ~SpatialSeries.repartition
       ~SpatialSeries.saveAsBinarySeries
       ~SpatialSeries.select

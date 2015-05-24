@@ -31,17 +31,20 @@
       ~Series.get
       ~Series.getMany
       ~Series.getRange
+      ~Series.groupByFixedLength
       ~Series.indToSub
       ~Series.keys
       ~Series.max
       ~Series.maxProject
       ~Series.mean
+      ~Series.meanByFixedLength
       ~Series.meanByRegions
       ~Series.meanOfRegion
       ~Series.min
       ~Series.pack
       ~Series.populateParamsFromFirstRecord
       ~Series.query
+      ~Series.range
       ~Series.repartition
       ~Series.saveAsBinarySeries
       ~Series.select

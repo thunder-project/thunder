@@ -207,104 +207,116 @@ avoid computation if known in advance.</p>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.between" title="thunder.TimeSeries.between"><tt class="xref py py-obj docutils literal"><span class="pre">between</span></tt></a>(left,&nbsp;right[,&nbsp;inclusive])</td>
 <td>Select subset of values within the given index range</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.blockedAverage" title="thunder.TimeSeries.blockedAverage"><tt class="xref py py-obj docutils literal"><span class="pre">blockedAverage</span></tt></a>(blockLength)</td>
-<td>Average blocks of a time series together, e.g.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.cache" title="thunder.TimeSeries.cache"><tt class="xref py py-obj docutils literal"><span class="pre">cache</span></tt></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.cache" title="thunder.TimeSeries.cache"><tt class="xref py py-obj docutils literal"><span class="pre">cache</span></tt></a>()</td>
 <td>Enable in-memory caching.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.center" title="thunder.TimeSeries.center"><tt class="xref py py-obj docutils literal"><span class="pre">center</span></tt></a>([axis])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.center" title="thunder.TimeSeries.center"><tt class="xref py py-obj docutils literal"><span class="pre">center</span></tt></a>([axis])</td>
 <td>Center series data by subtracting the mean</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.coalesce" title="thunder.TimeSeries.coalesce"><tt class="xref py py-obj docutils literal"><span class="pre">coalesce</span></tt></a>(numPartitions)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.coalesce" title="thunder.TimeSeries.coalesce"><tt class="xref py py-obj docutils literal"><span class="pre">coalesce</span></tt></a>(numPartitions)</td>
 <td>Coalesce data (used to reduce number of partitions).</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.collect" title="thunder.TimeSeries.collect"><tt class="xref py py-obj docutils literal"><span class="pre">collect</span></tt></a>([sorting])</td>
-<td>Return all records to the driver</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.collect" title="thunder.TimeSeries.collect"><tt class="xref py py-obj docutils literal"><span class="pre">collect</span></tt></a>([sorting])</td>
+<td>Return all records locally to the driver</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.collectAsArray" title="thunder.TimeSeries.collectAsArray"><tt class="xref py py-obj docutils literal"><span class="pre">collectAsArray</span></tt></a>([sorting])</td>
-<td>Return all keys and values to the driver as a tuple of numpy arrays</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.collectAsArray" title="thunder.TimeSeries.collectAsArray"><tt class="xref py py-obj docutils literal"><span class="pre">collectAsArray</span></tt></a>([sorting])</td>
+<td>Return all keys and values locally to the driver as a tuple of numpy arrays</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.collectKeysAsArray" title="thunder.TimeSeries.collectKeysAsArray"><tt class="xref py py-obj docutils literal"><span class="pre">collectKeysAsArray</span></tt></a>([sorting])</td>
-<td>Return all values to the driver as a numpy array</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.collectKeysAsArray" title="thunder.TimeSeries.collectKeysAsArray"><tt class="xref py py-obj docutils literal"><span class="pre">collectKeysAsArray</span></tt></a>([sorting])</td>
+<td>Return all values locally to the driver as a numpy array</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.collectValuesAsArray" title="thunder.TimeSeries.collectValuesAsArray"><tt class="xref py py-obj docutils literal"><span class="pre">collectValuesAsArray</span></tt></a>([sorting])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.collectValuesAsArray" title="thunder.TimeSeries.collectValuesAsArray"><tt class="xref py py-obj docutils literal"><span class="pre">collectValuesAsArray</span></tt></a>([sorting])</td>
 <td>Return all records to the driver as a numpy array</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.convolve" title="thunder.TimeSeries.convolve"><tt class="xref py py-obj docutils literal"><span class="pre">convolve</span></tt></a>(signal[,&nbsp;mode,&nbsp;var])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.convolve" title="thunder.TimeSeries.convolve"><tt class="xref py py-obj docutils literal"><span class="pre">convolve</span></tt></a>(signal[,&nbsp;mode,&nbsp;var])</td>
 <td>Conolve time series data against another signal</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.correlate" title="thunder.TimeSeries.correlate"><tt class="xref py py-obj docutils literal"><span class="pre">correlate</span></tt></a>(signal[,&nbsp;var])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.correlate" title="thunder.TimeSeries.correlate"><tt class="xref py py-obj docutils literal"><span class="pre">correlate</span></tt></a>(signal[,&nbsp;var])</td>
 <td>Correlate series data against one or many one-dimensional arrays</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.count" title="thunder.TimeSeries.count"><tt class="xref py py-obj docutils literal"><span class="pre">count</span></tt></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.count" title="thunder.TimeSeries.count"><tt class="xref py py-obj docutils literal"><span class="pre">count</span></tt></a>()</td>
 <td>Calculates and returns the number of records in the RDD.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.crossCorr" title="thunder.TimeSeries.crossCorr"><tt class="xref py py-obj docutils literal"><span class="pre">crossCorr</span></tt></a>(signal[,&nbsp;lag,&nbsp;var])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.crossCorr" title="thunder.TimeSeries.crossCorr"><tt class="xref py py-obj docutils literal"><span class="pre">crossCorr</span></tt></a>(signal[,&nbsp;lag,&nbsp;var])</td>
 <td>Cross correlate time series data against another signal</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.detrend" title="thunder.TimeSeries.detrend"><tt class="xref py py-obj docutils literal"><span class="pre">detrend</span></tt></a>([method])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.detrend" title="thunder.TimeSeries.detrend"><tt class="xref py py-obj docutils literal"><span class="pre">detrend</span></tt></a>([method])</td>
 <td>Detrend time series data with linear or nonlinear detrending</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.filter" title="thunder.TimeSeries.filter"><tt class="xref py py-obj docutils literal"><span class="pre">filter</span></tt></a>(func)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.filter" title="thunder.TimeSeries.filter"><tt class="xref py py-obj docutils literal"><span class="pre">filter</span></tt></a>(func)</td>
 <td>Filter records by applying a function to each record.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.filterOnKeys" title="thunder.TimeSeries.filterOnKeys"><tt class="xref py py-obj docutils literal"><span class="pre">filterOnKeys</span></tt></a>(func)</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.filterOnKeys" title="thunder.TimeSeries.filterOnKeys"><tt class="xref py py-obj docutils literal"><span class="pre">filterOnKeys</span></tt></a>(func)</td>
 <td>Filter records by applying a function to keys</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.filterOnValues" title="thunder.TimeSeries.filterOnValues"><tt class="xref py py-obj docutils literal"><span class="pre">filterOnValues</span></tt></a>(func)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.filterOnValues" title="thunder.TimeSeries.filterOnValues"><tt class="xref py py-obj docutils literal"><span class="pre">filterOnValues</span></tt></a>(func)</td>
 <td>Filter records by applying a function to values</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.first" title="thunder.TimeSeries.first"><tt class="xref py py-obj docutils literal"><span class="pre">first</span></tt></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.first" title="thunder.TimeSeries.first"><tt class="xref py py-obj docutils literal"><span class="pre">first</span></tt></a>()</td>
 <td>Return first record.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.fourier" title="thunder.TimeSeries.fourier"><tt class="xref py py-obj docutils literal"><span class="pre">fourier</span></tt></a>([freq])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.fourier" title="thunder.TimeSeries.fourier"><tt class="xref py py-obj docutils literal"><span class="pre">fourier</span></tt></a>([freq])</td>
 <td>Compute statistics of a Fourier decomposition on time series data</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.get" title="thunder.TimeSeries.get"><tt class="xref py py-obj docutils literal"><span class="pre">get</span></tt></a>(key)</td>
-<td>Returns a single value matching the passed key, or None if no matching keys found.</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.get" title="thunder.TimeSeries.get"><tt class="xref py py-obj docutils literal"><span class="pre">get</span></tt></a>(key)</td>
+<td>Returns single value locally to driver that matches the passed key</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.getMany" title="thunder.TimeSeries.getMany"><tt class="xref py py-obj docutils literal"><span class="pre">getMany</span></tt></a>(keys)</td>
-<td>Returns a sequence of values corresponding to the passed sequence of keys.</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.getMany" title="thunder.TimeSeries.getMany"><tt class="xref py py-obj docutils literal"><span class="pre">getMany</span></tt></a>(keys)</td>
+<td>Returns values locally to driver that correspond to the passed sequence of keys.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.getRange" title="thunder.TimeSeries.getRange"><tt class="xref py py-obj docutils literal"><span class="pre">getRange</span></tt></a>(sliceOrSlices[,&nbsp;keys])</td>
-<td>Returns key/value pairs that fall within a range given by the passed slice or slices.</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.getRange" title="thunder.TimeSeries.getRange"><tt class="xref py py-obj docutils literal"><span class="pre">getRange</span></tt></a>(sliceOrSlices[,&nbsp;keys])</td>
+<td>Returns key/value pairs locally to driver that fall within a given range.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.indToSub" title="thunder.TimeSeries.indToSub"><tt class="xref py py-obj docutils literal"><span class="pre">indToSub</span></tt></a>([order,&nbsp;isOneBased,&nbsp;dims])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.groupByFixedLength" title="thunder.TimeSeries.groupByFixedLength"><tt class="xref py py-obj docutils literal"><span class="pre">groupByFixedLength</span></tt></a>(length)</td>
+<td>Regroup each record by subdividing into fixed length portions</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.groupByWindow" title="thunder.TimeSeries.groupByWindow"><tt class="xref py py-obj docutils literal"><span class="pre">groupByWindow</span></tt></a>(indices,&nbsp;window)</td>
+<td>Group time series into multiple windows specified by their centers</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.indToSub" title="thunder.TimeSeries.indToSub"><tt class="xref py py-obj docutils literal"><span class="pre">indToSub</span></tt></a>([order,&nbsp;isOneBased,&nbsp;dims])</td>
 <td>Convert linear indexing to subscript indexing</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.keys" title="thunder.TimeSeries.keys"><tt class="xref py py-obj docutils literal"><span class="pre">keys</span></tt></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.keys" title="thunder.TimeSeries.keys"><tt class="xref py py-obj docutils literal"><span class="pre">keys</span></tt></a>()</td>
 <td>Return rdd of keys, ignoring values</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.max" title="thunder.TimeSeries.max"><tt class="xref py py-obj docutils literal"><span class="pre">max</span></tt></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.max" title="thunder.TimeSeries.max"><tt class="xref py py-obj docutils literal"><span class="pre">max</span></tt></a>()</td>
 <td>Maximum of values across keys, returned as an ndarray.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.maxProject" title="thunder.TimeSeries.maxProject"><tt class="xref py py-obj docutils literal"><span class="pre">maxProject</span></tt></a>([axis])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.maxProject" title="thunder.TimeSeries.maxProject"><tt class="xref py py-obj docutils literal"><span class="pre">maxProject</span></tt></a>([axis])</td>
 <td>Project over one of the keys by taking a maximum</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.mean" title="thunder.TimeSeries.mean"><tt class="xref py py-obj docutils literal"><span class="pre">mean</span></tt></a>([dtype,&nbsp;casting])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.mean" title="thunder.TimeSeries.mean"><tt class="xref py py-obj docutils literal"><span class="pre">mean</span></tt></a>([dtype,&nbsp;casting])</td>
 <td>Mean of values computed by aggregating across records, returned as an ndarray with the same size as a single record.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.meanByFixedLength" title="thunder.TimeSeries.meanByFixedLength"><tt class="xref py py-obj docutils literal"><span class="pre">meanByFixedLength</span></tt></a>(length)</td>
+<td>Compute the mean across fixed length portions of each record</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.meanByRegions" title="thunder.TimeSeries.meanByRegions"><tt class="xref py py-obj docutils literal"><span class="pre">meanByRegions</span></tt></a>(nestedKeys[,&nbsp;validate])</td>
 <td>Takes the mean of Series values within groupings specified by the passed keys.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.meanOfRegion" title="thunder.TimeSeries.meanOfRegion"><tt class="xref py py-obj docutils literal"><span class="pre">meanOfRegion</span></tt></a>(selection[,&nbsp;validate])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.meanByWindow" title="thunder.TimeSeries.meanByWindow"><tt class="xref py py-obj docutils literal"><span class="pre">meanByWindow</span></tt></a>(indices,&nbsp;window)</td>
+<td>Average time series across multiple windows specified by their centers</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.meanOfRegion" title="thunder.TimeSeries.meanOfRegion"><tt class="xref py py-obj docutils literal"><span class="pre">meanOfRegion</span></tt></a>(selection[,&nbsp;validate])</td>
 <td>Takes the mean of Series values within a single region specified by the passed mask or keys.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.min" title="thunder.TimeSeries.min"><tt class="xref py py-obj docutils literal"><span class="pre">min</span></tt></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.min" title="thunder.TimeSeries.min"><tt class="xref py py-obj docutils literal"><span class="pre">min</span></tt></a>()</td>
 <td>Minimum of values across keys, returned as an ndarray.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.normalize" title="thunder.TimeSeries.normalize"><tt class="xref py py-obj docutils literal"><span class="pre">normalize</span></tt></a>([baseline,&nbsp;window,&nbsp;perc])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.normalize" title="thunder.TimeSeries.normalize"><tt class="xref py py-obj docutils literal"><span class="pre">normalize</span></tt></a>([baseline,&nbsp;window,&nbsp;perc])</td>
 <td>Normalize each time series by subtracting and dividing by a baseline.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.pack" title="thunder.TimeSeries.pack"><tt class="xref py py-obj docutils literal"><span class="pre">pack</span></tt></a>([selection,&nbsp;sorting,&nbsp;transpose,&nbsp;dtype,&nbsp;...])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.pack" title="thunder.TimeSeries.pack"><tt class="xref py py-obj docutils literal"><span class="pre">pack</span></tt></a>([selection,&nbsp;sorting,&nbsp;transpose,&nbsp;dtype,&nbsp;...])</td>
 <td>Pack a Series into a local array (e.g.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.populateParamsFromFirstRecord" title="thunder.TimeSeries.populateParamsFromFirstRecord"><tt class="xref py py-obj docutils literal"><span class="pre">populateParamsFromFirstRecord</span></tt></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.populateParamsFromFirstRecord" title="thunder.TimeSeries.populateParamsFromFirstRecord"><tt class="xref py py-obj docutils literal"><span class="pre">populateParamsFromFirstRecord</span></tt></a>()</td>
 <td>Calls first() on the underlying rdd, using the returned record to determine appropriate attribute settings for this object (for instance, setting self.dtype to match the dtype of the underlying rdd records).</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.query" title="thunder.TimeSeries.query"><tt class="xref py py-obj docutils literal"><span class="pre">query</span></tt></a>(inds[,&nbsp;var,&nbsp;order,&nbsp;isOneBased])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.query" title="thunder.TimeSeries.query"><tt class="xref py py-obj docutils literal"><span class="pre">query</span></tt></a>(inds[,&nbsp;var,&nbsp;order,&nbsp;isOneBased])</td>
 <td>Extract records with indices matching those provided</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.range" title="thunder.TimeSeries.range"><tt class="xref py py-obj docutils literal"><span class="pre">range</span></tt></a>(start,&nbsp;stop)</td>
+<td>Extract records with keys that fall inside a range</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.repartition" title="thunder.TimeSeries.repartition"><tt class="xref py py-obj docutils literal"><span class="pre">repartition</span></tt></a>(numPartitions)</td>
 <td>Repartition data.</td>
@@ -315,7 +327,7 @@ avoid computation if known in advance.</p>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.select" title="thunder.TimeSeries.select"><tt class="xref py py-obj docutils literal"><span class="pre">select</span></tt></a>(crit)</td>
 <td>Select subset of values that match a given index criterion</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.selectByIndex" title="thunder.TimeSeries.selectByIndex"><tt class="xref py py-obj docutils literal"><span class="pre">selectByIndex</span></tt></a>(val[,&nbsp;level,&nbsp;squeeze,&nbsp;filter])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.selectByIndex" title="thunder.TimeSeries.selectByIndex"><tt class="xref py py-obj docutils literal"><span class="pre">selectByIndex</span></tt></a>(val[,&nbsp;level,&nbsp;squeeze,&nbsp;filter,&nbsp;...])</td>
 <td>Select or filter elements of the Series by index values (across levels, if multi-index).</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.seriesAggregateByIndex" title="thunder.TimeSeries.seriesAggregateByIndex"><tt class="xref py py-obj docutils literal"><span class="pre">seriesAggregateByIndex</span></tt></a>(function[,&nbsp;level])</td>
@@ -417,16 +429,13 @@ avoid computation if known in advance.</p>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.toTimeSeries" title="thunder.TimeSeries.toTimeSeries"><tt class="xref py py-obj docutils literal"><span class="pre">toTimeSeries</span></tt></a>()</td>
 <td>Convert Series to TimeSeries</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.triggeredAverage" title="thunder.TimeSeries.triggeredAverage"><tt class="xref py py-obj docutils literal"><span class="pre">triggeredAverage</span></tt></a>(events[,&nbsp;lag])</td>
-<td>Construct an average time series triggered on each of several events,</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.values" title="thunder.TimeSeries.values"><tt class="xref py py-obj docutils literal"><span class="pre">values</span></tt></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.values" title="thunder.TimeSeries.values"><tt class="xref py py-obj docutils literal"><span class="pre">values</span></tt></a>()</td>
 <td>Return rdd of values, ignoring keys</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.variance" title="thunder.TimeSeries.variance"><tt class="xref py py-obj docutils literal"><span class="pre">variance</span></tt></a>([dtype,&nbsp;casting])</td>
+<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.variance" title="thunder.TimeSeries.variance"><tt class="xref py py-obj docutils literal"><span class="pre">variance</span></tt></a>([dtype,&nbsp;casting])</td>
 <td>Variance of values computed by aggregating across records, returned as an ndarray with the same size as a single record.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#thunder.TimeSeries.zscore" title="thunder.TimeSeries.zscore"><tt class="xref py py-obj docutils literal"><span class="pre">zscore</span></tt></a>([axis])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.TimeSeries.zscore" title="thunder.TimeSeries.zscore"><tt class="xref py py-obj docutils literal"><span class="pre">zscore</span></tt></a>([axis])</td>
 <td>Zscore series data by subtracting the mean and</td>
 </tr>
 </tbody>
@@ -467,7 +476,7 @@ under the assumption that the function might change it</p>
 <dd><p>Apply arbitrary function to the keys of a Data object, preserving the values.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="thunder.Series.html#thunder.Series.apply" title="thunder.Series.apply"><tt class="xref py py-obj docutils literal"><span class="pre">Series.apply</span></tt></a></p>
+<p class="last"><tt class="xref py py-obj docutils literal"><span class="pre">Data.apply</span></tt></p>
 </div>
 </dd></dl>
 
@@ -477,7 +486,7 @@ under the assumption that the function might change it</p>
 <dd><p>Apply arbitrary function to the values of a Data object, preserving the keys.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="thunder.Series.html#thunder.Series.apply" title="thunder.Series.apply"><tt class="xref py py-obj docutils literal"><span class="pre">Series.apply</span></tt></a></p>
+<p class="last"><tt class="xref py py-obj docutils literal"><span class="pre">Data.apply</span></tt></p>
 </div>
 </dd></dl>
 
@@ -538,25 +547,6 @@ in floating point, then this method will return self unchanged.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="thunder.TimeSeries.blockedAverage">
-<tt class="descname">blockedAverage</tt><big>(</big><em>blockLength</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.blockedAverage" title="Permalink to this definition">¶</a></dt>
-<dd><p>Average blocks of a time series together, e.g. because they correspond
-to trials of some repeated measurement or process</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>triallength</strong> : int</p>
-<blockquote class="last">
-<div><p>Length of trial, must divide evenly into total length of time series</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
 <dt id="thunder.TimeSeries.cache">
 <tt class="descname">cache</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.TimeSeries.cache" title="Permalink to this definition">¶</a></dt>
 <dd><p>Enable in-memory caching.</p>
@@ -604,7 +594,7 @@ either within or across records</p>
 <dl class="method">
 <dt id="thunder.TimeSeries.collect">
 <tt class="descname">collect</tt><big>(</big><em>sorting=False</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.collect" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return all records to the driver</p>
+<dd><p>Return all records locally to the driver</p>
 <p>This will be slow for large datasets, and may exhaust the available memory on the driver.</p>
 <p>This calls the Spark collect() method on the underlying RDD.</p>
 </dd></dl>
@@ -612,14 +602,14 @@ either within or across records</p>
 <dl class="method">
 <dt id="thunder.TimeSeries.collectAsArray">
 <tt class="descname">collectAsArray</tt><big>(</big><em>sorting=False</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.collectAsArray" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return all keys and values to the driver as a tuple of numpy arrays</p>
+<dd><p>Return all keys and values locally to the driver as a tuple of numpy arrays</p>
 <p>This will be slow for large datasets, and may exhaust the available memory on the driver.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="thunder.TimeSeries.collectKeysAsArray">
 <tt class="descname">collectKeysAsArray</tt><big>(</big><em>sorting=False</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.collectKeysAsArray" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return all values to the driver as a numpy array</p>
+<dd><p>Return all values locally to the driver as a numpy array</p>
 <p>This will be slow for large datasets, and may exhaust the available memory on the driver.</p>
 </dd></dl>
 
@@ -743,18 +733,38 @@ Preserve intercept so that subsequent steps can adjust the baseline</p>
 <tt class="descname">filter</tt><big>(</big><em>func</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.filter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Filter records by applying a function to each record.</p>
 <p>This calls the Spark filter() method on the underlying RDD.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>func</strong> : function</p>
+<blockquote class="last">
+<div><p>The function to compute on each record, should evaluate to Boolean</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="thunder.TimeSeries.filterOnKeys">
 <tt class="descname">filterOnKeys</tt><big>(</big><em>func</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.filterOnKeys" title="Permalink to this definition">¶</a></dt>
 <dd><p>Filter records by applying a function to keys</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><tt class="xref py py-obj docutils literal"><span class="pre">Data.filter</span></tt></p>
+</div>
 </dd></dl>
 
 <dl class="method">
 <dt id="thunder.TimeSeries.filterOnValues">
 <tt class="descname">filterOnValues</tt><big>(</big><em>func</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.filterOnValues" title="Permalink to this definition">¶</a></dt>
 <dd><p>Filter records by applying a function to values</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><tt class="xref py py-obj docutils literal"><span class="pre">Data.filter</span></tt></p>
+</div>
 </dd></dl>
 
 <dl class="method">
@@ -786,15 +796,15 @@ can be set based on the values of the first record will be set (see populatePara
 <dl class="method">
 <dt id="thunder.TimeSeries.get">
 <tt class="descname">get</tt><big>(</big><em>key</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.get" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a single value matching the passed key, or None if no matching keys found.</p>
+<dd><p>Returns single value locally to driver that matches the passed key</p>
 <p>If multiple records are found with keys matching the passed key, a sequence of all matching
-values will be returned.</p>
+values will be returned. If no records found, will return None</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="thunder.TimeSeries.getMany">
 <tt class="descname">getMany</tt><big>(</big><em>keys</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.getMany" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a sequence of values corresponding to the passed sequence of keys.</p>
+<dd><p>Returns values locally to driver that correspond to the passed sequence of keys.</p>
 <p>The return value will be a sequence equal in length to the passed keys, with each
 value in the returned sequence corresponding to the key at the same position in the passed
 keys sequence. If no value is found for a given key, the corresponding sequence element will be None.
@@ -804,7 +814,7 @@ If multiple values are found, a sequence containing all matching values will be 
 <dl class="method">
 <dt id="thunder.TimeSeries.getRange">
 <tt class="descname">getRange</tt><big>(</big><em>sliceOrSlices</em>, <em>keys=True</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.getRange" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns key/value pairs that fall within a range given by the passed slice or slices.</p>
+<dd><p>Returns key/value pairs locally to driver that fall within a given range.</p>
 <p>The return values will be a sorted list of key/value pairs of all records in the underlying
 RDD for which the key falls within the range given by the passed slice selectors. Note that
 this may be very large, and could potentially exhaust the available memory on the driver.</p>
@@ -826,6 +836,49 @@ is not supported and a alueError will be raised if passed.</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">sorted sequence of key/value pairs</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.TimeSeries.groupByFixedLength">
+<tt class="descname">groupByFixedLength</tt><big>(</big><em>length</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.groupByFixedLength" title="Permalink to this definition">¶</a></dt>
+<dd><p>Regroup each record by subdividing into fixed length portions</p>
+<p>Will yield a new Series with N times as many records
+as the initial Series, where N is the number of chunks
+of fixed length.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>length</strong> : int</p>
+<blockquote class="last">
+<div><p>Fixed length with which to subdivide</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.TimeSeries.groupByWindow">
+<tt class="descname">groupByWindow</tt><big>(</big><em>indices</em>, <em>window</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.groupByWindow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Group time series into multiple windows specified by their centers</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>indices</strong> : array-like</p>
+<blockquote>
+<div><p>List of times specifying window centers</p>
+</div></blockquote>
+<p><strong>window</strong> : int</p>
+<blockquote class="last">
+<div><p>Window size</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -887,6 +940,24 @@ type before the operation is performed. See Data.astype() for details.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="thunder.TimeSeries.meanByFixedLength">
+<tt class="descname">meanByFixedLength</tt><big>(</big><em>length</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.meanByFixedLength" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the mean across fixed length portions of each record</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>length</strong> : int</p>
+<blockquote class="last">
+<div><p>Fixed length with which to subdivide</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="thunder.TimeSeries.meanByRegions">
 <tt class="descname">meanByRegions</tt><big>(</big><em>nestedKeys</em>, <em>validate=False</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.meanByRegions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes the mean of Series values within groupings specified by the passed keys.</p>
@@ -921,6 +992,28 @@ is not equal to the number specificed by the selection.</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">new Series object</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="thunder.TimeSeries.meanByWindow">
+<tt class="descname">meanByWindow</tt><big>(</big><em>indices</em>, <em>window</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.meanByWindow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Average time series across multiple windows specified by their centers</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>indices</strong> : array-like</p>
+<blockquote>
+<div><p>List of times specifying window centers</p>
+</div></blockquote>
+<p><strong>window</strong> : int</p>
+<blockquote class="last">
+<div><p>Window size</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1097,6 +1190,18 @@ filename of a MAT file containing a set of indices as a cell array</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="thunder.TimeSeries.range">
+<tt class="descname">range</tt><big>(</big><em>start</em>, <em>stop</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.range" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract records with keys that fall inside a range</p>
+<p>Returns another Data object, unlike
+getRange which returns a local array to the driver</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><tt class="xref py py-obj docutils literal"><span class="pre">Data.filterOnKeys</span></tt></p>
+</div>
+</dd></dl>
+
+<dl class="method">
 <dt id="thunder.TimeSeries.repartition">
 <tt class="descname">repartition</tt><big>(</big><em>numPartitions</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.repartition" title="Permalink to this definition">¶</a></dt>
 <dd><p>Repartition data.</p>
@@ -1170,7 +1275,7 @@ or list of indices</p>
 
 <dl class="method">
 <dt id="thunder.TimeSeries.selectByIndex">
-<tt class="descname">selectByIndex</tt><big>(</big><em>val</em>, <em>level=0</em>, <em>squeeze=False</em>, <em>filter=False</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.selectByIndex" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">selectByIndex</tt><big>(</big><em>val</em>, <em>level=0</em>, <em>squeeze=False</em>, <em>filter=False</em>, <em>returnMask=False</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.selectByIndex" title="Permalink to this definition">¶</a></dt>
 <dd><p>Select or filter elements of the Series by index values (across levels, if multi-index).</p>
 <p>The index is a property of a Series object that assigns a value to each position within
 the arrays stored in the records of the Series. This function returns a new Series where,
@@ -1548,29 +1653,6 @@ Instance of BlockingStrategy can be passed directly.</p>
 <dt id="thunder.TimeSeries.toTimeSeries">
 <tt class="descname">toTimeSeries</tt><big>(</big><big>)</big><a class="headerlink" href="#thunder.TimeSeries.toTimeSeries" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert Series to TimeSeries</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="thunder.TimeSeries.triggeredAverage">
-<tt class="descname">triggeredAverage</tt><big>(</big><em>events</em>, <em>lag=0</em><big>)</big><a class="headerlink" href="#thunder.TimeSeries.triggeredAverage" title="Permalink to this definition">¶</a></dt>
-<dd><p>Construct an average time series triggered on each of several events,
-considering a range of lags before and after the event</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>events</strong> : array-like</p>
-<blockquote>
-<div><p>List of events to trigger on</p>
-</div></blockquote>
-<p><strong>lag</strong> : int</p>
-<blockquote class="last">
-<div><p>Range of lags to consider, will cover (-lag, +lag)</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 <dl class="method">

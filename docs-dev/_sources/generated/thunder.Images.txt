@@ -31,6 +31,7 @@
       ~Images.getMany
       ~Images.getRange
       ~Images.keys
+      ~Images.localCorr
       ~Images.max
       ~Images.maxProjection
       ~Images.maxminProjection
@@ -40,6 +41,7 @@
       ~Images.min
       ~Images.planes
       ~Images.populateParamsFromFirstRecord
+      ~Images.range
       ~Images.renumber
       ~Images.repartition
       ~Images.saveAsBinaryImages
@@ -55,6 +57,7 @@
       ~Images.toBlocks
       ~Images.toSeries
       ~Images.toTimeSeries
+      ~Images.uniformFilter
       ~Images.values
       ~Images.variance
    

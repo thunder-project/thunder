@@ -48,6 +48,10 @@ Basic usage
 	
 	This error indicates that the Spark Hadoop version that Thunder was compiled against doesn’t match the version that is actually installed on the cluster. The jar files distributed with Thunder by default are compiled against Hadoop 1.0.4, which is what you will get with any of the “Pre-built for Hadoop 1.x” precompiled Spark distributions available from `here <https://spark.apache.org/downloads.html>`_. If Hadoop 2.x jars are found on the classpath at runtime rather than Hadoop 1.x jars, then you will see this error anytime the Thunder jar is used. The simplest workaround would be to make sure that ``$SPARK_HOME`` refers to a version of Spark compiled against Hadoop 1.x. If you prefer to use a version of Spark compiled for Hadoop 2.x, then at present this requires Thunder to be rebuilt from source. (See instructions elsewhere).
 
+*I'm getting "java.lang.OutOfMemoryError: Java heap space errors" during usage on a local machine. What should I do?*
+	
+	This error indicates that the JAVA heap space is being exceeded by Spark. One solution is to set JAVA runtime options to use more heap space. To make this change permanent when calling any applications using JAVA, open your bash profile (e.g. ``~/.bash_profile`` on Mac OS X or ``~/.bashrc`` on Ubuntu) and add a line similar to ``export _JAVA_OPTIONS="-Xms512m -Xmx4g"`` (or ``set _JAVA_OPTIONS=-Xms512m -Xmx4g on Windows``). In this example, the initial heap space is set to 512mb and the max heap space is set to 4gb. Note here to use ``_JAVA_OPTIONS`` and not ``JAVA_OPTS``. ``JAVA_OPTS`` is not an environment variable that JDK recognizes on its own, but is used by other apps while running JAVA.  
+
 Configuration and installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -36,11 +36,13 @@
       ~RowMatrix.getMany
       ~RowMatrix.getRange
       ~RowMatrix.gramian
+      ~RowMatrix.groupByFixedLength
       ~RowMatrix.indToSub
       ~RowMatrix.keys
       ~RowMatrix.max
       ~RowMatrix.maxProject
       ~RowMatrix.mean
+      ~RowMatrix.meanByFixedLength
       ~RowMatrix.meanByRegions
       ~RowMatrix.meanOfRegion
       ~RowMatrix.min
@@ -49,6 +51,7 @@
       ~RowMatrix.plus
       ~RowMatrix.populateParamsFromFirstRecord
       ~RowMatrix.query
+      ~RowMatrix.range
       ~RowMatrix.repartition
       ~RowMatrix.rows
       ~RowMatrix.saveAsBinarySeries
