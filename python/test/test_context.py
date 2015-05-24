@@ -278,6 +278,42 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         assert(array_equal(d.values(), [[1, 2, 3], [4, 5, 6]]))
         assert(array_equal(d.values("test0"), [1, 2, 3]))
 
+    def test_loadSeriesFromArray(self):
+
+        target = array([[0, 1], [0, 2]])
+        d1 = self.tsc.loadSeriesFromArray([[0, 1], [0, 2]])
+        d2 = self.tsc.loadSeriesFromArray(array([[0, 1], [0, 2]]))
+        assert(array_equal(d1.collectValuesAsArray(), target))
+        assert(d1.keys().collect(), [(0,), (1,)])
+        assert(array_equal(d2.collectValuesAsArray(), target))
+        assert(d2.keys().collect(), [(0,), (1,)])
+
+        target = array([[0, 1]])
+        d1 = self.tsc.loadSeriesFromArray([0, 1])
+        d2 = self.tsc.loadSeriesFromArray(array([0, 1]))
+        assert(array_equal(d1.collectValuesAsArray(), target))
+        assert(d1.keys().collect(), [(0,)])
+        assert(array_equal(d2.collectValuesAsArray(), target))
+        assert(d2.keys().collect(), [(0,)])
+
+    def test_loadImagesFromArray(self):
+
+        target = array([[[0, 1], [0, 2]]])
+        d1 = self.tsc.loadImagesFromArray([[0, 1], [0, 2]])
+        d2 = self.tsc.loadImagesFromArray(array([[0, 1], [0, 2]]))
+        assert(array_equal(d1.collectValuesAsArray(), target))
+        assert(d1.keys().collect() == [0])
+        assert(array_equal(d2.collectValuesAsArray(), target))
+        assert(d2.keys().collect() == [0])
+
+        target = array([[[0, 1], [0, 2]], [[0, 1], [0, 2]]])
+        d1 = self.tsc.loadImagesFromArray([[[0, 1], [0, 2]], [[0, 1], [0, 2]]])
+        d2 = self.tsc.loadImagesFromArray(array([[[0, 1], [0, 2]], [[0, 1], [0, 2]]]))
+        assert(array_equal(d1.collectValuesAsArray(), target))
+        assert(d1.keys().collect() == [0, 1])
+        assert(array_equal(d2.collectValuesAsArray(), target))
+        assert(d2.keys().collect() == [0, 1])
+
 
 class TestContextWriting(PySparkTestCaseWithOutputDir):
 

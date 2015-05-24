@@ -212,6 +212,72 @@ class ThunderContext():
         else:
             return data.renumber()
 
+    def loadSeriesFromArray(self, values, index=None, npartitions=None):
+        """
+        Load Series data from a local array
+
+        Parameters
+        ----------
+        values : list or ndarray
+            A list of 1d numpy arrays, or a single 2d numpy array
+
+        index : array-like, optional, deafult = None
+            Index to set for Series object, if None will use linear indices.
+
+        npartitions : position int, optional, default = None
+            Number of partitions for RDD, if unspecified will use
+            default parallelism.
+        """
+        from numpy import ndarray, asarray
+        from thunder.rdds.fileio.seriesloader import SeriesLoader
+        loader = SeriesLoader(self._sc)
+
+        if not npartitions:
+            npartitions = self._sc.defaultParallelism
+
+        if isinstance(values, list):
+            values = asarray(values)
+
+        if isinstance(values, ndarray) and values.ndim > 1:
+            values = list(values)
+
+        data = loader.fromArrays(values, npartitions=npartitions)
+
+        if index:
+            data.index = index
+
+        return data
+
+    def loadImagesFromArray(self, values, npartitions=None):
+        """
+        Load Images data from a local array
+
+        Parameters
+        ----------
+        values : list or ndarray
+            A list of 2d or 3d numpy arrays,
+            or a single 3d or 4d numpy array
+
+        npartitions : position int, optional, default = None
+            Number of partitions for RDD, if unspecified will use
+            default parallelism.
+        """
+        from numpy import ndarray, asarray
+
+        from thunder.rdds.fileio.imagesloader import ImagesLoader
+        loader = ImagesLoader(self._sc)
+
+        if isinstance(values, list):
+            values = asarray(values)
+
+        if isinstance(values, ndarray) and values.ndim > 2:
+            values = list(values)
+
+        if not npartitions:
+            npartitions = self._sc.defaultParallelism
+
+        return loader.fromArrays(values, npartitions=npartitions)
+
     def loadImagesOCP(self, bucketName, resolution, server='ocp.me', startIdx=None, stopIdx=None,
                       minBound=None, maxBound=None):
         """

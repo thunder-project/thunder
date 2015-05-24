@@ -48,7 +48,7 @@ class TestSeriesConversions(PySparkTestCase):
         ary = arange(size, dtype=dtypeFunc('uint8')).reshape(shape)
         ary2 = ary + size
         from thunder.rdds.fileio.seriesloader import SeriesLoader
-        series = SeriesLoader(self.sc).fromArrays([ary, ary2])
+        series = SeriesLoader(self.sc).fromArraysAsImages([ary, ary2])
 
         castSeries = series.astype("smallfloat")
 
@@ -61,7 +61,7 @@ class TestSeriesDataStatsMethods(PySparkTestCase):
         from thunder.rdds.fileio.seriesloader import SeriesLoader
         ary1 = arange(8, dtype=dtypeFunc('uint8')).reshape((2, 4))
         ary2 = arange(8, 16, dtype=dtypeFunc('uint8')).reshape((2, 4))
-        return SeriesLoader(self.sc).fromArrays([ary1, ary2])
+        return SeriesLoader(self.sc).fromArraysAsImages([ary1, ary2])
 
     def test_mean(self):
         from test_utils import elementwiseMean
@@ -259,7 +259,7 @@ class TestSeriesMethods(PySparkTestCase):
         from thunder.rdds.fileio.seriesloader import SeriesLoader
         ary = arange(8, dtype=dtypeFunc('int16')).reshape((2, 4))
 
-        series = SeriesLoader(self.sc).fromArrays(ary)
+        series = SeriesLoader(self.sc).fromArraysAsImages(ary)
         project0Series = series.maxProject(axis=0)
         project0 = project0Series.pack()
 

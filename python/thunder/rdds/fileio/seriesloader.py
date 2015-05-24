@@ -42,7 +42,31 @@ class SeriesLoader(object):
         from thunder.utils.common import raiseErrorIfPathExists
         raiseErrorIfPathExists(outputDirPath, awsCredentialsOverride=self.awsCredentialsOverride)
 
-    def fromArrays(self, arrays):
+    def fromArrays(self, arrays, npartitions=None):
+        """
+        Create a Series object from a sequence of 1d numpy arrays on the driver.
+        """
+        # recast singleton
+        if isinstance(arrays, ndarray):
+            arrays = [arrays]
+
+        # check shape and dtype
+        shape = arrays[0].shape
+        dtype = arrays[0].dtype
+        for ary in arrays:
+            if not ary.shape == shape:
+                raise ValueError("Inconsistent array shapes: first array had shape %s, but other array has shape %s" %
+                                 (str(shape), str(ary.shape)))
+            if not ary.dtype == dtype:
+                raise ValueError("Inconsistent array dtypes: first array had dtype %s, but other array has dtype %s" %
+                                 (str(dtype), str(ary.dtype)))
+
+        # generate linear keys
+        keys = map(lambda k: (k,), xrange(0, len(arrays)))
+
+        return Series(self.sc.parallelize(zip(keys, arrays), npartitions), dtype=str(dtype))
+
+    def fromArraysAsImages(self, arrays):
         """Create a Series object from a sequence of numpy ndarrays resident in memory on the driver.
 
         The arrays will be interpreted as though each represents a single time point - effectively the same
