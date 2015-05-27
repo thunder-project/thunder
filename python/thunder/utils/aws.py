@@ -36,8 +36,32 @@ class AWSCredentials(object):
         else:
             return None, None
 
-    @property
-    def credentialsAsDict(self):
-        access, secret = self.credentials
-        return {"aws_access_key_id": access, "aws_secret_access_key": secret}
 
+def S3ConnectionWithAnon(access, secret, anon=True):
+    """
+    Connect to S3 with automatic handling for anonymous access
+
+    Parameters
+    ----------
+    access : str
+        AWS access key
+
+    secret : str
+        AWS secret access key
+
+    anon : boolean, optional, default = True
+        Whether to make an anonymous connection if credentials fail to authenticate
+    """
+    from boto.s3.connection import S3Connection
+    from boto.exception import NoAuthHandlerFound
+
+    try:
+        conn = S3Connection(aws_access_key_id=access, aws_secret_access_key=secret)
+        return conn
+
+    except NoAuthHandlerFound:
+        if anon:
+            conn = S3Connection(anon=True)
+            return conn
+        else:
+            raise

@@ -30,7 +30,7 @@ import os
 import urllib
 import urlparse
 
-from thunder.utils.common import AWSCredentials
+from thunder.utils.aws import AWSCredentials, S3ConnectionWithAnon
 
 _haveBoto = False
 try:
@@ -308,10 +308,9 @@ class BotoParallelReader(_BotoClient):
 
         storageScheme = parse[0]
         bucketName = parse[1]
-        
+
         if storageScheme == 's3' or storageScheme == 's3n':
-            from boto.s3.connection import S3Connection
-            conn = S3Connection(**self.awsCredentialsOverride.credentialsAsDict)
+            conn = S3ConnectionWithAnon(*self.awsCredentialsOverride.credentials)
             bucket = conn.get_bucket(parse[1])
         elif storageScheme == 'gs':
             conn = boto.storage_uri(bucketName, 'gs')
@@ -344,14 +343,11 @@ class BotoParallelReader(_BotoClient):
         if not keyNameList:
             raise FileNotFoundError("No objects found for '%s'" % dataPath)
 
-        # try to prevent self from getting pulled into the closure
-        awsAccessKeyIdOverride_, awsSecretAccessKeyOverride_ = self.awsCredentialsOverride.credentials
+        access, secret = self.awsCredentialsOverride.credentials
 
         def readSplitFromBoto(kvIter):
             if storageScheme == 's3' or storageScheme == 's3n':
-                from boto.s3.connection import S3Connection
-                conn = S3Connection(aws_access_key_id=awsAccessKeyIdOverride_,
-                                    aws_secret_access_key=awsSecretAccessKeyOverride_)
+                conn = S3ConnectionWithAnon(access, secret)
                 bucket = conn.get_bucket(bucketName)
             elif storageScheme == 'gs':
                 conn = boto.storage_uri(bucketName, 'gs')
@@ -454,10 +450,9 @@ class BotoFileReader(_BotoClient):
         storageScheme = parse[0]
         bucketName = parse[1]
         keyName = parse[2]
-        
+
         if storageScheme == 's3' or storageScheme == 's3n':
-            from boto.s3.connection import S3Connection
-            conn = S3Connection(**self.awsCredentialsOverride.credentialsAsDict)
+            conn = S3ConnectionWithAnon(*self.awsCredentialsOverride.credentials)
             bucket = conn.get_bucket(bucketName)
         elif storageScheme == 'gs':
             conn = boto.storage_uri(bucketName, 'gs')

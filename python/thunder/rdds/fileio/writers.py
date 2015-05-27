@@ -28,7 +28,7 @@ import urllib
 import urlparse
 
 from thunder.rdds.fileio.readers import _BotoClient, getByScheme
-
+from thunder.utils.aws import S3ConnectionWithAnon
 
 _haveBoto = False
 try:
@@ -79,17 +79,15 @@ class _BotoWriter(_BotoClient):
     def activateContext(self, dataPath, isDirectory):
         """
         Set up a boto connection.
-
         """
         parsed = _BotoClient.parseQuery(dataPath)
 
         storageScheme = parsed[0]
         bucketName = parsed[1]
         keyName = parsed[2]
-        
+
         if storageScheme == 's3' or storageScheme == 's3n':
-            from boto.s3.connection import S3Connection
-            conn = S3Connection(**self.awsCredentialsOverride.credentialsAsDict)
+            conn = S3ConnectionWithAnon(*self.awsCredentialsOverride.credentials)
             bucket = conn.get_bucket(bucketName)
         elif storageScheme == 'gs':
             conn = boto.storage_uri(bucketName, 'gs')
