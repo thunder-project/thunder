@@ -194,7 +194,8 @@ class LocalFSParallelReader(object):
 
 
 class _BotoClient(object):
-    """Superclass for boto-based S3 and Google storage readers.
+    """
+    Superclass for boto-based S3 and Google storage readers.
     """
     @staticmethod
     def parseQuery(query, delim='/'):
@@ -294,17 +295,13 @@ class _BotoClient(object):
 
 
 class BotoParallelReader(_BotoClient):
-    """Parallel reader backed by boto AWS client library.
+    """
+    Parallel reader backed by boto AWS client library.
     """
     def __init__(self, sparkContext, awsCredentialsOverride=None):
         super(BotoParallelReader, self).__init__(awsCredentialsOverride=awsCredentialsOverride)
         self.sc = sparkContext
         self.lastNRecs = None
-
-    def listFiles(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
-        storageScheme, bucketname, keyNames = self._listFilesImpl(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
-                                                                  recursive=recursive)
-        return ["%s:///%s/%s" % (storageScheme, bucketname, keyname) for keyname in keyNames]
 
     def _listFilesImpl(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
         parse = _BotoClient.parseQuery(dataPath)
@@ -330,6 +327,11 @@ class BotoParallelReader(_BotoClient):
         keyNameList = selectByStartAndStopIndices(keyNameList, startIdx, stopIdx)
 
         return storageScheme, bucket.name, keyNameList
+
+    def listFiles(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
+        storageScheme, bucketname, keyNames = self._listFilesImpl(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
+                                                                  recursive=recursive)
+        return ["%s:///%s/%s" % (storageScheme, bucketname, keyname) for keyname in keyNames]
 
     def read(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False, npartitions=None):
         """Sets up Spark RDD across S3 or GS objects specified by dataPath.

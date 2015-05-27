@@ -131,6 +131,7 @@ class BotoParallelWriter(_BotoWriter):
         label, buf = kv
         self._bucket.new_key(self.keyName + label).set_contents_from_string(buf)
 
+
 class LocalFSFileWriter(object):
     def __init__(self, dataPath, filename, overwrite=False, **kwargs):
         self._dataPath = dataPath
@@ -166,6 +167,7 @@ class BotoFileWriter(_BotoWriter):
         if not self.contextActive:
             self.activateContext(self._dataPath, True)
         self._bucket.new_key(self.keyName + self._filename).set_contents_from_string(buf)
+
 
 class LocalFSCollectedFileWriter(object):
     def __init__(self, dataPath, overwrite=False, **kwargs):
