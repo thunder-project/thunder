@@ -206,7 +206,7 @@ class SeriesLoader(object):
 
         dataPath : string URI or local filesystem path
             Specifies the directory or files to be loaded. May be formatted as a URI string with scheme (e.g. "file://",
-            "s3n://". If no scheme is present, will be interpreted as a path on the local filesystem. This path
+            "s3n://", or "gs://"). If no scheme is present, will be interpreted as a path on the local filesystem. This path
             must be valid on all workers. Datafile may also refer to a single file, or to a range of files specified
             by a glob-style expression using a single wildcard character '*'.
 
@@ -260,7 +260,7 @@ class SeriesLoader(object):
 
         dataPath: string URI or local filesystem path
             Specifies the directory or files to be loaded. May be formatted as a URI string with scheme (e.g. "file://",
-            "s3n://". If no scheme is present, will be interpreted as a path on the local filesystem. This path
+            "s3n://" or "gs://"). If no scheme is present, will be interpreted as a path on the local filesystem. This path
             must be valid on all workers. Datafile may also refer to a single file, or to a range of files specified
             by a glob-style expression using a single wildcard character '*'.
 
@@ -433,7 +433,7 @@ class SeriesLoader(object):
             raise IOError("No files found for path '%s'" % dataPath)
         ntimepoints = len(filenames)
 
-        doMinimizeReads = dataPath.lower().startswith("s3")
+        doMinimizeReads = dataPath.lower().startswith("s3") or dataPath.lower().startswith("gs")
         # check PIL version to see whether it is actually pillow or indeed old PIL and choose
         # conversion function appropriately. See ImagesLoader.fromMultipageTif and common.pil_to_array
         # for more explanation.
@@ -487,9 +487,11 @@ class SeriesLoader(object):
                 fp = reader_.open(fname)
                 try:
                     if doMinimizeReads:
-                        # use multitif module to generate a fake, in-memory one-page tif file
-                        # the advantage of this is that it cuts way down on the many small reads
-                        # that PIL/pillow will make otherwise, which would be a problem for s3
+                        # use multitif module to generate a fake, in-memory
+                        # one-page tif file the advantage of this is that it
+                        # cuts way down on the many small reads that PIL/pillow
+                        # will make otherwise, which would be a problem for s3
+                        # or Google Storage
                         tiffParser_ = multitif.TiffParser(fp, debug=False)
                         tiffFilebuffer = multitif.packSinglePage(tiffParser_, pageIdx=planeIdx)
                         byteBuf = io.BytesIO(tiffFilebuffer)

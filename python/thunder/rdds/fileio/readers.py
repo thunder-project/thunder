@@ -4,7 +4,7 @@ Currently two types of 'filesystem' are supported:
 
 * the local file system, via python's native file() objects
 
-* Amazon's S3, using the boto library (only if boto is installed; boto is not a requirement)
+* Amazon's S3 or Google Storage, using the boto library (only if boto is installed; boto is not a requirement)
 
 For each filesystem, two types of reader classes are provided:
 
@@ -17,7 +17,7 @@ common file and filesystem operations. These include listing files in a director
 and providing a file handle or handle-like object that itself supports read(), seek(), and tell() operations.
 
 The reader classes also all support a common syntax for path specifications, including both "standard" file paths
-and "URI-like" syntax with an explicitly specified scheme (for instance, "file://" or "s3n://"). This path specification
+and "URI-like" syntax with an explicitly specified scheme (for instance, "file://", "gs://" or "s3n://"). This path specification
 syntax allows a single wildcard "*" character in the filename, making possible paths like
 "s3n:///my-bucket/key-one/foo*.bar", referring to "every object in the S3 bucket my-bucket whose key starts with
 'key-one/foo' and ends with '.bar'".
@@ -193,11 +193,12 @@ class LocalFSParallelReader(object):
         return self.sc.parallelize(enumerate(filePaths), npartitions).map(lambda (k, v): (k, _localRead(v)))
 
 
-class _BotoS3Client(object):
-    """Superclass for boto-based S3 readers.
+class _BotoClient(object):
+    """Superclass for boto-based S3 and Google storage readers.
     """
     @staticmethod
-    def parseS3Query(query, delim='/'):
+    def parseQuery(query, delim='/'):
+        storageScheme = ''
         keyName = ''
         prefix = ''
         postfix = ''
@@ -206,8 +207,9 @@ class _BotoS3Client(object):
         bucketName = parseResult.netloc
         keyQuery = parseResult.path.lstrip(delim)
 
-        if not parseResult.scheme.lower() in ('', "s3", "s3n"):
-            raise ValueError("Query scheme must be one of '', 's3', or 's3n'; got: '%s'" % parseResult.scheme)
+        if not parseResult.scheme.lower() in ('', "gs", "s3", "s3n"):
+            raise ValueError("Query scheme must be one of '', 'gs', 's3', or 's3n'; got: '%s'" % parseResult.scheme)
+        storageScheme = parseResult.scheme.lower()
 
         # special case handling for strings of form "/bucket/dir":
         if (not bucketName.strip()) and keyQuery:
@@ -238,7 +240,7 @@ class _BotoS3Client(object):
         else:
             raise ValueError("Only one wildcard ('*') allowed in query string, got: '%s'" % query)
 
-        return bucketName, keyName, prefix, postfix
+        return storageScheme, bucketName, keyName, prefix, postfix
 
     @staticmethod
     def checkPrefix(bucket, keyPath, delim='/'):
@@ -262,16 +264,16 @@ class _BotoS3Client(object):
         if not keyPath.endswith(delim) and keyPath:
             # not all directories have actual keys associated with them
             # check for matching prefix instead of literal key:
-            if _BotoS3Client.checkPrefix(bucket, keyPath+delim, delim=delim):
+            if _BotoClient.checkPrefix(bucket, keyPath+delim, delim=delim):
                 # found a directory; change path so that it explicitly refers to directory
                 keyPath += delim
 
         listDelim = delim if not recursive else None
         results = bucket.list(prefix=keyPath, delimiter=listDelim)
         if postfix:
-            return itertools.ifilter(lambda k_: _BotoS3Client.filterPredicate(k_, postfix, inclusive=True), results)
+            return itertools.ifilter(lambda k_: _BotoClient.filterPredicate(k_, postfix, inclusive=True), results)
         elif not includeDirectories:
-            return itertools.ifilter(lambda k_: _BotoS3Client.filterPredicate(k_, delim, inclusive=False), results)
+            return itertools.ifilter(lambda k_: _BotoClient.filterPredicate(k_, delim, inclusive=False), results)
         else:
             return results
 
@@ -287,54 +289,74 @@ class _BotoS3Client(object):
         will be used instead of those found by the standard boto credential lookup process.
         """
         if not _haveBoto:
-            raise ValueError("The boto package does not appear to be available; boto is required for BotoS3Reader")
+            raise ValueError("The boto package does not appear to be available; boto is required for BotoReader")
         self.awsCredentialsOverride = awsCredentialsOverride if awsCredentialsOverride else AWSCredentials()
 
 
-class BotoS3ParallelReader(_BotoS3Client):
+class BotoParallelReader(_BotoClient):
     """Parallel reader backed by boto AWS client library.
     """
     def __init__(self, sparkContext, awsCredentialsOverride=None):
-        super(BotoS3ParallelReader, self).__init__(awsCredentialsOverride=awsCredentialsOverride)
+        super(BotoParallelReader, self).__init__(awsCredentialsOverride=awsCredentialsOverride)
         self.sc = sparkContext
         self.lastNRecs = None
 
     def listFiles(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
-        bucketname, keyNames = self._listFilesImpl(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
-                                                   recursive=recursive)
-        return ["s3n:///%s/%s" % (bucketname, keyname) for keyname in keyNames]
+        storageScheme, bucketname, keyNames = self._listFilesImpl(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
+                                                                  recursive=recursive)
+        return ["%s:///%s/%s" % (storageScheme, bucketname, keyname) for keyname in keyNames]
 
     def _listFilesImpl(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
-        parse = _BotoS3Client.parseS3Query(dataPath)
-        conn = boto.connect_s3(**self.awsCredentialsOverride.credentialsAsDict)
-        bucket = conn.get_bucket(parse[0])
-        keys = _BotoS3Client.retrieveKeys(bucket, parse[1], prefix=parse[2], postfix=parse[3], recursive=recursive)
+        parse = _BotoClient.parseQuery(dataPath)
+
+        storageScheme = parse[0]
+        bucketName = parse[1]
+        
+        if storageScheme == 's3' or storageScheme == 's3n':
+            from boto.s3.connection import S3Connection
+            conn = S3Connection(**self.awsCredentialsOverride.credentialsAsDict)
+            bucket = conn.get_bucket(parse[1])
+        elif storageScheme == 'gs':
+            conn = boto.storage_uri(bucketName, 'gs')
+            bucket = conn.get_bucket()
+        else:
+            raise NotImplementedError("No file reader implementation for URL scheme " + storageScheme)
+
+        keys = _BotoClient.retrieveKeys(bucket, parse[2], prefix=parse[3], postfix=parse[4], recursive=recursive)
         keyNameList = [key.name for key in keys]
         if ext:
             keyNameList = [keyname for keyname in keyNameList if keyname.endswith(ext)]
         keyNameList.sort()
         keyNameList = selectByStartAndStopIndices(keyNameList, startIdx, stopIdx)
 
-        return bucket.name, keyNameList
+        return storageScheme, bucket.name, keyNameList
 
     def read(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False, npartitions=None):
-        """Sets up Spark RDD across S3 objects specified by dataPath.
+        """Sets up Spark RDD across S3 or GS objects specified by dataPath.
 
-        Returns RDD of <string s3 keyname, string buffer> k/v pairs.
+        Returns RDD of <string bucket keyname, string buffer> k/v pairs.
         """
         dataPath = appendExtensionToPathSpec(dataPath, ext)
-        bucketName, keyNameList = self._listFilesImpl(dataPath, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
+        storageScheme, bucketName, keyNameList = self._listFilesImpl(dataPath, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
 
         if not keyNameList:
-            raise FileNotFoundError("No S3 objects found for '%s'" % dataPath)
+            raise FileNotFoundError("No objects found for '%s'" % dataPath)
 
         # try to prevent self from getting pulled into the closure
         awsAccessKeyIdOverride_, awsSecretAccessKeyOverride_ = self.awsCredentialsOverride.credentials
 
-        def readSplitFromS3(kvIter):
-            conn = boto.connect_s3(aws_access_key_id=awsAccessKeyIdOverride_,
-                                   aws_secret_access_key=awsSecretAccessKeyOverride_)
-            bucket = conn.get_bucket(bucketName)
+        def readSplitFromBoto(kvIter):
+            if storageScheme == 's3' or storageScheme == 's3n':
+                from boto.s3.connection import S3Connection
+                conn = S3Connection(aws_access_key_id=awsAccessKeyIdOverride_,
+                                    aws_secret_access_key=awsSecretAccessKeyOverride_)
+                bucket = conn.get_bucket(bucketName)
+            elif storageScheme == 'gs':
+                conn = boto.storage_uri(bucketName, 'gs')
+                bucket = conn.get_bucket()
+            else:
+                raise NotImplementedError("No file reader implementation for URL scheme " + storageScheme)
+
             for kv in kvIter:
                 idx, keyName = kv
                 key = bucket.get_key(keyName)
@@ -343,7 +365,7 @@ class BotoS3ParallelReader(_BotoS3Client):
 
         self.lastNRecs = len(keyNameList)
         npartitions = min(npartitions, self.lastNRecs) if npartitions else self.lastNRecs
-        return self.sc.parallelize(enumerate(keyNameList), npartitions).mapPartitions(readSplitFromS3)
+        return self.sc.parallelize(enumerate(keyNameList), npartitions).mapPartitions(readSplitFromBoto)
 
 
 class LocalFSFileReader(object):
@@ -421,15 +443,25 @@ class LocalFSFileReader(object):
         return open(filenames[0], 'rb')
 
 
-class BotoS3FileReader(_BotoS3Client):
+class BotoFileReader(_BotoClient):
     """File reader backed by the boto AWS client library.
     """
     def __getMatchingKeys(self, dataPath, filename=None, includeDirectories=False, recursive=False):
-        parse = _BotoS3Client.parseS3Query(dataPath)
-        conn = boto.connect_s3(**self.awsCredentialsOverride.credentialsAsDict)
-        bucketName = parse[0]
-        keyName = parse[1]
-        bucket = conn.get_bucket(bucketName)
+        parse = _BotoClient.parseQuery(dataPath)
+
+        storageScheme = parse[0]
+        bucketName = parse[1]
+        keyName = parse[2]
+        
+        if storageScheme == 's3' or storageScheme == 's3n':
+            from boto.s3.connection import S3Connection
+            conn = S3Connection(**self.awsCredentialsOverride.credentialsAsDict)
+            bucket = conn.get_bucket(bucketName)
+        elif storageScheme == 'gs':
+            conn = boto.storage_uri(bucketName, 'gs')
+            bucket = conn.get_bucket()
+        else:
+            raise NotImplementedError("No file reader implementation for URL scheme " + storageScheme)
 
         if filename:
             # check whether last section of dataPath refers to a directory
@@ -448,28 +480,29 @@ class BotoS3FileReader(_BotoS3Client):
                         keyName = ""
             keyName += filename
 
-        return _BotoS3Client.retrieveKeys(bucket, keyName, prefix=parse[2], postfix=parse[3],
-                                          includeDirectories=includeDirectories, recursive=recursive)
+        return (storageScheme, _BotoClient.retrieveKeys(bucket, keyName, prefix=parse[3], postfix=parse[4],
+                                                        includeDirectories=includeDirectories, recursive=recursive))
 
     def list(self, dataPath, filename=None, startIdx=None, stopIdx=None, recursive=False, includeDirectories=False):
-        """List s3 objects specified by dataPath.
+        """List objects specified by dataPath.
 
-        Returns sorted list of 's3n://' URIs.
+        Returns sorted list of 'gs://' or 's3n://' URIs.
         """
-        keys = self.__getMatchingKeys(dataPath, filename=filename, includeDirectories=includeDirectories,
-                                      recursive=recursive)
-        keyNames = ["s3n:///" + key.bucket.name + "/" + key.name for key in keys]
+        storageScheme, keys = self.__getMatchingKeys(dataPath, filename=filename,
+                                                     includeDirectories=includeDirectories,
+                                                     recursive=recursive)
+        keyNames = [storageScheme + ":///" + key.bucket.name + "/" + key.name for key in keys]
         keyNames.sort()
         keyNames = selectByStartAndStopIndices(keyNames, startIdx, stopIdx)
         return keyNames
 
     def __getSingleMatchingKey(self, dataPath, filename=None):
-        keys = self.__getMatchingKeys(dataPath, filename=filename)
+        storageScheme, keys = self.__getMatchingKeys(dataPath, filename=filename)
         # keys is probably a lazy-loading ifilter iterable
         try:
             key = keys.next()
         except StopIteration:
-            raise FileNotFoundError("Could not find S3 object for: '%s'" % dataPath)
+            raise FileNotFoundError("Could not find object for: '%s'" % dataPath)
 
         # we expect to only have a single key returned
         nextKey = None
@@ -478,14 +511,14 @@ class BotoS3FileReader(_BotoS3Client):
         except StopIteration:
             pass
         if nextKey:
-            raise ValueError("Found multiple S3 keys for: '%s'" % dataPath)
-        return key
+            raise ValueError("Found multiple keys for: '%s'" % dataPath)
+        return storageScheme, key
 
     def read(self, dataPath, filename=None, startOffset=None, size=-1):
-        key = self.__getSingleMatchingKey(dataPath, filename=filename)
+        storageScheme, key = self.__getSingleMatchingKey(dataPath, filename=filename)
 
         if startOffset or (size > -1):
-            # specify Range header in S3 request
+            # specify Range header in boto request
             # see: http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.35
             # and: http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGET.html
             if not startOffset:
@@ -500,16 +533,17 @@ class BotoS3FileReader(_BotoS3Client):
             return key.get_contents_as_string()
 
     def open(self, dataPath, filename=None):
-        key = self.__getSingleMatchingKey(dataPath, filename=filename)
-        return BotoS3ReadFileHandle(key)
+        storageScheme, key = self.__getSingleMatchingKey(dataPath, filename=filename)
+        return BotoReadFileHandle(storageScheme, key)
 
 
-class BotoS3ReadFileHandle(object):
+class BotoReadFileHandle(object):
     """Read-only file handle-like object exposing a subset of file methods.
 
-    Returned by BotoS3FileReader's open() method.
+    Returned by BotoFileReader's open() method.
     """
-    def __init__(self, key):
+    def __init__(self, storageScheme, key):
+        self._storageScheme = storageScheme
         self._key = key
         self._closed = False
         self._offset = 0
@@ -558,7 +592,7 @@ class BotoS3ReadFileHandle(object):
 
     @property
     def name(self):
-        return "s3n:///" + self._key.bucket.name + "/" + self._key.name
+        return self._storageScheme + ":///" + self._key.bucket.name + "/" + self._key.name
 
     @property
     def mode(self):
@@ -568,8 +602,9 @@ class BotoS3ReadFileHandle(object):
 SCHEMAS_TO_PARALLELREADERS = {
     '': LocalFSParallelReader,
     'file': LocalFSParallelReader,
-    's3': BotoS3ParallelReader,
-    's3n': BotoS3ParallelReader,
+    'gs': BotoParallelReader,
+    's3': BotoParallelReader,
+    's3n': BotoParallelReader,
     'hdfs': None,
     'http': None,
     'https': None,
@@ -579,8 +614,9 @@ SCHEMAS_TO_PARALLELREADERS = {
 SCHEMAS_TO_FILEREADERS = {
     '': LocalFSFileReader,
     'file': LocalFSFileReader,
-    's3': BotoS3FileReader,
-    's3n': BotoS3FileReader,
+    'gs': BotoFileReader,
+    's3': BotoFileReader,
+    's3n': BotoFileReader,
     'hdfs': None,
     'http': None,
     'https': None,

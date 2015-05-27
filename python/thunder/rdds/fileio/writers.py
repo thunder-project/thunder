@@ -4,7 +4,7 @@ Currently two types of 'filesystem' are supported:
 
 * the local file system, via python's native file() objects
 
-* Amazon's S3, using the boto library (only if boto is installed; boto is not a requirement)
+* Amazon's S3 or Google Storage, using the boto library (only if boto is installed; boto is not a requirement)
 
 For each filesystem, three types of writer classes are provided:
 
@@ -27,7 +27,7 @@ import shutil
 import urllib
 import urlparse
 
-from thunder.rdds.fileio.readers import _BotoS3Client, getByScheme
+from thunder.rdds.fileio.readers import _BotoClient, getByScheme
 
 
 _haveBoto = False
@@ -67,9 +67,10 @@ class LocalFSParallelWriter(object):
             f.write(buf)
 
 
-class _BotoS3Writer(_BotoS3Client):
+class _BotoWriter(_BotoClient):
     def __init__(self, awsCredentialsOverride=None):
-        super(_BotoS3Writer, self).__init__(awsCredentialsOverride=awsCredentialsOverride)
+        super(_BotoWriter, self).__init__(awsCredentialsOverride=awsCredentialsOverride)
+        self._storageScheme = None
         self._contextActive = False
         self._conn = None
         self._keyName = None
@@ -77,17 +78,29 @@ class _BotoS3Writer(_BotoS3Client):
 
     def activateContext(self, dataPath, isDirectory):
         """
-        Set up a boto s3 connection.
+        Set up a boto connection.
 
         """
-        conn = boto.connect_s3(**self.awsCredentialsOverride.credentialsAsDict)
-        parsed = _BotoS3Client.parseS3Query(dataPath)
-        bucketName = parsed[0]
-        keyName = parsed[1]
+        parsed = _BotoClient.parseQuery(dataPath)
+
+        storageScheme = parsed[0]
+        bucketName = parsed[1]
+        keyName = parsed[2]
+        
+        if storageScheme == 's3' or storageScheme == 's3n':
+            from boto.s3.connection import S3Connection
+            conn = S3Connection(**self.awsCredentialsOverride.credentialsAsDict)
+            bucket = conn.get_bucket(bucketName)
+        elif storageScheme == 'gs':
+            conn = boto.storage_uri(bucketName, 'gs')
+            bucket = conn.get_bucket()
+        else:
+            raise NotImplementedError("No file reader implementation for URL scheme " + storageScheme)
+
         if isDirectory and (not keyName.endswith("/")):
             keyName += "/"
-        bucket = conn.get_bucket(bucketName)
 
+        self._storageScheme = storageScheme
         self._conn = conn
         self._keyName = keyName
         self._bucket = bucket
@@ -106,21 +119,17 @@ class _BotoS3Writer(_BotoS3Client):
         return self._contextActive
 
 
-class BotoS3ParallelWriter(_BotoS3Writer):
+class BotoParallelWriter(_BotoWriter):
     def __init__(self, dataPath, overwrite=False, awsCredentialsOverride=None):
-        super(BotoS3ParallelWriter, self).__init__(awsCredentialsOverride=awsCredentialsOverride)
+        super(BotoParallelWriter, self).__init__(awsCredentialsOverride=awsCredentialsOverride)
         self._dataPath = dataPath
         self._overwrite = overwrite
 
     def writerFcn(self, kv):
         if not self.contextActive:
             self.activateContext(self._dataPath, True)
-
         label, buf = kv
-        s3key = boto.s3.key.Key(self.bucket)
-        s3key.name = self.keyName + label
-        s3key.set_contents_from_string(buf)
-
+        self._bucket.new_key(self.keyName + label).set_contents_from_string(buf)
 
 class LocalFSFileWriter(object):
     def __init__(self, dataPath, filename, overwrite=False, **kwargs):
@@ -146,9 +155,9 @@ class LocalFSFileWriter(object):
             f.write(buf)
 
 
-class BotoS3FileWriter(_BotoS3Writer):
+class BotoFileWriter(_BotoWriter):
     def __init__(self, dataPath, filename, overwrite=False, awsCredentialsOverride=None):
-        super(BotoS3FileWriter, self).__init__(awsCredentialsOverride=awsCredentialsOverride)
+        super(BotoFileWriter, self).__init__(awsCredentialsOverride=awsCredentialsOverride)
         self._dataPath = dataPath
         self._filename = filename
         self._overwrite = overwrite
@@ -156,11 +165,7 @@ class BotoS3FileWriter(_BotoS3Writer):
     def writeFile(self, buf):
         if not self.contextActive:
             self.activateContext(self._dataPath, True)
-
-        s3Key = boto.s3.key.Key(self.bucket)
-        s3Key.name = self.keyName + self._filename
-        s3Key.set_contents_from_string(buf)
-
+        self._bucket.new_key(self.keyName + self._filename).set_contents_from_string(buf)
 
 class LocalFSCollectedFileWriter(object):
     def __init__(self, dataPath, overwrite=False, **kwargs):
@@ -191,10 +196,10 @@ class LocalFSCollectedFileWriter(object):
                 f.write(buf)
 
 
-class BotoS3CollectedFileWriter(_BotoS3Writer):
+class BotoCollectedFileWriter(_BotoWriter):
     # todo: needs to check before writing if overwrite is True
     def __init__(self, dataPath, overwrite=False, awsCredentialsOverride=None):
-        super(BotoS3CollectedFileWriter, self).__init__(awsCredentialsOverride=awsCredentialsOverride)
+        super(BotoCollectedFileWriter, self).__init__(awsCredentialsOverride=awsCredentialsOverride)
         self._dataPath = dataPath
         self._overwrite = overwrite
 
@@ -203,16 +208,15 @@ class BotoS3CollectedFileWriter(_BotoS3Writer):
             self.activateContext(self._dataPath, True)
 
         for filename, buf in labelBufSequence:
-            s3Key = boto.s3.key.Key(self.bucket)
-            s3Key.name = self.keyName + filename
-            s3Key.set_contents_from_string(buf)
+            self._bucket.new_key(self.keyName + filename).set_contents_from_string(buf)
 
 
 SCHEMAS_TO_PARALLELWRITERS = {
     '': LocalFSParallelWriter,
     'file': LocalFSParallelWriter,
-    's3': BotoS3ParallelWriter,
-    's3n': BotoS3ParallelWriter,
+    'gs': BotoParallelWriter,
+    's3': BotoParallelWriter,
+    's3n': BotoParallelWriter,
     'hdfs': None,
     'http': None,
     'https': None,
@@ -222,8 +226,9 @@ SCHEMAS_TO_PARALLELWRITERS = {
 SCHEMAS_TO_FILEWRITERS = {
     '': LocalFSFileWriter,
     'file': LocalFSFileWriter,
-    's3': BotoS3FileWriter,
-    's3n': BotoS3FileWriter,
+    'gs': BotoFileWriter,
+    's3': BotoFileWriter,
+    's3n': BotoFileWriter,
     'hdfs': None,
     'http': None,
     'https': None,
@@ -233,8 +238,9 @@ SCHEMAS_TO_FILEWRITERS = {
 SCHEMAS_TO_COLLECTEDFILEWRITERS = {
     '': LocalFSCollectedFileWriter,
     'file': LocalFSCollectedFileWriter,
-    's3': BotoS3CollectedFileWriter,
-    's3n': BotoS3CollectedFileWriter,
+    'gs': BotoCollectedFileWriter,
+    's3': BotoCollectedFileWriter,
+    's3n': BotoCollectedFileWriter,
     'hdfs': None,
     'http': None,
     'https': None,

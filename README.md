@@ -67,7 +67,7 @@ Thunder currently includes two primary data types for distributed spatial and te
 Input and output
 ----------------
 
-The primary data types in Thunder — Images and Series — can each be loaded from a variety of raw input formats, including text or flat binary files (for Series) and binary, tifs, or pngs (for Images). Files can be stored locally, on a networked file system, on Amazon's S3, or in HDFS. Where needed, metadata (e.g. model parameters) can be provided as numpy arrays or loaded from JSON or MAT files. Results can be visualized directly from the python shell or in iPython notebook using matplotlib, seaborn, or a new interactive visualization library we are developing called [lightning](http://lightning-viz.org)
+The primary data types in Thunder — Images and Series — can each be loaded from a variety of raw input formats, including text or flat binary files (for Series) and binary, tifs, or pngs (for Images). Files can be stored locally, on a networked file system, on Amazon's S3, on Google Storage, or in HDFS. Where needed, metadata (e.g. model parameters) can be provided as numpy arrays or loaded from JSON or MAT files. Results can be visualized directly from the python shell or in iPython notebook using matplotlib, seaborn, or a new interactive visualization library we are developing called [lightning](http://lightning-viz.org)
 
 Help
 ------------

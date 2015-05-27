@@ -830,22 +830,23 @@ class ThunderContext():
         """
         Manually set AWS access credentials to be used by Thunder.
 
-        Provided for hosted cloud environments without filesystem access.
-        If launching a cluster using the thunder-ec2 script, credentials will be configured
-        automatically (inside core-site.xml and ~/.boto), so this method should not need to be called.
+        Provided for hosted cloud environments without filesystem access. If
+        launching a cluster using the thunder-ec2 script, credentials will be
+        configured automatically (inside core-site.xml and ~/.boto), so this
+        method should not need to be called.
 
         Parameters
         ----------
         awsAccessKeyId : string
-             AWS public key, usually starts with "AKIA"
+            AWS public key, usually starts with "AKIA"
 
         awsSecretAccessKey : string
             AWS private key
+        
         """
         from thunder.utils.common import AWSCredentials
         self._credentials = AWSCredentials(awsAccessKeyId, awsSecretAccessKey)
         self._credentials.setOnContext(self._sc)
-
 
 DEFAULT_EXTENSIONS = {
     "stack": "bin",
