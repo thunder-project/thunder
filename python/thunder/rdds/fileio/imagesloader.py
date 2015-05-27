@@ -20,7 +20,7 @@ class ImagesLoader(object):
         sparkcontext: SparkContext
             The pyspark SparkContext object used by the current Thunder environment.
         """
-        from thunder.utils.common import AWSCredentials
+        from thunder.utils.aws import AWSCredentials
         self.sc = sparkContext
         self.awsCredentialsOverride = AWSCredentials.fromContext(sparkContext)
 

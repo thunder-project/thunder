@@ -845,7 +845,7 @@ class ThunderContext():
             AWS private key
         
         """
-        from thunder.utils.common import AWSCredentials
+        from thunder.utils.aws import AWSCredentials
         self._credentials = AWSCredentials(awsAccessKeyId, awsSecretAccessKey)
         self._credentials.setOnContext(self._sc)
 

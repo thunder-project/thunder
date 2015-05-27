@@ -112,7 +112,8 @@ class Data(object):
 
     def _checkOverwrite(self, outputDirPath):
         """ Checks for existence of outputDirPath, raising ValueError if it already exists """
-        from thunder.utils.common import AWSCredentials, raiseErrorIfPathExists
+        from thunder.utils.aws import AWSCredentials
+        from thunder.utils.common import raiseErrorIfPathExists
         awsCredentialOverride = AWSCredentials.fromContext(self.rdd.ctx)
         raiseErrorIfPathExists(outputDirPath, awsCredentialsOverride=awsCredentialOverride)
 

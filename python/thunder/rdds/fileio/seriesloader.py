@@ -33,7 +33,7 @@ class SeriesLoader(object):
         minPartitions: int
             minimum number of partitions to use when loading data. (Used by fromText, fromMatLocal, and fromNpyLocal)
         """
-        from thunder.utils.common import AWSCredentials
+        from thunder.utils.aws import AWSCredentials
         self.sc = sparkContext
         self.minPartitions = minPartitions
         self.awsCredentialsOverride = AWSCredentials.fromContext(sparkContext)

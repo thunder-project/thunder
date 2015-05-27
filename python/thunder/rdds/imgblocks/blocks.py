@@ -111,7 +111,7 @@ class Blocks(Data):
         """
         from thunder.rdds.fileio.writers import getParallelWriterForPath
         from thunder.rdds.fileio.seriesloader import writeSeriesConfig
-        from thunder.utils.common import AWSCredentials
+        from thunder.utils.aws import AWSCredentials
 
         if not overwrite:
             self._checkOverwrite(outputDirPath)
