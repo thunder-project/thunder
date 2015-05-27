@@ -119,7 +119,8 @@ class ThunderContext():
         Loads an Images object from data stored as a binary image stack, tif, or png files.
 
         Supports single files or multiple files, stored on a local file system, a networked file sytem
-        (mounted and available on all nodes), or Amazon S3. HDFS is not currently supported for image file data.
+        (mounted and available on all nodes), Amazon S3, or Google Storage.
+        HDFS is not currently supported for image file data.
 
         Parameters
         ----------
@@ -577,7 +578,7 @@ class ThunderContext():
         """
         Make an example data set for testing analyses.
 
-        Options include 'pca', 'factor', 'kmeans', and 'ica'.
+        Options include 'pca', 'factor', 'kmeans', 'ica', 'sources'
         See thunder.utils.datasets for detailed options.
 
         Parameters
@@ -707,12 +708,12 @@ class ThunderContext():
 
     def loadJSON(self, path):
         """
-        Generic function for loading JSON from a path, handling local file systems and S3
+        Generic function for loading JSON from a path, handling local file systems and S3 or GS
 
         Parameters
         ----------
         path : str
-            Path to a file, can be on a local file system or an S3 bucket
+            Path to a file, can be on a local file system or an S3 or GS bucket
 
         Returns
         -------
@@ -732,7 +733,7 @@ class ThunderContext():
 
     def loadParams(self, path):
         """
-        Load a file with parameters from a local file system or S3.
+        Load a file with parameters from a local file system or S3 or GS.
 
         Assumes file is JSON with basic types (strings, integers, doubles, lists),
         in either a single dict or list of dict-likes, and each dict has at least
@@ -743,7 +744,7 @@ class ThunderContext():
         Parameters
         ----------
         path : str
-            Path to file, can be on a local file system or an S3 bucket
+            Path to file, can be on a local file system or an S3 or GS bucket
 
         Returns
         -------
@@ -754,12 +755,12 @@ class ThunderContext():
 
     def loadSources(self, path):
         """
-        Load a file with sources from a local file system or S3.
+        Load a file with sources from a local file system or S3 or GS.
 
         Parameters
         ----------
         path : str
-            Path to file, can be on a local file system or an S3 bucket
+            Path to file, can be on a local file system or an S3 or GS bucket
 
         Returns
         -------
@@ -778,8 +779,8 @@ class ThunderContext():
         """
         Export local array data to a variety of formats.
 
-        Can write to a local file sytem or S3 (destination inferred from filename schema).
-        S3 writing useful for persisting arrays when working in an environment without
+        Can write to a local file sytem or S3 or GS (destination inferred from filename schema).
+        S3 or GS writing useful for persisting arrays when working in an environment without
         accessible local storage.
 
         Parameters

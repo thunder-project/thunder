@@ -488,7 +488,7 @@ class SeriesLoader(object):
                 try:
                     if doMinimizeReads:
                         # use multitif module to generate a fake, in-memory
-                        # one-page tif file the advantage of this is that it
+                        # one-page tif file. the advantage of this is that it
                         # cuts way down on the many small reads that PIL/pillow
                         # will make otherwise, which would be a problem for s3
                         # or Google Storage
