@@ -29,12 +29,14 @@ import itertools
 import os
 import urllib
 import urlparse
+import logging
 
 from thunder.utils.aws import AWSCredentials, S3ConnectionWithAnon
 
 _haveBoto = False
 try:
     import boto
+    logging.getLogger('boto').setLevel(logging.CRITICAL)
     _haveBoto = True
 except ImportError:
     boto = None
