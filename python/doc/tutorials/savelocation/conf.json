@@ -1,7 +1,0 @@
-{
-  "input": "savelocation", 
-  "valuetype": "int16", 
-  "nvalues": 10, 
-  "keytype": "int16", 
-  "nkeys": 2
-}
