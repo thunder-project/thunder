@@ -630,13 +630,15 @@ class SourceModel(Serializable, object):
                 minDistance = thresh
             vals = self.distance(other, minDistance=minDistance)
             vals[isnan(vals)] = inf
+            compare = lambda x: x < thresh
         elif metric == 'overlap':
             vals = self.overlap(other, method='support', minDistance=minDistance)
             vals[isnan(vals)] = 0
+            compare = lambda x: x > thresh
         else:
             raise Exception("Metric not recognized")
 
-        hits = sum(vals < thresh) / float(len(self.sources))
+        hits = sum(map(compare, vals)) / float(len(self.sources))
 
         return hits
 
