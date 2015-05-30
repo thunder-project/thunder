@@ -574,7 +574,7 @@ class ThunderContext():
                                    startIdx=startIdx, stopIdx=stopIdx, overwrite=overwrite,
                                    recursive=recursive)
 
-    def makeExample(self, dataset, **opts):
+    def makeExample(self, dataset=None, **opts):
         """
         Make an example data set for testing analyses.
 
@@ -593,6 +593,10 @@ class ThunderContext():
 
         """
         from thunder.utils.datasets import DATASET_MAKERS
+
+        if dataset is None:
+            return sorted(DATASET_MAKERS.keys())
+
         checkParams(dataset, DATASET_MAKERS.keys())
 
         return DataSets.make(self._sc, dataset, **opts)
