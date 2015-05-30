@@ -1,13 +1,9 @@
 
-.. \_images\_tutorial:
-
-.. currentmodule:: thunder
-
 Images
 ======
 
-An ``Images`` object is a distributed collection of either 2d images or
-3d volumes. It supports several simple manipulations of image content,
+An ``Images`` object is a distributed collection of either 2D images or
+3D volumes. It supports several simple manipulations of image content,
 exporting image data, and conversion to other data formats.
 
 Setup plotting
@@ -31,7 +27,7 @@ Loading images
 
 Images can be loaded from a ``ThunderContext`` using the ``loadImages``
 method. See the ``Input Formats`` tutorial for more detail; here, we'll
-load example image data.
+just load example image data.
 
 .. code:: python
 
@@ -100,9 +96,8 @@ haven't computed them yet.
 
 If you now inpsect the object again, you'll see those fields populated.
 This is an example of a *lazy* operation; because computing the
-dimensions requires loading the entire dataset, we don't compute it
-automatically, but once we have computed it, we keep it around in case
-we need it again.
+dimensions requires loading data, we don't compute it automatically, but
+once we have computed it, we keep it around in case we need it again.
 
 .. code:: python
 
@@ -126,7 +121,7 @@ so it is 0).
 
 .. code:: python
 
-    data.first()[0]
+    data.keys().first()
 
 
 
@@ -139,20 +134,20 @@ so it is 0).
 
 In Images data, a single record usually corresponds to a single input
 file. The ordering of keys comes from sorting the names of the input
-files alphabetically. In the common case where a single image file
-represents a single time point in an imaging experiment, ordering file
-names so that alphabetically later names correspond to later time points
-(for instance, by appending a postfix '\_tp000', '\_tp001', etc to a
-common file name) will cause the resulting Images data to be sorted in
-temporal order. This will greatly ease conversion into
-temporally-oriented ``Series`` data and other analyses.
+files alphanumerically. In a movie, where each image file represents a
+single time point, ordering file names so that alphabetically later
+names correspond to later time points (for instance, by appending a
+postfix '\_tp000', '\_tp001', etc to a common file name) will cause the
+resulting Images data to be sorted in temporal order. This will simplify
+ease conversion into temporally-oriented ``Series`` data and other
+analyses.
 
 The value of an Images record is the image volume, as an n-dimensional
 numpy array:
 
 .. code:: python
 
-    img = data.first()[1]
+    img = data.values().first()
     img.shape
 
 
@@ -164,7 +159,7 @@ numpy array:
 
 
 
-We can look at it as an image. It's three-dimensional, with two z-planes
+We can look at it as an image. It's three-dimensional, with two planes
 to look at:
 
 .. code:: python
@@ -192,14 +187,14 @@ As an example of 2D data, we can load another one of the examples
 .. code:: python
 
     data = tsc.loadExample('mouse-images')
-    data.dims
+    data.dims.count
 
 
 
 
 .. parsed-literal::
 
-    Dimensions(values=[(0, 0), (63, 63)], n=2)
+    (64, 64)
 
 
 
@@ -207,7 +202,7 @@ Look at the first image
 
 .. code:: python
 
-    img = data.first()[1]
+    img = data.values().first()
     image(img)
 
 
@@ -230,12 +225,13 @@ by specifying the key in the bracket
 Image manipulations
 -------------------
 
-An ``Images`` object has a variety of methods for image manipulation.
+An ``Images`` object has a variety of methods for image manipulation,
+all of which are automatically parallelized across images when running
+on a cluster.
 
 A common manipulation on volumetric data is computing a maximum
-projection in depth. We can perform a maximum projection in parallel
-across all volumes. Here, we compute the projections, and then show the
-first one.
+projection across one dimension. Here, we compute the projections, and
+then show the first one.
 
 .. code:: python
 
@@ -254,8 +250,7 @@ the desired range:
 
 .. code:: python
 
-    sub = data.planes(0,0)
-    img = sub.first()[1]
+    sub = data.planes(0,0).values().first()
     image(img)
 
 
@@ -267,8 +262,7 @@ And we can subsample in space:
 
 .. code:: python
 
-    sub = data.subsample([5,5,1])
-    img = sub.first()[1]
+    img = data.subsample([5,5,1]).values().first()
     image(img[:,:,0])
 
 
@@ -294,7 +288,7 @@ each image to a ``png`` file. You can pass the same arguments as to the
 ``matplotlib`` function ``imshow`` (NOTE: This support is currently
 limited to saving 2D image data.)
 
-.. code:: python
+::
 
     data.maxProjection().saveAsPngs('directory', vmin=0, vmax=200, cmap='gray')
 
@@ -302,11 +296,11 @@ Conversions
 -----------
 
 We commonly encounter images or volumes that correspond to different
-time points. It is useful to convert these data into a ``Series``
-object, the object used in ``thunder`` for distributed array data. After
-this conversion, the ``Series`` will be a distributed collection of
-records, where each record has a pixel identifier as a key, and a time
-series as a value.
+time points, e.g. from a movie. It is useful to convert these data into
+a ``Series`` object, the object used in Thunder for distributed
+one-dimensional array data. After this conversion, the ``Series`` will
+be a distributed collection of records, where each record has a pixel
+identifier as a key, and a time series as a value.
 
 There are two ways to convert image or volume data into ``Series`` data.
 The first is to load ``Images`` data and then convert it into ``Series``
@@ -396,10 +390,9 @@ it will ultimately be faster and more convienient to save ``Images``
 data to a collection of flat binary files on a distributed file system,
 which can in turn be read back in directly as a ``Series``, rather than
 repeatedly converting the images to a ``Series`` object. This can be
-performed either through a ``ThunderContext`` method,
-``convertImagesToSeries``, or directly on an ``Images`` object, as in:
+performed directly on an ``Images`` object, as in:
 
-.. code:: python
+::
 
     data = tsc.loadImages('my-image-directory', inputFormat='tif', startIdx=0, stopIdx=20)
     data.saveAsBinarySeries('my-binary-directory', overwrite=True)

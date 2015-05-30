@@ -1,0 +1,361 @@
+
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Regression</title>
+    
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootswatch-3.1.0/simplex/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/styles.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.6.0.dev',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../_static/bootstrap-sphinx.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="None" href="../../index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../index.html"><img src="../../_static/thunder_logo.png">
+           </a>
+        <span class="navbar-text navbar-version pull-left"><b>0.6.0.dev</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            <li class="divider-vertical"></li>
+            
+                <li><a href="../../tutorials.html">Tutorials</a></li>
+                <li><a href="../../api.html">API</a></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction to Thunder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../install_local.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../install_ec2.html">Running on EC2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../style_guide.html">Style guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">F.A.Q.</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/thunder-project/thunder/releases">Release notes</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../basic_usage.html">Basic usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../thunder_context.html">Thunder context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input_formats.html">Input formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../images.html">Images</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../series.html">Series</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../multi_index.html">Multi-indexing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../image_registration.html">Image registration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../clustering.html">Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../factorization.html">Factorization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regression.html">Regression</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://gitter.im/thunder-project/thunder">Gitter chatroom</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://groups.google.com/forum/?hl=en#!forum/thunder-user">Mailing list</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/thunder-project/thunder">Github repo</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://thunder-project.org">Project page</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Regression</a><ul>
+<li><a class="reference internal" href="#setup-plotting">Setup plotting</a></li>
+<li><a class="reference internal" href="#load-and-convert-data">Load and convert data</a></li>
+<li><a class="reference internal" href="#correlation-analysis">Correlation analysis</a></li>
+<li><a class="reference internal" href="#regression-analysis">Regression analysis</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+            
+            
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <div class="section" id="regression">
+<h1>Regression<a class="headerlink" href="#regression" title="Permalink to this headline">¶</a></h1>
+<p>Linear regression is a simple and powerful tool for describing
+relationships between a response variable and one or more explanatory
+variables. Here, we show how to peform ordinary least squres regression
+in Thunder and visualize the results.</p>
+<div class="section" id="setup-plotting">
+<h2>Setup plotting<a class="headerlink" href="#setup-plotting" title="Permalink to this headline">¶</a></h2>
+<div class="code python highlight-python"><div class="highlight"><pre>%matplotlib inline
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="kn">as</span> <span class="nn">sns</span>
+<span class="kn">from</span> <span class="nn">thunder</span> <span class="kn">import</span> <span class="n">Colorize</span>
+<span class="n">image</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">image</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;darkgrid&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="load-and-convert-data">
+<h2>Load and convert data<a class="headerlink" href="#load-and-convert-data" title="Permalink to this headline">¶</a></h2>
+<p>Load a series of images from one of the examples.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;mouse-images&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Take a look at the first image.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/regression_files/src/regression_9_0.png" src="tutorials/src/src/regression_files/src/regression_9_0.png" />
+<p>Convert the Images data to TimeSeries data, apply preprocessing, and
+cache the results. Here, the preprocessing does two things: squelches
+the data (to set all signals that do not exceed a threshold to 0, which
+helps eliminates noise), and normalizes (subtracting and removing all
+time series by a baseline).</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">series</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">toTimeSeries</span><span class="p">()</span><span class="o">.</span><span class="n">squelch</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
+<span class="n">series</span><span class="o">.</span><span class="n">cache</span><span class="p">()</span>
+<span class="n">series</span><span class="o">.</span><span class="n">count</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>Take a look at the time series of a few pixels (selected to have large
+standard devaitions to show activity).</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">sample</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">subset</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sample</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/regression_files/src/regression_13_0.png" src="tutorials/src/src/regression_files/src/regression_13_0.png" />
+<p>Load in associated behavioral data to be used as explanatory variables
+(a.k.a regressors) in predicting the above time series.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">regressors</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;mouse-params&#39;</span><span class="p">)</span>
+<span class="n">regressors</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>Params
+names: [&#39;runningSpeed&#39;, &#39;corridorPosition&#39;]
+</pre></div>
+</div>
+<p>We can also plot the regressors</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">regressors</span><span class="p">[</span><span class="s">&#39;runningSpeed&#39;</span><span class="p">]);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">regressors</span><span class="p">[</span><span class="s">&#39;corridorPosition&#39;</span><span class="p">]);</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/regression_files/src/regression_17_0.png" src="tutorials/src/src/regression_files/src/regression_17_0.png" />
+</div>
+<div class="section" id="correlation-analysis">
+<h2>Correlation analysis<a class="headerlink" href="#correlation-analysis" title="Permalink to this headline">¶</a></h2>
+<p>The correlation coefficient provides a measure of the strength of the
+linear relationship between two variables. When we have only a single
+explanatory varaible, the correlation coefficient offers a simpler
+alternative to a regression analysis. Let&#8217;s start by correlating the
+activity from each pixel with one of our explanatory variables.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">x</span> <span class="o">=</span> <span class="n">regressors</span><span class="p">[</span><span class="s">&#39;runningSpeed&#39;</span><span class="p">]</span>
+<span class="n">corrs</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can pack these correlation coefficients back into an arrary and
+visualize the results. We center the values of the correlation
+coefficients so that positive correlations are red and negative
+correlations are blue.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">center</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">y</span><span class="p">[</span><span class="n">y</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">y</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="nb">max</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">y</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">y</span><span class="p">[</span><span class="n">y</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">y</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">]</span><span class="o">/-</span><span class="nb">min</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">y</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">y</span>
+
+<span class="n">corrMat</span> <span class="o">=</span> <span class="n">center</span><span class="p">(</span><span class="n">corrs</span><span class="o">.</span><span class="n">pack</span><span class="p">())</span>
+<span class="n">image</span><span class="p">(</span><span class="n">corrMat</span><span class="p">,</span> <span class="n">bar</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;RdBu_r&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/regression_files/src/regression_22_0.png" src="tutorials/src/src/regression_files/src/regression_22_0.png" />
+</div>
+<div class="section" id="regression-analysis">
+<h2>Regression analysis<a class="headerlink" href="#regression-analysis" title="Permalink to this headline">¶</a></h2>
+<p>With more than two explanatory variables, correlation is no longer a
+viable optoin, so we turn to linear regression. Linear regression in
+Thunder models the data as:</p>
+<p><span class="math">\(y=\beta X\)</span></p>
+<p>where <span class="math">\(y\)</span> is a row-vector of measurements of the response
+variable, <span class="math">\(\beta\)</span> is a row-vector of regression coeffients, one
+for each regressor, and <span class="math">\(X\)</span> is a design matrix with one row for
+each regressor and one column for each measurement</p>
+<p>Since our data are time series, the columns of <span class="math">\(y\)</span> and <span class="math">\(X\)</span>
+represent measurements at different instants in time. Note: Thunder
+automatically adds a row of 1&#8217;s to the design matrix to model an
+intercept term.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">X</span> <span class="o">=</span> <span class="n">regressors</span><span class="p">[[</span><span class="s">&#39;runningSpeed&#39;</span><span class="p">,</span> <span class="s">&#39;corridorPosition&#39;</span><span class="p">]]</span>
+</pre></div>
+</div>
+<p>Unlike the correlation coefficient, linear regression is sensitive to
+the scale of the regressor. Thus, we standardize our regressors so that
+the resulting regression coefficients can be compared on the same scale.
+This will be useful later for visualization of the results.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">scipy.stats.mstats</span> <span class="kn">import</span> <span class="n">zscore</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">zscore</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For each pixel/series fit a linear regression model that predicts the
+pixel values from our regressors</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">thunder</span> <span class="kn">import</span> <span class="n">RegressionModel</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">RegressionModel</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="s">&#39;linear&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">series</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The result is a Series with three indices: &#8220;betas&#8221; (the regression
+coefficients), &#8220;stats&#8221; (the <span class="math">\(R^2\)</span> value), and &#8220;resid&#8221; (the
+residuals)</p>
+<p>We can collect the regression coefficients and visualize how they are
+distribution across the image.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">b1</span><span class="p">,</span> <span class="n">b2</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s">&#39;betas&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+<span class="n">rsq</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s">&#39;stats&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">rsq</span><span class="p">,</span> <span class="n">bar</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/regression_files/src/regression_32_0.png" src="tutorials/src/src/regression_files/src/regression_32_0.png" />
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">b1map</span><span class="p">,</span> <span class="n">b2map</span> <span class="o">=</span> <span class="n">center</span><span class="p">(</span><span class="n">b1</span><span class="p">),</span> <span class="n">center</span><span class="p">(</span><span class="n">b2</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span> <span class="p">,</span><span class="mi">10</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">b1map</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;RdBu_r&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;b1&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">b2map</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;RdBu_r&#39;</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;b2&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">rsq</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;r-squared&#39;</span><span class="p">);</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/regression_files/src/regression_33_0.png" src="tutorials/src/src/regression_files/src/regression_33_0.png" />
+<p>To combine these sources of information, we will make composite maps,
+one for the first regressor, one for the second, and one for both. In
+each map, we&#8217;ll pick a color to represent the regressor, and use the
+absolute value to represent all pixels that are related to that
+variable, whether positively or negative. We will also use <span class="math">\(R^2\)</span>
+as a mask, and use the mean image as a background to blend in.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">m</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">c</span> <span class="o">=</span> <span class="n">Colorize</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="s">&#39;indexed&#39;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">c</span><span class="o">.</span><span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;green&#39;</span><span class="p">]</span>
+<span class="n">img</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">transform</span><span class="p">([</span><span class="nb">abs</span><span class="p">(</span><span class="n">b1</span><span class="p">)],</span> <span class="n">mask</span><span class="o">=</span><span class="n">rsq</span><span class="p">,</span> <span class="n">background</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="n">mixing</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">c</span><span class="o">.</span><span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;red&#39;</span><span class="p">]</span>
+<span class="n">img</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">transform</span><span class="p">([</span><span class="nb">abs</span><span class="p">(</span><span class="n">b2</span><span class="p">)],</span> <span class="n">mask</span><span class="o">=</span><span class="n">rsq</span><span class="p">,</span> <span class="n">background</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="n">mixing</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">c</span><span class="o">.</span><span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;green&#39;</span><span class="p">,</span> <span class="s">&#39;red&#39;</span><span class="p">]</span>
+<span class="n">img</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">transform</span><span class="p">([</span><span class="nb">abs</span><span class="p">(</span><span class="n">b1</span><span class="p">),</span> <span class="nb">abs</span><span class="p">(</span><span class="n">b2</span><span class="p">)],</span> <span class="n">mask</span><span class="o">=</span><span class="n">rsq</span><span class="p">,</span> <span class="n">background</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="n">mixing</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/regression_files/src/regression_36_0.png" src="tutorials/src/src/regression_files/src/regression_36_0.png" />
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+        <br/>
+        
+<div id="sourcelink">
+  <a href="../../_sources/tutorials/src/regression.txt"
+     rel="nofollow">Source</a>
+</div>
+      
+    </p>
+    <p>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

@@ -117,7 +117,7 @@
 <li><a class="reference internal" href="#setup-plotting">Setup plotting</a></li>
 <li><a class="reference internal" href="#loading-series">Loading series</a></li>
 <li><a class="reference internal" href="#inspection">Inspection</a></li>
-<li><a class="reference internal" href="#preprocessing">Preprocessing</a></li>
+<li><a class="reference internal" href="#processing">Processing</a></li>
 <li><a class="reference internal" href="#selections">Selections</a></li>
 <li><a class="reference internal" href="#statistics">Statistics</a></li>
 <li><a class="reference internal" href="#keys">Keys</a></li>
@@ -155,23 +155,22 @@
       
   <div class="section" id="series">
 <h1>Series<a class="headerlink" href="#series" title="Permalink to this headline">¶</a></h1>
-<p>A <tt class="docutils literal"><span class="pre">Series</span></tt> object is a distributed collection of 1d arrays, all of
+<p>A <tt class="docutils literal"><span class="pre">Series</span></tt> object is a distributed collection of 1D arrays, all of
 which share a common index. It supports several manipulations and
-computations on 1d data, some of which take the index into account.</p>
+computations on 1D data, some of which take the index into account.</p>
 <p>The most common examples of Series objects are likely time series data,
 in which each array represents a quantity that has been temporally
-sampled at regular intervals. In imaging data, a single record within a
-Series might consist of a time series of measurements at a point within
-the imaging volume, as in the fish-series example data from the &#8220;basic
-usage&#8221; tutorial.</p>
+sampled at regular intervals. For example, a movie can be represented as
+Series data, where a single record might consist of a pixel time series,
+as in the <tt class="docutils literal"><span class="pre">fish-series</span></tt> and <tt class="docutils literal"><span class="pre">mouse-series</span></tt> example data from the
+<tt class="docutils literal"><span class="pre">basic</span> <span class="pre">usage</span></tt> tutorial.</p>
 <p>The keys associated with Series records can be any data used to identify
-the series; however for imaging data, the keys are commonly tuples of
-integers, representing the indicies of the position within the imaging
-volume from which the time series originates. For example, a Series
-record representing a time series from an outer corner of a
-3-dimensional imaged volume might have a key of (0, 0, 0), with the
-value being an array representing the measurements at that point over
-the course of an experiment: [112, 110, 118, ..., 124].</p>
+the series, for example, a single sensor channel identifier, or tuples
+representing pixel coordiantes (if derived from a movie). For example, a
+Series record representing a time series from an outer corner of a movie
+might have key (0, 0, 0), with the value being an array representing the
+measurements at that location over time: [112, 110, 118, ..., 124].</p>
+<p>Here, we show examples of loading and manipulating Series data.</p>
 <div class="section" id="setup-plotting">
 <h2>Setup plotting<a class="headerlink" href="#setup-plotting" title="Permalink to this headline">¶</a></h2>
 <div class="code python highlight-python"><div class="highlight"><pre>%matplotlib inline
@@ -201,31 +200,32 @@ which thresholds based on the standard deviation:</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">examples</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">20</span><span class="p">,:]);</span>
 </pre></div>
 </div>
-<img alt="../_images/series_9_0.png" src="../_images/series_9_0.png" />
+<img alt="../_images/series_8_0.png" src="../_images/series_8_0.png" />
 <p>Note the variation in raw intensity levels.</p>
 </div>
-<div class="section" id="preprocessing">
-<h2>Preprocessing<a class="headerlink" href="#preprocessing" title="Permalink to this headline">¶</a></h2>
-<p>A <tt class="docutils literal"><span class="pre">Series</span></tt> object has methods for normalizing and standardizing data,
-which can be useful during preprocessing. For example, <tt class="docutils literal"><span class="pre">center</span></tt>
-subtracts the mean, and <tt class="docutils literal"><span class="pre">normalize</span></tt> subtracts and divides by a
-baseline (either the mean, or a percentile). Note the changes in the
+<div class="section" id="processing">
+<h2>Processing<a class="headerlink" href="#processing" title="Permalink to this headline">¶</a></h2>
+<p>A <tt class="docutils literal"><span class="pre">Series</span></tt> object has various methods for processing and transforming
+the data. For example, <tt class="docutils literal"><span class="pre">center</span></tt> subtracts the mean, <tt class="docutils literal"><span class="pre">squelch</span></tt> sets
+to 0 any records not exceeding a threshold, and <tt class="docutils literal"><span class="pre">zscore</span></tt> subtracts the
+mean and divides by the standard deviation. Note the changes in the
 y-axis.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">examples</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">center</span><span class="p">()</span><span class="o">.</span><span class="n">subset</span><span class="p">(</span><span class="n">nsamples</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">examples</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">20</span><span class="p">,:]);</span>
 </pre></div>
 </div>
-<img alt="../_images/series_12_0.png" src="../_images/series_12_0.png" />
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">examples</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">toTimeSeries</span><span class="p">()</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="s">&#39;percentile&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">subset</span><span class="p">(</span><span class="n">nsamples</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<img alt="../_images/series_11_0.png" src="../_images/series_11_0.png" />
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">examples</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">squelch</span><span class="p">(</span><span class="mi">150</span><span class="p">)</span><span class="o">.</span><span class="n">zscore</span><span class="p">()</span><span class="o">.</span><span class="n">subset</span><span class="p">(</span><span class="n">nsamples</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">examples</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">20</span><span class="p">,:]);</span>
 </pre></div>
 </div>
-<img alt="../_images/series_13_0.png" src="../_images/series_13_0.png" />
-<p>Related methods include <tt class="docutils literal"><span class="pre">center</span></tt>, <tt class="docutils literal"><span class="pre">standardize</span></tt>, and <tt class="docutils literal"><span class="pre">detrend</span></tt>.</p>
+<img alt="../_images/series_12_0.png" src="../_images/series_12_0.png" />
+<p>Related methods include <tt class="docutils literal"><span class="pre">standardize</span></tt>, <tt class="docutils literal"><span class="pre">detrend</span></tt>, and <tt class="docutils literal"><span class="pre">normalize</span></tt>
+(the latter two are specified to <tt class="docutils literal"><span class="pre">TimeSeries</span></tt>, see below)</p>
 </div>
 <div class="section" id="selections">
 <h2>Selections<a class="headerlink" href="#selections" title="Permalink to this headline">¶</a></h2>
-<p>A <tt class="docutils literal"><span class="pre">Series</span></tt> has a 1d index, which can be used to subselect values.</p>
+<p>A <tt class="docutils literal"><span class="pre">Series</span></tt> has a 1D index, which can be used to subselect values.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">shape</span>
 </pre></div>
 </div>
@@ -257,8 +257,9 @@ y-axis.</p>
 integers starting at zero and ending one before the length of the series
 data, as shown in these examples. However, other data types can also be
 used as the index for a series object, such as a sequence of strings,
-providing text labels for each element in the series array. See the
-<tt class="docutils literal"><span class="pre">Regression</span></tt> tutorial for an example of this usage.</p>
+providing text labels for each element in the series array, or a tuple
+with indices at different levels. See the tutorial on Multi-indexing
+tutorial for this usage.</p>
 </div>
 <div class="section" id="statistics">
 <h2>Statistics<a class="headerlink" href="#statistics" title="Permalink to this headline">¶</a></h2>
@@ -269,7 +270,7 @@ records. To summarize across records:</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">toTimeSeries</span><span class="p">()</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span><span class="o">.</span><span class="n">min</span><span class="p">());</span>
 </pre></div>
 </div>
-<img alt="../_images/series_25_0.png" src="../_images/series_25_0.png" />
+<img alt="../_images/series_24_0.png" src="../_images/series_24_0.png" />
 <p>To summarize within records:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">seriesMean</span><span class="p">()</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
@@ -284,21 +285,22 @@ records. To summarize across records:</p>
 </pre></div>
 </div>
 <p>We can also correlate each record with a signal of interest. As
-expected, for a random signal, the correlation should be low.</p>
+expected, for a random signal, the correlation should be near 0.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">random</span>
 <span class="n">signal</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">240</span><span class="p">)</span>
 <span class="n">data</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mf">0.039062227147807042</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mf">0.018071405221599671</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="keys">
 <h2>Keys<a class="headerlink" href="#keys" title="Permalink to this headline">¶</a></h2>
-<p>We often use integer keys to index the records of a <tt class="docutils literal"><span class="pre">Series</span></tt>. For
-instance, in the case where a <tt class="docutils literal"><span class="pre">Series</span></tt> represents imaging data, the
-integer keys may represent spatial position within the imaged volume.</p>
+<p>We often use integer keys to index the records of a <tt class="docutils literal"><span class="pre">Series</span></tt>, and
+sometimes these keys represent indices into some original array (for
+example, indices into a multi-dimensional tensor, or pixel coordinates
+if the records are time series from a movie).</p>
 <p>A few convenience methods are provided for working with keys. First, the
 attribute <tt class="docutils literal"><span class="pre">dims</span></tt> contains information about the range of the keys.
 Computing this requires a pass through the data, but if computed on a
@@ -379,8 +381,8 @@ the provided index lists.</p>
 <p>The <tt class="docutils literal"><span class="pre">pack</span></tt> method collects a series into a local array, reshaped based
 on the keys. If there are multiple values per record, all will be
 collected into the local array, so typically we select a subset of
-values before packing to avoid overwhelming the local processing node
-with data.</p>
+values before packing to avoid overwhelming the local returning a very
+large amount of data.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">out</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
 <span class="n">out</span><span class="o">.</span><span class="n">shape</span>
 </pre></div>
@@ -400,8 +402,8 @@ with data.</p>
 <h2>Conversions<a class="headerlink" href="#conversions" title="Permalink to this headline">¶</a></h2>
 <p>Subclasses of <tt class="docutils literal"><span class="pre">Series</span></tt> provide additional functionality for more
 specialized data types.</p>
-<p>A <tt class="docutils literal"><span class="pre">TimeSeries</span></tt> provides methods like <tt class="docutils literal"><span class="pre">fourier</span></tt>, for computing the
-statistics of a Fourier transform:</p>
+<p>A <tt class="docutils literal"><span class="pre">TimeSeries</span></tt> provides methods specific to time-varying data, like
+<tt class="docutils literal"><span class="pre">fourier</span></tt>, for computing the statistics of a Fourier transform:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">ts</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">toTimeSeries</span><span class="p">()</span>
 <span class="n">fr</span> <span class="o">=</span> <span class="n">ts</span><span class="o">.</span><span class="n">fourier</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="n">fr</span><span class="o">.</span><span class="n">index</span>
@@ -416,17 +418,22 @@ statistics of a Fourier transform:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mf">0.17186687287857189</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>Or detrend for detrending data over time</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="o">.</span><span class="n">detrend</span><span class="p">(</span><span class="s">&#39;nonlinear&#39;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">());</span>
+</pre></div>
+</div>
+<img alt="../_images/series_49_0.png" src="../_images/series_49_0.png" />
 <p>A <tt class="docutils literal"><span class="pre">RowMatrix</span></tt> provides a variety of methods for working with
 distributed matrices and matrix operations:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">mat</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">toRowMatrix</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">mat</span><span class="o">.</span><span class="n">cov</span><span class="p">()</span><span class="o">.</span><span class="n">shape</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">thunder</span> <span class="kn">import</span> <span class="n">Colorize</span>
+<span class="n">Colorize</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">mat</span><span class="o">.</span><span class="n">cov</span><span class="p">())</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">240</span><span class="p">,</span> <span class="mi">240</span><span class="p">)</span>
-</pre></div>
-</div>
+<img alt="../_images/series_52_0.png" src="../_images/series_52_0.png" />
 </div>
 </div>
 

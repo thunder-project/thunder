@@ -151,7 +151,8 @@
       
   <div class="section" id="thunder-context">
 <h1>Thunder context<a class="headerlink" href="#thunder-context" title="Permalink to this headline">¶</a></h1>
-<p>The <tt class="docutils literal"><span class="pre">ThunderContext</span></tt> is the entry point for most analyses.</p>
+<p>The <tt class="docutils literal"><span class="pre">ThunderContext</span></tt> is the entry point for loading data and
+interacting with remote services (e.g. Amazon).</p>
 <div class="section" id="setup-plotting">
 <h2>Setup plotting<a class="headerlink" href="#setup-plotting" title="Permalink to this headline">¶</a></h2>
 <div class="code python highlight-python"><div class="highlight"><pre>%matplotlib inline
@@ -178,10 +179,9 @@ created from an existing instance of a <tt class="docutils literal"><span class=
 </pre></div>
 </div>
 <p>Or it can be created directly using the same arguments provided to a
-<tt class="docutils literal"><span class="pre">SparkContext</span></tt> (this line is commented out because executing it in the
-notebook will cause an error because you cannot run multiple
-<tt class="docutils literal"><span class="pre">SparkContexts</span></tt> at once):</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="c">#tsc = ThunderContext.start(appName=&#39;myapp&#39;)</span>
+<tt class="docutils literal"><span class="pre">SparkContext</span></tt> (we don&#8217;t run this line here because you can&#8217;t run
+multiple <tt class="docutils literal"><span class="pre">SparkContexts</span></tt> at once):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">tsc</span> <span class="o">=</span> <span class="n">ThunderContext</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">appName</span><span class="o">=</span><span class="s">&#39;myapp&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -204,7 +204,7 @@ on loading and data types.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">()</span><span class="o">.</span><span class="n">first</span><span class="p">())</span>
 </pre></div>
 </div>
-<img alt="../_images/thunder_context_13_0.png" src="../_images/thunder_context_13_0.png" />
+<img alt="../_images/thunder_context_12_0.png" src="../_images/thunder_context_12_0.png" />
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeries</span><span class="p">(</span><span class="n">datapath</span> <span class="o">+</span> <span class="s">&#39;/iris/iris.bin&#39;</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;binary&#39;</span><span class="p">)</span>
 <span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
@@ -213,19 +213,51 @@ on loading and data types.</p>
 </pre></div>
 </div>
 <p>Currently, <tt class="docutils literal"><span class="pre">loadImages</span></tt> can load <tt class="docutils literal"><span class="pre">tif</span></tt>, <tt class="docutils literal"><span class="pre">png</span></tt>, or <tt class="docutils literal"><span class="pre">binary</span></tt>
-images (or volumes) from a local file system, networked file system, or
-Amazon S3. <tt class="docutils literal"><span class="pre">loadSeries</span></tt> can load data from one or more <tt class="docutils literal"><span class="pre">text</span></tt> or
-<tt class="docutils literal"><span class="pre">binary</span></tt> files on a local file system, networked file system, S3, or
-HDFS.</p>
-<p>The <tt class="docutils literal"><span class="pre">loadSeries</span></tt> method can also load data stored in local arrays in
+images (or volumes) from a local file system, networked file system,
+Amazon S3, or Google Storage. <tt class="docutils literal"><span class="pre">loadSeries</span></tt> can load data from one or
+more <tt class="docutils literal"><span class="pre">text</span></tt> or <tt class="docutils literal"><span class="pre">binary</span></tt> files on a local file system, networked file
+system, Amazon S3, or HDFS.</p>
+<p>The methods <tt class="docutils literal"><span class="pre">loadImagesFromArray</span></tt> and <tt class="docutils literal"><span class="pre">loadSeriesFromArray</span></tt> can be
+used to used to load data directly from numpy arrays.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">random</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeriesFromArray</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">nrecords</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="mi">50</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">index</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadImagesFromArray</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">nrecords</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="mi">50</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">dims</span><span class="o">.</span><span class="n">count</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Finally, <tt class="docutils literal"><span class="pre">loadSeries</span></tt> can also load data stored in local arrays in
 either numpy <tt class="docutils literal"><span class="pre">npy</span></tt> or Matlab <tt class="docutils literal"><span class="pre">MAT</span></tt> format (if loading from a <tt class="docutils literal"><span class="pre">MAT</span></tt>
-file, you must additionally provide a variable name). This is not
-particularly useful when working with large data sets, but may be
-convenient for local testing, or for distributing a smaller data set for
-performing intensive computations. In the latter case, the number of
-partitions should be set to be approximately equal to 2-3 times the
-number of cores available on your cluster, so that different cores can
-work on different portions of the data.</p>
+file, you must additionally provide a variable name). This is especially
+useful for smaller local datasets, or for distributing a smaller data
+set for performing intensive computations. In the latter case, the
+number of partitions should be set to be approximately equal to 2-3
+times the number of cores available on your cluster, so that different
+cores can work on different portions of the data.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeries</span><span class="p">(</span><span class="n">datapath</span> <span class="o">+</span> <span class="s">&#39;/iris/iris.mat&#39;</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;mat&#39;</span><span class="p">,</span> <span class="n">varName</span><span class="o">=</span><span class="s">&#39;data&#39;</span><span class="p">,</span> <span class="n">minPartitions</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
@@ -238,36 +270,6 @@ work on different portions of the data.</p>
 </pre></div>
 </div>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">array</span><span class="p">([</span> <span class="mf">5.1</span><span class="p">,</span>  <span class="mf">3.5</span><span class="p">,</span>  <span class="mf">1.4</span><span class="p">,</span>  <span class="mf">0.2</span><span class="p">]))</span>
-</pre></div>
-</div>
-<p>Finally, there are two methods for performing the common operation of
-converting <tt class="docutils literal"><span class="pre">Images</span></tt> data into <tt class="docutils literal"><span class="pre">Series</span></tt> data. As an example, if we
-have a sequence of images that represent successive time points, we
-might want to convert these to <tt class="docutils literal"><span class="pre">Series</span></tt> data where each record is the
-time series of a voxel. These two methods take a set of image files as
-input, and either load them directly as a <tt class="docutils literal"><span class="pre">Series</span></tt>, or save the
-contents out as <tt class="docutils literal"><span class="pre">binary</span></tt> data suitable for loading with
-<tt class="docutils literal"><span class="pre">loadSeries</span></tt>.</p>
-<p>The ordering of points in the <tt class="docutils literal"><span class="pre">Series</span></tt> values comes from the
-lexicographic ordering of the image data file file names. Given image
-files that each represent a single time point, indicating the time point
-in the image file name so that alphabetically later file names
-correspond to temporally later images (for instance by adding a suffix
-&#8216;_tp000&#8217;, &#8216;_tp001&#8217; and so on to a common file name) will result in
-correct ordering of the resulting <tt class="docutils literal"><span class="pre">Series</span></tt> data.</p>
-<p>There are two implementations of the <tt class="docutils literal"><span class="pre">Image</span></tt> to <tt class="docutils literal"><span class="pre">Series</span></tt> conversion.
-Which to use is determined by the <tt class="docutils literal"><span class="pre">shuffle</span></tt> argument. If
-<tt class="docutils literal"><span class="pre">shuffle=True</span></tt> it will do the conversion using a distributed transpose
-operation, which requires shuffling blocks of data across the cluster.
-If <tt class="docutils literal"><span class="pre">shuffle=False</span></tt> it will use an alternate method that avoids the
-shuffle at the cost of increased file IO. In practice, <tt class="docutils literal"><span class="pre">shuffle=False</span></tt>
-will often be slower, but with versions of Spark before 1.2 it may be
-more robust. <tt class="docutils literal"><span class="pre">shuffle=True</span></tt> is the current default.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadImagesAsSeries</span><span class="p">(</span><span class="n">datapath</span> <span class="o">+</span> <span class="s">&#39;/mouse/images/&#39;</span><span class="p">,</span> <span class="n">startIdx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stopIdx</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">tsc</span><span class="o">.</span><span class="n">convertImagesToSeries</span><span class="p">(</span><span class="n">datapath</span> <span class="o">+</span> <span class="s">&#39;/mouse/images/&#39;</span><span class="p">,</span> <span class="s">&#39;savelocation&#39;</span><span class="p">,</span> <span class="n">startIdx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stopIdx</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeries</span><span class="p">(</span><span class="s">&#39;savelocation&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -283,19 +285,27 @@ testing purposes, by calling methods from the <tt class="docutils literal"><span
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/thunder_context_26_0.png" src="../_images/thunder_context_26_0.png" />
-<p>The &#8216;loadExample&#8217; method directly loads one of the small example
+<img alt="../_images/thunder_context_27_0.png" src="../_images/thunder_context_27_0.png" />
+<p>You can see the list of available generated datasets by calling without
+an argument</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">tsc</span><span class="o">.</span><span class="n">makeExample</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="s">&#39;factor&#39;</span><span class="p">,</span> <span class="s">&#39;ica&#39;</span><span class="p">,</span> <span class="s">&#39;kmeans&#39;</span><span class="p">,</span> <span class="s">&#39;pca&#39;</span><span class="p">,</span> <span class="s">&#39;rand&#39;</span><span class="p">,</span> <span class="s">&#39;sources&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">loadExample</span></tt> method directly loads one of the small example
 datasets. This are highly compressed and downsampled, and meant only to
 demonstrate basic functionality and help explore the API, not to
 represent anything meaningful about the data itself.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;mouse-images&#39;</span><span class="p">)</span>
-<span class="n">img</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">img</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">()</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
 </div>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/thunder_context_29_0.png" src="../_images/thunder_context_29_0.png" />
+<img alt="../_images/thunder_context_32_0.png" src="../_images/thunder_context_32_0.png" />
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;fish-series&#39;</span><span class="p">)</span>
 <span class="n">img</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">seriesMean</span><span class="p">()</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
 </pre></div>
@@ -303,8 +313,8 @@ represent anything meaningful about the data itself.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
-<img alt="../_images/thunder_context_31_0.png" src="../_images/thunder_context_31_0.png" />
-<p>You can easily see the list of avaiable example data sets:</p>
+<img alt="../_images/thunder_context_34_0.png" src="../_images/thunder_context_34_0.png" />
+<p>You can see the list of avaiable example data sets:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -316,11 +326,14 @@ represent anything meaningful about the data itself.</p>
  <span class="s">&#39;mouse-series&#39;</span><span class="p">]</span>
 </pre></div>
 </div>
-<p>Example data stored on S3 can be loaded using the <tt class="docutils literal"><span class="pre">loadExampleEC2</span></tt>
-method. You must be running Thunder on an Amazon EC2 cluster in order to
-use these methods. Some of the available data sets include parameters
-that are returned alongside the data, as in</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExampleS3</span><span class="p">(</span><span class="s">&#39;zebrafish-optomotor-response&#39;</span><span class="p">)</span>
+<p>Example large data sets are available Amazon S3 through the
+<a class="reference external" href="http://datasets.codeneuro.org">CodeNeuro</a> data repository. If you
+are running Thunder on an Amazon EC2 clsuter (see the
+<a class="reference external" href="http://thunder-project.org/thunder/docs/install_ec2.html">instructions</a>),
+these data sets can be can be loaded using the <tt class="docutils literal"><span class="pre">loadExampleS3</span></tt> method.
+We show the operation without calling it here, because we assume this
+notebook is being run locally:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExampleS3</span><span class="p">(</span><span class="s">&#39;ahrens.lab/direction.selectivity&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>You can also check the available data sets:</p>
@@ -332,6 +345,8 @@ that are returned alongside the data, as in</p>
  <span class="s">&#39;svoboda.lab/tactile.navigation&#39;</span><span class="p">]</span>
 </pre></div>
 </div>
+<p>Many of these data sets have notebooks associated with them for showing
+how to load the data</p>
 </div>
 </div>
 

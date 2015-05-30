@@ -152,7 +152,7 @@
   <div class="section" id="factorization">
 <h1>Factorization<a class="headerlink" href="#factorization" title="Permalink to this headline">¶</a></h1>
 <p>Factorization algorithms are useful for data-driven decomposition of
-spatio-temporal data, for example, to recover spatial patterns with
+spatial and temporal data, for example, to recover spatial patterns with
 similar temporal profiles. Here, we show how to use some of the
 factorization algorithms in Thunder and visualize the results.</p>
 <div class="section" id="setup-plotting">
@@ -194,11 +194,11 @@ plotting the components, the temporal basis functions.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">comps</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/factorization_11_0.png" src="../_images/factorization_11_0.png" />
+<img alt="../_images/factorization_10_0.png" src="../_images/factorization_10_0.png" />
 <p>The scores are spatial basis functions. We can pack them into a local
 array and look at them as images one by one.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">imgs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">scores</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
-<span class="n">imgs</span><span class="o">.</span><span class="n">shape</span> <span class="c"># dimensions should be (k, x, y, z) where k is the number of components</span>
+<span class="n">imgs</span><span class="o">.</span><span class="n">shape</span>
 </pre></div>
 </div>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">76</span><span class="p">,</span> <span class="mi">87</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
@@ -207,11 +207,11 @@ array and look at them as images one by one.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">imgs</span><span class="p">[</span><span class="mi">0</span><span class="p">,:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">clim</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">0.05</span><span class="p">,</span><span class="mf">0.05</span><span class="p">))</span>
 </pre></div>
 </div>
-<img alt="../_images/factorization_14_0.png" src="../_images/factorization_14_0.png" />
+<img alt="../_images/factorization_13_0.png" src="../_images/factorization_13_0.png" />
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">imgs</span><span class="p">[</span><span class="mi">1</span><span class="p">,:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">clim</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">0.05</span><span class="p">,</span><span class="mf">0.05</span><span class="p">))</span>
 </pre></div>
 </div>
-<img alt="../_images/factorization_15_0.png" src="../_images/factorization_15_0.png" />
+<img alt="../_images/factorization_14_0.png" src="../_images/factorization_14_0.png" />
 <p>Clearly there is some spatial structure to each component, but looking
 at them one by one can be difficult. A useful trick is to look at two
 components at once via a color code that converts the scores into polar
@@ -224,7 +224,7 @@ components, and the brightness shows the total amplitude.</p>
 <span class="n">image</span><span class="p">(</span><span class="n">amax</span><span class="p">(</span><span class="n">maps</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
 </div>
-<img alt="../_images/factorization_18_0.png" src="../_images/factorization_18_0.png" />
+<img alt="../_images/factorization_17_0.png" src="../_images/factorization_17_0.png" />
 <p>To get more intuition for these colors, we can get the scores from a
 random subset of pixels. This will return two numbers per pixel, the
 projection onto the first and second principal component, and we
@@ -240,7 +240,7 @@ the map.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">pts</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span><span class="n">pts</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">clrs</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">75</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/factorization_21_0.png" src="../_images/factorization_21_0.png" />
+<img alt="../_images/factorization_20_0.png" src="../_images/factorization_20_0.png" />
 <p>Recall that each of these points represents a single pixel. Another way
 to better understand the PCA space is to plot the time series
 corresponding to each of these pixels, reconstructed using the first two
@@ -251,7 +251,7 @@ principal components.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">recon</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/factorization_23_0.png" src="../_images/factorization_23_0.png" />
+<img alt="../_images/factorization_22_0.png" src="../_images/factorization_22_0.png" />
 </div>
 <div class="section" id="nmf">
 <h2>NMF<a class="headerlink" href="#nmf" title="Permalink to this headline">¶</a></h2>
@@ -272,22 +272,22 @@ contains the spatial basis functions. Let&#8217;s look at both.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">h</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/factorization_27_0.png" src="../_images/factorization_27_0.png" />
+<img alt="../_images/factorization_26_0.png" src="../_images/factorization_26_0.png" />
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">imgs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">w</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
 </pre></div>
 </div>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">imgs</span><span class="p">[</span><span class="mi">0</span><span class="p">][:,:,</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
-<img alt="../_images/factorization_29_0.png" src="../_images/factorization_29_0.png" />
+<img alt="../_images/factorization_28_0.png" src="../_images/factorization_28_0.png" />
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">imgs</span><span class="p">[</span><span class="mi">1</span><span class="p">][:,:,</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
-<img alt="../_images/factorization_30_0.png" src="../_images/factorization_30_0.png" />
+<img alt="../_images/factorization_29_0.png" src="../_images/factorization_29_0.png" />
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">imgs</span><span class="p">[</span><span class="mi">2</span><span class="p">][:,:,</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
-<img alt="../_images/factorization_31_0.png" src="../_images/factorization_31_0.png" />
+<img alt="../_images/factorization_30_0.png" src="../_images/factorization_30_0.png" />
 <p>For NMF, a useful way to look at the basis functions is to encode each
 one as a separate color channel. We can do that using colorization with
 an <tt class="docutils literal"><span class="pre">rgb</span></tt> conversion, which simply maps the spatial basis functions
@@ -297,7 +297,7 @@ factor which controls overall brightness.</p>
 <span class="n">image</span><span class="p">(</span><span class="n">maps</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">,:])</span>
 </pre></div>
 </div>
-<img alt="../_images/factorization_33_0.png" src="../_images/factorization_33_0.png" />
+<img alt="../_images/factorization_32_0.png" src="../_images/factorization_32_0.png" />
 <p>One problem with this way to look at NMF components is that the scale of
 the different components can cause some to dominante others. We also
 might like more control over color assignments. The <tt class="docutils literal"><span class="pre">indexed</span></tt>
@@ -307,10 +307,10 @@ automatically normalizes the amplitude of each one.</p>
 <span class="n">image</span><span class="p">(</span><span class="n">maps</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">,:])</span>
 </pre></div>
 </div>
-<img alt="../_images/factorization_35_0.png" src="../_images/factorization_35_0.png" />
+<img alt="../_images/factorization_34_0.png" src="../_images/factorization_34_0.png" />
 <p>With these plots, it can be useful to add in a background image (for
-example, the mean flouresence of each pixel). In this case, we also show
-how to select and colorize just two of the three image channels.</p>
+example, the mean). In this case, we also show how to select and
+colorize just two of the three map components against a background.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">ref</span> <span class="o">=</span> <span class="n">rawdata</span><span class="o">.</span><span class="n">seriesMean</span><span class="p">()</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -318,7 +318,7 @@ how to select and colorize just two of the three image channels.</p>
 <span class="n">image</span><span class="p">(</span><span class="n">maps</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">,:])</span>
 </pre></div>
 </div>
-<img alt="../_images/factorization_38_0.png" src="../_images/factorization_38_0.png" />
+<img alt="../_images/factorization_37_0.png" src="../_images/factorization_37_0.png" />
 </div>
 <div class="section" id="ica">
 <h2>ICA<a class="headerlink" href="#ica" title="Permalink to this headline">¶</a></h2>
@@ -336,7 +336,7 @@ sparse.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">a</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/factorization_41_0.png" src="../_images/factorization_41_0.png" />
+<img alt="../_images/factorization_40_0.png" src="../_images/factorization_40_0.png" />
 <p>Some signals will be positive and others negative. This is expected
 because sign is arbitrary in ICA. It is useful to look at absolute value
 when making maps.</p>
@@ -347,7 +347,7 @@ when making maps.</p>
 <span class="n">image</span><span class="p">(</span><span class="n">maps</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">,:])</span>
 </pre></div>
 </div>
-<img alt="../_images/factorization_44_0.png" src="../_images/factorization_44_0.png" />
+<img alt="../_images/factorization_43_0.png" src="../_images/factorization_43_0.png" />
 </div>
 </div>
 

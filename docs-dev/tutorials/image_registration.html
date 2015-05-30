@@ -152,10 +152,11 @@
 <h1>Image registration<a class="headerlink" href="#image-registration" title="Permalink to this headline">¶</a></h1>
 <p>A common problem when working with large collections of related images
 is registrating them together, relative to a reference. Thunder
-implements an architecture for image registration that supports a
-variety of registration algorithms, and exposes them to the user through
-a simple API. Here, we generate data for registration, apply a
-registration algorithm, and show the results.</p>
+implements a generic image registration API that supports a variety of
+registration algorithms, and exposes to the user both standard
+approaches and the ability to implement custom solutions. Here, we
+generate data for registration, apply a registration algorithm, and show
+the results.</p>
 <p>If you are interested in contributing a new registration algorithm to
 Thunder, let us know in the
 <a class="reference external" href="https://gitter.im/thunder-project/thunder">chatroom</a>!</p>
@@ -204,7 +205,7 @@ varies slowly over time, which will be easier to look at.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">dy</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/image_registration_11_0.png" src="../_images/image_registration_11_0.png" />
+<img alt="../_images/image_registration_10_0.png" src="../_images/image_registration_10_0.png" />
 <p>Now let&#8217;s use these drifts to shift the data. We&#8217;ll use the <tt class="docutils literal"><span class="pre">apply</span></tt>
 method on our data, which applies an arbitrary function to each record;
 in this case, the function is to shift by an amount given by the
@@ -228,7 +229,7 @@ images, and their difference</p>
 <span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/image_registration_15_0.png" src="../_images/image_registration_15_0.png" />
+<img alt="../_images/image_registration_14_0.png" src="../_images/image_registration_14_0.png" />
 <p>It&#8217;s also useful to look at the mean of the raw images and the shifted
 images, the mean of the shifted images should be much more blurry!</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;poster&#39;</span><span class="p">)</span>
@@ -239,7 +240,7 @@ images, the mean of the shifted images should be much more blurry!</p>
 <span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/image_registration_17_0.png" src="../_images/image_registration_17_0.png" />
+<img alt="../_images/image_registration_16_0.png" src="../_images/image_registration_16_0.png" />
 </div>
 <div class="section" id="registration">
 <h2>Registration<a class="headerlink" href="#registration" title="Permalink to this headline">¶</a></h2>
@@ -262,7 +263,7 @@ look at</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">reg</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/image_registration_24_0.png" src="../_images/image_registration_24_0.png" />
+<img alt="../_images/image_registration_23_0.png" src="../_images/image_registration_23_0.png" />
 <p>We could have equivalently computed the reference ourselves (using the
 mean, or any other calculation) and passed it as an argument</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">ref</span> <span class="o">=</span> <span class="n">shifted</span><span class="o">.</span><span class="n">filterOnKeys</span><span class="p">(</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">k</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="mi">500</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
@@ -270,7 +271,7 @@ mean, or any other calculation) and passed it as an argument</p>
 <span class="n">image</span><span class="p">(</span><span class="n">reg</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/image_registration_26_0.png" src="../_images/image_registration_26_0.png" />
+<img alt="../_images/image_registration_25_0.png" src="../_images/image_registration_25_0.png" />
 <p>Now we use the registration method <tt class="docutils literal"><span class="pre">reg</span></tt> and fit it to the shifted
 data, returning a fitted <tt class="docutils literal"><span class="pre">RegistrationModel</span></tt></p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">model</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">shifted</span><span class="p">)</span>
@@ -290,7 +291,7 @@ transformation type: Displacement
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">model</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">Displacement</span><span class="p">(</span><span class="n">delta</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Displacement</span><span class="p">(</span><span class="n">delta</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>You can also convert the full collection of transformations into an
@@ -304,7 +305,7 @@ similar.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">dy</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">clrs</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
 </pre></div>
 </div>
-<img alt="../_images/image_registration_34_0.png" src="../_images/image_registration_34_0.png" />
+<img alt="../_images/image_registration_33_0.png" src="../_images/image_registration_33_0.png" />
 <p>Note that, while following a similar pattern as the ground truth, the
 estimates are not perfect. That&#8217;s because we didn&#8217;t use the true
 reference to estimate the displacements, but rather the mean of the
@@ -323,7 +324,7 @@ truth.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">dy</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">clrs</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
 </pre></div>
 </div>
-<img alt="../_images/image_registration_38_0.png" src="../_images/image_registration_38_0.png" />
+<img alt="../_images/image_registration_37_0.png" src="../_images/image_registration_37_0.png" />
 <p>We can now use our model to <tt class="docutils literal"><span class="pre">transform</span></tt> a set of images, which applies
 the estimated transformations. The API design makes it easy to apply the
 transformations to the dataset we used to estimate the transformations,
@@ -350,7 +351,7 @@ replaced with its nearest neighbors).</p>
 <span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/image_registration_42_0.png" src="../_images/image_registration_42_0.png" />
+<img alt="../_images/image_registration_41_0.png" src="../_images/image_registration_41_0.png" />
 <p>As a final check on the registation, we can compare the mean of the
 shifted data, and the mean of the regsitered data. The latter should be
 much sharper.</p>
@@ -362,23 +363,10 @@ much sharper.</p>
 <span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/image_registration_44_0.png" src="../_images/image_registration_44_0.png" />
-<p>Finally, we can easily save the model to a JSON file, and load it back
-in.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s">&#39;model.json&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">modelreloaded</span> <span class="o">=</span> <span class="n">Registration</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s">&#39;model.json&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Inspect the reloaded model</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">modelreloaded</span>
-</pre></div>
-</div>
-<div class="highlight-python"><div class="highlight"><pre>RegistrationModel
-500 transformations
-registration method: CrossCorr
-transformation type: Displacement
+<img alt="../_images/image_registration_43_0.png" src="../_images/image_registration_43_0.png" />
+<p>We can easily save the model to a JSON file, and load it back in.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s">&#39;model.json&#39;</span><span class="p">)</span>
+<span class="n">modelreloaded</span> <span class="o">=</span> <span class="n">Registration</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s">&#39;model.json&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

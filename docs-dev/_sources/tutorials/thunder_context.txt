@@ -1,12 +1,9 @@
 
-.. \_basic\_usage\_tutorial:
-
-.. currentmodule:: thunder
-
 Thunder context
 ===============
 
-The ``ThunderContext`` is the entry point for most analyses.
+The ``ThunderContext`` is the entry point for loading data and
+interacting with remote services (e.g. Amazon).
 
 Setup plotting
 --------------
@@ -39,13 +36,12 @@ created from an existing instance of a ``SparkContext``:
     tsc = ThunderContext(sc)
 
 Or it can be created directly using the same arguments provided to a
-``SparkContext`` (this line is commented out because executing it in the
-notebook will cause an error because you cannot run multiple
-``SparkContexts`` at once):
+``SparkContext`` (we don't run this line here because you can't run
+multiple ``SparkContexts`` at once):
 
-.. code:: python
+::
 
-    #tsc = ThunderContext.start(appName='myapp')
+    tsc = ThunderContext.start(appName='myapp')
 
 Loading data
 ------------
@@ -73,7 +69,7 @@ on loading and data types.
 
 
 
-.. image:: thunder_context_files/thunder_context_13_0.png
+.. image:: thunder_context_files/thunder_context_12_0.png
 
 
 .. code:: python
@@ -91,20 +87,83 @@ on loading and data types.
 
 
 Currently, ``loadImages`` can load ``tif``, ``png``, or ``binary``
-images (or volumes) from a local file system, networked file system, or
-Amazon S3. ``loadSeries`` can load data from one or more ``text`` or
-``binary`` files on a local file system, networked file system, S3, or
-HDFS.
+images (or volumes) from a local file system, networked file system,
+Amazon S3, or Google Storage. ``loadSeries`` can load data from one or
+more ``text`` or ``binary`` files on a local file system, networked file
+system, Amazon S3, or HDFS.
 
-The ``loadSeries`` method can also load data stored in local arrays in
+The methods ``loadImagesFromArray`` and ``loadSeriesFromArray`` can be
+used to used to load data directly from numpy arrays.
+
+.. code:: python
+
+    from numpy import random
+    data = tsc.loadSeriesFromArray(random.randn(50,10))
+
+.. code:: python
+
+    data.nrecords
+
+
+
+
+.. parsed-literal::
+
+    50
+
+
+
+.. code:: python
+
+    data.index
+
+
+
+
+.. parsed-literal::
+
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+
+
+.. code:: python
+
+    data = tsc.loadImagesFromArray(random.randn(50,10,10))
+
+.. code:: python
+
+    data.nrecords
+
+
+
+
+.. parsed-literal::
+
+    50
+
+
+
+.. code:: python
+
+    data.dims.count
+
+
+
+
+.. parsed-literal::
+
+    (10, 10)
+
+
+
+Finally, ``loadSeries`` can also load data stored in local arrays in
 either numpy ``npy`` or Matlab ``MAT`` format (if loading from a ``MAT``
-file, you must additionally provide a variable name). This is not
-particularly useful when working with large data sets, but may be
-convenient for local testing, or for distributing a smaller data set for
-performing intensive computations. In the latter case, the number of
-partitions should be set to be approximately equal to 2-3 times the
-number of cores available on your cluster, so that different cores can
-work on different portions of the data.
+file, you must additionally provide a variable name). This is especially
+useful for smaller local datasets, or for distributing a smaller data
+set for performing intensive computations. In the latter case, the
+number of partitions should be set to be approximately equal to 2-3
+times the number of cores available on your cluster, so that different
+cores can work on different portions of the data.
 
 .. code:: python
 
@@ -134,41 +193,6 @@ work on different portions of the data.
 
 
 
-Finally, there are two methods for performing the common operation of
-converting ``Images`` data into ``Series`` data. As an example, if we
-have a sequence of images that represent successive time points, we
-might want to convert these to ``Series`` data where each record is the
-time series of a voxel. These two methods take a set of image files as
-input, and either load them directly as a ``Series``, or save the
-contents out as ``binary`` data suitable for loading with
-``loadSeries``.
-
-The ordering of points in the ``Series`` values comes from the
-lexicographic ordering of the image data file file names. Given image
-files that each represent a single time point, indicating the time point
-in the image file name so that alphabetically later file names
-correspond to temporally later images (for instance by adding a suffix
-'\_tp000', '\_tp001' and so on to a common file name) will result in
-correct ordering of the resulting ``Series`` data.
-
-There are two implementations of the ``Image`` to ``Series`` conversion.
-Which to use is determined by the ``shuffle`` argument. If
-``shuffle=True`` it will do the conversion using a distributed transpose
-operation, which requires shuffling blocks of data across the cluster.
-If ``shuffle=False`` it will use an alternate method that avoids the
-shuffle at the cost of increased file IO. In practice, ``shuffle=False``
-will often be slower, but with versions of Spark before 1.2 it may be
-more robust. ``shuffle=True`` is the current default.
-
-.. code:: python
-
-    data = tsc.loadImagesAsSeries(datapath + '/mouse/images/', startIdx=0, stopIdx=10)
-
-.. code:: python
-
-    tsc.convertImagesToSeries(datapath + '/mouse/images/', 'savelocation', startIdx=0, stopIdx=10)
-    data = tsc.loadSeries('savelocation')
-
 Loading examples
 ----------------
 
@@ -187,10 +211,26 @@ testing purposes, by calling methods from the ``DataSets`` class:
 
 
 
-.. image:: thunder_context_files/thunder_context_26_0.png
+.. image:: thunder_context_files/thunder_context_27_0.png
 
 
-The 'loadExample' method directly loads one of the small example
+You can see the list of available generated datasets by calling without
+an argument
+
+.. code:: python
+
+    tsc.makeExample()
+
+
+
+
+.. parsed-literal::
+
+    ['factor', 'ica', 'kmeans', 'pca', 'rand', 'sources']
+
+
+
+The ``loadExample`` method directly loads one of the small example
 datasets. This are highly compressed and downsampled, and meant only to
 demonstrate basic functionality and help explore the API, not to
 represent anything meaningful about the data itself.
@@ -198,7 +238,7 @@ represent anything meaningful about the data itself.
 .. code:: python
 
     data = tsc.loadExample('mouse-images')
-    img = data[0]
+    img = data.values().first()
 
 .. code:: python
 
@@ -206,7 +246,7 @@ represent anything meaningful about the data itself.
 
 
 
-.. image:: thunder_context_files/thunder_context_29_0.png
+.. image:: thunder_context_files/thunder_context_32_0.png
 
 
 .. code:: python
@@ -220,10 +260,10 @@ represent anything meaningful about the data itself.
 
 
 
-.. image:: thunder_context_files/thunder_context_31_0.png
+.. image:: thunder_context_files/thunder_context_34_0.png
 
 
-You can easily see the list of avaiable example data sets:
+You can see the list of avaiable example data sets:
 
 .. code:: python
 
@@ -243,14 +283,17 @@ You can easily see the list of avaiable example data sets:
 
 
 
-Example data stored on S3 can be loaded using the ``loadExampleEC2``
-method. You must be running Thunder on an Amazon EC2 cluster in order to
-use these methods. Some of the available data sets include parameters
-that are returned alongside the data, as in
+Example large data sets are available Amazon S3 through the
+`CodeNeuro <http://datasets.codeneuro.org>`__ data repository. If you
+are running Thunder on an Amazon EC2 clsuter (see the
+`instructions <http://thunder-project.org/thunder/docs/install_ec2.html>`__),
+these data sets can be can be loaded using the ``loadExampleS3`` method.
+We show the operation without calling it here, because we assume this
+notebook is being run locally:
 
-.. code:: python
+::
 
-    data, params = tsc.loadExampleS3('zebrafish-optomotor-response')
+    data, params = tsc.loadExampleS3('ahrens.lab/direction.selectivity')
 
 You can also check the available data sets:
 
@@ -268,3 +311,6 @@ You can also check the available data sets:
      'svoboda.lab/tactile.navigation']
 
 
+
+Many of these data sets have notebooks associated with them for showing
+how to load the data

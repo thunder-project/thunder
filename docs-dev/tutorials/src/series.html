@@ -1,0 +1,462 @@
+
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Series</title>
+    
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootswatch-3.1.0/simplex/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/styles.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.6.0.dev',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../_static/bootstrap-sphinx.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="None" href="../../index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../index.html"><img src="../../_static/thunder_logo.png">
+           </a>
+        <span class="navbar-text navbar-version pull-left"><b>0.6.0.dev</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            <li class="divider-vertical"></li>
+            
+                <li><a href="../../tutorials.html">Tutorials</a></li>
+                <li><a href="../../api.html">API</a></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction to Thunder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../install_local.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../install_ec2.html">Running on EC2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../style_guide.html">Style guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">F.A.Q.</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/thunder-project/thunder/releases">Release notes</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../basic_usage.html">Basic usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../thunder_context.html">Thunder context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input_formats.html">Input formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../images.html">Images</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../series.html">Series</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../multi_index.html">Multi-indexing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../image_registration.html">Image registration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../clustering.html">Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../factorization.html">Factorization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regression.html">Regression</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://gitter.im/thunder-project/thunder">Gitter chatroom</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://groups.google.com/forum/?hl=en#!forum/thunder-user">Mailing list</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/thunder-project/thunder">Github repo</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://thunder-project.org">Project page</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Series</a><ul>
+<li><a class="reference internal" href="#setup-plotting">Setup plotting</a></li>
+<li><a class="reference internal" href="#loading-series">Loading series</a></li>
+<li><a class="reference internal" href="#inspection">Inspection</a></li>
+<li><a class="reference internal" href="#processing">Processing</a></li>
+<li><a class="reference internal" href="#selections">Selections</a></li>
+<li><a class="reference internal" href="#statistics">Statistics</a></li>
+<li><a class="reference internal" href="#keys">Keys</a></li>
+<li><a class="reference internal" href="#conversions">Conversions</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+            
+            
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <div class="section" id="series">
+<h1>Series<a class="headerlink" href="#series" title="Permalink to this headline">¶</a></h1>
+<p>A <tt class="docutils literal"><span class="pre">Series</span></tt> object is a distributed collection of 1D arrays, all of
+which share a common index. It supports several manipulations and
+computations on 1D data, some of which take the index into account.</p>
+<p>The most common examples of Series objects are likely time series data,
+in which each array represents a quantity that has been temporally
+sampled at regular intervals. For example, a movie can be represented as
+Series data, where a single record might consist of a pixel time series,
+as in the <tt class="docutils literal"><span class="pre">fish-series</span></tt> and <tt class="docutils literal"><span class="pre">mouse-series</span></tt> example data from the
+<tt class="docutils literal"><span class="pre">basic</span> <span class="pre">usage</span></tt> tutorial.</p>
+<p>The keys associated with Series records can be any data used to identify
+the series, for example, a single sensor channel identifier, or tuples
+representing pixel coordiantes (if derived from a movie). For example, a
+Series record representing a time series from an outer corner of a movie
+might have key (0, 0, 0), with the value being an array representing the
+measurements at that location over time: [112, 110, 118, ..., 124].</p>
+<p>Here, we show examples of loading and manipulating Series data.</p>
+<div class="section" id="setup-plotting">
+<h2>Setup plotting<a class="headerlink" href="#setup-plotting" title="Permalink to this headline">¶</a></h2>
+<div class="code python highlight-python"><div class="highlight"><pre>%matplotlib inline
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="kn">as</span> <span class="nn">sns</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="loading-series">
+<h2>Loading series<a class="headerlink" href="#loading-series" title="Permalink to this headline">¶</a></h2>
+<p>Series can be loaded from a <tt class="docutils literal"><span class="pre">ThunderContext</span></tt> using the <tt class="docutils literal"><span class="pre">loadSeries</span></tt>
+method. (See the <tt class="docutils literal"><span class="pre">Input</span> <span class="pre">formats</span></tt> tutorial for more detail on loading
+methods and formats.) Here, we&#8217;ll again load the &#8220;fish-series&#8221; example
+data set:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;fish-series&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="inspection">
+<h2>Inspection<a class="headerlink" href="#inspection" title="Permalink to this headline">¶</a></h2>
+<p>Let&#8217;s plot a random subset of the data using the <tt class="docutils literal"><span class="pre">subset</span></tt> method,
+which thresholds based on the standard deviation:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">examples</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">subset</span><span class="p">(</span><span class="n">nsamples</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">examples</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">20</span><span class="p">,:]);</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/series_files/src/series_8_0.png" src="tutorials/src/src/series_files/src/series_8_0.png" />
+<p>Note the variation in raw intensity levels.</p>
+</div>
+<div class="section" id="processing">
+<h2>Processing<a class="headerlink" href="#processing" title="Permalink to this headline">¶</a></h2>
+<p>A <tt class="docutils literal"><span class="pre">Series</span></tt> object has various methods for processing and transforming
+the data. For example, <tt class="docutils literal"><span class="pre">center</span></tt> subtracts the mean, <tt class="docutils literal"><span class="pre">squelch</span></tt> sets
+to 0 any records not exceeding a threshold, and <tt class="docutils literal"><span class="pre">zscore</span></tt> subtracts the
+mean and divides by the standard deviation. Note the changes in the
+y-axis.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">examples</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">center</span><span class="p">()</span><span class="o">.</span><span class="n">subset</span><span class="p">(</span><span class="n">nsamples</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">examples</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">20</span><span class="p">,:]);</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/series_files/src/series_11_0.png" src="tutorials/src/src/series_files/src/series_11_0.png" />
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">examples</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">squelch</span><span class="p">(</span><span class="mi">150</span><span class="p">)</span><span class="o">.</span><span class="n">zscore</span><span class="p">()</span><span class="o">.</span><span class="n">subset</span><span class="p">(</span><span class="n">nsamples</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">examples</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">20</span><span class="p">,:]);</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/series_files/src/series_12_0.png" src="tutorials/src/src/series_files/src/series_12_0.png" />
+<p>Related methods include <tt class="docutils literal"><span class="pre">standardize</span></tt>, <tt class="docutils literal"><span class="pre">detrend</span></tt>, and <tt class="docutils literal"><span class="pre">normalize</span></tt>
+(the latter two are specified to <tt class="docutils literal"><span class="pre">TimeSeries</span></tt>, see below)</p>
+</div>
+<div class="section" id="selections">
+<h2>Selections<a class="headerlink" href="#selections" title="Permalink to this headline">¶</a></h2>
+<p>A <tt class="docutils literal"><span class="pre">Series</span></tt> has a 1D index, which can be used to subselect values.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">240</span><span class="p">,)</span>
+</pre></div>
+</div>
+<p>For example, to select a range:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">8</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">array</span><span class="p">([</span> <span class="mf">26.</span><span class="p">,</span>  <span class="mf">26.</span><span class="p">,</span>  <span class="mf">26.</span><span class="p">,</span>  <span class="mf">26.</span><span class="p">,</span>  <span class="mf">26.</span><span class="p">,</span>  <span class="mf">26.</span><span class="p">,</span>  <span class="mf">26.</span><span class="p">,</span>  <span class="mf">25.</span><span class="p">,</span>  <span class="mf">26.</span><span class="p">]))</span>
+</pre></div>
+</div>
+<p>Note that the index changes to reflect the subselected range:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">8</span><span class="p">)</span><span class="o">.</span><span class="n">index</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>We can also select based on an arbitrary criterion function:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">index</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The default index generated for <tt class="docutils literal"><span class="pre">Series</span></tt> objects will be the range of
+integers starting at zero and ending one before the length of the series
+data, as shown in these examples. However, other data types can also be
+used as the index for a series object, such as a sequence of strings,
+providing text labels for each element in the series array, or a tuple
+with indices at different levels. See the tutorial on Multi-indexing
+tutorial for this usage.</p>
+</div>
+<div class="section" id="statistics">
+<h2>Statistics<a class="headerlink" href="#statistics" title="Permalink to this headline">¶</a></h2>
+<p>A <tt class="docutils literal"><span class="pre">Series</span></tt> can be summarized with statistics both within and across
+records. To summarize across records:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">toTimeSeries</span><span class="p">()</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">());</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">toTimeSeries</span><span class="p">()</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">());</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">toTimeSeries</span><span class="p">()</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span><span class="o">.</span><span class="n">min</span><span class="p">());</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/series_files/src/series_24_0.png" src="tutorials/src/src/series_files/src/series_24_0.png" />
+<p>To summarize within records:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">seriesMean</span><span class="p">()</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mf">25.824999999999999</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">seriesStdev</span><span class="p">()</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mf">0.37996710383926657</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can also correlate each record with a signal of interest. As
+expected, for a random signal, the correlation should be near 0.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">random</span>
+<span class="n">signal</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">240</span><span class="p">)</span>
+<span class="n">data</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mf">0.018071405221599671</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="keys">
+<h2>Keys<a class="headerlink" href="#keys" title="Permalink to this headline">¶</a></h2>
+<p>We often use integer keys to index the records of a <tt class="docutils literal"><span class="pre">Series</span></tt>, and
+sometimes these keys represent indices into some original array (for
+example, indices into a multi-dimensional tensor, or pixel coordinates
+if the records are time series from a movie).</p>
+<p>A few convenience methods are provided for working with keys. First, the
+attribute <tt class="docutils literal"><span class="pre">dims</span></tt> contains information about the range of the keys.
+Computing this requires a pass through the data, but if computed on a
+<tt class="docutils literal"><span class="pre">Series</span></tt> it will be inherited by all derived objects, to avoid
+recomputation.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">dims</span><span class="o">.</span><span class="n">max</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">75</span><span class="p">,</span> <span class="mi">86</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">dims</span><span class="o">.</span><span class="n">min</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For keys that correspond to subscripts (e.g. indices of the rows and
+columns of a matrix, coordinates in space), we can convert between
+subscript and linear indexing. The default for these conversions is
+currently onebased subscript indexing, so we need to set <tt class="docutils literal"><span class="pre">onebased</span></tt> to
+<tt class="docutils literal"><span class="pre">False</span></tt> (this will likely change in a future release).</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">subToInd</span><span class="p">(</span><span class="n">isOneBased</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">subToInd</span><span class="p">(</span><span class="n">isOneBased</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span><span class="o">.</span><span class="n">indToSub</span><span class="p">(</span><span class="n">isOneBased</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">query</span></tt> method can be used to average subselected records based on
+their (linearized) keys. It returns the mean value and key for each of
+the provided index lists.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">keys</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">inds</span><span class="o">=</span><span class="p">[[</span><span class="mi">100</span><span class="p">,</span><span class="mi">101</span><span class="p">],[</span><span class="mi">200</span><span class="p">]],</span> <span class="n">isOneBased</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">keys</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">array</span><span class="p">([[</span> <span class="mf">25.5</span><span class="p">,</span>   <span class="mf">1.</span> <span class="p">,</span>   <span class="mf">0.</span> <span class="p">],</span>
+       <span class="p">[</span> <span class="mf">50.</span> <span class="p">,</span>   <span class="mf">2.</span> <span class="p">,</span>   <span class="mf">0.</span> <span class="p">]])</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">values</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">240</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">pack</span></tt> method collects a series into a local array, reshaped based
+on the keys. If there are multiple values per record, all will be
+collected into the local array, so typically we select a subset of
+values before packing to avoid overwhelming the local returning a very
+large amount of data.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">out</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+<span class="n">out</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">76</span><span class="p">,</span> <span class="mi">87</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">out</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+<span class="n">out</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">76</span><span class="p">,</span> <span class="mi">87</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="conversions">
+<h2>Conversions<a class="headerlink" href="#conversions" title="Permalink to this headline">¶</a></h2>
+<p>Subclasses of <tt class="docutils literal"><span class="pre">Series</span></tt> provide additional functionality for more
+specialized data types.</p>
+<p>A <tt class="docutils literal"><span class="pre">TimeSeries</span></tt> provides methods specific to time-varying data, like
+<tt class="docutils literal"><span class="pre">fourier</span></tt>, for computing the statistics of a Fourier transform:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">ts</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">toTimeSeries</span><span class="p">()</span>
+<span class="n">fr</span> <span class="o">=</span> <span class="n">ts</span><span class="o">.</span><span class="n">fourier</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">fr</span><span class="o">.</span><span class="n">index</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="s">&#39;coherence&#39;</span><span class="p">,</span> <span class="s">&#39;phase&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">fr</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s">&#39;coherence&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mf">0.17186687287857189</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Or detrend for detrending data over time</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="o">.</span><span class="n">detrend</span><span class="p">(</span><span class="s">&#39;nonlinear&#39;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">());</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/series_files/src/series_49_0.png" src="tutorials/src/src/series_files/src/series_49_0.png" />
+<p>A <tt class="docutils literal"><span class="pre">RowMatrix</span></tt> provides a variety of methods for working with
+distributed matrices and matrix operations:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">mat</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">toRowMatrix</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">thunder</span> <span class="kn">import</span> <span class="n">Colorize</span>
+<span class="n">Colorize</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">mat</span><span class="o">.</span><span class="n">cov</span><span class="p">())</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/series_files/src/series_52_0.png" src="tutorials/src/src/series_files/src/series_52_0.png" />
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+        <br/>
+        
+<div id="sourcelink">
+  <a href="../../_sources/tutorials/src/series.txt"
+     rel="nofollow">Source</a>
+</div>
+      
+    </p>
+    <p>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

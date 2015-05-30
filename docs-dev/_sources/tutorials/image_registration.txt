@@ -1,17 +1,14 @@
 
-.. \_image\_registration\_tutorial:
-
-.. currentmodule:: thunder
-
 Image registration
 ==================
 
 A common problem when working with large collections of related images
 is registrating them together, relative to a reference. Thunder
-implements an architecture for image registration that supports a
-variety of registration algorithms, and exposes them to the user through
-a simple API. Here, we generate data for registration, apply a
-registration algorithm, and show the results.
+implements a generic image registration API that supports a variety of
+registration algorithms, and exposes to the user both standard
+approaches and the ability to implement custom solutions. Here, we
+generate data for registration, apply a registration algorithm, and show
+the results.
 
 If you are interested in contributing a new registration algorithm to
 Thunder, let us know in the
@@ -78,7 +75,7 @@ varies slowly over time, which will be easier to look at.
 
 
 
-.. image:: image_registration_files/image_registration_11_0.png
+.. image:: image_registration_files/image_registration_10_0.png
 
 
 Now let's use these drifts to shift the data. We'll use the ``apply``
@@ -110,7 +107,7 @@ images, and their difference
 
 
 
-.. image:: image_registration_files/image_registration_15_0.png
+.. image:: image_registration_files/image_registration_14_0.png
 
 
 It's also useful to look at the mean of the raw images and the shifted
@@ -127,7 +124,7 @@ images, the mean of the shifted images should be much more blurry!
 
 
 
-.. image:: image_registration_files/image_registration_17_0.png
+.. image:: image_registration_files/image_registration_16_0.png
 
 
 Registration
@@ -160,7 +157,7 @@ look at
 
 
 
-.. image:: image_registration_files/image_registration_24_0.png
+.. image:: image_registration_files/image_registration_23_0.png
 
 
 We could have equivalently computed the reference ourselves (using the
@@ -174,7 +171,7 @@ mean, or any other calculation) and passed it as an argument
 
 
 
-.. image:: image_registration_files/image_registration_26_0.png
+.. image:: image_registration_files/image_registration_25_0.png
 
 
 Now we use the registration method ``reg`` and fit it to the shifted
@@ -213,7 +210,7 @@ The model represents a list of transformations. You can inspect them:
 
 .. parsed-literal::
 
-    Displacement(delta=[0, 0])
+    Displacement(delta=[1, 2])
 
 
 
@@ -232,7 +229,7 @@ similar.
 
 
 
-.. image:: image_registration_files/image_registration_34_0.png
+.. image:: image_registration_files/image_registration_33_0.png
 
 
 Note that, while following a similar pattern as the ground truth, the
@@ -259,7 +256,7 @@ truth.
 
 
 
-.. image:: image_registration_files/image_registration_38_0.png
+.. image:: image_registration_files/image_registration_37_0.png
 
 
 We can now use our model to ``transform`` a set of images, which applies
@@ -294,7 +291,7 @@ replaced with its nearest neighbors).
 
 
 
-.. image:: image_registration_files/image_registration_42_0.png
+.. image:: image_registration_files/image_registration_41_0.png
 
 
 As a final check on the registation, we can compare the mean of the
@@ -312,34 +309,12 @@ much sharper.
 
 
 
-.. image:: image_registration_files/image_registration_44_0.png
+.. image:: image_registration_files/image_registration_43_0.png
 
 
-Finally, we can easily save the model to a JSON file, and load it back
-in.
+We can easily save the model to a JSON file, and load it back in.
 
-.. code:: python
+::
 
     model.save('model.json')
-
-.. code:: python
-
     modelreloaded = Registration.load('model.json')
-
-Inspect the reloaded model
-
-.. code:: python
-
-    modelreloaded
-
-
-
-
-.. parsed-literal::
-
-    RegistrationModel
-    500 transformations
-    registration method: CrossCorr
-    transformation type: Displacement
-
-

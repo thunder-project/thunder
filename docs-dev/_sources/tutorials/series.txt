@@ -1,30 +1,26 @@
 
-.. \_series\_tutorial:
-
-.. currentmodule:: thunder
-
 Series
 ======
 
-A ``Series`` object is a distributed collection of 1d arrays, all of
+A ``Series`` object is a distributed collection of 1D arrays, all of
 which share a common index. It supports several manipulations and
-computations on 1d data, some of which take the index into account.
+computations on 1D data, some of which take the index into account.
 
 The most common examples of Series objects are likely time series data,
 in which each array represents a quantity that has been temporally
-sampled at regular intervals. In imaging data, a single record within a
-Series might consist of a time series of measurements at a point within
-the imaging volume, as in the fish-series example data from the "basic
-usage" tutorial.
+sampled at regular intervals. For example, a movie can be represented as
+Series data, where a single record might consist of a pixel time series,
+as in the ``fish-series`` and ``mouse-series`` example data from the
+``basic usage`` tutorial.
 
 The keys associated with Series records can be any data used to identify
-the series; however for imaging data, the keys are commonly tuples of
-integers, representing the indicies of the position within the imaging
-volume from which the time series originates. For example, a Series
-record representing a time series from an outer corner of a
-3-dimensional imaged volume might have a key of (0, 0, 0), with the
-value being an array representing the measurements at that point over
-the course of an experiment: [112, 110, 118, ..., 124].
+the series, for example, a single sensor channel identifier, or tuples
+representing pixel coordiantes (if derived from a movie). For example, a
+Series record representing a time series from an outer corner of a movie
+might have key (0, 0, 0), with the value being an array representing the
+measurements at that location over time: [112, 110, 118, ..., 124].
+
+Here, we show examples of loading and manipulating Series data.
 
 Setup plotting
 --------------
@@ -64,18 +60,18 @@ which thresholds based on the standard deviation:
 
 
 
-.. image:: series_files/series_9_0.png
+.. image:: series_files/series_8_0.png
 
 
 Note the variation in raw intensity levels.
 
-Preprocessing
--------------
+Processing
+----------
 
-A ``Series`` object has methods for normalizing and standardizing data,
-which can be useful during preprocessing. For example, ``center``
-subtracts the mean, and ``normalize`` subtracts and divides by a
-baseline (either the mean, or a percentile). Note the changes in the
+A ``Series`` object has various methods for processing and transforming
+the data. For example, ``center`` subtracts the mean, ``squelch`` sets
+to 0 any records not exceeding a threshold, and ``zscore`` subtracts the
+mean and divides by the standard deviation. Note the changes in the
 y-axis.
 
 .. code:: python
@@ -85,25 +81,26 @@ y-axis.
 
 
 
-.. image:: series_files/series_12_0.png
+.. image:: series_files/series_11_0.png
 
 
 .. code:: python
 
-    examples = data.toTimeSeries().normalize(baseline='percentile').subset(nsamples=50, thresh=0.1)
+    examples = data.squelch(150).zscore().subset(nsamples=50, thresh=0.1)
     plt.plot(examples.T[0:20,:]);
 
 
 
-.. image:: series_files/series_13_0.png
+.. image:: series_files/series_12_0.png
 
 
-Related methods include ``center``, ``standardize``, and ``detrend``.
+Related methods include ``standardize``, ``detrend``, and ``normalize``
+(the latter two are specified to ``TimeSeries``, see below)
 
 Selections
 ----------
 
-A ``Series`` has a 1d index, which can be used to subselect values.
+A ``Series`` has a 1D index, which can be used to subselect values.
 
 .. code:: python
 
@@ -167,8 +164,9 @@ The default index generated for ``Series`` objects will be the range of
 integers starting at zero and ending one before the length of the series
 data, as shown in these examples. However, other data types can also be
 used as the index for a series object, such as a sequence of strings,
-providing text labels for each element in the series array. See the
-``Regression`` tutorial for an example of this usage.
+providing text labels for each element in the series array, or a tuple
+with indices at different levels. See the tutorial on Multi-indexing
+tutorial for this usage.
 
 Statistics
 ----------
@@ -184,7 +182,7 @@ records. To summarize across records:
 
 
 
-.. image:: series_files/series_25_0.png
+.. image:: series_files/series_24_0.png
 
 
 To summarize within records:
@@ -216,7 +214,7 @@ To summarize within records:
 
 
 We can also correlate each record with a signal of interest. As
-expected, for a random signal, the correlation should be low.
+expected, for a random signal, the correlation should be near 0.
 
 .. code:: python
 
@@ -229,16 +227,17 @@ expected, for a random signal, the correlation should be low.
 
 .. parsed-literal::
 
-    ((0, 0, 0), 0.039062227147807042)
+    ((0, 0, 0), 0.018071405221599671)
 
 
 
 Keys
 ----
 
-We often use integer keys to index the records of a ``Series``. For
-instance, in the case where a ``Series`` represents imaging data, the
-integer keys may represent spatial position within the imaged volume.
+We often use integer keys to index the records of a ``Series``, and
+sometimes these keys represent indices into some original array (for
+example, indices into a multi-dimensional tensor, or pixel coordinates
+if the records are time series from a movie).
 
 A few convenience methods are provided for working with keys. First, the
 attribute ``dims`` contains information about the range of the keys.
@@ -373,8 +372,8 @@ the provided index lists.
 The ``pack`` method collects a series into a local array, reshaped based
 on the keys. If there are multiple values per record, all will be
 collected into the local array, so typically we select a subset of
-values before packing to avoid overwhelming the local processing node
-with data.
+values before packing to avoid overwhelming the local returning a very
+large amount of data.
 
 .. code:: python
 
@@ -410,8 +409,8 @@ Conversions
 Subclasses of ``Series`` provide additional functionality for more
 specialized data types.
 
-A ``TimeSeries`` provides methods like ``fourier``, for computing the
-statistics of a Fourier transform:
+A ``TimeSeries`` provides methods specific to time-varying data, like
+``fourier``, for computing the statistics of a Fourier transform:
 
 .. code:: python
 
@@ -441,6 +440,18 @@ statistics of a Fourier transform:
 
 
 
+Or detrend for detrending data over time
+
+.. code:: python
+
+    plt.plot(ts.mean())
+    plt.plot(ts.detrend('nonlinear', order=5).mean());
+
+
+
+.. image:: series_files/series_49_0.png
+
+
 A ``RowMatrix`` provides a variety of methods for working with
 distributed matrices and matrix operations:
 
@@ -450,13 +461,10 @@ distributed matrices and matrix operations:
 
 .. code:: python
 
-    mat.cov().shape
+    from thunder import Colorize
+    Colorize.image(mat.cov())
 
 
 
-
-.. parsed-literal::
-
-    (240, 240)
-
+.. image:: series_files/series_52_0.png
 

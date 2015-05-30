@@ -146,46 +146,59 @@
   <div class="section" id="basic-usage">
 <h1>Basic usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h1>
 <p>Thunder offers a variety of analyses and workflows for spatial and
-temporal data. We&#8217;ll walk through a very simple example here as an
-introduction. The entry point for most workflows is the
-<tt class="docutils literal"><span class="pre">ThunderContext</span></tt>. If you type <tt class="docutils literal"><span class="pre">thunder</span></tt> to start the interactive
-shell, this context is automatically provided as <tt class="docutils literal"><span class="pre">tsc</span></tt>, which is a
-thin wrapper for the <tt class="docutils literal"><span class="pre">SparkContext</span></tt> that provides functionality for
-loading data.</p>
-<p>We&#8217;ll start by loading some example data:</p>
+temporal data. When run on a cluster, most methods are efficiently and
+automatically parallelized, but Thunder can also be used on a single
+machine, especially for testing purposes.</p>
+<p>We&#8217;ll walk through a very simple example here as an introduction. The
+entry point for most workflows is the <tt class="docutils literal"><span class="pre">ThunderContext</span></tt>. If you type
+<tt class="docutils literal"><span class="pre">thunder</span></tt> to start the interactive shell, this context is
+automatically provided as <tt class="docutils literal"><span class="pre">tsc</span></tt>, which is an object that primarily
+provides functionality for loading and exporting data.</p>
+<p>We&#8217;ll start by loading and exploring some toy example data:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;fish-series&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><tt class="docutils literal"><span class="pre">data</span></tt> is a distributed collection of key-value records, each
-containing a coordinate identifier and the time series of a single
-voxel. We can look at the first record by using <tt class="docutils literal"><span class="pre">first()</span></tt>. It&#8217;s a
-key-value pair, where the key is a tuple of int (representing a spatial
-coordinate within the imaging volume) and the value is an
-one-dimensional array:</p>
+<p><tt class="docutils literal"><span class="pre">data</span></tt> is a <tt class="docutils literal"><span class="pre">Series</span></tt> object, which is a generic collection of
+one-dimensional array data sharing a common index. We can inspect it to
+see metadata:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>Series
+nrecords: None (inspect to compute)
+dtype: float
+dims: None (inspect to compute)
+index: [  0   1   2   3   4   5   6   7   8   9  10  11 ... ] (length: 240)
+</pre></div>
+</div>
+<p>A <tt class="docutils literal"><span class="pre">Series</span></tt> object is a collection of key-value records, each
+containing an identifier as a key and a one-dimensional array as a
+value. We can look at the first key and value by using <tt class="docutils literal"><span class="pre">first()</span></tt>.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
 </div>
+<p>We see that the <tt class="docutils literal"><span class="pre">first</span></tt> key in this example <tt class="docutils literal"><span class="pre">Series</span></tt> data is the
+tuple (0,0,0), corresponding to an x, y, z coordinate of an original
+movie.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">key</span>
 </pre></div>
 </div>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>We see that the <tt class="docutils literal"><span class="pre">first</span></tt> key in the fish <tt class="docutils literal"><span class="pre">Series</span></tt> data is the tuple
-(0,0,0), corresponding to an x, y, z coordinate at an outer corner of
-the volume.</p>
+<p>The value in this case is a time series of 240 observations, represented
+as a 1d numpy array.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">value</span><span class="o">.</span><span class="n">shape</span>
 </pre></div>
 </div>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">240</span><span class="p">,)</span>
 </pre></div>
 </div>
-<p>The value in this case is a time series of 240 observations, represented
-as a 1d numpy array.</p>
-<p>We can extract a random subset of voxels and plot their time series,
-after applying a simple baseline normalization. Here and elsewhere,
-we&#8217;ll use the excellent <tt class="docutils literal"><span class="pre">seaborn</span></tt> package for styling figures, but
-this is entirely optional.</p>
+<p>We can extract a random subset of records and plot their time series,
+after converting to <tt class="docutils literal"><span class="pre">TimeSeries</span></tt> (which enables time-specific
+methods), and applying a simple baseline normalization. Here and
+elsewhere, we&#8217;ll use the excellent <tt class="docutils literal"><span class="pre">seaborn</span></tt> package for styling
+figures, but this is entirely optional.</p>
 <div class="code python highlight-python"><div class="highlight"><pre>%matplotlib inline
 </pre></div>
 </div>
@@ -199,23 +212,22 @@ this is entirely optional.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">examples</span><span class="o">.</span><span class="n">T</span><span class="p">);</span>
 </pre></div>
 </div>
-<img alt="../_images/basic_usage_13_0.png" src="../_images/basic_usage_13_0.png" />
-<p>We can also compute the mean value for each pixel using the
-<tt class="docutils literal"><span class="pre">seriesMean</span></tt> method:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">means</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">seriesMean</span><span class="p">()</span>
+<img alt="../_images/basic_usage_14_0.png" src="../_images/basic_usage_14_0.png" />
+<p>We can also compute a statistic for each record using the method:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">means</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">seriesStdev</span><span class="p">()</span>
 <span class="n">means</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mf">25.824999999999999</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mf">0.37996710383926657</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><tt class="docutils literal"><span class="pre">means</span></tt> is now itself a <tt class="docutils literal"><span class="pre">Series</span></tt>, where the value of each record is
-the mean across the time series for that voxel.</p>
+the mean across time</p>
 <p>For this <tt class="docutils literal"><span class="pre">Series</span></tt>, since the keys correspond to spatial coordinates,
 we can <tt class="docutils literal"><span class="pre">pack</span></tt> the results back into a local array. <tt class="docutils literal"><span class="pre">pack</span></tt> is an
 operation that converts <tt class="docutils literal"><span class="pre">Series</span></tt> data, with spatial coordinates as
-keys, into an n-dimensional numpy array on the driver node of a Spark
-cluster. In this case, the result is 3d, with two planes:</p>
+keys, into an n-dimensional numpy array. In this case, the result is 3D,
+reflecting the original input data.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">img</span> <span class="o">=</span> <span class="n">means</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
 <span class="n">img</span><span class="o">.</span><span class="n">shape</span>
 </pre></div>
@@ -227,9 +239,7 @@ cluster. In this case, the result is 3d, with two planes:</p>
 involved will be sent to the Spark driver node. For larger data sets,
 this can be very problematic - it&#8217;s a good idea to downsample,
 subselect, or otherwise reduce the size of your data before attempting
-to <tt class="docutils literal"><span class="pre">pack</span></tt> large image data sets! (See the <tt class="docutils literal"><span class="pre">Series</span></tt> tutorial for more
-on how to do this.) In this case, after taking the <tt class="docutils literal"><span class="pre">mean</span></tt> the example
-data set is quite small, so <tt class="docutils literal"><span class="pre">pack</span></tt>ing it is no problem.</p>
+to <tt class="docutils literal"><span class="pre">pack</span></tt> large data sets!</p>
 <p>To look at this array as an image, we&#8217;ll use <tt class="docutils literal"><span class="pre">matplotlib</span></tt> via a helper
 function included with Thunder.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">thunder</span> <span class="kn">import</span> <span class="n">Colorize</span>
@@ -237,14 +247,79 @@ function included with Thunder.</p>
 <span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
-<img alt="../_images/basic_usage_19_0.png" src="../_images/basic_usage_19_0.png" />
+<img alt="../_images/basic_usage_21_0.png" src="../_images/basic_usage_21_0.png" />
 <p>It&#8217;s also easy to export the result to a <tt class="docutils literal"><span class="pre">numpy</span></tt> or <tt class="docutils literal"><span class="pre">MAT</span></tt> file.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">tsc</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="s">&quot;directory&quot;</span><span class="p">,</span> <span class="s">&quot;npy&quot;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">tsc</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="s">&quot;directory&quot;</span><span class="p">,</span> <span class="s">&quot;npy&quot;</span><span class="p">)</span>
 <span class="n">tsc</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="s">&quot;directory&quot;</span><span class="p">,</span> <span class="s">&quot;mat&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>This will put a <tt class="docutils literal"><span class="pre">npy</span></tt> file or <tt class="docutils literal"><span class="pre">MAT</span></tt> file called <tt class="docutils literal"><span class="pre">meanval</span></tt> in the
-folder <tt class="docutils literal"><span class="pre">directory</span></tt> in your current directory.</p>
+folder <tt class="docutils literal"><span class="pre">directory</span></tt> in your current directory. You can also export to a
+location of Amazon S3 or Google Storage if path is specified with an
+<tt class="docutils literal"><span class="pre">s3n://</span></tt>or <tt class="docutils literal"><span class="pre">gs://</span></tt> prefix.</p>
+<p>Thunder includes several other toy data sets, to see the available ones:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="s">&#39;fish-images&#39;</span><span class="p">,</span>
+ <span class="s">&#39;fish-series&#39;</span><span class="p">,</span>
+ <span class="s">&#39;iris&#39;</span><span class="p">,</span>
+ <span class="s">&#39;mouse-images&#39;</span><span class="p">,</span>
+ <span class="s">&#39;mouse-params&#39;</span><span class="p">,</span>
+ <span class="s">&#39;mouse-series&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Some of them are <tt class="docutils literal"><span class="pre">Series</span></tt>, some are <tt class="docutils literal"><span class="pre">Images</span></tt>, and some are
+associated <tt class="docutils literal"><span class="pre">Params</span></tt> (e.g. covariates). Let&#8217;s load an <tt class="docutils literal"><span class="pre">Images</span></tt>
+dataset:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">images</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;mouse-images&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">images</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>Images
+nrecords: 500
+dtype: int16
+dims: min=(0, 0), max=(63, 63), count=(64, 64)
+</pre></div>
+</div>
+<p>Now every record is an key-value pair where the key is an identifier,
+and the value is an image</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">images</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The key is an integer</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">key</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="mi">0</span>
+</pre></div>
+</div>
+<p>And the value is a two-dimensional array</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">value</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Although <tt class="docutils literal"><span class="pre">images</span></tt> is not an array, some syntactic sugar supports easy
+indexing:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">im</span> <span class="o">=</span> <span class="n">images</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">image</span><span class="p">(</span><span class="n">im</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/basic_usage_37_0.png" src="../_images/basic_usage_37_0.png" />
+<p>And we can now apply simple parallelized image processing routines</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">im</span> <span class="o">=</span> <span class="n">images</span><span class="o">.</span><span class="n">gaussianFilter</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">subsample</span><span class="p">(</span><span class="mi">3</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">image</span><span class="p">(</span><span class="n">im</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/basic_usage_39_0.png" src="../_images/basic_usage_39_0.png" />
+<p>For both <tt class="docutils literal"><span class="pre">Images</span></tt> and <tt class="docutils literal"><span class="pre">Series</span></tt> data, there are a variety of more
+complex analyses that can be run on these objects, including massively
+parallel regression, factorization, registration, feature extraction,
+and more! See the other tutorials for more information.</p>
 </div>
 
 

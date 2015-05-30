@@ -150,13 +150,13 @@
       
   <div class="section" id="multi-indexing">
 <h1>Multi-indexing<a class="headerlink" href="#multi-indexing" title="Permalink to this headline">¶</a></h1>
-<p>When dealing with series data, it is often useful to index each element
-of the series with multiple labels and then be able to select and
-aggregrate data based on these indices. For example, in an experiment
-where time-series data are collected, each point in time might be
-identified by trial number, block number, one or more experimental
-conditions, etc. This tutorial shows how to create and leverage such
-&#8220;multi-indices&#8221; when working with Thunder Series objects.</p>
+<p>When dealing with <tt class="docutils literal"><span class="pre">Series</span></tt> data, it is often useful to index each
+element of the series with multiple labels and then select and
+aggregrate data based on these indices. For example, for a collection of
+time series data, each point in time might be identified by trial
+number, block number, one or more experimental conditions, etc. This
+tutorial shows how to create and leverage such &#8220;multi-indices&#8221; when
+working with Series objects.</p>
 <div class="section" id="creating-a-toy-data-set">
 <h2>Creating a toy data set<a class="headerlink" href="#creating-a-toy-data-set" title="Permalink to this headline">¶</a></h2>
 <p>Let&#8217;s start by building a simple Series with only a single record.</p>
@@ -164,11 +164,11 @@ conditions, etc. This tutorial shows how to create and leverage such
 <span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">arange</span><span class="p">,</span> <span class="n">array</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">Series</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">parallelize</span><span class="p">([((</span><span class="mi">1</span><span class="p">,),</span> <span class="n">arange</span><span class="p">(</span><span class="mi">12</span><span class="p">))]))</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeriesFromArray</span><span class="p">(</span><span class="n">arange</span><span class="p">(</span><span class="mi">12</span><span class="p">))</span>
 <span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">1</span><span class="p">,),</span> <span class="n">array</span><span class="p">([</span> <span class="mi">0</span><span class="p">,</span>  <span class="mi">1</span><span class="p">,</span>  <span class="mi">2</span><span class="p">,</span>  <span class="mi">3</span><span class="p">,</span>  <span class="mi">4</span><span class="p">,</span>  <span class="mi">5</span><span class="p">,</span>  <span class="mi">6</span><span class="p">,</span>  <span class="mi">7</span><span class="p">,</span>  <span class="mi">8</span><span class="p">,</span>  <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">]))</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,),</span> <span class="n">array</span><span class="p">([</span> <span class="mi">0</span><span class="p">,</span>  <span class="mi">1</span><span class="p">,</span>  <span class="mi">2</span><span class="p">,</span>  <span class="mi">3</span><span class="p">,</span>  <span class="mi">4</span><span class="p">,</span>  <span class="mi">5</span><span class="p">,</span>  <span class="mi">6</span><span class="p">,</span>  <span class="mi">7</span><span class="p">,</span>  <span class="mi">8</span><span class="p">,</span>  <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">]))</span>
 </pre></div>
 </div>
 <p>By default, the index on the series will label the elemets with
@@ -179,9 +179,9 @@ ascending integers.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">array</span><span class="p">([</span> <span class="mi">0</span><span class="p">,</span>  <span class="mi">1</span><span class="p">,</span>  <span class="mi">2</span><span class="p">,</span>  <span class="mi">3</span><span class="p">,</span>  <span class="mi">4</span><span class="p">,</span>  <span class="mi">5</span><span class="p">,</span>  <span class="mi">6</span><span class="p">,</span>  <span class="mi">7</span><span class="p">,</span>  <span class="mi">8</span><span class="p">,</span>  <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">])</span>
 </pre></div>
 </div>
-<p>For the sake of example, let&#8217;s assume that these data come from an
-experient with two trials. Thus we might have one index describing the
-trial structure.</p>
+<p>For the sake of example, let&#8217;s assume that these data represent two
+independent trials. Thus we might have one index describing the trial
+structure.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">trial</span> <span class="o">=</span> <span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
 </pre></div>
 </div>
@@ -199,21 +199,16 @@ block.</p>
 each sub-list contains one value from each of the individual indices.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">index</span> <span class="o">=</span> <span class="n">array</span><span class="p">([</span><span class="n">trial</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">point</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
 <span class="n">data</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span>
-<span class="n">data</span><span class="o">.</span><span class="n">index</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
-       <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
-       <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
-       <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
-       <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
-       <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
-       <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
-       <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
-       <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
-       <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
-       <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
-       <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">]])</span>
+<p>To inspect the index, we look at the transpose so it lines up with the
+Series.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">T</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]])</span>
 </pre></div>
 </div>
 <p>As a useful piece of terminology, we would say that the resulting
@@ -222,14 +217,12 @@ level 3 (time point).</p>
 </div>
 <div class="section" id="selecting">
 <h2>Selecting<a class="headerlink" href="#selecting" title="Permalink to this headline">¶</a></h2>
-<p>There are two major pieces of multi-index functionality, the first of
-which is selection. To select a subset of the Series based on the
-multi-index, we choose both a value and a level and then only elements
-where that level of the index matches the value will be retained. For
-instance, we could select only the data data points from the first trial
-(level = 0; value = 1). Note: the transpose of the index is shown so
-that the values of the index can be aligned above the values of the
-series.</p>
+<p>There are two major pieces of multi-index functionality. The first is
+selection. To select a subset of the Series based on the multi-index, we
+choose a value and a level and then only elements where that level of
+the index matches the value will be retained. For instance, we could
+select only the data data points from the first trial (level = 0; value
+= 1).</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">selected</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">selectByIndex</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">displaySeries</span><span class="p">(</span><span class="n">series</span><span class="p">):</span>
@@ -349,12 +342,25 @@ series
 [ 2.5  8.5]
 </pre></div>
 </div>
+<p>The same operation can be called through the convienience function
+<tt class="docutils literal"><span class="pre">seriesMeanByIndex</span></tt></p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">aggregated</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">seriesMeanByIndex</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">displaySeries</span><span class="p">(</span><span class="n">aggregated</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>index
+-----
+[1 2]
+series
+------
+[ 2.5  8.5]
+</pre></div>
+</div>
 <p>As a more complex example, we might want aggregation with respect to the
 values on multiple levels. For example, we might want to examine how the
 maximum value at each time point (level = 2) is different across the
 different trials (level = 0).</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="nb">max</span>
-<span class="n">aggregated</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">seriesAggregateByIndex</span><span class="p">(</span><span class="nb">max</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">aggregated</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">seriesMaxByIndex</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
 <span class="n">displaySeries</span><span class="p">(</span><span class="n">aggregated</span><span class="p">)</span>
 </pre></div>
 </div>

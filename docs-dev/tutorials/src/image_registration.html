@@ -1,0 +1,397 @@
+
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Image registration</title>
+    
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootswatch-3.1.0/simplex/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/styles.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.6.0.dev',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../_static/bootstrap-sphinx.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="None" href="../../index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../index.html"><img src="../../_static/thunder_logo.png">
+           </a>
+        <span class="navbar-text navbar-version pull-left"><b>0.6.0.dev</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            <li class="divider-vertical"></li>
+            
+                <li><a href="../../tutorials.html">Tutorials</a></li>
+                <li><a href="../../api.html">API</a></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction to Thunder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../install_local.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../install_ec2.html">Running on EC2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../style_guide.html">Style guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">F.A.Q.</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/thunder-project/thunder/releases">Release notes</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../basic_usage.html">Basic usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../thunder_context.html">Thunder context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input_formats.html">Input formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../images.html">Images</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../series.html">Series</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../multi_index.html">Multi-indexing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../image_registration.html">Image registration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../clustering.html">Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../factorization.html">Factorization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regression.html">Regression</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://gitter.im/thunder-project/thunder">Gitter chatroom</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://groups.google.com/forum/?hl=en#!forum/thunder-user">Mailing list</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/thunder-project/thunder">Github repo</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://thunder-project.org">Project page</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Image registration</a><ul>
+<li><a class="reference internal" href="#setup-plotting">Setup plotting</a></li>
+<li><a class="reference internal" href="#generating-data">Generating data</a></li>
+<li><a class="reference internal" href="#registration">Registration</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+            
+            
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <div class="section" id="image-registration">
+<h1>Image registration<a class="headerlink" href="#image-registration" title="Permalink to this headline">¶</a></h1>
+<p>A common problem when working with large collections of related images
+is registrating them together, relative to a reference. Thunder
+implements a generic image registration API that supports a variety of
+registration algorithms, and exposes to the user both standard
+approaches and the ability to implement custom solutions. Here, we
+generate data for registration, apply a registration algorithm, and show
+the results.</p>
+<p>If you are interested in contributing a new registration algorithm to
+Thunder, let us know in the
+<a class="reference external" href="https://gitter.im/thunder-project/thunder">chatroom</a>!</p>
+<div class="section" id="setup-plotting">
+<h2>Setup plotting<a class="headerlink" href="#setup-plotting" title="Permalink to this headline">¶</a></h2>
+<div class="code python highlight-python"><div class="highlight"><pre>%matplotlib inline
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">seaborn</span> <span class="kn">as</span> <span class="nn">sns</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">thunder</span> <span class="kn">import</span> <span class="n">Colorize</span>
+<span class="n">image</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">image</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;darkgrid&#39;</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="generating-data">
+<h2>Generating data<a class="headerlink" href="#generating-data" title="Permalink to this headline">¶</a></h2>
+<p>We will use the included toy example image data to test registration
+algorithms. These data do not actually have any motion, so to test the
+algorithms, we will induce fake motion. First we&#8217;ll load and inspect the
+data.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadExample</span><span class="p">(</span><span class="s">&#39;mouse-images&#39;</span><span class="p">)</span>
+<span class="n">data</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>Images
+nrecords: 500
+dtype: int16
+dims: min=(0, 0), max=(63, 63), count=(64, 64)
+</pre></div>
+</div>
+<p>There are 500 images (corresponding to 500 time points), and the data
+are two-dimensional, so we&#8217;ll want to generate 500 random shifts in x
+and y. We&#8217;ll use smoothing functions from scipy to make sure the drift
+varies slowly over time, which will be easier to look at.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">random</span>
+<span class="kn">from</span> <span class="nn">scipy.ndimage.filters</span> <span class="kn">import</span> <span class="n">gaussian_filter</span>
+<span class="n">t</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">dx</span> <span class="o">=</span> <span class="n">gaussian_filter</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="mi">50</span><span class="p">)</span> <span class="o">*</span> <span class="mi">25</span>
+<span class="n">dy</span> <span class="o">=</span> <span class="n">gaussian_filter</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="mi">50</span><span class="p">)</span> <span class="o">*</span> <span class="mi">25</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">dx</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">dy</span><span class="p">);</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/image_registration_files/src/image_registration_10_0.png" src="tutorials/src/src/image_registration_files/src/image_registration_10_0.png" />
+<p>Now let&#8217;s use these drifts to shift the data. We&#8217;ll use the <tt class="docutils literal"><span class="pre">apply</span></tt>
+method on our data, which applies an arbitrary function to each record;
+in this case, the function is to shift by an amount given by the
+corresponding entry in our list of shifts.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">scipy.ndimage</span> <span class="kn">import</span> <span class="n">shift</span>
+<span class="n">shifted</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">shift</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="n">dx</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">dy</span><span class="p">[</span><span class="n">k</span><span class="p">]),</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;nearest&#39;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">0</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>Look at the first entry of both the original images and the shifted
+images, and their difference</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">im1</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">im2</span> <span class="o">=</span> <span class="n">shifted</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;poster&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">im1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">im2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">im1</span> <span class="o">-</span> <span class="n">im2</span><span class="p">,</span> <span class="n">clim</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">))</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/image_registration_files/src/image_registration_14_0.png" src="tutorials/src/src/image_registration_files/src/image_registration_14_0.png" />
+<p>It&#8217;s also useful to look at the mean of the raw images and the shifted
+images, the mean of the shifted images should be much more blurry!</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;poster&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">shifted</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/image_registration_files/src/image_registration_16_0.png" src="tutorials/src/src/image_registration_files/src/image_registration_16_0.png" />
+</div>
+<div class="section" id="registration">
+<h2>Registration<a class="headerlink" href="#registration" title="Permalink to this headline">¶</a></h2>
+<p>To run registration, first we create a registration method by specifying
+its name (current options include &#8216;crosscorr&#8217; and &#8216;planarcrosscorr&#8217;)</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">thunder</span> <span class="kn">import</span> <span class="n">Registration</span>
+<span class="n">reg</span> <span class="o">=</span> <span class="n">Registration</span><span class="p">(</span><span class="s">&#39;crosscorr&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This method computes a cross-correlation in parallel between every image
+and a reference. To compute that reference, we can use the <tt class="docutils literal"><span class="pre">prepare</span></tt>
+method, and either give it a reference, or have it compute one for us.
+For this method, the default <tt class="docutils literal"><span class="pre">prepare</span></tt> is to compute a mean, over some
+specified range. We call:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">reg</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">shifted</span><span class="p">,</span> <span class="n">startIdx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stopIdx</span><span class="o">=</span><span class="mi">500</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This adds a <tt class="docutils literal"><span class="pre">reference</span></tt> attribute to the <tt class="docutils literal"><span class="pre">reg</span></tt> object, which we can
+look at</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">image</span><span class="p">(</span><span class="n">reg</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/image_registration_files/src/image_registration_23_0.png" src="tutorials/src/src/image_registration_files/src/image_registration_23_0.png" />
+<p>We could have equivalently computed the reference ourselves (using the
+mean, or any other calculation) and passed it as an argument</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">ref</span> <span class="o">=</span> <span class="n">shifted</span><span class="o">.</span><span class="n">filterOnKeys</span><span class="p">(</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">k</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="mi">500</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="n">reg</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">reg</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/image_registration_files/src/image_registration_25_0.png" src="tutorials/src/src/image_registration_files/src/image_registration_25_0.png" />
+<p>Now we use the registration method <tt class="docutils literal"><span class="pre">reg</span></tt> and fit it to the shifted
+data, returning a fitted <tt class="docutils literal"><span class="pre">RegistrationModel</span></tt></p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">model</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">shifted</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Inspect the model</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">model</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>RegistrationModel
+500 transformations
+registration method: CrossCorr
+transformation type: Displacement
+</pre></div>
+</div>
+<p>The model represents a list of transformations. You can inspect them:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">model</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Displacement</span><span class="p">(</span><span class="n">delta</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>You can also convert the full collection of transformations into an
+array, which is useful for plotting. Here we&#8217;ll plot the estimated
+transformations relative to the ground truth, they should be fairly
+similar.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">clrs</span> <span class="o">=</span> <span class="n">sns</span><span class="o">.</span><span class="n">color_palette</span><span class="p">(</span><span class="s">&#39;deep&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">toArray</span><span class="p">()[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">clrs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">dx</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">clrs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">toArray</span><span class="p">()[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">clrs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">dy</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">clrs</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/image_registration_files/src/image_registration_33_0.png" src="tutorials/src/src/image_registration_files/src/image_registration_33_0.png" />
+<p>Note that, while following a similar pattern as the ground truth, the
+estimates are not perfect. That&#8217;s because we didn&#8217;t use the true
+reference to estimate the displacements, but rather the mean of the
+displaced data. To see that we get the exact displacements back, let&#8217;s
+compute a reference from the original, unshifted data.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">reg</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">startIdx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stopIdx</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">shifted</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now the estimates should be exact (up to rounding error)! But note that
+this is sort of cheating, because in general we don&#8217;t know the ground
+truth.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">toArray</span><span class="p">()[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">clrs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">dx</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">clrs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">toArray</span><span class="p">()[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">clrs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">dy</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">clrs</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/image_registration_files/src/image_registration_37_0.png" src="tutorials/src/src/image_registration_files/src/image_registration_37_0.png" />
+<p>We can now use our model to <tt class="docutils literal"><span class="pre">transform</span></tt> a set of images, which applies
+the estimated transformations. The API design makes it easy to apply the
+transformations to the dataset we used to estimate the transformations,
+or a different one. We&#8217;ll use the model we just estimates, which used
+the true reference, because it will be easy to see that it did the right
+thing.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">corrected</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">shifted</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Let&#8217;s again look at the first image from the orignal and corrected, and
+their difference. Whereas before they were different, now they should be
+the same, except for minor near the boundaries (where the image has been
+replaced with its nearest neighbors).</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">im1</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">im2</span> <span class="o">=</span> <span class="n">corrected</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;poster&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">im1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">im2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">im1</span> <span class="o">-</span> <span class="n">im2</span><span class="p">,</span> <span class="n">clim</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">))</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/image_registration_files/src/image_registration_41_0.png" src="tutorials/src/src/image_registration_files/src/image_registration_41_0.png" />
+<p>As a final check on the registation, we can compare the mean of the
+shifted data, and the mean of the regsitered data. The latter should be
+much sharper.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;poster&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">shifted</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">image</span><span class="p">(</span><span class="n">corrected</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="tutorials/src/src/image_registration_files/src/image_registration_43_0.png" src="tutorials/src/src/image_registration_files/src/image_registration_43_0.png" />
+<p>We can easily save the model to a JSON file, and load it back in.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s">&#39;model.json&#39;</span><span class="p">)</span>
+<span class="n">modelreloaded</span> <span class="o">=</span> <span class="n">Registration</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s">&#39;model.json&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+        <br/>
+        
+<div id="sourcelink">
+  <a href="../../_sources/tutorials/src/image_registration.txt"
+     rel="nofollow">Source</a>
+</div>
+      
+    </p>
+    <p>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

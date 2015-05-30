@@ -202,10 +202,10 @@ data both locally and from EC2.</p>
 <td>Load Images from OCP (Open Connectome Project).</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.ThunderContext.loadJSON" title="thunder.ThunderContext.loadJSON"><tt class="xref py py-obj docutils literal"><span class="pre">loadJSON</span></tt></a>(path)</td>
-<td>Generic function for loading JSON from a path, handling local file systems and S3</td>
+<td>Generic function for loading JSON from a path, handling local file systems and S3 or GS</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#thunder.ThunderContext.loadParams" title="thunder.ThunderContext.loadParams"><tt class="xref py py-obj docutils literal"><span class="pre">loadParams</span></tt></a>(path)</td>
-<td>Load a file with parameters from a local file system or S3.</td>
+<td>Load a file with parameters from a local file system or S3 or GS.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.ThunderContext.loadSeries" title="thunder.ThunderContext.loadSeries"><tt class="xref py py-obj docutils literal"><span class="pre">loadSeries</span></tt></a>(dataPath[,&nbsp;nkeys,&nbsp;nvalues,&nbsp;...])</td>
 <td>Loads a Series object from data stored as binary, text, npy, or mat.</td>
@@ -214,9 +214,9 @@ data both locally and from EC2.</p>
 <td>Load Series data from a local array</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.ThunderContext.loadSources" title="thunder.ThunderContext.loadSources"><tt class="xref py py-obj docutils literal"><span class="pre">loadSources</span></tt></a>(path)</td>
-<td>Load a file with sources from a local file system or S3.</td>
+<td>Load a file with sources from a local file system or S3 or GS.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.ThunderContext.makeExample" title="thunder.ThunderContext.makeExample"><tt class="xref py py-obj docutils literal"><span class="pre">makeExample</span></tt></a>(dataset,&nbsp;**opts)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.ThunderContext.makeExample" title="thunder.ThunderContext.makeExample"><tt class="xref py py-obj docutils literal"><span class="pre">makeExample</span></tt></a>([dataset])</td>
 <td>Make an example data set for testing analyses.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.ThunderContext.setAWSCredentials" title="thunder.ThunderContext.setAWSCredentials"><tt class="xref py py-obj docutils literal"><span class="pre">setAWSCredentials</span></tt></a>(awsAccessKeyId,&nbsp;...)</td>
@@ -339,8 +339,8 @@ different number of records (e.g. due to specifying nplanes). See Images.renumbe
 <dt id="thunder.ThunderContext.export">
 <tt class="descname">export</tt><big>(</big><em>data</em>, <em>filename</em>, <em>outputFormat=None</em>, <em>overwrite=False</em>, <em>varname=None</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.export" title="Permalink to this definition">¶</a></dt>
 <dd><p>Export local array data to a variety of formats.</p>
-<p>Can write to a local file sytem or S3 (destination inferred from filename schema).
-S3 writing useful for persisting arrays when working in an environment without
+<p>Can write to a local file sytem or S3 or GS (destination inferred from filename schema).
+S3 or GS writing useful for persisting arrays when working in an environment without
 accessible local storage.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -436,7 +436,8 @@ list of available datasets.</p>
 <tt class="descname">loadImages</tt><big>(</big><em>dataPath</em>, <em>dims=None</em>, <em>dtype=None</em>, <em>inputFormat='stack'</em>, <em>ext=None</em>, <em>startIdx=None</em>, <em>stopIdx=None</em>, <em>recursive=False</em>, <em>nplanes=None</em>, <em>npartitions=None</em>, <em>renumber=False</em>, <em>confFilename='conf.json'</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadImages" title="Permalink to this definition">¶</a></dt>
 <dd><p>Loads an Images object from data stored as a binary image stack, tif, or png files.</p>
 <p>Supports single files or multiple files, stored on a local file system, a networked file sytem
-(mounted and available on all nodes), or Amazon S3. HDFS is not currently supported for image file data.</p>
+(mounted and available on all nodes), Amazon S3, or Google Storage.
+HDFS is not currently supported for image file data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -696,14 +697,14 @@ maxBound contains (xMax,yMax,zMax).</p>
 <dl class="method">
 <dt id="thunder.ThunderContext.loadJSON">
 <tt class="descname">loadJSON</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadJSON" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generic function for loading JSON from a path, handling local file systems and S3</p>
+<dd><p>Generic function for loading JSON from a path, handling local file systems and S3 or GS</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>path</strong> : str</p>
 <blockquote>
-<div><p>Path to a file, can be on a local file system or an S3 bucket</p>
+<div><p>Path to a file, can be on a local file system or an S3 or GS bucket</p>
 </div></blockquote>
 </td>
 </tr>
@@ -717,7 +718,7 @@ maxBound contains (xMax,yMax,zMax).</p>
 <dl class="method">
 <dt id="thunder.ThunderContext.loadParams">
 <tt class="descname">loadParams</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadParams" title="Permalink to this definition">¶</a></dt>
-<dd><p>Load a file with parameters from a local file system or S3.</p>
+<dd><p>Load a file with parameters from a local file system or S3 or GS.</p>
 <p>Assumes file is JSON with basic types (strings, integers, doubles, lists),
 in either a single dict or list of dict-likes, and each dict has at least
 a &#8220;name&#8221; field and a &#8220;value&#8221; field.</p>
@@ -728,7 +729,7 @@ a &#8220;name&#8221; field and a &#8220;value&#8221; field.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>path</strong> : str</p>
 <blockquote>
-<div><p>Path to file, can be on a local file system or an S3 bucket</p>
+<div><p>Path to file, can be on a local file system or an S3 or GS bucket</p>
 </div></blockquote>
 </td>
 </tr>
@@ -842,14 +843,14 @@ default parallelism.</p>
 <dl class="method">
 <dt id="thunder.ThunderContext.loadSources">
 <tt class="descname">loadSources</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.loadSources" title="Permalink to this definition">¶</a></dt>
-<dd><p>Load a file with sources from a local file system or S3.</p>
+<dd><p>Load a file with sources from a local file system or S3 or GS.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>path</strong> : str</p>
 <blockquote>
-<div><p>Path to file, can be on a local file system or an S3 bucket</p>
+<div><p>Path to file, can be on a local file system or an S3 or GS bucket</p>
 </div></blockquote>
 </td>
 </tr>
@@ -866,9 +867,9 @@ default parallelism.</p>
 
 <dl class="method">
 <dt id="thunder.ThunderContext.makeExample">
-<tt class="descname">makeExample</tt><big>(</big><em>dataset</em>, <em>**opts</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.makeExample" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">makeExample</tt><big>(</big><em>dataset=None</em>, <em>**opts</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.makeExample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Make an example data set for testing analyses.</p>
-<p>Options include &#8216;pca&#8217;, &#8216;factor&#8217;, &#8216;kmeans&#8217;, and &#8216;ica&#8217;.
+<p>Options include &#8216;pca&#8217;, &#8216;factor&#8217;, &#8216;kmeans&#8217;, &#8216;ica&#8217;, &#8216;sources&#8217;
 See thunder.utils.datasets for detailed options.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -894,9 +895,10 @@ See thunder.utils.datasets for detailed options.</p>
 <dt id="thunder.ThunderContext.setAWSCredentials">
 <tt class="descname">setAWSCredentials</tt><big>(</big><em>awsAccessKeyId</em>, <em>awsSecretAccessKey</em><big>)</big><a class="headerlink" href="#thunder.ThunderContext.setAWSCredentials" title="Permalink to this definition">¶</a></dt>
 <dd><p>Manually set AWS access credentials to be used by Thunder.</p>
-<p>Provided for hosted cloud environments without filesystem access.
-If launching a cluster using the thunder-ec2 script, credentials will be configured
-automatically (inside core-site.xml and ~/.boto), so this method should not need to be called.</p>
+<p>Provided for hosted cloud environments without filesystem access. If
+launching a cluster using the thunder-ec2 script, credentials will be
+configured automatically (inside core-site.xml and ~/.boto), so this
+method should not need to be called.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />

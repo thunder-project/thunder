@@ -1,13 +1,9 @@
 
-.. \_factorization\_tutorial:
-
-.. currentmodule:: thunder
-
 Factorization
 =============
 
 Factorization algorithms are useful for data-driven decomposition of
-spatio-temporal data, for example, to recover spatial patterns with
+spatial and temporal data, for example, to recover spatial patterns with
 similar temporal profiles. Here, we show how to use some of the
 factorization algorithms in Thunder and visualize the results.
 
@@ -61,7 +57,7 @@ plotting the components, the temporal basis functions.
 
 
 
-.. image:: factorization_files/factorization_11_0.png
+.. image:: factorization_files/factorization_10_0.png
 
 
 The scores are spatial basis functions. We can pack them into a local
@@ -70,7 +66,7 @@ array and look at them as images one by one.
 .. code:: python
 
     imgs = model.scores.pack()
-    imgs.shape # dimensions should be (k, x, y, z) where k is the number of components
+    imgs.shape
 
 
 
@@ -87,7 +83,7 @@ array and look at them as images one by one.
 
 
 
-.. image:: factorization_files/factorization_14_0.png
+.. image:: factorization_files/factorization_13_0.png
 
 
 .. code:: python
@@ -96,7 +92,7 @@ array and look at them as images one by one.
 
 
 
-.. image:: factorization_files/factorization_15_0.png
+.. image:: factorization_files/factorization_14_0.png
 
 
 Clearly there is some spatial structure to each component, but looking
@@ -116,7 +112,7 @@ components, and the brightness shows the total amplitude.
 
 
 
-.. image:: factorization_files/factorization_18_0.png
+.. image:: factorization_files/factorization_17_0.png
 
 
 To get more intuition for these colors, we can get the scores from a
@@ -139,7 +135,7 @@ the map.
 
 
 
-.. image:: factorization_files/factorization_21_0.png
+.. image:: factorization_files/factorization_20_0.png
 
 
 Recall that each of these points represents a single pixel. Another way
@@ -156,7 +152,7 @@ principal components.
 
 
 
-.. image:: factorization_files/factorization_23_0.png
+.. image:: factorization_files/factorization_22_0.png
 
 
 NMF
@@ -185,7 +181,7 @@ contains the spatial basis functions. Let's look at both.
 
 
 
-.. image:: factorization_files/factorization_27_0.png
+.. image:: factorization_files/factorization_26_0.png
 
 
 .. code:: python
@@ -198,7 +194,7 @@ contains the spatial basis functions. Let's look at both.
 
 
 
-.. image:: factorization_files/factorization_29_0.png
+.. image:: factorization_files/factorization_28_0.png
 
 
 .. code:: python
@@ -207,7 +203,7 @@ contains the spatial basis functions. Let's look at both.
 
 
 
-.. image:: factorization_files/factorization_30_0.png
+.. image:: factorization_files/factorization_29_0.png
 
 
 .. code:: python
@@ -216,7 +212,7 @@ contains the spatial basis functions. Let's look at both.
 
 
 
-.. image:: factorization_files/factorization_31_0.png
+.. image:: factorization_files/factorization_30_0.png
 
 
 For NMF, a useful way to look at the basis functions is to encode each
@@ -232,7 +228,7 @@ factor which controls overall brightness.
 
 
 
-.. image:: factorization_files/factorization_33_0.png
+.. image:: factorization_files/factorization_32_0.png
 
 
 One problem with this way to look at NMF components is that the scale of
@@ -248,12 +244,12 @@ automatically normalizes the amplitude of each one.
 
 
 
-.. image:: factorization_files/factorization_35_0.png
+.. image:: factorization_files/factorization_34_0.png
 
 
 With these plots, it can be useful to add in a background image (for
-example, the mean flouresence of each pixel). In this case, we also show
-how to select and colorize just two of the three image channels.
+example, the mean). In this case, we also show how to select and
+colorize just two of the three map components against a background.
 
 .. code:: python
 
@@ -266,7 +262,7 @@ how to select and colorize just two of the three image channels.
 
 
 
-.. image:: factorization_files/factorization_38_0.png
+.. image:: factorization_files/factorization_37_0.png
 
 
 ICA
@@ -291,7 +287,7 @@ sparse.
 
 
 
-.. image:: factorization_files/factorization_41_0.png
+.. image:: factorization_files/factorization_40_0.png
 
 
 Some signals will be positive and others negative. This is expected
@@ -309,5 +305,5 @@ when making maps.
 
 
 
-.. image:: factorization_files/factorization_44_0.png
+.. image:: factorization_files/factorization_43_0.png
 

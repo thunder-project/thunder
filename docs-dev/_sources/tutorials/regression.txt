@@ -1,8 +1,4 @@
 
-.. \_regression\_tutorial:
-
-.. currentmodule:: thunder
-
 Regression
 ==========
 
@@ -30,8 +26,7 @@ Setup plotting
 Load and convert data
 ---------------------
 
-Load a series of images and cache the data to speed up subsequent
-operations.
+Load a series of images from one of the examples.
 
 .. code:: python
 
@@ -45,13 +40,13 @@ Take a look at the first image.
 
 
 
-.. image:: regression_files/regression_10_0.png
+.. image:: regression_files/regression_9_0.png
 
 
 Convert the Images data to TimeSeries data, apply preprocessing, and
 cache the results. Here, the preprocessing does two things: squelches
 the data (to set all signals that do not exceed a threshold to 0, which
-eliminates noise pixels), and normalizes (subtracting and removing all
+helps eliminates noise), and normalizes (subtracting and removing all
 time series by a baseline).
 
 .. code:: python
@@ -61,7 +56,7 @@ time series by a baseline).
     series.count();
 
 Take a look at the time series of a few pixels (selected to have large
-standard devaitions to avoid pixels with no activity).
+standard devaitions to show activity).
 
 .. code:: python
 
@@ -70,7 +65,7 @@ standard devaitions to avoid pixels with no activity).
 
 
 
-.. image:: regression_files/regression_14_0.png
+.. image:: regression_files/regression_13_0.png
 
 
 Load in associated behavioral data to be used as explanatory variables
@@ -100,7 +95,7 @@ We can also plot the regressors
 
 
 
-.. image:: regression_files/regression_18_0.png
+.. image:: regression_files/regression_17_0.png
 
 
 Correlation analysis
@@ -135,7 +130,7 @@ correlations are blue.
 
 
 
-.. image:: regression_files/regression_23_0.png
+.. image:: regression_files/regression_22_0.png
 
 
 Regression analysis
@@ -197,7 +192,7 @@ distribution across the image.
 
 
 
-.. image:: regression_files/regression_33_0.png
+.. image:: regression_files/regression_32_0.png
 
 
 .. code:: python
@@ -220,7 +215,7 @@ distribution across the image.
 
 
 
-.. image:: regression_files/regression_34_0.png
+.. image:: regression_files/regression_33_0.png
 
 
 To combine these sources of information, we will make composite maps,
@@ -257,5 +252,5 @@ as a mask, and use the mean image as a background to blend in.
 
 
 
-.. image:: regression_files/regression_37_0.png
+.. image:: regression_files/regression_36_0.png
 

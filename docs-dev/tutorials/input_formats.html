@@ -150,8 +150,10 @@
       
   <div class="section" id="input-formats">
 <h1>Input formats<a class="headerlink" href="#input-formats" title="Permalink to this headline">¶</a></h1>
-<p>Data can be loaded from a variety of sources, depending on the desired
-data type.</p>
+<p>Data in Thunder can be loaded from a variety of formats and locations.
+We support several input formats for both image and series data, but
+also encourage a set of standard, recommended formats for these data,
+especially when working with large datasets.</p>
 <div class="section" id="setup-plotting">
 <h2>Setup plotting<a class="headerlink" href="#setup-plotting" title="Permalink to this headline">¶</a></h2>
 <div class="code python highlight-python"><div class="highlight"><pre>%matplotlib inline
@@ -167,13 +169,12 @@ data type.</p>
 </div>
 <div class="section" id="loading-images">
 <h2>Loading Images<a class="headerlink" href="#loading-images" title="Permalink to this headline">¶</a></h2>
-<p>Images data are distributed collections of images or volumes.
+<p><tt class="docutils literal"><span class="pre">Images</span></tt> data are distributed collections of images or volumes.
 Two-dimensional images can be loaded from <tt class="docutils literal"><span class="pre">png</span></tt> or <tt class="docutils literal"><span class="pre">tif</span></tt> files, and
-three-dimensional volumes can be loaded from multi-page <tt class="docutils literal"><span class="pre">tif-stack</span></tt>
-volumes, or binary <tt class="docutils literal"><span class="pre">stack</span></tt> volumes. For an example, we&#8217;ll load a set
-of <tt class="docutils literal"><span class="pre">tif</span></tt> images by specifying a folder (note: these are small, highly
-downsampled images included with Thunder purely for demonstration and
-testing):</p>
+three-dimensional volumes can be loaded from multi-page <tt class="docutils literal"><span class="pre">tif</span></tt> stacks,
+or flat binary volumes. For an example, we&#8217;ll load a set of <tt class="docutils literal"><span class="pre">tif</span></tt>
+images by specifying a folder (note: these are small, highly downsampled
+images included with Thunder purely for demonstration and testing):</p>
 <p>For these examples, first we find the location relative to the thunder
 installation</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">os.path</span> <span class="kn">as</span> <span class="nn">pth</span>
@@ -185,16 +186,16 @@ installation</p>
 </pre></div>
 </div>
 <p>To look at the first image:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">img</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">img</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">()</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 <span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
-<img alt="../_images/input_formats_12_0.png" src="../_images/input_formats_12_0.png" />
+<img alt="../_images/input_formats_11_0.png" src="../_images/input_formats_11_0.png" />
 <p>To check the dimensions of the images:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">dims</span><span class="o">.</span><span class="n">max</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">dims</span><span class="o">.</span><span class="n">count</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">75</span><span class="p">,</span> <span class="mi">86</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">76</span><span class="p">,</span> <span class="mi">87</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>And to check the total number of images:</p>
@@ -204,14 +205,16 @@ installation</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="mi">20</span>
 </pre></div>
 </div>
-<p>For any of these image formats, the raw data can be stored on a local
-file system, a networked file system (accessible to all nodes of a
-cluster), or Amazon S3. To load images from S3, the location of the data
-must be specified as a URI, with &#8220;s3://&#8221; or &#8220;s3n://&#8221; given as the
-scheme. For instance, data stored in an S3 bucket named &#8220;my-bucket&#8221;
-under keys named &#8220;my-data/fileN.stack&#8221; could be retrieved by passing
-&#8216;<tt class="docutils literal"><span class="pre">s3n://my-bucket/file*.stack</span></tt>&#8216; to <tt class="docutils literal"><span class="pre">loadImages</span></tt>.</p>
-<p>It&#8217;s easy to load only a subset of images:</p>
+<p>For any of these image formats, the images can be stored on a local file
+system (for local use), a networked file system (accessible to all nodes
+of a cluster), Amazon S3, or Google Storage. To load images from S3, the
+location of the data must be specified as a URI, with &#8220;s3://&#8221; or
+&#8220;s3n://&#8221; given as the scheme. For instance, data stored in an S3 bucket
+named &#8220;my-bucket&#8221; under keys named &#8220;my-data/images0.tif,
+my-data/images1.tif, ...&#8221; could be retrieved by passing
+&#8216;<tt class="docutils literal"><span class="pre">s3n://my-bucket/my-data/images*.tif</span></tt>&#8216; to <tt class="docutils literal"><span class="pre">loadImages</span></tt>.</p>
+<p>It&#8217;s also easy to load only a subset of images (indexed assuming
+alphanumeric ordering):</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadImages</span><span class="p">(</span><span class="n">imagepath</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;tif&#39;</span><span class="p">,</span> <span class="n">startIdx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stopIdx</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -221,13 +224,74 @@ under keys named &#8220;my-data/fileN.stack&#8221; could be retrieved by passing
 <div class="highlight-python"><div class="highlight"><pre><span class="mi">10</span>
 </pre></div>
 </div>
+<p>Flat binary files provide a particularly simple format for image data.
+We recommended storing one image per binary file, alongside a single
+file <tt class="docutils literal"><span class="pre">conf.json</span></tt> specifying the dimensions and the numerical type:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+  <span class="s">&quot;dims&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">],</span>
+  <span class="s">&quot;dtype&quot;</span><span class="p">:</span> <span class="s">&quot;int16&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>If this file is included in the folder with the binary files it will be
+used automatically, but the parameters can also be passed as arguments
+to <tt class="docutils literal"><span class="pre">loadImages</span></tt></p>
+<p>You can load an <tt class="docutils literal"><span class="pre">Images</span></tt> object directly from a <tt class="docutils literal"><span class="pre">numpy</span></tt> arrays in
+memory. To see that, first we&#8217;ll collect the images from the <tt class="docutils literal"><span class="pre">tif</span></tt>
+files into a local array.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadImages</span><span class="p">(</span><span class="n">imagepath</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;tif&#39;</span><span class="p">,</span> <span class="n">startIdx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stopIdx</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">arrys</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">collectValuesAsArray</span><span class="p">()</span>
+<span class="n">arrys</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">76</span><span class="p">,</span> <span class="mi">87</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can now load this array directly as an <tt class="docutils literal"><span class="pre">Images</span></tt> object</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">datanew</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadImagesFromArray</span><span class="p">(</span><span class="n">arrys</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">datanew</span><span class="o">.</span><span class="n">nrecords</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="mi">10</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">datanew</span><span class="o">.</span><span class="n">dims</span><span class="o">.</span><span class="n">count</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">76</span><span class="p">,</span> <span class="mi">87</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">img</span> <span class="o">=</span> <span class="n">datanew</span><span class="o">.</span><span class="n">values</span><span class="p">()</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+<span class="n">image</span><span class="p">(</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<img alt="../_images/input_formats_29_0.png" src="../_images/input_formats_29_0.png" />
+<p>When loading n-dimensional array data, the first dimension is assumed to
+index the images, so a 4D array will be treated as a collection of 3D
+volumes, and a 3D array will be treated as a collection of 2D images.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">datanew</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadImagesFromArray</span><span class="p">(</span><span class="n">arrys</span><span class="p">[:,:,:,</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">datanew</span><span class="o">.</span><span class="n">nrecords</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="mi">10</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">datanew</span><span class="o">.</span><span class="n">dims</span><span class="o">.</span><span class="n">count</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">76</span><span class="p">,</span> <span class="mi">87</span><span class="p">)</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="loading-series">
 <h2>Loading Series<a class="headerlink" href="#loading-series" title="Permalink to this headline">¶</a></h2>
 <p>A <tt class="docutils literal"><span class="pre">Series</span></tt> object is a distributed collection of one-dimensional
-arrays with simple integer key identifiers. All arrays in a <tt class="docutils literal"><span class="pre">Series</span></tt>
-must have the same length. They can be loaded from flat text or binary
-files.</p>
+arrays with tuple key identifiers. All arrays in a <tt class="docutils literal"><span class="pre">Series</span></tt> must have
+the same length. They can be loaded from flat text or binary files.</p>
 <p>Text files must contain a line for each record, with numbers separated
 by spaces. The first numbers of each line will be interpreted as keys,
 and subsequent numbers will be interpreted as values. The number of keys
@@ -238,9 +302,9 @@ the <tt class="docutils literal"><span class="pre">iris</span></tt> dataset).</p
 <span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeries</span><span class="p">(</span><span class="n">seriespath</span> <span class="o">+</span> <span class="s">&#39;iris.txt&#39;</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;text&#39;</span><span class="p">,</span> <span class="n">nkeys</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>We could have also provided the folder name, rather than the file, and
-all file(s) of the given format would be loaded. Let&#8217;s look at the first
-entry of the <tt class="docutils literal"><span class="pre">Series</span></tt>:</p>
+<p>If data were split across multiple files, we could have also provided
+the folder name, rather than the file, and all file(s) of the given
+format would be loaded. Let&#8217;s look at the first entry of the <tt class="docutils literal"><span class="pre">Series</span></tt>:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -280,10 +344,19 @@ previously.</p>
 <p>In this case, the number of keys and number of values in each record,
 along with the data types of the keys and values, are automatically read
 out from a <tt class="docutils literal"><span class="pre">conf.json</span></tt> file located in the same directory as
-<tt class="docutils literal"><span class="pre">iris.bin</span></tt>. This file has a simple JSON format. But when a
-<tt class="docutils literal"><span class="pre">conf.json</span></tt> file is unavailable, these parameters can also be passed
-as arguments to the <tt class="docutils literal"><span class="pre">loadSeries</span></tt> method:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeries</span><span class="p">(</span><span class="n">seriespath</span> <span class="o">+</span> <span class="s">&#39;iris.bin&#39;</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;binary&#39;</span><span class="p">,</span> <span class="n">nkeys</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nvalues</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">keyType</span><span class="o">=</span><span class="s">&#39;float&#39;</span><span class="p">,</span> <span class="n">valueType</span><span class="o">=</span><span class="s">&#39;float&#39;</span><span class="p">)</span>
+<tt class="docutils literal"><span class="pre">iris.bin</span></tt>. This file has the following simple JSON format.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+  <span class="s">&quot;keytype&quot;</span><span class="p">:</span> <span class="s">&quot;int16&quot;</span><span class="p">,</span>
+  <span class="s">&quot;valuetype&quot;</span><span class="p">:</span> <span class="s">&quot;uint8&quot;</span><span class="p">,</span>
+  <span class="s">&quot;nkeys&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+  <span class="s">&quot;nvalues&quot;</span><span class="p">:</span> <span class="mi">240</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>When a <tt class="docutils literal"><span class="pre">conf.json</span></tt> file is unavailable, these parameters can also be
+passed as arguments to the <tt class="docutils literal"><span class="pre">loadSeries</span></tt> method:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">path</span> <span class="o">=</span> <span class="n">seriespath</span> <span class="o">+</span> <span class="s">&#39;iris.bin&#39;</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeries</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;binary&#39;</span><span class="p">,</span> <span class="n">nkeys</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nvalues</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">keyType</span><span class="o">=</span><span class="s">&#39;float&#39;</span><span class="p">,</span> <span class="n">valueType</span><span class="o">=</span><span class="s">&#39;float&#39;</span><span class="p">)</span>
 <span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -294,25 +367,24 @@ as arguments to the <tt class="docutils literal"><span class="pre">loadSeries</s
 large data sets from other scientific computing environments, e.g.
 Matlab. For example, the data loaded above was written out from within
 Matlab using</p>
-<blockquote>
-<div><p>f = fopen(&#8216;iris.bin&#8217;,&#8217;w&#8217;)</p>
-<p>fwrite(f, [[0:149]&#8217; data]&#8217;,&#8217;double&#8217;)</p>
-</div></blockquote>
+<div class="highlight-python"><div class="highlight"><pre>f = fopen(&#39;iris.bin&#39;,&#39;w&#39;)
+fwrite(f, [[0:149]&#39; data]&#39;,&#39;double&#39;)
+</pre></div>
+</div>
 <p>Where <tt class="docutils literal"><span class="pre">data</span></tt> is a matrix containing the data, and we append a column
-for the indices. Note that the data must be transposed because of
-Matlab&#8217;s ordering conventions.</p>
+for the indices. Note that the data must be transposed due to ordering
+conventions.</p>
 <p>Both text and binary data can be loaded from a single file or multiple
 files, stored on a local file system, a networked file system, Amazon
 S3, or HDFS. To load multiple files at once, specify a directory as the
 filename, or a wildcard pattern.</p>
-<p>There is also a method for easily loading <tt class="docutils literal"><span class="pre">Series</span></tt> data from local
-arrays saved in either numpy <tt class="docutils literal"><span class="pre">npy</span></tt> or Matlab <tt class="docutils literal"><span class="pre">MAT</span></tt> format. This is
-not advised when working with large data sets, but may be convenient for
-local testing, or for distributing a smaller data set for performing
-intensive computations. In the latter case, the number of partitions
-should be set to approximately 2-3 times the number of cores avaialble
-on your cluster, so that different cores can work on different portions
-of the data.</p>
+<p>You can load <tt class="docutils literal"><span class="pre">Series</span></tt> data from local arrays saved in either numpy
+<tt class="docutils literal"><span class="pre">npy</span></tt> or Matlab <tt class="docutils literal"><span class="pre">MAT</span></tt> format. This is particular useful for local
+use, or for distributing a smaller data set for performing intensive
+computations. In the latter case, the number of partitions should be set
+to approximately 2-3 times the number of cores avaialble on your
+cluster, so that different cores can work on different portions of the
+data.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeries</span><span class="p">(</span><span class="n">seriespath</span> <span class="o">+</span> <span class="s">&#39;/iris.mat&#39;</span><span class="p">,</span> <span class="n">inputFormat</span><span class="o">=</span><span class="s">&#39;mat&#39;</span><span class="p">,</span> <span class="n">varName</span><span class="o">=</span><span class="s">&#39;data&#39;</span><span class="p">,</span> <span class="n">minPartitions</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
@@ -325,6 +397,34 @@ of the data.</p>
 </pre></div>
 </div>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">array</span><span class="p">([</span> <span class="mf">5.1</span><span class="p">,</span>  <span class="mf">3.5</span><span class="p">,</span>  <span class="mf">1.4</span><span class="p">,</span>  <span class="mf">0.2</span><span class="p">]))</span>
+</pre></div>
+</div>
+<p>Finally, like <tt class="docutils literal"><span class="pre">Images</span></tt>, a <tt class="docutils literal"><span class="pre">Series</span></tt> object can be constructed
+directly from a <tt class="docutils literal"><span class="pre">numpy</span></tt> array in memory. To see this, we&#8217;ll
+<tt class="docutils literal"><span class="pre">collect</span></tt> the data we just loaded as an array, and then use it to
+create a new <tt class="docutils literal"><span class="pre">Series</span></tt> object</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">arry</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">collectValuesAsArray</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">arry</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="mi">150</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">datanew</span> <span class="o">=</span> <span class="n">tsc</span><span class="o">.</span><span class="n">loadSeriesFromArray</span><span class="p">(</span><span class="n">arry</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">datanew</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="mi">0</span><span class="p">,),</span> <span class="n">array</span><span class="p">([</span> <span class="mf">5.1</span><span class="p">,</span>  <span class="mf">3.5</span><span class="p">,</span>  <span class="mf">1.4</span><span class="p">,</span>  <span class="mf">0.2</span><span class="p">]))</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">datanew</span><span class="o">.</span><span class="n">nrecords</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="mi">150</span>
 </pre></div>
 </div>
 </div>
