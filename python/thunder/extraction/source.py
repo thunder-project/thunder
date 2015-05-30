@@ -459,7 +459,7 @@ class SourceModel(Serializable, object):
         if isinstance(base, SourceModel):
             base = base.masks(dims, color='silver')
 
-        if isinstance(base, ndarray):
+        elif isinstance(base, ndarray):
             base = Colorize(cmap='indexed', colors=['white']).transform([base])
 
         if base is not None and color is None:
