@@ -196,7 +196,7 @@ class SourcesData(DataSets):
             return array(zip(rr, cc))
 
         r = round(sd * 1.5)
-        sources = SourceModel([pointToCircle(c[::-1], r) for c in centers])
+        sources = SourceModel([pointToCircle(c, r) for c in centers])
 
         data = ImagesLoader(self.sc).fromArrays(allframes, npartitions).astype('float')
         if self.returnParams is True:
