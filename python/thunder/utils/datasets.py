@@ -121,12 +121,13 @@ class RandomData(DataSets):
 
         if seed is not None:
             seed = hash(seed)
+
             def f((k, v)):
                 random.seed(seed + v)
-                return (k, random.randn(ncols))
+                return k, random.randn(ncols)
         else:
             def f((k, v)):
-                return (k, random.randn(ncols))
+                return k, random.randn(ncols)
 
         rdd = rdd.map(f)
         return RowMatrix(rdd)
