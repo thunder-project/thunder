@@ -259,7 +259,7 @@ class TimeSeries(Series):
         order : int, optional, default = 5
             Order of polynomial, for non-linear detrending only
         """
-        checkParams(method, ['linear', 'nonlin'])
+        checkParams(method, ['linear', 'nonlinear'])
 
         if method.lower() == 'linear':
             order = 1
