@@ -56,11 +56,11 @@ class Colorize(object):
         img : ndarray, 2D or 3D
             The image to display
 
-        bar : boolean, optional, default = False
-            Whether to append a colorbar
-
         cmap : str or Colormap, optional, default = 'gray'
             A colormap to use, for non RGB images
+
+        bar : boolean, optional, default = False
+            Whether to append a colorbar
 
         nans : boolean, optional, deafult = True
             Whether to replace NaNs, if True, will replace with 0s
