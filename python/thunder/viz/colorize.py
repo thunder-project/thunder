@@ -82,13 +82,13 @@ class Colorize(object):
 
         if img.ndim == 3:
             if bar:
-                raise Exception("Cannot show meaningful colorbar for RGB images")
+                raise ValueError("Cannot show meaningful colorbar for RGB images")
             if img.shape[2] != 3:
-                raise Exception("Size of third dimension must be 3 for RGB images, got %g" % img.shape[2])
+                raise ValueError("Size of third dimension must be 3 for RGB images, got %g" % img.shape[2])
             mn = img.min()
             mx = img.max()
             if mn < 0.0 or mx > 1.0:
-                raise Exception("Values must be between 0.0 and 1.0 for RGB images, got range (%g, %g)" % (mn, mx))
+                raise ValueError("Values must be between 0.0 and 1.0 for RGB images, got range (%g, %g)" % (mn, mx))
             imshow(img, interpolation='none', clim=clim)
         else:
             imshow(img, cmap=cmap, interpolation='none', clim=clim)
