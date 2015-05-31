@@ -1,10 +1,8 @@
 from numpy import asarray, mean, sqrt, ndarray, amin, amax, concatenate, sum, zeros, maximum, \
-    argmin, newaxis, ones, delete, NaN, inf, isnan
-
-from scipy.stats import spearmanr
+    argmin, newaxis, ones, delete, NaN, inf, isnan, clip, logical_or
 
 from thunder.utils.serializable import Serializable
-from thunder.utils.common import checkParams
+from thunder.utils.common import checkParams, aslist
 from thunder.rdds.images import Images
 from thunder.rdds.series import Series
 
@@ -137,7 +135,7 @@ class Source(Serializable, object):
         elif isinstance(other, list) or isinstance(other, ndarray):
             return norm(self.center - asarray(other), ord=order)
 
-    def overlap(self, other, method='support', counts=False):
+    def overlap(self, other, method='support', counts=False, symmetric=True):
         """
         Compute the overlap between this source and other, in terms
         of either support or similarity of coefficients.
@@ -162,15 +160,18 @@ class Source(Serializable, object):
         """
         checkParams(method, ['support', 'corr'])
 
-        if isinstance(self.coordinates, ndarray):
-            coordsSelf = self.coordinates.tolist()
-        if isinstance(other.coordinates, ndarray):
-            coordsOther = other.coordinates.tolist()
+        coordsSelf = aslist(self.coordinates)
+        coordsOther = aslist(other.coordinates)
 
         intersection = [a for a in coordsSelf if a in coordsOther]
-        complement = [a for a in coordsSelf if a not in intersection]
+        complementLeft = [a for a in coordsSelf if a not in intersection]
+        complementRight = [a for a in coordsOther if a not in intersection]
         hits = len(intersection)
-        misses = len(complement)
+
+        if symmetric is True:
+            misses = len(complementLeft + complementRight)
+        else:
+            misses = len(complementLeft)
 
         if method == 'support':
             if counts:
@@ -179,16 +180,29 @@ class Source(Serializable, object):
                 return hits/float(hits+misses)
 
         if method == 'corr':
+            from scipy.stats import spearmanr
+
             if not (hasattr(self, 'values') and hasattr(other, 'values')):
                 raise Exception('Sources must have values to compute correlation')
             else:
-                valuesSelf = self.values.tolist()
-                valuesOther = other.values.tolist()
+                valuesSelf = aslist(self.values)
+                valuesOther = aslist(other.values)
             if len(intersection) > 0:
                 rho, _ = spearmanr(valuesSelf[intersection], valuesOther[intersection])
             else:
                 rho = 0.0
             return (rho * hits)/float(hits + misses)
+
+    def merge(self, other):
+        """
+        Combine this source with other
+        """
+        self.coordinates = concatenate((self.coordinates, other.coordinates))
+
+        if hasattr(self, 'values'):
+            self.values = concatenate((self.values, other.values))
+
+        return self
 
     def tolist(self):
         """
@@ -245,7 +259,7 @@ class Source(Serializable, object):
         else:
             return output
 
-    def mask(self, dims=None, binary=True, outline=False):
+    def mask(self, dims=None, binary=True, outline=False, color=None):
         """
         Construct a mask from a source, either locally or within a larger image.
 
@@ -260,7 +274,12 @@ class Source(Serializable, object):
 
         outline : boolean, optional, deafult = False
             Whether to only show outlines (derived using binary dilation)
+
+        color : str or array-like
+            RGB triplet (from 0 to 1) or named color (e.g. 'red', 'blue')
         """
+        from thunder import Colorize
+
         coords = self.coordinates
 
         if dims is None:
@@ -279,7 +298,29 @@ class Source(Serializable, object):
             from skimage.morphology import binary_dilation
             m = binary_dilation(m, ones((3, 3))) - m
 
+        if color is not None:
+            m = Colorize(cmap='indexed', colors=[color]).transform([m])
+
         return m
+
+    def inbounds(self, minBound, maxBound):
+        """
+        Check what fraction of coordinates are inside given bounds
+
+        Parameters
+        ----------
+        minBound : list or tuple
+            Minimum bounds
+
+        maxBounds : list or tuple
+            Maximum bounds
+        """
+
+        minCheck = sum(self.coordinates < minBound, axis=1) > 0
+        maxCheck = sum(self.coordinates > maxBound, axis=1) > 0
+        fraction = 1 - sum(logical_or(minCheck, maxCheck)) / float(len(self.coordinates))
+
+        return fraction
 
     def __repr__(self):
         s = self.__class__.__name__
@@ -373,9 +414,9 @@ class SourceModel(Serializable, object):
         """
         return len(self.sources)
 
-    def masks(self, dims=None, binary=True, outline=False, base=None):
+    def masks(self, dims=None, binary=True, outline=False, base=None, color=None, inds=None):
         """
-        Composite masks combined across sources as an iamge.
+        Composite masks combined across sources as an image.
 
         Parameters
         ----------
@@ -389,10 +430,21 @@ class SourceModel(Serializable, object):
         outline : boolean, optional, deafult = False
             Whether to only show outlines (derived using binary dilation)
 
-        base : array-like, optional, deafult = None
-            Base background image on which to put masks.
+        base : SourceModel or array-like, optional, deafult = None
+            Base background image on which to put masks,
+            or another set of sources (usually for comparisons).
+
+        color : str, optional, deafult = None
+            Color to assign regions, will assign randomly if 'random'
+
+        inds : array-like, optional, deafult = None
+            List of indices if only showing a subset
         """
         from thunder import Colorize
+        from matplotlib.cm import get_cmap
+
+        if inds is None:
+            inds = range(0, self.count)
 
         if dims is None and base is None:
             raise Exception("Must provide image dimensions for composite masks "
@@ -404,18 +456,31 @@ class SourceModel(Serializable, object):
         if dims is None and base is not None:
             dims = asarray(base).shape
 
-        combined = zeros(dims)
-        for s in self.sources:
-            combined = maximum(s.mask(dims, binary, outline), combined)
+        if isinstance(base, SourceModel):
+            base = base.masks(dims, color='silver')
+
+        elif isinstance(base, ndarray):
+            base = Colorize(cmap='indexed', colors=['white']).transform([base])
+
+        if base is not None and color is None:
+            color = 'deeppink'
+
+        if color == 'random':
+            combined = zeros(list(dims) + [3])
+            ncolors = min(self.count, 20)
+            colors = get_cmap('rainbow', ncolors)(range(0, ncolors, 1))[:, 0:3]
+            for i in inds:
+                combined = maximum(self.sources[i].mask(dims, binary, outline, colors[i % len(colors)]), combined)
+        else:
+            combined = zeros(dims)
+            for i in inds:
+                combined = maximum(self.sources[i].mask(dims, binary, outline), combined)
+
+        if color is not None and color != 'random':
+            combined = Colorize(cmap='indexed', colors=[color]).transform([combined])
 
         if base is not None:
-            if isinstance(base, SourceModel):
-                base = base.masks(dims)
-                baseColor = 'silver'
-            else:
-                baseColor = 'white'
-            clr = Colorize(cmap='indexed', colors=[baseColor, 'deeppink'])
-            combined = clr.transform([base, combined])
+            combined = maximum(base, combined)
 
         return combined
 
@@ -565,13 +630,15 @@ class SourceModel(Serializable, object):
                 minDistance = thresh
             vals = self.distance(other, minDistance=minDistance)
             vals[isnan(vals)] = inf
+            compare = lambda x: x < thresh
         elif metric == 'overlap':
             vals = self.overlap(other, method='support', minDistance=minDistance)
             vals[isnan(vals)] = 0
+            compare = lambda x: x > thresh
         else:
             raise Exception("Metric not recognized")
 
-        hits = sum(vals < thresh) / float(len(self.sources))
+        hits = sum(map(compare, vals)) / float(len(self.sources))
 
         return hits
 

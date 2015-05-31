@@ -9,7 +9,7 @@ import sys
 
 def convert_nb(nbname):
 	#os.system("runipy --o %s.ipynb --matplotlib --quiet" % nbname)
-	os.system("ipython nbconvert --to rst %s.ipynb --output %s" % (nbname, nbname))
+	os.system("ipython nbconvert --to rst src/%s.ipynb --output %s" % (nbname, nbname))
 	#os.system("tools/nbstripout %s.ipynb" % nbname)
 
 

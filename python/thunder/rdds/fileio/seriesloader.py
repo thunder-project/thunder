@@ -33,7 +33,7 @@ class SeriesLoader(object):
         minPartitions: int
             minimum number of partitions to use when loading data. (Used by fromText, fromMatLocal, and fromNpyLocal)
         """
-        from thunder.utils.common import AWSCredentials
+        from thunder.utils.aws import AWSCredentials
         self.sc = sparkContext
         self.minPartitions = minPartitions
         self.awsCredentialsOverride = AWSCredentials.fromContext(sparkContext)
@@ -42,7 +42,31 @@ class SeriesLoader(object):
         from thunder.utils.common import raiseErrorIfPathExists
         raiseErrorIfPathExists(outputDirPath, awsCredentialsOverride=self.awsCredentialsOverride)
 
-    def fromArrays(self, arrays):
+    def fromArrays(self, arrays, npartitions=None):
+        """
+        Create a Series object from a sequence of 1d numpy arrays on the driver.
+        """
+        # recast singleton
+        if isinstance(arrays, ndarray):
+            arrays = [arrays]
+
+        # check shape and dtype
+        shape = arrays[0].shape
+        dtype = arrays[0].dtype
+        for ary in arrays:
+            if not ary.shape == shape:
+                raise ValueError("Inconsistent array shapes: first array had shape %s, but other array has shape %s" %
+                                 (str(shape), str(ary.shape)))
+            if not ary.dtype == dtype:
+                raise ValueError("Inconsistent array dtypes: first array had dtype %s, but other array has dtype %s" %
+                                 (str(dtype), str(ary.dtype)))
+
+        # generate linear keys
+        keys = map(lambda k: (k,), xrange(0, len(arrays)))
+
+        return Series(self.sc.parallelize(zip(keys, arrays), npartitions), dtype=str(dtype))
+
+    def fromArraysAsImages(self, arrays):
         """Create a Series object from a sequence of numpy ndarrays resident in memory on the driver.
 
         The arrays will be interpreted as though each represents a single time point - effectively the same
@@ -182,7 +206,7 @@ class SeriesLoader(object):
 
         dataPath : string URI or local filesystem path
             Specifies the directory or files to be loaded. May be formatted as a URI string with scheme (e.g. "file://",
-            "s3n://". If no scheme is present, will be interpreted as a path on the local filesystem. This path
+            "s3n://", or "gs://"). If no scheme is present, will be interpreted as a path on the local filesystem. This path
             must be valid on all workers. Datafile may also refer to a single file, or to a range of files specified
             by a glob-style expression using a single wildcard character '*'.
 
@@ -236,7 +260,7 @@ class SeriesLoader(object):
 
         dataPath: string URI or local filesystem path
             Specifies the directory or files to be loaded. May be formatted as a URI string with scheme (e.g. "file://",
-            "s3n://". If no scheme is present, will be interpreted as a path on the local filesystem. This path
+            "s3n://" or "gs://"). If no scheme is present, will be interpreted as a path on the local filesystem. This path
             must be valid on all workers. Datafile may also refer to a single file, or to a range of files specified
             by a glob-style expression using a single wildcard character '*'.
 
@@ -409,7 +433,7 @@ class SeriesLoader(object):
             raise IOError("No files found for path '%s'" % dataPath)
         ntimepoints = len(filenames)
 
-        doMinimizeReads = dataPath.lower().startswith("s3")
+        doMinimizeReads = dataPath.lower().startswith("s3") or dataPath.lower().startswith("gs")
         # check PIL version to see whether it is actually pillow or indeed old PIL and choose
         # conversion function appropriately. See ImagesLoader.fromMultipageTif and common.pil_to_array
         # for more explanation.
@@ -463,9 +487,11 @@ class SeriesLoader(object):
                 fp = reader_.open(fname)
                 try:
                     if doMinimizeReads:
-                        # use multitif module to generate a fake, in-memory one-page tif file
-                        # the advantage of this is that it cuts way down on the many small reads
-                        # that PIL/pillow will make otherwise, which would be a problem for s3
+                        # use multitif module to generate a fake, in-memory
+                        # one-page tif file. the advantage of this is that it
+                        # cuts way down on the many small reads that PIL/pillow
+                        # will make otherwise, which would be a problem for s3
+                        # or Google Storage
                         tiffParser_ = multitif.TiffParser(fp, debug=False)
                         tiffFilebuffer = multitif.packSinglePage(tiffParser_, pageIdx=planeIdx)
                         byteBuf = io.BytesIO(tiffFilebuffer)

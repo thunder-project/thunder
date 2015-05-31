@@ -2,8 +2,9 @@
 """
 import cStringIO as StringIO
 import itertools
-from numpy import zeros, arange
+from numpy import zeros, arange, array, multiply, tile, add
 import struct
+
 from thunder.rdds.data import Data
 from thunder.rdds.keys import Dimensions
 
@@ -110,7 +111,7 @@ class Blocks(Data):
         """
         from thunder.rdds.fileio.writers import getParallelWriterForPath
         from thunder.rdds.fileio.seriesloader import writeSeriesConfig
-        from thunder.utils.common import AWSCredentials
+        from thunder.utils.aws import AWSCredentials
 
         if not overwrite:
             self._checkOverwrite(outputDirPath)
@@ -305,10 +306,14 @@ class BlockGroupingKey(BlockingKey):
     imgSlices: sequence of slices
         Slices into an array of shape origShape; these slices represent the full extent of the block in its original
         space. These slices include the temporal dimension as the first slice in the sequence (imgSlices[0]).
+
+    pixelsPerDim: list or tuple
+        Pixels per dimension, from the blocking strategy used to generate this block
     """
-    def __init__(self, origShape, imgSlices):
+    def __init__(self, origShape, imgSlices, pixelsPerDim=None):
         self.origShape = origShape
         self.imgSlices = imgSlices
+        self.pixelsPerDim = tuple(pixelsPerDim) if pixelsPerDim is not None else None
 
     @property
     def temporalKey(self):
@@ -320,6 +325,41 @@ class BlockGroupingKey(BlockingKey):
     def spatialKey(self):
         return tuple(sl.start for sl in self.imgSlices[1:])
 
+    @property
+    def spatialShape(self):
+        return tuple(sl.stop - sl.start for sl in self.imgSlices[1:])
+
+    def neighbors(self):
+        """
+        Construct list of spatial keys that neighbor this one.
+
+        Uses the current block's spatial key, and the pixels
+        per block dimension (derived from the blocking strategy)
+        to construct a list of neighbors. Excludes any neighbors
+        that would fall outside the bounds, assumed to range from
+        (0, 0, ...) to the original shape.
+        """
+        center = self.spatialKey
+        extent = self.pixelsPerDim
+        maxbound = self.origShape[1:]
+
+        ndim = len(maxbound)
+        minbound = zeros(ndim, 'int').tolist()
+        origin = tuple(zeros(ndim, 'int'))
+        shifts = tuple(tile([-1, 0, 1], (ndim, 1)).tolist())
+
+        neighbors = []
+        import itertools
+        for shift in itertools.product(*shifts):
+            if not (shift == origin):
+                newkey = add(center, multiply(extent, shift))
+                cond1 = sum(map(lambda (x, y): x < y, zip(newkey, minbound)))
+                cond2 = sum(map(lambda (x, y): x >= y, zip(newkey, maxbound)))
+                if not (cond1 or cond2):
+                    neighbors.append(tuple(newkey))
+
+        return neighbors
+
     def asTemporallyConcatenatedKey(self):
         """Returns a new key that is a copy of self, except that the new temporal range of imgSlices will be from 0 to
         the total number of time points.
@@ -329,7 +369,8 @@ class BlockGroupingKey(BlockingKey):
         """
         # new slices should be full slice for formerly planar dimension, plus existing block slices
         newImgSlices = [slice(0, self.origShape[0])] + list(self.imgSlices)[1:]
-        return BlockGroupingKey(origShape=self.origShape, imgSlices=tuple(newImgSlices))
+        return BlockGroupingKey(origShape=self.origShape, imgSlices=tuple(newImgSlices),
+                                pixelsPerDim=self.pixelsPerDim)
 
     def getSeriesDataForSpatialIndices(self, spatialIndices, ary):
         """Returns a one-dimensional array corresponding to the time series (dimension 0) at the passed spatial
@@ -416,18 +457,20 @@ class PaddedBlockGroupingKey(BlockGroupingKey):
         represent the 'core' block, without padding. These slices should be the same size as those in imgSlices,
         differing only in their offsets.
 
+    pixelsPerDim: tuple
+        Pixels per dimension, from the blocking strategy used to generate this block
     """
-    def __init__(self, origShape, padImgSlices, imgSlices, valShape, valSlices):
-        super(PaddedBlockGroupingKey, self).__init__(origShape, imgSlices)
+    def __init__(self, origShape, padImgSlices, imgSlices, valShape, valSlices, pixelsPerDim=None):
+        super(PaddedBlockGroupingKey, self).__init__(origShape, imgSlices, pixelsPerDim)
         self.padImgSlices = padImgSlices
         self.valShape = valShape
         self.valSlices = valSlices
 
     @property
     def padding(self):
-        start = [self.imgSlices[i].start - self.padImgSlices[i].start for i in range(1, len(self.origShape))]
-        stop = [self.padImgSlices[i].stop - self.imgSlices[i].stop for i in range(1, len(self.origShape))]
-        return start, stop
+        before = tuple([self.imgSlices[i].start - self.padImgSlices[i].start for i in range(1, len(self.origShape))])
+        after = tuple([self.padImgSlices[i].stop - self.imgSlices[i].stop for i in range(1, len(self.origShape))])
+        return before, after
 
     def asTemporallyConcatenatedKey(self):
         """Returns a new key that is a copy of self, except that the new temporal range is from 0 to the total number
@@ -440,7 +483,7 @@ class PaddedBlockGroupingKey(BlockGroupingKey):
         newvalSlices = [allTimeSlice] + list(self.valSlices[1:])
         return PaddedBlockGroupingKey(origShape=self.origShape, imgSlices=tuple(newImgSlices),
                                       padImgSlices=tuple(newPadImgSlices), valShape=tuple(newValShape),
-                                      valSlices=tuple(newvalSlices))
+                                      valSlices=tuple(newvalSlices), pixelsPerDim=self.pixelsPerDim)
 
     def getSeriesDataForSpatialIndices(self, spatialIndices, ary):
         """Returns a one-dimensional array corresponding to the time series (dimension 0) at the passed spatial

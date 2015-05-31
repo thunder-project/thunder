@@ -1,6 +1,6 @@
 from numpy import sqrt, pi, angle, fft, fix, zeros, roll, dot, mean, \
-    array, size, diag, tile, ones, asarray, polyfit, polyval, arange, \
-    percentile, ceil, float64
+    array, size, asarray, polyfit, polyval, arange, \
+    percentile, ceil, float64, where, floor
 
 from thunder.rdds.series import Series
 from thunder.utils.common import loadMatVar, checkParams
@@ -37,64 +37,69 @@ class TimeSeries(Series):
     def _constructor(self):
         return TimeSeries
 
-    def triggeredAverage(self, events, lag=0):
+    def _makeWindowMasks(self, indices, window):
         """
-        Construct an average time series triggered on each of several events,
-        considering a range of lags before and after the event
+        Make masks used by windowing functions
+
+        Given a list of indices specifying window centers,
+        and a window size, construct a list of index arrays,
+        one per window, that index into the target array
 
         Parameters
         ----------
-        events : array-like
-            List of events to trigger on
+        indices : array-like
+            List of times specifying window centers
 
-        lag : int
-            Range of lags to consider, will cover (-lag, +lag)
+        window : int
+            Window size
         """
-        events = asarray(events)
-        m = zeros((lag*2+1, len(self.index)))
-        for i, shift in enumerate(range(-lag, lag+1)):
-            fillInds = events + shift
-            fillInds = fillInds[fillInds >= 0]
-            fillInds = fillInds[fillInds < len(self.index)]
-            m[i, fillInds] = 1
+        before = window / 2
+        after = window / 2 + divmod(window, 2)[1]
+        index = asarray(self.index)
+        indices = asarray(indices)
+        if where(index == max(indices))[0][0] + after > len(index):
+            raise ValueError("Maximum requested index %g, with window %g, exceeds length %g"
+                             % (max(indices), window, len(index)))
+        if where(index == min(indices))[0][0] - before < 0:
+            raise ValueError("Minimum requested index %g, with window %g, is less than 0"
+                             % (min(indices), window))
+        masks = [arange(where(index == i)[0][0]-before, where(index == i)[0][0]+after) for i in indices]
+        return masks
 
-        if lag == 0:
-            newIndex = 0
-        else:
-            newIndex = range(-lag, lag+1)
-
-        scale = m.sum(axis=1)
-
-        rdd = self.rdd.mapValues(lambda x: dot(m, x) / scale)
-        return self._constructor(rdd, index=newIndex).__finalize__(self)
-
-    def blockedAverage(self, blockLength):
+    def meanByWindow(self, indices, window):
         """
-        Average blocks of a time series together, e.g. because they correspond
-        to trials of some repeated measurement or process
+        Average time series across multiple windows specified by their centers
 
         Parameters
         ----------
-        triallength : int
-            Length of trial, must divide evenly into total length of time series
+        indices : array-like
+            List of times specifying window centers
+
+        window : int
+            Window size
         """
+        masks = self._makeWindowMasks(indices, window)
+        rdd = self.rdd.mapValues(lambda x: mean([x[m] for m in masks], axis=0))
+        index = arange(0, len(masks[0]))
+        return self._constructor(rdd, index=index).__finalize__(self)
 
-        n = len(self.index)
+    def groupByWindow(self, indices, window):
+        """
+        Group time series into multiple windows specified by their centers
 
-        if divmod(n, blockLength)[1] != 0:
-            raise Exception('Trial length, %g, must evenly divide length of time series, %g'
-                            % (blockLength, n))
+        Parameters
+        ----------
+        indices : array-like
+            List of times specifying window centers
 
-        if n == blockLength:
-            raise Exception('Trial length, %g, cannot be length of entire time series, %g'
-                            % (blockLength, n))
-
-        m = tile(diag(ones((blockLength,))), [n/blockLength, 1]).T
-        newIndex = range(0, blockLength)
-        scale = n / blockLength
-
-        rdd = self.rdd.mapValues(lambda x: dot(m, x) / scale)
-        return self._constructor(rdd, index=newIndex).__finalize__(self)
+        window : int
+            Window size
+        """
+        masks = self._makeWindowMasks(indices, window)
+        rdd = self.rdd.flatMap(lambda (k, x): [(k + (i, ), x[m]) for i, m in enumerate(masks)])
+        index = arange(0, len(masks[0]))
+        nrecords = self.nrecords * len(indices)
+        return self._constructor(rdd, index=index, nrecords=nrecords).__finalize__(self)
 
     def subsample(self, sampleFactor=2):
         """
@@ -254,7 +259,7 @@ class TimeSeries(Series):
         order : int, optional, default = 5
             Order of polynomial, for non-linear detrending only
         """
-        checkParams(method, ['linear', 'nonlin'])
+        checkParams(method, ['linear', 'nonlinear'])
 
         if method.lower() == 'linear':
             order = 1

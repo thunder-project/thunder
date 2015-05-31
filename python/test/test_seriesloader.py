@@ -143,7 +143,7 @@ class TestSeriesLoader(PySparkTestCase):
     def test_fromArrays(self):
         ary = arange(8, dtype=dtypeFunc('int16')).reshape((2, 4))
 
-        series = SeriesLoader(self.sc).fromArrays(ary)
+        series = SeriesLoader(self.sc).fromArraysAsImages(ary)
 
         seriesVals = series.collect()
         seriesAry = series.pack()
@@ -172,7 +172,7 @@ class TestSeriesLoader(PySparkTestCase):
         ary = arange(8, dtype=dtypeFunc('int16')).reshape((2, 4))
         ary2 = arange(8, 16, dtype=dtypeFunc('int16')).reshape((2, 4))
 
-        series = SeriesLoader(self.sc).fromArrays([ary, ary2])
+        series = SeriesLoader(self.sc).fromArraysAsImages([ary, ary2])
 
         seriesVals = series.collect()
         seriesAry = series.pack()
@@ -408,7 +408,7 @@ class TestSeriesBinaryRoundtrip(PySparkTestCaseWithOutputDir):
     def _run_roundtrip_tst(self, testIdx, nimages, aryShape, dtypeSpec, npartitions):
         testArrays = TestSeriesBinaryWriteFromStack.generateTestImages(nimages, aryShape, dtypeSpec)
         loader = SeriesLoader(self.sc)
-        series = loader.fromArrays(testArrays)
+        series = loader.fromArraysAsImages(testArrays)
 
         saveDirPath = os.path.join(self.outputdir, 'save%d' % testIdx)
         series.repartition(npartitions)  # note: this does an elementwise shuffle! won't be in sorted order
@@ -455,7 +455,7 @@ class TestSeriesBlocksRoundtrip(PySparkTestCase):
     def _run_roundtrip_tst(self, nimages, aryShape, dtypeSpec, sizeSpec):
         testArrays = TestSeriesBinaryWriteFromStack.generateTestImages(nimages, aryShape, dtypeSpec)
         loader = SeriesLoader(self.sc)
-        series = loader.fromArrays(testArrays)
+        series = loader.fromArraysAsImages(testArrays)
 
         blocks = series.toBlocks(sizeSpec)
 
@@ -469,7 +469,7 @@ class TestSeriesBlocksRoundtrip(PySparkTestCase):
     def _run_roundtrip_exception_tst(self, nimages, aryShape, dtypeSpec, sizeSpec):
         testArrays = TestSeriesBinaryWriteFromStack.generateTestImages(nimages, aryShape, dtypeSpec)
         loader = SeriesLoader(self.sc)
-        series = loader.fromArrays(testArrays)
+        series = loader.fromArraysAsImages(testArrays)
 
         assert_raises(ValueError, series.toBlocks, sizeSpec)
 

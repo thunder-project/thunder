@@ -1,6 +1,6 @@
 from numpy import arctan2, sqrt, pi, abs, dstack, clip, transpose, inf, \
     random, zeros, ones, asarray, corrcoef, allclose, maximum, add, multiply, \
-    nan_to_num, copy
+    nan_to_num, copy, ndarray, abs, around, ceil, sqrt
 
 
 class Colorize(object):
@@ -35,7 +35,6 @@ class Colorize(object):
     vmax : scalar, optional, default = None
         Numerical value to set to 1 during normalization, values above will be clipped.
     """
-
     def __init__(self, cmap='rainbow', scale=1, colors=None, vmin=None, vmax=None):
         self.cmap = cmap
         self.scale = scale
@@ -46,7 +45,93 @@ class Colorize(object):
         self.vmax = vmax
 
     @staticmethod
-    def image(img, cmap='gray', bar=False, nans=True, clim=None):
+    def tile(imgs, cmap='gray', bar=False, nans=True, clim=None, grid=None, size=11):
+        """
+        Display a collection of images as a grid of tiles
+
+        Parameters
+        ----------
+        img : list or ndarray (2D or 3D)
+            The images to display. Can be a list of either 2D, 3D,
+            or a mix of 2D and 3D numpy arrays. Can also be a single
+            numpy array, in which case the first dimension will be assumes
+            to index the image list, e.g. a (10, 512, 512) array will
+            be treated as 10 different (512,512) images
+
+        cmap : str or Colormap, optional, default = 'gray'
+            A colormap to use, for non RGB images, will apply to all images
+
+        bar : boolean, optional, default = False
+            Whether to append a colorbar to each image
+
+        nans : boolean, optional, deafult = True
+            Whether to replace NaNs, if True, will replace with 0s
+
+        clim : tuple, optional, default = None
+            Limits for scaling image
+
+        grid : tuple, optional, default = None
+            Dimensions of image tile grid, if None, will use a square grid
+            large enough to include all images
+
+        size : scalar, optional, deafult = 11
+            Size of the figure
+        """
+        from matplotlib.pyplot import figure, colorbar
+        from mpl_toolkits.axes_grid1 import ImageGrid
+
+        if not isinstance(imgs, list):
+            if isinstance(imgs, ndarray):
+                imgs = list(imgs)
+            else:
+                raise ValueError("Must provide a list of images, or an ndarray")
+
+        imgs = [asarray(im) for im in imgs]
+
+        if (nans is True) and (imgs[0].dtype != bool):
+            imgs = [nan_to_num(im) for im in imgs]
+
+        fig = figure(1, (size, size))
+
+        if bar is True:
+            axes_pad = 0.4
+            if sum([im.ndim == 3 for im in imgs]):
+                raise ValueError("Cannot show meaningful colorbar for RGB image")
+            cbar_mode = "each"
+        else:
+            axes_pad = 0.2
+            cbar_mode = None
+
+        nimgs = len(imgs)
+
+        if grid is None:
+            c = int(ceil(sqrt(nimgs)))
+            grid = (c, c)
+
+        ngrid = grid[0] * grid[1]
+        if ngrid < nimgs:
+            raise ValueError("Total grid count %g too small for number of images %g" % (ngrid, nimgs))
+
+        g = ImageGrid(fig, 111, nrows_ncols=grid, axes_pad=axes_pad,
+                      cbar_mode=cbar_mode, cbar_size="5%", cbar_pad="5%")
+
+        for i, im in enumerate(imgs):
+            ax = g[i].imshow(im, cmap=cmap, interpolation='none', clim=clim)
+            g[i].axis('off')
+
+            if bar:
+                cb = colorbar(ax, g[i].cax)
+                rng = abs(cb.vmax - cb.vmin) * 0.05
+                cb.set_ticks([around(cb.vmin + rng, 1), around(cb.vmax - rng, 1)])
+                cb.outline.set_visible(False)
+
+        if nimgs < ngrid:
+            for i in range(nimgs, ngrid):
+                g[i].axis('off')
+                g[i].cax.axis('off')
+
+    @staticmethod
+    def image(img, cmap='gray', bar=False, nans=True, clim=None, size=9):
         """
         Streamlined display of images using matplotlib.
 
@@ -55,11 +140,11 @@ class Colorize(object):
         img : ndarray, 2D or 3D
             The image to display
 
-        bar : boolean, optional, default = False
-            Whether to append a colorbar
-
         cmap : str or Colormap, optional, default = 'gray'
             A colormap to use, for non RGB images
+
+        bar : boolean, optional, default = False
+            Whether to append a colorbar
 
         nans : boolean, optional, deafult = True
             Whether to replace NaNs, if True, will replace with 0s
@@ -67,23 +152,27 @@ class Colorize(object):
         clim : tuple, optional, default = None
             Limits for scaling image
 
+        size : scalar, optional, deafult = 9
+            Size of the figure
         """
-        from matplotlib.pyplot import imshow, axis, colorbar
+        from matplotlib.pyplot import imshow, axis, colorbar, figure
 
         img = asarray(img)
 
         if (nans is True) and (img.dtype != bool):
             img = nan_to_num(img)
 
+        figure(1, (size, size))
+
         if img.ndim == 3:
             if bar:
-                raise Exception("Cannot show meaningful colorbar for RGB images")
+                raise ValueError("Cannot show meaningful colorbar for RGB images")
             if img.shape[2] != 3:
-                raise Exception("Size of third dimension must be 3 for RGB images, got %g" % img.shape[2])
+                raise ValueError("Size of third dimension must be 3 for RGB images, got %g" % img.shape[2])
             mn = img.min()
             mx = img.max()
             if mn < 0.0 or mx > 1.0:
-                raise Exception("Values must be between 0.0 and 1.0 for RGB images, got range (%g, %g)" % (mn, mx))
+                raise ValueError("Values must be between 0.0 and 1.0 for RGB images, got range (%g, %g)" % (mn, mx))
             imshow(img, interpolation='none', clim=clim)
         else:
             imshow(img, cmap=cmap, interpolation='none', clim=clim)

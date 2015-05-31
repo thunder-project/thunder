@@ -634,6 +634,7 @@ class TestImagesMeanByRegions(PySparkTestCase):
         assert_equals(5, collected[0][1][0])
         assert_equals(15, collected[1][1][0])
 
+
 class TestImagesLocalCorr(PySparkTestCase):
     """Test accuracy for local correlation
     by comparison to known result

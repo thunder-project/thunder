@@ -53,6 +53,7 @@ class BlockMethod(SourceExtractionMethod):
         --------
         Images.toBlocks
         """
+
         if isinstance(blocks, Images):
             if size is None:
                 raise Exception("Must specify a size if images will be converted to blocks")
@@ -68,11 +69,11 @@ class BlockMethod(SourceExtractionMethod):
 
         result = blocks.rdd.mapValues(algorithm.extract).collect()
 
-        if len(result) < 1:
-            raise Exception("No sources found, try changing parameters?")
-
         keys = map(lambda x: x[0], result)
         sources = map(lambda x: x[1], result)
+
+        if sum(map(lambda b: len(b), sources)) < 1:
+            raise Exception("No sources found, try changing parameters?")
 
         model = self.merger.merge(sources, keys)
 
@@ -94,5 +95,5 @@ class BlockMerger(object):
     """
     A method for merging sources across blocks
     """
-    def merge(self, sources, keys, data=None):
+    def merge(self, sources, keys):
         raise NotImplementedError

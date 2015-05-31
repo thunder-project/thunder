@@ -20,7 +20,7 @@ class ImagesLoader(object):
         sparkcontext: SparkContext
             The pyspark SparkContext object used by the current Thunder environment.
         """
-        from thunder.utils.common import AWSCredentials
+        from thunder.utils.aws import AWSCredentials
         self.sc = sparkContext
         self.awsCredentialsOverride = AWSCredentials.fromContext(sparkContext)
 
@@ -81,7 +81,7 @@ class ImagesLoader(object):
         recursive: boolean, default False
             If true, will recursively descend directories rooted at datapath, loading all files in the tree that
             have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
-            (not s3).
+            (not S3 or GS).
 
         nplanes: positive integer, default None
             If passed, will cause a single binary stack file to be subdivided into multiple records. Every
@@ -278,8 +278,7 @@ class ImagesLoader(object):
 
         recursive: boolean, default False
             If true, will recursively descend directories rooted at datapath, loading all files in the tree that
-            have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
-            (not s3).
+            have an extension matching 'ext'.
 
         nplanes: positive integer, default None
             If passed, will cause a single multipage tif file to be subdivided into multiple records. Every
@@ -398,7 +397,7 @@ class ImagesLoader(object):
         recursive: boolean, default False
             If true, will recursively descend directories rooted at datapath, loading all files in the tree that
             have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
-            (not s3).
+            (not s3 or Google Storage).
 
         npartitions: positive int, optional.
             If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1

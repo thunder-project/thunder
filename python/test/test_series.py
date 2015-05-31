@@ -48,7 +48,7 @@ class TestSeriesConversions(PySparkTestCase):
         ary = arange(size, dtype=dtypeFunc('uint8')).reshape(shape)
         ary2 = ary + size
         from thunder.rdds.fileio.seriesloader import SeriesLoader
-        series = SeriesLoader(self.sc).fromArrays([ary, ary2])
+        series = SeriesLoader(self.sc).fromArraysAsImages([ary, ary2])
 
         castSeries = series.astype("smallfloat")
 
@@ -61,7 +61,7 @@ class TestSeriesDataStatsMethods(PySparkTestCase):
         from thunder.rdds.fileio.seriesloader import SeriesLoader
         ary1 = arange(8, dtype=dtypeFunc('uint8')).reshape((2, 4))
         ary2 = arange(8, 16, dtype=dtypeFunc('uint8')).reshape((2, 4))
-        return SeriesLoader(self.sc).fromArrays([ary1, ary2])
+        return SeriesLoader(self.sc).fromArraysAsImages([ary1, ary2])
 
     def test_mean(self):
         from test_utils import elementwiseMean
@@ -259,7 +259,7 @@ class TestSeriesMethods(PySparkTestCase):
         from thunder.rdds.fileio.seriesloader import SeriesLoader
         ary = arange(8, dtype=dtypeFunc('int16')).reshape((2, 4))
 
-        series = SeriesLoader(self.sc).fromArrays(ary)
+        series = SeriesLoader(self.sc).fromArraysAsImages(ary)
         project0Series = series.maxProject(axis=0)
         project0 = project0Series.pack()
 
@@ -376,11 +376,39 @@ class TestSeriesMethods(PySparkTestCase):
 
         result = data.seriesStatByIndex('sum', level=[0, 1])
         assert_true(array_equal(result.values().first(), array([1, 14, 13, 38])))
-        assert_true(array_equal(result.index, array([[0,0], [0, 1], [1, 0], [1, 1]])))
+        assert_true(array_equal(result.index, array([[0, 0], [0, 1], [1, 0], [1, 1]])))
 
         result = data.seriesSumByIndex(level=[0, 1])
         assert_true(array_equal(result.values().first(), array([1, 14, 13, 38])))
-        assert_true(array_equal(result.index, array([[0,0], [0, 1], [1, 0], [1, 1]])))
+        assert_true(array_equal(result.index, array([[0, 0], [0, 1], [1, 0], [1, 1]])))
+
+    def test_groupByFixedLength(self):
+        rdd = self.sc.parallelize([((0,), array([0, 1, 2, 3, 4, 5, 6, 7], dtype='float16'))])
+        data = Series(rdd)
+
+        test1 = data.groupByFixedLength(4)
+        assert(test1.keys().collect() == [(0, 0), (0, 1)])
+        assert(allclose(test1.index, array([0, 1, 2, 3])))
+        assert(allclose(test1.values().collect(), [[0, 1, 2, 3], [4, 5, 6, 7]]))
+
+        test2 = data.groupByFixedLength(2)
+        assert(test2.keys().collect() == [(0, 0), (0, 1), (0, 2), (0, 3)])
+        assert(allclose(test2.index, array([0, 1])))
+        assert(allclose(test2.values().collect(), [[0, 1], [2, 3], [4, 5], [6, 7]]))
+
+    def test_meanByFixedLength(self):
+        rdd = self.sc.parallelize([((0,), array([0, 1, 2, 3, 4, 5, 6, 7], dtype='float16'))])
+        data = Series(rdd)
+
+        test1 = data.meanByFixedLength(4)
+        assert(test1.keys().collect() == [(0,)])
+        assert(allclose(test1.index, array([0, 1, 2, 3])))
+        assert(allclose(test1.values().collect(), [[2, 3, 4, 5]]))
+
+        test2 = data.meanByFixedLength(2)
+        assert(test2.keys().collect() == [(0,)])
+        assert(allclose(test2.index, array([0, 1])))
+        assert(allclose(test2.values().collect(), [[3, 4]]))
 
 
 class TestSeriesRegionMeanMethods(PySparkTestCase):

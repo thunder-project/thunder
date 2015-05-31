@@ -104,8 +104,6 @@ class TestTimeSeriesMethods(TimeSeriesTestCase):
         result_true = (y - b_true) / (b_true + 0.1)
         assert(allclose(vals, result_true, atol=1e-3))
 
-        
-
     def test_normalization_bymean(self):
         rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5], dtype='float16'))])
         data = TimeSeries(rdd, dtype='float16')
@@ -115,7 +113,29 @@ class TestTimeSeriesMethods(TimeSeriesTestCase):
         assert(allclose(out.first()[1],
                         array([-0.64516,  -0.32258,  0.0,  0.32258,  0.64516]), atol=1e-3))
 
-    # TODO add test for triggered average
+    def test_meanByWindow(self):
+        rdd = self.sc.parallelize([((0,), array([0, 1, 2, 3, 4, 5, 6], dtype='float16'))])
+        data = TimeSeries(rdd, dtype='float16')
+        assert(data.count() == 1)
+        test1 = data.meanByWindow(indices=[3, 5], window=2).first()[1]
+        assert(allclose(test1, [3, 4]))
+        test2 = data.meanByWindow(indices=[3, 5], window=3).first()[1]
+        assert(allclose(test2, [3, 4, 5]))
+        test3 = data.meanByWindow(indices=[3, 5], window=4).first()[1]
+        assert(allclose(test3, [2, 3, 4, 5]))
+        test4 = data.meanByWindow(indices=[3], window=4).first()[1]
+        assert(allclose(test4, [1, 2, 3, 4]))
 
-    # TODO add test for blocked averaged
-
+    def test_groupByWindow(self):
+        rdd = self.sc.parallelize([((0,), array([0, 1, 2, 3, 4, 5, 6], dtype='float16'))])
+        data = TimeSeries(rdd, dtype='float16')
+        test1 = data.groupByWindow(indices=[3, 5], window=2).values().collect()
+        assert(allclose(test1, [[2, 3], [4, 5]]))
+        test2 = data.groupByWindow(indices=[3, 5], window=3).values().collect()
+        assert(allclose(test2, [[2, 3, 4], [4, 5, 6]]))
+        test3 = data.groupByWindow(indices=[3, 5], window=4).values().collect()
+        assert(allclose(test3, [[1, 2, 3, 4], [3, 4, 5, 6]]))
+        test4 = data.groupByWindow(indices=[3, 4, 5], window=2).values().collect()
+        assert(allclose(test4, [[2, 3], [3, 4], [4, 5]]))
+        test5 = data.groupByWindow(indices=[3], window=2).values().collect()
+        assert(allclose(test5, [[2, 3]]))

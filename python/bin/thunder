@@ -42,7 +42,12 @@ def main():
 
     # check for notebook option
     if "-n" in childArgs:
-        os.environ['IPYTHON_OPTS'] = 'notebook'
+        args = [opt for opt in childArgs if "--notebook-opts" in opt]
+        if len(args) > 0:
+            extraOpts = ' ' + args[0][16:]
+        else:
+            extraOpts = ''
+        os.environ['IPYTHON_OPTS'] = 'notebook' + extraOpts
 
     # check for help flags, and print our own first if present
     if "-h" in childArgs or "--help" in childArgs:

@@ -58,6 +58,7 @@ class PCAData(DataSets):
         else:
             return data
 
+
 class FactorAnalysisData(DataSets):
 
     def generate(self, q=1, p=3, nrows=50, npartitions=10, sigmas=None, seed=None):
@@ -100,6 +101,7 @@ class FactorAnalysisData(DataSets):
         else:
             return data
 
+
 class RandomData(DataSets):
 
     def generate(self, nrows=50, ncols=50, npartitions=10, seed=None):
@@ -115,12 +117,21 @@ class RandomData(DataSets):
         nrows : int, optional, default = 50
           Number of rows in the generated matrix
         """
-        random.seed(seed)
-        # Generate the data
-        x = matrix(random.randn(nrows, ncols))
-        # Put the data into an RDD
-        data = RowMatrix(self.sc.parallelize(self.appendKeys(x), npartitions))
-        return data
+        rdd = self.sc.parallelize(self.appendKeys(xrange(nrows)), npartitions)
+
+        if seed is not None:
+            seed = hash(seed)
+
+            def f((k, v)):
+                random.seed(seed + v)
+                return k, random.randn(ncols)
+        else:
+            def f((k, v)):
+                return k, random.randn(ncols)
+
+        rdd = rdd.map(f)
+        return RowMatrix(rdd)
+
 
 class ICAData(DataSets):
 
@@ -157,25 +168,27 @@ class SourcesData(DataSets):
 
         if size(centers) == 1:
             n = centers
-            xcenters = (dims[1] - margin) * random.random_sample(n) + margin/2
-            ycenters = (dims[0] - margin) * random.random_sample(n) + margin/2
+            xcenters = (dims[0] - margin) * random.random_sample(n) + margin/2
+            ycenters = (dims[1] - margin) * random.random_sample(n) + margin/2
             centers = zip(xcenters, ycenters)
         else:
             centers = asarray(centers)
             n = len(centers)
 
-        ts = [clip(random.randn(t), 0, inf) for i in range(0, n)]
-        ts = [gaussian_filter1d(vec, 10) for vec in ts] * 5
+        ts = [random.randn(t) for i in range(0, n)]
+        ts = clip(asarray([gaussian_filter1d(vec, 5) for vec in ts]), 0, 1)
+        for ii, tt in enumerate(ts):
+            ts[ii] = (tt / tt.max()) * 2
         allframes = []
         for tt in range(0, t):
             frame = zeros(dims)
             for nn in range(0, n):
                 base = zeros(dims)
-                base[centers[nn][1], centers[nn][0]] = 1
+                base[centers[nn][0], centers[nn][1]] = 1
                 img = gaussian_filter(base, sd)
                 img = img/max(img)
                 frame += img * ts[nn][tt]
-            frame += random.randn(dims[0], dims[1]) * noise
+            frame += clip(random.randn(dims[0], dims[1]) * noise, 0, inf)
             allframes.append(frame)
 
         def pointToCircle(center, radius):
@@ -183,7 +196,7 @@ class SourcesData(DataSets):
             return array(zip(rr, cc))
 
         r = round(sd * 1.5)
-        sources = SourceModel([pointToCircle(c[::-1], r) for c in centers])
+        sources = SourceModel([pointToCircle(c, r) for c in centers])
 
         data = ImagesLoader(self.sc).fromArrays(allframes, npartitions).astype('float')
         if self.returnParams is True:

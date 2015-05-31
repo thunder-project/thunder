@@ -219,7 +219,7 @@ class Images(Data):
         from matplotlib.pyplot import imsave
         from io import BytesIO
         from thunder.rdds.fileio.writers import getParallelWriterForPath, getCollectedFileWriterForPath
-        from thunder.utils.common import AWSCredentials
+        from thunder.utils.aws import AWSCredentials
 
         def toFilenameAndPngBuf(kv):
             key, img = kv
@@ -260,7 +260,7 @@ class Images(Data):
         """
         from thunder.rdds.fileio.writers import getParallelWriterForPath
         from thunder.rdds.fileio.imagesloader import writeBinaryImagesConfig
-        from thunder.utils.common import AWSCredentials
+        from thunder.utils.aws import AWSCredentials
 
         dimsTotal = list(asarray(self.dims.max)-asarray(self.dims.min)+1)
 

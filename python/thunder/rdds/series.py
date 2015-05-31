@@ -398,6 +398,59 @@ class Series(Data):
         dims.max = list(array(dims.max)[arange(0, nkeys) != axis])
         return self._constructor(rdd, dims=dims).__finalize__(self)
 
+    def _checkFixedLength(self, length):
+        """
+        Check that given fixed length evenly divides index
+
+        Parameters
+        ----------
+        length : int
+            Fixed length with which to subdivide index
+        """
+        n = len(self.index)
+        if divmod(n, length)[1] != 0:
+            raise ValueError('Fixed length, %g, must evenly divide length of series, %g'
+                             % (length, n))
+        if n == length:
+            raise ValueError('Length, %g, cannot be length of series, %g'
+                             % (length, n))
+
+    def meanByFixedLength(self, length):
+        """
+        Compute the mean across fixed length portions of each record
+
+        Parameters
+        ----------
+        length : int
+            Fixed length with which to subdivide
+        """
+        self._checkFixedLength(length)
+        func = lambda v: v.reshape(-1, length).mean(axis=0)
+        rdd = self.rdd.mapValues(func)
+        index = arange(0, length)
+        return self._constructor(rdd, index=index).__finalize__(self)
+
+    def groupByFixedLength(self, length):
+        """
+        Regroup each record by subdividing into fixed length portions
+
+        Will yield a new Series with N times as many records
+        as the initial Series, where N is the number of chunks
+        of fixed length.
+
+        Parameters
+        ----------
+        length : int
+            Fixed length with which to subdivide
+        """
+        self._checkFixedLength(length)
+        n = len(self.index) / length
+        func = lambda (k, v): zip([k + (i,) for i in range(0, n)], list(v.reshape(-1, length)))
+        rdd = self.rdd.flatMap(func)
+        index = arange(0, length)
+        count = self.nrecords * n
+        return self._constructor(rdd, index=index, nrecords=count).__finalize__(self)
+
     def subToInd(self, order='F', isOneBased=True):
         """
         Convert subscript index keys to linear index keys
@@ -863,7 +916,7 @@ class Series(Data):
         from thunder.rdds.imgblocks.blocks import SimpleBlocks
         from thunder.rdds.fileio.writers import getParallelWriterForPath
         from thunder.rdds.fileio.seriesloader import writeSeriesConfig
-        from thunder.utils.common import AWSCredentials
+        from thunder.utils.aws import AWSCredentials
 
         if not overwrite:
             self._checkOverwrite(outputDirPath)
@@ -951,7 +1004,7 @@ class Series(Data):
         lenIdx = index.shape[0]
         nlevels = index.shape[1]
 
-        combs = product(*[unique(index.T[i,:]) for i in xrange(nlevels)])
+        combs = product(*[unique(index.T[i, :]) for i in xrange(nlevels)])
         combs = array([l for l in combs])
 
         masks = array([[array_equal(index[i], c) for i in xrange(lenIdx)] for c in combs])

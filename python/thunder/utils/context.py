@@ -119,7 +119,8 @@ class ThunderContext():
         Loads an Images object from data stored as a binary image stack, tif, or png files.
 
         Supports single files or multiple files, stored on a local file system, a networked file sytem
-        (mounted and available on all nodes), or Amazon S3. HDFS is not currently supported for image file data.
+        (mounted and available on all nodes), Amazon S3, or Google Storage.
+        HDFS is not currently supported for image file data.
 
         Parameters
         ----------
@@ -211,6 +212,72 @@ class ThunderContext():
             return data
         else:
             return data.renumber()
+
+    def loadSeriesFromArray(self, values, index=None, npartitions=None):
+        """
+        Load Series data from a local array
+
+        Parameters
+        ----------
+        values : list or ndarray
+            A list of 1d numpy arrays, or a single 2d numpy array
+
+        index : array-like, optional, deafult = None
+            Index to set for Series object, if None will use linear indices.
+
+        npartitions : position int, optional, default = None
+            Number of partitions for RDD, if unspecified will use
+            default parallelism.
+        """
+        from numpy import ndarray, asarray
+        from thunder.rdds.fileio.seriesloader import SeriesLoader
+        loader = SeriesLoader(self._sc)
+
+        if not npartitions:
+            npartitions = self._sc.defaultParallelism
+
+        if isinstance(values, list):
+            values = asarray(values)
+
+        if isinstance(values, ndarray) and values.ndim > 1:
+            values = list(values)
+
+        data = loader.fromArrays(values, npartitions=npartitions)
+
+        if index:
+            data.index = index
+
+        return data
+
+    def loadImagesFromArray(self, values, npartitions=None):
+        """
+        Load Images data from a local array
+
+        Parameters
+        ----------
+        values : list or ndarray
+            A list of 2d or 3d numpy arrays,
+            or a single 3d or 4d numpy array
+
+        npartitions : position int, optional, default = None
+            Number of partitions for RDD, if unspecified will use
+            default parallelism.
+        """
+        from numpy import ndarray, asarray
+
+        from thunder.rdds.fileio.imagesloader import ImagesLoader
+        loader = ImagesLoader(self._sc)
+
+        if isinstance(values, list):
+            values = asarray(values)
+
+        if isinstance(values, ndarray) and values.ndim > 2:
+            values = list(values)
+
+        if not npartitions:
+            npartitions = self._sc.defaultParallelism
+
+        return loader.fromArrays(values, npartitions=npartitions)
 
     def loadImagesOCP(self, bucketName, resolution, server='ocp.me', startIdx=None, stopIdx=None,
                       minBound=None, maxBound=None):
@@ -507,11 +574,11 @@ class ThunderContext():
                                    startIdx=startIdx, stopIdx=stopIdx, overwrite=overwrite,
                                    recursive=recursive)
 
-    def makeExample(self, dataset, **opts):
+    def makeExample(self, dataset=None, **opts):
         """
         Make an example data set for testing analyses.
 
-        Options include 'pca', 'factor', 'kmeans', and 'ica'.
+        Options include 'pca', 'factor', 'kmeans', 'ica', 'sources'
         See thunder.utils.datasets for detailed options.
 
         Parameters
@@ -526,6 +593,10 @@ class ThunderContext():
 
         """
         from thunder.utils.datasets import DATASET_MAKERS
+
+        if dataset is None:
+            return sorted(DATASET_MAKERS.keys())
+
         checkParams(dataset, DATASET_MAKERS.keys())
 
         return DataSets.make(self._sc, dataset, **opts)
@@ -641,12 +712,12 @@ class ThunderContext():
 
     def loadJSON(self, path):
         """
-        Generic function for loading JSON from a path, handling local file systems and S3
+        Generic function for loading JSON from a path, handling local file systems and S3 or GS
 
         Parameters
         ----------
         path : str
-            Path to a file, can be on a local file system or an S3 bucket
+            Path to a file, can be on a local file system or an S3 or GS bucket
 
         Returns
         -------
@@ -666,7 +737,7 @@ class ThunderContext():
 
     def loadParams(self, path):
         """
-        Load a file with parameters from a local file system or S3.
+        Load a file with parameters from a local file system or S3 or GS.
 
         Assumes file is JSON with basic types (strings, integers, doubles, lists),
         in either a single dict or list of dict-likes, and each dict has at least
@@ -677,7 +748,7 @@ class ThunderContext():
         Parameters
         ----------
         path : str
-            Path to file, can be on a local file system or an S3 bucket
+            Path to file, can be on a local file system or an S3 or GS bucket
 
         Returns
         -------
@@ -688,12 +759,12 @@ class ThunderContext():
 
     def loadSources(self, path):
         """
-        Load a file with sources from a local file system or S3.
+        Load a file with sources from a local file system or S3 or GS.
 
         Parameters
         ----------
         path : str
-            Path to file, can be on a local file system or an S3 bucket
+            Path to file, can be on a local file system or an S3 or GS bucket
 
         Returns
         -------
@@ -712,8 +783,8 @@ class ThunderContext():
         """
         Export local array data to a variety of formats.
 
-        Can write to a local file sytem or S3 (destination inferred from filename schema).
-        S3 writing useful for persisting arrays when working in an environment without
+        Can write to a local file sytem or S3 or GS (destination inferred from filename schema).
+        S3 or GS writing useful for persisting arrays when working in an environment without
         accessible local storage.
 
         Parameters
@@ -764,22 +835,23 @@ class ThunderContext():
         """
         Manually set AWS access credentials to be used by Thunder.
 
-        Provided for hosted cloud environments without filesystem access.
-        If launching a cluster using the thunder-ec2 script, credentials will be configured
-        automatically (inside core-site.xml and ~/.boto), so this method should not need to be called.
+        Provided for hosted cloud environments without filesystem access. If
+        launching a cluster using the thunder-ec2 script, credentials will be
+        configured automatically (inside core-site.xml and ~/.boto), so this
+        method should not need to be called.
 
         Parameters
         ----------
         awsAccessKeyId : string
-             AWS public key, usually starts with "AKIA"
+            AWS public key, usually starts with "AKIA"
 
         awsSecretAccessKey : string
             AWS private key
+        
         """
-        from thunder.utils.common import AWSCredentials
+        from thunder.utils.aws import AWSCredentials
         self._credentials = AWSCredentials(awsAccessKeyId, awsSecretAccessKey)
         self._credentials.setOnContext(self._sc)
-
 
 DEFAULT_EXTENSIONS = {
     "stack": "bin",

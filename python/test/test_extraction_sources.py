@@ -1,6 +1,5 @@
 from numpy import meshgrid, ndarray, array_equal, array, sqrt
 from test_utils import LocalTestCase
-from nose.tools import nottest
 
 from thunder.extraction.source import Source, SourceModel
 
@@ -71,6 +70,40 @@ class TestSourceProperties(LocalTestCase):
         assert("center" in s.__dict__.keys())
         s.restore(skip="center")
         assert("center" in s.__dict__.keys())
+
+
+class TestSourceMethods(LocalTestCase):
+
+    def test_merge(self):
+        """
+        (SourceMethods) merge
+        """
+        s1 = Source([[10, 10], [10, 20]], values=[1.0, 2.0])
+        s2 = Source([[10, 30], [10, 40]], values=[4.0, 5.0])
+        s1.merge(s2)
+        assert(array_equal(s1.coordinates, [[10, 10], [10, 20], [10, 30], [10, 40]]))
+        assert(array_equal(s1.values, [1.0, 2.0, 4.0, 5.0]))
+
+        s1 = Source([[10, 10], [10, 20]])
+        s2 = Source([[10, 30], [10, 40]])
+        s1.merge(s2)
+        assert(array_equal(s1.coordinates, [[10, 10], [10, 20], [10, 30], [10, 40]]))
+
+    def test_inbounds(self):
+        """
+        (SourceMethods) in bounds
+        """
+        # two dimensional
+        s = Source([[10, 10], [10, 20]], values=[1.0, 2.0])
+        assert(s.inbounds([0, 0], [20, 20]) == 1)
+        assert(s.inbounds([0, 0], [10, 10]) == 0.5)
+        assert(s.inbounds([15, 15], [20, 20]) == 0)
+
+        # three dimensional
+        s = Source([[10, 10, 10], [10, 20, 20]], values=[1.0, 2.0, 3.0])
+        assert(s.inbounds([0, 0, 0], [20, 20, 20]) == 1)
+        assert(s.inbounds([0, 0, 0], [10, 10, 20]) == 0.5)
+        assert(s.inbounds([15, 15, 15], [20, 20, 20]) == 0)
 
 
 class TestSourceConversion(LocalTestCase):

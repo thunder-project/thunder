@@ -1,14 +1,15 @@
 from collections import namedtuple
 from nose.tools import assert_equals, assert_true
 from numpy import arange, array_equal, expand_dims, isclose
-import unittest
+
+from test_utils import LocalTestCase
 
 from thunder.rdds.imgblocks.strategy import PaddedBlockingStrategy, SimpleBlockingStrategy
 
 MockImage = namedtuple("MockImage", "dims nrecords dtype")
 
 
-class TestSimpleSplitCalculation(unittest.TestCase):
+class TestSimpleSplitCalculation(LocalTestCase):
 
     @staticmethod
     def _run_tst_splitCalc(blockSize, image, expectedSplits, expectedSize, testIdx=-1):
@@ -82,7 +83,7 @@ class TestSimpleSplitCalculation(unittest.TestCase):
             assert_equals(params.expSlices0, strat._slices[0])
 
 
-class TestBlockExtraction(unittest.TestCase):
+class TestBlockExtraction(LocalTestCase):
     ExtractParams = namedtuple("ExtractParams", "aryshape blockslices timepoint ntimepoints padding")
     PARAMS = [ExtractParams((2, 2), (slice(None), slice(0, 1)), 5, 10, 0),
               ExtractParams((12, 12), (slice(3, 6, 1), slice(6, 9, 1)), 5, 10, 0),
