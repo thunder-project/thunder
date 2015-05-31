@@ -47,6 +47,7 @@ class Colorize(object):
 
     @staticmethod
     def image(img, cmap='gray', bar=False, nans=True, clim=None):
+    def image(img, cmap='gray', bar=False, nans=True, clim=None, size=9):
         """
         Streamlined display of images using matplotlib.
 
@@ -67,13 +68,17 @@ class Colorize(object):
         clim : tuple, optional, default = None
             Limits for scaling image
 
+        size : scalar, optional, deafult = 9
+            Size of the figure
         """
-        from matplotlib.pyplot import imshow, axis, colorbar
+        from matplotlib.pyplot import imshow, axis, colorbar, figure
 
         img = asarray(img)
 
         if (nans is True) and (img.dtype != bool):
             img = nan_to_num(img)
+
+        figure(1, (size, size))
 
         if img.ndim == 3:
             if bar:
