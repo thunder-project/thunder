@@ -91,7 +91,7 @@ class Colorize(object):
         if (nans is True) and (imgs[0].dtype != bool):
             imgs = [nan_to_num(im) for im in imgs]
 
-        fig = figure(1, (size, size))
+        fig = figure(figsize=(size, size))
 
         if bar is True:
             axes_pad = 0.4
@@ -162,7 +162,7 @@ class Colorize(object):
         if (nans is True) and (img.dtype != bool):
             img = nan_to_num(img)
 
-        figure(1, (size, size))
+        figure(figsize=(size, size))
 
         if img.ndim == 3:
             if bar:
