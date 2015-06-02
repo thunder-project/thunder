@@ -58,8 +58,9 @@ class Colorize(object):
             to index the image list, e.g. a (10, 512, 512) array will
             be treated as 10 different (512,512) images
 
-        cmap : str or Colormap, optional, default = 'gray'
-            A colormap to use, for non RGB images, will apply to all images
+        cmap : str or Colormap or list, optional, default = 'gray'
+            A colormap to use, for non RGB images, a list can be used to
+            specify a different colormap for each image
 
         bar : boolean, optional, default = False
             Whether to append a colorbar to each image
@@ -67,8 +68,9 @@ class Colorize(object):
         nans : boolean, optional, deafult = True
             Whether to replace NaNs, if True, will replace with 0s
 
-        clim : tuple, optional, default = None
-            Limits for scaling image
+        clim : tuple or list of tuples, optional, default = None
+            Limits for scaling image, a list can be used to
+            specify different limits for each image
 
         grid : tuple, optional, default = None
             Dimensions of image tile grid, if None, will use a square grid
@@ -104,6 +106,20 @@ class Colorize(object):
 
         nimgs = len(imgs)
 
+        if not isinstance(cmap, list):
+            cmap = [cmap for _ in range(nimgs)]
+
+        if not isinstance(clim, list):
+            clim = [clim for _ in range(nimgs)]
+        
+        if len(clim) < nimgs:
+            raise ValueError("Number of clim specifications %g too small for number of images %g"
+                             % (len(clim), nimgs))
+
+        if len(cmap) < nimgs:
+            raise ValueError("Number of cmap specifications %g too small for number of images %g"
+                             % (len(cmap), nimgs))
+
         if grid is None:
             c = int(ceil(sqrt(nimgs)))
             grid = (c, c)
@@ -116,7 +132,7 @@ class Colorize(object):
                       cbar_mode=cbar_mode, cbar_size="5%", cbar_pad="5%")
 
         for i, im in enumerate(imgs):
-            ax = g[i].imshow(im, cmap=cmap, interpolation='none', clim=clim)
+            ax = g[i].imshow(im, cmap=cmap[i], interpolation='none', clim=clim[i])
             g[i].axis('off')
 
             if bar:
