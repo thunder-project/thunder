@@ -45,7 +45,7 @@ class Colorize(object):
         self.vmax = vmax
 
     @staticmethod
-    def tile(imgs, cmap='gray', bar=False, nans=True, clim=None, grid=None, size=11):
+    def tile(imgs, cmap='gray', bar=False, nans=True, clim=None, grid=None, size=9):
         """
         Display a collection of images as a grid of tiles
 
@@ -131,7 +131,7 @@ class Colorize(object):
                 g[i].cax.axis('off')
 
     @staticmethod
-    def image(img, cmap='gray', bar=False, nans=True, clim=None, size=9):
+    def image(img, cmap='gray', bar=False, nans=True, clim=None, size=7, ax=None):
         """
         Streamlined display of images using matplotlib.
 
@@ -154,15 +154,20 @@ class Colorize(object):
 
         size : scalar, optional, deafult = 9
             Size of the figure
+
+        ax : matplotlib axis, optional, default = None
+            An existing axis to plot into
         """
-        from matplotlib.pyplot import imshow, axis, colorbar, figure
+        from matplotlib.pyplot import axis, colorbar, figure, gca
 
         img = asarray(img)
 
         if (nans is True) and (img.dtype != bool):
             img = nan_to_num(img)
 
-        figure(figsize=(size, size))
+        if ax is None:
+            f = figure(figsize=(size, size))
+            ax = gca()
 
         if img.ndim == 3:
             if bar:
@@ -173,12 +178,15 @@ class Colorize(object):
             mx = img.max()
             if mn < 0.0 or mx > 1.0:
                 raise ValueError("Values must be between 0.0 and 1.0 for RGB images, got range (%g, %g)" % (mn, mx))
-            imshow(img, interpolation='none', clim=clim)
+            im = ax.imshow(img, interpolation='none', clim=clim)
         else:
-            imshow(img, cmap=cmap, interpolation='none', clim=clim)
+            im = ax.imshow(img, cmap=cmap, interpolation='none', clim=clim)
 
         if bar is True:
-            colorbar()
+            cb = colorbar(im, fraction=0.046, pad=0.04)
+            rng = abs(cb.vmax - cb.vmin) * 0.05
+            cb.set_ticks([around(cb.vmin + rng, 1), around(cb.vmax - rng, 1)])
+            cb.outline.set_visible(False)
 
         axis('off')
 
