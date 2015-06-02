@@ -169,6 +169,7 @@ Thunder, let us know in the
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 <span class="kn">from</span> <span class="nn">thunder</span> <span class="kn">import</span> <span class="n">Colorize</span>
 <span class="n">image</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">image</span>
+<span class="n">tile</span> <span class="o">=</span> <span class="n">Colorize</span><span class="o">.</span><span class="n">tile</span>
 <span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;darkgrid&#39;</span><span class="p">)</span>
 <span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
 </pre></div>
@@ -218,26 +219,13 @@ corresponding entry in our list of shifts.</p>
 images, and their difference</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">im1</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 <span class="n">im2</span> <span class="o">=</span> <span class="n">shifted</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-
-<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;poster&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">image</span><span class="p">(</span><span class="n">im1</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">image</span><span class="p">(</span><span class="n">im2</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-<span class="n">image</span><span class="p">(</span><span class="n">im1</span> <span class="o">-</span> <span class="n">im2</span><span class="p">,</span> <span class="n">clim</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">))</span>
-<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
+<span class="n">tile</span><span class="p">([</span><span class="n">im1</span><span class="p">,</span> <span class="n">im2</span><span class="p">,</span> <span class="n">im1</span><span class="o">-</span><span class="n">im2</span><span class="p">],</span> <span class="n">clim</span><span class="o">=</span><span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">300</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">300</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">300</span><span class="p">,</span><span class="mi">300</span><span class="p">)],</span> <span class="n">grid</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/image_registration_14_0.png" src="../_images/image_registration_14_0.png" />
 <p>It&#8217;s also useful to look at the mean of the raw images and the shifted
 images, the mean of the shifted images should be much more blurry!</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;poster&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">image</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">image</span><span class="p">(</span><span class="n">shifted</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
-<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">tile</span><span class="p">([</span><span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">shifted</span><span class="o">.</span><span class="n">mean</span><span class="p">()],</span> <span class="n">size</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/image_registration_16_0.png" src="../_images/image_registration_16_0.png" />
@@ -291,7 +279,7 @@ transformation type: Displacement
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">model</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">Displacement</span><span class="p">(</span><span class="n">delta</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Displacement</span><span class="p">(</span><span class="n">delta</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>You can also convert the full collection of transformations into an
@@ -340,27 +328,14 @@ the same, except for minor near the boundaries (where the image has been
 replaced with its nearest neighbors).</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">im1</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 <span class="n">im2</span> <span class="o">=</span> <span class="n">corrected</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-
-<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;poster&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">image</span><span class="p">(</span><span class="n">im1</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">image</span><span class="p">(</span><span class="n">im2</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-<span class="n">image</span><span class="p">(</span><span class="n">im1</span> <span class="o">-</span> <span class="n">im2</span><span class="p">,</span> <span class="n">clim</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">))</span>
-<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
+<span class="n">tile</span><span class="p">([</span><span class="n">im1</span><span class="p">,</span> <span class="n">im2</span><span class="p">,</span> <span class="n">im1</span><span class="o">-</span><span class="n">im2</span><span class="p">],</span> <span class="n">clim</span><span class="o">=</span><span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">300</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">300</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">300</span><span class="p">,</span><span class="mi">300</span><span class="p">)],</span> <span class="n">grid</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/image_registration_41_0.png" src="../_images/image_registration_41_0.png" />
 <p>As a final check on the registation, we can compare the mean of the
 shifted data, and the mean of the regsitered data. The latter should be
 much sharper.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;poster&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">image</span><span class="p">(</span><span class="n">shifted</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">image</span><span class="p">(</span><span class="n">corrected</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
-<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s">&#39;notebook&#39;</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">tile</span><span class="p">([</span><span class="n">shifted</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">corrected</span><span class="o">.</span><span class="n">mean</span><span class="p">()],</span> <span class="n">size</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/image_registration_43_0.png" src="../_images/image_registration_43_0.png" />

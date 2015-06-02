@@ -20,6 +20,7 @@ Setup plotting
     import seaborn as sns
     from thunder import Colorize
     image = Colorize.image
+    tile = Colorize.tile
     sns.set_context('notebook')
     sns.set_style('darkgrid')
 
@@ -36,7 +37,7 @@ Take a look at the first image.
 
 .. code:: python
 
-    image(data[0])
+    image(data[0], bar=True)
 
 
 
@@ -199,19 +200,7 @@ distribution across the image.
 
     b1map, b2map = center(b1), center(b2)
     
-    plt.subplots(1, 3, figsize=(15 ,10))
-    
-    plt.subplot(1, 3, 1)
-    image(b1map, cmap='RdBu_r')
-    plt.title('b1')
-    
-    plt.subplot(1, 3, 2)
-    image(b2map, cmap='RdBu_r');
-    plt.title('b2')
-    
-    plt.subplot(1, 3, 3)
-    image(rsq)
-    plt.title('r-squared');
+    tile([b1map, b2map, rsq], cmap=['RdBu_r', 'RdBu_r', 'gray'], grid=(1,3), size=14)
 
 
 
@@ -233,22 +222,16 @@ as a mask, and use the mean image as a background to blend in.
 
     c = Colorize(cmap='indexed', scale=5)
     
-    plt.figure(figsize=(20,10))
-    
-    plt.subplot(1,3,1)
     c.colors = ['green']
-    img = c.transform([abs(b1)], mask=rsq, background=m, mixing=0.75)
-    image(img)
+    img1 = c.transform([abs(b1)], mask=rsq, background=m, mixing=0.75)
     
-    plt.subplot(1,3,2)
     c.colors = ['red']
-    img = c.transform([abs(b2)], mask=rsq, background=m, mixing=0.75)
-    image(img)
+    img2 = c.transform([abs(b2)], mask=rsq, background=m, mixing=0.75)
     
-    plt.subplot(1,3,3)
     c.colors = ['green', 'red']
-    img = c.transform([abs(b1), abs(b2)], mask=rsq, background=m, mixing=0.75)
-    image(img)
+    img3 = c.transform([abs(b1), abs(b2)], mask=rsq, background=m, mixing=0.75)
+    
+    tile([img1, img2, img3], grid=(1,3), size=14)
 
 
 

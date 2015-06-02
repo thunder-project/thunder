@@ -227,7 +227,7 @@ expected, for a random signal, the correlation should be near 0.
 
 .. parsed-literal::
 
-    ((0, 0, 0), 0.018071405221599671)
+    ((0, 0, 0), 0.063411240679893649)
 
 
 

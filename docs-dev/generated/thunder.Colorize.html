@@ -192,7 +192,7 @@ scaled by its maximum and minimum values.</p>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.Colorize.blend" title="thunder.Colorize.blend"><tt class="xref py py-obj docutils literal"><span class="pre">blend</span></tt></a>(img,&nbsp;mask[,&nbsp;op])</td>
 <td>Blend two images together using the specified operator.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#thunder.Colorize.image" title="thunder.Colorize.image"><tt class="xref py py-obj docutils literal"><span class="pre">image</span></tt></a>(img[,&nbsp;cmap,&nbsp;bar,&nbsp;nans,&nbsp;clim])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#thunder.Colorize.image" title="thunder.Colorize.image"><tt class="xref py py-obj docutils literal"><span class="pre">image</span></tt></a>(img[,&nbsp;cmap,&nbsp;bar,&nbsp;nans,&nbsp;clim,&nbsp;size,&nbsp;ax])</td>
 <td>Streamlined display of images using matplotlib.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#thunder.Colorize.optimize" title="thunder.Colorize.optimize"><tt class="xref py py-obj docutils literal"><span class="pre">optimize</span></tt></a>(mat[,&nbsp;asCmap])</td>
@@ -231,7 +231,7 @@ scaled by its maximum and minimum values.</p>
 
 <dl class="staticmethod">
 <dt id="thunder.Colorize.image">
-<em class="property">static </em><tt class="descname">image</tt><big>(</big><em>img</em>, <em>cmap='gray'</em>, <em>bar=False</em>, <em>nans=True</em>, <em>clim=None</em><big>)</big><a class="headerlink" href="#thunder.Colorize.image" title="Permalink to this definition">¶</a></dt>
+<em class="property">static </em><tt class="descname">image</tt><big>(</big><em>img</em>, <em>cmap='gray'</em>, <em>bar=False</em>, <em>nans=True</em>, <em>clim=None</em>, <em>size=7</em>, <em>ax=None</em><big>)</big><a class="headerlink" href="#thunder.Colorize.image" title="Permalink to this definition">¶</a></dt>
 <dd><p>Streamlined display of images using matplotlib.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -241,21 +241,29 @@ scaled by its maximum and minimum values.</p>
 <blockquote>
 <div><p>The image to display</p>
 </div></blockquote>
-<p><strong>bar</strong> : boolean, optional, default = False</p>
-<blockquote>
-<div><p>Whether to append a colorbar</p>
-</div></blockquote>
 <p><strong>cmap</strong> : str or Colormap, optional, default = &#8216;gray&#8217;</p>
 <blockquote>
 <div><p>A colormap to use, for non RGB images</p>
+</div></blockquote>
+<p><strong>bar</strong> : boolean, optional, default = False</p>
+<blockquote>
+<div><p>Whether to append a colorbar</p>
 </div></blockquote>
 <p><strong>nans</strong> : boolean, optional, deafult = True</p>
 <blockquote>
 <div><p>Whether to replace NaNs, if True, will replace with 0s</p>
 </div></blockquote>
 <p><strong>clim</strong> : tuple, optional, default = None</p>
-<blockquote class="last">
+<blockquote>
 <div><p>Limits for scaling image</p>
+</div></blockquote>
+<p><strong>size</strong> : scalar, optional, deafult = 9</p>
+<blockquote>
+<div><p>Size of the figure</p>
+</div></blockquote>
+<p><strong>ax</strong> : matplotlib axis, optional, default = None</p>
+<blockquote class="last">
+<div><p>An existing axis to plot into</p>
 </div></blockquote>
 </td>
 </tr>
@@ -283,6 +291,55 @@ between the data points in m-dimensional space.</p>
 <blockquote class="last">
 <div><p>Whether to return a matplotlib colormap, if False will
 return a list of colors.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="thunder.Colorize.tile">
+<em class="property">static </em><tt class="descname">tile</tt><big>(</big><em>imgs</em>, <em>cmap='gray'</em>, <em>bar=False</em>, <em>nans=True</em>, <em>clim=None</em>, <em>grid=None</em>, <em>size=9</em><big>)</big><a class="headerlink" href="#thunder.Colorize.tile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Display a collection of images as a grid of tiles</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>img</strong> : list or ndarray (2D or 3D)</p>
+<blockquote>
+<div><p>The images to display. Can be a list of either 2D, 3D,
+or a mix of 2D and 3D numpy arrays. Can also be a single
+numpy array, in which case the first dimension will be assumes
+to index the image list, e.g. a (10, 512, 512) array will
+be treated as 10 different (512,512) images</p>
+</div></blockquote>
+<p><strong>cmap</strong> : str or Colormap or list, optional, default = &#8216;gray&#8217;</p>
+<blockquote>
+<div><p>A colormap to use, for non RGB images, a list can be used to
+specify a different colormap for each image</p>
+</div></blockquote>
+<p><strong>bar</strong> : boolean, optional, default = False</p>
+<blockquote>
+<div><p>Whether to append a colorbar to each image</p>
+</div></blockquote>
+<p><strong>nans</strong> : boolean, optional, deafult = True</p>
+<blockquote>
+<div><p>Whether to replace NaNs, if True, will replace with 0s</p>
+</div></blockquote>
+<p><strong>clim</strong> : tuple or list of tuples, optional, default = None</p>
+<blockquote>
+<div><p>Limits for scaling image, a list can be used to
+specify different limits for each image</p>
+</div></blockquote>
+<p><strong>grid</strong> : tuple, optional, default = None</p>
+<blockquote>
+<div><p>Dimensions of image tile grid, if None, will use a square grid
+large enough to include all images</p>
+</div></blockquote>
+<p><strong>size</strong> : scalar, optional, deafult = 11</p>
+<blockquote class="last">
+<div><p>Size of the figure</p>
 </div></blockquote>
 </td>
 </tr>

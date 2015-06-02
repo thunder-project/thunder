@@ -27,6 +27,7 @@ Setup plotting
     import matplotlib.pyplot as plt
     from thunder import Colorize
     image = Colorize.image
+    tile = Colorize.tile
     sns.set_style('darkgrid')
     sns.set_context('notebook')
 
@@ -95,15 +96,7 @@ images, and their difference
 
     im1 = data[0]
     im2 = shifted[0]
-    
-    sns.set_context('poster')
-    plt.subplot(1, 3, 1)
-    image(im1)
-    plt.subplot(1, 3, 2)
-    image(im2)
-    plt.subplot(1, 3, 3)
-    image(im1 - im2, clim=(-200, 200))
-    sns.set_context('notebook')
+    tile([im1, im2, im1-im2], clim=[(0,300), (0,300), (-300,300)], grid=(1,3), size=14)
 
 
 
@@ -115,12 +108,7 @@ images, the mean of the shifted images should be much more blurry!
 
 .. code:: python
 
-    sns.set_context('poster')
-    plt.subplot(1, 2, 1)
-    image(data.mean())
-    plt.subplot(1, 2, 2)
-    image(shifted.mean())
-    sns.set_context('notebook')
+    tile([data.mean(), shifted.mean()], size=14)
 
 
 
@@ -210,7 +198,7 @@ The model represents a list of transformations. You can inspect them:
 
 .. parsed-literal::
 
-    Displacement(delta=[1, 2])
+    Displacement(delta=[0, -1])
 
 
 
@@ -279,15 +267,7 @@ replaced with its nearest neighbors).
 
     im1 = data[0]
     im2 = corrected[0]
-    
-    sns.set_context('poster')
-    plt.subplot(1, 3, 1)
-    image(im1)
-    plt.subplot(1, 3, 2)
-    image(im2)
-    plt.subplot(1, 3, 3)
-    image(im1 - im2, clim=(-200, 200))
-    sns.set_context('notebook')
+    tile([im1, im2, im1-im2], clim=[(0,300), (0,300), (-300,300)], grid=(1,3), size=14)
 
 
 
@@ -300,12 +280,7 @@ much sharper.
 
 .. code:: python
 
-    sns.set_context('poster')
-    plt.subplot(1, 2, 1)
-    image(shifted.mean())
-    plt.subplot(1, 2, 2)
-    image(corrected.mean())
-    sns.set_context('notebook')
+    tile([shifted.mean(), corrected.mean()], size=14)
 
 
 
