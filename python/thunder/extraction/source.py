@@ -1,5 +1,5 @@
 from numpy import asarray, mean, sqrt, ndarray, amin, amax, concatenate, sum, zeros, maximum, \
-    argmin, newaxis, ones, delete, NaN, inf, isnan, clip, logical_or, unique, where
+    argmin, newaxis, ones, delete, NaN, inf, isnan, clip, logical_or, unique, where, all
 
 from thunder.utils.serializable import Serializable
 from thunder.utils.common import checkParams, aslist
@@ -45,13 +45,16 @@ class Source(Serializable, object):
     def __init__(self, coordinates, values=None, id=None):
         self.coordinates = asarray(coordinates)
 
-        if self.coordinates.ndim == 1:
+        if self.coordinates.ndim == 1 and len(self.coordinates) > 0:
             self.coordinates = asarray([self.coordinates])
 
         if values is not None:
             self.values = asarray(values)
             if self.values.ndim == 0:
                 self.values = asarray([self.values])
+            if not (len(self.coordinates) == len(self.values)):
+                raise ValueError("Lengths of coordinates %g and values %g do not match"
+                                 % (len(self.coordinates), len(self.values)))
 
         if id is not None:
             self.id = id
@@ -229,6 +232,111 @@ class Source(Serializable, object):
                 if val is not None and not isinstance(val, ndarray):
                     setattr(new, prop, asarray(val))
         return new
+
+    def crop(self, minBound, maxBound):
+        """
+        Crop a source by removing coordinates outside bounds.
+
+        Follows normal slice indexing conventions.
+
+        Parameters
+        ----------
+        minBound : tuple
+            Minimum or starting bounds for each axis
+
+        maxBound : tuple
+            Maximum or ending bounds for each axis
+        """
+        coords = self.coordinates
+
+        newid = self.id if hasattr(self, 'id') else None
+
+        if hasattr(self, 'values') and self.values is not None:
+            values = self.values
+            inside = [(c, v) for c, v in zip(coords, values) if c not in coords]
+            newcoords, newvalues = zip(*inside)
+            return Source(coordinates=newcoords, values=newvalues, id=newid)
+        else:
+            newcoords = [c for c in coords if all(c >= minBound) and all(c < maxBound)]
+            return Source(coordinates=newcoords, id=newid)
+
+    def dilate(self, size):
+        """
+        Dilate a source using morphological operators.
+
+        Parameters
+        ----------
+        size : int
+            Size of dilation in pixels
+        """
+        if size == 0:
+            newcoords = self.coordinates
+
+        else:
+            size = (size * 2) + 1
+
+            if hasattr(self, 'values') and self.values is not None:
+                raise AttributeError('Cannot dilate sources with values')
+
+            from skimage.morphology import binary_dilation
+
+            coords = self.coordinates
+            extent = self.bbox[len(self.center):] - self.bbox[0:len(self.center)] + 1 + size * 2
+            m = zeros(extent)
+            coords = (coords - self.bbox[0:len(self.center)] + size)
+            m[coords.T.tolist()] = 1
+            m = binary_dilation(m, ones((size, size)))
+            newcoords = asarray(where(m)).T + self.bbox[0:len(self.center)] - size
+            newcoords = [c for c in newcoords if all(c >= 0)]
+
+        newid = self.id if hasattr(self, 'id') else None
+
+        return Source(coordinates=newcoords, id=newid)
+
+    def exclude(self, other):
+        """
+        Remove coordinates derived from another Source or an array.
+
+        If other is an array, will remove coordinates of all
+        non-zero elements from this source. If other is a source,
+        will remove any matching coordinates.
+
+        Parameters
+        ----------
+        other : ndarray or Source
+            Source to remove
+        """
+        if isinstance(other, ndarray):
+            coordsOther = asarray(where(other)).T
+        else:
+            coordsOther = aslist(other.coordinates)
+
+        coordsSelf = aslist(self.coordinates)
+
+        newid = self.id if hasattr(self, 'id') else None
+
+        if hasattr(self, 'values') and self.values is not None:
+            valuesSelf = self.values
+            complement = [(c, v) for c, v in zip(coordsSelf, valuesSelf) if c not in coordsOther]
+            newcoords, newvalues = zip(*complement)
+            return Source(coordinates=newcoords, values=newvalues, id=newid)
+        else:
+            complement = [a for a in coordsSelf if a not in coordsOther]
+            return Source(coordinates=complement, id=newid)
+
+    def outline(self, inner, outer):
+        """
+        Compute source outline by differencing two dilations
+
+        Parameters
+        ----------
+        inner : int
+            Size of inner outline boundary (in pixels)
+
+        outer : int
+            Size of outer outline boundary (in pixels)
+        """
+        return self.dilate(outer).exclude(self.dilate(inner))
 
     def transform(self, data, collect=True):
         """
@@ -748,6 +856,43 @@ class SourceModel(Serializable, object):
             newmodel = c.clean(newmodel)
 
         return newmodel
+
+    def dilate(self, size):
+        """
+        Dilate all sources using morphological operators
+
+        Parameters
+        ----------
+        size : int
+            Size of dilation in pixels
+        """
+        return SourceModel([s.dilate(size) for s in self.sources])
+
+    def outline(self, inner, outer):
+        """
+        Outline all sources
+
+        inner : int
+            Size of inner outline boundary (in pixels)
+
+        outer : int
+            Size of outer outline boundary (in pixels)
+        """
+        return SourceModel([s.outline(inner, outer) for s in self.sources])
+
+    def crop(self, minBound, maxBound):
+        """
+        Crop all sources by removing coordinates outside of bounds
+
+        Parameters
+        ----------
+        minBound : tuple
+            Minimum or starting bounds for each axis
+
+        maxBound : tuple
+            Maximum or ending bounds for each axis
+        """
+        return SourceModel([s.crop(minBound, maxBound) for s in self.sources])
 
     def save(self, f, numpyStorage='auto', include=None, **kwargs):
         """

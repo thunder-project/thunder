@@ -1,4 +1,4 @@
-from numpy import meshgrid, ndarray, array_equal, array, sqrt, zeros
+from numpy import meshgrid, ndarray, array_equal, array, sqrt, zeros, asarray, where, ones
 from test_utils import LocalTestCase
 
 from thunder.extraction.source import Source, SourceModel
@@ -139,10 +139,102 @@ class TestSourceMethods(LocalTestCase):
         assert(s.inbounds([15, 15], [20, 20]) == 0)
 
         # three dimensional
-        s = Source([[10, 10, 10], [10, 20, 20]], values=[1.0, 2.0, 3.0])
+        s = Source([[10, 10, 10], [10, 20, 20]], values=[1.0, 2.0])
         assert(s.inbounds([0, 0, 0], [20, 20, 20]) == 1)
         assert(s.inbounds([0, 0, 0], [10, 10, 20]) == 0.5)
         assert(s.inbounds([15, 15, 15], [20, 20, 20]) == 0)
+
+    def test_crop(self):
+        """
+        (SourceMethods) crop
+        """
+        # without values
+        s = Source([[10, 10], [10, 20]])
+        assert(array_equal(s.crop([0, 0], [21, 21]).coordinates, s.coordinates))
+        assert(array_equal(s.crop([0, 0], [11, 11]).coordinates, [[10, 10]]))
+        assert(array_equal(s.crop([0, 0], [5, 5]).coordinates, []))
+
+        # with values (two dimensional)
+        s = Source([[10, 10], [10, 20]])
+        assert(array_equal(s.crop([0, 0], [21, 21]).coordinates, s.coordinates))
+        assert(array_equal(s.crop([0, 0], [11, 11]).coordinates, [[10, 10]]))
+        assert(array_equal(s.crop([0, 0], [5, 5]).coordinates, []))
+
+    def test_exclude(self):
+        """
+        (SourceMethods) exclude
+        """
+        # without values
+        s = Source([[10, 10], [10, 20]])
+        o = Source([[10, 20]])
+        assert(array_equal(s.exclude(o).coordinates, [[10, 10]]))
+
+        # with values (two dimensional)
+        s = Source([[10, 10], [10, 20]], values=[1.0, 2.0])
+        o = Source([[10, 20]])
+        assert(array_equal(s.exclude(o).coordinates, [[10, 10]]))
+        assert(array_equal(s.exclude(o).values, [1]))
+
+        # with values (three dimensional)
+        s = Source([[10, 10, 10], [10, 20, 20]], values=[1.0, 2.0])
+        o = Source([[10, 20, 20]])
+        assert(array_equal(s.exclude(o).coordinates, [[10, 10, 10]]))
+        assert(array_equal(s.exclude(o).values, [1.0]))
+
+    def test_dilate(self):
+        """
+        (SourceMethods) dilate
+        """
+        # make base source
+        m = zeros((10, 10))
+        m[5, 5] = 1
+        m[5, 6] = 1
+        m[6, 5] = 1
+        m[4, 5] = 1
+        m[5, 4] = 1
+        coords = asarray(where(m)).T
+        s = Source(coords)
+
+        # dilating by 0 doesn't change anything
+        assert(array_equal(s.dilate(0).coordinates, s.coordinates))
+        assert(array_equal(s.dilate(0).bbox, [4, 4, 6, 6]))
+
+        # dilating by 1 expands region but doesn't affect center
+        assert(array_equal(s.dilate(1).center, s.center))
+        assert(array_equal(s.dilate(1).area, 21))
+        assert(array_equal(s.dilate(1).bbox, [3, 3, 7, 7]))
+        assert(array_equal(s.dilate(1).mask().shape, [5, 5]))
+
+        # manually construct expected shape of dilated source mask
+        truth = ones((5, 5))
+        truth[0, 0] = 0
+        truth[4, 4] = 0
+        truth[0, 4] = 0
+        truth[4, 0] = 0
+        assert(array_equal(s.dilate(1).mask(), truth))
+
+    def test_outline(self):
+        """
+        (SourceMethods) outline
+        """
+        # make base source
+        m = zeros((10, 10))
+        m[5, 5] = 1
+        m[5, 6] = 1
+        m[6, 5] = 1
+        m[4, 5] = 1
+        m[5, 4] = 1
+        coords = asarray(where(m)).T
+        s = Source(coords)
+
+        # compare outlines to manual results
+        o1 = s.outline(0, 1).mask((10, 10))
+        o2 = s.dilate(1).mask((10, 10)) - s.mask((10, 10))
+        assert(array_equal(o1, o2))
+
+        o1 = s.outline(1, 2).mask((10, 10))
+        o2 = s.dilate(2).mask((10, 10)) - s.dilate(1).mask((10, 10))
+        assert(array_equal(o1, o2))
 
 
 class TestSourceConversion(LocalTestCase):
