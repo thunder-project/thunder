@@ -45,7 +45,7 @@ class Colorize(object):
         self.vmax = vmax
 
     @staticmethod
-    def tile(imgs, cmap='gray', bar=False, nans=True, clim=None, grid=None, size=11):
+    def tile(imgs, cmap='gray', bar=False, nans=True, clim=None, grid=None, size=9):
         """
         Display a collection of images as a grid of tiles
 
@@ -58,8 +58,9 @@ class Colorize(object):
             to index the image list, e.g. a (10, 512, 512) array will
             be treated as 10 different (512,512) images
 
-        cmap : str or Colormap, optional, default = 'gray'
-            A colormap to use, for non RGB images, will apply to all images
+        cmap : str or Colormap or list, optional, default = 'gray'
+            A colormap to use, for non RGB images, a list can be used to
+            specify a different colormap for each image
 
         bar : boolean, optional, default = False
             Whether to append a colorbar to each image
@@ -67,8 +68,9 @@ class Colorize(object):
         nans : boolean, optional, deafult = True
             Whether to replace NaNs, if True, will replace with 0s
 
-        clim : tuple, optional, default = None
-            Limits for scaling image
+        clim : tuple or list of tuples, optional, default = None
+            Limits for scaling image, a list can be used to
+            specify different limits for each image
 
         grid : tuple, optional, default = None
             Dimensions of image tile grid, if None, will use a square grid
@@ -91,7 +93,7 @@ class Colorize(object):
         if (nans is True) and (imgs[0].dtype != bool):
             imgs = [nan_to_num(im) for im in imgs]
 
-        fig = figure(1, (size, size))
+        fig = figure(figsize=(size, size))
 
         if bar is True:
             axes_pad = 0.4
@@ -103,6 +105,20 @@ class Colorize(object):
             cbar_mode = None
 
         nimgs = len(imgs)
+
+        if not isinstance(cmap, list):
+            cmap = [cmap for _ in range(nimgs)]
+
+        if not isinstance(clim, list):
+            clim = [clim for _ in range(nimgs)]
+        
+        if len(clim) < nimgs:
+            raise ValueError("Number of clim specifications %g too small for number of images %g"
+                             % (len(clim), nimgs))
+
+        if len(cmap) < nimgs:
+            raise ValueError("Number of cmap specifications %g too small for number of images %g"
+                             % (len(cmap), nimgs))
 
         if grid is None:
             c = int(ceil(sqrt(nimgs)))
@@ -116,7 +132,7 @@ class Colorize(object):
                       cbar_mode=cbar_mode, cbar_size="5%", cbar_pad="5%")
 
         for i, im in enumerate(imgs):
-            ax = g[i].imshow(im, cmap=cmap, interpolation='none', clim=clim)
+            ax = g[i].imshow(im, cmap=cmap[i], interpolation='none', clim=clim[i])
             g[i].axis('off')
 
             if bar:
@@ -131,7 +147,7 @@ class Colorize(object):
                 g[i].cax.axis('off')
 
     @staticmethod
-    def image(img, cmap='gray', bar=False, nans=True, clim=None, size=9):
+    def image(img, cmap='gray', bar=False, nans=True, clim=None, size=7, ax=None):
         """
         Streamlined display of images using matplotlib.
 
@@ -154,15 +170,20 @@ class Colorize(object):
 
         size : scalar, optional, deafult = 9
             Size of the figure
+
+        ax : matplotlib axis, optional, default = None
+            An existing axis to plot into
         """
-        from matplotlib.pyplot import imshow, axis, colorbar, figure
+        from matplotlib.pyplot import axis, colorbar, figure, gca
 
         img = asarray(img)
 
         if (nans is True) and (img.dtype != bool):
             img = nan_to_num(img)
 
-        figure(1, (size, size))
+        if ax is None:
+            f = figure(figsize=(size, size))
+            ax = gca()
 
         if img.ndim == 3:
             if bar:
@@ -173,12 +194,15 @@ class Colorize(object):
             mx = img.max()
             if mn < 0.0 or mx > 1.0:
                 raise ValueError("Values must be between 0.0 and 1.0 for RGB images, got range (%g, %g)" % (mn, mx))
-            imshow(img, interpolation='none', clim=clim)
+            im = ax.imshow(img, interpolation='none', clim=clim)
         else:
-            imshow(img, cmap=cmap, interpolation='none', clim=clim)
+            im = ax.imshow(img, cmap=cmap, interpolation='none', clim=clim)
 
         if bar is True:
-            colorbar()
+            cb = colorbar(im, fraction=0.046, pad=0.04)
+            rng = abs(cb.vmax - cb.vmin) * 0.05
+            cb.set_ticks([around(cb.vmin + rng, 1), around(cb.vmax - rng, 1)])
+            cb.outline.set_visible(False)
 
         axis('off')
 

@@ -1,4 +1,4 @@
-from numpy import meshgrid, ndarray, array_equal, array, sqrt
+from numpy import meshgrid, ndarray, array_equal, array, sqrt, zeros
 from test_utils import LocalTestCase
 
 from thunder.extraction.source import Source, SourceModel
@@ -21,6 +21,45 @@ class TestSourceConstruction(LocalTestCase):
         s = Source([[10, 10], [10, 20]], values=[1.0, 2.0])
         assert(array_equal(s.coordinates, array([[10, 10], [10, 20]])))
         assert(array_equal(s.values, array([1.0, 2.0])))
+
+    def test_source_fromMask_binary(self):
+        """
+        (SourceConstruction) from mask
+        """
+        mask = zeros((10, 10))
+        mask[5, 5] = 1
+        mask[5, 6] = 1
+        mask[5, 7] = 1
+        s = Source.fromMask(mask)
+        assert(isinstance(s, Source))
+        assert(isinstance(s.coordinates, ndarray))
+        assert(array_equal(s.coordinates, array([[5, 5], [5, 6], [5, 7]])))
+        assert(array_equal(s.mask((10, 10), binary=True), mask))
+        assert(array_equal(s.mask((10, 10), binary=False), mask))
+
+    def test_source_fromMask_values(self):
+        """
+        (SourceConstruction) from mask with values
+        """
+        mask = zeros((10, 10))
+        mask[5, 5] = 0.5
+        mask[5, 6] = 0.6
+        mask[5, 7] = 0.7
+        s = Source.fromMask(mask)
+        assert(isinstance(s, Source))
+        assert(isinstance(s.coordinates, ndarray))
+        assert(isinstance(s.values, ndarray))
+        assert(array_equal(s.coordinates, array([[5, 5], [5, 6], [5, 7]])))
+        assert(array_equal(s.values, array([0.5, 0.6, 0.7])))
+        assert(array_equal(s.mask((10, 10), binary=False), mask))
+
+    def test_source_fromCoordinates(self):
+        """
+        (SourceConstruction) from coordinates
+        """
+        s = Source.fromCoordinates([[10, 10], [10, 20]])
+        assert(isinstance(s.coordinates, ndarray))
+        assert(array_equal(s.coordinates, array([[10, 10], [10, 20]])))
 
 
 class TestSourceProperties(LocalTestCase):

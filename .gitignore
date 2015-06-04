@@ -15,6 +15,7 @@ python/doc/_build
 python/doc/generated
 *.iml
 python/doc/tutorials/*.rst
+python/doc/tutorials/src/.ipynb*
 python/doc/tutorials/.ipynb*
 python/doc/tutorials/*_files
 python/thunder/lib/*dev*.egg

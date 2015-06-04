@@ -1,5 +1,5 @@
 from numpy import asarray, mean, sqrt, ndarray, amin, amax, concatenate, sum, zeros, maximum, \
-    argmin, newaxis, ones, delete, NaN, inf, isnan, clip, logical_or
+    argmin, newaxis, ones, delete, NaN, inf, isnan, clip, logical_or, unique, where
 
 from thunder.utils.serializable import Serializable
 from thunder.utils.common import checkParams, aslist
@@ -321,6 +321,55 @@ class Source(Serializable, object):
         fraction = 1 - sum(logical_or(minCheck, maxCheck)) / float(len(self.coordinates))
 
         return fraction
+
+    @staticmethod
+    def fromMask(mask, id=None):
+        """
+        Genearte a source from a mask.
+
+        Assumes that the mask is an image where all non-zero
+        elements are part of the source. If all non-zero
+        elements are 1, then values will be ignored
+        as the source is assumed to be binary.
+
+        Parameters
+        ----------
+        mask : array-like
+            An array (typically 2D or 3D) containing the image mask
+
+        id : int or string
+            Arbitrary identifier for the source, typically an int or string
+        """
+        mask = asarray(mask)
+        u = unique(mask)
+
+        if len(u) == 2 and u[0] == 0 and u[1] == 1:
+            inds = where(mask)
+            return Source(coordinates=asarray(zip(*inds)), id=id)
+
+        else:
+            inds = where(mask)
+            values = mask[inds]
+            coords = asarray(zip(*inds))
+            return Source(coordinates=coords, values=values, id=id)
+
+    @staticmethod
+    def fromCoordinates(coordinates, values=None, id=None):
+        """
+        Generate a source from a list of coordinates and values.
+
+        Parameters
+        ----------
+        coordinates : array-like
+            List coordinates as a list of lists or array of shape (n,2) or (n,3)
+
+        values : list or array-like
+            Value (or weight) associated with each coordiante
+
+        id : int or string
+            Arbitrary specification per source, typically an index or string label
+        """
+        return Source(coordinates, values, id)
 
     def __repr__(self):
         s = self.__class__.__name__
