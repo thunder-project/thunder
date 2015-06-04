@@ -45,7 +45,7 @@ class Source(Serializable, object):
     def __init__(self, coordinates, values=None, id=None):
         self.coordinates = asarray(coordinates)
 
-        if self.coordinates.ndim == 1:
+        if self.coordinates.ndim == 1 and len(self.coordinates) > 0:
             self.coordinates = asarray([self.coordinates])
 
         if values is not None:
