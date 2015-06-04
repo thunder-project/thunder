@@ -52,6 +52,9 @@ class Source(Serializable, object):
             self.values = asarray(values)
             if self.values.ndim == 0:
                 self.values = asarray([self.values])
+            if not (len(self.coordinates) == len(self.values)):
+                raise ValueError("Lengths of coordinates %g and values %g do not match"
+                                 % (len(self.coordinates), len(self.values)))
 
         if id is not None:
             self.id = id
