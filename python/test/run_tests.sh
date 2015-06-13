@@ -22,4 +22,4 @@ export PYTHONPATH=$PYTHONPATH:$PYFORJ
 
 export PYTHONWARNINGS="ignore"
 
-nosetests $@ --verbosity 2 --rednose --nologcapture
+nosetests $@ --verbosity 2 --nologcapture
