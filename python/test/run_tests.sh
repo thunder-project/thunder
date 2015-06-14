@@ -21,5 +21,6 @@ export PYTHONPATH=$PYTHONPATH:$SPARK_HOME/python:../
 export PYTHONPATH=$PYTHONPATH:$PYFORJ
 
 export PYTHONWARNINGS="ignore"
+export NOSE_REDNOSE=1
 
 nosetests $@ --verbosity 2 --nologcapture
