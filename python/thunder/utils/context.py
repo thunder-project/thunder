@@ -48,6 +48,12 @@ class ThunderContext():
             Path to a file as either a local file, file in HDFS, or URI.
         """
         self._sc.addPyFile(path)
+        
+    def stop(self):
+        """
+        Shut down the context
+        """
+        self._sc.stop()
 
     def loadSeries(self, dataPath, nkeys=None, nvalues=None, inputFormat='binary', minPartitions=None,
                    maxPartitionSize='32mb', confFilename='conf.json', keyType=None, valueType=None, keyPath=None,
