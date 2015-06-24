@@ -452,7 +452,11 @@ if __name__ == "__main__":
         parser.add_option("--placement-group", type="string", default=None,
                           help="Which placement group to try and launch instances into. Assumes placement "
                                "group is already created.")
-
+    parser.add_option("--spark-ec2-git-repo", default="https://github.com/mesos/spark-ec2",
+                      help="Github repo from which to checkout spark-ec2 (default: %default)")
+    parser.add_option("--spark-ec2-git-branch", default="branch-1.3",
+                      help="Github repo branch of spark-ec2 to use (default: %default)")
+        
     (opts, args) = parser.parse_args()
     if len(args) != 2:
         parser.print_help()
