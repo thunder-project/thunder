@@ -456,7 +456,11 @@ if __name__ == "__main__":
                       help="Github repo from which to checkout spark-ec2 (default: %default)")
     parser.add_option("--spark-ec2-git-branch", default="branch-1.3",
                       help="Github repo branch of spark-ec2 to use (default: %default)")
-        
+    parser.add_option("--private-ips", action="store_true", default=False,
+                      help="Use private IPs for instances rather than public if VPC/subnet " +
+                      "requires that.")
+
+    
     (opts, args) = parser.parse_args()
     if len(args) != 2:
         parser.print_help()
