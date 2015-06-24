@@ -171,6 +171,9 @@ def install_anaconda(master, opts):
     ssh(master, opts, "echo 'export PATH=/root/anaconda/bin:$PATH:/root/spark/bin' >> /root/.bash_profile")
     ssh(master, opts, "pssh -h /root/spark-ec2/slaves 'echo 'export "
                       "PATH=/root/anaconda/bin:$PATH:/root/spark/bin' >> /root/.bash_profile'")
+    ssh(master, opts, "echo 'export PYSPARK_PYTHON=/root/anaconda/bin/python' >> /root/.bash_profile")
+    ssh(master, opts, "pssh -h /root/spark-ec2/slaves 'echo 'export "
+                      "PYSPARK_PYTHON=/root/anaconda/bin/python' >> /root/.bash_profile'")
     print_success()
 
     # update core libraries
