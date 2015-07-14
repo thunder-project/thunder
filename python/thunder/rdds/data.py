@@ -1,4 +1,4 @@
-from numpy import asarray, maximum, minimum
+from numpy import asarray, maximum, minimum, add
 
 
 class Data(object):
@@ -479,7 +479,7 @@ class Data(object):
         obj.sum() is equivalent to obj.astype(dtype, casting).rdd.values().sum().
         """
         out = self.astype(dtype, casting)
-        return out.rdd.values().sum()
+        return out.rdd.values().treeReduce(add, depth=3)
 
     def variance(self, dtype='float64', casting='safe'):
         """
@@ -527,17 +527,19 @@ class Data(object):
             return left_counter.mergeStats(right_counter)
 
         out = self.astype(dtype, casting)
-        return out.values().mapPartitions(lambda i: [StatCounter(i, stats=requestedStats)]).reduce(redFunc)
+        parts = out.values().mapPartitions(lambda i: [StatCounter(i, stats=requestedStats)])
+        result = parts.treeReduce(redFunc, depth=3)
+        return result
 
     def max(self):
         """ Maximum of values across keys, returned as an ndarray. """
         # NOTE: Does not use stats('max') to prevent cast to float64
-        return self.rdd.values().reduce(maximum)
+        return self.rdd.values().treeReduce(maximum, depth=3)
 
     def min(self):
         """ Minimum of values across keys, returned as an ndarray. """
         # NOTE: Does not use stats('min') to prevent cast to float64
-        return self.rdd.values().reduce(minimum)
+        return self.rdd.values().treeReduce(minimum, depth=3)
 
     def coalesce(self, numPartitions):
         """
