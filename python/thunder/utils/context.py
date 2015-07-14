@@ -188,7 +188,8 @@ class ThunderContext():
             to True to ensure consistent keys.
 
         npartitions: positive int, optional, default = None
-            Specify number of partitions for the RDD, if unspecified will use 1 partition per image.
+            Specify number of partitions for the RDD, if unspecified will use as many partitions
+            as available cores
 
         renumber: boolean, optional, default = False
             Recalculate keys for records after images are loading. Only necessary if different files contain
@@ -207,6 +208,9 @@ class ThunderContext():
 
         from thunder.rdds.fileio.imagesloader import ImagesLoader
         loader = ImagesLoader(self._sc)
+
+        if npartitions is None:
+            npartitions = self._sc.defaultParallelism
 
         # Checking StartIdx is smaller or equal to StopIdx
         if startIdx is not None and stopIdx is not None and startIdx > stopIdx:
