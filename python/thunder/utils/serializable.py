@@ -425,10 +425,11 @@ class Serializable(object):
         if isinstance(f, basestring):
             if "~" in f:
                 f = os.path.expanduser(f)
-            if os.path.exists(f) and overwrite is True:
-                os.remove(f)
-            else:
-                raise IOError("File '%s' exists and overwrite is False" % f)
+            if os.path.exists(f):
+                if overwrite is True:
+                    os.remove(f)
+                else:
+                    raise IOError("File '%s' exists and overwrite is False" % f)
             with open(f, 'w') as handle:
                 saveImpl(handle, numpyStorage)
         else:
