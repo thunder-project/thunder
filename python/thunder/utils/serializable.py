@@ -131,8 +131,6 @@ class Serializable(object):
         dataType = type(data)
         if dataType in frozenset([type(None), bool, int, long, float, str]):
             return data
-        elif dataType == unicode:
-            return str(data)
         elif dataType == list:
             # awkward special case - check for lists of homogeneous serializable objects
             if self.__isHomogeneousSerializable(iter(data)):
@@ -269,7 +267,6 @@ class Serializable(object):
             d = simplify(d)
 
         return d
-
 
     @classmethod
     def deserialize(cls, serializedDict, unsimplify=None):

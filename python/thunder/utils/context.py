@@ -750,6 +750,7 @@ class ThunderContext():
 
         import json
         from thunder.rdds.fileio.readers import getFileReaderForPath, FileNotFoundError
+        from thunder.utils.serializable import _decode_dict
 
         reader = getFileReaderForPath(path)(awsCredentialsOverride=self._credentials)
         try:
@@ -757,7 +758,7 @@ class ThunderContext():
         except FileNotFoundError:
             raise Exception("Cannot find file %s" % path)
 
-        return json.loads(buffer)
+        return json.loads(buffer, object_hook=_decode_dict)
 
     def loadParams(self, path):
         """
