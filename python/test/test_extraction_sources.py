@@ -1,4 +1,4 @@
-from numpy import meshgrid, ndarray, array_equal, array, sqrt, zeros, asarray, where, ones
+from numpy import meshgrid, ndarray, array_equal, allclose, array, sqrt, zeros, asarray, where, ones
 from test_utils import LocalTestCase
 
 from thunder.extraction.source import Source, SourceModel
@@ -236,6 +236,15 @@ class TestSourceMethods(LocalTestCase):
         o2 = s.dilate(2).mask((10, 10)) - s.dilate(1).mask((10, 10))
         assert(array_equal(o1, o2))
 
+    def test_overlap(self):
+        """
+        (SourceMethods) overlap
+        """
+        s1 = Source([[0, 0], [0, 1], [0, 2]], values=[0, 1, 2])
+        s2 = Source([[0, 1], [0, 2], [0, 3]], values=[1, 2, 3])
+        assert(s1.overlap(s2, 'fraction') == 0.5)
+        assert(allclose(s1.overlap(s2, 'rates'), [2.0/3.0, 1.0/3.0]))
+        assert(s1.overlap(s2, 'correlation') == 1.0)
 
 class TestSourceConversion(LocalTestCase):
 
