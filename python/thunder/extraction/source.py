@@ -893,7 +893,7 @@ class SourceModel(Serializable, object):
         """
         return SourceModel([s.crop(minBound, maxBound) for s in self.sources])
 
-    def save(self, f, numpyStorage='auto', include=None, **kwargs):
+    def save(self, f, include=None, overwrite=False, **kwargs):
         """
         Custom save to file with simplified, human-readable output, and selection of lazy attributes.
         """
@@ -906,7 +906,7 @@ class SourceModel(Serializable, object):
                 map(lambda s: getattr(s, prop), output.sources)
         output.sources = map(lambda s: s.restore(include).tolist(), output.sources)
         simplify = lambda d: d['sources']['py/homogeneousList']['data']
-        super(SourceModel, output).save(f, numpyStorage='ascii', simplify=simplify, **kwargs)
+        super(SourceModel, output).save(f, simplify=simplify, overwrite=overwrite, **kwargs)
 
     @classmethod
     def load(cls, f, **kwargs):

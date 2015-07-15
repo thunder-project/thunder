@@ -408,7 +408,7 @@ class Serializable(object):
         """
         return json.dumps(self.serialize(numpyStorage=numpyStorage, simplify=simplify), **kwargs)
 
-    def save(self, f, numpyStorage='auto', simplify=None, **kwargs):
+    def save(self, f, numpyStorage='auto', simplify=None, overwrite=False, **kwargs):
         """
         Serialize this object to a JSON file.
 
@@ -425,6 +425,10 @@ class Serializable(object):
         if isinstance(f, basestring):
             if "~" in f:
                 f = os.path.expanduser(f)
+            if os.path.exists(f) and overwrite is True:
+                os.remove(f)
+            else:
+                raise IOError("File '%s' exists and overwrite is False" % f)
             with open(f, 'w') as handle:
                 saveImpl(handle, numpyStorage)
         else:
