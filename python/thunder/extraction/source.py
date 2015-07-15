@@ -728,7 +728,7 @@ class SourceModel(Serializable, object):
         other : SourceModel
             The sources to compare to
 
-        method : str, optional, default = "support"
+        method : str, optional, default = 'fraction"
             Method to use when computing overlap between sources
             ('fraction', 'rates', or 'correlation')
 
