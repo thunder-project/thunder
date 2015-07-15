@@ -796,8 +796,8 @@ class SourceModel(Serializable, object):
         else:
             raise Exception("Metric not recognized")
 
-        hits = sum(map(compare, vals)) / float(len(self.sources))
-        fa = 1 - sum(map(compare, vals)) / float(len(other.count))
+        hits = sum(map(compare, vals)) / float(self.count)
+        fa = 1 - sum(map(compare, vals)) / float(other.count)
 
         return hits, fa
 
