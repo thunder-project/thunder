@@ -138,14 +138,14 @@ class Source(Serializable, object):
         elif isinstance(other, list) or isinstance(other, ndarray):
             return norm(self.center - asarray(other), ord=order)
 
-    def overlap(self, other, method='support', counts=False, symmetric=True):
+    def overlap(self, other, method='support'):
         """
-        Compute the overlap between this source and other, in terms
-        of either support or similarity of coefficients.
+        Compute the overlap between this source and other.
 
         Support computes the number of overlapping pixels relative
-        to the union of both sources. Correlation computes the similarity
-        of the weights (not defined for binary masks).
+        as both a hit rate and false alarm rate.
+        Correlation computes the similarity of the weights
+        within overlapping pixels (not defined for binary masks).
 
         Parameters
         ----------
@@ -154,35 +154,21 @@ class Source(Serializable, object):
 
         method : str
             Compare either support of source coefficients ('support'), or the 
-            source spatial filters (not yet implemented).
-
-        counts : boolean, optional, default = True
-            Whether to return raw counts when computing support, otherwise
-            return a fraction.
-
+            source spatial filters ('correlation').
         """
-        checkParams(method, ['support', 'corr'])
+        checkParams(method, ['support', 'correlation'])
 
         coordsSelf = aslist(self.coordinates)
         coordsOther = aslist(other.coordinates)
 
         intersection = [a for a in coordsSelf if a in coordsOther]
-        complementLeft = [a for a in coordsSelf if a not in intersection]
-        complementRight = [a for a in coordsOther if a not in intersection]
-        hits = len(intersection)
-
-        if symmetric is True:
-            misses = len(complementLeft + complementRight)
-        else:
-            misses = len(complementLeft)
 
         if method == 'support':
-            if counts:
-                return hits, misses
-            else:
-                return hits/float(hits+misses)
+            hits = len(intersection) / float(len(coordsSelf))
+            fa = 1 - len(intersection) / float(len(coordsOther))
+            return hits, fa
 
-        if method == 'corr':
+        if method == 'correlation':
             from scipy.stats import spearmanr
 
             if not (hasattr(self, 'values') and hasattr(other, 'values')):
@@ -194,7 +180,7 @@ class Source(Serializable, object):
                 rho, _ = spearmanr(valuesSelf[intersection], valuesOther[intersection])
             else:
                 rho = 0.0
-            return (rho * hits)/float(hits + misses)
+            return rho
 
     def merge(self, other):
         """
@@ -712,7 +698,6 @@ class SourceModel(Serializable, object):
         minDistance : scalar, optiona, default = inf
             Minimum distance to use when matching indices
         """
-
         inds = self.match(other, unique=True, minDistance=minDistance)
         d = []
         for jj, ii in enumerate(inds):
@@ -741,14 +726,17 @@ class SourceModel(Serializable, object):
         minDistance : scalar, optional, default = inf
             Minimum distance to use when matching indices
         """
-
         inds = self.match(other, unique=True, minDistance=minDistance)
         d = []
         for jj, ii in enumerate(inds):
             if ii is not NaN:
                 d.append(self[jj].overlap(other[ii], method=method))
             else:
-                d.append(NaN)
+                if method == 'support':
+                    d.append((NaN, NaN))
+                elif method == 'correlation':
+                    d.append(NaN)
+
         return asarray(d)
 
     def similarity(self, other, metric='distance', thresh=5, minDistance=inf):
