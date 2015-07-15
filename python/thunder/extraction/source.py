@@ -753,12 +753,13 @@ class SourceModel(Serializable, object):
 
     def similarity(self, other, metric='distance', thresh=5, minDistance=inf):
         """
-        Estimate similarity between sources in self and other.
+        Estimate similarity to other sources as hits and false alarms.
 
-        Will compute the fraction of sources in self that are found
+        Will compute the number of sources in self that are also
         in other, based on a given distance metric and a threshold.
-        The fraction is estimated as the number of sources in self
-        found in other, divided by the total number of sources in self.
+        The hit rate is this number divided by the total number in self,
+        and the false alarm rate is one minus this number divided
+        by the total number in other.
 
         Before computing metrics, all sources in self are matched to other,
         and a minimum distance can be set to control matching.
@@ -796,8 +797,9 @@ class SourceModel(Serializable, object):
             raise Exception("Metric not recognized")
 
         hits = sum(map(compare, vals)) / float(len(self.sources))
+        fa = 1 - sum(map(compare, vals)) / float(len(other.count))
 
-        return hits
+        return hits, fa
 
     def transform(self, data, collect=True):
         """
