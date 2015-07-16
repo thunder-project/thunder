@@ -243,7 +243,7 @@ class TestSourceMethods(LocalTestCase):
         s1 = Source([[0, 0], [0, 1], [0, 2]], values=[0, 1, 2])
         s2 = Source([[0, 1], [0, 2], [0, 3]], values=[1, 2, 3])
         assert(s1.overlap(s2, 'fraction') == 0.5)
-        assert(allclose(s1.overlap(s2, 'rates'), [2.0/3.0, 1.0/3.0]))
+        assert(allclose(s1.overlap(s2, 'rates'), [2.0/3.0, 2.0/3.0]))
         assert(s1.overlap(s2, 'correlation') == 1.0)
 
 class TestSourceConversion(LocalTestCase):
