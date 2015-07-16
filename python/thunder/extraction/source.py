@@ -145,7 +145,7 @@ class Source(Serializable, object):
         Options are a symmetric measure of overlap based on the fraction
         of intersecting pixels relative to the union ('fraction'), an assymmetric
         measure of overlap that expresses detected intersecting pixels
-        (relative to this source) as hits and false alarm rates ('rates'), or
+        (relative to this source) using precision and recall rates ('rates'), or
         a correlation coefficient of the weights within the intersection
         (not defined for binary weights) ('correlation')
 
@@ -168,9 +168,9 @@ class Source(Serializable, object):
         ntotal = float(len(set([tuple(x) for x in coordsSelf] + [tuple(x) for x in coordsOther])))
 
         if method == 'rates':
-            hits = nhit / len(coordsSelf)
-            fa = 1 - nhit / len(coordsOther)
-            return hits, fa
+            recall = nhit / len(coordsSelf)
+            precision = nhit / len(coordsOther)
+            return recall, precision
 
         if method == 'fraction':
             return nhit / float(ntotal)
@@ -750,13 +750,14 @@ class SourceModel(Serializable, object):
 
     def similarity(self, other, metric='distance', thresh=5, minDistance=inf):
         """
-        Estimate similarity to other sources as hits and false alarms.
+        Estimate similarity to another set of sources using recall and precision.
 
         Will compute the number of sources in self that are also
         in other, based on a given distance metric and a threshold.
-        The hit rate is this number divided by the total number in self,
-        and the false alarm rate is one minus this number divided
-        by the total number in other.
+        The recall rate is the number of matches divided by the number in self,
+        and the precision rate is the number of matches divided by the number in other.
+        Typically self is ground truth and other is an estimate.
+        The F score is defined as 2 * (recall * precision) / (recall + precision)
 
         Before computing metrics, all sources in self are matched to other,
         and a minimum distance can be set to control matching.
@@ -764,17 +765,17 @@ class SourceModel(Serializable, object):
         Parameters
         ----------
         other : SourceModel
-            The sources to compare to
+            The sources to compare to.
 
-        metric : str, optional, default = "distance"
+        metric : str, optional, default = 'distance'
             Metric to use when computing distances,
             options include 'distance' and 'overlap'
 
         thresh : scalar, optional, default = 5
-            The distance below which a source is considered found
+            The distance below which a source is considered found.
 
         minDistance : scalar, optional, default = inf
-            Minimum distance to use when matching indices
+            Minimum distance to use when matching indices.
         """
         checkParams(metric, ['distance', 'overlap'])
 
@@ -793,10 +794,11 @@ class SourceModel(Serializable, object):
         else:
             raise Exception("Metric not recognized")
 
-        hits = sum(map(compare, vals)) / float(self.count)
-        fa = 1 - sum(map(compare, vals)) / float(other.count)
+        recall = sum(map(compare, vals)) / float(self.count)
+        precision = sum(map(compare, vals)) / float(other.count)
+        score = 2 * (recall * precision) / (recall + precision)
 
-        return hits, fa
+        return recall, precision, score
 
     def transform(self, data, collect=True):
         """
