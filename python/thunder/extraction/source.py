@@ -788,7 +788,7 @@ class SourceModel(Serializable, object):
             vals[isnan(vals)] = inf
             compare = lambda x: x < thresh
         elif metric == 'overlap':
-            vals = self.overlap(other, method='support', minDistance=minDistance)
+            vals = self.overlap(other, method='fraction', minDistance=minDistance)
             vals[isnan(vals)] = 0
             compare = lambda x: x > thresh
         else:
