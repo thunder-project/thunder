@@ -20,8 +20,6 @@ setup(
               'thunder.extraction.block.methods',
               'thunder.extraction.feature.methods',
               'thunder.registration',
-              'thunder.registration.regmethods',
-              'thunder.lib',
               'thunder.rdds',
               'thunder.rdds.fileio',
               'thunder.rdds.imgblocks',
