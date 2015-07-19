@@ -53,7 +53,6 @@ class BlockMethod(SourceExtractionMethod):
         --------
         Images.toBlocks
         """
-
         if isinstance(blocks, Images):
             if size is None:
                 raise Exception("Must specify a size if images will be converted to blocks")

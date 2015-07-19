@@ -3,8 +3,8 @@
 from numpy import ndarray
 
 from thunder.rdds.images import Images
-from thunder.imgprocessing.registration import RegistrationMethod
-from thunder.imgprocessing.regmethods.utils import computeDisplacement, computeReferenceMean, checkReference
+from thunder.registration.registration import RegistrationMethod
+from thunder.registration.methods.utils import computeDisplacement, computeReferenceMean, checkReference
 
 
 class CrossCorr(RegistrationMethod):
@@ -68,7 +68,7 @@ class CrossCorr(RegistrationMethod):
             The image or volume
         """
 
-        from thunder.imgprocessing.transformation import Displacement
+        from thunder.registration.transformation import Displacement
 
         delta = computeDisplacement(im, self.reference)
 
@@ -95,7 +95,7 @@ class PlanarCrossCorr(CrossCorr):
         im : ndarray
             The image or volume
         """
-        from thunder.imgprocessing.transformation import PlanarDisplacement
+        from thunder.registration.transformation import PlanarDisplacement
 
         delta = []
 

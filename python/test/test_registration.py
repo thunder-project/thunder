@@ -6,7 +6,7 @@ from numpy import allclose, dstack, mean, random, ndarray
 from scipy.ndimage.interpolation import shift
 from nose.tools import assert_true
 
-from thunder.imgprocessing.registration import Registration
+from thunder.registration.registration import Registration
 from thunder.rdds.fileio.imagesloader import ImagesLoader
 
 

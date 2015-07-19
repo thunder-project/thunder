@@ -19,7 +19,7 @@ class Registration(object):
 
     def __new__(cls, method, **kwargs):
 
-        from thunder.imgprocessing.regmethods.crosscorr import CrossCorr, PlanarCrossCorr
+        from thunder.registration.methods.crosscorr import CrossCorr, PlanarCrossCorr
 
         REGMETHODS = {
             'crosscorr': CrossCorr,
@@ -170,10 +170,6 @@ class RegistrationModel(Serializable, object):
         table specifying which transformation should be applied to which record of the
         Images object based on the key. Because transformations are small,
         we broadcast the transformations rather than using a join.
-
-        See also
-        --------
-        Registration : construct registration algorithms
         """
 
         from thunder.rdds.images import Images

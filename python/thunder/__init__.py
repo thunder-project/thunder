@@ -10,9 +10,9 @@ from thunder.regression.regress import MeanRegressionModel, LinearRegressionMode
 from thunder.clustering.kmeans import KMeans, KMeansModel
 from thunder.regression.tuning import TuningModel
 from thunder.regression.tuning import GaussianTuningModel, CircularTuningModel
-from thunder.imgprocessing.registration import Registration, RegistrationModel
-from thunder.imgprocessing.regmethods.crosscorr import CrossCorr, PlanarCrossCorr
+from thunder.registration.registration import Registration, RegistrationModel
 from thunder.extraction.extraction import SourceExtraction
+from thunder.extraction.source import Source, SourceModel
 
 # data types
 from thunder.rdds.series import Series
