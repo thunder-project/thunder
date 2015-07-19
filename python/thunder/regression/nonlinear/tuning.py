@@ -1,7 +1,6 @@
 """
 Classes for mass-unvariate tuning analyses
 """
-
 from numpy import array, sum, inner, dot, angle, abs, exp, asarray
 
 from thunder.rdds.series import Series
