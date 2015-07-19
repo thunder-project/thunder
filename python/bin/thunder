@@ -6,13 +6,14 @@ try:
     import thunder
 except ImportError as e:
     thunder = None
-    print("Unable to import Thunder, this is likely due to an incorrect PYTHONPATH or missing dependencies.\nGot the following error during import:\n%s" % e)
+    print("Unable to import Thunder, this is likely due to an incorrect PYTHONPATH or missing dependencies."
+          " Got the following error during import:\n%s" % e)
     sys.exit()
 except SyntaxError as e:
     thunder = None
     print("Unable to import Thunder, got the following syntax error:\n%s" % e)
     sys.exit()
-except:
+except BaseException as e:
     print("Unable to import Thunder for unknown reasons, got the following error:\n%s" % e)
     sys.exit()
 
