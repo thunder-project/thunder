@@ -1,0 +1,15 @@
+ICA
+===========================================
+
+.. currentmodule:: thunder.factorization.ica
+
+.. autoclass:: ICA
+
+   
+   .. rubric:: Methods
+   .. autosummary::
+	   
+	      ~ICA.__init__
+	      ~ICA.fit
+	   
+
