@@ -31,13 +31,13 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
             raise IOError("Test resources directory "+testResourcesDirPath+" not found")
         return testResourcesDirPath
 
-    def __run_loadStacksAsSeries(self, shuffle):
+    def test_loadStacksAsSeriesWithShuffle(self):
         rangeAry = arange(64*128, dtype=dtypeFunc('int16'))
         filePath = os.path.join(self.outputdir, "rangeary.stack")
         rangeAry.tofile(filePath)
         expectedAry = rangeAry.reshape((128, 64), order='F')
 
-        rangeSeries = self.tsc.loadImagesAsSeries(filePath, dims=(128, 64), shuffle=shuffle)
+        rangeSeries = self.tsc.loadImagesAsSeries(filePath, dims=(128, 64))
         assert_equals('float32', rangeSeries._dtype)  # check before any potential first() calls update this val
         rangeSeriesAry = rangeSeries.pack()
 
@@ -46,19 +46,13 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         assert_equals('float32', str(rangeSeriesAry.dtype))
         assert_true(array_equal(expectedAry, rangeSeriesAry))
 
-    def test_loadStacksAsSeriesNoShuffle(self):
-        self.__run_loadStacksAsSeries(False)
-
-    def test_loadStacksAsSeriesWithShuffle(self):
-        self.__run_loadStacksAsSeries(True)
-
-    def __run_load3dStackAsSeries(self, shuffle):
+    def test_load3dStackAsSeriesWithShuffle(self):
         rangeAry = arange(32*64*4, dtype=dtypeFunc('int16'))
         filePath = os.path.join(self.outputdir, "rangeary.stack")
         rangeAry.tofile(filePath)
         expectedAry = rangeAry.reshape((32, 64, 4), order='F')
 
-        rangeSeries = self.tsc.loadImagesAsSeries(filePath, dims=(32, 64, 4), shuffle=shuffle)
+        rangeSeries = self.tsc.loadImagesAsSeries(filePath, dims=(32, 64, 4))
         assert_equals('float32', rangeSeries._dtype)
         rangeSeriesAry = rangeSeries.pack()
 
@@ -67,13 +61,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         assert_equals('float32', str(rangeSeriesAry.dtype))
         assert_true(array_equal(expectedAry, rangeSeriesAry))
 
-    def test_load3dStackAsSeriesNoShuffle(self):
-        self.__run_load3dStackAsSeries(False)
-
-    def test_load3dStackAsSeriesWithShuffle(self):
-        self.__run_load3dStackAsSeries(True)
-
-    def __run_loadMultipleStacksAsSeries(self, shuffle):
+    def __run_loadMultipleStacksAsSeries(self):
         rangeAry = arange(64*128, dtype=dtypeFunc('int16'))
         filePath = os.path.join(self.outputdir, "rangeary01.bin")
         rangeAry.tofile(filePath)
@@ -83,7 +71,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         rangeAry2.tofile(filePath)
         expectedAry2 = rangeAry2.reshape((128, 64), order='F')
 
-        rangeSeries = self.tsc.loadImagesAsSeries(self.outputdir, dims=(128, 64), shuffle=shuffle)
+        rangeSeries = self.tsc.loadImagesAsSeries(self.outputdir, dims=(128, 64))
         assert_equals('float32', rangeSeries._dtype)
 
         rangeSeriesAry = rangeSeries.pack()
@@ -98,12 +86,6 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         assert_true(array_equal(expectedAry.T, rangeSeriesAry_xpose[0]))
         assert_true(array_equal(expectedAry2.T, rangeSeriesAry_xpose[1]))
 
-    def test_loadMultipleStacksAsSeriesNoShuffle(self):
-        self.__run_loadMultipleStacksAsSeries(False)
-
-    def test_loadMultipleStacksAsSeriesWithShuffle(self):
-        self.__run_loadMultipleStacksAsSeries(True)
-
     def test_loadMultipleMultipointStacksAsSeries(self):
         rangeAry = arange(64*128, dtype=dtypeFunc('int16'))
         filePath = os.path.join(self.outputdir, "rangeary01.bin")
@@ -114,7 +96,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         rangeAry2.tofile(filePath)
         expectedAry2 = rangeAry2.reshape((32, 32, 8), order='F')
 
-        rangeSeries = self.tsc.loadImagesAsSeries(self.outputdir, dims=(32, 32, 8), nplanes=2, shuffle=True)
+        rangeSeries = self.tsc.loadImagesAsSeries(self.outputdir, dims=(32, 32, 8), nplanes=2)
         assert_equals('float32', rangeSeries._dtype)
 
         rangeSeriesAry = rangeSeries.pack()
@@ -131,7 +113,8 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         assert_true(array_equal(expectedAry2[:, :, 4:6], rangeSeriesAry[6]))
         assert_true(array_equal(expectedAry2[:, :, 6:], rangeSeriesAry[7]))
 
-    def __run_loadTifAsSeries(self, shuffle):
+    @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
+    def __run_loadTifAsSeries(self):
         tmpAry = arange(60*120, dtype=dtypeFunc('uint16'))
         rangeAry = mod(tmpAry, 255).astype('uint8').reshape((60, 120))
         pilImg = Image.fromarray(rangeAry)
@@ -139,7 +122,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         pilImg.save(filePath)
         del pilImg, tmpAry
 
-        rangeSeries = self.tsc.loadImagesAsSeries(self.outputdir, inputFormat="tif-stack", shuffle=shuffle)
+        rangeSeries = self.tsc.loadImagesAsSeries(self.outputdir, inputFormat="tif-stack")
         assert_equals('float16', rangeSeries._dtype)  # check before any potential first() calls update this val
         rangeSeriesAry = rangeSeries.pack()
 
@@ -149,14 +132,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         assert_true(array_equal(rangeAry, rangeSeriesAry))
 
     @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
-    def test_loadTifAsSeriesNoShuffle(self):
-        self.__run_loadTifAsSeries(False)
-
-    @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
-    def test_loadTifAsSeriesWithShuffle(self):
-        self.__run_loadTifAsSeries(True)
-
-    def __run_loadTestTifAsSeries(self, shuffle):
+    def test_loadTestTifAsSeriesWithShuffle(self):
         testResourcesDir = TestContextLoading._findTestResourcesDir()
         imagePath = os.path.join(testResourcesDir, "multilayer_tif", "dotdotdot_lzw.tif")
 
@@ -168,7 +144,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         testimg_pil.seek(2)
         testimg_arys.append(array(testimg_pil))
 
-        rangeSeries = self.tsc.loadImagesAsSeries(imagePath, inputFormat="tif-stack", shuffle=shuffle)
+        rangeSeries = self.tsc.loadImagesAsSeries(imagePath, inputFormat="tif-stack")
         assert_true(rangeSeries._dtype.startswith("float"))
         rangeSeriesAry = rangeSeries.pack()
         rangeSeriesAry_xpose = rangeSeries.pack(transpose=True)
@@ -185,14 +161,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         assert_true(array_equal(testimg_arys[2].T, rangeSeriesAry_xpose[2]))
 
     @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
-    def test_loadTestTifAsSeriesNoShuffle(self):
-        self.__run_loadTestTifAsSeries(False)
-
-    @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
-    def test_loadTestTifAsSeriesWithShuffle(self):
-        self.__run_loadTestTifAsSeries(True)
-
-    def __run_loadMultipleTifsAsSeries(self, shuffle):
+    def test_loadMultipleTifsAsSeriesWithShuffle(self):
         tmpAry = arange(60*120, dtype=dtypeFunc('uint16'))
         rangeAry = mod(tmpAry, 255).astype('uint8').reshape((60, 120))
         pilImg = Image.fromarray(rangeAry)
@@ -207,7 +176,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
 
         del pilImg, tmpAry
 
-        rangeSeries = self.tsc.loadImagesAsSeries(self.outputdir, inputFormat="tif-stack", shuffle=shuffle)
+        rangeSeries = self.tsc.loadImagesAsSeries(self.outputdir, inputFormat="tif-stack")
         assert_equals('float16', rangeSeries._dtype)
         rangeSeriesAry = rangeSeries.pack()
         rangeSeriesAry_xpose = rangeSeries.pack(transpose=True)
@@ -222,14 +191,6 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
         assert_true(array_equal(rangeAry2.T, rangeSeriesAry_xpose[1]))
 
     @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
-    def test_loadMultipleTifsAsSeriesNoShuffle(self):
-        self.__run_loadMultipleTifsAsSeries(False)
-
-    @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
-    def test_loadMultipleTifsAsSeriesWithShuffle(self):
-        self.__run_loadMultipleTifsAsSeries(True)
-
-    @unittest.skipIf(not _have_image, "PIL/pillow not installed or not functional")
     def test_loadMultipleMultipointTifsAsSeries(self):
         testResourcesDir = TestContextLoading._findTestResourcesDir()
         imagesPath = os.path.join(testResourcesDir, "multilayer_tif", "dotdotdot_lzw*.tif")
@@ -241,7 +202,7 @@ class TestContextLoading(PySparkTestCaseWithOutputDir):
             testimg_pil.seek(idx)
             testimg_arys.append(array(testimg_pil))
 
-        rangeSeries = self.tsc.loadImagesAsSeries(imagesPath, inputFormat="tif-stack", shuffle=True, nplanes=1)
+        rangeSeries = self.tsc.loadImagesAsSeries(imagesPath, inputFormat="tif-stack", nplanes=1)
         assert_equals((70, 75), rangeSeries.dims.count)
 
         rangeSeriesAry = rangeSeries.pack()

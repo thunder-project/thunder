@@ -53,7 +53,6 @@ class TestImagesFileLoaders(PySparkTestCase):
         except URLError, e:
             print "fromOCP is unavaliable"
 
-
     def test_fromPng(self):
         imagePath = os.path.join(self.testResourcesDir, "singlelayer_png", "dot1_grey.png")
         pngImage = ImagesLoader(self.sc).fromPng(imagePath)
