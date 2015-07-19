@@ -231,21 +231,12 @@ class SeriesLoader(object):
         keySize = paramsObj.nkeys * keyDtype.itemsize
         recordSize = keySize + paramsObj.nvalues * valDtype.itemsize
 
-        from thunder.utils.common import parseMemoryString
-        if isinstance(maxPartitionSize, basestring):
-            size = parseMemoryString(maxPartitionSize)
-        else:
-            raise Exception("Invalid size specification")
-        hadoopConf = {'recordLength': str(recordSize), 'mapred.max.split.size': str(size)}
+        lines = self.sc.binaryRecords(dataPath, recordSize)
 
-        lines = self.sc.newAPIHadoopFile(dataPath, 'thunder.util.io.hadoop.FixedLengthBinaryInputFormat',
-                                         'org.apache.hadoop.io.LongWritable',
-                                         'org.apache.hadoop.io.BytesWritable',
-                                         conf=hadoopConf)
+        get = lambda v: (tuple(int(x) for x in frombuffer(buffer(v, 0, keySize), dtype=keyDtype)),
+                         frombuffer(buffer(v, keySize), dtype=valDtype))
 
-        data = lines.map(lambda (_, v):
-                         (tuple(int(x) for x in frombuffer(buffer(v, 0, keySize), dtype=keyDtype)),
-                          frombuffer(buffer(v, keySize), dtype=valDtype)))
+        data = lines.map(get)
 
         return Series(data, dtype=str(valDtype), index=arange(paramsObj.nvalues)).astype(newDtype, casting)
 
