@@ -7,16 +7,16 @@ thunder.iml
 project/project
 project/target
 target*
-python/dist
-python/build
-python/thunder.egg-info
-python/thunder_python.egg-info
-python/doc/build
-python/doc/source/generated
-python/doc/source/tutorials/build
-python/doc/source/tutorials/source/.ipynb_checkpoints
+dist
+build
+thunder.egg-info
+thunder_python.egg-info
+doc/build
+doc/source/generated
+doc/source/tutorials/build
+doc/source/tutorials/source/.ipynb_checkpoints
 
-python/doc/generated
+doc/generated
 *.iml
-python/thunder/lib/*dev*.egg
+thunder/lib/*dev*.egg
 

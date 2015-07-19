@@ -73,14 +73,6 @@ def buildThunderEgg():
     return findThunderEgg()
 
 
-def findThunderJar():
-    thunderdir = os.path.dirname(os.path.realpath(thunder.__file__))
-    thunderJar = os.path.join(thunderdir, 'lib', 'thunder_2.10-'+str(thunder.__version__)+'.jar')
-    if not os.path.isfile(thunderJar):
-        raise Exception("Thunder jar file not found at '%s'. Does Thunder need to be rebuilt?")
-    return thunderJar
-
-
 def getCommaSeparatedOptionsList(childOptionsFlag, commaSeparated, additionalDefault=None):
     lst = commaSeparated.split(",") if commaSeparated else []
     if additionalDefault:
@@ -130,7 +122,7 @@ def transformArguments(args):
         nextArg = next(argIter, done)
         while nextArg is not done:
             strippedArg = nextArg.lower().lstrip("-")
-            if strippedArg in frozenset(["master", "py-files", "jars", "driver-class-path"]):
+            if strippedArg in frozenset(["master", "py-files"]):
                 opts[strippedArg] = next(argIter, "")
             else:
                 passthruArgs.append(nextArg)
@@ -147,17 +139,10 @@ def transformArguments(args):
     else:
         thunderEgg = None
 
-    thunderJar = findThunderJar()
-
     # update arguments list with new values
     pyFiles = getCommaSeparatedOptionsList("--py-files", opts.get("py-files", []), thunderEgg)
-    jars = getCommaSeparatedOptionsList("--jars", opts.get("jars", []), thunderJar)
-    driverJars = getCommaSeparatedOptionsList("--driver-class-path", opts.get("driver-class-path", []), thunderJar)
-
     retVals = ["--master", master]
     retVals.extend(pyFiles)
-    retVals.extend(jars)
-    retVals.extend(driverJars)
     retVals.extend(passthruArgs)
 
     return retVals
