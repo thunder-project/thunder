@@ -11,12 +11,12 @@ python/dist
 python/build
 python/thunder.egg-info
 python/thunder_python.egg-info
-python/doc/_build
+python/doc/build
+python/doc/source/generated
+python/doc/source/tutorials/build
+python/doc/source/tutorials/source/.ipynb_checkpoints
+
 python/doc/generated
 *.iml
-python/doc/tutorials/*.rst
-python/doc/tutorials/src/.ipynb*
-python/doc/tutorials/.ipynb*
-python/doc/tutorials/*_files
 python/thunder/lib/*dev*.egg
 

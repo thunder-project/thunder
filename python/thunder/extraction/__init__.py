@@ -7,5 +7,3 @@ from thunder.extraction.feature.methods.localmax import LocalMaxFeatureAlgorithm
 from thunder.extraction.block.base import BlockMethod
 from thunder.extraction.block.mergers import BasicBlockMerger, OverlapBlockMerger
 from thunder.extraction.block.methods.nmf import NMFBlockAlgorithm
-
-from thunder.extraction.source import Source, SourceModel

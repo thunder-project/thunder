@@ -1,0 +1,290 @@
+@font-face {
+  font-family: "CooperHewitt-Medium";
+  src: url("fonts/CooperHewitt-Medium.woff");
+}
+
+@font-face {
+  font-family: "CooperHewitt-MediumItalic";
+  src: url("fonts/CooperHewitt-MediumItalic.woff");
+}
+
+@font-face {
+  font-family: "CooperHewitt-Light";
+  src: url("fonts/CooperHewitt-Light.woff");
+}
+
+@font-face {
+  font-family: "CooperHewitt-LightItalic";
+  src: url("fonts/CooperHewitt-LightItalic.woff");
+}
+
+@font-face {
+  font-family: "CooperHewitt-Book";
+  src: url("fonts/CooperHewitt-Book.woff");
+}
+
+body {
+	font-family: "CooperHewitt-Light";
+}
+
+hr {
+	border-top: 2px dotted rgb(194,194,194)
+}
+
+h1, h2, h3, h4, h5, h6 {
+	font-family: "CooperHewitt-Medium";
+	font-weight: normal;
+}
+
+a {
+	-webkit-transition:all 0.25s ease;
+ 	-moz-transition:all 0.25s ease;
+ 	-o-transition:all 0.25s ease;
+ 	transition:all 0.25s ease;
+}
+
+a {
+	color: rgb(228, 30, 83);
+}
+
+
+/*footer {
+	display: none;
+}
+*/
+
+.headerlink {
+	display:none !important;
+	opacity: 0 !important;
+	pointer-events: none !important;
+}
+
+.docutils.literal {
+	padding-top: 4px;
+	padding-bottom: 2px;
+	font-size: 13px;
+}
+
+.toctree-l3 {
+	display: none;
+}
+
+a:visited {
+	color: rgb(228, 30, 83);
+}
+
+a:hover {
+	color: rgb(178, 10, 43);
+}
+
+#rtd-search-form {
+	padding-top: 20px;
+	padding-bottom: 20px;
+}
+
+#rtd-search-form input[type="text"] {
+	font-family: "CooperHewitt-Light";
+	width: 90%;
+	box-shadow: none;
+	border-radius: 5px;
+	font-size: 14px;
+	padding-top: 10px;
+}
+
+.wy-breadcrumbs-aside {
+	display: none !important;
+}
+
+.wy-side-nav-search input[type=text] {
+	border: none;
+}
+
+.wy-side-nav-search {
+	background: none !important;
+}
+
+.icon {
+	visibility: hidden;
+	height: 110px;
+}
+
+.icon:before {
+	display: none !important;
+}
+
+.logo {
+	visibility: visible;
+	height: 100px !important;
+	margin-top: -10px !important;
+}
+
+.fa {
+	display: none !important;
+}
+
+div[class^='highlight'] {
+	border-radius: 8px;
+}
+
+div[class^='highlight'] pre {
+	border-radius: 8px;
+	font-size: 13px;
+}
+
+strong {
+	font-family: "CooperHewitt-Medium";
+}
+
+.method {
+	font-family: "CooperHewitt-Light";
+}
+
+.rst-content dl:not(.docutils) dl dt {
+	display: inline-block;
+}
+
+
+.rst-content dl dd {
+	margin-left: 2px;
+	margin-bottom: 10px;
+}
+
+.rst-content table.field-list .field-name {
+	font-family: "CooperHewitt-MediumItalic";
+	font-size: 16px;
+}
+
+.rst-content table.field-list td {
+	padding-top: 9px;
+	font-size: 16px;
+}
+
+.rst-content dl:not(.docutils) dl dt {
+	border-left: none;
+	background: #f0f0f0;
+}
+
+.wy-nav-top {
+	background: rgb(210,227,145);
+}
+
+.wy-nav-top a {
+	font-family: "CooperHewitt-Medium";
+	color: rgb(252,252,252) !important;
+}
+
+.wy-nav-content {
+	max-width: 900px !important;
+}
+
+.wy-nav-content-wrap {
+	background: none;
+}
+
+.wy-nav-side {
+	background: rgb(255,181,110);
+	overflow-y: hidden;
+}
+
+.btn {
+	box-shadow: none;
+	border: 1px solid rgb(238, 40, 93);
+	color: rgb(238, 40, 93) !important;
+	background-color: rgb(252,252,252) !important;
+}
+
+.btn:visited {
+	color: rgb(238, 40, 93) !important;
+}
+
+.btn-neutral:visited {
+	color: rgb(238, 40, 93) !important;
+}
+
+.btn:hover {
+	background-color: rgb(238, 40, 93) !important;
+	color: rgb(252,252,252) !important;
+}
+
+.btn-neutral:hover {
+	background-color: rgb(238, 40, 93)!important;
+	color: rgb(252,252,252) !important;
+}
+
+.toctree-expand {
+	display: none !important;
+}
+
+.wy-menu-vertical a {
+	color: rgb(20,20,20);
+	font-size: 16px;
+	background-color: none;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	-webkit-transition:all 0.25s ease;
+ 	-moz-transition:all 0.25s ease;
+ 	-o-transition:all 0.25s ease;
+ 	transition:all 0.25s ease;
+}
+
+.wy-menu-vertical a:hover {
+	background: none;
+	font-family: "CooperHewitt-Medium";
+	font-weight: 100;
+}
+
+.wy-menu-vertical a:active {
+	color: rgb(20,20,20);
+}
+
+.wy-menu-vertical li.current a {
+	border-right: none !important;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	background-color: rgb(255,203,150);
+	color: rgb(20,20,20);
+}
+
+.wy-menu-vertical li.current a:hover {
+	background-color: rgb(255,203,150);
+}
+
+.wy-menu-vertical li.on a:hover, .wy-menu-vertical li.current>a:hover {
+	background-color: none;
+}
+
+.wy-menu-vertical li.current>a:hover {
+	background-color:rgb(252,252,252);
+}
+
+.wy-menu-vertical li.toctree-l2.current>a {
+	padding-top: 10px;
+	padding-bottom: 10px;
+	font-family: "CooperHewitt-Medium";
+	background-color: rgb(255,203,150);
+}
+
+.wy-menu-vertical li.on a, .wy-menu-vertical li.current>a {
+	border-bottom: none;
+	border-top: none;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	background-color: rgb(252,252,252);
+	font-family: "CooperHewitt-Medium";
+	font-weight: normal;
+	color: rgb(20,20,20);
+}
+
+.reference .internal {
+	padding-top: 10px !important;
+	padding-bottom: 10px !important;
+	color: red !important;
+}
+
+@media (min-width: 768px) {
+
+	.rst-footer-buttons {
+		display: none;
+	}
+
+}

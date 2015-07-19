@@ -9,6 +9,12 @@ from thunder.extraction.source import Source
 class BlockSIMA(BlockMethod):
 
     def __init__(self, simaStrategy=None, **kwargs):
+        try:
+            import sima
+        except ImportError:
+            raise ImportError("Unable to import sima, while Thunder does not depend "
+                              "on this library it is required for the block sima algoirthm, "
+                              "try installing with 'pip install sima'")
         algorithm = SIMABlockAlgorithm(simaStrategy=simaStrategy, **kwargs)
         super(self.__class__, self).__init__(algorithm, **kwargs)
 

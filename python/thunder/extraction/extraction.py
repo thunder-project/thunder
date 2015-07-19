@@ -4,7 +4,10 @@ from thunder.extraction.source import SourceModel
 
 class SourceExtraction(object):
     """
-    Factory for constructing source extraction methods
+    Factory for constructing source extraction methods.
+
+    Returns a source extraction method given a string identifier.
+    Options include: 'nmf', 'localmax', 'sima'
     """
     def __new__(cls, method, **kwargs):
 

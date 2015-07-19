@@ -13,15 +13,6 @@ class ThunderContext():
 
     Also supports creation of example datasets, and loading example
     data both locally and from EC2.
-
-    Attributes
-    ----------
-    `_sc` : SparkContext
-        Spark context for Spark functionality
-
-    `_credentials` : AWSCredentials object, optional, default = None
-        Stores public and private keys for AWS services. Typically available through
-        configuration files, and but can optionally be set using :func:`ThunderContext.setAWSCredentials()`.
     """
     def __init__(self, sparkcontext):
         self._sc = sparkcontext
