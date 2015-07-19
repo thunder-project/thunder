@@ -6,7 +6,7 @@ import os
 import sys
 
 def convert_nb(nbname):
-    os.system("ipython nbconvert --to rst src/%s.ipynb --output %s --template=tools/custom.tpl" % (nbname, nbname))
+    os.system("ipython nbconvert --to rst source/%s.ipynb --output %s --template=tools/custom.tpl" % (nbname, nbname))
     os.system("mv %s.rst build/%s.rst" % (nbname, nbname))
     os.system("mv %s_files build/%s_files" % (nbname, nbname))
 
