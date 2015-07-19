@@ -343,7 +343,7 @@ class ThunderContext():
 
     def loadImagesAsSeries(self, dataPath, dims=None, inputFormat='stack', ext=None, dtype='int16',
                            blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,
-                           shuffle=True, recursive=False, nplanes=None, npartitions=None,
+                           recursive=False, nplanes=None, npartitions=None,
                            renumber=False, confFilename='conf.json'):
         """
         Load Images data as Series data.
@@ -391,9 +391,6 @@ class ThunderContext():
         stopIdx: nonnegative int, optional, default = None
             See startIdx.
 
-        shuffle: boolean, optional, default = True
-            Controls whether the conversion from Images to Series formats will use of a Spark shuffle-based method.
-
         recursive: boolean, optional, default = False
             If true, will recursively descend directories rooted at dataPath, loading all files
             in the tree with an appropriate extension.
@@ -428,42 +425,23 @@ class ThunderContext():
         if not ext:
             ext = DEFAULT_EXTENSIONS.get(inputFormat.lower(), None)
 
-        if shuffle:
-            from thunder.rdds.fileio.imagesloader import ImagesLoader
-            loader = ImagesLoader(self._sc)
-            if inputFormat.lower() == 'stack':
-                images = loader.fromStack(dataPath, dims, dtype=dtype, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
-                                          recursive=recursive, nplanes=nplanes, npartitions=npartitions,
-                                          confFilename=confFilename)
-            else:
-                # tif / tif stack
-                images = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
-                                        recursive=recursive, nplanes=nplanes, npartitions=npartitions)
-            if renumber:
-                images = images.renumber()
-            return images.toBlocks(blockSize, units=blockSizeUnits).toSeries()
-
+        from thunder.rdds.fileio.imagesloader import ImagesLoader
+        loader = ImagesLoader(self._sc)
+        if inputFormat.lower() == 'stack':
+            images = loader.fromStack(dataPath, dims, dtype=dtype, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
+                                      recursive=recursive, nplanes=nplanes, npartitions=npartitions,
+                                      confFilename=confFilename)
         else:
-            from thunder.rdds.fileio.seriesloader import SeriesLoader
-            if nplanes is not None:
-                raise NotImplementedError("nplanes is not supported with shuffle=False")
-            if npartitions is not None:
-                raise NotImplementedError("npartitions is not supported with shuffle=False")
-            if renumber:
-                raise NotImplementedError("renumber is not supported with shuffle=False")
-
-            loader = SeriesLoader(self._sc)
-            if inputFormat.lower() == 'stack':
-                return loader.fromStack(dataPath, dims, ext=ext, dtype=dtype, blockSize=blockSize,
-                                        startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
-            else:
-                # tif / tif stack
-                return loader.fromTif(dataPath, ext=ext, blockSize=blockSize,
-                                      startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
+            # tif / tif stack
+            images = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
+                                    recursive=recursive, nplanes=nplanes, npartitions=npartitions)
+        if renumber:
+            images = images.renumber()
+        return images.toBlocks(blockSize, units=blockSizeUnits).toSeries()
 
     def convertImagesToSeries(self, dataPath, outputDirPath, dims=None, inputFormat='stack', ext=None,
                               dtype='int16', blockSize="150M", blockSizeUnits="pixels", startIdx=None, stopIdx=None,
-                              shuffle=True, overwrite=False, recursive=False, nplanes=None, npartitions=None,
+                              overwrite=False, recursive=False, nplanes=None, npartitions=None,
                               renumber=False, confFilename='conf.json'):
         """
         Write out Images data as Series data, saved in a flat binary format.
@@ -521,9 +499,6 @@ class ThunderContext():
         stopIdx: nonnegative int, optional, default = None
             See startIdx.
 
-        shuffle: boolean, optional, default = True
-            Controls whether the conversion from Images to Series formats will use of a Spark shuffle-based method.
-
         overwrite: boolean, optional, default False
             If true, the directory specified by outputDirPath will be deleted (recursively) if it
             already exists. (Use with caution.)
@@ -558,36 +533,19 @@ class ThunderContext():
         if not ext:
             ext = DEFAULT_EXTENSIONS.get(inputFormat.lower(), None)
 
-        if shuffle:
-            from thunder.rdds.fileio.imagesloader import ImagesLoader
-            loader = ImagesLoader(self._sc)
-            if inputFormat.lower() == 'stack':
-                images = loader.fromStack(dataPath, dims, ext=ext, dtype=dtype, startIdx=startIdx, stopIdx=stopIdx,
-                                          recursive=recursive, nplanes=nplanes, npartitions=npartitions,
-                                          confFilename=confFilename)
-            else:
-                # 'tif' or 'tif-stack'
-                images = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
-                                        recursive=recursive, nplanes=nplanes, npartitions=npartitions)
-            if renumber:
-                images = images.renumber()
-            images.toBlocks(blockSize, units=blockSizeUnits).saveAsBinarySeries(outputDirPath, overwrite=overwrite)
+        from thunder.rdds.fileio.imagesloader import ImagesLoader
+        loader = ImagesLoader(self._sc)
+        if inputFormat.lower() == 'stack':
+            images = loader.fromStack(dataPath, dims, ext=ext, dtype=dtype, startIdx=startIdx, stopIdx=stopIdx,
+                                      recursive=recursive, nplanes=nplanes, npartitions=npartitions,
+                                      confFilename=confFilename)
         else:
-            from thunder.rdds.fileio.seriesloader import SeriesLoader
-            if nplanes is not None:
-                raise NotImplementedError("nplanes is not supported with shuffle=False")
-            if npartitions is not None:
-                raise NotImplementedError("npartitions is not supported with shuffle=False")
-            loader = SeriesLoader(self._sc)
-            if inputFormat.lower() == 'stack':
-                loader.saveFromStack(dataPath, outputDirPath, dims, ext=ext, dtype=dtype,
-                                     blockSize=blockSize, overwrite=overwrite, startIdx=startIdx,
-                                     stopIdx=stopIdx, recursive=recursive)
-            else:
-                # 'tif' or 'tif-stack'
-                loader.saveFromTif(dataPath, outputDirPath, ext=ext, blockSize=blockSize,
-                                   startIdx=startIdx, stopIdx=stopIdx, overwrite=overwrite,
-                                   recursive=recursive)
+            # 'tif' or 'tif-stack'
+            images = loader.fromTif(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
+                                    recursive=recursive, nplanes=nplanes, npartitions=npartitions)
+        if renumber:
+            images = images.renumber()
+        images.toBlocks(blockSize, units=blockSizeUnits).saveAsBinarySeries(outputDirPath, overwrite=overwrite)
 
     def makeExample(self, dataset=None, **opts):
         """

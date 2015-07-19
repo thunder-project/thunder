@@ -3,7 +3,7 @@
 from io import BytesIO
 import json
 from matplotlib.pyplot import imread
-from numpy import array, dstack, frombuffer, ndarray, prod, transpose, load, swapaxes
+from numpy import array, dstack, frombuffer, ndarray, prod, load, swapaxes
 
 from thunder.rdds.fileio.readers import getParallelReaderForPath, getFileReaderForPath, FileNotFoundError
 from thunder.rdds.images import Images
