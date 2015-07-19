@@ -13,5 +13,4 @@ include thunder/utils/data/mouse/images/*.bin
 include thunder/utils/data/mouse/series/*.json
 include thunder/utils/data/mouse/series/*.bin
 include thunder/utils/data/mouse/params/*.json
-include thunder/lib/*.jar
 include thunder/lib/*.egg
