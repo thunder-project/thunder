@@ -13,8 +13,8 @@ python/thunder.egg-info
 python/thunder_python.egg-info
 python/doc/build
 python/doc/source/generated
-python/doc/tutorials/build
-python/doc/tutorials/source/.ipynb_checkpoints
+python/doc/source/tutorials/build
+python/doc/source/tutorials/source/.ipynb_checkpoints
 
 python/doc/generated
 *.iml
