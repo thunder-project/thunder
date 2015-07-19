@@ -12,7 +12,9 @@ python/build
 python/thunder.egg-info
 python/thunder_python.egg-info
 python/doc/build
+python/doc/source/generated
 python/doc/tutorials/build
+
 python/doc/generated
 *.iml
 python/thunder/lib/*dev*.egg
