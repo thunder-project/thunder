@@ -28,7 +28,7 @@ install:
   - pip install -r requirements.txt
   - pip install -r requirements-dev.txt
   # Install Spark
-  - wget http://www.apache.org/dyn/closer.cgi/spark/spark-1.4.1/spark-1.4.1-bin-hadoop1.tgz
+  - wget http://d3kbcqa49mib13.cloudfront.net/spark-1.4.1-bin-hadoop1.tgz
   - tar -xzf spark-1.4.1-bin-hadoop1.tgz
   # Workaround for Travis issue with POSIX semaphores; see
   # https://github.com/travis-ci/travis-cookbooks/issues/155
