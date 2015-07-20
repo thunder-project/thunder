@@ -8,7 +8,7 @@ Thunder
   </a>
 </div>
 
-Large-scale neural data analysis with Spark - [project page](http://thunder-project.org)
+Large-scale image and time series analysis with Spark - [project page](http://thunder-project.org)
 
 [![Latest Version](https://img.shields.io/pypi/v/thunder-python.svg)](https://pypi.python.org/pypi/thunder-python)
 [![Build Status](https://img.shields.io/travis/thunder-project/thunder/master.svg)](https://travis-ci.org/thunder-project/thunder) 
