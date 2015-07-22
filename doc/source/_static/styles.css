@@ -1,3 +1,5 @@
+@import url(http://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,600,700,900,200italic,300italic,400italic,600italic,700italic,900italic);
+
 @font-face {
   font-family: "CooperHewitt-Medium";
   src: url("fonts/CooperHewitt-Medium.woff");
@@ -24,11 +26,20 @@
 }
 
 body {
-	font-family: "CooperHewitt-Light";
+	font-family: "Source Sans Pro";
+	font-weight: 300;
 }
 
 hr {
 	border-top: 2px dotted rgb(194,194,194)
+}
+
+p {
+	font-size: 18px;
+}
+
+ul {
+	font-size: 18px;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -83,12 +94,13 @@ a:hover {
 }
 
 #rtd-search-form input[type="text"] {
-	font-family: "CooperHewitt-Light";
+	font-family: "Source Sans Pro";
+	font-weight: 200;
 	width: 90%;
 	box-shadow: none;
 	border-radius: 5px;
-	font-size: 14px;
-	padding-top: 10px;
+	font-size: 16px;
+	padding-top: 5px;
 }
 
 .wy-breadcrumbs-aside {
@@ -132,11 +144,12 @@ div[class^='highlight'] pre {
 }
 
 strong {
-	font-family: "CooperHewitt-Medium";
+	font-family: "Source Sans Pro";
+	font-weight: 600;
 }
 
 .method {
-	font-family: "CooperHewitt-Light";
+	font-family: "Source Sans Pro";
 }
 
 .rst-content dl:not(.docutils) dl dt {
@@ -150,7 +163,8 @@ strong {
 }
 
 .rst-content table.field-list .field-name {
-	font-family: "CooperHewitt-MediumItalic";
+	font-family: "Source Sans Pro";
+	font-style: italic;
 	font-size: 16px;
 }
 
@@ -216,15 +230,16 @@ strong {
 }
 
 .wy-menu-vertical a {
+	font-family: "CooperHewitt-Light";
 	color: rgb(20,20,20);
 	font-size: 16px;
 	background-color: none;
 	padding-top: 10px;
 	padding-bottom: 10px;
-	-webkit-transition:all 0.25s ease;
- 	-moz-transition:all 0.25s ease;
- 	-o-transition:all 0.25s ease;
- 	transition:all 0.25s ease;
+	-webkit-transition:none;
+ 	-moz-transition:none;
+ 	-o-transition:none;
+ 	transition:none;
 }
 
 .wy-menu-vertical a:hover {
