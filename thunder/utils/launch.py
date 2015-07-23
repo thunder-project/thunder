@@ -69,6 +69,8 @@ def buildThunderEgg():
     egg = 'thunder_python-' + str(thunder.__version__) + '*.egg'
     src = glob.glob(os.path.join(calldir, '..', '..', 'dist', egg))
     target = os.path.join(calldir, '..', '..', 'thunder/lib/')
+    if not os.path.isdir(target):
+        os.mkdir(target)
     shutil.copy(src[0], target)
     return findThunderEgg()
 

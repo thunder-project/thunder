@@ -8,6 +8,7 @@ project/project
 project/target
 target*
 dist
+build/*
 thunder.egg-info
 thunder_python.egg-info
 doc/build
