@@ -612,7 +612,7 @@ class ThunderContext():
         checkParams(dataset, DATASETS.keys())
 
         if 'ec2' in self._sc.master:
-            tmpdir = os.path.join('/root/thunder/python/thunder/utils', 'data', DATASETS[dataset])
+            tmpdir = os.path.join('/root/thunder/thunder/utils', 'data', DATASETS[dataset])
         else:
             tmpdir = tempfile.mkdtemp()
             atexit.register(shutil.rmtree, tmpdir)

@@ -206,22 +206,22 @@ def install_thunder(master, opts):
 
     # copy local data examples to all workers
     ssh(master, opts, "yum install -y pssh")
-    ssh(master, opts, "pssh -h /root/spark-ec2/slaves mkdir -p /root/thunder/python/thunder/utils/data/")
-    ssh(master, opts, "~/spark-ec2/copy-dir /root/thunder/python/thunder/utils/data/")
+    ssh(master, opts, "pssh -h /root/spark-ec2/slaves mkdir -p /root/thunder/thunder/utils/data/")
+    ssh(master, opts, "~/spark-ec2/copy-dir /root/thunder/thunder/utils/data/")
 
     # install requirements
-    ssh(master, opts, "source ~/.bash_profile && pip install -r /root/thunder/python/requirements.txt")
+    ssh(master, opts, "source ~/.bash_profile && pip install -r /root/thunder/requirements.txt")
     ssh(master, opts, "pssh -h /root/spark-ec2/slaves 'source ~/.bash_profile && pip install zope.cachedescriptors'")
 
     # set environmental variables
     ssh(master, opts, "echo 'export SPARK_HOME=/root/spark' >> /root/.bash_profile")
-    ssh(master, opts, "echo 'export PYTHONPATH=/root/thunder/python' >> /root/.bash_profile")
+    ssh(master, opts, "echo 'export PYTHONPATH=/root/thunder' >> /root/.bash_profile")
     ssh(master, opts, "echo 'export IPYTHON=1' >> /root/.bash_profile")
 
     # build thunder
-    ssh(master, opts, "chmod u+x thunder/python/bin/build")
-    ssh(master, opts, "source ~/.bash_profile && thunder/python/bin/build")
-    ssh(master, opts, "echo 'export PATH=/root/thunder/python/bin:$PATH' >> /root/.bash_profile")
+    ssh(master, opts, "chmod u+x thunder/bin/build")
+    ssh(master, opts, "source ~/.bash_profile && thunder/bin/build")
+    ssh(master, opts, "echo 'export PATH=/root/thunder/bin:$PATH' >> /root/.bash_profile")
 
     # add AWS credentials to ~/.boto
     access, secret = get_s3_keys()
@@ -587,7 +587,7 @@ if __name__ == "__main__":
 
         # Install thunder on the cluster
         elif action == "install":
-            install_anaconda(master, opts)
+            #install_anaconda(master, opts)
             install_thunder(master, opts)
             configure_spark(master, opts)
 
