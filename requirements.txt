@@ -1,0 +1,7 @@
+argparse
+numpy
+scipy
+scikit-learn
+scikit-image
+matplotlib
+zope.cachedescriptors

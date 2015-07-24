@@ -8,7 +8,7 @@ Thunder
   </a>
 </div>
 
-Large-scale neural data analysis with Spark - [project page](http://thunder-project.org)
+Large-scale image and time series analysis with Spark - [project page](http://thunder-project.org)
 
 [![Latest Version](https://img.shields.io/pypi/v/thunder-python.svg)](https://pypi.python.org/pypi/thunder-python)
 [![Build Status](https://img.shields.io/travis/thunder-project/thunder/master.svg)](https://travis-ci.org/thunder-project/thunder) 
@@ -17,7 +17,7 @@ Large-scale neural data analysis with Spark - [project page](http://thunder-proj
 About
 -----
 
-Thunder is a library for analyzing large-scale spatial and temporal neural data. It's fast to run, easy to extend, and designed for interactivity. It is built on Spark, a new framework for cluster computing.
+Thunder is a library for analyzing large-scale spatial and temporal data. It's fast to run, easy to extend, and designed for interactivity. It is built on Spark, a new framework for cluster computing.
 
 Thunder includes utilities for loading and saving different formats, classes for working with distributed spatial and temporal data, and modular functions for time series analysis, factorization, and model fitting. Analyses can easily be scripted or combined. It is written against Spark's Python API (Pyspark), making use of scipy, numpy, and scikit-learn.
 

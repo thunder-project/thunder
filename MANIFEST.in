@@ -1,0 +1,16 @@
+include *.rst
+include *.txt
+include thunder/utils/data/fish/series/*.json
+include thunder/utils/data/fish/series/*.bin
+include thunder/utils/data/fish/images/*.tif
+include thunder/utils/data/iris/*.json
+include thunder/utils/data/iris/*.bin
+include thunder/utils/data/iris/*.mat
+include thunder/utils/data/iris/*.npy
+include thunder/utils/data/iris/*.txt
+include thunder/utils/data/mouse/images/*.json
+include thunder/utils/data/mouse/images/*.bin
+include thunder/utils/data/mouse/series/*.json
+include thunder/utils/data/mouse/series/*.bin
+include thunder/utils/data/mouse/params/*.json
+include thunder/lib/*.egg
