@@ -270,7 +270,7 @@ class TimeSeries(Series):
                 order = 5
 
         def func(y):
-            x = arange(1, len(y)+1)
+            x = arange(len(y))
             p = polyfit(x, y, order)
             p[-1] = 0
             yy = polyval(p, x)
