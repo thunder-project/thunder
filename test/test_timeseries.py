@@ -64,7 +64,7 @@ class TestTimeSeriesMethods(TimeSeriesTestCase):
         rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5]))])
         data = TimeSeries(rdd).detrend('linear')
         # detrending linearly increasing data should yield all 0s
-        assert(allclose(data.first()[1], array([0, 0, 0, 0, 0])))
+        assert(allclose(data.first()[1], array([1, 1, 1, 1, 1])))
 
     def test_normalization_bypercentile(self):
         rdd = self.sc.parallelize([(0, array([1, 2, 3, 4, 5], dtype='float16'))])
