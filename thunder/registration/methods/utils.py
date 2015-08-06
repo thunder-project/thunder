@@ -105,21 +105,20 @@ def computeDisplacement(arry1, arry2):
         The second array
     """
 
-    from numpy.fft import fftn, ifftn
+    from numpy.fft import rfftn, irfftn
     from numpy import unravel_index, argmax
 
-    # get fourier transforms
-    f2 = fftn(arry2)
-    f1 = fftn(arry1)
-
-    # get cross correlation
-    c = abs(ifftn((f1 * f2.conjugate())))
+    # compute real-valued cross-correlation in fourier domain
+    s = arry1.shape
+    f = rfftn(arry1)
+    f *= rfftn(arry2).conjugate()
+    c = abs(irfftn(f, s))
 
     # find location of maximum
-    maxInds = unravel_index(argmax(c), c.shape)
+    inds = unravel_index(argmax(c), s)
 
     # fix displacements that are greater than half the total size
-    pairs = zip(maxInds, arry1.shape)
+    pairs = zip(inds, arry1.shape)
     # cast to basic python int for serialization
     adjusted = [int(d - n) if d > n // 2 else int(d) for (d, n) in pairs]
 
