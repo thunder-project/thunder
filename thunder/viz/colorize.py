@@ -1,6 +1,6 @@
 from numpy import arctan2, sqrt, pi, abs, dstack, clip, transpose, inf, \
     random, zeros, ones, asarray, corrcoef, allclose, maximum, add, multiply, \
-    nan_to_num, copy, ndarray, abs, around, ceil, sqrt
+    nan_to_num, copy, ndarray, around, ceil, rollaxis
 
 
 class Colorize(object):
@@ -45,7 +45,7 @@ class Colorize(object):
         self.vmax = vmax
 
     @staticmethod
-    def tile(imgs, cmap='gray', bar=False, nans=True, clim=None, grid=None, size=9):
+    def tile(imgs, cmap='gray', bar=False, nans=True, clim=None, grid=None, size=9, axis=0):
         """
         Display a collection of images as a grid of tiles
 
@@ -54,9 +54,10 @@ class Colorize(object):
         img : list or ndarray (2D or 3D)
             The images to display. Can be a list of either 2D, 3D,
             or a mix of 2D and 3D numpy arrays. Can also be a single
-            numpy array, in which case the first dimension will be assumes
-            to index the image list, e.g. a (10, 512, 512) array will
-            be treated as 10 different (512,512) images
+            numpy array, in which case the axis parameter will be assumed
+            to index the image list, e.g. a (10, 512, 512) array with axis=0 
+            will be treated as 10 different (512,512) images, and the same
+            array with axis=1 would be treated as 512 (10,512) images.
 
         cmap : str or Colormap or list, optional, default = 'gray'
             A colormap to use, for non RGB images, a list can be used to
@@ -84,7 +85,9 @@ class Colorize(object):
 
         if not isinstance(imgs, list):
             if isinstance(imgs, ndarray):
-                imgs = list(imgs)
+                if (axis < 0) | (axis >= imgs.ndim):
+                    raise ValueError("Must specify a valid axis to index the images")
+                imgs = list(rollaxis(imgs, axis, 0))
             else:
                 raise ValueError("Must provide a list of images, or an ndarray")
 
