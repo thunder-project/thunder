@@ -179,7 +179,7 @@ def install_anaconda(master, opts):
     # update core libraries
     print_status("Updating Anaconda libraries")
     ssh(master, opts, "/root/anaconda/bin/conda update --yes numpy scipy ipython")
-    ssh(master, opts, "/root/anaconda/bin/conda install --yes jsonschema pillow seaborn scikit-learn")
+    ssh(master, opts, "/root/anaconda/bin/conda install --yes jsonschema pillow seaborn scikit-learn juypter")
     print_success()
 
     # add mistune (for notebook conversions)
