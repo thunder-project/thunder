@@ -186,9 +186,11 @@ class LocalFSParallelReader(object):
 
         Returns RDD of <integer file index, string buffer> k/v pairs.
         """
-        absPath = self.uriToPath(dataPath)
-        filePaths = self.listFiles(absPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
-
+        if not hasattr(dataPath, '__iter__'):
+            absPath = self.uriToPath(dataPath)
+            filePaths = self.listFiles(absPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
+        else:
+            filePaths = [filePath for filePath in dataPath]
         lfilepaths = len(filePaths)
         self.lastNRecs = lfilepaths
         npartitions = min(npartitions, lfilepaths) if npartitions else lfilepaths
@@ -626,8 +628,11 @@ SCHEMAS_TO_FILEREADERS = {
 def getByScheme(dataPath, lookup, default):
     """Helper function used by get*ForPath().
     """
-    parseresult = urlparse.urlparse(dataPath)
-    clazz = lookup.get(parseresult.scheme, default)
+    if hasattr(dataPath, '__iter__'):
+        clazz = LocalFSParallelReader
+    else:
+        parseresult = urlparse.urlparse(dataPath)
+        clazz = lookup.get(parseresult.scheme, default)
     if clazz is None:
         raise NotImplementedError("No implementation for scheme " + parseresult.scheme)
     return clazz
