@@ -261,13 +261,18 @@ class Images(Data):
         from thunder.rdds.fileio.writers import getParallelWriterForPath
         from thunder.rdds.fileio.imagesloader import writeBinaryImagesConfig
         from thunder.utils.aws import AWSCredentials
+        import StringIO
 
         dimsTotal = list(asarray(self.dims.max)-asarray(self.dims.min)+1)
 
         def toFilenameAndBinaryBuf(kv):
             key, img = kv
             fname = prefix+"-"+"%05d.bin" % int(key)
-            return fname, img.transpose().copy()
+            buf = StringIO.StringIO()
+            buf.write(img.transpose().copy().tostring())
+            val = buf.getvalue()
+            buf.close()
+            return fname, val
 
         bufRdd = self.rdd.map(toFilenameAndBinaryBuf)
 
