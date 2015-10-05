@@ -24,6 +24,12 @@ class Images(Data):
         self._dims = dims
 
     @property
+    def shape(self):
+        if self._shape is None:
+            self._shape = (self.nrecords,) + self.dims.count
+        return self._shape
+
+    @property
     def dims(self):
         if self._dims is None:
             self.populateParamsFromFirstRecord()
@@ -648,7 +654,6 @@ class Images(Data):
         --------
         Images.crop
         """
-
         dims = self.dims
 
         if len(dims) == 2 or dims[2] == 1:

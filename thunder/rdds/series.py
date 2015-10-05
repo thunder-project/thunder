@@ -56,6 +56,12 @@ class Series(Data):
         self._dims = dims
 
     @property
+    def shape(self):
+        if self._shape is None:
+            self._shape = tuple(self.dims) + (size(self.index),)
+        return self._shape
+
+    @property
     def index(self):
         if self._index is None:
             self.populateParamsFromFirstRecord()

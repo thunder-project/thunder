@@ -20,12 +20,13 @@ class Data(object):
         directly exposed by the Data object can be accessed via `obj.rdd`.
     """
 
-    _metadata = ['_nrecords', '_dtype']
+    _metadata = ['_nrecords', '_dtype', '_shape']
 
     def __init__(self, rdd, nrecords=None, dtype=None):
         self.rdd = rdd
         self._nrecords = nrecords
         self._dtype = dtype
+        self._shape = None
 
     def __repr__(self):
         # start with class name
