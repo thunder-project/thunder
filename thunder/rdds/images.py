@@ -641,14 +641,15 @@ class Images(Data):
         data = self.rdd.map(selectFcn)
         return self._constructor(data, dims=(1, nregions)).__finalize__(self)
 
-    def planes(self, startidz, stopidz):
+    def planes(self, startidz, stopidz=None):
         """
         Subselect planes from 3D image data.
 
         Parameters
         ----------
         startidz, stopidz : int
-            Indices of region to crop in z, interpreted according to python slice indexing conventions.
+            Range of planes to include. Can either provide a start and stop plane,
+            or provide a single list.
 
         See also
         --------
@@ -659,7 +660,14 @@ class Images(Data):
         if len(dims) == 2 or dims[2] == 1:
             raise Exception("Cannot subselect planes, images must be 3D")
 
-        return self.crop([0, 0, startidz], [dims[0], dims[1], stopidz])
+        if stopidz is not None:
+            return self.crop([0, 0, startidz], [dims[0], dims[1], stopidz])
+        else:
+            if max(startidz) > dims[2]-1:
+                raise ValueError('maxmium selected plane %g exceeds size %g' % (max(startidz), dims[2]))
+            newrdd = self.rdd.mapValues(lambda v: v[:, :, startidz])
+            newdims = (dims[0], dims[1], len(startidz))
+            return self._constructor(newrdd, dims=newdims).__finalize__(self)
 
     def subtract(self, val):
         """

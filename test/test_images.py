@@ -450,6 +450,19 @@ class TestImagesMethods(PySparkTestCase):
         assert_equals(tuple(expected.shape), planedData._dims.count)
         assert_equals(str(expected.dtype), planedData._dtype)
 
+    def test_planes_indices(self):
+        dims = (2, 2, 4)
+        sz = reduce(lambda x, y: x*y, dims)
+        origAry = arange(sz, dtype=dtypeFunc('int16')).reshape(dims)
+        imageData = ImagesLoader(self.sc).fromArrays([origAry])
+        planedData = imageData.planes([0, 2])
+        planed = planedData.collect()[0][1]
+
+        expected = squeeze(origAry[slice(None), slice(None), [0, 2]])
+        assert_true(array_equal(expected, planed))
+        assert_equals(tuple(expected.shape), planedData._dims.count)
+        assert_equals(str(expected.dtype), planedData._dtype)
+
     def test_subtract(self):
         narys = 3
         arys, sh, sz = _generateTestArrays(narys)
