@@ -1,12 +1,8 @@
-"""
-Class for performing Singular Value Decomposition
-"""
-
+import checkist
 from numpy import zeros, shape
 
-from thunder.utils.common import checkParams
-from thunder.rdds.series import Series
-from thunder.rdds.matrices import RowMatrix
+from ..data.series.series import Series
+from ..data.series.matrices import Matrix
 
 
 class SVD(object):
@@ -23,8 +19,6 @@ class SVD(object):
         If set to 'direct', will compute the SVD with direct gramian matrix estimation and eigenvector decomposition.
         If set to 'em', will approximate the SVD using iterative expectation-maximization algorithm.
         If set to 'auto', will use 'em' if number of columns in input data exceeds 750, otherwise will use 'direct'.
-
-
 
     maxIter : int, optional, default = 20
         Maximum number of iterations if using an iterative method
@@ -73,10 +67,10 @@ class SVD(object):
         if not (isinstance(mat, Series)):
             raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')
 
-        if not (isinstance(mat, RowMatrix)):
-            mat = mat.toRowMatrix()
+        if not (isinstance(mat, Matrix)):
+            mat = mat.toMatrix()
 
-        checkParams(self.method, ['auto', 'direct', 'em'])
+        checkist.opts(self.method, ['auto', 'direct', 'em'])
 
         if self.method == 'auto':
             if len(mat.index) < 750:

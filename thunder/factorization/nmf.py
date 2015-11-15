@@ -1,11 +1,10 @@
-"""
-Class for performing non-negative matrix factorization
-"""
+from numpy import add, any, diag, dot, inf, maximum, outer, sqrt, apply_along_axis
+from numpy.linalg import inv, norm, pinv
+from numpy.random import rand
 
-from thunder.rdds.series import Series
+from ..data.series.series import Series
 
 
-# TODO use RowMatrix throughout
 class NMF(object):
     """
     Non-negative matrix factorization on a distributed matrix.
@@ -98,9 +97,7 @@ class NMF(object):
         self : returns an instance of self.
         """
 
-        from numpy import add, any, diag, dot, inf, maximum, outer, sqrt, apply_along_axis
-        from numpy.linalg import inv, norm, pinv
-        from numpy.random import rand
+        # TODO use RowMatrix throughout
 
         if not (isinstance(mat, Series)):
             raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')

@@ -7,7 +7,7 @@ class Transform(object):
     def __init__(self):
         raise NotImplementedError
 
-    def transform(self):
+    def transform(self, X):
         raise NotImplementedError
 
 

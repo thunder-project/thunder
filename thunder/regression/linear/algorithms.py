@@ -1,7 +1,8 @@
 from numpy import vstack, sqrt, eye
-from thunder.regression.estimators import PseudoInv, TikhonovPseudoInv
-from thunder.regression.linear.models import RegressionModel, LocalLinearRegressionModel
-from thunder.regression.transformations import AddConstant, ZScore, TransformList
+
+from ..estimators import PseudoInv, TikhonovPseudoInv
+from ..transformations import AddConstant, ZScore, TransformList
+from ..linear.models import RegressionModel, LocalLinearRegressionModel
 
 
 class LinearRegression(object):

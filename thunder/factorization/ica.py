@@ -1,10 +1,9 @@
-"""
-Class for Independent Component Analysis
-"""
+from numpy import sign, random, linspace, sin, array, dot, c_
 
-from thunder.factorization.svd import SVD
-from thunder.rdds.series import Series
-from thunder.rdds.matrices import RowMatrix
+from .svd import SVD
+from ..data.series.series import Series
+from ..data.series.matrices import Matrix
+from ..data.series.readers import fromList
 
 
 class ICA(object):
@@ -83,8 +82,8 @@ class ICA(object):
         if not (isinstance(data, Series)):
             raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')
 
-        if not isinstance(data, RowMatrix):
-            data = data.toRowMatrix()
+        if not isinstance(data, Matrix):
+            data = data.toMatrix()
 
         d = data.ncols
 
@@ -142,3 +141,23 @@ class ICA(object):
         self.sigs = sigs
 
         return self
+
+    @staticmethod
+    def make(shape=(100, 10), npartitions=10, withparams=False):
+        """
+        Generator random data for ICA
+        """
+        random.seed(42)
+        time = linspace(0, shape[1], shape[0])
+        s1 = sin(2 * time)
+        s2 = sign(sin(3 * time))
+        s = c_[s1, s2]
+        s += 0.2 * random.randn(s.shape[0], s.shape[1])  # Add noise
+        s /= s.std(axis=0)
+        a = array([[1, 1], [0.5, 2]])
+        x = dot(s, a.T)
+        data = fromList(x, npartitions=npartitions)
+        if withparams is True:
+            return data, s, a
+        else:
+            return data

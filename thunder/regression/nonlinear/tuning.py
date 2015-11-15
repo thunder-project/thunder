@@ -1,10 +1,7 @@
-"""
-Classes for mass-unvariate tuning analyses
-"""
+import checkist
 from numpy import array, sum, inner, dot, angle, abs, exp, asarray
 
-from thunder.rdds.series import Series
-from thunder.utils.common import loadMatVar
+from ...data.series.series import Series
 
 
 class TuningModel(object):
@@ -13,9 +10,8 @@ class TuningModel(object):
 
     Parameters
     ----------
-    modelFile : str, or array
-        Array of input values or specification of a MAT file
-        containing a variable s with input values
+    model : array
+        Array of input values
 
     var : str, default = 's'
         Variable name if loading from a MAT file
@@ -32,16 +28,12 @@ class TuningModel(object):
     GaussianTuningModel : gaussian tuning parameter estimation
     """
 
-    def __init__(self, modelFile, var='s'):
-        if isinstance(modelFile, basestring):
-            self.s = loadMatVar(modelFile, var)
-        else:
-            self.s = modelFile
+    def __init__(self, model):
+        self.s = model
 
     @staticmethod
     def load(modelFile, tuningMode):
-        from thunder.utils.common import checkParams
-        checkParams(tuningMode.lower(), TUNING_MODELS.keys())
+        checkist.opts(tuningMode.lower(), TUNING_MODELS.keys())
         return TUNING_MODELS[tuningMode.lower()](modelFile)
 
     def get(self, y):

@@ -2,9 +2,10 @@
 Classes for KMeans clustering
 """
 
-from numpy import array, argmin, corrcoef, ndarray, asarray, std
+from numpy import array, argmin, corrcoef, ndarray, asarray, std, random, floor
 
-from thunder.rdds.series import Series
+from ..data.series.series import Series
+from ..data.series.readers import fromList
 
 
 class KMeansModel(object):
@@ -135,3 +136,17 @@ class KMeans(object):
 
         return KMeansModel(asarray(model.clusterCenters))
 
+    @staticmethod
+    def make(shape=(100, 5), k=5, noise=0.1, npartitions=10, seed=None, withparams=False):
+        """
+        Generator random data for testing clustering
+        """
+        random.seed(seed)
+        centers = random.randn(k, shape[1])
+        genFunc = lambda i: centers[int(floor(random.rand(1, 1) * k))] + noise*random.rand(shape[1])
+        dataLocal = map(genFunc, range(0, shape[0]))
+        data = fromList(dataLocal, npartitions=npartitions)
+        if withparams is True:
+            return data, centers
+        else:
+            return data

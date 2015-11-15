@@ -1,69 +1,3 @@
-""" Common operations and utilities """
-
-
-def pinv(mat):
-    """ Compute pseudoinverse of a matrix """
-    from scipy.linalg import inv
-    from numpy import dot, transpose
-    return dot(inv(dot(mat, transpose(mat))), mat)
-
-
-def loadMatVar(filename, var):
-    """ Load a variable from a MAT file"""
-    from scipy.io import loadmat
-    return loadmat(filename)[var]
-
-
-def isRdd(data):
-    """ Check whether data is an RDD or not"""
-    dtype = type(data)
-    import pyspark
-    if (dtype == pyspark.rdd.RDD) | (dtype == pyspark.rdd.PipelinedRDD):
-        return True
-    else:
-        return False
-
-
-def aslist(x):
-    """ Convert numpy arrays to lists, keep lists as lists """
-    from numpy import ndarray
-    if isinstance(x, ndarray):
-        return x.tolist()
-    elif isinstance(x, list):
-        return x
-    else:
-        raise TypeError("Expected list or numpy array, got %s" % type(x))
-
-
-def checkParams(param, opts):
-    """ Check whether param is contained in opts (including lowercase), otherwise error """
-    if not param.lower() in opts:
-        raise ValueError("Option must be one of %s, got %s" % (str(opts)[1:-1], param))
-
-
-def selectByMatchingPrefix(param, opts):
-    """
-    Given a string parameter and a sequence of possible options, returns an option that is uniquely
-    specified by matching its prefix to the passed parameter.
-
-    The match is checked without sensitivity to case.
-
-    Throws IndexError if none of opts starts with param, or if multiple opts start with param.
-
-    >> selectByMatchingPrefix("a", ["aardvark", "mongoose"])
-    "aardvark"
-    """
-    lparam = param.lower()
-    hits = [opt for opt in opts if opt.lower().startswith(lparam)]
-    nhits = len(hits)
-    if nhits == 1:
-        return hits[0]
-    if nhits:
-        raise IndexError("Multiple matches for for prefix '%s': %s" % (param, hits))
-    else:
-        raise IndexError("No matches for prefix '%s' found in options %s" % (param, opts))
-
-
 def smallestFloatType(dtype):
     """
     Returns the smallest floating point dtype to which the passed dtype can be safely cast.
@@ -160,7 +94,6 @@ def pil_to_array(pilImage):
         raise ValueError("Thunder only supports luminance / greyscale images in pil_to_array; got unknown image " +
                          "mode: '%s'" % pilImage.mode)
 
-
 def parseMemoryString(memStr):
     """
     Returns the size in bytes of memory represented by a Java-style 'memory string'
@@ -220,55 +153,42 @@ def handleFormat(filename, format):
     return path, file, format
 
 
-def raiseErrorIfPathExists(path, awsCredentialsOverride=None):
+def raiseErrorIfPathExists(path, credentials=None):
     """
     The ValueError message will suggest calling with overwrite=True; this function is expected to be
     called from the various output methods that accept an 'overwrite' keyword argument.
     """
     # check that specified output path does not already exist
-    from thunder.rdds.fileio.readers import getFileReaderForPath
-    reader = getFileReaderForPath(path)(awsCredentialsOverride=awsCredentialsOverride)
+    from thunder.data.fileio.readers import getFileReaderForPath
+    reader = getFileReaderForPath(path)(credentials=credentials)
     existing = reader.list(path, includeDirectories=True)
     if existing:
         raise ValueError("Path %s appears to already exist. Specify a new directory, or call " % path +
                          "with overwrite=True to overwrite.")
 
+def S3ConnectionWithAnon(credentials, anon=True):
+    """
+    Connect to S3 with automatic handling for anonymous access
 
-class AWSCredentials(object):
-    __slots__ = ('awsAccessKeyId', 'awsSecretAccessKey')
+    Parameters
+    ----------
+    credentials : dict
+        AWS access key ('access') and secret access key ('secret')
 
-    def __init__(self, awsAccessKeyId=None, awsSecretAccessKey=None):
-        self.awsAccessKeyId = awsAccessKeyId if awsAccessKeyId else None
-        self.awsSecretAccessKey = awsSecretAccessKey if awsSecretAccessKey else None
+    anon : boolean, optional, default = True
+        Whether to make an anonymous connection if credentials fail to authenticate
+    """
+    from boto.s3.connection import S3Connection
+    from boto.exception import NoAuthHandlerFound
 
-    def __repr__(self):
-        def obfuscate(s):
-            return "None" if s is None else "<%d-char string>" % len(s)
-        return "AWSCredentials(accessKeyId: %s, secretAccessKey: %s)" % \
-               (obfuscate(self.awsAccessKeyId), obfuscate(self.awsSecretAccessKey))
+    try:
+        conn = S3Connection(aws_access_key_id=credentials['access'],
+                            aws_secret_access_key=credentials['secret'])
+        return conn
 
-    def setOnContext(self, sparkContext):
-        sparkContext._jsc.hadoopConfiguration().set("fs.s3n.awsAccessKeyId", self.awsAccessKeyId)
-        sparkContext._jsc.hadoopConfiguration().set("fs.s3n.awsSecretAccessKey", self.awsSecretAccessKey)
-
-    @classmethod
-    def fromContext(cls, sparkContext):
-        if sparkContext:
-            awsAccessKeyId = sparkContext._jsc.hadoopConfiguration().get("fs.s3n.awsAccessKeyId", "")
-            awsSecretAccessKey = sparkContext._jsc.hadoopConfiguration().get("fs.s3n.awsSecretAccessKey", "")
-            return AWSCredentials(awsAccessKeyId, awsSecretAccessKey)
+    except NoAuthHandlerFound:
+        if anon:
+            conn = S3Connection(anon=True)
+            return conn
         else:
-            return AWSCredentials()
-
-    @property
-    def credentials(self):
-        if self.awsAccessKeyId and self.awsSecretAccessKey:
-            return self.awsAccessKeyId, self.awsSecretAccessKey
-        else:
-            return None, None
-
-    @property
-    def credentialsAsDict(self):
-        access, secret = self.credentials
-        return {"aws_access_key_id": access, "aws_secret_access_key": secret}
-
+            raise

@@ -1,51 +1,34 @@
-import shutil
-import tempfile
-from numpy import array, array_equal
+import pytest
+from numpy import array, allclose
+
 from thunder.clustering.kmeans import KMeans, KMeansModel
-from thunder.utils.datasets import DataSets
-from thunder.rdds.series import Series
-from test_utils import PySparkTestCase
+from thunder.data import series
+
+pytestmark = pytest.mark.usefixtures("context")
 
 
-class ClusteringTestCase(PySparkTestCase):
-    def setUp(self):
-        super(ClusteringTestCase, self).setUp()
-        self.outputdir = tempfile.mkdtemp()
+def test_kmeans_k1():
 
-    def tearDown(self):
-        super(ClusteringTestCase, self).tearDown()
-        shutil.rmtree(self.outputdir)
+    dataLocal = [
+        array([1.0, 2.0, 6.0]),
+        array([1.0, 3.0, 0.0]),
+        array([1.0, 4.0, 6.0])
+    ]
 
-
-class TestKMeans(ClusteringTestCase):
-    def test_KMeans_k1(self):
-        """ With k=1 always get one cluster centered on the mean"""
-
-        dataLocal = [
-            array([1.0, 2.0, 6.0]),
-            array([1.0, 3.0, 0.0]),
-            array([1.0, 4.0, 6.0])]
-
-        data = Series(self.sc.parallelize(zip(range(1, 4), dataLocal)))
-
-        model = KMeans(k=1, maxIterations=20).fit(data)
-        labels = model.predict(data)
-        assert array_equal(model.centers[0], array([1.0, 3.0, 4.0]))
-        assert array_equal(labels.values().collect(), array([0, 0, 0]))
-
-    def test_KMeans_k2(self):
-        """ Test k=2 also with more points"""
-
-        data, centersTrue = DataSets.make(self.sc, "kmeans",
-                                          k=2, nrecords=50, npartitions=5, seed=42, returnParams=True)
-        centersTrue = KMeansModel(centersTrue)
-
-        model = KMeans(k=2, maxIterations=20).fit(data)
-
-        labels = array(model.predict(data).values().collect())
-        labelsTrue = array(centersTrue.predict(data).values().collect())
-
-        assert(array_equal(labels, labelsTrue) or array_equal(labels, 1 - labelsTrue))
+    data = series.fromList(dataLocal)
+    model = KMeans(k=1, maxIterations=20).fit(data)
+    labels = model.predict(data)
+    assert allclose(model.centers[0], array([1.0, 3.0, 4.0]))
+    assert allclose(labels.values().collect(), array([0, 0, 0]))
 
 
+def test_kmeans_k2():
 
+    data, centers = KMeans.make(shape=(50, 5), k=2, npartitions=5, seed=42, withparams=True)
+    truth = KMeansModel(centers)
+
+    model = KMeans(k=2, maxIterations=20).fit(data)
+
+    labels = array(model.predict(data).values().collect())
+    labelsTrue = array(truth.predict(data).values().collect())
+    assert allclose(labels, labelsTrue) or allclose(labels, 1 - labelsTrue)

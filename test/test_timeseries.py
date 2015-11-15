@@ -1,7 +1,7 @@
 import shutil
 import tempfile
 from numpy import array, allclose, corrcoef
-from thunder.rdds.timeseries import TimeSeries
+from thunder.data.series.timeseries import TimeSeries
 from test_utils import PySparkTestCase
 from nose.tools import assert_equals
 

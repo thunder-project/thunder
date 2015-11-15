@@ -1,6 +1,7 @@
 from numpy import dot, square, sum, mean
-from thunder.rdds.series import Series
-from thunder.regression.transformations import TransformList
+
+from ...data.series.series import Series
+from ..transformations import TransformList
 
 class RegressionModel(object):
     """

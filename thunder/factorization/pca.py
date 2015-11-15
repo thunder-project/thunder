@@ -1,11 +1,9 @@
-"""
-Class for Principal Component Analysis
-"""
+from numpy import random, dot
 
-from thunder.factorization.svd import SVD
-from thunder.rdds.series import Series
-from thunder.rdds.matrices import RowMatrix
-
+from .svd import SVD
+from ..data.series.series import Series
+from ..data.series.matrices import Matrix
+from ..data.series.readers import fromList
 
 class PCA(object):
     """
@@ -59,8 +57,8 @@ class PCA(object):
         if not (isinstance(data, Series)):
             raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')
 
-        if type(data) is not RowMatrix:
-            data = data.toRowMatrix()
+        if type(data) is not Matrix:
+            data = data.toMatrix()
 
         mat = data.center(1)
 
@@ -93,9 +91,25 @@ class PCA(object):
         if not (isinstance(data, Series)):
             raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')
 
-        if type(data) is not RowMatrix:
-            data = RowMatrix(data)
+        if type(data) is not Matrix:
+            data = data.toMatrix()
 
         mat = data.center(1)
         scores = mat.times(self.comps.T / self.latent)
         return scores
+
+    @staticmethod
+    def make(shape=(100, 10), k=3, npartitions=10, seed=None, withparams=False):
+        """
+        Generator random data for PCA
+        """
+        random.seed(seed)
+        u = random.randn(shape[0], k)
+        v = random.randn(k, shape[1])
+        a = dot(u, v)
+        a += random.randn(a.shape[0], a.shape[1])
+        data = fromList(a, npartitions=npartitions)
+        if withparams is True:
+            return data, u, v
+        else:
+            return data
