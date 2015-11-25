@@ -20,12 +20,14 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - conda create --yes -q -n test-environment python=$TRAVIS_PYTHON_VERSION pip numpy scipy scikit-learn scikit-image matplotlib pytest
-  - source activate test-environment
+  - conda create --yes -q -n test python=$TRAVIS_PYTHON_VERSION pip numpy scipy scikit-learn scikit-image matplotlib pytest
+  - source activate test
   - pip install .
-  - wget http://d3kbcqa49mib13.cloudfront.net/spark-1.5.1-bin-hadoop1.tgz
-  - tar -xzf spark-1.5.1-bin-hadoop1.tgz
+  - wget http://d3kbcqa49mib13.cloudfront.net/spark-1.5.1-bin-hadoop2.6.tgz
+  - tar -xzf spark-1.5.1-bin-hadoop2.6.tgz
 
 script:
-  - export SPARK_HOME=`pwd`/spark-1.5.1-bin-hadoop1
-  - py.test test/ --traceconfig
+  - export SPARK_HOME=`pwd`/spark-1.5.1-bin-hadoop2.6
+  - export PYTHONPATH=$SPARK_HOME/python:$PYTHONPATH
+  - export PYTHONPATH=$SPARK_HOME/python/lib/py4j-0.8.2.1-src.zip:$PYTHONPATH
+  - py.test
