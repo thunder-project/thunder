@@ -30,5 +30,4 @@ install:
 
 script:
   - export SPARK_HOME=`pwd`/spark-1.5.1-bin-hadoop1
-  - cd thunder/test
   - py.test
