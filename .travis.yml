@@ -28,4 +28,4 @@ install:
 
 script:
   - export SPARK_HOME=`pwd`/spark-1.5.1-bin-hadoop1
-  - py.test
+  - py.test test/ --traceconfig
