@@ -12,7 +12,6 @@ setup(
     url='https://github.com/thunder-project/thunder',
     packages=['thunder',
               'thunder.clustering',
-              'thunder.decoding',
               'thunder.factorization',
               'thunder.data',
               'thunder.data.fileio',
