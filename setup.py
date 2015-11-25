@@ -2,9 +2,10 @@
 
 from setuptools import setup
 
+version = '0.6.0.dev'
 setup(
     name='thunder-python',
-    version='0.6.0.dev',
+    version=version,
     description='large-scale image and time series analysis',
     author='freeman-lab',
     author_email='the.freeman.lab@gmail.com',
@@ -23,7 +24,7 @@ setup(
               'thunder.regression.nonlinear',
               'thunder.utils'
               ],
-    package_data={'thunder.lib': ['thunder_python-' + str(thunder.__version__) + '-py2.7.egg']},
+    package_data={'thunder.lib': ['thunder_python-' + version + '-py2.7.egg']},
     install_requires=open('requirements.txt').read().split(),
     long_description='See https://github.com/thunder-project/thunder'
 )
