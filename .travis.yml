@@ -8,7 +8,7 @@ jdk:
 
 sudo: false
 
-before_install:
+install:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       wget http://repo.continuum.io/miniconda/Miniconda-3.7.3-Linux-x86_64.sh -O miniconda.sh;
     else
@@ -20,9 +20,7 @@ before_install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-
-install:
-  - conda create --yes -q -n test-environment python=$TRAVIS_PYTHON_VERSION nose numpy scipy scikit-learn scikit-image matplotlib pytest
+  - conda create --yes -q -n test-environment python=$TRAVIS_PYTHON_VERSION pip numpy scipy scikit-learn scikit-image matplotlib pytest
   - source activate test-environment
   - pip install .
   - wget http://d3kbcqa49mib13.cloudfront.net/spark-1.5.1-bin-hadoop1.tgz
