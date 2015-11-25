@@ -161,8 +161,4 @@ def test_nmf_init():
 
     nmfThunder = NMF(k=2, reconHist='final')
     nmfThunder.fit(mat)
-
-    # check to see if Thunder's solution achieves close-to-optimal reconstruction error
-    # scikit-learn's solution achieves 2.993952
-    # matlab's non-deterministic implementation usually achieves < 2.9950 (when it converges)
-    assert(nmfThunder.reconErr < 2.9950)
+    assert nmfThunder.reconErr < 2.9950

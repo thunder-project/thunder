@@ -2,7 +2,7 @@ from numpy import random, dot
 
 from .svd import SVD
 from ..data.series.series import Series
-from ..data.series.matrices import Matrix
+from ..data.series.matrix import Matrix
 from ..data.series.readers import fromList
 
 class PCA(object):

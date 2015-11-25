@@ -7,7 +7,7 @@ def fromRDD(rdd, **kwargs):
     from .series import Series
     return Series(rdd, **kwargs)
 
-def fromList(items, accessor=None, keys=None, npartitions=None, **kwargs):
+def fromList(items, accessor=None, keys=None, npartitions=None, index=None, **kwargs):
 
     if mode() == 'spark':
         nrecords = len(items)
@@ -18,7 +18,7 @@ def fromList(items, accessor=None, keys=None, npartitions=None, **kwargs):
         rdd = engine().parallelize(items, npartitions)
         if accessor:
             rdd = rdd.mapValues(accessor)
-        return fromRDD(rdd, nrecords=nrecords, **kwargs)
+        return fromRDD(rdd, nrecords=nrecords, index=index, **kwargs)
 
     else:
         raise NotImplementedError("Loading not implemented for '%s' mode" % mode())

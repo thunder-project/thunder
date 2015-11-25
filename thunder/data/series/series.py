@@ -1,6 +1,6 @@
 from itertools import product
 from numpy import ndarray, array, sum, mean, median, std, size, arange, percentile,\
-    asarray, maximum, zeros, corrcoef, where, unique, array_equal, delete, \
+    asarray, zeros, corrcoef, where, unique, array_equal, delete, \
     ravel, logical_not, max, min
 
 from ..base import Data
@@ -382,20 +382,6 @@ class Series(Data):
         return self._constructor(rdd, index=['count', 'mean', 'std', 'max', 'min'])\
             .__finalize__(self, noPropagate=('_dtype',))
 
-    def maxProject(self, axis=0):
-        """
-        Project over one of the keys by taking a maximum
-        """
-        import copy
-        dims = copy.copy(self.dims)
-        nkeys = len(self.first()[0])
-        if axis > nkeys - 1:
-            raise IndexError('only %g keys, cannot compute maximum along axis %g' % (nkeys, axis))
-        rdd = self.rdd.map(lambda (k, v): (tuple(array(k)[arange(0, nkeys) != axis]), v)).reduceByKey(maximum)
-        dims.min = list(array(dims.min)[arange(0, nkeys) != axis])
-        dims.max = list(array(dims.max)[arange(0, nkeys) != axis])
-        return self._constructor(rdd, dims=dims).__finalize__(self)
-
     def _checkFixedLength(self, length):
         """
         Check that given fixed length evenly divides index
@@ -443,53 +429,12 @@ class Series(Data):
         """
         self._checkFixedLength(length)
         n = len(self.index) / length
-        func = lambda (k, v): zip([k + (i,) for i in range(0, n)], list(v.reshape(-1, length)))
+        tupleize = lambda k: k if isinstance(k, tuple) else (k,)
+        func = lambda (k, v): zip([tupleize(k) + (i,) for i in range(0, n)], list(v.reshape(-1, length)))
         rdd = self.rdd.flatMap(func)
         index = arange(0, length)
         count = self.nrecords * n
         return self._constructor(rdd, index=index, nrecords=count).__finalize__(self)
-
-    def subToInd(self, order='F', isOneBased=True):
-        """
-        Convert subscript index keys to linear index keys
-
-        Parameters
-        ----------
-        order : str, 'C' or 'F', default = 'F'
-            Specifies row-major or column-major array indexing. See numpy.ravel_multi_index.
-
-        isOneBased : boolean, default = True
-            True if subscript indices start at 1, False if they start at 0
-        """
-        from thunder.data.keys import _subToIndConverter
-
-        converter = _subToIndConverter(self.dims.count, order=order, isOneBased=isOneBased)
-        rdd = self.rdd.map(lambda (k, v): (converter(k), v))
-        return self._constructor(rdd, index=self._index).__finalize__(self)
-
-    def indToSub(self, order='F', isOneBased=True, dims=None):
-        """
-        Convert linear indexing to subscript indexing
-
-        Parameters
-        ----------
-        dims : array-like, optional
-            Maximum dimensions. If not provided, will use dims property.
-
-        order : str, 'C' or 'F', default = 'F'
-            Specifies row-major or column-major array indexing. See numpy.unravel_index.
-
-        onebased : boolean, default = True
-            True if generated subscript indices are to start at 1, False to start at 0
-        """
-        from thunder.data.keys import _indToSubConverter
-
-        if dims is None:
-            dims = self.dims.max
-
-        converter = _indToSubConverter(dims, order=order, isOneBased=isOneBased)
-        rdd = self.rdd.map(lambda (k, v): (converter(k), v))
-        return self._constructor(rdd, index=self._index).__finalize__(self)
 
     def pack(self, selection=None, sorting=False, transpose=False, dtype=None, casting='safe'):
         """
@@ -600,225 +545,6 @@ class Series(Data):
 
         return result
 
-    def query(self, inds,  order='F', isOneBased=True):
-        """
-        Extract records with indices matching those provided
-
-        Keys will be automatically linearized before matching to provided indices.
-        This will not affect
-
-        Parameters
-        ----------
-        inds : array-like (2D)
-            Array of indices, each an array-like of integer indices
-
-        order : str, optional, default = 'F'
-            Specify ordering for linearizing indices (see subtoind)
-
-        onebased : boolean, optional, default = True
-            Specify zero or one based indexing for linearizing (see subtoind)
-
-        Returns
-        -------
-        keys : array, shape (n, k) where k is the length of each value
-            Averaged values
-
-        values : array, shape (n, d) where d is the number of keys
-            Averaged keys
-        """
-        inds = asarray(inds)
-
-        n = len(inds)
-
-        from thunder.data.keys import _indToSubConverter
-        converter = _indToSubConverter(dims=self.dims.max, order=order, isOneBased=isOneBased)
-
-        keys = zeros((n, len(self.dims.count)))
-        values = zeros((n, len(self.first()[1])))
-
-        data = self.subToInd(order=order, isOneBased=isOneBased)
-
-        for idx, indList in enumerate(inds):
-            if len(indList) > 0:
-                indsSet = set(asarray(indList).flat)
-                bcInds = self.rdd.context.broadcast(indsSet)
-                values[idx, :] = data.filterOnKeys(lambda k: k in bcInds.value).values().mean()
-                keys[idx, :] = mean(map(lambda k: converter(k), indList), axis=0)
-
-        return keys, values
-
-    def __maskToKeys(self, mask, returnNested=False):
-        """
-        Helper method to validate and convert a binary mask to a set of keys for use in
-        mean of/by region(s).
-
-        If returnNested is true, will return a sequence of sequences of keys, suitable for use
-        in meanByRegions. If returnNested is true and an integer or uint mask is passed, a separate set
-        of keys will be returned for each unique nonzero value in the mask, sorted in numeric order of the
-        mask values.
-
-        If returnNested is false, a single sequence of keys will be returned. The keys will be the indices
-        of all nonzero values of the passed mask.
-
-        Parameters
-        ----------
-        mask: ndarray
-
-        returnNested: boolean, optional, default False
-
-        Returns
-        -------
-        sequence of subscripted indices if returnNested is false,
-        sequence of sequence of subscripted indices if returnNested is true
-        """
-        # argument type checking
-        if not isinstance(mask, ndarray):
-            raise ValueError("Mask should be numpy ndarray, got: '%s'" % str(type(mask)))
-        # check for matching shapes only if we already know our own shape; don't trigger action otherwise
-        # a shape mismatch should be caught downstream, when expected and actual record counts fail to line up
-        if self._dims:
-            if mask.shape != self._dims.count:
-                raise ValueError("Shape mismatch between mask '%s' and series '%s'; shapes must be equal" %
-                                 (str(mask.shape), str(self._dims.count)))
-        from numpy import nonzero, transpose, unique
-
-        def maskToIndices(bmask):
-            return [tuple(idxs) for idxs in transpose(nonzero(bmask))]
-
-        if mask.dtype.kind in ('i', 'u') and returnNested:
-            nestedKeys = []
-            # integer or unsigned int mask
-            for group in unique(mask):
-                if group != 0:
-                    keys = maskToIndices(mask == group)
-                    nestedKeys.append(keys)
-            return nestedKeys
-        else:
-            keys = maskToIndices(mask)
-            if returnNested:
-                return [keys]
-            else:
-                return keys
-
-    def meanOfRegion(self, selection, validate=False):
-        """
-        Takes the mean of Series values within a single region specified by the passed mask or keys.
-
-        The region, defined as a group of keys, may be specified either by a mask array, or directly by
-        Series keys. If an ndarray is passed as `selection`, then the mean will be taken across all series
-        records corresponding to nonzero elements of the passed mask. (The passed ndarray must have the
-        same shape as series.dims.count, otherwise a ValueError will be thrown.)
-
-        If a sequence of record keys is passed, the the mean will be taken across all records
-        with keys matching one of those in the passed selection sequence.
-
-        Parameters
-        ----------
-        selection : sequence of tuples, or ndarray mask
-            The region over which to compute a mean as specified by a set of keys, or a ndarray mask.
-
-        validate : boolean, default False
-            Whether to check that all requested records were included in the mean. If True,
-            ValueError will be thrown if the number included is not equal to the number specified.
-
-        Returns
-        -------
-        tuple of (tuple(mean of keys), array(mean value)), or (None, None) if no matching records are found
-        """
-        if isinstance(selection, ndarray):
-            selection = self.__maskToKeys(selection, returnNested=False)
-        else:
-            selection = map(lambda p: tuple(p), selection)
-
-        bcRegionKeys = self.rdd.context.broadcast(frozenset(selection))
-        n, keyMean, valMean = self.rdd.filter(lambda (k, v): k in bcRegionKeys.value) \
-            .map(lambda (k, v):  (array(k, dtype=v.dtype), v)) \
-            .aggregate(_MeanCombiner.createZeroTuple(),
-                       _MeanCombiner.mergeIntoMeanTuple,
-                       _MeanCombiner.combineMeanTuples)
-        if isinstance(keyMean, ndarray):
-            keyMean = tuple(keyMean.astype('int32'))
-
-        if validate and n != len(selection):
-            raise ValueError("%d records were expected in region, but only %d were found" % (len(selection), n))
-
-        return (keyMean, valMean) if n > 0 else (None, None)
-
-    def meanByRegions(self, nestedKeys, validate=False):
-        """
-        Takes the mean of Series values within groupings specified by the passed keys.
-
-        Each sequence of keys passed specifies a "region" within which to calculate the mean. For instance,
-        series.meanByRegion([[(1,0), (2,0)]) would return the mean of the records in series with keys (1,0) and (2,0).
-        If multiple regions are passed in, then multiple aggregates will be returned. For instance,
-        series.meanByRegion([[(1,0), (2,0)], [(1,0), (3,0)]]) would return two means, one for the region composed
-        of records (1,0) and (2,0), the other for records (1,0) and (3,0).
-
-        Alternatively, an ndarray mask may be passed instead of a sequence of sequences of keys. The array mask
-        must be the same shape as the underlying series data (that is, nestedKeys.shape == series.dims.count must
-        be True). If an integer or unsigned integer mask is passed, then each unique nonzero element in the passed
-        mask will be interpreted as a separate region (that is, all '1's will be a single region, as will all '2's,
-        and so on). If another type of ndarray is passed, then all nonzero mask elements will be interpreted
-        as a single region.
-
-        This method returns a new Series object, with one record per defined region. Record keys will be the mean of
-        keys within the region, while record values will be the mean of values in the region. The `dims` attribute on
-        the new Series will not be set; all other attributes will be as in the source Series object.
-
-        Parameters
-        ----------
-        nestedKeys: sequence of sequences of Series record keys, or ndarray mask
-            Specification of regions over which to compute means.
-
-        validate: boolean, default False
-            Whether to check that all requested records were included in the mean. If True,
-            exceptions will be thrown on workers if the number of records per region
-            is not equal to the number specificed by the selection.
-
-        Returns
-        -------
-        new Series object
-        """
-        if isinstance(nestedKeys, ndarray):
-            nestedKeys = self.__maskToKeys(nestedKeys, returnNested=True)
-
-        # transform keys into map from keys to sequence of region indices
-        regionLookup = {}
-        nRecsInRegion = []
-        for regionIdx, region in enumerate(nestedKeys):
-            nRecsInRegion.append(len(region))
-            for key in region:
-                regionLookup.setdefault(tuple(key), []).append(regionIdx)
-
-        bcRegionLookup = self.rdd.context.broadcast(regionLookup)
-
-        def toRegionIdx(kvIter):
-            regionLookup_ = bcRegionLookup.value
-            for k, val in kvIter:
-                for regionIdx_ in regionLookup_.get(k, []):
-                    yield regionIdx_, (k, val)
-
-        def validateCounts(region_, n_, keyMean, valMean):
-            # nRecsInRegion pulled in via closure
-            if nRecsInRegion[region_] != n_:
-                raise ValueError("%d records were expected in region %d, but only %d were found" %
-                                 (nRecsInRegion[region_], region_, n_))
-            else:
-                return keyMean.astype('int16'), valMean
-
-        combinedData = self.rdd.mapPartitions(toRegionIdx) \
-            .combineByKey(_MeanCombiner.createMeanTuple,
-                          _MeanCombiner.mergeIntoMeanTuple,
-                          _MeanCombiner.combineMeanTuples, numPartitions=len(nestedKeys))
-
-        if validate:
-            data = combinedData.map(lambda (region_, (n, keyMean, valMean)):
-                                    validateCounts(region_, n, keyMean, valMean))
-        else:
-            data = combinedData.map(lambda (region_, (_, keyMean, valMean)):
-                                    (tuple(keyMean.astype('int16')), valMean))
-        return self._constructor(data).__finalize__(self, noPropagate=('_dims',))
-
     def toImages(self, size="150M"):
         """
         Converts Series to Images.
@@ -880,7 +606,7 @@ class Series(Data):
         """
         Convert Series to Matrix, a subclass with additional methods for matrix computations
         """
-        from thunder.data.series.matrices import Matrix
+        from thunder.data.series.matrix import Matrix
         return Matrix(self.rdd).__finalize__(self)
 
     def toTimeSeries(self):

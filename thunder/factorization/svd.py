@@ -2,7 +2,7 @@ import checkist
 from numpy import zeros, shape
 
 from ..data.series.series import Series
-from ..data.series.matrices import Matrix
+from ..data.series.matrix import Matrix
 
 
 class SVD(object):
