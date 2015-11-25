@@ -22,7 +22,7 @@ before_install:
   - conda info -a
 
 install:
-  - conda create --yes -q -n test-environment python=$TRAVIS_PYTHON_VERSION nose numpy scipy scikit-learn scikit-image matplotlib
+  - conda create --yes -q -n test-environment python=$TRAVIS_PYTHON_VERSION nose numpy scipy scikit-learn scikit-image matplotlib pytest
   - source activate test-environment
   - pip install .
   - wget http://d3kbcqa49mib13.cloudfront.net/spark-1.5.1-bin-hadoop1.tgz
@@ -30,5 +30,4 @@ install:
 
 script:
   - export SPARK_HOME=`pwd`/spark-1.5.1-bin-hadoop1
-  - cd thunder
   - py.test
