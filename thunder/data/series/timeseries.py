@@ -95,7 +95,8 @@ class TimeSeries(Series):
             Window size
         """
         masks = self._makeWindowMasks(indices, window)
-        rdd = self.rdd.flatMap(lambda (k, x): [(k + (i, ), x[m]) for i, m in enumerate(masks)])
+        tupleize = lambda k: k if isinstance(k, tuple) else (k,)
+        rdd = self.rdd.flatMap(lambda (k, x): [(tupleize(k) + (i, ), x[m]) for i, m in enumerate(masks)])
         index = arange(0, len(masks[0]))
         nrecords = self.nrecords * len(indices)
         return self._constructor(rdd, index=index, nrecords=nrecords).__finalize__(self)
@@ -280,18 +281,18 @@ class TimeSeries(Series):
         Parameters
         ----------
         baseline : str, optional, default = 'percentile'
-            Quantity to use as the baseline, options are 'mean', 'percentile', 'window', or 'window-fast'
+            Quantity to use as the baseline, options are 'mean', 'percentile', 'window', or 'window-exact'
 
         window : int, optional, default = 6
-            Size of window for baseline estimation, for 'window' and 'window-fast' baseline only
+            Size of window for baseline estimation, for 'window' and 'window-exact' baseline only
 
         perc : int, optional, default = 20
-            Percentile value to use, for 'percentile', 'window', or 'window-fast' baseline only
+            Percentile value to use, for 'percentile', 'window', or 'window-exact' baseline only
         """
-        checkist.opts(method, ['mean', 'percentile', 'window', 'window-fast'])
+        checkist.opts(method, ['mean', 'percentile', 'window', 'window-exact'])
     
         from warnings import warn
-        if not (method == 'window' or method == 'window-fast') and window is not None:
+        if not (method == 'window' or method == 'window-exact') and window is not None:
             warn('Setting window without using method "window" has no effect')
 
         if method == 'mean':
