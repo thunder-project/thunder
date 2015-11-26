@@ -2,7 +2,6 @@ import pytest
 from numpy import allclose, arange, array
 
 from thunder.data.series.readers import fromList
-from thunder.data.images.images import Images
 from thunder.data.series.matrix import Matrix
 from thunder.data.series.timeseries import TimeSeries
 
@@ -175,12 +174,15 @@ def test_series_stat_by_index():
     assert allclose(data.seriesMaxByIndex().values().first(), array([3, 7, 11]))
     assert allclose(data.seriesCountByIndex().values().first(), array([4, 4, 4]))
     assert allclose(data.seriesMedianByIndex().values().first(), array([1.5, 5.5, 9.5]))
+
+
+def test_series_stat_by_multiindex():
     index = [
         [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1],
         [0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1],
         [0, 1, 0, 1, 2, 3, 0, 1, 0, 1, 2, 3]
     ]
-    data.index = array(index).T
+    data = fromList([arange(12)], index=array(index).T)
     result = data.seriesStatByIndex('sum', level=[0, 1])
     assert allclose(result.values().first(), array([1, 14, 13, 38]))
     assert allclose(result.index, array([[0, 0], [0, 1], [1, 0], [1, 1]]))

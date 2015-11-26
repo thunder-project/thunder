@@ -690,8 +690,6 @@ class Series(Data):
         p = product(*val)
         selected = set([x for x in p])
 
-        #TODO: this could be more efficient if _makeMasks also accepted the desired values so that
-        #we not produce ALL possible masks which we must then filter down to the ones we want
         masks, ind = self._makeMasks(index=self.index, level=level)
         nmasks = len(masks)
         masks = array([masks[x] for x in xrange(nmasks) if tuple(ind[x]) in selected])

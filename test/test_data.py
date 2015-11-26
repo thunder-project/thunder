@@ -87,6 +87,16 @@ def test_brackets_multi():
     assert allclose(data[0, :], [a0, a1])
 
 
+def test_dims():
+    keys = [(1, 1, 1), (2, 1, 1), (1, 2, 1), (2, 2, 1), (1, 3, 1), (2, 3, 1),
+            (1, 1, 2), (2, 1, 2), (1, 2, 2), (2, 2, 2), (1, 3, 2), (2, 3, 2)]
+    data = fromList(arange(12), keys=keys)
+    dims = data.dims
+    assert(allclose(dims.max, (2, 3, 2)))
+    assert(allclose(dims.count, (2, 3, 2)))
+    assert(allclose(dims.min, (1, 1, 1)))
+
+
 def test_casting():
     data = fromList([array([1, 2, 3], 'int16')])
     assert data.astype('int64').collectValuesAsArray().dtype == 'int64'
