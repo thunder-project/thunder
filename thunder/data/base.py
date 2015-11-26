@@ -193,7 +193,7 @@ class Data(object):
             retVals.append(vals)
         return retVals
 
-    def getRange(self, sliceOrSlices, keys=True):
+    def getRange(self, sliceOrSlices, keys=False):
         """
         Returns key/value pairs locally to driver that fall within a given range.
 
@@ -443,7 +443,9 @@ class Data(object):
         of the key tuples before and after sorting so they are sorted according to the convention
         that the first key varies fastest, then the second, then the third, etc.
         """
-        newrdd = self.rdd.map(lambda (k, v): (k[::-1], v)).sortByKey().map(lambda (k, v): (k[::-1], v))
+        reverse = lambda k: k[::-1] if isinstance(k, tuple) else k
+        newrdd = self.rdd.map(lambda (k, v): (reverse(k), v)).sortByKey().map(
+            lambda (k, v): (reverse(k), v))
         return self._constructor(newrdd).__finalize__(self)
 
     def count(self):

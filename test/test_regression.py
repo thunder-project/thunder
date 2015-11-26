@@ -21,6 +21,8 @@ X = array([
     [-1.62162968,  0.46928843,  0.62996118,  1.08668594]
 ])
 
+Xscaled = (X - mean(X, axis=0))/std(X, axis=0, ddof=1)
+
 y0 = array([
     4.57058016, -4.06400691,  4.25957933,  2.01583617,  0.34791879,
     -0.9113852, 3.41167194,  5.26059279, -2.35116878,  6.28263909
@@ -29,54 +31,54 @@ y0 = array([
 tol = 1E-3
 
 
-def test_ordinary_linear_regression():
+def test_ordinary_linear():
     y = fromList([y0])
-
-    # sklearn's normalize=True option 'unscales' after fitting, we do not, so we do the scaling for them
-    Xscaled = (X - mean(X, axis=0))/std(X, axis=0, ddof=1)
-
-    # no intercept, no scaling
     betas = LinearRegression(intercept=False).fit(X, y).coeffs.values().first()
     betas0 = lm.LinearRegression(fit_intercept=False).fit(X, y0).coef_
     assert allclose(betas, betas0, atol=tol)
 
-    # intercept, no scaling
-    betas = LinearRegression().fit(X, y).coeffs.values().first()
-    result = lm.LinearRegression(fit_intercept=True).fit(X, y0)
-    betas0 = r_[result.intercept_, result.coef_]
-    assert allclose(betas, betas0, atol=tol)
 
-    # no intercept, scaling
-    betas = LinearRegression(intercept=False, zscore=True).fit(X, y).coeffs.values().first()
-    betas0 = lm.LinearRegression(fit_intercept=False).fit(Xscaled, y0).coef_
-    assert allclose(betas, betas0, atol=tol)
-
-    # intercept, scaling
+def test_ordinary_linear_intercept_scaling():
+    y = fromList([y0])
     betas = LinearRegression(zscore=True).fit(X, y).coeffs.values().first()
     result = lm.LinearRegression().fit(Xscaled, y0)
     betas0 = r_[result.intercept_, result.coef_]
     assert allclose(betas, betas0, atol=tol)
 
 
-def test_tikhonov_linear_regression():
+def test_ordinary_linear_intercept():
+    y = fromList([y0])
+    betas = LinearRegression().fit(X, y).coeffs.values().first()
+    result = lm.LinearRegression(fit_intercept=True).fit(X, y0)
+    betas0 = r_[result.intercept_, result.coef_]
+    assert allclose(betas, betas0, atol=tol)
+
+
+def test_ordinary_linear_scaling():
+    y = fromList([y0])
+    betas = LinearRegression(intercept=False, zscore=True).fit(X, y).coeffs.values().first()
+    betas0 = lm.LinearRegression(fit_intercept=False).fit(Xscaled, y0).coef_
+    assert allclose(betas, betas0, atol=tol)
+
+
+def test_tikhonov_linear():
     y = fromList([y0])
     R = array([[1, -2, 1, 0], [0, 1, -2, 0]], dtype='float')
     c = 2.0
-    # no intercept, no normalization
-    # tikhonov regularization can be recast in the form of OLS regression with an augmented design matrix
     Xaug = r_[X, sqrt(c)*R]
     yaug = r_[y0, zeros(R.shape[0])]
-
     betas = LinearRegression('tikhonov', intercept=False,  R=R, c=c).fit(X, y).coeffs.values().first()
     betas0 = lm.LinearRegression(fit_intercept=False).fit(Xaug, yaug).coef_
     assert allclose(betas, betas0, atol=tol)
 
-    # intercept, no normalization
-    Xscaled = (X - mean(X, axis=0))/std(X, axis=0, ddof=1)
+
+def test_tikhonov_linear_intercept():
+    y = fromList([y0])
+    R = array([[1, -2, 1, 0], [0, 1, -2, 0]], dtype='float')
+    c = 2.0
     Xaug = r_[Xscaled, sqrt(c)*R]
     yint = mean(y0)
     yaug = r_[y0-yint, zeros(R.shape[0])]
-
     betas = LinearRegression('tikhonov', zscore=True, R=R, c=c).fit(X, y).coeffs.values().first()
     result = lm.LinearRegression(fit_intercept=False).fit(Xaug, yaug)
     betas0 = r_[yint, result.coef_]
@@ -91,24 +93,35 @@ def test_ridge_linear_regression():
     assert(allclose(betas, betas0, atol=tol))
 
 
-def test_linear_regression_model_methods():
+def test_linear_predict():
     y = fromList([y0])
     model = LinearRegression().fit(X, y)
     model0 = lm.LinearRegression().fit(X, y0)
-
     yhat = model.predict(X).values().first()
     yhat0 = model0.predict(X)
     assert allclose(yhat, yhat0, atol=tol)
 
+
+def test_linear_stats():
+    y = fromList([y0])
+    model = LinearRegression().fit(X, y)
+    model0 = lm.LinearRegression().fit(X, y0)
     R2_initial = model.stats.values().first()
     R2_score = model.score(X, y).values().first()
     R2_0 = model0.score(X, y0)
     assert allclose(R2_initial, R2_score, atol=tol)
     assert allclose(R2_initial, R2_0, atol=tol)
 
+
+def test_linear_predict_and_score():
+    y = fromList([y0])
+    model = LinearRegression().fit(X, y)
     result1, result2 = model.predictAndScore(X, y)
     yhat = result1.values().first()
     R2 = result2.values().first()
+    model0 = lm.LinearRegression().fit(X, y0)
+    yhat0 = model0.predict(X)
+    R2_0 = model0.score(X, y0)
     assert allclose(yhat, yhat0, atol=tol)
     assert allclose(R2, R2_0, atol=tol)
 

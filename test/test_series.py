@@ -15,7 +15,6 @@ def test_to_matrix():
     assert isinstance(mat, Matrix)
     assert mat.nrows == 2
     assert mat.ncols == 4
-
     out = mat.applyValues(lambda x: x + 1).collectValuesAsArray()
     assert allclose(out, array([[5, 6, 7, 8], [9, 10, 11, 12]]))
 
@@ -33,71 +32,6 @@ def test_to_images():
     assert isinstance(imgs, Images)
     im = imgs.values().first()
     assert allclose(im, [[1, 2], [3, 4]])
-
-
-def test_cast_to_float():
-    size = 3 * 2 * 2
-    a1 = arange(size, dtype='uint8')
-    a2 = a1 + size
-    series = fromList([a1, a2])
-    casted = series.astype("smallfloat")
-    assert str(casted.dtype) == 'float16'
-    assert str(casted.first()[1].dtype) == 'float16'
-
-
-def test_mean():
-    data = fromList([arange(8)])
-    val = data.mean()
-    expected = data.collectValuesAsArray().mean(axis=0)
-    assert allclose(val, expected)
-    assert str(val.dtype) == 'float64'
-
-
-def test_sum():
-    data = fromList([arange(8)])
-    val = data.sum()
-    expected = data.collectValuesAsArray().sum(axis=0)
-    assert allclose(val, expected)
-    assert str(val.dtype) == 'float64'
-
-
-def test_variance():
-    data = fromList([arange(8)])
-    val = data.variance()
-    expected = data.collectValuesAsArray().var(axis=0)
-    assert allclose(val, expected)
-    assert str(val.dtype) == 'float64'
-
-
-def test_stdev():
-    data = fromList([arange(8)])
-    val = data.stdev()
-    expected = data.collectValuesAsArray().std(axis=0)
-    assert allclose(val, expected)
-    assert str(val.dtype) == 'float64'
-
-
-def test_stats():
-    data = fromList([arange(8)])
-    stats = data.stats()
-    expected = data.collectValuesAsArray().mean(axis=0)
-    assert allclose(stats.mean(), expected)
-    expected = data.collectValuesAsArray().var(axis=0)
-    assert allclose(stats.variance(), expected)
-
-
-def test_max():
-    data = fromList([arange(8)])
-    val = data.max()
-    expected = data.collectValuesAsArray().max(axis=0)
-    assert allclose(val, expected)
-
-
-def test_min():
-    data = fromList([arange(8)])
-    val = data.min()
-    expected = data.collectValuesAsArray().min(axis=0)
-    assert allclose(val, expected)
 
 
 def test_between():
