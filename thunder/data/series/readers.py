@@ -11,10 +11,9 @@ def fromList(items, accessor=None, keys=None, npartitions=None, index=None, **kw
 
     if mode() == 'spark':
         nrecords = len(items)
-        if keys:
-            items = zip(keys, items)
-        else:
-            items = enumerate(items)
+        if not keys:
+            keys = map(lambda k: (k, ), range(len(items)))
+        items = zip(keys, items)
         rdd = engine().parallelize(items, npartitions)
         if accessor:
             rdd = rdd.mapValues(accessor)

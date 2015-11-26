@@ -29,6 +29,12 @@ class Images(Data):
         return self._dims
 
     @property
+    def shape(self):
+        if self._shape is None:
+            self._shape = (self.nrecords,) + self.dims.count
+        return self._shape
+
+    @property
     def dtype(self):
         # override just calls superclass; here for explicitness
         return super(Images, self).dtype

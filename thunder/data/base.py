@@ -19,12 +19,13 @@ class Data(object):
         Standard pyspark RDD methods on a data instance `obj` that are not already
         directly exposed by the Data object can be accessed via `obj.rdd`.
     """
-    _metadata = ['_nrecords', '_dtype']
+    _metadata = ['_nrecords', '_dtype', '_shape']
 
     def __init__(self, rdd, nrecords=None, dtype=None):
         self.rdd = rdd
         self._nrecords = nrecords
         self._dtype = dtype
+        self._shape = None
 
     def __repr__(self):
         # start with class name
@@ -157,6 +158,8 @@ class Data(object):
         If multiple records are found with keys matching the passed key, a sequence of all matching
         values will be returned. If no records found, will return None
         """
+        if not hasattr(key, '__iter__'):
+            key = (key,)
         firstKey = self.first()[0]
         Data.__getKeyTypeCheck(firstKey, key)
         filteredVals = self.rdd.filter(lambda (k, v): k == key).values().collect()
@@ -177,6 +180,9 @@ class Data(object):
         If multiple values are found, a sequence containing all matching values will be returned.
         """
         firstKey = self.first()[0]
+        for i, key in enumerate(keys):
+            if not hasattr(key, '__iter__'):
+                keys[i] = (key,)
         for key in keys:
             Data.__getKeyTypeCheck(firstKey, key)
         keySet = frozenset(keys)
@@ -217,14 +223,16 @@ class Data(object):
         -------
         sorted sequence of key/value pairs
         """
-        # None is less than everything except itself
+        if isinstance(sliceOrSlices, slice):
+            sliceOrSlices = (sliceOrSlices,)
+
         def singleSlicePredicate(kv):
             key, _ = kv
             if isinstance(sliceOrSlices, slice):
                 if sliceOrSlices.stop is None:
                     return key >= sliceOrSlices.start
                 return sliceOrSlices.stop > key >= sliceOrSlices.start
-            else:  # apparently this isn't a slice
+            else:
                 return key == sliceOrSlices
 
         def multiSlicesPredicate(kv):
@@ -244,7 +252,6 @@ class Data(object):
         firstKey = self.first()[0]
         Data.__getKeyTypeCheck(firstKey, sliceOrSlices)
         if not hasattr(sliceOrSlices, '__iter__'):
-            # make my func the pFunc; http://en.wikipedia.org/wiki/P._Funk_%28Wants_to_Get_Funked_Up%29
             pFunc = singleSlicePredicate
             if hasattr(sliceOrSlices, 'step') and sliceOrSlices.step is not None:
                 raise ValueError("'step' slice attribute is not supported in getRange, got step: %d" %
@@ -257,7 +264,6 @@ class Data(object):
                                      slise.step)
 
         filteredRecs = self.rdd.filter(pFunc).collect()
-        # default sort of tuples is by first item, which happens to be what we want
         output = sorted(filteredRecs)
 
         if keys is True:
@@ -266,15 +272,12 @@ class Data(object):
             return map(lambda (k, v): v, output)
 
     def __getitem__(self, item):
-        # should raise exception here when no matching items found
-        # see object.__getitem__ in https://docs.python.org/2/reference/datamodel.html
         isRangeQuery = False
         if isinstance(item, slice):
             isRangeQuery = True
         elif hasattr(item, '__iter__'):
             if any([isinstance(slise, slice) for slise in item]):
                 isRangeQuery = True
-
         result = self.getRange(item, keys=False) if isRangeQuery else self.get(item)
         if (result is None) or (result == []):
             raise KeyError("No value found for key: %s" % str(item))

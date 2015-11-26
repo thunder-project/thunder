@@ -89,6 +89,12 @@ class Series(Data):
         return self._dims
 
     @property
+    def shape(self):
+        if self._shape is None:
+            self._shape = tuple(self.dims) + (size(self.index),)
+        return self._shape
+
+    @property
     def dtype(self):
         # override just calls superclass; here for explicitness
         return super(Series, self).dtype
@@ -544,63 +550,6 @@ class Series(Data):
                             % (stat, thresh))
 
         return result
-
-    def toImages(self, size="150M"):
-        """
-        Converts Series to Images.
-
-        Equivalent to calling series.toBlocks(size).toImages()
-
-        Parameters
-        ----------
-        size : string memory size, optional, default = "150M"
-            String interpreted as memory size (e.g. "64M").
-
-        Returns
-        -------
-        Images instance
-        """
-        return self.toBlocks(size).toImages()
-
-    def toBlocks(self, size="150M"):
-        """
-        Converts Series to Blocks.
-
-        Parameters
-        ----------
-        size : string memory size, tuple of splits per dimension, or instance of BlockingStrategy
-            String interpreted as memory size (e.g. "64M"). Tuple of ints interpreted as
-            "pixels per dimension" (default) or "splits per dimension", depending on units.
-            Instance of BlockingStrategy can be passed directly.
-
-        Returns
-        -------
-        Blocks instance
-        """
-        from thunder.data.blocks.strategy import BlockingStrategy, SeriesBlockingStrategy
-        if isinstance(size, SeriesBlockingStrategy):
-            blockingStrategy = size
-        elif isinstance(size, basestring) or isinstance(size, int):
-            blockingStrategy = SeriesBlockingStrategy.generateFromBlockSize(self, size)
-        else:
-            # assume it is a tuple of positive int specifying splits
-            blockingStrategy = SeriesBlockingStrategy(size)
-
-        blockingStrategy.setSource(self)
-        avgSize = blockingStrategy.calcAverageBlockSize()
-        if avgSize >= BlockingStrategy.DEFAULT_MAX_BLOCK_SIZE:
-            # TODO: use logging module here rather than print
-            print "Thunder WARNING: average block size of %g bytes exceeds suggested max size of %g bytes" % \
-                  (avgSize, BlockingStrategy.DEFAULT_MAX_BLOCK_SIZE)
-
-        returnType = blockingStrategy.getBlocksClass()
-        blockedRdd = self.rdd.map(blockingStrategy.blockingFunction)
-        # since our blocks are likely pretty big, try setting 1 partition per block
-        groupedRdd = blockedRdd.groupByKey(numPartitions=blockingStrategy.nblocks)
-        # <key>, <val> at this point is:
-        # <block number>, <[(series key, series val), (series key, series val), ...]>
-        simpleBlocksRdd = groupedRdd.map(blockingStrategy.combiningFunction)
-        return returnType(simpleBlocksRdd, dims=self.dims, nimages=len(self.index), dtype=self.dtype)
 
     def toMatrix(self):
         """

@@ -64,6 +64,13 @@ class Blocks(Data):
         return self._dims
 
     @property
+    def shape(self):
+        """Total shape"""
+        if self._shape is None:
+            self._shape = (self.nrecords,) + self.dims.count
+        return self._shape
+
+    @property
     def nimages(self):
         """Number of images (records) in the original Images data from which these Blocks were derived.
 

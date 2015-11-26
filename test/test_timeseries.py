@@ -26,8 +26,10 @@ def test_crossCorr():
     betas = data.crossCorr(signal=sig, lag=0)
     assert allclose(betas.collectValuesAsArray(), corrcoef(local, sig)[0, 1])
     betas = data.crossCorr(signal=sig, lag=2)
-    assert allclose(betas.collectValuesAsArray(),
-        array([-0.18511, 0.03817, 0.99221, 0.06567, -0.25750]), atol=1E-5)
+    assert allclose(
+        betas.collectValuesAsArray(),
+        array([-0.18511, 0.03817, 0.99221, 0.06567, -0.25750]), atol=1E-5
+    )
 
 
 def test_detrend():

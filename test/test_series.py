@@ -25,15 +25,6 @@ def test_to_time_series():
     assert isinstance(ts, TimeSeries)
 
 
-def test_to_images():
-    keys = [(0, 0), (0, 1), (1, 0), (1, 1)]
-    data = fromList([array([1]), array([2]), array([3]), array([4])], keys=keys)
-    imgs = data.toImages()
-    assert isinstance(imgs, Images)
-    im = imgs.values().first()
-    assert allclose(im, [[1, 2], [3, 4]])
-
-
 def test_between():
     data = fromList([array([4, 5, 6, 7]), array([8, 9, 10, 11])])
     val = data.between(0, 1)
@@ -213,10 +204,10 @@ def test_group_by_fixed_length():
 def test_mean_by_fixed_length():
     data = fromList([arange(8)])
     test1 = data.meanByFixedLength(4)
-    assert test1.keys().collect() == [0]
+    assert test1.keys().collect() == [(0,)]
     assert allclose(test1.index, array([0, 1, 2, 3]))
     assert allclose(test1.values().collect(), [[2, 3, 4, 5]])
     test2 = data.meanByFixedLength(2)
-    assert test2.keys().collect() == [0]
+    assert test2.keys().collect() == [(0,)]
     assert allclose(test2.index, array([0, 1]))
     assert allclose(test2.values().collect(), [[3, 4]])
