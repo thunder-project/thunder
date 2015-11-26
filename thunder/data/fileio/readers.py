@@ -1,27 +1,3 @@
-"""Classes that abstract reading from various types of filesystems.
-
-Currently two types of 'filesystem' are supported:
-
-* the local file system, via python's native file() objects
-
-* Amazon's S3 or Google Storage, using the boto library (only if boto is installed; boto is not a requirement)
-
-For each filesystem, two types of reader classes are provided:
-
-* parallel readers are intended to serve as the entry point to a Spark workflow. They provide a read() method
-that itself calls the spark context's parallelize() method, setting up a workflow with one partition per file. This
-method returns a Spark RDD of <string filename, string binary data>.
-
-* file readers are intended to abstract across the supported filesystems, providing a consistent interface to several
-common file and filesystem operations. These include listing files in a directory, reading the contents of a file,
-and providing a file handle or handle-like object that itself supports read(), seek(), and tell() operations.
-
-The reader classes also all support a common syntax for path specifications, including both "standard" file paths
-and "URI-like" syntax with an explicitly specified scheme (for instance, "file://", "gs://" or "s3n://"). This path specification
-syntax allows a single wildcard "*" character in the filename, making possible paths like
-"s3n:///my-bucket/key-one/foo*.bar", referring to "every object in the S3 bucket my-bucket whose key starts with
-'key-one/foo' and ends with '.bar'".
-"""
 import errno
 import fnmatch
 import glob
@@ -131,7 +107,7 @@ class LocalFSParallelReader(object):
     """
     Parallel reader backed by python's native file() objects.
     """
-    def __init__(self, sparkContext, **kwargs):
+    def __init__(self, sparkContext=None, **kwargs):
         # kwargs allow AWS credentials to be passed into generic Readers w/o exceptions being raised
         # in this case kwargs are just ignored
         self.sc = sparkContext
