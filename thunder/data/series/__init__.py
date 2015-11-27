@@ -1,2 +1,2 @@
-from .readers import (fromList, fromExample, fromArray, fromBinary, fromText,
-                      fromMat, fromNpy, fromRDD, fromRandom)
+from .readers import (fromlist, fromexample, fromarray, frombinary, fromtext,
+                      frommat, fromnpy, fromrdd, fromrandom)

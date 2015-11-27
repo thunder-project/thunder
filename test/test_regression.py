@@ -2,9 +2,9 @@ import pytest
 from numpy import array, allclose, r_, pi, mean, std, zeros, sqrt
 from sklearn import linear_model as lm
 
+from thunder.data.series.readers import fromlist
 from thunder.regression import LinearRegression
 from thunder.regression import TuningModel
-from thunder.data.series.readers import fromList
 
 pytestmark = pytest.mark.usefixtures("context")
 
@@ -32,14 +32,14 @@ tol = 1E-3
 
 
 def test_ordinary_linear():
-    y = fromList([y0])
+    y = fromlist([y0])
     betas = LinearRegression(intercept=False).fit(X, y).coeffs.values().first()
     betas0 = lm.LinearRegression(fit_intercept=False).fit(X, y0).coef_
     assert allclose(betas, betas0, atol=tol)
 
 
 def test_ordinary_linear_intercept_scaling():
-    y = fromList([y0])
+    y = fromlist([y0])
     betas = LinearRegression(zscore=True).fit(X, y).coeffs.values().first()
     result = lm.LinearRegression().fit(Xscaled, y0)
     betas0 = r_[result.intercept_, result.coef_]
@@ -47,7 +47,7 @@ def test_ordinary_linear_intercept_scaling():
 
 
 def test_ordinary_linear_intercept():
-    y = fromList([y0])
+    y = fromlist([y0])
     betas = LinearRegression().fit(X, y).coeffs.values().first()
     result = lm.LinearRegression(fit_intercept=True).fit(X, y0)
     betas0 = r_[result.intercept_, result.coef_]
@@ -55,14 +55,14 @@ def test_ordinary_linear_intercept():
 
 
 def test_ordinary_linear_scaling():
-    y = fromList([y0])
+    y = fromlist([y0])
     betas = LinearRegression(intercept=False, zscore=True).fit(X, y).coeffs.values().first()
     betas0 = lm.LinearRegression(fit_intercept=False).fit(Xscaled, y0).coef_
     assert allclose(betas, betas0, atol=tol)
 
 
 def test_tikhonov_linear():
-    y = fromList([y0])
+    y = fromlist([y0])
     R = array([[1, -2, 1, 0], [0, 1, -2, 0]], dtype='float')
     c = 2.0
     Xaug = r_[X, sqrt(c)*R]
@@ -73,7 +73,7 @@ def test_tikhonov_linear():
 
 
 def test_tikhonov_linear_intercept():
-    y = fromList([y0])
+    y = fromlist([y0])
     R = array([[1, -2, 1, 0], [0, 1, -2, 0]], dtype='float')
     c = 2.0
     Xaug = r_[Xscaled, sqrt(c)*R]
@@ -86,7 +86,7 @@ def test_tikhonov_linear_intercept():
 
 
 def test_ridge_linear_regression():
-    y = fromList([y0])
+    y = fromlist([y0])
     c = 2.0
     betas = LinearRegression('ridge', intercept=False, c=c).fit(X, y).coeffs.values().first()
     betas0 = lm.Ridge(fit_intercept=False, alpha=c).fit(X, y0).coef_
@@ -94,7 +94,7 @@ def test_ridge_linear_regression():
 
 
 def test_linear_predict():
-    y = fromList([y0])
+    y = fromlist([y0])
     model = LinearRegression().fit(X, y)
     model0 = lm.LinearRegression().fit(X, y0)
     yhat = model.predict(X).values().first()
@@ -103,7 +103,7 @@ def test_linear_predict():
 
 
 def test_linear_stats():
-    y = fromList([y0])
+    y = fromlist([y0])
     model = LinearRegression().fit(X, y)
     model0 = lm.LinearRegression().fit(X, y0)
     R2_initial = model.stats.values().first()
@@ -114,7 +114,7 @@ def test_linear_stats():
 
 
 def test_linear_predict_and_score():
-    y = fromList([y0])
+    y = fromlist([y0])
     model = LinearRegression().fit(X, y)
     result1, result2 = model.predictAndScore(X, y)
     yhat = result1.values().first()
@@ -127,7 +127,7 @@ def test_linear_predict_and_score():
 
 
 def test_gaussian_tuning_model():
-    data = fromList([array([1.5, 2.3, 6.2, 5.1, 3.4, 2.1])])
+    data = fromlist([array([1.5, 2.3, 6.2, 5.1, 3.4, 2.1])])
     s = array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
     model = TuningModel.load(s, "gaussian")
     params = model.fit(data)
@@ -136,7 +136,7 @@ def test_gaussian_tuning_model():
 
 
 def test_circular_tuning_model():
-    data = fromList([array([1.5, 2.3, 6.2, 5.1, 3.4, 2.1])])
+    data = fromlist([array([1.5, 2.3, 6.2, 5.1, 3.4, 2.1])])
     s = array([-pi/2, -pi/3, -pi/4, pi/4, pi/3, pi/2])
     model = TuningModel.load(s, "circular")
     params = model.fit(data)

@@ -6,18 +6,18 @@ from thunder.factorization.ica import ICA
 from thunder.factorization.svd import SVD
 from thunder.factorization.nmf import NMF
 from thunder.factorization.pca import PCA
-from thunder.data.series.readers import fromList
+from thunder.data.series.readers import fromlist
 
 pytestmark = pytest.mark.usefixtures("context")
 
 
 def test_pca():
-    dataLocal = [
+    local = [
         array([1.0, 1.0, 1.0, 5.0]),
         array([2.0, 3.0, 4.0, 1.0]),
         array([6.0, 0.0, 6.0, 6.0])
     ]
-    mat = fromList(dataLocal)
+    mat = fromlist(local)
     pca1 = PCA(k=1, svdMethod='direct')
     pca1.fit(mat)
     out1_comps = pca1.comps
@@ -25,9 +25,9 @@ def test_pca():
     out1_transform_scores = pca1.transform(mat).toarray() * pca1.latent
     from sklearn.decomposition import PCA as skPCA
     pca2 = skPCA(n_components=1)
-    pca2.fit(array(dataLocal))
+    pca2.fit(array(local))
     out2_comps = pca2.components_
-    out2_scores = pca2.transform(array(dataLocal)).squeeze()
+    out2_scores = pca2.transform(array(local)).squeeze()
     print(out1_scores)
     print(out2_scores)
     assert allclose(out1_comps, out2_comps) | allclose(out1_comps, -out2_comps)
@@ -36,52 +36,52 @@ def test_pca():
 
 
 def test_svd_direct():
-    dataLocal = [
+    local = [
         array([1.0, 2.0, 6.0]),
         array([1.0, 3.0, 0.0]),
         array([1.0, 4.0, 6.0]),
         array([5.0, 1.0, 4.0])
     ]
-    mat = fromList(dataLocal)
+    mat = fromlist(local)
     svd = SVD(k=1, method="direct")
     svd.calc(mat)
-    uTest = transpose(array(svd.u.rows().collect()))[0]
-    vTest = svd.v[0]
+    utest = transpose(array(svd.u.rows().collect()))[0]
+    vtest = svd.v[0]
     from scipy.linalg import svd as ssvd
-    uTrue, sTrue, vTrue = ssvd(array(dataLocal))
-    assert allclose(svd.s[0], sTrue[0])
-    assert allclose(vTest, vTrue[0, :]) | allclose(-vTest, vTrue[0, :])
-    assert allclose(uTest, uTrue[:, 0]) | allclose(-uTest, uTrue[:, 0])
+    utrue, strue, vtrue = ssvd(array(local))
+    assert allclose(svd.s[0], strue[0])
+    assert allclose(vtest, vtrue[0, :]) | allclose(-vtest, vtrue[0, :])
+    assert allclose(utest, utrue[:, 0]) | allclose(-utest, utrue[:, 0])
 
 
 def test_svd_em():
-    dataLocal = [
+    local = [
         array([1.0, 2.0, 6.0]),
         array([1.0, 3.0, 0.0]),
         array([1.0, 4.0, 6.0]),
         array([5.0, 1.0, 4.0])
     ]
-    mat = fromList(dataLocal)
+    mat = fromlist(local)
     svd = SVD(k=1, method="em")
     svd.calc(mat)
-    uTest = transpose(array(svd.u.rows().collect()))[0]
-    vTest = svd.v[0]
+    utest = transpose(array(svd.u.rows().collect()))[0]
+    vtest = svd.v[0]
     from scipy.linalg import svd as ssvd
-    uTrue, sTrue, vTrue = ssvd(array(dataLocal))
+    utrue, strue, vtrue = ssvd(array(local))
     tol = 10e-04  # allow small error for iterative method
-    assert allclose(svd.s[0], sTrue[0], atol=tol)
-    assert allclose(vTest, vTrue[0, :], atol=tol) | allclose(-vTest, vTrue[0, :], atol=tol)
-    assert allclose(uTest, uTrue[:, 0], atol=tol) | allclose(-uTest, uTrue[:, 0], atol=tol)
+    assert allclose(svd.s[0], strue[0], atol=tol)
+    assert allclose(vtest, vtrue[0, :], atol=tol) | allclose(-vtest, vtrue[0, :], atol=tol)
+    assert allclose(utest, utrue[:, 0], atol=tol) | allclose(-utest, utrue[:, 0], atol=tol)
 
 
 def test_svd_conversion():
-    dataLocal = [
+    local = [
         array([1.0, 2.0, 6.0]),
         array([1.0, 3.0, 0.0]),
         array([1.0, 4.0, 6.0]),
         array([5.0, 1.0, 4.0])
     ]
-    mat = fromList(dataLocal)
+    mat = fromlist(local)
     SVD(k=1, method='direct').calc(mat)
 
 
@@ -100,42 +100,42 @@ def test_ica():
 
 
 def test_nmf_als():
-    dataLocal = array([
+    local = array([
         [1.0, 2.0, 6.0],
         [1.0, 3.0, 0.0],
         [1.0, 4.0, 6.0],
         [5.0, 1.0, 4.0]])
-    mat = fromList(dataLocal)
+    mat = fromlist(local)
     h0 = array(
         [[0.09082617,  0.85490047,  0.57234593],
          [0.82766740,  0.21301186,  0.90913979]])
-    hTrue = array(
+    htrue = array(
         [[0, 0.6010, 0.9163],
          [0.8970, 0.1556, 0.7423]])
-    wTrue = array(
+    wtrue = array(
         [[4.5885, 1.5348],
          [1.3651, 0.2184],
          [5.9349, 1.0030],
          [0, 5.5147]])
-    scaleMat = diag(norm(hTrue, axis=1))
-    hTrue = dot(inv(scaleMat), hTrue)
-    wTrue = dot(wTrue, scaleMat)
-    nmfThunder = NMF(k=2, method="als", h0=h0, maxIter=9)
-    nmfThunder.fit(mat)
-    hThunder = nmfThunder.h
-    wThunder = array(nmfThunder.w.values().collect())
+    matscale = diag(norm(htrue, axis=1))
+    htrue = dot(inv(matscale), htrue)
+    wtrue = dot(wtrue, matscale)
+    nmfthunder = NMF(k=2, method="als", h0=h0, maxIter=9)
+    nmfthunder.fit(mat)
+    hthunder = nmfthunder.h
+    wthunder = array(nmfthunder.w.values().collect())
     tol = 1e-03
-    assert allclose(wThunder, wTrue, atol=tol)
-    assert allclose(hThunder, hTrue, atol=tol)
+    assert allclose(wthunder, wtrue, atol=tol)
+    assert allclose(hthunder, htrue, atol=tol)
 
 
 def test_nmf_init():
-    dataLocal = array([
+    local = array([
         [1.0, 2.0, 6.0],
         [1.0, 3.0, 0.0],
         [1.0, 4.0, 6.0],
         [5.0, 1.0, 4.0]])
-    mat = fromList(dataLocal)
-    nmfThunder = NMF(k=2, reconHist='final')
-    nmfThunder.fit(mat)
-    assert nmfThunder.reconErr < 2.9950
+    mat = fromlist(local)
+    nmfthunder = NMF(k=2, reconHist='final')
+    nmfthunder.fit(mat)
+    assert nmfthunder.reconErr < 2.9950

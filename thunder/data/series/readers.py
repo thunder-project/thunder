@@ -3,11 +3,11 @@ from numpy import array, arange, frombuffer, load, ndarray, asarray, random
 from thunder import engine, mode, credentials
 
 
-def fromRDD(rdd, **kwargs):
+def fromrdd(rdd, **kwargs):
     from .series import Series
     return Series(rdd, **kwargs)
 
-def fromList(items, accessor=None, keys=None, npartitions=None, index=None, **kwargs):
+def fromlist(items, accessor=None, keys=None, npartitions=None, index=None, **kwargs):
 
     if mode() == 'spark':
         nrecords = len(items)
@@ -19,12 +19,12 @@ def fromList(items, accessor=None, keys=None, npartitions=None, index=None, **kw
         rdd = engine().parallelize(items, npartitions)
         if accessor:
             rdd = rdd.mapValues(accessor)
-        return fromRDD(rdd, nrecords=nrecords, index=index, **kwargs)
+        return fromrdd(rdd, nrecords=nrecords, index=index, **kwargs)
 
     else:
         raise NotImplementedError("Loading not implemented for '%s' mode" % mode())
 
-def fromArray(arrays, npartitions=None, index=None, keys=None):
+def fromarray(arrays, npartitions=None, index=None, keys=None):
     """
     Create a Series object from a sequence of 1d numpy arrays.
     """
@@ -46,9 +46,9 @@ def fromArray(arrays, npartitions=None, index=None, keys=None):
             raise ValueError("Inconsistent array dtypes: first array had dtype %s, but other array has dtype %s" %
                              (str(dtype), str(ary.dtype)))
 
-    return fromList(arrays, keys=keys, npartitions=npartitions, dtype=str(dtype), index=index)
+    return fromlist(arrays, keys=keys, npartitions=npartitions, dtype=str(dtype), index=index)
 
-def fromMat(path, var, npartitions=None, keyFile=None, index=None):
+def frommat(path, var, npartitions=None, keyFile=None, index=None):
     """
     Loads Series data stored in a Matlab .mat file.
 
@@ -63,9 +63,9 @@ def fromMat(path, var, npartitions=None, keyFile=None, index=None):
     else:
         keys = None
 
-    return fromList(data, keys=keys, npartitions=npartitions, dtype=str(data.dtype), index=index)
+    return fromlist(data, keys=keys, npartitions=npartitions, dtype=str(data.dtype), index=index)
 
-def fromNpy(path, npartitions=None, keyfile=None, index=None):
+def fromnpy(path, npartitions=None, keyfile=None, index=None):
     """
     Loads Series data stored in the numpy save() .npy format.
 
@@ -79,9 +79,9 @@ def fromNpy(path, npartitions=None, keyfile=None, index=None):
     else:
         keys = None
 
-    return fromList(data, keys=keys, npartitions=npartitions, dtype=str(data.dtype), index=index)
+    return fromlist(data, keys=keys, npartitions=npartitions, dtype=str(data.dtype), index=index)
 
-def fromText(path, npartitions=None, nkeys=None, ext="txt", dtype='float64'):
+def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64'):
     """
     Loads Series data from text files.
 
@@ -109,57 +109,12 @@ def fromText(path, npartitions=None, nkeys=None, ext="txt", dtype='float64'):
 
         lines = engine().textFile(path, npartitions)
         data = lines.map(lambda x: parse(x, nkeys))
-        return fromRDD(data, dtype=str(dtype))
+        return fromrdd(data, dtype=str(dtype))
 
     else:
         raise NotImplementedError("Loading not implemented for '%s' mode" % mode())
 
-def loadBinaryParameters(path, conf, nkeys, nvalues, keyType, valueType):
-    """
-    Collects parameters to use for binary series loading.
-
-    Priority order is as follows:
-    1. parameters specified as keyword arguments;
-    2. parameters specified in a conf.json file on the local filesystem;
-    3. default parameters
-
-    Returns
-    -------
-    BinaryLoadParameters instance
-    """
-    from collections import namedtuple
-    Parameters = namedtuple('BinaryLoadParameters', 'nkeys nvalues keytype valuetype')
-    Parameters.__new__.__defaults__ = (None, None, 'int16', 'int16')
-
-    params = loadConf(path, conf=conf)
-
-    # filter dict to include only recognized field names:
-    for k in params.keys():
-        if k not in Parameters._fields:
-            del params[k]
-    keywordParams = {'nkeys': nkeys, 'nvalues': nvalues, 'keytype': keyType, 'valuetype': valueType}
-    for k, v in keywordParams.items():
-        if not v and not v == 0:
-            del keywordParams[k]
-    params.update(keywordParams)
-    return Parameters(**params)
-
-def checkBinaryParameters(paramsObj):
-    """
-    Throws ValueError if any of the field values in the passed namedtuple instance evaluate to False.
-
-    Note this is okay only so long as zero is not a valid parameter value. Hmm.
-    """
-    missing = []
-    for paramName, paramVal in paramsObj._asdict().iteritems():
-        if not paramVal and not paramVal == 0:
-            missing.append(paramName)
-    if missing:
-        raise ValueError("Missing parameters to load binary series files - " +
-                         "these must be given either as arguments or in a configuration file: " +
-                         str(tuple(missing)))
-
-def fromBinary(path, ext='bin', confFilename='conf.json', nkeys=None, nvalues=None,
+def frombinary(path, ext='bin', confFilename='conf.json', nkeys=None, nvalues=None,
                keyType=None, valueType=None, newDtype='smallfloat', casting='safe'):
     """
     Load a Series object from a directory of binary files.
@@ -183,79 +138,105 @@ def fromBinary(path, ext='bin', confFilename='conf.json', nkeys=None, nvalues=No
         Maximum size of partitions as Java-style memory, will indirectly control the number of partitions
 
     """
-    paramsObj = loadBinaryParameters(path, confFilename, nkeys, nvalues, keyType, valueType)
-    checkBinaryParameters(paramsObj)
+    params = binaryconfig(path, confFilename, nkeys, nvalues, keyType, valueType)
 
     from thunder.data.fileio.readers import normalizeScheme
     dataPath = normalizeScheme(path, ext)
 
     from numpy import dtype as dtypeFunc
-    keyDtype = dtypeFunc(paramsObj.keytype)
-    valDtype = dtypeFunc(paramsObj.valuetype)
+    keytype = dtypeFunc(params.keytype)
+    valuetype = dtypeFunc(params.valuetype)
 
-    keySize = paramsObj.nkeys * keyDtype.itemsize
-    recordSize = keySize + paramsObj.nvalues * valDtype.itemsize
+    keySize = params.nkeys * keytype.itemsize
+    recordSize = keySize + params.nvalues * valuetype.itemsize
 
     if mode() == 'spark':
         lines = engine().binaryRecords(dataPath, recordSize)
 
         def get(kv):
-            k = tuple(int(x) for x in frombuffer(buffer(kv, 0, keySize), dtype=keyDtype))
-            v = frombuffer(buffer(kv, keySize), dtype=valDtype)
+            k = tuple(int(x) for x in frombuffer(buffer(kv, 0, keySize), dtype=keytype))
+            v = frombuffer(buffer(kv, keySize), dtype=valuetype)
             return (k, v) if keySize > 0 else v
 
         raw = lines.map(get)
-
         if keySize == 0:
             raw = raw.zipWithIndex().map(lambda (v, k): ((k,), v))
-
-        data = fromRDD(raw, dtype=str(valDtype), index=arange(paramsObj.nvalues))
+        data = fromrdd(raw, dtype=str(valuetype), index=arange(params.nvalues))
         return data.astype(newDtype, casting)
 
     else:
         raise NotImplementedError("Loading not implemented for '%s' mode" % mode())
 
-def loadConf(path, conf='conf.json'):
+def binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype):
     """
-    Returns a dict loaded from a json file.
-
-    Looks for file named `conffile` in same directory as `dataPath`
-
-    Returns {} if file not found
+    Collects parameters to use for binary series loading.
     """
-    if not conf:
-        return {}
-
+    import json
+    from collections import namedtuple
     from thunder.data.fileio.readers import getFileReaderForPath, FileNotFoundError
+
+    Parameters = namedtuple('BinaryLoadParameters', 'nkeys nvalues keytype valuetype')
+    Parameters.__new__.__defaults__ = (None, None, 'int16', 'int16')
 
     reader = getFileReaderForPath(path)(credentials=credentials())
     try:
-        jsonBuf = reader.read(path, filename=conf)
+        buf = reader.read(path, filename=conf)
+        params = json.loads(buf)
     except FileNotFoundError:
-        return {}
+        params = {}
 
-    import json
-    params = json.loads(jsonBuf)
+    for k in params.keys():
+        if k not in Parameters._fields:
+            del params[k]
+    keywords = {'nkeys': nkeys, 'nvalues': nvalues, 'keytype': keytype, 'valuetype': valuetype}
+    for k, v in keywords.items():
+        if not v and not v == 0:
+            del keywords[k]
+    params.update(keywords)
+    params = Parameters(**params)
 
-    if 'format' in params:
-        raise Exception("Numerical format of value should be specified as 'valuetype', not 'format'")
-    if 'keyformat' in params:
-        raise Exception("Numerical format of key should be specified as 'keytype', not 'keyformat'")
-
+    missing = []
+    for name, val in params._asdict().iteritems():
+        if not val and not val == 0:
+            missing.append(name)
+    if missing:
+        raise ValueError("Missing parameters to load binary series files - " +
+                         "these must be given either as arguments or in a configuration file: " +
+                         str(tuple(missing)))
     return params
 
-def fromRandom(shape=(100, 10), npartitions=1, seed=42):
+def fromrandom(shape=(100, 10), npartitions=1, seed=42):
+    """
+    Generate gaussian random Series data.
 
+    Parameters
+    ----------
+    shape : tuple
+        Dimensions of data
+
+    npartitions : int
+        Number of partitions with which to distribute data
+
+    seed : int
+        Randomization seed
+    """
     seed = hash(seed)
 
     def generate(v):
         random.seed(seed + v)
         return random.randn(shape[1])
 
-    return fromList(range(shape[0]), accessor=generate, npartitions=npartitions)
+    return fromlist(range(shape[0]), accessor=generate, npartitions=npartitions)
 
-def fromExample(name=None):
+def fromexample(name=None):
+    """
+    Load example Series data.
 
+    Parameters
+    ----------
+    name : str
+        Options include 'iris' | 'mouse' | 'fish. If not specified will print options.
+    """
     datasets = ['iris', 'mouse', 'fish']
 
     if name is None:
@@ -268,13 +249,13 @@ def fromExample(name=None):
         print('Downloading data, this may take a few seconds...')
 
         if name == 'iris':
-            data = fromBinary(dataPath='s3n://thunder-sample-data/iris/')
+            data = frombinary(path='s3n://thunder-sample-data/iris/')
 
         elif name == 'mouse':
-            data = fromBinary(dataPath='s3n://thunder-sample-data/mouse-series/')
+            data = frombinary(path='s3n://thunder-sample-data/mouse-series/')
 
         elif name == 'fish':
-            data = fromBinary(dataPath='s3n://thunder-sample-data/fish-series/')
+            data = frombinary(path='s3n://thunder-sample-data/fish-series/')
 
         else:
             raise NotImplementedError("Example '%s' not found" % name)

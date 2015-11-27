@@ -1,23 +1,23 @@
 import pytest
 from numpy import allclose, array, arange
 
-from thunder.data.series.readers import fromList
+from thunder.data.series.readers import fromlist
 
 pytestmark = pytest.mark.usefixtures("context")
 
 
 def test_get_missing():
-    data = fromList([array([1, 2, 3, 4]), array([5, 6, 7, 8])])
+    data = fromlist([array([1, 2, 3, 4]), array([5, 6, 7, 8])])
     assert data.get(-1) is None
 
 
 def test_get():
-    data = fromList([array([1, 2, 3, 4]), array([5, 6, 7, 8])])
+    data = fromlist([array([1, 2, 3, 4]), array([5, 6, 7, 8])])
     assert allclose(data.get(1), [5, 6, 7, 8])
 
 
 def test_get_errors():
-    data = fromList([array([1, 2, 3, 4]), array([5, 6, 7, 8])])
+    data = fromlist([array([1, 2, 3, 4]), array([5, 6, 7, 8])])
     with pytest.raises(ValueError):
         data.get((1, 2))
     with pytest.raises(ValueError):
@@ -25,7 +25,7 @@ def test_get_errors():
 
 
 def test_get_many():
-    data = fromList([array([1, 2, 3, 4]), array([5, 6, 7, 8])])
+    data = fromlist([array([1, 2, 3, 4]), array([5, 6, 7, 8])])
     vals = data.getmany([0, -1, 1, 0])
     assert len(vals) == 4
     assert allclose(vals[0], array([1, 2, 3, 4]))
@@ -37,7 +37,7 @@ def test_get_many():
 def test_get_range():
     a0 = array([1, 2, 3, 4])
     a1 = array([5, 6, 7, 8])
-    data = fromList([a0, a1])
+    data = fromlist([a0, a1])
     vals = data.getrange(slice(None))
     assert len(vals) == 2
     assert allclose(vals[0], a0)
@@ -53,7 +53,7 @@ def test_get_range():
 
 
 def test_get_range_error():
-    data = fromList([array([1, 2, 3, 4]), array([5, 6, 7, 8])])
+    data = fromlist([array([1, 2, 3, 4]), array([5, 6, 7, 8])])
     with pytest.raises(ValueError):
         data.getrange([slice(1), slice(1)])
     with pytest.raises(ValueError):
@@ -63,7 +63,7 @@ def test_get_range_error():
 def test_brackets():
     a0 = array([1, 2, 3, 4])
     a1 = array([5, 6, 7, 8])
-    data = fromList([a0, a1])
+    data = fromlist([a0, a1])
     assert allclose(data[0], a0)
     assert allclose(data[1], a1)
     assert allclose(data[0:1], [a0])
@@ -77,7 +77,7 @@ def test_brackets_multi():
     a1 = array([3, 4])
     a2 = array([5, 6])
     a3 = array([7, 8])
-    data = fromList([a0, a1, a2, a3], keys=[(0, 0), (0, 1), (1, 0), (1, 1)])
+    data = fromlist([a0, a1, a2, a3], keys=[(0, 0), (0, 1), (1, 0), (1, 1)])
     assert allclose(data[(0, 1)], a1)
     assert allclose(data[0, 1], a1)
     assert allclose(data[0:1, 1:2], a1)
@@ -90,7 +90,7 @@ def test_brackets_multi():
 def test_dims():
     keys = [(1, 1, 1), (2, 1, 1), (1, 2, 1), (2, 2, 1), (1, 3, 1), (2, 3, 1),
             (1, 1, 2), (2, 1, 2), (1, 2, 2), (2, 2, 2), (1, 3, 2), (2, 3, 2)]
-    data = fromList(arange(12), keys=keys)
+    data = fromlist(arange(12), keys=keys)
     dims = data.dims
     assert(allclose(dims.max, (2, 3, 2)))
     assert(allclose(dims.count, (2, 3, 2)))
@@ -98,7 +98,7 @@ def test_dims():
 
 
 def test_casting():
-    data = fromList([array([1, 2, 3], 'int16')])
+    data = fromlist([array([1, 2, 3], 'int16')])
     assert data.astype('int64').toarray().dtype == 'int64'
     assert data.astype('float32').toarray().dtype == 'float32'
     assert data.astype('float64').toarray().dtype == 'float64'
@@ -106,27 +106,27 @@ def test_casting():
 
 
 def test_casting_smallfloat():
-    data = fromList([arange(3, dtype='uint8')])
+    data = fromlist([arange(3, dtype='uint8')])
     casted = data.astype("smallfloat")
     assert str(casted.dtype) == 'float16'
     assert str(casted.toarray().dtype) == 'float16'
 
 
 def test_sort():
-    data = fromList(arange(6), keys=[(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2)])
+    data = fromlist(arange(6), keys=[(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2)])
     vals = data.sort().keys().collect()
     assert allclose(vals, [(0, 0), (1, 0), (0, 1), (1, 1), (0, 2), (1, 2)])
-    data = fromList(arange(3), keys=[(0,), (2,), (1,)])
+    data = fromlist(arange(3), keys=[(0,), (2,), (1,)])
     vals = data.sort().keys().collect()
     assert allclose(vals, [(0,), (1,), (2,)])
-    data = fromList(arange(3), keys=[0, 2, 1])
+    data = fromlist(arange(3), keys=[0, 2, 1])
     vals = data.sort().keys().collect()
     assert allclose(vals, [0, 1, 2])
 
 
 def test_collect():
     keys = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2)]
-    data = fromList([[0], [1], [2], [3], [4], [5]], keys=keys)
+    data = fromlist([[0], [1], [2], [3], [4], [5]], keys=keys)
     assert allclose(data.keys().collect(), [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2]])
     assert allclose(data.toarray(), [0, 1, 2, 3, 4, 5])
     assert allclose(data.toarray(sorting=True), [0, 3, 1, 4, 2, 5])
@@ -134,20 +134,20 @@ def test_collect():
 
 def test_range_int_key():
     keys = [0, 1, 2, 3, 4, 5]
-    data = fromList([[0], [1], [2], [3], [4], [5]], keys=keys)
+    data = fromlist([[0], [1], [2], [3], [4], [5]], keys=keys)
     assert allclose(data.range(0, 2).keys().collect(), [0, 1])
     assert allclose(data.range(0, 5).keys().collect(), [0, 1, 2, 3, 4])
 
 
 def test_range_tuple_key():
     keys = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2)]
-    data = fromList([[0], [1], [2], [3], [4], [5]], keys=keys)
+    data = fromlist([[0], [1], [2], [3], [4], [5]], keys=keys)
     vals = data.range((0, 0), (1, 1)).keys().collect()
     assert allclose(vals, [(0, 0), (0, 1), (0, 2), (1, 0)])
 
 
 def test_mean():
-    data = fromList([arange(8), arange(8)])
+    data = fromlist([arange(8), arange(8)])
     val = data.mean()
     expected = data.toarray().mean(axis=0)
     print(data.toarray())
@@ -156,7 +156,7 @@ def test_mean():
 
 
 def test_sum():
-    data = fromList([arange(8), arange(8)])
+    data = fromlist([arange(8), arange(8)])
     val = data.sum()
     expected = data.toarray().sum(axis=0)
     assert allclose(val, expected)
@@ -164,7 +164,7 @@ def test_sum():
 
 
 def test_var():
-    data = fromList([arange(8), arange(8)])
+    data = fromlist([arange(8), arange(8)])
     val = data.var()
     expected = data.toarray().var(axis=0)
     assert allclose(val, expected)
@@ -172,7 +172,7 @@ def test_var():
 
 
 def test_std():
-    data = fromList([arange(8), arange(8)])
+    data = fromlist([arange(8), arange(8)])
     val = data.std()
     expected = data.toarray().std(axis=0)
     assert allclose(val, expected)
@@ -180,7 +180,7 @@ def test_std():
 
 
 def test_stats():
-    data = fromList([arange(8), arange(8)])
+    data = fromlist([arange(8), arange(8)])
     stats = data.stats()
     expected = data.toarray().mean(axis=0)
     assert allclose(stats.mean(), expected)
@@ -189,14 +189,14 @@ def test_stats():
 
 
 def test_max():
-    data = fromList([arange(8), arange(8)])
+    data = fromlist([arange(8), arange(8)])
     val = data.max()
     expected = data.toarray().max(axis=0)
     assert allclose(val, expected)
 
 
 def test_min():
-    data = fromList([arange(8), arange(8)])
+    data = fromlist([arange(8), arange(8)])
     val = data.min()
     expected = data.toarray().min(axis=0)
     assert allclose(val, expected)

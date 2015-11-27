@@ -5,7 +5,7 @@ Classes for KMeans clustering
 from numpy import array, argmin, corrcoef, ndarray, asarray, std, random, floor
 
 from ..data.series.series import Series
-from ..data.series.readers import fromList
+from ..data.series.readers import fromlist
 
 
 class KMeansModel(object):
@@ -145,7 +145,7 @@ class KMeans(object):
         centers = random.randn(k, shape[1])
         gen = lambda i: centers[int(floor(random.rand(1, 1) * k))] + noise*random.rand(shape[1])
         local = map(gen, range(0, shape[0]))
-        data = fromList(local, npartitions=npartitions)
+        data = fromlist(local, npartitions=npartitions)
         if withparams is True:
             return data, centers
         else:

@@ -405,13 +405,13 @@ class Images(Data):
 
         return self._constructor(newrdd, dims=newdims).__finalize__(self)
 
-    def planes(self, startidz, stopidz):
+    def planes(self, start, stop):
         """
         Subselect planes from 3D image data.
 
         Parameters
         ----------
-        startidz, stopidz : int
+        start, stop : int
             Indices of region to crop in z, interpreted according to python slice indexing conventions.
 
         See also
@@ -424,7 +424,7 @@ class Images(Data):
         if len(dims) == 2 or dims[2] == 1:
             raise Exception("Cannot subselect planes, images must be 3D")
 
-        return self.crop([0, 0, startidz], [dims[0], dims[1], stopidz])
+        return self.crop([0, 0, start], [dims[0], dims[1], stop])
 
     def subtract(self, val):
         """
@@ -452,7 +452,7 @@ class Images(Data):
         renumberedRdd = self.rdd.values().zipWithIndex().map(lambda (ary, idx): (idx, ary))
         return self._constructor(renumberedRdd).__finalize__(self)
 
-    def toPng(self, path, prefix="image", overwrite=False):
+    def topng(self, path, prefix="image", overwrite=False):
         """
         Write 2d or 3d images as PNG files.
 
@@ -470,11 +470,11 @@ class Images(Data):
         overwrite : bool
             If true, the directory given by path will first be deleted if it exists.
         """
-        from thunder.data.images.writers import toPng
+        from thunder.data.images.writers import topng
         # TODO add back colormap and vmin/vmax
-        toPng(self, path, prefix=prefix, overwrite=overwrite)
+        topng(self, path, prefix=prefix, overwrite=overwrite)
 
-    def toTif(self, path, prefix="image", overwrite=False):
+    def totif(self, path, prefix="image", overwrite=False):
         """
         Write 2d or 3d images as TIF files.
 
@@ -492,11 +492,11 @@ class Images(Data):
         overwrite : bool
             If true, the directory given by path will first be deleted if it exists.
         """
-        from thunder.data.images.writers import toTif
+        from thunder.data.images.writers import totif
         # TODO add back colormap and vmin/vmax
-        toTif(self, path, prefix=prefix, overwrite=overwrite)
+        totif(self, path, prefix=prefix, overwrite=overwrite)
 
-    def toBinary(self, path, prefix="image", overwrite=False):
+    def tobinary(self, path, prefix="image", overwrite=False):
         """
         Write out images or volumes as flat binary files.
 
@@ -513,5 +513,5 @@ class Images(Data):
         overwrite : bool
             If true, the directory given by path will first be deleted if it exists.
         """
-        from thunder.data.images.writers import toBinary
-        toBinary(self, path, prefix=prefix, overwrite=overwrite)
+        from thunder.data.images.writers import tobinary
+        tobinary(self, path, prefix=prefix, overwrite=overwrite)

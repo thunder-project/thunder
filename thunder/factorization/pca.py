@@ -3,7 +3,7 @@ from numpy import random, dot
 from .svd import SVD
 from ..data.series.series import Series
 from ..data.series.matrix import Matrix
-from ..data.series.readers import fromList
+from ..data.series.readers import fromlist
 
 class PCA(object):
     """
@@ -108,7 +108,7 @@ class PCA(object):
         v = random.randn(k, shape[1])
         a = dot(u, v)
         a += random.randn(a.shape[0], a.shape[1])
-        data = fromList(a, npartitions=npartitions)
+        data = fromlist(a, npartitions=npartitions)
         if withparams is True:
             return data, u, v
         else:

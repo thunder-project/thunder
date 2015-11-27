@@ -1,7 +1,7 @@
 import pytest
 from numpy import allclose, arange, array
 
-from thunder.data.series.readers import fromList
+from thunder.data.series.readers import fromlist
 from thunder.data.series.matrix import Matrix
 from thunder.data.series.timeseries import TimeSeries
 
@@ -9,7 +9,7 @@ pytestmark = pytest.mark.usefixtures("context")
 
 
 def test_tomatrix():
-    data = fromList([array([4, 5, 6, 7]), array([8, 9, 10, 11])])
+    data = fromlist([array([4, 5, 6, 7]), array([8, 9, 10, 11])])
     mat = data.tomatrix()
     assert isinstance(mat, Matrix)
     assert mat.nrows == 2
@@ -19,13 +19,13 @@ def test_tomatrix():
 
 
 def test_totimeseries():
-    data = fromList([array([4, 5, 6, 7]), array([8, 9, 10, 11])])
+    data = fromlist([array([4, 5, 6, 7]), array([8, 9, 10, 11])])
     ts = data.totimeseries()
     assert isinstance(ts, TimeSeries)
 
 
 def test_between():
-    data = fromList([array([4, 5, 6, 7]), array([8, 9, 10, 11])])
+    data = fromlist([array([4, 5, 6, 7]), array([8, 9, 10, 11])])
     val = data.between(0, 1)
     assert allclose(val.index, array([0, 1]))
     assert allclose(val.values().first(), array([4, 5]))
@@ -33,13 +33,13 @@ def test_between():
 
 def test_select():
     index = ['label1', 'label2', 'label3', 'label4']
-    data = fromList([array([4, 5, 6, 7]), array([8, 9, 10, 11])], index=index)
+    data = fromlist([array([4, 5, 6, 7]), array([8, 9, 10, 11])], index=index)
     assert allclose(data.select(['label1']).values().first(), 4)
     assert allclose(data.select(['label1', 'label2']).values().first(), array([4, 5]))
 
 
 def test_series_stats():
-    data = fromList([array([1, 2, 3, 4, 5])])
+    data = fromlist([array([1, 2, 3, 4, 5])])
     assert allclose(data.series_mean().values().first(), 3.0)
     assert allclose(data.series_sum().values().first(), 15.0)
     assert allclose(data.series_median().values().first(), 3.0)
@@ -52,7 +52,7 @@ def test_series_stats():
 
 
 def test_standardize_axis0():
-    data = fromList([array([1, 2, 3, 4, 5])])
+    data = fromlist([array([1, 2, 3, 4, 5])])
     centered = data.center(0)
     standardized = data.standardize(0)
     zscored = data.zscore(0)
@@ -64,7 +64,7 @@ def test_standardize_axis0():
 
 
 def test_standardize_axis1():
-    data = fromList([array([1, 2]), array([3, 4])])
+    data = fromlist([array([1, 2]), array([3, 4])])
     centered = data.center(1)
     standardized = data.standardize(1)
     zscored = data.zscore(1)
@@ -74,7 +74,7 @@ def test_standardize_axis1():
 
 
 def test_squelch():
-    data = fromList([array([1, 2]), array([3, 4])])
+    data = fromlist([array([1, 2]), array([3, 4])])
     squelched = data.squelch(5)
     assert allclose(squelched.toarray(), [[0, 0], [0, 0]])
     squelched = data.squelch(3)
@@ -84,7 +84,7 @@ def test_squelch():
 
 
 def test_correlate():
-    data = fromList([array([1, 2, 3, 4, 5])])
+    data = fromlist([array([1, 2, 3, 4, 5])])
     sig = [4, 5, 6, 7, 8]
     corr = data.correlate(sig).values().first()
     assert allclose(corr, 1)
@@ -94,7 +94,7 @@ def test_correlate():
 
 
 def test_subset():
-    data = fromList([array([1, 5]), array([1, 10]), array([1, 15])])
+    data = fromlist([array([1, 5]), array([1, 10]), array([1, 15])])
     assert len(data.subset(3, stat='min', thresh=0)) == 3
     assert allclose(data.subset(1, stat='max', thresh=10), [[1, 15]])
     assert allclose(data.subset(1, stat='mean', thresh=6), [[1, 15]])
@@ -103,7 +103,7 @@ def test_subset():
 
 
 def test_index_setting():
-    data = fromList([array([1, 2, 3]), array([2, 2, 4]), array([4, 2, 1])])
+    data = fromlist([array([1, 2, 3]), array([2, 2, 4]), array([4, 2, 1])])
     assert allclose(data.index, array([0, 1, 2]))
     data.index = [3, 2, 1]
     assert allclose(data.index, [3, 2, 1])
@@ -114,7 +114,7 @@ def test_index_setting():
 
 
 def test_select_by_index():
-    data = fromList([arange(12)], index=[0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2])
+    data = fromlist([arange(12)], index=[0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2])
     result = data.select_by_index(1)
     assert allclose(result.values().first(), array([4, 5, 6, 7]))
     assert allclose(result.index, array([1, 1, 1, 1]))
@@ -145,7 +145,7 @@ def test_select_by_index():
 
 
 def test_aggregate_by_index():
-    data = fromList([arange(12)], index=[0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2])
+    data = fromlist([arange(12)], index=[0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2])
     result = data.aggregate_by_index(sum)
     assert allclose(result.values().first(), array([6, 22, 38]))
     assert allclose(result.index, array([0, 1, 2]))
@@ -161,7 +161,7 @@ def test_aggregate_by_index():
 
 
 def test_stat_by_index():
-    data = fromList([arange(12)], index=[0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2])
+    data = fromlist([arange(12)], index=[0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2])
     assert allclose(data.stat_by_index('sum').values().first(), array([6, 22, 38]))
     assert allclose(data.stat_by_index('mean').values().first(), array([1.5, 5.5, 9.5]))
     assert allclose(data.stat_by_index('min').values().first(), array([0, 4, 8]))
@@ -182,7 +182,7 @@ def test_stat_by_index_multi():
         [0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1],
         [0, 1, 0, 1, 2, 3, 0, 1, 0, 1, 2, 3]
     ]
-    data = fromList([arange(12)], index=array(index).T)
+    data = fromlist([arange(12)], index=array(index).T)
     result = data.stat_by_index('sum', level=[0, 1])
     assert allclose(result.values().first(), array([1, 14, 13, 38]))
     assert allclose(result.index, array([[0, 0], [0, 1], [1, 0], [1, 1]]))
@@ -192,7 +192,7 @@ def test_stat_by_index_multi():
 
 
 def test_group_by_panel():
-    data = fromList([arange(8)])
+    data = fromlist([arange(8)])
     test1 = data.group_by_panel(4)
     assert test1.keys().collect() == [(0, 0), (0, 1)]
     assert allclose(test1.index, array([0, 1, 2, 3]))
@@ -204,7 +204,7 @@ def test_group_by_panel():
 
 
 def test_mean_by_panel():
-    data = fromList([arange(8)])
+    data = fromlist([arange(8)])
     test1 = data.mean_by_panel(4)
     assert test1.keys().collect() == [(0,)]
     assert allclose(test1.index, array([0, 1, 2, 3]))

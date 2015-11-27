@@ -1,6 +1,7 @@
 import pytest
 from numpy import array, allclose
 
+from thunder.data.series.readers import fromlist
 from thunder.clustering.kmeans import KMeans, KMeansModel
 from thunder.data import series
 
@@ -8,12 +9,12 @@ pytestmark = pytest.mark.usefixtures("context")
 
 
 def test_kmeans_k1():
-    dataLocal = [
+    local = [
         array([1.0, 2.0, 6.0]),
         array([1.0, 3.0, 0.0]),
         array([1.0, 4.0, 6.0])
     ]
-    data = series.fromList(dataLocal)
+    data = fromlist(local)
     model = KMeans(k=1, maxIterations=20).fit(data)
     labels = model.predict(data)
     assert allclose(model.centers[0], array([1.0, 3.0, 4.0]))

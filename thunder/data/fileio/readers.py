@@ -71,16 +71,16 @@ def appendExtensionToPathSpec(dataPath, ext=None):
         return dataPath
 
 
-def selectByStartAndStopIndices(files, startIdx, stopIdx):
+def selectByStartAndStopIndices(files, start, stop):
     """
     Helper function for consistent handling of start and stop indices
     """
-    if startIdx or stopIdx:
-        if startIdx is None:
-            startIdx = 0
-        if stopIdx is None:
-            stopIdx = len(files)
-        files = files[startIdx:stopIdx]
+    if start or stop:
+        if start is None:
+            start = 0
+        if stop is None:
+            stop = len(files)
+        files = files[start:stop]
     return files
 
 
@@ -151,24 +151,24 @@ class LocalFSParallelReader(object):
         files = [fpath for fpath in files if not os.path.isdir(fpath)]
         return sorted(files)
 
-    def listFiles(self, absPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
+    def listFiles(self, absPath, ext=None, start=None, stop=None, recursive=False):
         """ Get sorted list of file paths matching passed `absPath` path and `ext` filename extension """
         files = LocalFSParallelReader._listFilesNonRecursive(absPath, ext) if not recursive else \
             LocalFSParallelReader._listFilesRecursive(absPath, ext)
         if len(files) < 1:
             raise FileNotFoundError('cannot find files of type "%s" in %s' % (ext if ext else '*', absPath))
-        files = selectByStartAndStopIndices(files, startIdx, stopIdx)
+        files = selectByStartAndStopIndices(files, start, stop)
 
         return files
 
-    def read(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False, npartitions=None):
+    def read(self, dataPath, ext=None, start=None, stop=None, recursive=False, npartitions=None):
         """
         Sets up Spark RDD across files specified by dataPath on local filesystem.
 
         Returns RDD of <integer file index, string buffer> k/v pairs.
         """
         absPath = self.uriToPath(dataPath)
-        filePaths = self.listFiles(absPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
+        filePaths = self.listFiles(absPath, ext=ext, start=start, stop=stop, recursive=recursive)
 
         lfilepaths = len(filePaths)
         self.lastNRecs = lfilepaths
@@ -287,14 +287,14 @@ class BotoParallelReader(_BotoClient):
         self.sc = sparkContext
         self.lastNRecs = None
 
-    def _listFilesImpl(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
+    def _listFilesImpl(self, dataPath, ext=None, start=None, stop=None, recursive=False):
         parse = _BotoClient.parseQuery(dataPath)
 
         storageScheme = parse[0]
         bucketName = parse[1]
 
         if storageScheme == 's3' or storageScheme == 's3n':
-            conn = S3ConnectionWithAnon(*self.credentials)
+            conn = S3ConnectionWithAnon(self.credentials)
             bucket = conn.get_bucket(parse[1])
         elif storageScheme == 'gs':
             conn = boto.storage_uri(bucketName, 'gs')
@@ -307,29 +307,32 @@ class BotoParallelReader(_BotoClient):
         if ext:
             keyNameList = [keyname for keyname in keyNameList if keyname.endswith(ext)]
         keyNameList.sort()
-        keyNameList = selectByStartAndStopIndices(keyNameList, startIdx, stopIdx)
+        keyNameList = selectByStartAndStopIndices(keyNameList, start, stop)
 
         return storageScheme, bucket.name, keyNameList
 
-    def listFiles(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False):
-        storageScheme, bucketname, keyNames = self._listFilesImpl(dataPath, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
+    def listFiles(self, dataPath, ext=None, start=None, stop=None, recursive=False):
+        storageScheme, bucketname, keyNames = self._listFilesImpl(dataPath, ext=ext, start=start, stop=stop,
                                                                   recursive=recursive)
         return ["%s:///%s/%s" % (storageScheme, bucketname, keyname) for keyname in keyNames]
 
-    def read(self, dataPath, ext=None, startIdx=None, stopIdx=None, recursive=False, npartitions=None):
-        """Sets up Spark RDD across S3 or GS objects specified by dataPath.
+    def read(self, path, ext=None, start=None, stop=None, recursive=False, npartitions=None):
+        """
+        Sets up Spark RDD across S3 or GS objects specified by dataPath.
 
         Returns RDD of <string bucket keyname, string buffer> k/v pairs.
         """
-        dataPath = appendExtensionToPathSpec(dataPath, ext)
-        storageScheme, bucketName, keyNameList = self._listFilesImpl(dataPath, startIdx=startIdx, stopIdx=stopIdx, recursive=recursive)
+        path = appendExtensionToPathSpec(path, ext)
+        storageScheme, bucketName, keyNameList = self._listFilesImpl(path, start=start, stop=stop, recursive=recursive)
 
         if not keyNameList:
-            raise FileNotFoundError("No objects found for '%s'" % dataPath)
+            raise FileNotFoundError("No objects found for '%s'" % path)
+
+        credentials = self.credentials
 
         def readSplitFromBoto(kvIter):
             if storageScheme == 's3' or storageScheme == 's3n':
-                conn = S3ConnectionWithAnon(self.credentials)
+                conn = S3ConnectionWithAnon(credentials)
                 bucket = conn.get_bucket(bucketName)
             elif storageScheme == 'gs':
                 conn = boto.storage_uri(bucketName, 'gs')
@@ -353,7 +356,6 @@ class LocalFSFileReader(object):
     File reader backed by python's native file() objects.
     """
     def __init__(self, **kwargs):
-        # do nothing; allows AWS access keys to be passed in to a generic Reader instance w/o blowing up
         pass
 
     def __listRecursive(self, dataPath):
@@ -373,7 +375,7 @@ class LocalFSFileReader(object):
         filenames.sort()
         return filenames
 
-    def list(self, dataPath, filename=None, startIdx=None, stopIdx=None, recursive=False,
+    def list(self, dataPath, filename=None, start=None, stop=None, recursive=False,
              includeDirectories=False):
         """
         List files specified by dataPath.
@@ -401,7 +403,7 @@ class LocalFSFileReader(object):
         if not includeDirectories:
             files = [fpath for fpath in files if not os.path.isdir(fpath)]
         files.sort()
-        files = selectByStartAndStopIndices(files, startIdx, stopIdx)
+        files = selectByStartAndStopIndices(files, start, stop)
         return files
 
     def read(self, dataPath, filename=None, startOffset=None, size=-1):
@@ -465,7 +467,7 @@ class BotoFileReader(_BotoClient):
         return (storageScheme, _BotoClient.retrieveKeys(bucket, keyName, prefix=parse[3], postfix=parse[4],
                                                         includeDirectories=includeDirectories, recursive=recursive))
 
-    def list(self, dataPath, filename=None, startIdx=None, stopIdx=None, recursive=False, includeDirectories=False):
+    def list(self, dataPath, filename=None, start=None, stop=None, recursive=False, includeDirectories=False):
         """
         List objects specified by dataPath.
 
@@ -476,7 +478,7 @@ class BotoFileReader(_BotoClient):
                                                      recursive=recursive)
         keyNames = [storageScheme + ":///" + key.bucket.name + "/" + key.name for key in keys]
         keyNames.sort()
-        keyNames = selectByStartAndStopIndices(keyNames, startIdx, stopIdx)
+        keyNames = selectByStartAndStopIndices(keyNames, start, stop)
         return keyNames
 
     def __getSingleMatchingKey(self, dataPath, filename=None):

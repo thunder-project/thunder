@@ -4,11 +4,11 @@ from numpy import array, dstack, frombuffer, prod, load, swapaxes, random, asarr
 from thunder import engine, mode, credentials
 
 
-def fromRDD(rdd, **kwargs):
+def fromrdd(rdd, **kwargs):
     from .images import Images
     return Images(rdd, **kwargs)
 
-def fromList(items, accessor=None, keys=None, npartitions=None, **kwargs):
+def fromlist(items, accessor=None, keys=None, npartitions=None, **kwargs):
 
     if mode() == 'spark':
         nrecords = len(items)
@@ -21,12 +21,12 @@ def fromList(items, accessor=None, keys=None, npartitions=None, **kwargs):
         rdd = engine().parallelize(items, npartitions)
         if accessor:
             rdd = rdd.mapValues(accessor)
-        return fromRDD(rdd, nrecords=nrecords, **kwargs)
+        return fromrdd(rdd, nrecords=nrecords, **kwargs)
 
     else:
         raise NotImplementedError("Loading not implemented for '%s' mode" % mode())
 
-def fromURLs(urls, accessor=None, keys=None, npartitions=None, **kwargs):
+def fromurls(urls, accessor=None, keys=None, npartitions=None, **kwargs):
 
     if mode() == 'spark':
         if keys:
@@ -36,15 +36,15 @@ def fromURLs(urls, accessor=None, keys=None, npartitions=None, **kwargs):
         rdd = engine().parallelize(urls, npartitions)
         if accessor:
             rdd = rdd.mapValues(accessor)
-        return fromRDD(rdd, **kwargs)
+        return fromrdd(rdd, **kwargs)
 
-def fromPath(path, accessor=None, ext=None, startIdx=None, stopIdx=None, recursive=None,
+def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=None,
              npartitions=None, dims=None, dtype=None, recount=False):
 
     if mode() == 'spark':
         from thunder.data.fileio.readers import getParallelReaderForPath
         reader = getParallelReaderForPath(path)(engine(), credentials=credentials())
-        rdd = reader.read(path, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
+        rdd = reader.read(path, ext=ext, start=start, stop=stop,
                           recursive=recursive, npartitions=npartitions)
         if accessor:
             rdd = rdd.flatMap(accessor)
@@ -52,12 +52,12 @@ def fromPath(path, accessor=None, ext=None, startIdx=None, stopIdx=None, recursi
             nrecords = None
         else:
             nrecords = reader.lastNRecs
-        return fromRDD(rdd, nrecords=nrecords, dims=dims, dtype=dtype)
+        return fromrdd(rdd, nrecords=nrecords, dims=dims, dtype=dtype)
 
     else:
         raise NotImplementedError("Loading not implemented for '%s' mode" % mode())
 
-def fromArray(arrays, npartitions=None):
+def fromarray(arrays, npartitions=None):
     """
     Load Images data from passed sequence of numpy arrays.
 
@@ -81,11 +81,11 @@ def fromArray(arrays, npartitions=None):
                              (str(dtype), str(ary.dtype)))
     narrays = len(arrays)
     npartitions = min(narrays, npartitions) if npartitions else narrays
-    return fromList(arrays, npartitions=npartitions, dims=shape, dtype=str(dtype))
+    return fromlist(arrays, npartitions=npartitions, dims=shape, dtype=str(dtype))
 
 
-def fromBinary(dataPath, dims=None, dtype=None, ext='bin', startIdx=None, stopIdx=None, recursive=False,
-               nplanes=None, npartitions=None, confFilename='conf.json'):
+def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, recursive=False,
+               nplanes=None, npartitions=None, conf='conf.json', order='C'):
     """
     Load images from a directory of flat binary files
 
@@ -98,7 +98,7 @@ def fromBinary(dataPath, dims=None, dtype=None, ext='bin', startIdx=None, stopId
     Parameters
     ----------
 
-    dataPath: string
+    path: string
         Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
         including scheme. A dataPath argument may include a single '*' wildcard character in the filename.
 
@@ -108,7 +108,7 @@ def fromBinary(dataPath, dims=None, dtype=None, ext='bin', startIdx=None, stopId
     ext: string, optional, default "bin"
         Extension required on data files to be loaded.
 
-    startIdx, stopIdx: nonnegative int. optional.
+    start, stop: nonnegative int. optional.
         Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
         `datapath` and `ext`. Interpreted according to python slice indexing conventions.
 
@@ -131,9 +131,9 @@ def fromBinary(dataPath, dims=None, dtype=None, ext='bin', startIdx=None, stopId
     import json
     from thunder.data.fileio.readers import getFileReaderForPath, FileNotFoundError
     try:
-        reader = getFileReaderForPath(dataPath)(credentials=credentials())
-        jsonBuf = reader.read(dataPath, filename=confFilename)
-        params = json.loads(jsonBuf)
+        reader = getFileReaderForPath(path)(credentials=credentials())
+        buf = reader.read(path, filename=conf)
+        params = json.loads(buf)
     except FileNotFoundError:
         params = {}
 
@@ -155,9 +155,9 @@ def fromBinary(dataPath, dims=None, dtype=None, ext='bin', startIdx=None, stopId
             raise ValueError("Last dimension of binary image '%d' must be divisible by nplanes '%d'" %
                              (dims[-1], nplanes))
 
-    def toArray(idxAndBuf):
+    def getarray(idxAndBuf):
         idx, buf = idxAndBuf
-        ary = frombuffer(buf, dtype=dtype, count=int(prod(dims))).reshape(dims, order='C')
+        ary = frombuffer(buf, dtype=dtype, count=int(prod(dims))).reshape(dims, order=order)
         if nplanes is None:
             yield idx, ary
         else:
@@ -182,12 +182,11 @@ def fromBinary(dataPath, dims=None, dtype=None, ext='bin', startIdx=None, stopId
     recount = False if nplanes is None else True
     append = [nplanes] if nplanes > 1 else []
     newdims = tuple(list(dims[:-1]) + append) if nplanes else dims
-    return fromPath(dataPath, accessor=toArray, ext=ext, startIdx=startIdx,
-                    stopIdx=stopIdx, recursive=recursive, npartitions=npartitions,
+    return frompath(path, accessor=getarray, ext=ext, start=start,
+                    stop=stop, recursive=recursive, npartitions=npartitions,
                     dims=newdims, dtype=dtype, recount=recount)
 
-def fromTif(dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, nplanes=None,
-            npartitions=None):
+def fromtif(path, ext='tif', start=None, stop=None, recursive=False, nplanes=None, npartitions=None):
     """
     Sets up a new Images object with data to be read from one or more tif files.
 
@@ -205,14 +204,14 @@ def fromTif(dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, n
     Parameters
     ----------
 
-    dataPath: string
+    path: string
         Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
         including scheme. A datapath argument may include a single '*' wildcard character in the filename.
 
     ext: string, optional, default "tif"
         Extension required on data files to be loaded.
 
-    startIdx, stopIdx: nonnegative int. optional.
+    start, stop: nonnegative int. optional.
         Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
         `datapath` and `ext`. Interpreted according to python slice indexing conventions.
 
@@ -236,7 +235,7 @@ def fromTif(dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, n
     if nplanes is not None and nplanes <= 0:
         raise ValueError("nplanes must be positive if passed, got %d" % nplanes)
 
-    def multitifReader(idxAndBuf):
+    def getarray(idxAndBuf):
         idx, buf = idxAndBuf
         fbuf = BytesIO(buf)
         tfh = tifffile.TiffFile(fbuf)
@@ -259,10 +258,10 @@ def fromTif(dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, n
         return zip(keys, values)
 
     recount = False if nplanes is None else True
-    return fromPath(dataPath, accessor=multitifReader, ext=ext, startIdx=startIdx, stopIdx=stopIdx,
+    return frompath(path, accessor=getarray, ext=ext, start=start, stop=stop,
                     recursive=recursive, npartitions=npartitions, recount=recount)
 
-def fromPng(dataPath, ext='png', startIdx=None, stopIdx=None, recursive=False, npartitions=None):
+def frompng(path, ext='png', start=None, stop=None, recursive=False, npartitions=None):
     """Load an Images object stored in a directory of png files
 
     The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
@@ -278,7 +277,7 @@ def fromPng(dataPath, ext='png', startIdx=None, stopIdx=None, recursive=False, n
     ext: string, optional, default "png"
         Extension required on data files to be loaded.
 
-    startIdx, stopIdx: nonnegative int. optional.
+    start, stop: nonnegative int. optional.
         Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
         `datapath` and `ext`. Interpreted according to python slice indexing conventions.
 
@@ -293,15 +292,15 @@ def fromPng(dataPath, ext='png', startIdx=None, stopIdx=None, recursive=False, n
     """
     from scipy.misc import imread
 
-    def readPngFromBuf(idxAndBuf):
+    def getarray(idxAndBuf):
         idx, buf = idxAndBuf
         fbuf = BytesIO(buf)
         yield idx, imread(fbuf)
 
-    return fromPath(dataPath, accessor=readPngFromBuf, ext=ext, startIdx=startIdx,
-                    stopIdx=stopIdx, recursive=recursive, npartitions=npartitions)
+    return frompath(path, accessor=getarray, ext=ext, start=start,
+                    stop=stop, recursive=recursive, npartitions=npartitions)
 
-def fromOCP(bucketName, resolution, server='ocp.me', startIdx=None, stopIdx=None,
+def fromocp(bucketName, resolution, server='ocp.me', start=None, stop=None,
             minBound=None, maxBound=None):
     """
     Load data from OCP
@@ -318,7 +317,7 @@ def fromOCP(bucketName, resolution, server='ocp.me', startIdx=None, stopIdx=None
     server: string. optional.
         Name of the server in OCP which has the corresponding token.
 
-    startIdx, stopIdx: nonnegative int. optional.
+    start, stop: nonnegative int. optional.
         Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
         `datapath` and `ext`. Interpreted according to python slice indexing conventions.
 
@@ -346,15 +345,15 @@ def fromOCP(bucketName, resolution, server='ocp.me', startIdx=None, stopIdx=None
     timageStart, timageStop = projInfo['dataset']['timerange']
 
     # Checking if dimensions are within bounds
-    if startIdx is None:
-        startIdx = timageStart
-    elif startIdx < timageStart or startIdx > timageStop:
-        raise Exception("startIdx out of bounds {},{}".format(timageStart, timageStop))
+    if start is None:
+        start = timageStart
+    elif start < timageStart or start > timageStop:
+        raise Exception("start out of bounds {},{}".format(timageStart, timageStop))
 
-    if stopIdx is None:
-        stopIdx = timageStop
-    elif stopIdx < timageStart or stopIdx > timageStop:
-        raise Exception("startIdx out of bounds {},{}".format(timageStart, timageStop))
+    if stop is None:
+        stop = timageStop
+    elif stop < timageStart or stop > timageStop:
+        raise Exception("start out of bounds {},{}".format(timageStart, timageStop))
 
     if minBound is None:
         minBound = (0, 0, zimageStart)
@@ -395,9 +394,9 @@ def fromOCP(bucketName, resolution, server='ocp.me', startIdx=None, stopIdx=None
 
         return data
 
-    return fromURLs(enumerate(urlList), accessor=read, npartitions=len(urlList))
+    return fromurls(enumerate(urlList), accessor=read, npartitions=len(urlList))
 
-def fromRandom(shape=(10, 50, 50), npartitions=1, seed=42):
+def fromrandom(shape=(10, 50, 50), npartitions=1, seed=42):
 
     seed = hash(seed)
 
@@ -405,9 +404,9 @@ def fromRandom(shape=(10, 50, 50), npartitions=1, seed=42):
         random.seed(seed + v)
         return random.randn(*shape[1:])
 
-    return fromList(range(shape[0]), accessor=generate, npartitions=npartitions)
+    return fromlist(range(shape[0]), accessor=generate, npartitions=npartitions)
 
-def fromExample(name=None):
+def fromexample(name=None):
 
     datasets = ['mouse', 'fish']
 
@@ -421,10 +420,10 @@ def fromExample(name=None):
         print('Downloading data from S3, this may take a few seconds...')
 
         if name == 'mouse':
-            data = fromBinary(dataPath='s3n://thunder-sample-data/mouse-images/', npartitions=1)
+            data = frombinary(path='s3n://thunder-sample-data/mouse-images/', npartitions=1, order='F')
 
         elif name == 'fish':
-            data = fromTif(dataPath='s3n://thunder-sample-data/fish-images/', npartitions=1)
+            data = fromtif(path='s3n://thunder-sample-data/fish-images/', npartitions=1)
 
         else:
             raise NotImplementedError("Example '%s' not found" % name)

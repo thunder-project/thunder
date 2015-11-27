@@ -4,13 +4,13 @@ import json
 from thunder import credentials
 
 
-def toPng(images, path, prefix="image", overwrite=False):
+def topng(images, path, prefix="image", overwrite=False):
     """
     Write out PNG files for 2d or 3d image data.
 
     See also
     --------
-    thunder.data.images.toPng
+    thunder.data.images.topng
     """
     dims = images.dims
     if not len(dims) in [2, 3]:
@@ -32,13 +32,13 @@ def toPng(images, path, prefix="image", overwrite=False):
     writer = getParallelWriterForPath(path)(path, overwrite=overwrite, credentials=credentials())
     bufRdd.foreach(writer.writerFcn)
 
-def toTif(images, path, prefix="image", overwrite=False):
+def totif(images, path, prefix="image", overwrite=False):
     """
     Write out TIF files for 2d or 3d image data.
 
     See also
     --------
-    thunder.data.images.toTif
+    thunder.data.images.totif
     """
     dims = images.dims
     if not len(dims) in [2, 3]:
@@ -61,30 +61,30 @@ def toTif(images, path, prefix="image", overwrite=False):
     writer = getParallelWriterForPath(path)(path, overwrite=overwrite, credentials=credentials())
     bufRdd.foreach(writer.writerFcn)
 
-def toBinary(images, path, prefix="image", overwrite=False):
+def tobinary(images, path, prefix="image", overwrite=False):
     """
     Write out binary files for image data.
 
     See also
     --------
-    thunder.data.images.toBinary
+    thunder.data.images.tobinary
     """
     from thunder.data.fileio.writers import getParallelWriterForPath
 
-    dimsTotal = list(asarray(images.dims.max)-asarray(images.dims.min)+1)
+    dimsTotal = list(asarray(images.dims.max) - asarray(images.dims.min) + 1)
 
     def toFilenameAndBinaryBuf(kv):
         key, img = kv
-        fname = prefix+"-"+"%05d.bin" % int(key)
+        fname = prefix + "-" + "%05d.bin" % int(key)
         return fname, img.copy()
 
     bufRdd = images.rdd.map(toFilenameAndBinaryBuf)
 
     writer = getParallelWriterForPath(path)(path, overwrite=overwrite, credentials=credentials())
     bufRdd.foreach(writer.writerFcn)
-    writeBinaryImagesConfig(path, dims=dimsTotal, dtype=images.dtype, overwrite=overwrite)
+    config(path, dims=dimsTotal, dtype=images.dtype, overwrite=overwrite)
 
-def writeBinaryImagesConfig(path, dims, dtype='int16', name="conf.json", overwrite=True):
+def config(path, dims, dtype='int16', name="conf.json", overwrite=True):
     """
     Helper function to write a JSON file with configuration for binary image data.
     """

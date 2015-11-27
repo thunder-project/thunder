@@ -3,7 +3,7 @@ from numpy import sign, random, linspace, sin, array, dot, c_
 from .svd import SVD
 from ..data.series.series import Series
 from ..data.series.matrix import Matrix
-from ..data.series.readers import fromList
+from ..data.series.readers import fromlist
 
 
 class ICA(object):
@@ -156,7 +156,7 @@ class ICA(object):
         s /= s.std(axis=0)
         a = array([[1, 1], [0.5, 2]])
         x = dot(s, a.T)
-        data = fromList(x, npartitions=npartitions)
+        data = fromlist(x, npartitions=npartitions)
         if withparams is True:
             return data, s, a
         else:
