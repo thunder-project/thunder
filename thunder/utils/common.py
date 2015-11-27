@@ -1,4 +1,4 @@
-def smallestFloatType(dtype):
+def smallfloat(dtype):
     """
     Returns the smallest floating point dtype to which the passed dtype can be safely cast.
 
@@ -8,12 +8,12 @@ def smallestFloatType(dtype):
 
     This function relies on numpy's promote_types function.
     """
-    from numpy import dtype as dtypeFunc
+    from numpy import dtype as dtypefunc
     from numpy import promote_types
-    inType = dtypeFunc(dtype)
-    compSize = max(2, inType.itemsize)  # smallest float is at least 16 bits
-    compType = dtypeFunc('=f'+str(compSize))  # compare to a float of the same size
-    return promote_types(inType, compType)
+    intype = dtypefunc(dtype)
+    compsize = max(2, intype.itemsize)  # smallest float is at least 16 bits
+    comptype = dtypefunc('=f'+str(compsize))  # compare to a float of the same size
+    return promote_types(intype, comptype)
 
 
 def pil_to_array(pilImage):

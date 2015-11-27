@@ -75,14 +75,14 @@ def test_blocks_roundtrip():
     a = arange(8).reshape((4, 2))
     data = fromList([a, a])
     vals = data.toBlocks((2, 2)).toImages()
-    assert allclose(vals.collectValuesAsArray(), data.collectValuesAsArray())
+    assert allclose(vals.toarray(), data.toarray())
 
 
 def test_padded_blocks_roundtrip():
     a = arange(8).reshape((4, 2))
     data = fromList([a, a])
     vals = data.toBlocks((2, 2), padding=(2, 2)).toImages()
-    assert allclose(vals.collectValuesAsArray(), data.collectValuesAsArray())
+    assert allclose(vals.toarray(), data.toarray())
 
 
 def test_blocks_shape():

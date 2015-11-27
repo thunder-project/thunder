@@ -38,10 +38,8 @@ class StatCounter(object):
         'sum': ('mu',),
         'min': ('minValue',),
         'max': ('maxValue',),
-        'variance': ('mu', 'm2'),
-        'sampleVariance': ('mu', 'm2'),
-        'stdev': ('mu', 'm2'),
-        'sampleStdev': ('mu', 'm2'),
+        'var': ('mu', 'm2'),
+        'std': ('mu', 'm2'),
         'all': ('mu', 'm2', 'minValue', 'maxValue')
     }
 
@@ -139,28 +137,17 @@ class StatCounter(object):
         self.__checkAvail('max')
         return self.maxValue
 
-    def variance(self):
-        self.__checkAvail('variance')
+    def var(self):
+        self.__checkAvail('var')
         if self.n == 0:
             return float('nan')
         else:
             return self.m2 / self.n
 
-    def sampleVariance(self):
-        self.__checkAvail('sampleVariance')
-        if self.n <= 1:
-            return float('nan')
-        else:
-            return self.m2 / (self.n - 1)
-
-    def stdev(self):
-        self.__checkAvail('stdev')
-        return sqrt(self.variance())
-
-    def sampleStdev(self):
-        self.__checkAvail('sampleStdev')
-        return sqrt(self.sampleVariance())
+    def std(self):
+        self.__checkAvail('std')
+        return sqrt(self.var())
 
     def __repr__(self):
-        return ("(count: %s, mean: %s, stdev: %s, max: %s, min: %s, required: %s)" %
-                (self.count(), self.mean(), self.stdev(), self.max(), self.min(), str(tuple(self.requiredAttrs))))
+        return ("(count: %s, mean: %s, std: %s, max: %s, min: %s, required: %s)" %
+                (self.count(), self.mean(), self.std(), self.max(), self.min(), str(tuple(self.requiredAttrs))))

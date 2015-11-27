@@ -15,7 +15,7 @@ def test_from_array():
     assert data.nrecords == 4
     assert data.dtype == 'int16'
     assert allclose(data.index, [0, 1])
-    assert allclose(data.collectValuesAsArray(), a)
+    assert allclose(data.toarray(), a)
 
 
 def test_from_array_index():
@@ -32,7 +32,7 @@ def test_from_npy(tmpdir):
     assert data.nrecords == 4
     assert data.dtype == 'int16'
     assert allclose(data.index, [0, 1])
-    assert allclose(data.collectValuesAsArray(), a)
+    assert allclose(data.toarray(), a)
 
 
 def test_from_mat(tmpdir):
@@ -43,7 +43,7 @@ def test_from_mat(tmpdir):
     assert data.nrecords == 4
     assert data.dtype == 'int16'
     assert allclose(data.index, [0, 1])
-    assert allclose(data.collectValuesAsArray(), a)
+    assert allclose(data.toarray(), a)
 
 
 def test_from_text(tmpdir):
@@ -97,4 +97,4 @@ def test_to_binary_roundtrip(tmpdir):
     data = fromArray(a, npartitions=1)
     data.toBinary(p)
     loaded = fromBinary(p)
-    assert allclose(data.collectValuesAsArray(), loaded.collectValuesAsArray())
+    assert allclose(data.toarray(), loaded.toarray())

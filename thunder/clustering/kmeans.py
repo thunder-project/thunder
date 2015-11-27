@@ -37,7 +37,7 @@ class KMeansModel(object):
         centers = self.centers
 
         if isinstance(data, Series):
-            return data.applyValues(lambda x: func(centers, x))
+            return data.applyvalues(lambda x: func(centers, x))
 
         elif isinstance(data, list):
             return map(lambda x: func(centers, x), data)
@@ -63,8 +63,8 @@ class KMeansModel(object):
             For each data point, ggives the closest center to that point
         """
         from scipy.spatial.distance import cdist
-        closestPoint = lambda centers, p: argmin(cdist(centers, array([p])))
-        out = self.calc(data, closestPoint)
+        closest = lambda centers, p: argmin(cdist(centers, array([p])))
+        out = self.calc(data, closest)
         if isinstance(data, Series):
             out._index = 'label'
         return out
@@ -143,9 +143,9 @@ class KMeans(object):
         """
         random.seed(seed)
         centers = random.randn(k, shape[1])
-        genFunc = lambda i: centers[int(floor(random.rand(1, 1) * k))] + noise*random.rand(shape[1])
-        dataLocal = map(genFunc, range(0, shape[0]))
-        data = fromList(dataLocal, npartitions=npartitions)
+        gen = lambda i: centers[int(floor(random.rand(1, 1) * k))] + noise*random.rand(shape[1])
+        local = map(gen, range(0, shape[0]))
+        data = fromList(local, npartitions=npartitions)
         if withparams is True:
             return data, centers
         else:

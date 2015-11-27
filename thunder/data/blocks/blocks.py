@@ -99,7 +99,8 @@ class Blocks(Data):
         raise NotImplementedError("toBinarySeries not implemented")
 
     def saveAsBinarySeries(self, outputDirPath, overwrite=False):
-        """Writes out Series-formatted data.
+        """
+        Writes out Series-formatted data.
 
         Subclasses are *not* expected to override this method.
 
@@ -119,8 +120,10 @@ class Blocks(Data):
         from thunder.data.series.writers import writeSeriesConfig
 
         if not overwrite:
-            self._checkOverwrite(outputDirPath)
-            overwrite = True  # prevent additional downstream checks for this path
+            # prevent additional downstream checks for this path
+            from thunder.utils.common import raiseErrorIfPathExists
+            raiseErrorIfPathExists(outputDirPath, credentials=credentials())
+            overwrite = True
 
         writer = getParallelWriterForPath(outputDirPath)(
             outputDirPath, overwrite=overwrite, credentials=credentials())

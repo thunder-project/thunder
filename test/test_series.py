@@ -14,7 +14,7 @@ def test_to_matrix():
     assert isinstance(mat, Matrix)
     assert mat.nrows == 2
     assert mat.ncols == 4
-    out = mat.applyValues(lambda x: x + 1).collectValuesAsArray()
+    out = mat.applyvalues(lambda x: x + 1).toarray()
     assert allclose(out, array([[5, 6, 7, 8], [9, 10, 11, 12]]))
 
 
@@ -76,11 +76,11 @@ def test_standardization_axis1():
 def test_squelch():
     data = fromList([array([1, 2]), array([3, 4])])
     squelched = data.squelch(5)
-    assert allclose(squelched.collectValuesAsArray(), [[0, 0], [0, 0]])
+    assert allclose(squelched.toarray(), [[0, 0], [0, 0]])
     squelched = data.squelch(3)
-    assert allclose(squelched.collectValuesAsArray(), [[0, 0], [3, 4]])
+    assert allclose(squelched.toarray(), [[0, 0], [3, 4]])
     squelched = data.squelch(1)
-    assert allclose(squelched.collectValuesAsArray(), [[1, 2], [3, 4]])
+    assert allclose(squelched.toarray(), [[1, 2], [3, 4]])
 
 
 def test_correlate():

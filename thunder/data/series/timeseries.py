@@ -269,7 +269,7 @@ class TimeSeries(Series):
             yy = polyval(p, x)
             return y - yy
 
-        return self.applyValues(func, keepIndex=True)
+        return self.applyvalues(func, keepindex=True)
 
     def normalize(self, method='percentile', window=None, perc=20):
         """
@@ -319,5 +319,5 @@ class TimeSeries(Series):
             b = baseFunc(y)
             return (y - b) / (b + 0.1)
 
-        return self.applyValues(get, keepIndex=True)
+        return self.applyvalues(get, keepindex=True)
 

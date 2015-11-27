@@ -21,13 +21,15 @@ def test_pca():
     pca1 = PCA(k=1, svdMethod='direct')
     pca1.fit(mat)
     out1_comps = pca1.comps
-    out1_scores = pca1.scores.collectValuesAsArray() * pca1.latent
-    out1_transform_scores = pca1.transform(mat).collectValuesAsArray() * pca1.latent
+    out1_scores = pca1.scores.toarray() * pca1.latent
+    out1_transform_scores = pca1.transform(mat).toarray() * pca1.latent
     from sklearn.decomposition import PCA as skPCA
     pca2 = skPCA(n_components=1)
     pca2.fit(array(dataLocal))
     out2_comps = pca2.components_
-    out2_scores = pca2.transform(array(dataLocal))
+    out2_scores = pca2.transform(array(dataLocal)).squeeze()
+    print(out1_scores)
+    print(out2_scores)
     assert allclose(out1_comps, out2_comps) | allclose(out1_comps, -out2_comps)
     assert allclose(out1_scores, out2_scores) | allclose(out1_scores, -out2_scores)
     assert allclose(out1_scores, out1_transform_scores)

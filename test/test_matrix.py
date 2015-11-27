@@ -8,14 +8,14 @@ pytestmark = pytest.mark.usefixtures("context")
 def test_elementwise():
     mat1 = fromList([array([1, 2, 3]), array([4, 5, 6])]).toMatrix()
     mat2 = fromList([array([7, 8, 9]), array([10, 11, 12])]).toMatrix()
-    result = mat1.elementwise(mat2, add).collectValuesAsArray()
+    result = mat1.elementwise(mat2, add).toarray()
     truth = array([[8, 10, 12], [14, 16, 18]])
     assert allclose(result, truth)
 
 
 def test_elementwise_array():
     mat = fromList([array([1, 2, 3])]).toMatrix()
-    assert allclose(mat.elementwise(2, add).collectValuesAsArray(), array([3, 4, 5]))
+    assert allclose(mat.elementwise(2, add).toarray(), array([3, 4, 5]))
 
 
 def test_times_rdd():
@@ -31,7 +31,7 @@ def test_times_array():
     mat2 = array([[7, 8], [9, 10], [11, 12]])
     truth = [array([58, 64]), array([139, 154])]
     rdd = mat1.times(mat2)
-    result = rdd.collectValuesAsArray()
+    result = rdd.toarray()
     assert allclose(result, truth)
     assert allclose(rdd.index, range(0, 2))
 

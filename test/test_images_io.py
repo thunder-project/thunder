@@ -17,7 +17,7 @@ def test_from_list():
     vals = data.collect()
     assert len(vals) == 1
     assert allclose(data.dims, a.shape)
-    assert allclose(data.collectValuesAsArray()[0], a)
+    assert allclose(data.toarray(), a)
 
 
 def test_from_array():
@@ -26,7 +26,7 @@ def test_from_array():
     vals = data.collect()
     assert len(vals) == 1
     assert allclose(data.dims, a[0].shape)
-    assert allclose(data.collectValuesAsArray(), a)
+    assert allclose(data.toarray(), a)
 
 
 def test_from_png():
@@ -131,7 +131,7 @@ def test_from_binary_many(tmpdir):
     assert data.nrecords == 2
     assert data.dtype == 'int16'
     assert allclose(data.dims, (2, 4))
-    assert allclose(data.collectValuesAsArray(), a)
+    assert allclose(data.toarray(), a)
 
 
 def test_from_binary_conf(tmpdir):
@@ -144,7 +144,7 @@ def test_from_binary_conf(tmpdir):
     assert data.nrecords == 2
     assert data.dtype == 'int32'
     assert allclose(data.dims, (2, 4))
-    assert allclose(data.collectValuesAsArray(), a)
+    assert allclose(data.toarray(), a)
 
 
 def test_from_binary_multi(tmpdir):
@@ -188,7 +188,7 @@ def test_to_binary_roundtrip(tmpdir):
     data = fromList(a)
     data.toBinary(os.path.join(str(tmpdir), 'images'))
     loaded = fromBinary(os.path.join(str(tmpdir), 'images'))
-    assert allclose(data.collectValuesAsArray(), loaded.collectValuesAsArray())
+    assert allclose(data.toarray(), loaded.toarray())
 
 
 def test_to_binary_roundtrip_3d(tmpdir):
@@ -196,7 +196,7 @@ def test_to_binary_roundtrip_3d(tmpdir):
     data = fromList(a)
     data.toBinary(os.path.join(str(tmpdir), 'images'))
     loaded = fromBinary(os.path.join(str(tmpdir), 'images'))
-    assert allclose(data.collectValuesAsArray(), loaded.collectValuesAsArray())
+    assert allclose(data.toarray(), loaded.toarray())
 
 
 def test_to_png(tmpdir):
@@ -211,7 +211,7 @@ def test_to_png_roundtrip(tmpdir):
     data = fromList(a)
     data.toPng(os.path.join(str(tmpdir), 'images'), prefix='image')
     loaded = fromPng(os.path.join(str(tmpdir), 'images'))
-    assert allclose(data.collectValuesAsArray(), loaded.collectValuesAsArray())
+    assert allclose(data.toarray(), loaded.toarray())
 
 
 def test_to_tif(tmpdir):
@@ -226,4 +226,4 @@ def test_to_tif_roundtrip(tmpdir):
     data = fromList(a)
     data.toTif(os.path.join(str(tmpdir), 'images'), prefix='image')
     loaded = fromTif(os.path.join(str(tmpdir), 'images'))
-    assert allclose(data.collectValuesAsArray(), loaded.collectValuesAsArray())
+    assert allclose(data.toarray(), loaded.toarray())

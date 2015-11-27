@@ -36,7 +36,6 @@ class Series(Data):
     See also
     --------
     TimeSeries : a Series where the indices represent time
-    SpatialSeries : a Series where the keys represent spatial coordinates
     """
     _metadata = Data._metadata + ['_dims', '_index']
 
@@ -55,7 +54,7 @@ class Series(Data):
     @property
     def index(self):
         if self._index is None:
-            self.populateParamsFromFirstRecord()
+            self.fromfirst()
         return self._index
         
     @index.setter
@@ -81,7 +80,7 @@ class Series(Data):
     def dims(self):
         from thunder.data.keys import Dimensions
         if self._dims is None:
-            entry = self.populateParamsFromFirstRecord()[0]
+            entry = self.fromfirst()[0]
             n = size(entry)
             d = self.rdd.keys().mapPartitions(lambda i: [Dimensions(i, n)]).reduce(lambda x, y: x.mergeDims(y))
             self._dims = d
@@ -97,14 +96,14 @@ class Series(Data):
     def dtype(self):
         return super(Series, self).dtype
 
-    def populateParamsFromFirstRecord(self):
+    def fromfirst(self):
         """
         Calls first() on the underlying rdd, using the returned record to determine appropriate attribute settings
         for this object (for instance, setting self.dtype to match the dtype of the underlying rdd records).
 
         Returns the result of calling self.rdd.first().
         """
-        record = super(Series, self).populateParamsFromFirstRecord()
+        record = super(Series, self).fromfirst()
         if self._index is None:
             val = record[1]
             try:
@@ -119,19 +118,7 @@ class Series(Data):
     def _constructor(self):
         return Series
 
-    @staticmethod
-    def _checkType(record):
-        key = record[0]
-        value = record[1]
-        if not isinstance(key, tuple):
-            raise Exception('Keys must be tuples')
-        if not isinstance(value, ndarray):
-            raise Exception('Values must be ndarrays')
-        else:
-            if value.ndim != 1:
-                raise Exception('Values must be 1d arrays')
-
-    def _resetCounts(self):
+    def _reset(self):
         self._nrecords = None
         self._dims = None
         return self
@@ -224,10 +211,10 @@ class Series(Data):
             Which axis to center along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.applyValues(lambda x: x - mean(x), keepIndex=True)
+            return self.applyvalues(lambda x: x - mean(x), keepindex=True)
         elif axis == 1:
             meanVec = self.mean()
-            return self.applyValues(lambda x: x - meanVec, keepIndex=True)
+            return self.applyvalues(lambda x: x - meanVec, keepindex=True)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -242,10 +229,10 @@ class Series(Data):
             Which axis to standardize along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.applyValues(lambda x: x / std(x), keepIndex=True)
+            return self.applyvalues(lambda x: x / std(x), keepindex=True)
         elif axis == 1:
-            stdvec = self.stdev()
-            return self.applyValues(lambda x: x / stdvec, keepIndex=True)
+            stdvec = self.std()
+            return self.applyvalues(lambda x: x / stdvec, keepindex=True)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -261,12 +248,12 @@ class Series(Data):
             Which axis to zscore along, rows (0) or columns (1)
         """
         if axis == 0:
-            return self.applyValues(lambda x: (x - mean(x)) / std(x), keepIndex=True)
+            return self.applyvalues(lambda x: (x - mean(x)) / std(x), keepindex=True)
         elif axis == 1:
             stats = self.stats()
-            meanVec = stats.mean()
-            stdVec = stats.stdev()
-            return self.applyValues(lambda x: (x - meanVec) / stdVec, keepIndex=True)
+            meanval = stats.mean()
+            stdval = stats.std()
+            return self.applyvalues(lambda x: (x - meanval) / stdval, keepindex=True)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -280,7 +267,7 @@ class Series(Data):
             Level below which to set records to zero
         """
         func = lambda x: zeros(x.shape) if max(x) < threshold else x
-        return self.applyValues(func, keepDtype=True, keepIndex=True)
+        return self.applyvalues(func, keepdtype=True, keepindex=True)
 
     def correlate(self, signal, var='s'):
         """
@@ -302,13 +289,12 @@ class Series(Data):
         else:
             s = asarray(signal)
 
-        # handle the case of a 1d signal
         if s.ndim == 1:
             if size(s) != size(self.index):
                 raise Exception('Size of signal to correlate with, %g, does not match size of series' % size(s))
             rdd = self.rdd.mapValues(lambda x: corrcoef(x, s)[0, 1])
             newIndex = 0
-        # handle multiple 1d signals
+
         elif s.ndim == 2:
             if s.shape[1] != size(self.index):
                 raise Exception('Length of signals to correlate with, %g, does not match size of series' % s.shape[1])
@@ -350,7 +336,7 @@ class Series(Data):
             Floating point number between 0 and 100 inclusive, specifying percentile.
         """
         rdd = self.rdd.mapValues(lambda x: percentile(x, q))
-        return self._constructor(rdd, index=q).__finalize__(self, noPropagate=('_dtype',))
+        return self._constructor(rdd, index=q).__finalize__(self, noprop=('_dtype',))
 
     def seriesStdev(self):
         """ Compute the value std of each record in a Series """
@@ -376,7 +362,7 @@ class Series(Data):
         }
         func = STATS[stat.lower()]
         rdd = self.rdd.mapValues(lambda x: func(x))
-        return self._constructor(rdd, index=stat).__finalize__(self, noPropagate=('_dtype',))
+        return self._constructor(rdd, index=stat).__finalize__(self, noprop=('_dtype',))
 
     def seriesStats(self):
         """
@@ -384,7 +370,7 @@ class Series(Data):
         """
         rdd = self.rdd.mapValues(lambda x: array([x.size, mean(x), std(x), max(x), min(x)]))
         return self._constructor(rdd, index=['count', 'mean', 'std', 'max', 'min'])\
-            .__finalize__(self, noPropagate=('_dtype',))
+            .__finalize__(self, noprop=('_dtype',))
 
     def _checkFixedLength(self, length):
         """
@@ -615,7 +601,7 @@ class Series(Data):
         index = array(ind)
         if len(index[0]) == 1:
             index = ravel(index)
-        return self._constructor(newrdd, index=index).__finalize__(self, noPropagate=('_dtype',))
+        return self._constructor(newrdd, index=index).__finalize__(self, noprop=('_dtype',))
 
     def selectByIndex(self, val, level=0, squeeze=False, filter=False, returnMask=False):
         """
@@ -736,7 +722,7 @@ class Series(Data):
             Specifies the levels of the multi-index to use when determining unique index values. If only a single
             level is desired, can be an int.
         """
-        return self._applyByIndex(function, level=level).applyValues(lambda v: array(v), keepIndex=True)
+        return self._applyByIndex(function, level=level).applyvalues(lambda v: array(v), keepindex=True)
 
     def seriesStatByIndex(self, stat, level=0):
         """

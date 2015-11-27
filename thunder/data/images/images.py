@@ -25,7 +25,7 @@ class Images(Data):
     @property
     def dims(self):
         if self._dims is None:
-            self.populateParamsFromFirstRecord()
+            self.fromfirst()
         return self._dims
 
     @property
@@ -43,8 +43,8 @@ class Images(Data):
     def _constructor(self):
         return Images
 
-    def populateParamsFromFirstRecord(self):
-        record = super(Images, self).populateParamsFromFirstRecord()
+    def fromfirst(self):
+        record = super(Images, self).fromfirst()
         self._dims = Dimensions.fromTuple(record[1].shape)
         return record
 
@@ -347,12 +347,12 @@ class Images(Data):
 
         # Union the averaged images with the originals to create an Images object containing 2N images (where
         # N is the original number of images), ordered such that the first N images are the averaged ones.
-        combined = self.rdd.union(blurred.applyKeys(lambda k: k + nimages).rdd)
+        combined = self.rdd.union(blurred.applykeys(lambda k: k + nimages).rdd)
         combinedImages = self._constructor(combined, nrecords=(2 * nimages)).__finalize__(self)
 
         # Correlate the first N (averaged) records with the last N (original) records
         series = combinedImages.toSeries()
-        corr = series.applyValues(lambda x: corrcoef(x[:nimages], x[nimages:])[0, 1])
+        corr = series.applyvalues(lambda x: corrcoef(x[:nimages], x[nimages:])[0, 1])
 
         return corr.pack()
 
@@ -441,7 +441,7 @@ class Images(Data):
                 raise Exception('Cannot subtract image with dimensions %s '
                                 'from images with dimension %s' % (str(val.shape), str(self.dims)))
 
-        return self.applyValues(lambda x: x - val)
+        return self.applyvalues(lambda x: x - val)
 
     def renumber(self):
         """

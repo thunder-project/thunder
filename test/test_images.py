@@ -9,16 +9,16 @@ pytestmark = pytest.mark.usefixtures("context")
 def test_toseries():
     data = fromList([arange(6).reshape((2, 3))])
     truth = [0, 3, 1, 4, 2, 5]
-    vals = data.toSeries().collectValuesAsArray()
+    vals = data.toSeries().toarray()
     assert allclose(vals, truth)
-    vals = data.toBlocks((1, 1)).toSeries().collectValuesAsArray()
+    vals = data.toBlocks((1, 1)).toSeries().toarray()
     assert allclose(vals, truth)
 
 
 def test_totimeseries():
     data = fromList([arange(6).reshape((2, 3))])
-    vals1 = data.toTimeSeries().collectValuesAsArray()
-    vals2 = data.toTimeSeries().collectValuesAsArray()
+    vals1 = data.toTimeSeries().toarray()
+    vals2 = data.toTimeSeries().toarray()
     assert allclose(vals1, vals2)
 
 
@@ -36,48 +36,48 @@ def test_toseries_pack_3d():
 
 def test_subsample():
     data = fromList([arange(24).reshape((4, 6))])
-    vals = data.subsample(2).collectValuesAsArray()
+    vals = data.subsample(2).toarray()
     truth = [[0, 2, 4], [12, 14, 16]]
     assert allclose(vals, truth)
 
 
 def test_median_filter_2d():
     data = fromList([arange(24).reshape((4, 6))])
-    assert data.medianFilter(2).collectValuesAsArray().shape == (1, 4, 6)
-    assert data.medianFilter([2, 2]).collectValuesAsArray().shape == (1, 4, 6)
-    assert allclose(data.medianFilter(2).collectValuesAsArray(), data.medianFilter([2, 2]).collectValuesAsArray())
+    assert data.medianFilter(2).toarray().shape == (4, 6)
+    assert data.medianFilter([2, 2]).toarray().shape == (4, 6)
+    assert allclose(data.medianFilter(2).toarray(), data.medianFilter([2, 2]).toarray())
 
 
 def test_median_filter_3d():
     data = fromList([arange(24).reshape((2, 3, 4))])
-    assert data.medianFilter(2).collectValuesAsArray().shape == (1, 2, 3, 4)
-    assert data.medianFilter([2, 2, 2]).collectValuesAsArray().shape == (1, 2, 3, 4)
+    assert data.medianFilter(2).toarray().shape == (2, 3, 4)
+    assert data.medianFilter([2, 2, 2]).toarray().shape == (2, 3, 4)
 
 
 def test_gaussian_filter_2d():
     data = fromList([arange(24).reshape((4, 6))])
-    assert data.gaussianFilter(2).collectValuesAsArray().shape == (1, 4, 6)
-    assert data.gaussianFilter([2, 2]).collectValuesAsArray().shape == (1, 4, 6)
-    assert allclose(data.gaussianFilter(2).collectValuesAsArray(), data.gaussianFilter([2, 2]).collectValuesAsArray())
+    assert data.gaussianFilter(2).toarray().shape == (4, 6)
+    assert data.gaussianFilter([2, 2]).toarray().shape == (4, 6)
+    assert allclose(data.gaussianFilter(2).toarray(), data.gaussianFilter([2, 2]).toarray())
 
 
 def test_gaussian_filter_3d():
     data = fromList([arange(24).reshape((2, 3, 4))])
-    assert data.gaussianFilter(2).collectValuesAsArray().shape == (1, 2, 3, 4)
-    assert data.gaussianFilter([2, 2, 2]).collectValuesAsArray().shape == (1, 2, 3, 4)
+    assert data.gaussianFilter(2).toarray().shape == (2, 3, 4)
+    assert data.gaussianFilter([2, 2, 2]).toarray().shape == (2, 3, 4)
 
 
 def test_uniform_filter_2d():
     data = fromList([arange(24).reshape((4, 6))])
-    assert data.uniformFilter(2).collectValuesAsArray().shape == (1, 4, 6)
-    assert data.uniformFilter([2, 2]).collectValuesAsArray().shape == (1, 4, 6)
-    assert allclose(data.uniformFilter(2).collectValuesAsArray(), data.uniformFilter([2, 2]).collectValuesAsArray())
+    assert data.uniformFilter(2).toarray().shape == (4, 6)
+    assert data.uniformFilter([2, 2]).toarray().shape == (4, 6)
+    assert allclose(data.uniformFilter(2).toarray(), data.uniformFilter([2, 2]).toarray())
 
 
 def test_uniform_filter_3d():
     data = fromList([arange(24).reshape((2, 3, 4))])
-    assert data.uniformFilter(2).collectValuesAsArray().shape == (1, 2, 3, 4)
-    assert data.uniformFilter([2, 2, 2]).collectValuesAsArray().shape == (1, 2, 3, 4)
+    assert data.uniformFilter(2).toarray().shape == (2, 3, 4)
+    assert data.uniformFilter([2, 2, 2]).toarray().shape == (2, 3, 4)
 
 
 def test_mean():
@@ -92,10 +92,10 @@ def test_sum():
     assert allclose(data.sum(), original.sum(axis=0))
 
 
-def test_variance():
+def test_var():
     original = arange(24).reshape((2, 3, 4))
     data = fromList(list(original))
-    assert allclose(data.variance(), original.var(axis=0))
+    assert allclose(data.var(), original.var(axis=0))
 
 
 def test_crop():
