@@ -94,7 +94,7 @@ def test_to_binary(tmpdir):
 def test_to_binary_roundtrip(tmpdir):
     a = arange(8, dtype='int16').reshape((4, 2))
     p = str(tmpdir) + '/data'
-    data = fromArray(a)
+    data = fromArray(a, npartitions=1)
     data.toBinary(p)
     loaded = fromBinary(p)
     assert allclose(data.collectValuesAsArray(), loaded.collectValuesAsArray())
