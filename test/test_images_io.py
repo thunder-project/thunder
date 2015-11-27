@@ -178,7 +178,7 @@ def test_to_binary(tmpdir):
     f = open(str(tmpdir) + '/binary/conf.json', 'r')
     conf = json.load(f)
     f.close()
-    assert files == ['image-00000.bin', 'image-00001.bin']
+    assert sorted(files) == ['image-00000.bin', 'image-00001.bin']
     assert conf['dims'] == [4, 2]
     assert conf['dtype'] == 'int16'
 
