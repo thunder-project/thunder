@@ -231,80 +231,29 @@ def fromTif(dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, n
         If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
         partition per image file.
     """
-    try:
-        from PIL import Image
-    except ImportError, e:
-        Image = None
-        raise ImportError("fromMultipageTif requires a successful 'from PIL import Image'; " +
-                          "the PIL/pillow library appears to be missing or broken.", e)
-    # we know that that array(pilimg) works correctly for pillow == 2.3.0, and that it
-    # does not work (at least not with spark) for old PIL == 1.1.7. we believe but have not confirmed
-    # that array(pilimg) works correctly for every version of pillow. thus currently we check only whether
-    # our PIL library is in fact pillow, and choose our conversion function accordingly
-    isPillow = hasattr(Image, "PILLOW_VERSION")
-    if isPillow:
-        conversionFcn = array  # use numpy's array() function
-    else:
-        from thunder.utils.common import pil_to_array
-        conversionFcn = pil_to_array  # use our modified version of matplotlib's pil_to_array
+    import skimage.external.tifffile as tifffile
 
     if nplanes is not None and nplanes <= 0:
         raise ValueError("nplanes must be positive if passed, got %d" % nplanes)
 
     def multitifReader(idxAndBuf):
         idx, buf = idxAndBuf
-        values = []
         fbuf = BytesIO(buf)
-        multipage = Image.open(fbuf)
-        if multipage.mode.startswith('I') and 'S' in multipage.mode:
-            # signed integer tiff file; use tifffile module to read
-            try:
-                import tifffile
-            except ImportError:
-                raise ImportError('Cannot import tiffile, required for signed tifs')
-            fbuf.seek(0)  # reset pointer after read done by PIL
-            tfh = tifffile.TiffFile(fbuf)
-            ary = tfh.asarray()  # ary comes back with pages as first dimension, will need to transpose
-            pageCount = ary.shape[0]
-            if nplanes is not None:
-                values = [ary[i:(i+nplanes)] for i in xrange(0, ary.shape[0], nplanes)]
-            else:
-                values = [ary]
-            tfh.close()
-            # transpose Z dimension if any, leave X and Y in same order
-            if ary.ndim == 3:
-                values = [val.transpose((1, 2, 0)) for val in values]
-                # squeeze out last dimension if singleton
-                values = [val.squeeze(-1) if val.shape[-1] == 1 else val for val in values]
+        tfh = tifffile.TiffFile(fbuf)
+        ary = tfh.asarray()
+        pageCount = ary.shape[0]
+        if nplanes is not None:
+            values = [ary[i:(i+nplanes)] for i in xrange(0, ary.shape[0], nplanes)]
         else:
-            # normal case; use PIL/Pillow for anything but signed ints
-            pageIdx = 0
-            imgArys = []
-            npagesLeft = -1 if nplanes is None else nplanes  # counts number of planes remaining in image if positive
-            while True:
-                try:
-                    multipage.seek(pageIdx)
-                    imgArys.append(conversionFcn(multipage))
-                    pageIdx += 1
-                    npagesLeft -= 1
-                    if npagesLeft == 0:
-                        # we have just finished an image from this file
-                        retAry = dstack(imgArys) if len(imgArys) > 1 else imgArys[0]
-                        values.append(retAry)
-                        # reset counters:
-                        npagesLeft = nplanes
-                        imgArys = []
-                except EOFError:
-                    # past last page in tif
-                    break
-            pageCount = pageIdx
-            if imgArys:
-                retAry = dstack(imgArys) if len(imgArys) > 1 else imgArys[0]
-                values.append(retAry)
-        # check for inappropriate nplanes that doesn't evenly divide num pages
+            values = [ary]
+        tfh.close()
+
+        if ary.ndim == 3:
+            values = [val.transpose((1, 2, 0)) for val in values]
+            values = [val.squeeze(-1) if val.shape[-1] == 1 else val for val in values]
+
         if nplanes and (pageCount % nplanes):
-            raise ValueError("nplanes '%d' does not evenly divide page count of multipage tif '%d'" %
-                             (nplanes, pageCount))
+            raise ValueError("nplanes '%d' does not evenly divide '%d'" % (nplanes, pageCount))
         nvals = len(values)
         keys = [idx*nvals + timepoint for timepoint in xrange(nvals)]
         return zip(keys, values)
