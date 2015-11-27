@@ -16,6 +16,8 @@ def fromList(items, accessor=None, keys=None, npartitions=None, **kwargs):
             items = zip(keys, items)
         else:
             items = enumerate(items)
+        if not npartitions:
+            npartitions = engine().defaultParallelism
         rdd = engine().parallelize(items, npartitions)
         if accessor:
             rdd = rdd.mapValues(accessor)

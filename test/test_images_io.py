@@ -185,18 +185,18 @@ def test_to_binary(tmpdir):
 
 def test_to_binary_roundtrip(tmpdir):
     a = [arange(8).reshape((4, 2)), arange(8, 16).reshape((4, 2))]
-    fromList(a).toBinary(os.path.join(str(tmpdir), 'images'))
-    data = fromBinary(os.path.join(str(tmpdir), 'images'))
-    assert data.nrecords == 2
-    assert allclose(data.collectValuesAsArray(), a)
+    data = fromList(a)
+    data.toBinary(os.path.join(str(tmpdir), 'images'))
+    loaded = fromBinary(os.path.join(str(tmpdir), 'images'))
+    assert allclose(data.collectValuesAsArray(), loaded.collectValuesAsArray())
 
 
 def test_to_binary_roundtrip_3d(tmpdir):
     a = [arange(24).reshape((2, 3, 4)), arange(24, 48).reshape((2, 3, 4))]
-    fromList(a).toBinary(os.path.join(str(tmpdir), 'images'))
-    data = fromBinary(os.path.join(str(tmpdir), 'images'))
-    assert data.nrecords == 2
-    assert allclose(data.collectValuesAsArray(), a)
+    data = fromList(a)
+    data.toBinary(os.path.join(str(tmpdir), 'images'))
+    loaded = fromBinary(os.path.join(str(tmpdir), 'images'))
+    assert allclose(data.collectValuesAsArray(), loaded.collectValuesAsArray())
 
 
 def test_to_png(tmpdir):
@@ -208,10 +208,10 @@ def test_to_png(tmpdir):
 
 def test_to_png_roundtrip(tmpdir):
     a = [arange(8, dtype='uint8').reshape((4, 2))]
-    fromList(a).toPng(os.path.join(str(tmpdir), 'images'), prefix='image')
-    data = fromPng(os.path.join(str(tmpdir), 'images'))
-    assert data.nrecords == 1
-    assert allclose(data.collectValuesAsArray(), a)
+    data = fromList(a)
+    data.toPng(os.path.join(str(tmpdir), 'images'), prefix='image')
+    loaded = fromPng(os.path.join(str(tmpdir), 'images'))
+    assert allclose(data.collectValuesAsArray(), loaded.collectValuesAsArray())
 
 
 def test_to_tif(tmpdir):
@@ -223,7 +223,7 @@ def test_to_tif(tmpdir):
 
 def test_to_tif_roundtrip(tmpdir):
     a = [arange(8, dtype='uint8').reshape((4, 2))]
-    fromList(a).toTif(os.path.join(str(tmpdir), 'images'), prefix='image')
-    data = fromTif(os.path.join(str(tmpdir), 'images'))
-    assert data.nrecords == 1
-    assert allclose(data.collectValuesAsArray(), a)
+    data = fromList(a)
+    data.toTif(os.path.join(str(tmpdir), 'images'), prefix='image')
+    loaded = fromTif(os.path.join(str(tmpdir), 'images'))
+    assert allclose(data.collectValuesAsArray(), loaded.collectValuesAsArray())

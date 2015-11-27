@@ -813,9 +813,9 @@ class Series(Data):
         """
         return self.seriesStatByIndex(level=level, stat='count')
 
-    def toBinary(self, outputDirPath, overwrite=False):
+    def toBinary(self, path, overwrite=False):
         from thunder.data.series.writers import toBinary
-        toBinary(self, outputDirPath, overwrite=overwrite)
+        toBinary(self, path, overwrite=overwrite)
 
 
 class _MeanCombiner(object):

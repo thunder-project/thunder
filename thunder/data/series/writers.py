@@ -1,6 +1,6 @@
 from thunder import credentials
 
-def toBinary(series, outputDirPath, overwrite=False):
+def toBinary(series, path, overwrite=False):
     """
     Writes out Series-formatted data.
 
@@ -33,7 +33,7 @@ def toBinary(series, outputDirPath, overwrite=False):
     from thunder.data.fileio.writers import getParallelWriterForPath
 
     if not overwrite:
-        checkOverwrite(outputDirPath)
+        checkOverwrite(path)
         overwrite = True  # prevent additional downstream checks for this path
 
     def partitionToBinarySeries(kvIter):
@@ -57,7 +57,7 @@ def toBinary(series, outputDirPath, overwrite=False):
             label = SimpleBlocks.getBinarySeriesNameForKey(firstKey) + ".bin"
             return iter([(label, val)])
 
-    writer = getParallelWriterForPath(outputDirPath)(outputDirPath, overwrite=overwrite, credentials=credentials())
+    writer = getParallelWriterForPath(path)(path, overwrite=overwrite, credentials=credentials())
 
     binseriesrdd = series.rdd.mapPartitions(partitionToBinarySeries)
 
@@ -66,31 +66,28 @@ def toBinary(series, outputDirPath, overwrite=False):
     # TODO: all we really need here are the number of keys and number of values, which could in principle
     # be cached in _nkeys and _nvals attributes, removing the need for this .first() call in most cases.
     firstKey, firstVal = series.first()
-    writeSeriesConfig(outputDirPath, len(firstKey), len(firstVal), keyType='int16',
+    writeSeriesConfig(path, len(firstKey), len(firstVal), keyType='int16',
                       valueType=series.dtype, overwrite=overwrite)
 
-def checkOverwrite(outputDirPath):
+def checkOverwrite(path):
     from thunder.utils.common import raiseErrorIfPathExists
-    raiseErrorIfPathExists(outputDirPath, credentials=credentials())
+    raiseErrorIfPathExists(path, credentials=credentials())
 
-def writeSeriesConfig(outputDirPath, nkeys, nvalues, keyType='int16', valueType='int16',
-                      confFilename="conf.json", overwrite=True):
+def writeSeriesConfig(path, nkeys, nvalues, keyType='int16', valueType='int16',
+                      name="conf.json", overwrite=True):
     """
     Helper function to write out a conf.json file with required information to load Series binary data.
     """
     import json
     from thunder.data.fileio.writers import getFileWriterForPath
 
-    filewriterClass = getFileWriterForPath(outputDirPath)
-    # write configuration file
-    # config JSON keys are lowercased "valuetype", "keytype", not valueType, keyType
-    conf = {'input': outputDirPath,
-            'nkeys': nkeys, 'nvalues': nvalues,
+    writer = getFileWriterForPath(path)
+    conf = {'input': path, 'nkeys': nkeys, 'nvalues': nvalues,
             'valuetype': str(valueType), 'keytype': str(keyType)}
 
-    confWriter = filewriterClass(outputDirPath, confFilename, overwrite=overwrite, credentials=credentials())
-    confWriter.writeFile(json.dumps(conf, indent=2))
+    confwriter = writer(path, name, overwrite=overwrite, credentials=credentials())
+    confwriter.writeFile(json.dumps(conf, indent=2))
 
     # touch "SUCCESS" file as final action
-    successWriter = filewriterClass(outputDirPath, "SUCCESS", overwrite=overwrite, credentials=credentials())
-    successWriter.writeFile('')
+    successwriter = writer(path, "SUCCESS", overwrite=overwrite, credentials=credentials())
+    successwriter.writeFile('')

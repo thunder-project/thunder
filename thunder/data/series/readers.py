@@ -13,6 +13,8 @@ def fromList(items, accessor=None, keys=None, npartitions=None, index=None, **kw
         nrecords = len(items)
         if not keys:
             keys = map(lambda k: (k, ), range(len(items)))
+        if not npartitions:
+            npartitions = engine().defaultParallelism
         items = zip(keys, items)
         rdd = engine().parallelize(items, npartitions)
         if accessor:
