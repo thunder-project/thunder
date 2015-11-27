@@ -38,7 +38,6 @@ class Series(Data):
     TimeSeries : a Series where the indices represent time
     SpatialSeries : a Series where the keys represent spatial coordinates
     """
-
     _metadata = Data._metadata + ['_dims', '_index']
 
     def __init__(self, rdd, nrecords=None, dtype=None, index=None, dims=None):
@@ -96,7 +95,6 @@ class Series(Data):
 
     @property
     def dtype(self):
-        # override just calls superclass; here for explicitness
         return super(Series, self).dtype
 
     def populateParamsFromFirstRecord(self):
@@ -572,7 +570,6 @@ class Series(Data):
         As all other multi-index functions will call this function, basic type-checking is also
         performed at this stage.
         """
-
         if index is None:
             index = self.index
         
@@ -657,7 +654,6 @@ class Series(Data):
         returnMask: bool, optional, default=False
             If True, return the mask used to implement the selection.
         """
-
         try:
             level[0]
         except:
@@ -740,10 +736,6 @@ class Series(Data):
             Specifies the levels of the multi-index to use when determining unique index values. If only a single
             level is desired, can be an int.
         """
-
-        # if we ever demand that Series elements are basic data types, this is the place to check the output
-        # of the aggregating function returns a single value
-
         return self._applyByIndex(function, level=level).applyValues(lambda v: array(v), keepIndex=True)
 
     def seriesStatByIndex(self, stat, level=0):
@@ -814,47 +806,8 @@ class Series(Data):
         return self.seriesStatByIndex(level=level, stat='count')
 
     def toBinary(self, path, overwrite=False):
+        """
+        Write data to binary files
+        """
         from thunder.data.series.writers import toBinary
         toBinary(self, path, overwrite=overwrite)
-
-
-class _MeanCombiner(object):
-    @staticmethod
-    def createZeroTuple():
-        return 0, array((0.0,)), array((0.0,))
-
-    @staticmethod
-    def createMeanTuple(kv):
-        key, val = kv
-        return 1, array(key, dtype=val.dtype), val
-
-    @staticmethod
-    def mergeIntoMeanTuple(meanTuple, kv):
-        n, kmu, vmu = meanTuple
-        newn = n+1
-        return newn, kmu + (kv[0] - kmu) / newn, vmu + (kv[1] - vmu) / newn
-
-    @staticmethod
-    def combineMeanTuples(meanTup1, meanTup2):
-        n1, kmu1, vmu1 = meanTup1
-        n2, kmu2, vmu2 = meanTup2
-        if n1 == 0:
-            return n2, kmu2, vmu2
-        elif n2 == 0:
-            return n1, kmu1, vmu1
-        else:
-            newn = n1 + n2
-            if n2 * 10 < n1:
-                kdel = kmu2 - kmu1
-                vdel = vmu2 - vmu1
-                kmu1 += (kdel * n2) / newn
-                vmu1 += (vdel * n2) / newn
-            elif n1 * 10 < n2:
-                kdel = kmu2 - kmu1
-                vdel = vmu2 - vmu1
-                kmu1 = kmu2 - (kdel * n1) / newn
-                vmu1 = vmu2 - (vdel * n1) / newn
-            else:
-                kmu1 = (kmu1 * n1 + kmu2 * n2) / newn
-                vmu1 = (vmu1 * n1 + vmu2 * n2) / newn
-            return newn, kmu1, vmu1

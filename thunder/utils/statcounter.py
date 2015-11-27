@@ -59,7 +59,6 @@ class StatCounter(object):
         for v in values:
             self.merge(v)
 
-    # Add a value into this StatCounter, updating the internal statistics.
     def merge(self, value):
         self.n += 1
         if self.__requires('mu'):
@@ -74,12 +73,9 @@ class StatCounter(object):
 
         return self
 
-    # checks whether the passed attribute name is required to be updated in order to support the
-    # statistics requested in self.requestedStats.
     def __requires(self, attrName):
         return attrName in self.requiredAttrs
 
-    # Merge another StatCounter into this one, adding up the internal statistics.
     def mergeStats(self, other):
         if not isinstance(other, StatCounter):
             raise Exception("Can only merge Statcounters!")
@@ -117,7 +113,6 @@ class StatCounter(object):
                 self.n += other.n
         return self
 
-    # Clone this StatCounter
     def copy(self):
         return copy.deepcopy(self)
 
@@ -144,7 +139,6 @@ class StatCounter(object):
         self.__checkAvail('max')
         return self.maxValue
 
-    # Return the variance of the values.
     def variance(self):
         self.__checkAvail('variance')
         if self.n == 0:
@@ -152,10 +146,6 @@ class StatCounter(object):
         else:
             return self.m2 / self.n
 
-    #
-    # Return the sample variance, which corrects for bias in estimating the variance by dividing
-    # by N-1 instead of N.
-    #
     def sampleVariance(self):
         self.__checkAvail('sampleVariance')
         if self.n <= 1:
@@ -163,15 +153,10 @@ class StatCounter(object):
         else:
             return self.m2 / (self.n - 1)
 
-    # Return the standard deviation of the values.
     def stdev(self):
         self.__checkAvail('stdev')
         return sqrt(self.variance())
 
-    #
-    # Return the sample standard deviation of the values, which corrects for bias in estimating the
-    # variance by dividing by N-1 instead of N.
-    #
     def sampleStdev(self):
         self.__checkAvail('sampleStdev')
         return sqrt(self.sampleVariance())
