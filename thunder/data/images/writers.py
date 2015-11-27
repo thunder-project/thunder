@@ -1,32 +1,23 @@
 from numpy import asarray
+import json
 
 from thunder import credentials
 
 
-def toPng(images, outputDirPath, cmap=None, vmin=None, vmax=None, prefix="image", overwrite=False):
+def toPng(images, path, prefix="image", overwrite=False):
     """
-    Write out basic png files for two-dimensional image data.
+    Write out PNG files for 2d or 3d image data.
 
-    Files will be written into a newly-created directory given by outputdirname.
-
-    Parameters
-    ----------
-    outputDirPath : string
-        Path to output directory to be created. Exception will be thrown if this directory already
-        exists, unless overwrite is True. Directory must be one level below an existing directory.
-
-    prefix : string
-        String to prepend to all filenames. Files will be named <prefix>-00000.png, <prefix>-00001.png, etc
-
-    overwrite : bool
-        If true, the directory given by outputdirname will first be deleted if it already exists.
+    See also
+    --------
+    thunder.data.images.toPng
     """
     dims = images.dims
-    if not len(dims) == 2:
-        raise ValueError("Only two-dimensional images can be exported as .png files; image is %d-dimensional." %
-                         len(dims))
+    if not len(dims) in [2, 3]:
+        raise ValueError("Only 2D or 3D images can be exported to png, "
+                         "images are %d-dimensional." % len(dims))
 
-    from matplotlib.pyplot import imsave
+    from scipy.misc import imsave
     from io import BytesIO
     from thunder.data.fileio.writers import getParallelWriterForPath
 
@@ -34,32 +25,49 @@ def toPng(images, outputDirPath, cmap=None, vmin=None, vmax=None, prefix="image"
         key, img = kv
         fname = prefix+"-"+"%05d.png" % int(key)
         bytebuf = BytesIO()
-        imsave(bytebuf, img, vmin, vmax, cmap=cmap, format="png")
+        imsave(bytebuf, img, format='PNG')
+        return fname, bytebuf.getvalue()
+
+    bufRdd = images.rdd.map(toFilenameAndPngBuf)
+    writer = getParallelWriterForPath(path)(path, overwrite=overwrite, credentials=credentials())
+    bufRdd.foreach(writer.writerFcn)
+
+def toTif(images, path, prefix="image", overwrite=False):
+    """
+    Write out TIF files for 2d or 3d image data.
+
+    See also
+    --------
+    thunder.data.images.toTif
+    """
+    dims = images.dims
+    if not len(dims) in [2, 3]:
+        raise ValueError("Only 2D or 3D images can be exported to tif, "
+                         "images are %d-dimensional." % len(dims))
+
+    from scipy.misc import imsave
+    from io import BytesIO
+    from thunder.data.fileio.writers import getParallelWriterForPath
+
+    def toFilenameAndPngBuf(kv):
+        key, img = kv
+        fname = prefix+"-"+"%05d.tif" % int(key)
+        bytebuf = BytesIO()
+        imsave(bytebuf, img, format='TIFF')
         return fname, bytebuf.getvalue()
 
     bufRdd = images.rdd.map(toFilenameAndPngBuf)
 
-    writer = getParallelWriterForPath(outputDirPath)(
-        outputDirPath, overwrite=overwrite, credentials=credentials())
+    writer = getParallelWriterForPath(path)(path, overwrite=overwrite, credentials=credentials())
     bufRdd.foreach(writer.writerFcn)
 
-def toBinary(images, outputDirPath, prefix="image", overwrite=False):
+def toBinary(images, path, prefix="image", overwrite=False):
     """
-    Write out images or volumes as flat binary files.
+    Write out binary files for image data.
 
-    Files will be written into a newly-created directory given by outputdirname.
-
-    Parameters
-    ----------
-    outputDirPath : string
-        Path to output directory to be created. Exception will be thrown if this directory already
-        exists, unless overwrite is True. Directory must be one level below an existing directory.
-
-    prefix : string
-        String to prepend to all filenames. Files will be named <prefix>-00000.bin, <prefix>-00001.bin, etc
-
-    overwrite : bool
-        If true, the directory given by outputdirname will first be deleted if it already exists.
+    See also
+    --------
+    thunder.data.images.toBinary
     """
     from thunder.data.fileio.writers import getParallelWriterForPath
 
@@ -68,32 +76,25 @@ def toBinary(images, outputDirPath, prefix="image", overwrite=False):
     def toFilenameAndBinaryBuf(kv):
         key, img = kv
         fname = prefix+"-"+"%05d.bin" % int(key)
-        return fname, img.transpose().copy()
+        return fname, img.copy()
 
     bufRdd = images.rdd.map(toFilenameAndBinaryBuf)
 
-    writer = getParallelWriterForPath(outputDirPath)(
-        outputDirPath, overwrite=overwrite, credentials=credentials())
+    writer = getParallelWriterForPath(path)(path, overwrite=overwrite, credentials=credentials())
     bufRdd.foreach(writer.writerFcn)
-    writeBinaryImagesConfig(
-        outputDirPath, dims=dimsTotal, dtype=images.dtype, overwrite=overwrite)
+    writeBinaryImagesConfig(path, dims=dimsTotal, dtype=images.dtype, overwrite=overwrite)
 
-def writeBinaryImagesConfig(outputDirPath, dims, dtype='int16', confFilename="conf.json", overwrite=True):
+def writeBinaryImagesConfig(path, dims, dtype='int16', name="conf.json", overwrite=True):
     """
-    Helper function to write out a conf.json file with required information to load binary Image data.
+    Helper function to write a JSON file with configuration for binary image data.
     """
-    import json
     from thunder.data.fileio.writers import getFileWriterForPath
 
-    filewriterClass = getFileWriterForPath(outputDirPath)
+    writer = getFileWriterForPath(path)
 
-    # write configuration file
     conf = {'dims': dims, 'dtype': dtype}
-    confWriter = filewriterClass(
-        outputDirPath, confFilename, overwrite=overwrite, credentials=credentials())
-    confWriter.writeFile(json.dumps(conf, indent=2))
+    confwriter = writer(path, name, overwrite=overwrite, credentials=credentials())
+    confwriter.writeFile(json.dumps(conf, indent=2))
 
-    # touch "SUCCESS" file as final action
-    successWriter = filewriterClass(
-        outputDirPath, "SUCCESS", overwrite=overwrite, credentials=credentials())
-    successWriter.writeFile('')
+    successwriter = writer(path, "SUCCESS", overwrite=overwrite, credentials=credentials())
+    successwriter.writeFile('')

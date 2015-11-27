@@ -150,12 +150,12 @@ def fromBinary(dataPath, dims=None, dtype=None, ext='bin', startIdx=None, stopId
         if nplanes <= 0:
             raise ValueError("nplanes must be positive if passed, got %d" % nplanes)
         if dims[-1] % nplanes:
-            raise ValueError("Last dimension of stack image '%d' must be divisible by nplanes '%d'" %
+            raise ValueError("Last dimension of binary image '%d' must be divisible by nplanes '%d'" %
                              (dims[-1], nplanes))
 
     def toArray(idxAndBuf):
         idx, buf = idxAndBuf
-        ary = frombuffer(buf, dtype=dtype, count=int(prod(dims))).reshape(dims, order='F')
+        ary = frombuffer(buf, dtype=dtype, count=int(prod(dims))).reshape(dims, order='C')
         if nplanes is None:
             yield idx, ary
         else:
@@ -169,19 +169,20 @@ def fromBinary(dataPath, dims=None, dtype=None, ext='bin', startIdx=None, stopId
             while curPlane < ary.shape[-1]:
                 if curPlane % nplanes == 0:
                     slices = [slice(None)] * (ary.ndim - 1) + [slice(lastPlane, curPlane)]
-                    yield idx*npoints + timepoint, ary[slices]
+                    yield idx*npoints + timepoint, ary[slices].squeeze()
                     timepoint += 1
                     lastPlane = curPlane
                 curPlane += 1
             # yield remaining planes
             slices = [slice(None)] * (ary.ndim - 1) + [slice(lastPlane, ary.shape[-1])]
-            yield idx*npoints + timepoint, ary[slices]
+            yield idx*npoints + timepoint, ary[slices].squeeze()
 
     recount = False if nplanes is None else True
-    newDims = tuple(list(dims[:-1]) + [nplanes]) if nplanes else dims
+    append = [nplanes] if nplanes > 1 else []
+    newdims = tuple(list(dims[:-1]) + append) if nplanes else dims
     return fromPath(dataPath, accessor=toArray, ext=ext, startIdx=startIdx,
                     stopIdx=stopIdx, recursive=recursive, npartitions=npartitions,
-                    dims=newDims, dtype=dtype, recount=recount)
+                    dims=newdims, dtype=dtype, recount=recount)
 
 def fromTif(dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, nplanes=None,
             npartitions=None):
@@ -256,7 +257,7 @@ def fromTif(dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, n
         multipage = Image.open(fbuf)
         if multipage.mode.startswith('I') and 'S' in multipage.mode:
             # signed integer tiff file; use tifffile module to read
-            import thunder.rdds.fileio.tifffile as tifffile
+            import thunder.data.fileio.tifffile as tifffile
             fbuf.seek(0)  # reset pointer after read done by PIL
             tfh = tifffile.TiffFile(fbuf)
             ary = tfh.asarray()  # ary comes back with pages as first dimension, will need to transpose
@@ -337,11 +338,12 @@ def fromPng(dataPath, ext='png', startIdx=None, stopIdx=None, recursive=False, n
         If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
         partition per image file.
     """
-    from matplotlib.pyplot import imread
+    from scipy.misc import imread
 
-    def readPngFromBuf(buf):
+    def readPngFromBuf(idxAndBuf):
+        idx, buf = idxAndBuf
         fbuf = BytesIO(buf)
-        return imread(fbuf, format='png')
+        yield idx, imread(fbuf)
 
     return fromPath(dataPath, accessor=readPngFromBuf, ext=ext, startIdx=startIdx,
                     stopIdx=stopIdx, recursive=recursive, npartitions=npartitions)

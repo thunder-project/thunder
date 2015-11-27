@@ -452,16 +452,66 @@ class Images(Data):
         renumberedRdd = self.rdd.values().zipWithIndex().map(lambda (ary, idx): (idx, ary))
         return self._constructor(renumberedRdd).__finalize__(self)
 
-    def toPng(self, outputDirPath, cmap=None, vmin=None, vmax=None, prefix="image", overwrite=False):
+    def toPng(self, path, prefix="image", overwrite=False):
         """
-        Write images to PNG files
+        Write 2d or 3d images as PNG files.
+
+        Files will be written into a newly-created directory.
+        Three-dimensional data will be treated as RGB channels.
+
+        Parameters
+        ----------
+        path : string
+            Path to output directory, must be one level below an existing directory.
+
+        prefix : string
+            String to prepend to filenames.
+
+        overwrite : bool
+            If true, the directory given by path will first be deleted if it exists.
         """
         from thunder.data.images.writers import toPng
-        toPng(self, outputDirPath, cmap, vmin=vmin, vmax=vmax, prefix=prefix, overwrite=overwrite)
+        # TODO add back colormap and vmin/vmax
+        toPng(self, path, prefix=prefix, overwrite=overwrite)
 
-    def toBinary(self, outputDirPath, prefix="image", overwrite=False):
+    def toTif(self, path, prefix="image", overwrite=False):
         """
-        Write images to binary files
+        Write 2d or 3d images as TIF files.
+
+        Files will be written into a newly-created directory.
+        Three-dimensional data will be treated as RGB channels.
+
+        Parameters
+        ----------
+        path : string
+            Path to output directory, must be one level below an existing directory.
+
+        prefix : string
+            String to prepend to filenames.
+
+        overwrite : bool
+            If true, the directory given by path will first be deleted if it exists.
+        """
+        from thunder.data.images.writers import toTif
+        # TODO add back colormap and vmin/vmax
+        toTif(self, path, prefix=prefix, overwrite=overwrite)
+
+    def toBinary(self, path, prefix="image", overwrite=False):
+        """
+        Write out images or volumes as flat binary files.
+
+        Files will be written into a newly-created directory.
+
+        Parameters
+        ----------
+        path : string
+            Path to output directory, must be one level below an existing directory.
+
+        prefix : string
+            String to prepend to filenames.
+
+        overwrite : bool
+            If true, the directory given by path will first be deleted if it exists.
         """
         from thunder.data.images.writers import toBinary
-        toBinary(self, outputDirPath, prefix=prefix, overwrite=overwrite)
+        toBinary(self, path, prefix=prefix, overwrite=overwrite)
