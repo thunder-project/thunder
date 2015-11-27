@@ -124,35 +124,6 @@ def parseMemoryString(memStr):
         return int(memStr)
 
 
-def handleFormat(filename, format):
-    """
-    Given a string with filename, either:
-
-    (1) obtain format from the filename's extension or
-    (2) use the specified format to append an extension to filename
-
-    Returns the path to the file, the filename, and the inferred format
-    """
-    import os
-    from thunder.utils.context import DEFAULT_EXTENSIONS
-
-    file = os.path.basename(filename)
-    path = os.path.dirname(filename)
-    parts = os.path.splitext(file)
-    ext = parts[1][1:]
-
-    if format is None:
-        if len(ext) == 0:
-            raise Exception("Cannot infer file type from name %s" % filename)
-        else:
-            format = ext
-    else:
-        if len(ext) == 0:
-            file += "." + DEFAULT_EXTENSIONS[format]
-
-    return path, file, format
-
-
 def raiseErrorIfPathExists(path, credentials=None):
     """
     The ValueError message will suggest calling with overwrite=True; this function is expected to be

@@ -1,27 +1,3 @@
-"""Classes that abstract writing to various types of filesystems.
-
-Currently two types of 'filesystem' are supported:
-
-* the local file system, via python's native file() objects
-
-* Amazon's S3 or Google Storage, using the boto library (only if boto is installed; boto is not a requirement)
-
-For each filesystem, three types of writer classes are provided:
-
-* parallel writers are intended to serve as a data sink at the end of a Spark workflow. They provide a `writerFcn(kv)`
-method, which is intended to be used inside a Spark foreach() call (for instance: myrdd.foreach(writer.writerFcn)).
-They expect to be given key, value pairs where the key is a filename (not including a directory component in the path),
-and the value is a string buffer.
-
-* file writers abstract across the supported filesystems, providing a common writeFile(buf) interface that writes
-the contents of buf to a file object specified at writer initialization.
-
-* collected file writers are intended to be used after a Spark collect() call. They provide similar functionality
-to the parallel writers, but operate only on the driver rather than distributed across all nodes. This is intended
-to make it easier to write the results of an analysis to the local filesystem, without requiring NFS or a similar
-distributed file system available on all worker nodes.
-
-"""
 import os
 import shutil
 import urllib
@@ -41,8 +17,6 @@ except ImportError:
 class LocalFSParallelWriter(object):
     def __init__(self, dataPath, overwrite=False, **kwargs):
         self._dataPath = dataPath
-        # thanks stack overflow:
-        # http://stackoverflow.com/questions/5977576/is-there-a-convenient-way-to-map-a-file-uri-to-os-path
         self._absPath = urllib.url2pathname(urlparse.urlparse(dataPath).path)
         self._overwrite = overwrite
         self._checked = False

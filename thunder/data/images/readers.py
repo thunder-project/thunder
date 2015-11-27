@@ -253,13 +253,15 @@ def fromTif(dataPath, ext='tif', startIdx=None, stopIdx=None, recursive=False, n
 
     def multitifReader(idxAndBuf):
         idx, buf = idxAndBuf
-        pageCount = -1
         values = []
         fbuf = BytesIO(buf)
         multipage = Image.open(fbuf)
         if multipage.mode.startswith('I') and 'S' in multipage.mode:
             # signed integer tiff file; use tifffile module to read
-            import thunder.data.fileio.tifffile as tifffile
+            try:
+                import tifffile
+            except ImportError:
+                raise ImportError('Cannot import tiffile, required for signed tifs')
             fbuf.seek(0)  # reset pointer after read done by PIL
             tfh = tifffile.TiffFile(fbuf)
             ary = tfh.asarray()  # ary comes back with pages as first dimension, will need to transpose
