@@ -36,7 +36,7 @@ class TimeSeries(Series):
     def _constructor(self):
         return TimeSeries
 
-    def _makeWindowMasks(self, indices, window):
+    def _makewindows(self, indices, window):
         """
         Make masks used by windowing functions
 
@@ -65,7 +65,7 @@ class TimeSeries(Series):
         masks = [arange(where(index == i)[0][0]-before, where(index == i)[0][0]+after) for i in indices]
         return masks
 
-    def meanByWindow(self, indices, window):
+    def mean_by_window(self, indices, window):
         """
         Average time series across multiple windows specified by their centers
 
@@ -77,12 +77,12 @@ class TimeSeries(Series):
         window : int
             Window size
         """
-        masks = self._makeWindowMasks(indices, window)
+        masks = self._makewindows(indices, window)
         rdd = self.rdd.mapValues(lambda x: mean([x[m] for m in masks], axis=0))
         index = arange(0, len(masks[0]))
         return self._constructor(rdd, index=index).__finalize__(self)
 
-    def groupByWindow(self, indices, window):
+    def group_by_window(self, indices, window):
         """
         Group time series into multiple windows specified by their centers
 
@@ -94,7 +94,7 @@ class TimeSeries(Series):
         window : int
             Window size
         """
-        masks = self._makeWindowMasks(indices, window)
+        masks = self._makewindows(indices, window)
         tupleize = lambda k: k if isinstance(k, tuple) else (k,)
         rdd = self.rdd.flatMap(lambda (k, x): [(tupleize(k) + (i, ), x[m]) for i, m in enumerate(masks)])
         index = arange(0, len(masks[0]))
@@ -182,7 +182,7 @@ class TimeSeries(Series):
 
         return self._constructor(newrdd, index=newindex).__finalize__(self)
 
-    def crossCorr(self, signal, lag=0, var=None):
+    def crosscorr(self, signal, lag=0):
         """
         Cross correlate time series data against another signal
 
@@ -191,17 +191,12 @@ class TimeSeries(Series):
         signal : array
             Signal to correlate against (must be 1D)
 
-        var : str
-            Variable name if loading from a MAT file
-
         lag : int
             Range of lags to consider, will cover (-lag, +lag)
         """
         from scipy.linalg import norm
 
         s = asarray(signal)
-
-        # standardize signal
         s = s - mean(s)
         s = s / norm(s)
 
@@ -216,7 +211,7 @@ class TimeSeries(Series):
             sShifted = zeros((m, d))
             for i in range(0, len(shifts)):
                 tmp = roll(s, shifts[i])
-                if shifts[i] < 0:  # zero padding
+                if shifts[i] < 0:
                     tmp[(d+shifts[i]):] = 0
                 if shifts[i] > 0:
                     tmp[:shifts[i]] = 0
@@ -269,7 +264,7 @@ class TimeSeries(Series):
             yy = polyval(p, x)
             return y - yy
 
-        return self.applyvalues(func, keepindex=True)
+        return self.apply_values(func, keepindex=True)
 
     def normalize(self, method='percentile', window=None, perc=20):
         """
@@ -319,5 +314,5 @@ class TimeSeries(Series):
             b = baseFunc(y)
             return (y - b) / (b + 0.1)
 
-        return self.applyvalues(get, keepindex=True)
+        return self.apply_values(get, keepindex=True)
 

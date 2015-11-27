@@ -68,7 +68,7 @@ class SVD(object):
             raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')
 
         if not (isinstance(mat, Matrix)):
-            mat = mat.toMatrix()
+            mat = mat.tomatrix()
 
         checkist.opts(self.method, ['auto', 'direct', 'em'])
 

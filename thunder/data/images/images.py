@@ -129,7 +129,7 @@ class Images(Data):
         --------
         Images.toBlocks
         """
-        return self.toBlocks(size).toSeries().toTimeSeries()
+        return self.toBlocks(size).toSeries().totimeseries()
 
     def toSeries(self, size="150M"):
         """
@@ -319,7 +319,7 @@ class Images(Data):
         return self._constructor(
             self.rdd.mapValues(lambda v: filter_(v))).__finalize__(self)
 
-    def localCorr(self, neighborhood=2):
+    def localcorr(self, neighborhood=2):
         """
         Correlate every pixel to the average of its local neighborhood.
 
@@ -347,12 +347,12 @@ class Images(Data):
 
         # Union the averaged images with the originals to create an Images object containing 2N images (where
         # N is the original number of images), ordered such that the first N images are the averaged ones.
-        combined = self.rdd.union(blurred.applykeys(lambda k: k + nimages).rdd)
+        combined = self.rdd.union(blurred.apply_keys(lambda k: k + nimages).rdd)
         combinedImages = self._constructor(combined, nrecords=(2 * nimages)).__finalize__(self)
 
         # Correlate the first N (averaged) records with the last N (original) records
         series = combinedImages.toSeries()
-        corr = series.applyvalues(lambda x: corrcoef(x[:nimages], x[nimages:])[0, 1])
+        corr = series.apply_values(lambda x: corrcoef(x[:nimages], x[nimages:])[0, 1])
 
         return corr.pack()
 
@@ -441,7 +441,7 @@ class Images(Data):
                 raise Exception('Cannot subtract image with dimensions %s '
                                 'from images with dimension %s' % (str(val.shape), str(self.dims)))
 
-        return self.applyvalues(lambda x: x - val)
+        return self.apply_values(lambda x: x - val)
 
     def renumber(self):
         """

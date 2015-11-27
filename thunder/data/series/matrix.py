@@ -104,7 +104,7 @@ class Matrix(Series):
 
         Parameters
         ----------
-        method : string, optional, default = "reduce"
+        method : string, optional, default = "accum"
             Method to use for summation
         """
 
@@ -188,7 +188,7 @@ class Matrix(Series):
             return self._constructor(self.rdd.mapValues(lambda x: dot(x, other_b.value)),
                                      nrows=self._nrows, ncols=new_d, index=newindex).__finalize__(self)
 
-    def elementwise(self, other, op):
+    def element_wise(self, other, op):
         """
         Apply an elementwise operation to distributed matrices.
 
@@ -210,18 +210,20 @@ class Matrix(Series):
         if dtype is Matrix:
             if (self.nrows is not other.nrows) | (self.ncols is not other.ncols):
                 raise Exception(
-                    "cannot do elementwise op for shapes ("+self.nrows+","+self.ncols+") and ("+other.nrows+","+other.ncols+")")
+                    "cannot do elementwise op for shapes (" + self.nrows + "," + self.ncols +
+                    ") and (" + other.nrows + "," + other.ncols + ")")
             else:
-                return self._constructor(
-                    self.rdd.zip(other.rdd).map(lambda ((k1, x), (k2, y)): (k1, add(x, y)))).__finalize__(self)
+                func = lambda ((k1, x), (k2, y)): (k1, add(x, y))
+                return self._constructor(self.rdd.zip(other.rdd).map(func)).__finalize__(self)
         else:
             if dtype is ndarray:
                 dims = shape(other)
                 if len(dims) > 1 or dims[0] is not self.ncols:
                     raise Exception(
-                        "cannot do elementwise operation for shapes ("+str(self.nrows)+","+str(self.ncols)+") and " + str(dims))
-            return self._constructor(
-                self.rdd.mapValues(lambda x: op(x, other))).__finalize__(self)
+                        "cannot do elementwise operation for shapes (" + str(self.nrows) +
+                        "," + str(self.ncols) + ") and " + str(dims))
+            func = lambda x: op(x, other)
+            return self._constructor(self.rdd.mapValues(func)).__finalize__(self)
 
     def plus(self, other):
         """
@@ -232,7 +234,7 @@ class Matrix(Series):
         elementwise
 
         """
-        return Matrix.elementwise(self, other, add)
+        return Matrix.element_wise(self, other, add)
 
     def minus(self, other):
         """
@@ -242,9 +244,9 @@ class Matrix(Series):
         --------
         elementwise
         """
-        return Matrix.elementwise(self, other, subtract)
+        return Matrix.element_wise(self, other, subtract)
 
-    def dotTimes(self, other):
+    def dottimes(self, other):
         """
         Elementwise division of distributed matrices.
 
@@ -252,9 +254,9 @@ class Matrix(Series):
         --------
         elementwise
         """
-        return Matrix.elementwise(self, other, multiply)
+        return Matrix.element_wise(self, other, multiply)
 
-    def dotDivide(self, other):
+    def dotdivide(self, other):
         """
         Elementwise division of distributed matrices.
 
@@ -262,7 +264,7 @@ class Matrix(Series):
         --------
         elementwise
         """
-        return Matrix.elementwise(self, other, divide)
+        return Matrix.element_wise(self, other, divide)
 
 
 def matrixSumIterator_self(iterator):

@@ -86,7 +86,7 @@ def test_from_binary_keys(tmpdir):
 def test_to_binary(tmpdir):
     a = arange(8, dtype='int16').reshape((4, 2))
     p = str(tmpdir) + '/data'
-    fromArray(a, npartitions=1).toBinary(p)
+    fromArray(a, npartitions=1).tobinary(p)
     files = [os.path.basename(f) for f in glob.glob(str(tmpdir) + '/data/*')]
     assert sorted(files) == ['SUCCESS', 'conf.json', 'key00_00000.bin']
 
@@ -95,6 +95,6 @@ def test_to_binary_roundtrip(tmpdir):
     a = arange(8, dtype='int16').reshape((4, 2))
     p = str(tmpdir) + '/data'
     data = fromArray(a, npartitions=1)
-    data.toBinary(p)
+    data.tobinary(p)
     loaded = fromBinary(p)
     assert allclose(data.toarray(), loaded.toarray())

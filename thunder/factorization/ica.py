@@ -83,7 +83,7 @@ class ICA(object):
             raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')
 
         if not isinstance(data, Matrix):
-            data = data.toMatrix()
+            data = data.tomatrix()
 
         d = data.ncols
 

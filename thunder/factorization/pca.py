@@ -58,7 +58,7 @@ class PCA(object):
             raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')
 
         if type(data) is not Matrix:
-            data = data.toMatrix()
+            data = data.tomatrix()
 
         mat = data.center(1)
 
@@ -92,7 +92,7 @@ class PCA(object):
             raise Exception('Input must be Series or a subclass (e.g. RowMatrix)')
 
         if type(data) is not Matrix:
-            data = data.toMatrix()
+            data = data.tomatrix()
 
         mat = data.center(1)
         scores = mat.times(self.comps.T / self.latent)

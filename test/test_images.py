@@ -126,6 +126,6 @@ def test_localcorr():
         array([[3.0, 4.0, 1.0], [5.0, 8.0, 1.0], [6.0, 2.0, 1.0]])
     ]
     data = fromList(imgs)
-    vals = data.localCorr(1)
+    vals = data.localcorr(1)
     truth = corrcoef(map(lambda i: i.mean(), imgs), array([4.0, 2.0, 8.0]))[0, 1]
     assert allclose(vals[1][1], truth)

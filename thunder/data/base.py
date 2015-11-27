@@ -56,9 +56,9 @@ class Data(object):
         if isinstance(other, Data):
             for name in self._metadata:
                 if name not in noprop:
-                    otherattr = getattr(other, name, None)
-                    if (otherattr is not None) and (getattr(self, name, None) is None):
-                        object.__setattr__(self, name, otherattr)
+                    attr = getattr(other, name, None)
+                    if (attr is not None) and (getattr(self, name, None) is None):
+                        object.__setattr__(self, name, attr)
         return self
 
     def __getitem__(self, item):
@@ -302,7 +302,6 @@ class Data(object):
         New Data object, of same type as self, with values cast to the requested dtype; or self if no cast is performed.
         """
         from numpy import ndarray
-        from numpy import dtype as dtypeFunc
 
         if dtype is None or dtype == '':
             return self
@@ -317,7 +316,7 @@ class Data(object):
             else:
                 return asarray([v]).astype(dtype_, casting=casting_, copy=False)[0]
 
-        new = self.rdd.mapValues(lambda v: cast(v, dtypeFunc(dtype), casting))
+        new = self.rdd.mapValues(lambda v: cast(v, dtype, casting))
         return self._constructor(new, dtype=str(dtype)).__finalize__(self)
 
     def apply(self, func, keepdtype=False, keepindex=False):
@@ -347,7 +346,7 @@ class Data(object):
             noprop += ('_index',)
         return self._constructor(self.rdd.map(func)).__finalize__(self, noprop=noprop)
 
-    def applykeys(self, func, **kwargs):
+    def apply_keys(self, func, **kwargs):
         """
         Apply arbitrary function to the keys of a Data object, preserving the values.
 
@@ -358,7 +357,7 @@ class Data(object):
 
         return self.apply(lambda (k, v): (func(k), v), **kwargs)
 
-    def applyvalues(self, func, **kwargs):
+    def apply_values(self, func, **kwargs):
         """
         Apply arbitrary function to the values of a Data object, preserving the keys.
 
@@ -552,7 +551,7 @@ class Data(object):
         """
         return self._constructor(self.rdd.filter(lambda d: func(d))).__finalize__(self)._reset()
 
-    def filterkeys(self, func):
+    def filter_keys(self, func):
         """
         Filter records by applying a function to keys
 
@@ -562,7 +561,7 @@ class Data(object):
         """
         return self._constructor(self.rdd.filter(lambda (k, v): func(k))).__finalize__(self)._reset()
 
-    def filtervalues(self, func):
+    def filter_values(self, func):
         """
         Filter records by applying a function to values
 
@@ -586,4 +585,4 @@ class Data(object):
         if start >= stop:
             raise ValueError("Start (%g) is greater than or equal to stop (%g), result will be empty" % (start, stop))
 
-        return self.filterkeys(lambda k: start <= k < stop)
+        return self.filter_keys(lambda k: start <= k < stop)

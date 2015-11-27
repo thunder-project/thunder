@@ -37,7 +37,7 @@ class KMeansModel(object):
         centers = self.centers
 
         if isinstance(data, Series):
-            return data.applyvalues(lambda x: func(centers, x))
+            return data.apply_values(lambda x: func(centers, x))
 
         elif isinstance(data, list):
             return map(lambda x: func(centers, x), data)
