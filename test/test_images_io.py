@@ -203,7 +203,7 @@ def test_to_png(tmpdir):
     a = [arange(8, dtype='int16').reshape((4, 2)), arange(8, 16, dtype='int16').reshape((4, 2))]
     fromList(a).toPng(os.path.join(str(tmpdir), 'images'), prefix='image')
     files = [os.path.basename(f) for f in glob.glob(str(tmpdir) + '/images/image*')]
-    assert files == ['image-00000.png', 'image-00001.png']
+    assert sorted(files) == ['image-00000.png', 'image-00001.png']
 
 
 def test_to_png_roundtrip(tmpdir):
@@ -218,7 +218,7 @@ def test_to_tif(tmpdir):
     a = [arange(8, dtype='int16').reshape((4, 2)), arange(8, 16, dtype='int16').reshape((4, 2))]
     fromList(a).toTif(os.path.join(str(tmpdir), 'images'), prefix='image')
     files = [os.path.basename(f) for f in glob.glob(str(tmpdir) + '/images/image*')]
-    assert files == ['image-00000.tif', 'image-00001.tif']
+    assert sorted(files) == ['image-00000.tif', 'image-00001.tif']
 
 
 def test_to_tif_roundtrip(tmpdir):

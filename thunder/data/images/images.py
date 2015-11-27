@@ -1,4 +1,4 @@
-from numpy import ndarray, arange, amax, amin, size, asarray
+from numpy import ndarray, arange, amax, amin, size
 
 from ..base import Data
 from ..keys import Dimensions
