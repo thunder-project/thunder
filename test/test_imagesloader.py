@@ -3,7 +3,7 @@ from numpy import arange, array_equal, ndarray
 from numpy import dtype as dtypeFunc
 import os
 import unittest
-from nose.tools import assert_almost_equal, assert_equals, assert_raises, assert_true
+from nose.tools import assert_almost_equal, assert_equals, assert_raises, assert_true, nottest
 
 from thunder.rdds.fileio.imagesloader import ImagesLoader
 from test_utils import PySparkTestCase, PySparkTestCaseWithOutputDir
@@ -41,6 +41,7 @@ class TestImagesFileLoaders(PySparkTestCase):
         assert_equals(0, collectedImage[0][0])  # check key
         assert_true(array_equal(ary, collectedImage[0][1]))  # check value
 
+    @nottest
     def test_fromOCP(self):
         from urllib2 import urlopen, Request, URLError
         try:

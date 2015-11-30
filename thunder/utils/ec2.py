@@ -166,6 +166,7 @@ def install_anaconda(master, opts):
 
     # setup anaconda
     print_status("Installing Anaconda")
+    ssh(master, opts, "yum install -y pssh")
     ssh(master, opts, "rm -rf /root/anaconda && bash Anaconda-2.1.0-Linux-x86_64.sh -b "
                       "&& rm Anaconda-2.1.0-Linux-x86_64.sh")
     ssh(master, opts, "echo 'export PATH=/root/anaconda/bin:$PATH:/root/spark/bin' >> /root/.bash_profile")
@@ -179,7 +180,7 @@ def install_anaconda(master, opts):
     # update core libraries
     print_status("Updating Anaconda libraries")
     ssh(master, opts, "/root/anaconda/bin/conda update --yes numpy scipy ipython")
-    ssh(master, opts, "/root/anaconda/bin/conda install --yes jsonschema pillow seaborn scikit-learn")
+    ssh(master, opts, "/root/anaconda/bin/conda install --yes jsonschema pillow seaborn scikit-learn jupyter")
     print_success()
 
     # add mistune (for notebook conversions)
@@ -336,7 +337,15 @@ def setup_cluster(conn, master_nodes, slave_nodes, opts, deploy_ssh_key):
     if opts.ganglia:
         modules.append('ganglia')
 
-    if spark_home_loose_version >= LooseVersion("1.3.0"):
+    if spark_home_loose_version >= LooseVersion("1.5.0"):
+        ssh(host=master,
+            opts=opts,
+            command="rm -rf spark-ec2"
+            + " && "
+            + "git clone {r} -b {b} spark-ec2".format(r=opts.spark_ec2_git_repo,
+                                                      b=opts.spark_ec2_git_branch)
+            )
+    elif spark_home_loose_version >= LooseVersion("1.3.0"):
         MESOS_SPARK_EC2_BRANCH = "branch-1.3"
         ssh(master, opts, "rm -rf spark-ec2 && git clone https://github.com/mesos/spark-ec2.git "
                           "-b {b}".format(b=MESOS_SPARK_EC2_BRANCH))
@@ -358,6 +367,11 @@ def setup_cluster(conn, master_nodes, slave_nodes, opts, deploy_ssh_key):
 if __name__ == "__main__":
     spark_home_version_string = get_spark_version_string(MINIMUM_SPARK_VERSION)
     spark_home_loose_version = LooseVersion(spark_home_version_string)
+
+    if spark_home_loose_version >= LooseVersion("1.5.0"):
+        DEFAULT_SPARK_EC2_GITHUB_REPO = "https://github.com/amplab/spark-ec2"
+    else:
+        DEFAULT_SPARK_EC2_GITHUB_REPO = "https://github.com/mesos/spark-ec2"
 
     parser = OptionParser(usage="thunder-ec2 [options] <action> <clustername>",  add_help_option=False)
     parser.add_option("-h", "--help", action="help", help="Show this help message and exit")
@@ -455,15 +469,23 @@ if __name__ == "__main__":
         parser.add_option("--placement-group", type="string", default=None,
                           help="Which placement group to try and launch instances into. Assumes placement "
                                "group is already created.")
-    parser.add_option("--spark-ec2-git-repo", default="https://github.com/mesos/spark-ec2",
+    if spark_home_loose_version >= LooseVersion("1.5.0"):
+        parser.add_option("--instance-initiated-shutdown-behavior",
+                          default="stop", choices=["stop", "terminate"],
+                          help="Whether instances should terminate when shut down or just stop")
+        parser.add_option("--instance-profile-name", default=None,
+                          help="IAM profile name to launch instances under")
+        parser.add_option("--additional-tags", type="string", default="",
+                          help="Additional tags to set on the machines; tags are comma-separated, while name and " +
+                          "value are colon separated; ex: \"Task:MySparkProject,Env:production\"")
+    parser.add_option("--spark-ec2-git-repo", default=DEFAULT_SPARK_EC2_GITHUB_REPO,
                       help="Github repo from which to checkout spark-ec2 (default: %default)")
-    parser.add_option("--spark-ec2-git-branch", default="branch-1.3",
+    parser.add_option("--spark-ec2-git-branch", default="branch-1.5",
                       help="Github repo branch of spark-ec2 to use (default: %default)")
     parser.add_option("--private-ips", action="store_true", default=False,
                       help="Use private IPs for instances rather than public if VPC/subnet " +
                       "requires that.")
 
-    
     (opts, args) = parser.parse_args()
     if len(args) != 2:
         parser.print_help()
