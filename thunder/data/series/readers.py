@@ -8,7 +8,9 @@ def fromrdd(rdd, **kwargs):
     return Series(rdd, **kwargs)
 
 def fromlist(items, accessor=None, keys=None, npartitions=None, index=None, **kwargs):
-
+    """
+    Create a Series object from a list.
+    """
     if mode() == 'spark':
         nrecords = len(items)
         if not keys:
@@ -40,19 +42,17 @@ def fromarray(arrays, npartitions=None, index=None, keys=None):
     dtype = arrays[0].dtype
     for ary in arrays:
         if not ary.shape == shape:
-            raise ValueError("Inconsistent array shapes: first array had shape %s, but other array has shape %s" %
-                             (str(shape), str(ary.shape)))
+            raise ValueError("Inconsistent array shapes: first array had shape %s, "
+                             "but other array has shape %s" % (str(shape), str(ary.shape)))
         if not ary.dtype == dtype:
-            raise ValueError("Inconsistent array dtypes: first array had dtype %s, but other array has dtype %s" %
-                             (str(dtype), str(ary.dtype)))
+            raise ValueError("Inconsistent array dtypes: first array had dtype %s, "
+                             "but other array has dtype %s" % (str(dtype), str(ary.dtype)))
 
     return fromlist(arrays, keys=keys, npartitions=npartitions, dtype=str(dtype), index=index)
 
 def frommat(path, var, npartitions=None, keyFile=None, index=None):
     """
     Loads Series data stored in a Matlab .mat file.
-
-    `datafile` must refer to a path visible to all workers, such as on NFS or similar mounted shared filesystem.
     """
     from scipy.io import loadmat
     data = loadmat(path)[var]
@@ -68,8 +68,6 @@ def frommat(path, var, npartitions=None, keyFile=None, index=None):
 def fromnpy(path, npartitions=None, keyfile=None, index=None):
     """
     Loads Series data stored in the numpy save() .npy format.
-
-    `datafile` must refer to a path visible to all workers, such as on NFS or similar mounted shared filesystem.
     """
     data = load(path)
     if data.ndim > 2:
@@ -87,15 +85,13 @@ def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64'):
 
     Parameters
     ----------
-    dataPath : string
-        Specifies the file or files to be loaded. dataPath may be either a URI (with scheme specified) or a path
-        on the local filesystem.
-        If a path is passed (determined by the absence of a scheme component when attempting to parse as a URI),
-        and it is not already a wildcard expression and does not end in <ext>, then it will be converted into a
-        wildcard pattern by appending '/*.ext'. This conversion can be avoided by passing a "file://" URI.
+    path : string
+        Directory to load from, can be a URI string with scheme
+        (e.g. "file://", "s3n://", or "gs://"), or a single file,
+        or a directory, or a directory with a single wildcard character.
 
     dtype: dtype or dtype specifier, default 'float64'
-
+        Numerical type to use for data after converting from text.
     """
     if mode() == 'spark':
         from thunder.data.fileio.readers import normalizeScheme
@@ -114,55 +110,62 @@ def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64'):
     else:
         raise NotImplementedError("Loading not implemented for '%s' mode" % mode())
 
-def frombinary(path, ext='bin', confFilename='conf.json', nkeys=None, nvalues=None,
-               keyType=None, valueType=None, newDtype='smallfloat', casting='safe'):
+def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
+               keytype=None, valuetype=None, newdtype='smallfloat', casting='safe'):
     """
-    Load a Series object from a directory of binary files.
+    Load a Series object from a binary files.
 
     Parameters
     ----------
-    dataPath : string URI or local filesystem path
-        Specifies the directory or files to be loaded. May be formatted as a URI string with scheme (e.g. "file://",
-        "s3n://", or "gs://"). If no scheme is present, will be interpreted as a path on the local filesystem. This path
-        must be valid on all workers. Datafile may also refer to a single file, or to a range of files specified
-        by a glob-style expression using a single wildcard character '*'.
+    path : string URI or local filesystem path
+        Directory to load from, can be a URI string with scheme
+        (e.g. "file://", "s3n://", or "gs://"), or a single file,
+        or a directory, or a directory with a single wildcard character.
 
-    newDtype : dtype or dtype specifier or string 'smallfloat' or None, optional, default 'smallfloat'
-        Numpy dtype of output series data. Most methods expect Series data to be floating-point. Input data will be
-        cast to the requested `newdtype` if not None - see Data `astype()` method.
+    ext : str, optional, default='bin'
+        Optional file extension specifier.
 
-    casting : 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
-        Casting method to pass on to numpy's `astype()` method; see numpy documentation for details.
+    conf : str
+        Name of conf file with type and size information.
 
-    maxPartitionSize : str, optional, default = '32mb'
-        Maximum size of partitions as Java-style memory, will indirectly control the number of partitions
+    nkeys, nvalues : int
+        Parameters of binary data, can be specified here or in a configuration file.
+
+    keytype, valuetype : str
+        Parameters of binary data, can be specified here or in a configuration file.
+
+    newdtype : dtype or string 'smallfloat' or None, optional, default='smallfloat'
+        Numpy dtype to recast output series data to.
+
+    casting : 'no' | 'equiv' | 'safe' | 'same_kind' | 'unsafe', optional, default='safe'
+        Casting method to pass on to numpy's `astype()` method.
 
     """
-    params = binaryconfig(path, confFilename, nkeys, nvalues, keyType, valueType)
+    params = binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype)
 
     from thunder.data.fileio.readers import normalizeScheme
-    dataPath = normalizeScheme(path, ext)
+    path = normalizeScheme(path, ext)
 
     from numpy import dtype as dtypeFunc
     keytype = dtypeFunc(params.keytype)
     valuetype = dtypeFunc(params.valuetype)
 
-    keySize = params.nkeys * keytype.itemsize
-    recordSize = keySize + params.nvalues * valuetype.itemsize
+    keysize = params.nkeys * keytype.itemsize
+    recordsize = keysize + params.nvalues * valuetype.itemsize
 
     if mode() == 'spark':
-        lines = engine().binaryRecords(dataPath, recordSize)
+        lines = engine().binaryRecords(path, recordsize)
 
         def get(kv):
-            k = tuple(int(x) for x in frombuffer(buffer(kv, 0, keySize), dtype=keytype))
-            v = frombuffer(buffer(kv, keySize), dtype=valuetype)
-            return (k, v) if keySize > 0 else v
+            k = tuple(int(x) for x in frombuffer(buffer(kv, 0, keysize), dtype=keytype))
+            v = frombuffer(buffer(kv, keysize), dtype=valuetype)
+            return (k, v) if keysize > 0 else v
 
         raw = lines.map(get)
-        if keySize == 0:
+        if keysize == 0:
             raw = raw.zipWithIndex().map(lambda (v, k): ((k,), v))
         data = fromrdd(raw, dtype=str(valuetype), index=arange(params.nvalues))
-        return data.astype(newDtype, casting)
+        return data.astype(newdtype, casting)
 
     else:
         raise NotImplementedError("Loading not implemented for '%s' mode" % mode())

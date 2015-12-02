@@ -2,6 +2,7 @@ import pytest
 from numpy import arange, array, allclose, ones
 
 from thunder.data.images.readers import fromlist
+from thunder.data.series.readers import frombinary
 
 pytestmark = pytest.mark.usefixtures("context")
 
@@ -62,6 +63,16 @@ def test_blocks_conversion_3d():
     data = fromlist([a])
     vals = data.toblocks((2, 3, 4), units='splits').toseries().pack()
     assert allclose(vals, a)
+
+
+def test_blocks_io(tmpdir):
+    a = arange(24).reshape((2, 3, 4))
+    p = str(tmpdir) + '/data'
+    data = fromlist([a, a])
+    data.toblocks((2, 3, 4), units='splits').tobinary(p)
+    loaded = frombinary(p)
+    assert loaded.nrecords == 2 * 3 * 4
+    assert loaded.shape == (2, 3, 4, 2)
 
 
 def test_padded_blocks_conversion():

@@ -64,7 +64,7 @@ def test_from_binary(tmpdir):
     p = os.path.join(str(tmpdir), 'data.bin')
     with open(p, 'w') as f:
         f.write(a)
-    data = frombinary(p, nkeys=0, nvalues=2, keyType='int16', valueType='int16')
+    data = frombinary(p, nkeys=0, nvalues=2, keytype='int16', valuetype='int16')
     assert data.nrecords == 4
     assert allclose(data.keys().collect(), [(i,) for i in range(4)])
     assert allclose(data.values().collect(), a)
@@ -77,7 +77,7 @@ def test_from_binary_keys(tmpdir):
     p = os.path.join(str(tmpdir), 'data.bin')
     with open(p, 'w') as f:
         f.write(a)
-    data = frombinary(p, nkeys=1, nvalues=2, keyType='int16', valueType='int16')
+    data = frombinary(p, nkeys=1, nvalues=2, keytype='int16', valuetype='int16')
     assert data.nrecords == 10
     assert allclose(data.keys().collect(), k)
     assert allclose(data.values().collect(), v)

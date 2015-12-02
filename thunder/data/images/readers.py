@@ -88,46 +88,36 @@ def fromarray(arrays, npartitions=None):
 def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, recursive=False,
                nplanes=None, npartitions=None, conf='conf.json', order='C'):
     """
-    Load images from a directory of flat binary files
-
-    The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
-    files read in by this method.
-
-    Currently all binary data read by this method is assumed to be formatted as signed 16 bit integers in native
-    byte order.
+    Load images from a directory of flat binary files.
 
     Parameters
     ----------
+    path : str
+        Path to data files or directory, specified as either a local filesystem path
+        or in a URI-like format, including scheme. May include a single '*' wildcard character.
 
-    path: string
-        Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-        including scheme. A dataPath argument may include a single '*' wildcard character in the filename.
-
-    dims: tuple of positive int
+    dims : tuple of positive int
         Dimensions of input image data, ordered with fastest-changing dimension first
 
-    ext: string, optional, default "bin"
+    ext : string, optional, default "bin"
         Extension required on data files to be loaded.
 
-    start, stop: nonnegative int. optional.
-        Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
-        `datapath` and `ext`. Interpreted according to python slice indexing conventions.
+    start, stop: nonnegative int, optional, default=None
+        Indices of the first and last-plus-one file to load, relative to the sorted
+        filenames matching `path` and `ext`. Interpreted using python slice indexing conventions.
 
-    recursive: boolean, default False
-        If true, will recursively descend directories rooted at datapath, loading all files in the tree that
-        have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
-        (not S3 or GS).
+    recursive: boolean, optional, default=False
+        If true, will recursively descend directories rooted at datapath, loading all files
+        in the tree that have an extension matching 'ext'.
+        Recursive loading is currently only implemented for local filesystems (not S3 or GS).
 
-    nplanes: positive integer, default None
-        If passed, will cause a single binary stack file to be subdivided into multiple records. Every
-        `nplanes` z-planes in the file will be taken as a new record, with the first nplane planes of the
-        first file being record 0, the second nplane planes being record 1, etc, until the first file is
-        exhausted and record ordering continues with the first nplane planes of the second file, and so on.
-        With nplanes=None (the default), a single file will be considered as representing a single record.
+    nplanes: positive integer, optional, default=None
+        If passed, will cause single files to be subdivided into nplanes separate images.
+        Otherwise, each file is taken to represent one image.
 
-    npartitions: positive int, optional.
-        If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
-        partition per image file.
+    npartitions: positive int, optional, default=None
+        Number of partitions for the underlying collection, if None will use
+        default partitioning of compute engine.
     """
     import json
     from thunder.data.fileio.readers import getFileReaderForPath, FileNotFoundError
@@ -144,7 +134,7 @@ def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, re
         dims = params['dims']
 
     if not dims:
-        raise ValueError("Image dimensions must be specified either as argument or in a conf.json file")
+        raise ValueError("Image dimensions must be specified as argument or in a conf.json file")
 
     if not dtype:
         dtype = 'int16'
@@ -153,7 +143,7 @@ def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, re
         if nplanes <= 0:
             raise ValueError("nplanes must be positive if passed, got %d" % nplanes)
         if dims[-1] % nplanes:
-            raise ValueError("Last dimension of binary image '%d' must be divisible by nplanes '%d'" %
+            raise ValueError("Last dimension '%d' must be divisible by nplanes '%d'" %
                              (dims[-1], nplanes))
 
     def getarray(idxAndBuf):

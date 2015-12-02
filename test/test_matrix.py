@@ -40,7 +40,7 @@ def test_outer():
     mat1 = fromlist([array([1, 2, 3]), array([4, 5, 6])]).tomatrix()
     resultA = mat1.gramian()
     resultB1 = mat1.gramian("accum")
-    resultB2 = mat1.gramian("aggregate")
+    resultB2 = mat1.gramian("reduce")
     truth = array([[17, 22, 27], [22, 29, 36], [27, 36, 45]])
     assert allclose(resultA, truth)
     assert allclose(resultB1, truth)

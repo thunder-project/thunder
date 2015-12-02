@@ -431,8 +431,8 @@ class Data(object):
         Sum of values computed by aggregating across records, returned as an ndarray
         with the same size as a single record.
 
-        If dtype is not None, then the values will first be cast to the requested type before the operation is
-        performed. See Data.astype() for details.
+        If dtype is not None, then the values will first be cast to the requested
+        type before the operation is performed. See Data.astype() for details.
 
         obj.sum() is equivalent to obj.astype(dtype, casting).rdd.values().sum().
         """
@@ -470,13 +470,13 @@ class Data(object):
 
         Parameters
         ----------
-        requestedStats: sequence of one or more requested stats, or 'all'
+        requestedStats : sequence of one or more requested stats, or 'all'
             Possible stats include 'mean', 'sum', 'min', 'max', 'variance', 'sampleVariance', 'stdev', 'sampleStdev'.
 
-        dtype: numpy dtype or dtype specifier, or string 'smallfloat', or None
+        dtype : numpy dtype or dtype specifier, or string 'smallfloat', or None
             Data type to which RDD values are to be cast before calculating stats. See Data.astype().
 
-        casting: 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
+        casting : 'no'|'equiv'|'safe'|'same_kind'|'unsafe', optional, default 'safe'
             Method of casting to use. See Data.astype() and numpy astype() function.
         """
         from thunder.utils.statcounter import StatCounter
@@ -490,11 +490,15 @@ class Data(object):
         return result
 
     def max(self):
-        """ Maximum of values across keys, returned as an ndarray. """
+        """
+        Maximum of values across keys, returned as an ndarray.
+        """
         return self.rdd.values().treeReduce(maximum, depth=3)
 
     def min(self):
-        """ Minimum of values across keys, returned as an ndarray. """
+        """
+        Minimum of values across keys, returned as an ndarray.
+        """
         return self.rdd.values().treeReduce(minimum, depth=3)
 
     def coalesce(self, npartitions):

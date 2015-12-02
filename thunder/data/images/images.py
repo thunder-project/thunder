@@ -19,7 +19,8 @@ class Images(Data):
             try:
                 dims = Dimensions.fromTuple(dims)
             except:
-                raise TypeError("Images dims parameter must be castable to Dimensions object, got: %s" % str(dims))
+                raise TypeError("Images dims parameter must be castable to "
+                                "Dimensions object, got: %s" % str(dims))
         self._dims = dims
 
     @property
@@ -78,7 +79,8 @@ class Images(Data):
         -------
         Blocks instance
         """
-        from thunder.data.blocks.strategy import BlockingStrategy, SimpleBlockingStrategy, PaddedBlockingStrategy
+        from thunder.data.blocks.strategy import \
+            BlockingStrategy, SimpleBlockingStrategy, PaddedBlockingStrategy
 
         stratClass = SimpleBlockingStrategy if not padding else PaddedBlockingStrategy
 
@@ -94,13 +96,13 @@ class Images(Data):
         blockingStrategy.setSource(self)
         avgSize = blockingStrategy.calcAverageBlockSize()
         if avgSize >= BlockingStrategy.DEFAULT_MAX_BLOCK_SIZE:
-            # TODO: use logging module here rather than print
-            print "Thunder WARNING: average block size of %g bytes exceeds suggested max size of %g bytes" % \
+            print "Thunder WARNING: average block size of %g bytes " \
+                  "exceeds suggested max size of %g bytes" % \
                   (avgSize, BlockingStrategy.DEFAULT_MAX_BLOCK_SIZE)
 
         returntype = blockingStrategy.getBlocksClass()
         vals = self.rdd.flatMap(blockingStrategy.blockingFunction, preservesPartitioning=False)
-        # fastest changing dimension (e.g. x) is first, so must sort reversed keys to get desired ordering
+        # fastest changing dimension (e.g. x) is first, so must sort reversed keys
         # sort must come after group, b/c group will mess with ordering.
         groupedvals = vals.groupBy(lambda (k, _): k.spatial).sortBy(lambda (k, _): tuple(k[::-1]))
         # groupedvals is now rdd of (z, y, x spatial key, [(partitioning key, numpy array)...]
@@ -163,7 +165,8 @@ class Images(Data):
             Which axis to compute projection along
         """
         if axis >= size(self.dims):
-            raise Exception("Axis for projection (%s) exceeds image dimensions (%s-%s)" % (axis, 0, size(self.dims)-1))
+            raise Exception("Axis for projection (%s) exceeds "
+                            "image dimensions (%s-%s)" % (axis, 0, size(self.dims)-1))
 
         proj = self.rdd.mapValues(lambda x: amax(x, axis))
         # update dimensions to remove axis of projection
@@ -210,9 +213,6 @@ class Images(Data):
             raise ValueError("All sampling factors must be positive; got " + str(sampleFactor))
 
         def divRoundup(a, b):
-            # thanks stack overflow & Eli Collins:
-            # http://stackoverflow.com/questions/7181757/how-to-implement-division-with-round-towards-infinity-in-python
-            # this only works for positive ints, but we've checked for that above
             return (a + b - 1) // b
 
         sampleSlices = [slice(0, dims[i], sampleFactor[i]) for i in xrange(ndims)]
@@ -326,8 +326,8 @@ class Images(Data):
         This algorithm computes, for every spatial record, the correlation coefficient
         between that record's series, and the average series of all records within
         a local neighborhood with a size defined by the neighborhood parameter.
-        The neighborhood is currently required to be a single integer, which represents the neighborhood
-        size in both x and y.
+        The neighborhood is currently required to be a single integer,
+        which represents the neighborhood size in both x and y.
 
         parameters
         ----------
@@ -345,8 +345,9 @@ class Images(Data):
         # Spatially average the original image set over the specified neighborhood
         blurred = self.uniformFilter((neighborhood * 2) + 1)
 
-        # Union the averaged images with the originals to create an Images object containing 2N images (where
-        # N is the original number of images), ordered such that the first N images are the averaged ones.
+        # Union the averaged images with the originals to create an
+        # Images object containing 2N images (where N is the original number of images),
+        # ordered such that the first N images are the averaged ones.
         combined = self.rdd.union(blurred.apply_keys(lambda k: k + nimages).rdd)
         combinedImages = self._constructor(combined, nrecords=(2 * nimages)).__finalize__(self)
 
@@ -381,7 +382,7 @@ class Images(Data):
 
         dimMinMaxTuples = zip(dimsCount, minbound, maxbound)
         if len(dimMinMaxTuples) != ndims:
-            raise ValueError("Number of specified bounds (%d) must equal image dimensionality (%d)" % 
+            raise ValueError("Number of bounds (%d) must equal image dimensionality (%d)" %
                              (len(dimMinMaxTuples), ndims))
         slices = []
         newdims = []
@@ -394,8 +395,7 @@ class Images(Data):
                 slise = slice(minb, maxb)
                 newdims.append(maxb - minb)
             elif minb == maxb:
-                slise = minb  # just an integer index, not a slice; this squeezes out singleton dimensions
-                # don't append to newdims, this dimension will be squeezed out
+                slise = minb
             else:
                 raise ValueError("Minimum bound (%d) must be <= max bound (%d)" % (minb, maxb))
             slices.append(slise)
@@ -412,7 +412,7 @@ class Images(Data):
         Parameters
         ----------
         start, stop : int
-            Indices of region to crop in z, interpreted according to python slice indexing conventions.
+            Indices of region to crop in z, according to python slice indexing conventions.
 
         See also
         --------
@@ -447,7 +447,8 @@ class Images(Data):
         """
         Recalculates keys for this Images object.
 
-        New keys will be a sequence of consecutive integers, starting at 0 and ending at self.nrecords-1.
+        New keys will be a sequence of consecutive integers,
+        starting at 0 and ending at self.nrecords-1.
         """
         renumberedRdd = self.rdd.values().zipWithIndex().map(lambda (ary, idx): (idx, ary))
         return self._constructor(renumberedRdd).__finalize__(self)

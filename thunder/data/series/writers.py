@@ -2,22 +2,11 @@ from thunder import credentials
 
 def tobinary(series, path, overwrite=False):
     """
-    Writes out Series-formatted data.
-
-    This method (Series.saveAsBinarySeries) writes out binary series files using the current partitioning
-    of this Series object. (That is, if mySeries.rdd.getNumPartitions() == 5, then 5 files will be written
-    out, one per partition.) The records will not be resorted; the file names for each partition will be
-    taken from the key of the first Series record in that partition. If the Series object is already
-    sorted and no records have been removed by filtering, then the resulting output should be equivalent
-    to what one would get from calling myImages.saveAsBinarySeries().
-
-    If all one wishes to do is to save out Images data in a binary series format, then
-    tsc.convertImagesToSeries() will likely be more efficient than
-    tsc.loadImages().toSeries().saveAsBinarySeries().
+    Writes out data to binary format.
 
     Parameters
     ----------
-    series: Series
+    series : Series
         The data to write
 
     path : string path or URI to directory to be created

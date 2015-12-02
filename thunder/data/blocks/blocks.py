@@ -32,10 +32,10 @@ def slices_to_iterators(slices, shape):
 
     Parameters
     ----------
-    slices: tuple
+    slices : tuple
         Sequence of slices
 
-    shape: tuple of int
+    shape : tuple of int
         Same length as slices
 
     Returns
@@ -50,17 +50,17 @@ def record_iter(key, value):
 
     Parameters:
     -----------
-    key: BlockGroupingKey
+    key : BlockGroupingKey
         Key associated with the passed array value
 
-    value: ndarray
+    value : ndarray
         Array data for the block associated with the passed key
 
     Yields:
     --------
-    iterator< key, series >
-    key: tuple of int
-    series: 1d array of self.values.dtype
+    iterator < key, series >
+    key : tuple of int
+    series : 1d array of self.values.dtype
     """
     for spatialIndices in key.spatial_range():
         series = key.getseries(spatialIndices, value)
@@ -72,21 +72,21 @@ def block_iter(key, value):
 
     Parameters:
     -----------
-    key: BlockGroupingKey
+    key : BlockGroupingKey
         Key associated with the passed array value
 
-    value: ndarrary
+    value : ndarrary
         Array data for the block associated with the passed key
 
     Yields:
     -------
     iterator <ImageReconstructionKey, ndarray>
 
-    ImageReconstructionKey: new key
+    ImageReconstructionKey : new key
         Key imgSlices, origShape will be for full Image space, not just block,
         and will not include time
 
-    array: ndarray with dimensions x, y, z equal to block shape; no time dimension
+    array : ndarray with dimensions x, y, z equal to block shape; no time dimension
     """
     slices = key.slices[1:]
     shape = key.shape[1:]
@@ -159,7 +159,7 @@ class Blocks(Data):
 
     def tobinary(self, path, overwrite=False):
         """
-        Writes out Series-formatted data.
+        Writes out Series-formatted binary data.
 
         Subclasses are *not* expected to override this method.
 
@@ -302,19 +302,19 @@ class BlockGroupingKey(BlockingKey):
 
     Attributes
     ----------
-    shape: sequence of positive int
+    shape : sequence of positive int
         Shape of original Images array of which this block is a part.
         This shape includes a "time" dimension as the first dimension.
         (This additional dimension is not present on Images values,
         which are each assumed to represent a single point in time.)
 
-    slices: sequence of slices
+    slices : sequence of slices
         Slices into an array of shape origShape; these slices represent
         the full extent of the block in its original space.
         These slices include the temporal dimension as the first
         slice in the sequence (imgSlices[0]).
 
-    pixels_per_dim: list or tuple
+    pixels_per_dim : list or tuple
         Pixels per dimension, from the blocking strategy used to generate this block
     """
     def __init__(self, shape, slices, pixels_per_dim=None):
@@ -450,31 +450,31 @@ class PaddedBlockGroupingKey(BlockGroupingKey):
 
     Attributes
     ----------
-    shape: sequence of positive int
+    shape : sequence of positive int
         Shape of original Images array of which this block is a part.
         This shape includes a "time" dimension as the first dimension.
         (This additional dimension is not present on Images values,
         which are each assumed to represent a single point in time.)
 
-    slices: sequence of slices
+    slices : sequence of slices
         Slices into an array with dimensions shape; these slices represent
         the 'core' block, without padding, in its original space.
         These slices include the temporal dimension as the first slice in the sequence.
 
-    padded_slices: sequence of slices
+    padded_slices : sequence of slices
         Slices into an array with dimensions shape; these slices represent the full
         extent of the block in its original space, including padding.
         These slices include the temporal dimension as the first slice in the sequence
 
-    array_shape: tuple of positive int
+    array_shape : tuple of positive int
         Shape of associated numpy array value
 
-    array_slices: sequence of slices
+    array_slices : sequence of slices
         Slices into the array-type value for which this object
         is the key in a collection. These slices represent the 'core' block, without padding.
         These slices should be the same size as those in slices, differing only in their offsets.
 
-    pixels_per_dim: tuple
+    pixels_per_dim : tuple
         Pixels per dimension, from the blocking strategy used to generate this block
     """
     def __init__(self, shape, slices, padded_slices, array_shape, array_slices, pixels_per_dim):
@@ -514,9 +514,9 @@ class PaddedBlockGroupingKey(BlockGroupingKey):
 
         Parameters
         ----------
-        indices: sequence of int
-            Spatial coordinates in original image space, ordered as x, y, z,
-            should have length ary.ndim - 1
+        indices : sequence of int
+            Spatial coordinates in original image space, ordered as x, y, z.
+            Should have length ary.ndim - 1.
         """
         slices = [slice(None)]
         zipped = zip(indices, self.slices[1:], self.shape[1:],

@@ -30,47 +30,19 @@ class Matrix(Series):
     ncols : int
         Number of columns, will be automatically computed if not provided,
         can save computation to specify if known in advance
-
     """
-
     _metadata = Series._metadata + ['_ncols', '_nrows']
 
-    def __init__(self, rdd, index=None, dims=None, dtype=None, nrows=None, ncols=None, nrecords=None):
-        if nrows is not None and nrecords is not None:
-            if nrows != nrecords:
-                raise ValueError("nrows and nrecords must be consistent, got %d and %d" % (nrows, nrecords))
-        nrecs = nrecords if nrecords is not None else nrows
-        if index is not None:
-            if ncols is not None and len(index) != ncols:
-                    raise ValueError("ncols and len(index) must be consistent, got %d and len(index)=%d" %
-                                     (ncols, len(index)))
-        elif ncols is not None:
-            index = arange(ncols)
-        super(Matrix, self).__init__(rdd, nrecords=nrecs, dtype=dtype, dims=dims, index=index)
+    def __init__(self, rdd, index=None, dims=None, dtype=None, nrecords=None):
+        super(Matrix, self).__init__(rdd, nrecords=nrecords, dtype=dtype, dims=dims, index=index)
 
     @property
     def nrows(self):
         return self.nrecords
 
     @property
-    def _nrows(self):
-        return self._nrecords
-
-    @_nrows.setter
-    def _nrows(self, value):
-        pass
-
-    @property
     def ncols(self):
         return len(self.index)
-
-    @property
-    def _ncols(self):
-        return len(self._index) if self._index is not None else None
-
-    @_ncols.setter
-    def _ncols(self, value):
-        pass
 
     @property
     def _constructor(self):
@@ -110,7 +82,7 @@ class Matrix(Series):
 
         from pyspark.accumulators import AccumulatorParam
 
-        class MatrixAccumulatorParam(AccumulatorParam):
+        class MatrixAccumulator(AccumulatorParam):
             def zero(self, value):
                 return zeros(shape(value))
 
@@ -119,32 +91,21 @@ class Matrix(Series):
                 return val1
 
         if method is "reduce":
-            return self.rdd.map(lambda (k, v): v).mapPartitions(matrixSumIterator_self).sum()
+            return self.rdd.map(lambda (k, v): v).mapPartitions(outer_iterator).sum()
 
-        if method is "accum":
+        elif method is "accum":
             global mat
-            mat = self.rdd.context.accumulator(zeros((self.ncols, self.ncols)), MatrixAccumulatorParam())
+            mat = self.rdd.context.accumulator(zeros((self.ncols, self.ncols)), MatrixAccumulator())
 
-            def outerSum(x):
+            def outer_sum(x):
                 global mat
                 mat += outer(x, x)
-            self.rdd.map(lambda (k, v): v).foreach(outerSum)
 
+            self.rdd.map(lambda (k, v): v).foreach(outer_sum)
             return mat.value
 
-        if method is "aggregate":
-
-            def seqOp(x, v):
-                return x + outer(v, v)
-
-            def combOp(x, y):
-                x += y
-                return x
-
-            return self.rdd.map(lambda (_, v): v).aggregate(zeros((self.ncols, self.ncols)), seqOp, combOp)
-
         else:
-            raise Exception("method must be reduce, accum, or aggregate")
+            raise Exception("Method must be reduce or accum")
 
     def times(self, other):
         """
@@ -169,24 +130,26 @@ class Matrix(Series):
         if dtype == Matrix:
             if self.nrows != other.nrows:
                 raise Exception(
-                    "cannot multiply shapes (" + str(self.nrows) + "," + str(self.ncols) + ") and (" +
+                    "Cannot multiply shapes ("
+                    + str(self.nrows) + "," + str(self.ncols) + ") and (" +
                     str(other.nrows) + "," + str(other.ncols) + ")")
             else:
                 return self.rdd.zip(other.rdd).map(lambda ((k1, x), (k2, y)): (x, y))\
-                    .mapPartitions(matrixSumIterator_other).sum()
+                    .mapPartitions(outer_iterator_other).sum()
         else:
             dims = shape(other)
             if dims[0] != self.ncols:
                 raise Exception(
-                    "cannot multiply shapes ("+str(self.nrows)+","+str(self.ncols)+") and " + str(dims))
+                    "Cannot multiply shapes ("
+                    +str(self.nrows)+","+str(self.ncols)+") and " + str(dims))
             if len(dims) == 0:
                 new_d = 1
             else:
                 new_d = dims[1]
             other_b = self.rdd.context.broadcast(other)
             newindex = arange(0, new_d)
-            return self._constructor(self.rdd.mapValues(lambda x: dot(x, other_b.value)),
-                                     nrows=self._nrows, ncols=new_d, index=newindex).__finalize__(self)
+            newrdd = self.rdd.mapValues(lambda x: dot(x, other_b.value))
+            return self._constructor(newrdd, index=newindex).__finalize__(self)
 
     def element_wise(self, other, op):
         """
@@ -210,8 +173,9 @@ class Matrix(Series):
         if dtype is Matrix:
             if (self.nrows is not other.nrows) | (self.ncols is not other.ncols):
                 raise Exception(
-                    "cannot do elementwise op for shapes (" + self.nrows + "," + self.ncols +
-                    ") and (" + other.nrows + "," + other.ncols + ")")
+                    "Cannot do elementwise op for shapes ("
+                    + self.nrows + "," + self.ncols + ") and ("
+                    + other.nrows + "," + other.ncols + ")")
             else:
                 func = lambda ((k1, x), (k2, y)): (k1, add(x, y))
                 return self._constructor(self.rdd.zip(other.rdd).map(func)).__finalize__(self)
@@ -220,8 +184,8 @@ class Matrix(Series):
                 dims = shape(other)
                 if len(dims) > 1 or dims[0] is not self.ncols:
                     raise Exception(
-                        "cannot do elementwise operation for shapes (" + str(self.nrows) +
-                        "," + str(self.ncols) + ") and " + str(dims))
+                        "Cannot do elementwise operation for shapes ("
+                        + str(self.nrows) + "," + str(self.ncols) + ") and " + str(dims))
             func = lambda x: op(x, other)
             return self._constructor(self.rdd.mapValues(func)).__finalize__(self)
 
@@ -267,11 +231,11 @@ class Matrix(Series):
         return Matrix.element_wise(self, other, divide)
 
 
-def matrixSumIterator_self(iterator):
+def outer_iterator(iterator):
     yield sum(outer(x, x) for x in iterator)
 
 
-def matrixSumIterator_other(iterator):
+def outer_iterator_other(iterator):
     yield sum(outer(x, y) for x, y in iterator)
 
 
