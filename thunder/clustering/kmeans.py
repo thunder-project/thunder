@@ -31,7 +31,9 @@ class KMeansModel(object):
         self.centers = centers
 
     def calc(self, data, func):
-        """Base function for making clustering predictions"""
+        """
+        Base function for making clustering predictions
+        """
 
         # small optimization to avoid serializing full model
         centers = self.centers
@@ -101,15 +103,15 @@ class KMeans(object):
     k : int
         Number of clusters to find
 
-    maxiter : int, optional, default = 20
+    maxiterations : int, optional, default = 20
         Maximum number of iterations to use
 
     tol : float, optional, default = 0.001
         Change tolerance for stopping algorithm
     """
-    def __init__(self, k, maxIterations=20):
+    def __init__(self, k, maxiterations=20):
         self.k = k
-        self.maxIterations = maxIterations
+        self.maxiterations = maxiterations
 
     def fit(self, data):
         """
@@ -132,18 +134,18 @@ class KMeans(object):
 
         import pyspark.mllib.clustering as mllib
 
-        model = mllib.KMeans.train(data.astype('float').rdd.values(), k=self.k, maxIterations=self.maxIterations)
+        model = mllib.KMeans.train(data.astype('float').rdd.values(), k=self.k, maxIterations=self.maxiterations)
 
         return KMeansModel(asarray(model.clusterCenters))
 
     @staticmethod
     def make(shape=(100, 5), k=5, noise=0.1, npartitions=10, seed=None, withparams=False):
         """
-        Generator random data for testing clustering
+        Generate random data for testing clustering
         """
         random.seed(seed)
         centers = random.randn(k, shape[1])
-        gen = lambda i: centers[int(floor(random.rand(1, 1) * k))] + noise*random.rand(shape[1])
+        gen = lambda i: centers[int(floor(random.rand(1, 1) * k))] + noise * random.rand(shape[1])
         local = map(gen, range(0, shape[0]))
         data = fromlist(local, npartitions=npartitions)
         if withparams is True:
