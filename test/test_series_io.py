@@ -4,7 +4,7 @@ import glob
 from numpy import arange, array, allclose, save, savetxt
 from scipy.io import savemat
 
-from thunder.data.series.readers import fromarray, fromnpy, frommat, fromtext, frombinary
+from thunder.data.series.readers import fromarray, fromnpy, frommat, fromtext, frombinary, fromexample
 
 pytestmark = pytest.mark.usefixtures("context")
 
@@ -98,3 +98,8 @@ def test_to_binary_roundtrip(tmpdir):
     data.tobinary(p)
     loaded = frombinary(p)
     assert allclose(data.toarray(), loaded.toarray())
+
+
+def test_fromexample():
+    for d in ['fish', 'mouse', 'iris']:
+        fromexample(d).count()

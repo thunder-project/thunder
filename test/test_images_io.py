@@ -4,7 +4,7 @@ import glob
 import json
 from numpy import arange, allclose
 
-from thunder.data.images.readers import fromlist, fromarray, frompng, fromtif, frombinary
+from thunder.data.images.readers import fromlist, fromarray, frompng, fromtif, frombinary, fromexample
 
 pytestmark = pytest.mark.usefixtures("context")
 
@@ -227,3 +227,8 @@ def test_to_tif_roundtrip(tmpdir):
     data.totif(os.path.join(str(tmpdir), 'images'), prefix='image')
     loaded = fromtif(os.path.join(str(tmpdir), 'images'))
     assert allclose(data.toarray(), loaded.toarray())
+
+
+def test_fromexample():
+    for d in ['fish', 'mouse']:
+        fromexample(d).count()
