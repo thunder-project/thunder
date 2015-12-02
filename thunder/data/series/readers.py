@@ -210,18 +210,18 @@ def binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype):
 
 def fromrandom(shape=(100, 10), npartitions=1, seed=42):
     """
-    Generate gaussian random Series data.
+    Generate gaussian random series data.
 
     Parameters
     ----------
     shape : tuple
-        Dimensions of data
+        Dimensions of data.
 
     npartitions : int
-        Number of partitions with which to distribute data
+        Number of partitions with which to distribute data.
 
     seed : int
-        Randomization seed
+        Randomization seed.
     """
     seed = hash(seed)
 
@@ -233,12 +233,16 @@ def fromrandom(shape=(100, 10), npartitions=1, seed=42):
 
 def fromexample(name=None):
     """
-    Load example Series data.
+    Load example series data.
+
+    Data must be downloaded from S3, so this method requires
+    an internet connection.
 
     Parameters
     ----------
     name : str
-        Options include 'iris' | 'mouse' | 'fish. If not specified will print options.
+        Name of dataset, options include 'iris' | 'mouse' | 'fish'.
+        If not specified will print options.
     """
     import os
     import tempfile

@@ -6,11 +6,27 @@ from thunder import engine, mode, credentials
 
 
 def fromrdd(rdd, **kwargs):
+    """
+    Load images from an Spark RDD.
+    """
     from .images import Images
     return Images(rdd, **kwargs)
 
 def fromlist(items, accessor=None, keys=None, npartitions=None, **kwargs):
+    """
+    Load images from a list of items using the given accessor.
 
+    Parameters
+    ----------
+    accessor : function
+        Apply to each item from the list to yield an image
+
+    keys : list, optional, default=None
+        An optional list of keys
+
+    npartitions : int
+        Number of partitions for computational engine
+    """
     if mode() == 'spark':
         nrecords = len(items)
         if keys:
@@ -28,7 +44,20 @@ def fromlist(items, accessor=None, keys=None, npartitions=None, **kwargs):
         raise NotImplementedError("Loading not implemented for '%s' mode" % mode())
 
 def fromurls(urls, accessor=None, keys=None, npartitions=None, **kwargs):
+    """
+    Load images from a list of URLs using the given accessor.
 
+    Parameters
+    ----------
+    accessor : function
+        Apply to each item from the list to yield an image
+
+    keys : list, optional, default=None
+        An optional list of keys
+
+    npartitions : int
+        Number of partitions for computational engine
+    """
     if mode() == 'spark':
         if keys:
             urls = zip(keys, urls)
@@ -39,9 +68,41 @@ def fromurls(urls, accessor=None, keys=None, npartitions=None, **kwargs):
             rdd = rdd.mapValues(accessor)
         return fromrdd(rdd, **kwargs)
 
-def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=None,
+def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=False,
              npartitions=None, dims=None, dtype=None, recount=False):
+    """
+    Load images from a path using the given accessor.
 
+    Supports both local and remote filesystems.
+
+    Parameters
+    ----------
+    accessor : function
+        Apply to each item after loading to yield an image.
+
+    ext : str, optional, default=None
+        File extension.
+
+    npartitions : int, optional, default=None
+        Number of partitions for computational engine,
+        if None will use default for engine.
+
+    dims : tuple, optional, default=None
+        Dimensions of images.
+
+    dtype : str, optional, default=None
+        Numerical type of images.
+
+    start, stop: nonnegative int, optional, default=None
+        Indices of files to load, interpreted using Python slicing conventions.
+
+    recursive : boolean, optional, default=False
+        If true, will recursively descend directories from path, loading all files
+        with an extension matching 'ext'.
+
+    recount : boolean, optional, default=False
+        Force subsequent record counting.
+    """
     if mode() == 'spark':
         from thunder.data.fileio.readers import getParallelReaderForPath
         reader = getParallelReaderForPath(path)(engine(), credentials=credentials())
@@ -60,12 +121,8 @@ def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=Non
 
 def fromarray(arrays, npartitions=None):
     """
-    Load Images data from passed sequence of numpy arrays.
-
-    Expected usage is mainly in testing - having a full dataset loaded in memory
-    on the driver is likely prohibitive in the use cases for which Thunder is intended.
+    Load images from a sequence of ndarrays.
     """
-
     arrays = asarray(arrays)
 
     shape = None
@@ -88,7 +145,7 @@ def fromarray(arrays, npartitions=None):
 def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, recursive=False,
                nplanes=None, npartitions=None, conf='conf.json', order='C'):
     """
-    Load images from a directory of flat binary files.
+    Load images from binary files.
 
     Parameters
     ----------
@@ -99,25 +156,24 @@ def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, re
     dims : tuple of positive int
         Dimensions of input image data, ordered with fastest-changing dimension first
 
-    ext : string, optional, default "bin"
+    ext : string, optional, default="bin"
         Extension required on data files to be loaded.
 
-    start, stop: nonnegative int, optional, default=None
+    start, stop : nonnegative int, optional, default=None
         Indices of the first and last-plus-one file to load, relative to the sorted
         filenames matching `path` and `ext`. Interpreted using python slice indexing conventions.
 
-    recursive: boolean, optional, default=False
-        If true, will recursively descend directories rooted at datapath, loading all files
-        in the tree that have an extension matching 'ext'.
-        Recursive loading is currently only implemented for local filesystems (not S3 or GS).
+    recursive : boolean, optional, default=False
+        If true, will recursively descend directories from path, loading all files
+        with an extension matching 'ext'.
 
-    nplanes: positive integer, optional, default=None
+    nplanes : positive integer, optional, default=None
         If passed, will cause single files to be subdivided into nplanes separate images.
         Otherwise, each file is taken to represent one image.
 
-    npartitions: positive int, optional, default=None
-        Number of partitions for the underlying collection, if None will use
-        default partitioning of compute engine.
+    npartitions : int, optional, default=None
+        Number of partitions for computational engine,
+        if None will use default for engine.
     """
     import json
     from thunder.data.fileio.readers import getFileReaderForPath, FileNotFoundError
@@ -177,49 +233,35 @@ def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, re
                     stop=stop, recursive=recursive, npartitions=npartitions,
                     dims=newdims, dtype=dtype, recount=recount)
 
-def fromtif(path, ext='tif', start=None, stop=None, recursive=False, nplanes=None, npartitions=None):
+def fromtif(path, ext='tif', start=None, stop=None, recursive=False,
+            nplanes=None, npartitions=None):
     """
-    Sets up a new Images object with data to be read from one or more tif files.
-
-    Multiple pages of a multipage tif file will by default be assumed to represent the z-axis (depth) of a
-    single 3-dimensional volume, in which case a single input multipage tif file will be converted into
-    a single Images record. If `nplanes` is passed, then every nplanes pages will be interpreted as a single
-    3d volume (2d if nplanes==1), allowing a single tif file to contain multiple Images records.
-
-    This method attempts to explicitly import PIL. ImportError may be thrown if 'from PIL import Image' is
-    unsuccessful. (PIL/pillow is not an explicit requirement for thunder.)
-
-    The RDD wrapped by the returned Images object will by default have a number of partitions equal to the
-    number of image data files read in by this method; it may have fewer partitions if npartitions is specified.
+    Loads images from single or multi-page TIF files.
 
     Parameters
     ----------
+    path : str
+        Path to data files or directory, specified as either a local filesystem path
+        or in a URI-like format, including scheme. May include a single '*' wildcard character.
 
-    path: string
-        Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-        including scheme. A datapath argument may include a single '*' wildcard character in the filename.
-
-    ext: string, optional, default "tif"
+    ext : string, optional, default="tif"
         Extension required on data files to be loaded.
 
-    start, stop: nonnegative int. optional.
-        Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
-        `datapath` and `ext`. Interpreted according to python slice indexing conventions.
+    start, stop : nonnegative int, optional, default=None
+        Indices of the first and last-plus-one file to load, relative to the sorted
+        filenames matching `path` and `ext`. Interpreted using python slice indexing conventions.
 
-    recursive: boolean, default False
-        If true, will recursively descend directories rooted at datapath, loading all files in the tree that
-        have an extension matching 'ext'.
+    recursive : boolean, optional, default=False
+        If true, will recursively descend directories from path, loading all files
+        with an extension matching 'ext'.
 
-    nplanes: positive integer, default None
-        If passed, will cause a single multipage tif file to be subdivided into multiple records. Every
-        `nplanes` tif pages in the file will be taken as a new record, with the first nplane pages of the
-        first file being record 0, the second nplane pages being record 1, etc, until the first file is
-        exhausted and record ordering continues with the first nplane images of the second file, and so on.
-        With nplanes=None (the default), a single file will be considered as representing a single record.
+    nplanes : positive integer, optional, default=None
+        If passed, will cause single files to be subdivided into nplanes separate images.
+        Otherwise, each file is taken to represent one image.
 
-    npartitions: positive int, optional.
-        If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
-        partition per image file.
+    npartitions : int, optional, default=None
+        Number of partitions for computational engine,
+        if None will use default for engine.
     """
     import skimage.external.tifffile as tifffile
 
@@ -253,33 +295,29 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False, nplanes=Non
                     recursive=recursive, npartitions=npartitions, recount=recount)
 
 def frompng(path, ext='png', start=None, stop=None, recursive=False, npartitions=None):
-    """Load an Images object stored in a directory of png files
-
-    The RDD wrapped by the returned Images object will have a number of partitions equal to the number of image data
-    files read in by this method.
+    """
+    Load images from PNG files.
 
     Parameters
     ----------
+    path : str
+        Path to data files or directory, specified as either a local filesystem path
+        or in a URI-like format, including scheme. May include a single '*' wildcard character.
 
-    dataPath: string
-        Path to data files or directory, specified as either a local filesystem path or in a URI-like format,
-        including scheme. A dataPath argument may include a single '*' wildcard character in the filename.
-
-    ext: string, optional, default "png"
+    ext : string, optional, default="tif"
         Extension required on data files to be loaded.
 
-    start, stop: nonnegative int. optional.
-        Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
-        `datapath` and `ext`. Interpreted according to python slice indexing conventions.
+    start, stop : nonnegative int, optional, default=None
+        Indices of the first and last-plus-one file to load, relative to the sorted
+        filenames matching `path` and `ext`. Interpreted using python slice indexing conventions.
 
-    recursive: boolean, default False
-        If true, will recursively descend directories rooted at datapath, loading all files in the tree that
-        have an extension matching 'ext'. Recursive loading is currently only implemented for local filesystems
-        (not s3 or Google Storage).
+    recursive : boolean, optional, default=False
+        If true, will recursively descend directories from path, loading all files
+        with an extension matching 'ext'.
 
-    npartitions: positive int, optional.
-        If specified, request a certain number of partitions for the underlying Spark RDD. Default is 1
-        partition per image file.
+    npartitions : int, optional, default=None
+        Number of partitions for computational engine,
+        if None will use default for engine.
     """
     from scipy.misc import imread
 
@@ -379,7 +417,7 @@ def fromocp(bucketName, resolution, server='ocp.me', start=None, stop=None,
         pageStr = zlib.decompress(imgData[:])
         pageObj = cStringIO.StringIO(pageStr)
         data = load(pageObj)
-        # Data comes in as 4d numpy array in t,z,y,x order. Swapping axes and removing the time dimension
+        # Data is a 4d numpy array in t,z,y,x order. Swap axes and remove time dimension
         # to give back a 3d numpy array in x,y,z order
         data = swapaxes(data[0, :, :, :], 0, 2)
 
@@ -388,7 +426,20 @@ def fromocp(bucketName, resolution, server='ocp.me', start=None, stop=None,
     return fromurls(enumerate(urlList), accessor=read, npartitions=len(urlList))
 
 def fromrandom(shape=(10, 50, 50), npartitions=1, seed=42):
+    """
+    Generate random image data.
 
+    Parameters
+    ----------
+    shape : tuple, optional, default=(10, 50, 50)
+        Dimensions of images.
+
+    npartitions : int, optional, default=1
+        Number of partitions.
+
+    seed : int, optional, default=42
+        Random seed.
+    """
     seed = hash(seed)
 
     def generate(v):
@@ -398,7 +449,18 @@ def fromrandom(shape=(10, 50, 50), npartitions=1, seed=42):
     return fromlist(range(shape[0]), accessor=generate, npartitions=npartitions)
 
 def fromexample(name=None):
+    """
+    Load example image data.
 
+    Data must be downloaded from S3, so this method requires
+    an internet connection.
+
+    Parameters
+    ----------
+    name : str
+        Name of dataset, options include 'mouse' | 'fish.
+        If not specified will print options.
+    """
     datasets = ['mouse', 'fish']
 
     if name is None:
