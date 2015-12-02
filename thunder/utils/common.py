@@ -22,7 +22,7 @@ def check_path(path, credentials=None):
     The ValueError message will suggest calling with overwrite=True; this function is expected to be
     called from the various output methods that accept an 'overwrite' keyword argument.
     """
-    from thunder.data.fileio.readers import get_file_reader
+    from thunder.data.readers import get_file_reader
     reader = get_file_reader(path)(credentials=credentials)
     existing = reader.list(path, directories=True)
     if existing:

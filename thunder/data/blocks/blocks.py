@@ -175,7 +175,7 @@ class Blocks(Data):
             be deleted and recreated as part of this call.
         """
         from thunder import credentials
-        from thunder.data.fileio.writers import get_parallel_writer
+        from thunder.data.writers import get_parallel_writer
         from thunder.data.series.writers import write_config
 
         if not overwrite:

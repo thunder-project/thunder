@@ -104,7 +104,7 @@ def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=Fal
         Force subsequent record counting.
     """
     if mode() == 'spark':
-        from thunder.data.fileio.readers import get_parallel_reader
+        from thunder.data.readers import get_parallel_reader
         reader = get_parallel_reader(path)(engine(), credentials=credentials())
         rdd = reader.read(path, ext=ext, start=start, stop=stop,
                           recursive=recursive, npartitions=npartitions)
@@ -176,7 +176,7 @@ def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, re
         if None will use default for engine.
     """
     import json
-    from thunder.data.fileio.readers import get_file_reader, FileNotFoundError
+    from thunder.data.readers import get_file_reader, FileNotFoundError
     try:
         reader = get_file_reader(path)(credentials=credentials())
         buf = reader.read(path, filename=conf)

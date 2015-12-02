@@ -14,7 +14,6 @@ setup(
               'thunder.clustering',
               'thunder.factorization',
               'thunder.data',
-              'thunder.data.fileio',
               'thunder.data.blocks',
               'thunder.data.series',
               'thunder.data.images',

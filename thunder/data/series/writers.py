@@ -21,11 +21,11 @@ def tobinary(series, path, overwrite=False):
     import struct
     from thunder import credentials
     from thunder.utils.common import check_path
-    from thunder.data.fileio.writers import get_parallel_writer
+    from thunder.data.writers import get_parallel_writer
 
     if not overwrite:
         check_path(path, credentials=credentials())
-        overwrite = True # prevent additional downstream checks for this path
+        overwrite = True
 
     def tobuffer(kv):
         keypacker = None
@@ -59,7 +59,7 @@ def write_config(path, nkeys, nvalues, keytype='int16', valuetype='int16',
     Write a conf.json file with required information to load Series binary data.
     """
     import json
-    from thunder.data.fileio.writers import get_file_writer
+    from thunder.data.writers import get_file_writer
 
     writer = get_file_writer(path)
     conf = {'input': path, 'nkeys': nkeys, 'nvalues': nvalues,

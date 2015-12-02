@@ -94,7 +94,7 @@ def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64'):
         Numerical type to use for data after converting from text.
     """
     if mode() == 'spark':
-        from thunder.data.fileio.readers import normalize_scheme
+        from thunder.data.readers import normalize_scheme
         path = normalize_scheme(path, ext)
 
         def parse(line, nkeys_):
@@ -143,7 +143,7 @@ def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
     """
     params = binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype)
 
-    from thunder.data.fileio.readers import normalize_scheme
+    from thunder.data.readers import normalize_scheme
     path = normalize_scheme(path, ext)
 
     from numpy import dtype as dtypeFunc
@@ -176,7 +176,7 @@ def binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype):
     """
     import json
     from collections import namedtuple
-    from thunder.data.fileio.readers import get_file_reader, FileNotFoundError
+    from thunder.data.readers import get_file_reader, FileNotFoundError
 
     Parameters = namedtuple('BinaryLoadParameters', 'nkeys nvalues keytype valuetype')
     Parameters.__new__.__defaults__ = (None, None, 'int16', 'int16')

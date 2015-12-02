@@ -1,4 +1,4 @@
-from thunder.data.fileio.readers import LocalFileReader, LocalParallelReader
+from thunder.data.readers import LocalFileReader, LocalParallelReader
 
 
 def make(tmpdir, files):
