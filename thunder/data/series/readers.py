@@ -240,6 +240,7 @@ def fromexample(name=None):
     import os
     import tempfile
     import shutil
+    import checkist
     from boto.s3.connection import S3Connection
 
     datasets = ['iris', 'mouse', 'fish']
@@ -250,30 +251,20 @@ def fromexample(name=None):
             print '- ' + d
         return
 
+    checkist.opts(name, datasets)
+
     if mode() == 'spark':
-        print('Downloading data, this may take a few seconds...')
-
-        if name == 'iris':
-            path = 'iris'
-
-        elif name == 'mouse':
-            path = 'mouse-series'
-
-        elif name == 'fish':
-            path = 'fish-series'
-
-        else:
-            raise NotImplementedError("Example '%s' not found" % name)
 
         d = tempfile.mkdtemp()
         try:
-            os.mkdir(os.path.join(d, path))
+            os.mkdir(os.path.join(d, 'series'))
+            os.mkdir(os.path.join(d, 'series', name))
             conn = S3Connection(anon=True)
             bucket = conn.get_bucket('thunder-sample-data')
-            for key in bucket.list(path):
+            for key in bucket.list(os.path.join('series', name)):
                 if not key.name.endswith('/'):
                     key.get_contents_to_filename(os.path.join(d, key.name))
-            data = frombinary(os.path.join(d, path))
+            data = frombinary(os.path.join(d, 'series', name))
             data.cache()
             data.count()
         finally:

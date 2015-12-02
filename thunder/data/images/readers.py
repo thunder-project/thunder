@@ -1,5 +1,6 @@
+import checkist
 from io import BytesIO
-from numpy import array, dstack, frombuffer, prod, load, swapaxes, random, asarray
+from numpy import frombuffer, prod, load, swapaxes, random, asarray
 
 from thunder import engine, mode, credentials
 
@@ -416,17 +417,17 @@ def fromexample(name=None):
             print '- ' + d
         return
 
+    checkist.opts(name, datasets)
+
     if mode() == 'spark':
-        print('Downloading data from S3, this may take a few seconds...')
+
+        path = 's3n://thunder-sample-data/images/' + name
 
         if name == 'mouse':
-            data = frombinary(path='s3n://thunder-sample-data/mouse-images/', npartitions=1, order='F')
+            data = frombinary(path=path, npartitions=1, order='F')
 
-        elif name == 'fish':
-            data = fromtif(path='s3n://thunder-sample-data/fish-images/', npartitions=1)
-
-        else:
-            raise NotImplementedError("Example '%s' not found" % name)
+        if name == 'fish':
+            data = fromtif(path=path, npartitions=1)
 
         data.cache()
         data.count()
