@@ -798,5 +798,5 @@ class Series(Data):
         """
         Write data to binary files
         """
-        from thunder.data.series.writers import toBinary
-        toBinary(self, path, overwrite=overwrite)
+        from thunder.data.series.writers import tobinary
+        tobinary(self, path, overwrite=overwrite)

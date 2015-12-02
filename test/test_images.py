@@ -9,29 +9,29 @@ pytestmark = pytest.mark.usefixtures("context")
 def test_toseries():
     data = fromlist([arange(6).reshape((2, 3))])
     truth = [0, 3, 1, 4, 2, 5]
-    vals = data.toSeries().toarray()
+    vals = data.toseries().toarray()
     assert allclose(vals, truth)
-    vals = data.toBlocks((1, 1)).toSeries().toarray()
+    vals = data.toblocks((1, 1)).toseries().toarray()
     assert allclose(vals, truth)
 
 
 def test_totimeseries():
     data = fromlist([arange(6).reshape((2, 3))])
-    vals1 = data.toTimeSeries().toarray()
-    vals2 = data.toTimeSeries().toarray()
+    vals1 = data.totimeseries().toarray()
+    vals2 = data.totimeseries().toarray()
     assert allclose(vals1, vals2)
 
 
 def test_toseries_pack_2d():
     original = arange(6).reshape((2, 3))
     data = fromlist([original])
-    assert allclose(data.toSeries().pack(), original)
+    assert allclose(data.toseries().pack(), original)
 
 
 def test_toseries_pack_3d():
     original = arange(24).reshape((2, 3, 4))
     data = fromlist([original])
-    assert allclose(data.toSeries().pack(), original)
+    assert allclose(data.toseries().pack(), original)
 
 
 def test_subsample():

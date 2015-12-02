@@ -55,7 +55,7 @@ class Images(Data):
         if not isinstance(record[1], ndarray):
             raise Exception('Values must be ndarrays')
 
-    def toBlocks(self, size="150M", units="pixels", padding=0):
+    def toblocks(self, size="150M", units="pixels", padding=0):
         """
         Convert to Blocks, each representing a subdivision of the larger Images data.
 
@@ -102,12 +102,12 @@ class Images(Data):
         vals = self.rdd.flatMap(blockingStrategy.blockingFunction, preservesPartitioning=False)
         # fastest changing dimension (e.g. x) is first, so must sort reversed keys to get desired ordering
         # sort must come after group, b/c group will mess with ordering.
-        groupedvals = vals.groupBy(lambda (k, _): k.spatialKey).sortBy(lambda (k, _): tuple(k[::-1]))
+        groupedvals = vals.groupBy(lambda (k, _): k.spatial).sortBy(lambda (k, _): tuple(k[::-1]))
         # groupedvals is now rdd of (z, y, x spatial key, [(partitioning key, numpy array)...]
         blockedvals = groupedvals.map(blockingStrategy.combiningFunction)
         return returntype(blockedvals, dims=self.dims, nimages=self.nrecords, dtype=self.dtype)
 
-    def toTimeSeries(self, size="150M"):
+    def totimeseries(self, size="150M"):
         """
         Converts this Images object to a TimeSeries object.
 
@@ -129,9 +129,9 @@ class Images(Data):
         --------
         Images.toBlocks
         """
-        return self.toBlocks(size).toSeries().totimeseries()
+        return self.toblocks(size).toseries().totimeseries()
 
-    def toSeries(self, size="150M"):
+    def toseries(self, size="150M"):
         """
         Converts this Images object to a Series object.
 
@@ -150,7 +150,7 @@ class Images(Data):
         --------
         Images.toBlocks
         """
-        return self.toBlocks(size).toSeries()
+        return self.toblocks(size).toseries()
 
     def maxProjection(self, axis=2):
         """
@@ -351,7 +351,7 @@ class Images(Data):
         combinedImages = self._constructor(combined, nrecords=(2 * nimages)).__finalize__(self)
 
         # Correlate the first N (averaged) records with the last N (original) records
-        series = combinedImages.toSeries()
+        series = combinedImages.toseries()
         corr = series.apply_values(lambda x: corrcoef(x[:nimages], x[nimages:])[0, 1])
 
         return corr.pack()

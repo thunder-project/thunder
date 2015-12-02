@@ -1,6 +1,6 @@
 from thunder import credentials
 
-def toBinary(series, path, overwrite=False):
+def tobinary(series, path, overwrite=False):
     """
     Writes out Series-formatted data.
 
@@ -17,26 +17,28 @@ def toBinary(series, path, overwrite=False):
 
     Parameters
     ----------
-    outputDirPath : string path or URI to directory to be created
-        Output files will be written underneath outputdirname. This directory must not yet exist
-        (unless overwrite is True), and must be no more than one level beneath an existing directory.
-        It will be created as a result of this call.
+    series: Series
+        The data to write
+
+    path : string path or URI to directory to be created
+        Output files will be written underneath path.
+        Directory will be created as a result of this call.
 
     overwrite : bool
-        If true, outputdirname and all its contents will be deleted and recreated as part
-        of this call.
+        If true, path and all its contents will be deleted and
+        recreated as partof this call.
     """
     import cStringIO as StringIO
     import struct
     from thunder import credentials
-    from thunder.data.blocks.blocks import SimpleBlocks
+    from thunder.utils.common import check_path
     from thunder.data.fileio.writers import getParallelWriterForPath
 
     if not overwrite:
-        checkOverwrite(path)
+        check_path(path, credentials=credentials())
         overwrite = True  # prevent additional downstream checks for this path
 
-    def partitionToBinarySeries(kvIter):
+    def getbinary(kvIter):
         """ Collects all Series records in a partition into a single binary series record. """
         keypacker = None
         firstKey = None
@@ -54,27 +56,21 @@ def toBinary(series, path, overwrite=False):
         if firstKey is None:
             return iter([])
         else:
-            label = SimpleBlocks.getBinarySeriesNameForKey(firstKey) + ".bin"
+            label = getlabel(firstKey) + ".bin"
             return iter([(label, val)])
 
     writer = getParallelWriterForPath(path)(path, overwrite=overwrite, credentials=credentials())
 
-    binseriesrdd = series.rdd.mapPartitions(partitionToBinarySeries)
+    binary = series.rdd.mapPartitions(getbinary)
 
-    binseriesrdd.foreach(writer.writerFcn)
+    binary.foreach(writer.writerFcn)
 
-    # TODO: all we really need here are the number of keys and number of values, which could in principle
-    # be cached in _nkeys and _nvals attributes, removing the need for this .first() call in most cases.
     firstKey, firstVal = series.first()
-    writeSeriesConfig(path, len(firstKey), len(firstVal), keyType='int16',
-                      valueType=series.dtype, overwrite=overwrite)
+    write_config(path, len(firstKey), len(firstVal), keytype='int16',
+                 valuetype=series.dtype, overwrite=overwrite)
 
-def checkOverwrite(path):
-    from thunder.utils.common import raiseErrorIfPathExists
-    raiseErrorIfPathExists(path, credentials=credentials())
-
-def writeSeriesConfig(path, nkeys, nvalues, keyType='int16', valueType='int16',
-                      name="conf.json", overwrite=True):
+def write_config(path, nkeys, nvalues, keytype='int16', valuetype='int16',
+                 name="conf.json", overwrite=True):
     """
     Helper function to write out a conf.json file with required information to load Series binary data.
     """
@@ -83,11 +79,13 @@ def writeSeriesConfig(path, nkeys, nvalues, keyType='int16', valueType='int16',
 
     writer = getFileWriterForPath(path)
     conf = {'input': path, 'nkeys': nkeys, 'nvalues': nvalues,
-            'valuetype': str(valueType), 'keytype': str(keyType)}
+            'valuetype': str(valuetype), 'keytype': str(keytype)}
 
     confwriter = writer(path, name, overwrite=overwrite, credentials=credentials())
     confwriter.writeFile(json.dumps(conf, indent=2))
 
-    # touch "SUCCESS" file as final action
     successwriter = writer(path, "SUCCESS", overwrite=overwrite, credentials=credentials())
     successwriter.writeFile('')
+
+def getlabel(key):
+    return '-'.join(reversed(["key%02d_%05g" % (ki, k) for (ki, k) in enumerate(key)]))

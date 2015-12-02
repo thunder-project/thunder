@@ -44,7 +44,7 @@ def parseMemoryString(memStr):
     else:
         return int(memStr)
 
-def raiseErrorIfPathExists(path, credentials=None):
+def check_path(path, credentials=None):
     """
     The ValueError message will suggest calling with overwrite=True; this function is expected to be
     called from the various output methods that accept an 'overwrite' keyword argument.
