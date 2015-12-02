@@ -19,18 +19,18 @@ def topng(images, path, prefix="image", overwrite=False):
 
     from scipy.misc import imsave
     from io import BytesIO
-    from thunder.data.fileio.writers import getParallelWriterForPath
+    from thunder.data.fileio.writers import get_parallel_writer
 
-    def toFilenameAndPngBuf(kv):
+    def tobuffer(kv):
         key, img = kv
         fname = prefix+"-"+"%05d.png" % int(key)
         bytebuf = BytesIO()
         imsave(bytebuf, img, format='PNG')
         return fname, bytebuf.getvalue()
 
-    bufRdd = images.rdd.map(toFilenameAndPngBuf)
-    writer = getParallelWriterForPath(path)(path, overwrite=overwrite, credentials=credentials())
-    bufRdd.foreach(writer.writerFcn)
+    bufRdd = images.rdd.map(tobuffer)
+    writer = get_parallel_writer(path)(path, overwrite=overwrite, credentials=credentials())
+    bufRdd.foreach(writer.write)
 
 def totif(images, path, prefix="image", overwrite=False):
     """
@@ -47,19 +47,18 @@ def totif(images, path, prefix="image", overwrite=False):
 
     from scipy.misc import imsave
     from io import BytesIO
-    from thunder.data.fileio.writers import getParallelWriterForPath
+    from thunder.data.fileio.writers import get_parallel_writer
 
-    def toFilenameAndPngBuf(kv):
+    def tobuffer(kv):
         key, img = kv
         fname = prefix+"-"+"%05d.tif" % int(key)
         bytebuf = BytesIO()
         imsave(bytebuf, img, format='TIFF')
         return fname, bytebuf.getvalue()
 
-    bufRdd = images.rdd.map(toFilenameAndPngBuf)
-
-    writer = getParallelWriterForPath(path)(path, overwrite=overwrite, credentials=credentials())
-    bufRdd.foreach(writer.writerFcn)
+    bufRdd = images.rdd.map(tobuffer)
+    writer = get_parallel_writer(path)(path, overwrite=overwrite, credentials=credentials())
+    bufRdd.foreach(writer.write)
 
 def tobinary(images, path, prefix="image", overwrite=False):
     """
@@ -69,32 +68,32 @@ def tobinary(images, path, prefix="image", overwrite=False):
     --------
     thunder.data.images.tobinary
     """
-    from thunder.data.fileio.writers import getParallelWriterForPath
+    from thunder.data.fileio.writers import get_parallel_writer
 
-    dimsTotal = list(asarray(images.dims.max) - asarray(images.dims.min) + 1)
+    dims = list(asarray(images.dims.max) - asarray(images.dims.min) + 1)
 
-    def toFilenameAndBinaryBuf(kv):
+    def tobuffer(kv):
         key, img = kv
         fname = prefix + "-" + "%05d.bin" % int(key)
         return fname, img.copy()
 
-    bufRdd = images.rdd.map(toFilenameAndBinaryBuf)
+    bufRdd = images.rdd.map(tobuffer)
 
-    writer = getParallelWriterForPath(path)(path, overwrite=overwrite, credentials=credentials())
-    bufRdd.foreach(writer.writerFcn)
-    config(path, dims=dimsTotal, dtype=images.dtype, overwrite=overwrite)
+    writer = get_parallel_writer(path)(path, overwrite=overwrite, credentials=credentials())
+    bufRdd.foreach(writer.write)
+    config(path, dims=dims, dtype=images.dtype, overwrite=overwrite)
 
 def config(path, dims, dtype='int16', name="conf.json", overwrite=True):
     """
     Helper function to write a JSON file with configuration for binary image data.
     """
-    from thunder.data.fileio.writers import getFileWriterForPath
+    from thunder.data.fileio.writers import get_file_writer
 
-    writer = getFileWriterForPath(path)
+    writer = get_file_writer(path)
 
     conf = {'dims': dims, 'dtype': dtype}
     confwriter = writer(path, name, overwrite=overwrite, credentials=credentials())
-    confwriter.writeFile(json.dumps(conf, indent=2))
+    confwriter.write(json.dumps(conf, indent=2))
 
     successwriter = writer(path, "SUCCESS", overwrite=overwrite, credentials=credentials())
-    successwriter.writeFile('')
+    successwriter.write('')

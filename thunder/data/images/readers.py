@@ -104,8 +104,8 @@ def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=Fal
         Force subsequent record counting.
     """
     if mode() == 'spark':
-        from thunder.data.fileio.readers import getParallelReaderForPath
-        reader = getParallelReaderForPath(path)(engine(), credentials=credentials())
+        from thunder.data.fileio.readers import get_parallel_reader
+        reader = get_parallel_reader(path)(engine(), credentials=credentials())
         rdd = reader.read(path, ext=ext, start=start, stop=stop,
                           recursive=recursive, npartitions=npartitions)
         if accessor:
@@ -113,7 +113,7 @@ def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=Fal
         if recount:
             nrecords = None
         else:
-            nrecords = reader.lastNRecs
+            nrecords = reader.nfiles
         return fromrdd(rdd, nrecords=nrecords, dims=dims, dtype=dtype)
 
     else:
@@ -176,9 +176,9 @@ def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, re
         if None will use default for engine.
     """
     import json
-    from thunder.data.fileio.readers import getFileReaderForPath, FileNotFoundError
+    from thunder.data.fileio.readers import get_file_reader, FileNotFoundError
     try:
-        reader = getFileReaderForPath(path)(credentials=credentials())
+        reader = get_file_reader(path)(credentials=credentials())
         buf = reader.read(path, filename=conf)
         params = json.loads(buf)
     except FileNotFoundError:

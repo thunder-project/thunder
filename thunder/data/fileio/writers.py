@@ -2,192 +2,141 @@ import os
 import shutil
 import urllib
 import urlparse
+import boto
 
-from thunder.data.fileio.readers import _BotoClient, getByScheme
-from thunder.utils.common import S3ConnectionWithAnon
-
-_haveBoto = False
-try:
-    import boto
-    _haveBoto = True
-except ImportError:
-    boto = None
+from thunder.data.fileio.readers import BotoClient, get_by_scheme
+from thunder.utils.common import connection_with_anon
 
 
-class LocalFSParallelWriter(object):
-    def __init__(self, dataPath, overwrite=False, **kwargs):
-        self._dataPath = dataPath
-        self._absPath = urllib.url2pathname(urlparse.urlparse(dataPath).path)
+class LocalParallelWriter(object):
+    def __init__(self, path, overwrite=False, **kwargs):
+        self._path = urllib.url2pathname(urlparse.urlparse(path).path)
         self._overwrite = overwrite
         self._checked = False
-        self._checkDirectory()
+        self.check_directory()
 
-    def _checkDirectory(self):
+    def check_directory(self):
         if not self._checked:
-            if os.path.isfile(self._absPath):
-                raise ValueError("LocalFSParallelWriter must be initialized with path to directory not file" +
-                                 " in order to use writerFcn. Got: " + self._dataPath)
-            if os.path.isdir(self._absPath):
+            if os.path.isfile(self._path):
+                raise ValueError("LocalFSParallelWriter must be initialized with path "
+                                 "to directory not file in order to use writer. Got: " + self._path)
+            if os.path.isdir(self._path):
                 if self._overwrite:
-                    shutil.rmtree(self._absPath)
+                    shutil.rmtree(self._path)
                 else:
-                    raise ValueError("Directory %s already exists, and overwrite is false" % self._dataPath)
-            os.mkdir(self._absPath)
+                    raise ValueError("Directory %s already exists, "
+                                     "and overwrite is false" % self._path)
+            os.mkdir(self._path)
             self._checked = True
 
-    def writerFcn(self, kv):
+    def write(self, kv):
         label, buf = kv
-        with open(os.path.join(self._absPath, label), 'wb') as f:
+        with open(os.path.join(self._path, label), 'wb') as f:
             f.write(buf)
 
 
-class _BotoWriter(_BotoClient):
+class BotoWriter(BotoClient):
     def __init__(self, credentials=None):
-        super(_BotoWriter, self).__init__(credentials=credentials)
-        self._storageScheme = None
-        self._contextActive = False
+        super(BotoWriter, self).__init__(credentials=credentials)
+        self._scheme = None
+        self._active = False
         self._conn = None
-        self._keyName = None
+        self._key = None
         self._bucket = None
 
-    def activateContext(self, dataPath, isDirectory):
+    def activate(self, path, isdirectory):
         """
         Set up a boto connection.
         """
-        parsed = _BotoClient.parseQuery(dataPath)
+        parsed = BotoClient.parse_query(path)
 
-        storageScheme = parsed[0]
-        bucketName = parsed[1]
-        keyName = parsed[2]
+        scheme = parsed[0]
+        bucket_name = parsed[1]
+        key = parsed[2]
 
-        if storageScheme == 's3' or storageScheme == 's3n':
-            conn = S3ConnectionWithAnon(self.credentials)
-            bucket = conn.get_bucket(bucketName)
-        elif storageScheme == 'gs':
-            conn = boto.storage_uri(bucketName, 'gs')
+        if scheme == 's3' or scheme == 's3n':
+            conn = connection_with_anon(self.credentials)
+            bucket = conn.get_bucket(bucket_name)
+        elif scheme == 'gs':
+            conn = boto.storage_uri(bucket_name, 'gs')
             bucket = conn.get_bucket()
         else:
-            raise NotImplementedError("No file reader implementation for URL scheme " + storageScheme)
+            raise NotImplementedError("No file reader implementation for URL scheme " + scheme)
 
-        if isDirectory and (not keyName.endswith("/")):
-            keyName += "/"
+        if isdirectory and (not key.endswith("/")):
+            key += "/"
 
-        self._storageScheme = storageScheme
+        self._scheme = scheme
         self._conn = conn
-        self._keyName = keyName
+        self._key = key
         self._bucket = bucket
-        self._contextActive = True
+        self._active = True
 
     @property
     def bucket(self):
         return self._bucket
 
     @property
-    def keyName(self):
-        return self._keyName
+    def key(self):
+        return self._key
 
     @property
-    def contextActive(self):
-        return self._contextActive
+    def active(self):
+        return self._active
 
 
-class BotoParallelWriter(_BotoWriter):
-    def __init__(self, dataPath, overwrite=False, credentials=None):
+class BotoParallelWriter(BotoWriter):
+    def __init__(self, path, overwrite=False, credentials=None):
         super(BotoParallelWriter, self).__init__(credentials=credentials)
-        self._dataPath = dataPath
+        self._path = path
         self._overwrite = overwrite
 
-    def writerFcn(self, kv):
-        if not self.contextActive:
-            self.activateContext(self._dataPath, True)
+    def write(self, kv):
+        if not self.active:
+            self.activate(self._path, True)
         label, buf = kv
-        self._bucket.new_key(self.keyName + label).set_contents_from_string(buf)
+        self._bucket.new_key(self.key + label).set_contents_from_string(buf)
 
 
-class LocalFSFileWriter(object):
-    def __init__(self, dataPath, filename, overwrite=False, **kwargs):
-        self._dataPath = dataPath
+class LocalFileWriter(object):
+    def __init__(self, path, filename, overwrite=False, **kwargs):
+        self._path = os.path.join(urllib.url2pathname(urlparse.urlparse(path).path), filename)
         self._filename = filename
-        self._absPath = os.path.join(urllib.url2pathname(urlparse.urlparse(dataPath).path), filename)
         self._overwrite = overwrite
         self._checked = False
 
-    def _checkWriteFile(self):
+    def check_file(self):
         if not self._checked:
-            if os.path.isdir(self._absPath):
-                raise ValueError("LocalFSFileWriter must be initialized with path to file, not directory," +
-                                 " in order to use writeFile. Got path: '%s', filename: '%s'" %
-                                 (self._dataPath, self._filename))
-            if (not self._overwrite) and os.path.exists(self._absPath):
-                raise ValueError("File %s already exists, and overwrite is false" % self._dataPath)
+            if os.path.isdir(self._path):
+                raise ValueError("LocalFileWriter must be initialized with path to file, "
+                                 "not directory, in order to use writeFile. "
+                                 "Got path: '%s', filename: '%s'" % (self._path, self._filename))
+            if (not self._overwrite) and os.path.exists(self._path):
+                raise ValueError("File %s already exists, and overwrite is false" % self._path)
             self._checked = True
 
-    def writeFile(self, buf):
-        self._checkWriteFile()
-        with open(os.path.join(self._absPath), 'wb') as f:
+    def write(self, buf):
+        self.check_file()
+        with open(os.path.join(self._path), 'wb') as f:
             f.write(buf)
 
 
-class BotoFileWriter(_BotoWriter):
-    def __init__(self, dataPath, filename, overwrite=False, credentials=None):
+class BotoFileWriter(BotoWriter):
+    def __init__(self, path, filename, overwrite=False, credentials=None):
         super(BotoFileWriter, self).__init__(credentials=credentials)
-        self._dataPath = dataPath
+        self._path = path
         self._filename = filename
         self._overwrite = overwrite
 
-    def writeFile(self, buf):
-        if not self.contextActive:
-            self.activateContext(self._dataPath, True)
-        self._bucket.new_key(self.keyName + self._filename).set_contents_from_string(buf)
-
-
-class LocalFSCollectedFileWriter(object):
-    def __init__(self, dataPath, overwrite=False, **kwargs):
-        self._dataPath = dataPath
-        self._absPath = urllib.url2pathname(urlparse.urlparse(dataPath).path)
-        self._overwrite = overwrite
-        self._checked = False
-
-    def _checkDirectory(self):
-        # todo: this is duplicated code with LocalFSParallelWriter
-        if not self._checked:
-            if os.path.isfile(self._absPath):
-                raise ValueError("LocalFSCollectedFileWriter must be initialized with path to directory not file" +
-                                 " in order to use writerFcn. Got: " + self._dataPath)
-            if os.path.isdir(self._absPath):
-                if self._overwrite:
-                    shutil.rmtree(self._absPath)
-                else:
-                    raise ValueError("Directory %s already exists, and overwrite is false" % self._dataPath)
-            os.mkdir(self._absPath)  # will throw error if is already a file
-            self._checked = True
-
-    def writeCollectedFiles(self, labelBufSequence):
-        self._checkDirectory()
-        for filename, buf in labelBufSequence:
-            absPath = os.path.join(self._absPath, filename)
-            with open(absPath, 'wb') as f:
-                f.write(buf)
-
-
-class BotoCollectedFileWriter(_BotoWriter):
-    # todo: needs to check before writing if overwrite is True
-    def __init__(self, dataPath, overwrite=False, credentials=None):
-        super(BotoCollectedFileWriter, self).__init__(credentials=credentials)
-        self._dataPath = dataPath
-        self._overwrite = overwrite
-
-    def writeCollectedFiles(self, labelBufSequence):
-        if not self.contextActive:
-            self.activateContext(self._dataPath, True)
-
-        for filename, buf in labelBufSequence:
-            self._bucket.new_key(self.keyName + filename).set_contents_from_string(buf)
+    def write(self, buf):
+        if not self.active:
+            self.activate(self._path, True)
+        self._bucket.new_key(self.key + self._filename).set_contents_from_string(buf)
 
 
 SCHEMAS_TO_PARALLELWRITERS = {
-    '': LocalFSParallelWriter,
-    'file': LocalFSParallelWriter,
+    '': LocalParallelWriter,
+    'file': LocalParallelWriter,
     'gs': BotoParallelWriter,
     's3': BotoParallelWriter,
     's3n': BotoParallelWriter,
@@ -198,8 +147,8 @@ SCHEMAS_TO_PARALLELWRITERS = {
 }
 
 SCHEMAS_TO_FILEWRITERS = {
-    '': LocalFSFileWriter,
-    'file': LocalFSFileWriter,
+    '': LocalFileWriter,
+    'file': LocalFileWriter,
     'gs': BotoFileWriter,
     's3': BotoFileWriter,
     's3n': BotoFileWriter,
@@ -209,47 +158,22 @@ SCHEMAS_TO_FILEWRITERS = {
     'ftp': None
 }
 
-SCHEMAS_TO_COLLECTEDFILEWRITERS = {
-    '': LocalFSCollectedFileWriter,
-    'file': LocalFSCollectedFileWriter,
-    'gs': BotoCollectedFileWriter,
-    's3': BotoCollectedFileWriter,
-    's3n': BotoCollectedFileWriter,
-    'hdfs': None,
-    'http': None,
-    'https': None,
-    'ftp': None
-}
-
-
-def getParallelWriterForPath(dataPath):
-    """Returns the class of a parallel file writer suitable for the scheme used by `datapath`.
-
-    The resulting class object must still be instantiated in order to get a usable instance of the class.
-
-    Throws NotImplementedError if the requested scheme is explicitly not supported (e.g. "ftp://").
-    Returns LocalFSParallelWriter if scheme is absent or not recognized.
+def get_parallel_writer(path):
     """
-    return getByScheme(dataPath, SCHEMAS_TO_PARALLELWRITERS, LocalFSParallelWriter)
+    Returns the class of a parallel file writer for the scheme in path.
 
-
-def getFileWriterForPath(dataPath):
-    """Returns the class of a file writer suitable for the scheme used by `datapath`.
-
-    The resulting class object must still be instantiated in order to get a usable instance of the class.
-
-    Throws NotImplementedError if the requested scheme is explicitly not supported (e.g. "ftp://").
-    Returns LocalFSFileWriter if scheme is absent or not recognized.
+    The resulting class object must still be instantiated.
+    Throws NotImplementedError if the requested scheme is not supported (e.g. "ftp://").
+    Returns LocalFileReader if scheme is absent or not recognized.
     """
-    return getByScheme(dataPath, SCHEMAS_TO_FILEWRITERS, LocalFSFileWriter)
+    return get_by_scheme(path, SCHEMAS_TO_PARALLELWRITERS, LocalParallelWriter)
 
-
-def getCollectedFileWriterForPath(dataPath):
-    """Returns the class of a collected file writer suitable for the scheme used by `datapath`.
-
-    The resulting class object must still be instantiated in order to get a usable instance of the class.
-
-    Throws NotImplementedError if the requested scheme is explicitly not supported (e.g. "ftp://").
-    Returns LocalFSCollectedFileWriter if scheme is absent or not recognized.
+def get_file_writer(path):
     """
-    return getByScheme(dataPath, SCHEMAS_TO_COLLECTEDFILEWRITERS, LocalFSCollectedFileWriter)
+    Returns the class of a file writer suitable for the scheme in path.
+
+    The resulting class object must still be instantiated.
+    Throws NotImplementedError if the requested scheme is not supported (e.g. "ftp://").
+    Returns LocalFileReader if scheme is absent or not recognized.
+    """
+    return get_by_scheme(path, SCHEMAS_TO_FILEWRITERS, LocalFileWriter)

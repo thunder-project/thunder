@@ -1,4 +1,3 @@
-import bisect
 import itertools
 import checkist
 from numpy import expand_dims, zeros
@@ -6,6 +5,35 @@ from numpy import dtype as dtypeFunc
 
 from .blocks import BlockGroupingKey, Blocks, PaddedBlockGroupingKey, PaddedBlocks, \
     SimpleBlocks, slice_to_tuple
+
+def parse_memory_string(memstring):
+    """
+    Returns the size in bytes of memory represented by a Java-style memory string
+
+    parseMemoryString("150k") -> 150000
+    parseMemoryString("2M") -> 2000000
+    parseMemoryString("5G") -> 5000000000
+    parseMemoryString("128") -> 128
+
+    Recognized suffixes are k, m, and g. Parsing is case-insensitive.
+    """
+    if isinstance(memstring, basestring):
+        import re
+        regPat = r"""(\d+)([bBkKmMgG])?"""
+        m = re.match(regPat, memstring)
+        if not m:
+            raise ValueError("Could not parse '%s' as memory specification; should be NUMBER[k|m|g]" % memStr)
+        quant = int(m.group(1))
+        units = m.group(2).lower()
+        if units == "g":
+            return int(quant * 1e9)
+        elif units == 'm':
+            return int(quant * 1e6)
+        elif units == 'k':
+            return int(quant * 1e3)
+        return quant
+    else:
+        return int(memstring)
 
 
 class BlockingStrategy(object):
@@ -149,7 +177,7 @@ class SimpleBlockingStrategy(BlockingStrategy):
 
         blockSize : positive int or string
             Requests an average size for the intermediate blocks in bytes. A passed string should
-            be in a format like "256k" or "150M" (see util.common.parseMemoryString). If blocksPerDim
+            be in a format like "256k" or "150M". If blocksPerDim
             or groupingDim are passed, they will take precedence over this argument. See
             strategy._BlockMemoryAsSequence for a description of the blocking strategy used.
 
@@ -347,10 +375,9 @@ def _normDimsToShapeTuple(dims):
 
 
 def _calcSplitsForBlockSize(blockSize, elementSize, dims):
-    from thunder.utils.common import parseMemoryString
     import bisect
     if isinstance(blockSize, basestring):
-        blockSize = parseMemoryString(blockSize)
+        blockSize = parse_memory_string(blockSize)
 
     memSeq = _BlockMemoryAsReversedSequence(_normDimsToShapeTuple(dims))
     tmpIdx = bisect.bisect_left(memSeq, blockSize / float(elementSize))

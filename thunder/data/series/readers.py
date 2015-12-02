@@ -94,8 +94,8 @@ def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64'):
         Numerical type to use for data after converting from text.
     """
     if mode() == 'spark':
-        from thunder.data.fileio.readers import normalizeScheme
-        path = normalizeScheme(path, ext)
+        from thunder.data.fileio.readers import normalize_scheme
+        path = normalize_scheme(path, ext)
 
         def parse(line, nkeys_):
             vec = [float(x) for x in line.split(' ')]
@@ -143,8 +143,8 @@ def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
     """
     params = binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype)
 
-    from thunder.data.fileio.readers import normalizeScheme
-    path = normalizeScheme(path, ext)
+    from thunder.data.fileio.readers import normalize_scheme
+    path = normalize_scheme(path, ext)
 
     from numpy import dtype as dtypeFunc
     keytype = dtypeFunc(params.keytype)
@@ -176,12 +176,12 @@ def binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype):
     """
     import json
     from collections import namedtuple
-    from thunder.data.fileio.readers import getFileReaderForPath, FileNotFoundError
+    from thunder.data.fileio.readers import get_file_reader, FileNotFoundError
 
     Parameters = namedtuple('BinaryLoadParameters', 'nkeys nvalues keytype valuetype')
     Parameters.__new__.__defaults__ = (None, None, 'int16', 'int16')
 
-    reader = getFileReaderForPath(path)(credentials=credentials())
+    reader = get_file_reader(path)(credentials=credentials())
     try:
         buf = reader.read(path, filename=conf)
         params = json.loads(buf)

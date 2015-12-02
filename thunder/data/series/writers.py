@@ -21,60 +21,58 @@ def tobinary(series, path, overwrite=False):
     import struct
     from thunder import credentials
     from thunder.utils.common import check_path
-    from thunder.data.fileio.writers import getParallelWriterForPath
+    from thunder.data.fileio.writers import get_parallel_writer
 
     if not overwrite:
         check_path(path, credentials=credentials())
-        overwrite = True  # prevent additional downstream checks for this path
+        overwrite = True # prevent additional downstream checks for this path
 
-    def getbinary(kvIter):
-        """ Collects all Series records in a partition into a single binary series record. """
+    def tobuffer(kv):
         keypacker = None
-        firstKey = None
+        firstkey = None
         buf = StringIO.StringIO()
-        for seriesKey, series in kvIter:
+        for serieskey, series in kv:
             if keypacker is None:
-                keypacker = struct.Struct('h'*len(seriesKey))
-                firstKey = seriesKey
-            # print >> sys.stderr, seriesKey, series, series.tostring().encode('hex')
-            buf.write(keypacker.pack(*seriesKey))
+                keypacker = struct.Struct('h'*len(serieskey))
+                firstkey = serieskey
+            buf.write(keypacker.pack(*serieskey))
             buf.write(series.tostring())
         val = buf.getvalue()
         buf.close()
-        # we might have an empty partition, in which case firstKey will still be None
-        if firstKey is None:
+        if firstkey is None:
+            # empty partition
             return iter([])
         else:
-            label = getlabel(firstKey) + ".bin"
+            label = getlabel(firstkey) + ".bin"
             return iter([(label, val)])
 
-    writer = getParallelWriterForPath(path)(path, overwrite=overwrite, credentials=credentials())
-
-    binary = series.rdd.mapPartitions(getbinary)
-
-    binary.foreach(writer.writerFcn)
-
-    firstKey, firstVal = series.first()
-    write_config(path, len(firstKey), len(firstVal), keytype='int16',
+    writer = get_parallel_writer(path)(path, overwrite=overwrite, credentials=credentials())
+    binary = series.rdd.mapPartitions(tobuffer)
+    binary.foreach(writer.write)
+    firstkey, firstvalue = series.first()
+    write_config(path, len(firstkey), len(firstvalue), keytype='int16',
                  valuetype=series.dtype, overwrite=overwrite)
 
 def write_config(path, nkeys, nvalues, keytype='int16', valuetype='int16',
                  name="conf.json", overwrite=True):
     """
-    Helper function to write out a conf.json file with required information to load Series binary data.
+    Write a conf.json file with required information to load Series binary data.
     """
     import json
-    from thunder.data.fileio.writers import getFileWriterForPath
+    from thunder.data.fileio.writers import get_file_writer
 
-    writer = getFileWriterForPath(path)
+    writer = get_file_writer(path)
     conf = {'input': path, 'nkeys': nkeys, 'nvalues': nvalues,
             'valuetype': str(valuetype), 'keytype': str(keytype)}
 
     confwriter = writer(path, name, overwrite=overwrite, credentials=credentials())
-    confwriter.writeFile(json.dumps(conf, indent=2))
+    confwriter.write(json.dumps(conf, indent=2))
 
     successwriter = writer(path, "SUCCESS", overwrite=overwrite, credentials=credentials())
-    successwriter.writeFile('')
+    successwriter.write('')
 
 def getlabel(key):
+    """
+    Get a file label from keys with reversed order
+    """
     return '-'.join(reversed(["key%02d_%05g" % (ki, k) for (ki, k) in enumerate(key)]))

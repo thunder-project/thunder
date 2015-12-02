@@ -6,74 +6,37 @@ import os
 import urllib
 import urlparse
 import logging
+import boto
 
-from thunder.utils.common import S3ConnectionWithAnon
+from thunder.utils.common import connection_with_anon
 
-_haveBoto = False
-try:
-    import boto
-    logging.getLogger('boto').setLevel(logging.CRITICAL)
-    _haveBoto = True
-except ImportError:
-    boto = None
+logging.getLogger('boto').setLevel(logging.CRITICAL)
 
 
-class FileNotFoundError(IOError):
+def addextension(path, ext=None):
     """
-    An exception to be thrown when reader implementations can't find a requested file.
-
-    Implementations are responsible for watching for their own appropriate exceptions and rethrowing
-    FileNotFoundError.
-
-    See PEP 3151 for background and inspiration.
-    """
-    pass
-
-
-def appendExtensionToPathSpec(dataPath, ext=None):
-    """
-    Helper function for consistent handling of paths given with separately passed file extensions
-
-    Returns
-    -------
-    result: string dataPath
-        dataPath string formed by concatenating passed `dataPath` with "*" and passed `ext`, with some
-        normalization as appropriate
+    Helper function for handling of paths given separately passed file extensions.
     """
     if ext:
-        if '*' in dataPath:
-            # we already have a literal wildcard, which we take as a sign that the user knows
-            # what they're doing and don't want us overriding their path by appending extensions to it
-            return dataPath
-        elif os.path.splitext(dataPath)[1]:
-            # looks like we already have a literal extension specified at the end of dataPath.
-            # go with that.
-            return dataPath
+        if '*' in path:
+            return path
+        elif os.path.splitext(path)[1]:
+            return path
         else:
-            # no wildcard in path yet
-            # check whether we already end in `ext`, which suggests we've been passed a literal filename.
-            # prepend '.' to ext, as mild protection against the case where we have a directory 'bin' and
-            # are looking in it for files named '*.bin'.
             if not ext.startswith('.'):
                 ext = '.'+ext
-            if not dataPath.endswith(ext):
-                # we have an extension and we'd like to append it.
-                # we assume that dataPath should be pointing to a directory at this point, but we might
-                # or might not have a directory separator at the end of it. add it if we don't.
-                if not dataPath.endswith(os.path.sep):
-                    dataPath += os.path.sep
-                # return a path with "/*."+`ext` added to it.
-                return dataPath+'*'+ext
+            if not path.endswith(ext):
+                if not path.endswith(os.path.sep):
+                    path += os.path.sep
+                return path + '*' + ext
             else:
-                # we are asking to append `ext`, but it looks like dataPath already ends with '.'+`ext`
-                return dataPath
+                return path
     else:
-        return dataPath
+        return path
 
-
-def selectByStartAndStopIndices(files, start, stop):
+def select(files, start, stop):
     """
-    Helper function for consistent handling of start and stop indices
+    Helper function for handling start and stop indices
     """
     if start or stop:
         if start is None:
@@ -83,17 +46,16 @@ def selectByStartAndStopIndices(files, start, stop):
         files = files[start:stop]
     return files
 
-
-def _localRead(filePath, startOffset=None, size=-1):
+def readlocal(path, offset=None, size=-1):
     """
-    Wrapper around open(filepath, 'rb') that returns the contents of the file as a string.
+    Wrapper around open(path, 'rb') that returns the contents of the file as a string.
 
-    Will rethrow FileNotFoundError if it receives an IOError with error number indicating that the file isn't found.
+    Will rethrow FileNotFoundError if it receives an IOError.
     """
     try:
-        with open(filePath, 'rb') as f:
-            if startOffset:
-                f.seek(startOffset)
+        with open(path, 'rb') as f:
+            if offset:
+                f.seek(offset)
             buf = f.read(size)
     except IOError, e:
         if e.errno == errno.ENOENT:
@@ -102,281 +64,96 @@ def _localRead(filePath, startOffset=None, size=-1):
             raise
     return buf
 
+def listrecursive(path, ext=None):
+    """
+    List files recurisvely
+    """
+    filenames = set()
+    for root, dirs, files in os.walk(path):
+        if ext:
+            files = fnmatch.filter(files, '*.' + ext)
+        for filename in files:
+            filenames.add(os.path.join(root, filename))
+    filenames = list(filenames)
+    filenames.sort()
+    return sorted(filenames)
 
-class LocalFSParallelReader(object):
+def listflat(path, ext=None):
+    """
+    List files without recursion
+    """
+    if os.path.isdir(path):
+        if ext:
+            files = glob.glob(os.path.join(path, '*.' + ext))
+        else:
+            files = [os.path.join(path, fname) for fname in os.listdir(path)]
+    else:
+        files = glob.glob(path)
+    # filter out directories
+    files = [fpath for fpath in files if not os.path.isdir(fpath)]
+    return sorted(files)
+
+def uri_to_path(uri):
+    path = urllib.url2pathname(urlparse.urlparse(uri).path)
+    if uri and (not path):
+        raise ValueError("Could not interpret %s as URI. " +
+                         "Paths in URIs should start with 'file:///', not 'file://'")
+    return path
+
+
+class FileNotFoundError(IOError):
+    """
+    An exception to be thrown when reader implementations can't find a requested file.
+    """
+    pass
+
+
+class LocalParallelReader(object):
     """
     Parallel reader backed by python's native file() objects.
     """
-    def __init__(self, sparkContext=None, **kwargs):
-        # kwargs allow AWS credentials to be passed into generic Readers w/o exceptions being raised
-        # in this case kwargs are just ignored
-        self.sc = sparkContext
-        self.lastNRecs = None
+    def __init__(self, engine=None, **kwargs):
+        self.engine = engine
+        self.nfiles = None
 
     @staticmethod
-    def uriToPath(uri):
-        # thanks stack overflow:
-        # http://stackoverflow.com/questions/5977576/is-there-a-convenient-way-to-map-a-file-uri-to-os-path
-        path = urllib.url2pathname(urlparse.urlparse(uri).path)
-        if uri and (not path):
-            # passed a nonempty uri, got an empty path back
-            # this happens when given a file uri that starts with "file://" instead of "file:///"
-            # error here to prevent unexpected behavior of looking at current working directory
-            raise ValueError("Could not interpret %s as URI. " +
-                             "Note absolute paths in URIs should start with 'file:///', not 'file://'")
-        return path
-
-    @staticmethod
-    def _listFilesRecursive(absPath, ext=None):
-        filenames = set()
-        for root, dirs, files in os.walk(absPath):
-            if ext:
-                files = fnmatch.filter(files, '*.' + ext)
-            for filename in files:
-                filenames.add(os.path.join(root, filename))
-        filenames = list(filenames)
-        filenames.sort()
-        return sorted(filenames)
-
-    @staticmethod
-    def _listFilesNonRecursive(absPath, ext=None):
-        if os.path.isdir(absPath):
-            if ext:
-                files = glob.glob(os.path.join(absPath, '*.' + ext))
-            else:
-                files = [os.path.join(absPath, fname) for fname in os.listdir(absPath)]
-        else:
-            files = glob.glob(absPath)
-        # filter out directories
-        files = [fpath for fpath in files if not os.path.isdir(fpath)]
-        return sorted(files)
-
-    def listFiles(self, absPath, ext=None, start=None, stop=None, recursive=False):
-        """ Get sorted list of file paths matching passed `absPath` path and `ext` filename extension """
-        files = LocalFSParallelReader._listFilesNonRecursive(absPath, ext) if not recursive else \
-            LocalFSParallelReader._listFilesRecursive(absPath, ext)
+    def list(path, ext=None, start=None, stop=None, recursive=False):
+        """
+        Get sorted list of file paths matching path and extension
+        """
+        files = listflat(path, ext) if not recursive else listrecursive(path, ext)
         if len(files) < 1:
-            raise FileNotFoundError('cannot find files of type "%s" in %s' % (ext if ext else '*', absPath))
-        files = selectByStartAndStopIndices(files, start, stop)
+            raise FileNotFoundError('Cannot find files of type "%s" in %s'
+                                    % (ext if ext else '*', path))
+        files = select(files, start, stop)
 
         return files
 
-    def read(self, dataPath, ext=None, start=None, stop=None, recursive=False, npartitions=None):
+    def read(self, path, ext=None, start=None, stop=None, recursive=False, npartitions=None):
         """
         Sets up Spark RDD across files specified by dataPath on local filesystem.
 
         Returns RDD of <integer file index, string buffer> k/v pairs.
         """
-        absPath = self.uriToPath(dataPath)
-        filePaths = self.listFiles(absPath, ext=ext, start=start, stop=stop, recursive=recursive)
+        path = uri_to_path(path)
+        files = self.list(path, ext=ext, start=start, stop=stop, recursive=recursive)
 
-        lfilepaths = len(filePaths)
-        self.lastNRecs = lfilepaths
-        npartitions = min(npartitions, lfilepaths) if npartitions else lfilepaths
-        return self.sc.parallelize(enumerate(filePaths), npartitions).map(lambda (k, v): (k, _localRead(v)))
-
-
-class _BotoClient(object):
-    """
-    Superclass for boto-based S3 and Google storage readers.
-    """
-    @staticmethod
-    def parseQuery(query, delim='/'):
-        storageScheme = ''
-        keyName = ''
-        prefix = ''
-        postfix = ''
-
-        parseResult = urlparse.urlparse(query)
-        bucketName = parseResult.netloc
-        keyQuery = parseResult.path.lstrip(delim)
-
-        if not parseResult.scheme.lower() in ('', "gs", "s3", "s3n"):
-            raise ValueError("Query scheme must be one of '', 'gs', 's3', or 's3n'; got: '%s'" % parseResult.scheme)
-        storageScheme = parseResult.scheme.lower()
-
-        # special case handling for strings of form "/bucket/dir":
-        if (not bucketName.strip()) and keyQuery:
-            toks = keyQuery.split(delim, 1)
-            bucketName = toks[0]
-            if len(toks) == 2:
-                keyQuery = toks[1]
-            else:
-                keyQuery = ''
-
-        if not bucketName.strip():
-            raise ValueError("Could not parse bucket name from query string '%s'" % query)
-
-        keyToks = keyQuery.split("*")
-        nkeyToks = len(keyToks)
-        if nkeyToks == 0:
-            pass
-        elif nkeyToks == 1:
-            keyName = keyToks[0]
-        elif nkeyToks == 2:
-            rdelimIdx = keyToks[0].rfind(delim)
-            if rdelimIdx >= 0:
-                keyName = keyToks[0][:(rdelimIdx+1)]
-                prefix = keyToks[0][(rdelimIdx+1):] if len(keyToks[0]) > (rdelimIdx+1) else ''
-            else:
-                prefix = keyToks[0]
-            postfix = keyToks[1]
-        else:
-            raise ValueError("Only one wildcard ('*') allowed in query string, got: '%s'" % query)
-
-        return storageScheme, bucketName, keyName, prefix, postfix
-
-    @staticmethod
-    def checkPrefix(bucket, keyPath, delim='/'):
-        return len(bucket.get_all_keys(prefix=keyPath, delimiter=delim, max_keys=1)) > 0
-
-    @staticmethod
-    def filterPredicate(key, post, inclusive=False):
-        kname = key.name
-        keyEndsWithPostfix = kname.endswith(post)
-        return keyEndsWithPostfix if inclusive else not keyEndsWithPostfix
-
-    @staticmethod
-    def retrieveKeys(bucket, key, prefix='', postfix='', delim='/', includeDirectories=False,
-                     recursive=False):
-        if key and prefix:
-            assert key.endswith(delim)
-
-        keyPath = key+prefix
-        # if we are asking for a key that doesn't end in a delimiter, check whether it might
-        # actually be a directory
-        if not keyPath.endswith(delim) and keyPath:
-            # not all directories have actual keys associated with them
-            # check for matching prefix instead of literal key:
-            if _BotoClient.checkPrefix(bucket, keyPath+delim, delim=delim):
-                # found a directory; change path so that it explicitly refers to directory
-                keyPath += delim
-
-        listDelim = delim if not recursive else None
-        results = bucket.list(prefix=keyPath, delimiter=listDelim)
-        if postfix:
-            return itertools.ifilter(lambda k_: _BotoClient.filterPredicate(k_, postfix, inclusive=True), results)
-        elif not includeDirectories:
-            return itertools.ifilter(lambda k_: _BotoClient.filterPredicate(k_, delim, inclusive=False), results)
-        else:
-            return results
-
-    def __init__(self, credentials=None):
-        """
-        Initialization; validates that AWS keys are available as environment variables.
-
-        Will let boto library look up credentials itself according to its own rules - e.g. first looking for
-        AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, then going through several possible config files and finally
-        looking for a ~/.aws/credentials .ini-formatted file. See boto docs:
-        http://boto.readthedocs.org/en/latest/boto_config_tut.html
-
-        However, if an AWSCredentials object is provided, its `awsAccessKeyId` and `awsSecretAccessKey` attributes
-        will be used instead of those found by the standard boto credential lookup process.
-        """
-        if not _haveBoto:
-            raise ValueError("The boto package does not appear to be available; boto is required for BotoReader")
-        self.credentials = credentials if credentials else {'access': None, 'secret': None}
+        nfiles = len(files)
+        self.nfiles = nfiles
+        npartitions = min(npartitions, nfiles) if npartitions else nfiles
+        rdd = self.engine.parallelize(enumerate(files), npartitions)
+        return rdd.map(lambda (k, v): (k, readlocal(v)))
 
 
-class BotoParallelReader(_BotoClient):
-    """
-    Parallel reader backed by boto AWS client library.
-    """
-    def __init__(self, sparkContext, credentials=None):
-        super(BotoParallelReader, self).__init__(credentials=credentials)
-        self.sc = sparkContext
-        self.lastNRecs = None
-
-    def _listFilesImpl(self, dataPath, ext=None, start=None, stop=None, recursive=False):
-        parse = _BotoClient.parseQuery(dataPath)
-
-        storageScheme = parse[0]
-        bucketName = parse[1]
-
-        if storageScheme == 's3' or storageScheme == 's3n':
-            conn = S3ConnectionWithAnon(self.credentials)
-            bucket = conn.get_bucket(parse[1])
-        elif storageScheme == 'gs':
-            conn = boto.storage_uri(bucketName, 'gs')
-            bucket = conn.get_bucket()
-        else:
-            raise NotImplementedError("No file reader implementation for URL scheme " + storageScheme)
-
-        keys = _BotoClient.retrieveKeys(bucket, parse[2], prefix=parse[3], postfix=parse[4], recursive=recursive)
-        keyNameList = [key.name for key in keys]
-        if ext:
-            keyNameList = [keyname for keyname in keyNameList if keyname.endswith(ext)]
-        keyNameList.sort()
-        keyNameList = selectByStartAndStopIndices(keyNameList, start, stop)
-
-        return storageScheme, bucket.name, keyNameList
-
-    def listFiles(self, dataPath, ext=None, start=None, stop=None, recursive=False):
-        storageScheme, bucketname, keyNames = self._listFilesImpl(dataPath, ext=ext, start=start, stop=stop,
-                                                                  recursive=recursive)
-        return ["%s:///%s/%s" % (storageScheme, bucketname, keyname) for keyname in keyNames]
-
-    def read(self, path, ext=None, start=None, stop=None, recursive=False, npartitions=None):
-        """
-        Sets up Spark RDD across S3 or GS objects specified by dataPath.
-
-        Returns RDD of <string bucket keyname, string buffer> k/v pairs.
-        """
-        path = appendExtensionToPathSpec(path, ext)
-        storageScheme, bucketName, keyNameList = self._listFilesImpl(path, start=start, stop=stop, recursive=recursive)
-
-        if not keyNameList:
-            raise FileNotFoundError("No objects found for '%s'" % path)
-
-        credentials = self.credentials
-
-        def readSplitFromBoto(kvIter):
-            if storageScheme == 's3' or storageScheme == 's3n':
-                conn = S3ConnectionWithAnon(credentials)
-                bucket = conn.get_bucket(bucketName)
-            elif storageScheme == 'gs':
-                conn = boto.storage_uri(bucketName, 'gs')
-                bucket = conn.get_bucket()
-            else:
-                raise NotImplementedError("No file reader implementation for URL scheme " + storageScheme)
-
-            for kv in kvIter:
-                idx, keyName = kv
-                key = bucket.get_key(keyName)
-                buf = key.get_contents_as_string()
-                yield idx, buf
-
-        self.lastNRecs = len(keyNameList)
-        npartitions = min(npartitions, self.lastNRecs) if npartitions else self.lastNRecs
-        return self.sc.parallelize(enumerate(keyNameList), npartitions).mapPartitions(readSplitFromBoto)
-
-
-class LocalFSFileReader(object):
+class LocalFileReader(object):
     """
     File reader backed by python's native file() objects.
     """
     def __init__(self, **kwargs):
         pass
 
-    def __listRecursive(self, dataPath):
-        if os.path.isdir(dataPath):
-            dirname = dataPath
-            matchpattern = None
-        else:
-            dirname, matchpattern = os.path.split(dataPath)
-
-        filenames = set()
-        for root, dirs, files in os.walk(dirname):
-            if matchpattern:
-                files = fnmatch.filter(files, matchpattern)
-            for filename in files:
-                filenames.add(os.path.join(root, filename))
-        filenames = list(filenames)
-        filenames.sort()
-        return filenames
-
-    def list(self, dataPath, filename=None, start=None, stop=None, recursive=False,
-             includeDirectories=False):
+    @staticmethod
+    def list(path, filename=None, start=None, stop=None, recursive=False, directories=False):
         """
         List files specified by dataPath.
 
@@ -384,110 +161,274 @@ class LocalFSFileReader(object):
 
         Returns sorted list of absolute path strings.
         """
-        absPath = LocalFSParallelReader.uriToPath(dataPath)
+        path = uri_to_path(path)
 
-        if (not filename) and recursive:
-            return self.__listRecursive(absPath)
+        if not filename and recursive:
+            return listrecursive(path)
 
         if filename:
-            if os.path.isdir(absPath):
-                absPath = os.path.join(absPath, filename)
+            if os.path.isdir(path):
+                path = os.path.join(path, filename)
             else:
-                absPath = os.path.join(os.path.dirname(absPath), filename)
+                path = os.path.join(os.path.dirname(path), filename)
         else:
-            if os.path.isdir(absPath) and not includeDirectories:
-                absPath = os.path.join(absPath, "*")
+            if os.path.isdir(path) and not directories:
+                path = os.path.join(path, "*")
 
-        files = glob.glob(absPath)
-        # filter out directories
-        if not includeDirectories:
+        files = glob.glob(path)
+
+        if not directories:
             files = [fpath for fpath in files if not os.path.isdir(fpath)]
+
         files.sort()
-        files = selectByStartAndStopIndices(files, start, stop)
+        files = select(files, start, stop)
         return files
 
-    def read(self, dataPath, filename=None, startOffset=None, size=-1):
-        filenames = self.list(dataPath, filename=filename)
+    def read(self, path, filename=None, offset=None, size=-1):
+        filenames = self.list(path, filename=filename)
 
         if not filenames:
-            raise FileNotFoundError("No file found matching: '%s'" % dataPath)
+            raise FileNotFoundError("No file found matching: '%s'" % path)
         if len(filenames) > 1:
-            raise ValueError("Found multiple files matching: '%s'" % dataPath)
+            raise ValueError("Found multiple files matching: '%s'" % path)
 
-        return _localRead(filenames[0], startOffset=startOffset, size=size)
+        return readlocal(filenames[0], offset=offset, size=size)
 
-    def open(self, dataPath, filename=None):
-        filenames = self.list(dataPath, filename=filename)
+    def open(self, path, filename=None):
+        filenames = self.list(path, filename=filename)
 
         if not filenames:
-            raise FileNotFoundError("No file found matching: '%s'" % dataPath)
+            raise FileNotFoundError("No file found matching: '%s'" % path)
         if len(filenames) > 1:
-            raise ValueError("Found multiple files matching: '%s'" % dataPath)
+            raise ValueError("Found multiple files matching: '%s'" % path)
 
         return open(filenames[0], 'rb')
 
 
-class BotoFileReader(_BotoClient):
+class BotoClient(object):
     """
-    File reader backed by the boto AWS client library.
+    Superclass for boto-based S3 and Google storage readers.
     """
-    def __getMatchingKeys(self, dataPath, filename=None, includeDirectories=False, recursive=False):
-        parse = _BotoClient.parseQuery(dataPath)
+    def __init__(self, credentials=None):
+        self.credentials = credentials if credentials else {'access': None, 'secret': None}
 
-        storageScheme = parse[0]
-        bucketName = parse[1]
-        keyName = parse[2]
+    @staticmethod
+    def parse_query(query, delim='/'):
+        """
+        Parse a boto query
+        """
+        key = ''
+        prefix = ''
+        postfix = ''
 
-        if storageScheme == 's3' or storageScheme == 's3n':
-            conn = S3ConnectionWithAnon(self.credentials)
-            bucket = conn.get_bucket(bucketName)
-        elif storageScheme == 'gs':
-            conn = boto.storage_uri(bucketName, 'gs')
+        parsed = urlparse.urlparse(query)
+        query = parsed.path.lstrip(delim)
+        bucket = parsed.netloc
+
+        if not parsed.scheme.lower() in ('', "gs", "s3", "s3n"):
+            raise ValueError("Query scheme must be one of '', 'gs', 's3', or 's3n'; "
+                             "got: '%s'" % parsed.scheme)
+        storage = parsed.scheme.lower()
+
+        if not bucket.strip() and query:
+            toks = query.split(delim, 1)
+            bucket = toks[0]
+            if len(toks) == 2:
+                key = toks[1]
+            else:
+                key = ''
+
+        if not bucket.strip():
+            raise ValueError("Could not parse bucket name from query string '%s'" % query)
+
+        tokens = query.split("*")
+        n = len(tokens)
+        if n == 0:
+            pass
+        elif n == 1:
+            key = tokens[0]
+        elif n == 2:
+            index = tokens[0].rfind(delim)
+            if index >= 0:
+                key = tokens[0][:(index + 1)]
+                prefix = tokens[0][(index + 1):] if len(tokens[0]) > (index + 1) else ''
+            else:
+                prefix = tokens[0]
+            postfix = tokens[1]
+        else:
+            raise ValueError("Only one wildcard ('*') allowed in query string, got: '%s'" % query)
+
+        return storage, bucket, key, prefix, postfix
+
+    @staticmethod
+    def check_prefix(bucket, keyPath, delim='/'):
+        return len(bucket.get_all_keys(prefix=keyPath, delimiter=delim, max_keys=1)) > 0
+
+    @staticmethod
+    def filter_predicate(key, post, inclusive=False):
+        kname = key.name
+        ends_with_postfix = kname.endswith(post)
+        return ends_with_postfix if inclusive else not ends_with_postfix
+
+    @staticmethod
+    def retrieve_keys(bucket, key, prefix='', postfix='', delim='/',
+                      directories=False, recursive=False):
+        """
+        Retrieve keys from a bucket
+        """
+        if key and prefix:
+            assert key.endswith(delim)
+
+        key += prefix
+        # check whether key is a directory
+        if not key.endswith(delim) and key:
+            # check for matching prefix
+            if BotoClient.check_prefix(bucket, key + delim, delim=delim):
+                # found a directory
+                key += delim
+
+        listdelim = delim if not recursive else None
+        results = bucket.list(prefix=key, delimiter=listdelim)
+        if postfix:
+            func = lambda k_: BotoClient.filter_predicate(k_, postfix, inclusive=True)
+            return itertools.ifilter(func, results)
+        elif not directories:
+            func = lambda k_: BotoClient.filter_predicate(k_, delim, inclusive=False)
+            return itertools.ifilter(func, results)
+        else:
+            return results
+
+
+class BotoParallelReader(BotoClient):
+    """
+    Parallel reader backed by boto AWS client library.
+    """
+    def __init__(self, engine, credentials=None):
+        super(BotoParallelReader, self).__init__(credentials=credentials)
+        self.engine = engine
+        self.nfiles = None
+
+    def getfiles(self, path, ext=None, start=None, stop=None, recursive=False):
+        """
+        Get scheme, bucket, and keys for a set of files
+        """
+        parse = BotoClient.parse_query(path)
+
+        scheme = parse[0]
+        bucket_name = parse[1]
+
+        if scheme == 's3' or scheme == 's3n':
+            conn = connection_with_anon(self.credentials)
+            bucket = conn.get_bucket(parse[1])
+        elif scheme == 'gs':
+            conn = boto.storage_uri(bucket_name, 'gs')
             bucket = conn.get_bucket()
         else:
-            raise NotImplementedError("No file reader implementation for URL scheme " + storageScheme)
+            raise NotImplementedError("No file reader implementation for URL scheme " + scheme)
+
+        keys = BotoClient.retrieve_keys(
+            bucket, parse[2], prefix=parse[3], postfix=parse[4], recursive=recursive)
+        keylist = [key.name for key in keys]
+        if ext:
+            keylist = [keyname for keyname in keylist if keyname.endswith(ext)]
+        keylist.sort()
+        keylist = select(keylist, start, stop)
+
+        return scheme, bucket.name, keylist
+
+    def list(self, dataPath, ext=None, start=None, stop=None, recursive=False):
+        """
+        List files from remote storage
+        """
+        scheme, bucket_name, keylist = self.getfiles(
+            dataPath, ext=ext, start=start, stop=stop, recursive=recursive)
+
+        return ["%s:///%s/%s" % (scheme, bucket_name, key) for key in keylist]
+
+    def read(self, path, ext=None, start=None, stop=None, recursive=False, npartitions=None):
+        """
+        Sets up Spark RDD across S3 or GS objects specified by dataPath.
+
+        Returns RDD of <string bucket keyname, string buffer> k/v pairs.
+        """
+        path = addextension(path, ext)
+        scheme, bucket_name, keylist = self.getfiles(
+            path, start=start, stop=stop, recursive=recursive)
+
+        if not keylist:
+            raise FileNotFoundError("No objects found for '%s'" % path)
+
+        credentials = self.credentials
+
+        def getsplit(kvIter):
+            if scheme == 's3' or scheme == 's3n':
+                conn = connection_with_anon(credentials)
+                bucket = conn.get_bucket(bucket_name)
+            elif scheme == 'gs':
+                conn = boto.storage_uri(bucket_name, 'gs')
+                bucket = conn.get_bucket()
+            else:
+                raise NotImplementedError("No file reader implementation for URL scheme " + scheme)
+
+            for kv in kvIter:
+                idx, keyName = kv
+                key = bucket.get_key(keyName)
+                buf = key.get_contents_as_string()
+                yield idx, buf
+
+        self.nfiles = len(keylist)
+        npartitions = min(npartitions, self.nfiles) if npartitions else self.nfiles
+        return self.engine.parallelize(enumerate(keylist), npartitions).mapPartitions(getsplit)
+
+
+class BotoFileReader(BotoClient):
+    """
+    File reader backed by boto.
+    """
+    def getkeys(self, path, filename=None, directories=False, recursive=False):
+        """
+        Get matching keys for a path
+        """
+        parse = BotoClient.parse_query(path)
+
+        scheme = parse[0]
+        bucket_name = parse[1]
+        key = parse[2]
+
+        if scheme == 's3' or scheme == 's3n':
+            conn = connection_with_anon(self.credentials)
+            bucket = conn.get_bucket(bucket_name)
+        elif scheme == 'gs':
+            conn = boto.storage_uri(bucket_name, 'gs')
+            bucket = conn.get_bucket()
+        else:
+            raise NotImplementedError("No file reader implementation for URL scheme " + scheme)
 
         if filename:
-            # check whether last section of dataPath refers to a directory
-            if not keyName.endswith("/"):
-                if self.checkPrefix(bucket, keyName + "/"):
-                    # keyname is a directory, but we've omitted the trailing "/"
-                    keyName += "/"
+            if not key.endswith("/"):
+                if self.check_prefix(bucket, key + "/"):
+                    key += "/"
                 else:
-                    # assume keyname refers to an object other than a directory
-                    # look for filename in same directory as keyname
-                    slashIdx = keyName.rfind("/")
-                    if slashIdx >= 0:
-                        keyName = keyName[:(slashIdx+1)]
+                    index = key.rfind("/")
+                    if index >= 0:
+                        key = key[:(index+1)]
                     else:
-                        # no directory separators, so our object is in the top level of the bucket
-                        keyName = ""
-            keyName += filename
+                        key = ""
+            key += filename
 
-        return (storageScheme, _BotoClient.retrieveKeys(bucket, keyName, prefix=parse[3], postfix=parse[4],
-                                                        includeDirectories=includeDirectories, recursive=recursive))
+        keylist = BotoClient.retrieve_keys(bucket, key, prefix=parse[3], postfix=parse[4],
+                                           directories=directories, recursive=recursive)
+        return scheme, keylist
 
-    def list(self, dataPath, filename=None, start=None, stop=None, recursive=False, includeDirectories=False):
+    def getkey(self, path, filename=None):
         """
-        List objects specified by dataPath.
-
-        Returns sorted list of 'gs://' or 's3n://' URIs.
+        Get single matching key for a path
         """
-        storageScheme, keys = self.__getMatchingKeys(dataPath, filename=filename,
-                                                     includeDirectories=includeDirectories,
-                                                     recursive=recursive)
-        keyNames = [storageScheme + ":///" + key.bucket.name + "/" + key.name for key in keys]
-        keyNames.sort()
-        keyNames = selectByStartAndStopIndices(keyNames, start, stop)
-        return keyNames
-
-    def __getSingleMatchingKey(self, dataPath, filename=None):
-        storageScheme, keys = self.__getMatchingKeys(dataPath, filename=filename)
-        # keys is probably a lazy-loading ifilter iterable
+        scheme, keys = self.getkeys(path, filename=filename)
         try:
             key = keys.next()
         except StopIteration:
-            raise FileNotFoundError("Could not find object for: '%s'" % dataPath)
+            raise FileNotFoundError("Could not find object for: '%s'" % path)
 
         # we expect to only have a single key returned
         nextKey = None
@@ -496,30 +437,46 @@ class BotoFileReader(_BotoClient):
         except StopIteration:
             pass
         if nextKey:
-            raise ValueError("Found multiple keys for: '%s'" % dataPath)
-        return storageScheme, key
+            raise ValueError("Found multiple keys for: '%s'" % path)
+        return scheme, key
 
-    def read(self, dataPath, filename=None, startOffset=None, size=-1):
-        storageScheme, key = self.__getSingleMatchingKey(dataPath, filename=filename)
+    def list(self, path, filename=None, start=None, stop=None, recursive=False, directories=False):
+        """
+        List objects specified by path.
 
-        if startOffset or (size > -1):
-            # specify Range header in boto request
-            # see: http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.35
-            # and: http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGET.html
-            if not startOffset:
-                startOffset = 0
+        Returns sorted list of 'gs://' or 's3n://' URIs.
+        """
+        storageScheme, keys = self.getkeys(
+            path, filename=filename, directories=directories, recursive=recursive)
+        keys = [storageScheme + ":///" + key.bucket.name + "/" + key.name for key in keys]
+        keys.sort()
+        keys = select(keys, start, stop)
+        return keys
+
+    def read(self, path, filename=None, offset=None, size=-1):
+        """
+        Read a file specified by path.
+        """
+        storageScheme, key = self.getkey(path, filename=filename)
+
+        if offset or (size > -1):
+            if not offset:
+                offset = 0
             if size > -1:
-                sizeStr = startOffset + size - 1  # range header is inclusive
+                sizeStr = offset + size - 1  # range header is inclusive
             else:
                 sizeStr = ""
-            hdrs = {"Range": "bytes=%d-%s" % (startOffset, sizeStr)}
-            return key.get_contents_as_string(headers=hdrs)
+            headers = {"Range": "bytes=%d-%s" % (offset, sizeStr)}
+            return key.get_contents_as_string(headers=headers)
         else:
             return key.get_contents_as_string()
 
-    def open(self, dataPath, filename=None):
-        storageScheme, key = self.__getSingleMatchingKey(dataPath, filename=filename)
-        return BotoReadFileHandle(storageScheme, key)
+    def open(self, path, filename=None):
+        """
+        Open a file specified by path.
+        """
+        scheme, key = self.getkey(path, filename=filename)
+        return BotoReadFileHandle(scheme, key)
 
 
 class BotoReadFileHandle(object):
@@ -528,8 +485,8 @@ class BotoReadFileHandle(object):
 
     Returned by BotoFileReader's open() method.
     """
-    def __init__(self, storageScheme, key):
-        self._storageScheme = storageScheme
+    def __init__(self, scheme, key):
+        self._scheme = scheme
         self._key = key
         self._closed = False
         self._offset = 0
@@ -578,7 +535,7 @@ class BotoReadFileHandle(object):
 
     @property
     def name(self):
-        return self._storageScheme + ":///" + self._key.bucket.name + "/" + self._key.name
+        return self._scheme + ":///" + self._key.bucket.name + "/" + self._key.name
 
     @property
     def mode(self):
@@ -586,8 +543,8 @@ class BotoReadFileHandle(object):
 
 
 SCHEMAS_TO_PARALLELREADERS = {
-    '': LocalFSParallelReader,
-    'file': LocalFSParallelReader,
+    '': LocalParallelReader,
+    'file': LocalParallelReader,
     'gs': BotoParallelReader,
     's3': BotoParallelReader,
     's3n': BotoParallelReader,
@@ -598,8 +555,8 @@ SCHEMAS_TO_PARALLELREADERS = {
 }
 
 SCHEMAS_TO_FILEREADERS = {
-    '': LocalFSFileReader,
-    'file': LocalFSFileReader,
+    '': LocalFileReader,
+    'file': LocalFileReader,
     'gs': BotoFileReader,
     's3': BotoFileReader,
     's3n': BotoFileReader,
@@ -609,60 +566,55 @@ SCHEMAS_TO_FILEREADERS = {
     'ftp': None
 }
 
-def normalizeScheme(dataPath, ext):
+def normalize_scheme(path, ext):
     """
     Normalize scheme for paths related to hdfs
     """
     import urlparse
-    dataPath = appendExtensionToPathSpec(dataPath, ext)
-    # we do need to prepend a scheme here, b/c otherwise the Hadoop based readers
-    # will adopt their default behavior and start looking on hdfs://.
+    path = addextension(path, ext)
 
-    parseResult = urlparse.urlparse(dataPath)
-    if parseResult.scheme:
+    parsed = urlparse.urlparse(path)
+    if parsed.scheme:
         # this appears to already be a fully-qualified URI
-        return dataPath
+        return path
     else:
         # this looks like a local path spec
-        # check whether we look like an absolute or a relative path
         import os
-        dirComponent, fileComponent = os.path.split(dataPath)
-        if not os.path.isabs(dirComponent):
-            # need to make relative local paths absolute; our file scheme parsing isn't all that it could be.
-            dirComponent = os.path.abspath(dirComponent)
-            dataPath = os.path.join(dirComponent, fileComponent)
-        return "file://" + dataPath
+        dirname, filename = os.path.split(path)
+        if not os.path.isabs(dirname):
+            # need to make relative local paths absolute
+            dirname = os.path.abspath(dirname)
+            path = os.path.join(dirname, filename)
+        return "file://" + path
 
-def getByScheme(dataPath, lookup, default):
+def get_by_scheme(path, lookup, default):
     """
     Helper function used by get*ForPath().
     """
-    parseresult = urlparse.urlparse(dataPath)
-    clazz = lookup.get(parseresult.scheme, default)
-    if clazz is None:
-        raise NotImplementedError("No implementation for scheme " + parseresult.scheme)
-    return clazz
+    parsed = urlparse.urlparse(path)
+    class_name = lookup.get(parsed.scheme, default)
+    if class_name is None:
+        raise NotImplementedError("No implementation for scheme " + parsed.scheme)
+    return class_name
 
 
-def getParallelReaderForPath(dataPath):
+def get_parallel_reader(path):
     """
-    Returns the class of a parallel reader suitable for the scheme used by `dataPath`.
+    Returns the class of a parallel reader suitable for the scheme in path.
 
-    The resulting class object must still be instantiated in order to get a usable instance of the class.
-
-    Throws NotImplementedError if the requested scheme is explicitly not supported (e.g. "ftp://").
-    Returns LocalFSParallelReader if scheme is absent or not recognized.
+    The resulting class object must still be instantiated.
+    Throws NotImplementedError if the requested scheme is not supported (e.g. "ftp://").
+    Returns LocalParallelReader if scheme is absent or not recognized.
     """
-    return getByScheme(dataPath, SCHEMAS_TO_PARALLELREADERS, LocalFSParallelReader)
+    return get_by_scheme(path, SCHEMAS_TO_PARALLELREADERS, LocalParallelReader)
 
 
-def getFileReaderForPath(dataPath):
+def get_file_reader(path):
     """
-    Returns the class of a file reader suitable for the scheme used by `dataPath`.
+    Returns the class of a file reader suitable for the scheme in path.
 
-    The resulting class object must still be instantiated in order to get a usable instance of the class.
-
-    Throws NotImplementedError if the requested scheme is explicitly not supported (e.g. "ftp://").
-    Returns LocalFSFileReader if scheme is absent or not recognized.
+    The resulting class object must still be instantiated.
+    Throws NotImplementedError if the requested scheme is not supported (e.g. "ftp://").
+    Returns LocalFileReader if scheme is absent or not recognized.
     """
-    return getByScheme(dataPath, SCHEMAS_TO_FILEREADERS, LocalFSFileReader)
+    return get_by_scheme(path, SCHEMAS_TO_FILEREADERS, LocalFileReader)

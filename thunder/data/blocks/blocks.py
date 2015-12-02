@@ -19,10 +19,8 @@ def slice_to_tuple(s, size):
     step = 1 if s.step is None else s.step
     return start, stop, step
 
-
 def slice_to_range(s, stop):
     return xrange(*slice_to_tuple(s, stop))
-
 
 def slices_to_iterators(slices, shape):
     """
@@ -94,6 +92,7 @@ def block_iter(key, value):
         newvalue = key.getimage(tpIdx, value)
         newkey = ImageReconstructionKey(tpIdx, shape, slices)
         yield newkey, newvalue
+
 
 class Blocks(Data):
     """
@@ -176,7 +175,7 @@ class Blocks(Data):
             be deleted and recreated as part of this call.
         """
         from thunder import credentials
-        from thunder.data.fileio.writers import getParallelWriterForPath
+        from thunder.data.fileio.writers import get_parallel_writer
         from thunder.data.series.writers import write_config
 
         if not overwrite:
@@ -184,9 +183,9 @@ class Blocks(Data):
             check_path(path, credentials=credentials())
             overwrite = True
 
-        writer = getParallelWriterForPath(path)(path, overwrite=overwrite, credentials=credentials())
+        writer = get_parallel_writer(path)(path, overwrite=overwrite, credentials=credentials())
         binary = self.getbinary()
-        binary.foreach(writer.writerFcn)
+        binary.foreach(writer.write)
         write_config(path, len(self.dims), self.nimages,
                      keytype='int16', valuetype=self.dtype, overwrite=overwrite)
 

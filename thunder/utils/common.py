@@ -15,51 +15,23 @@ def smallfloat(dtype):
     comptype = dtypefunc('=f'+str(compsize))  # compare to a float of the same size
     return promote_types(intype, comptype)
 
-def parseMemoryString(memStr):
-    """
-    Returns the size in bytes of memory represented by a Java-style 'memory string'
-
-    parseMemoryString("150k") -> 150000
-    parseMemoryString("2M") -> 2000000
-    parseMemoryString("5G") -> 5000000000
-    parseMemoryString("128") -> 128
-
-    Recognized suffixes are k, m, and g. Parsing is case-insensitive.
-    """
-    if isinstance(memStr, basestring):
-        import re
-        regPat = r"""(\d+)([bBkKmMgG])?"""
-        m = re.match(regPat, memStr)
-        if not m:
-            raise ValueError("Could not parse '%s' as memory specification; should be NUMBER[k|m|g]" % memStr)
-        quant = int(m.group(1))
-        units = m.group(2).lower()
-        if units == "g":
-            return int(quant * 1e9)
-        elif units == 'm':
-            return int(quant * 1e6)
-        elif units == 'k':
-            return int(quant * 1e3)
-        return quant
-    else:
-        return int(memStr)
-
 def check_path(path, credentials=None):
     """
+    Check that specified output path does not already exist
+
     The ValueError message will suggest calling with overwrite=True; this function is expected to be
     called from the various output methods that accept an 'overwrite' keyword argument.
     """
-    # check that specified output path does not already exist
-    from thunder.data.fileio.readers import getFileReaderForPath
-    reader = getFileReaderForPath(path)(credentials=credentials)
-    existing = reader.list(path, includeDirectories=True)
+    from thunder.data.fileio.readers import get_file_reader
+    reader = get_file_reader(path)(credentials=credentials)
+    existing = reader.list(path, directories=True)
     if existing:
-        raise ValueError("Path %s appears to already exist. Specify a new directory, or call " % path +
-                         "with overwrite=True to overwrite.")
+        raise ValueError("Path %s appears to already exist. Specify a new directory, "
+                         "or call " % path + "with overwrite=True to overwrite.")
 
-def S3ConnectionWithAnon(credentials, anon=True):
+def connection_with_anon(credentials, anon=True):
     """
-    Connect to S3 with automatic handling for anonymous access
+    Connect to S3 with automatic handling for anonymous access.
 
     Parameters
     ----------
