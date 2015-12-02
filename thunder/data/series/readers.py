@@ -237,6 +237,11 @@ def fromexample(name=None):
     name : str
         Options include 'iris' | 'mouse' | 'fish. If not specified will print options.
     """
+    import os
+    import tempfile
+    import shutil
+    from boto.s3.connection import S3Connection
+
     datasets = ['iris', 'mouse', 'fish']
 
     if name is None:
@@ -249,19 +254,31 @@ def fromexample(name=None):
         print('Downloading data, this may take a few seconds...')
 
         if name == 'iris':
-            data = frombinary(path='s3n://thunder-sample-data/iris/')
+            path = 'iris'
 
         elif name == 'mouse':
-            data = frombinary(path='s3n://thunder-sample-data/mouse-series/')
+            path = 'mouse-series'
 
         elif name == 'fish':
-            data = frombinary(path='s3n://thunder-sample-data/fish-series/')
+            path = 'fish-series'
 
         else:
             raise NotImplementedError("Example '%s' not found" % name)
 
-        data.cache()
-        data.count()
+        d = tempfile.mkdtemp()
+        try:
+            os.mkdir(os.path.join(d, path))
+            conn = S3Connection(anon=True)
+            bucket = conn.get_bucket('thunder-sample-data')
+            for key in bucket.list(path):
+                if not key.name.endswith('/'):
+                    key.get_contents_to_filename(os.path.join(d, key.name))
+            data = frombinary(os.path.join(d, path))
+            data.cache()
+            data.count()
+        finally:
+            shutil.rmtree(d)
+
         return data
 
     else:
