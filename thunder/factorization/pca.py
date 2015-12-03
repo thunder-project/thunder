@@ -35,9 +35,9 @@ class PCA(object):
     SVD : singular value decomposition
     """
 
-    def __init__(self, k=3, svdMethod='auto'):
+    def __init__(self, k=3, svdmethod='auto'):
         self.k = k
-        self.svdMethod = svdMethod
+        self.svdmethod = svdmethod
         self.scores = None
         self.latent = None
         self.comps = None
@@ -62,7 +62,7 @@ class PCA(object):
 
         mat = data.center(1)
 
-        svd = SVD(k=self.k, method=self.svdMethod)
+        svd = SVD(k=self.k, method=self.svdmethod)
         svd.calc(mat)
 
         self.scores = svd.u

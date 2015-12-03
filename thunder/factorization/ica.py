@@ -49,11 +49,11 @@ class ICA(object):
     PCA: principal components analysis
     """
 
-    def __init__(self, c, k=None, svdMethod='auto', maxIter=10, tol=0.000001, seed=0):
+    def __init__(self, c, k=None, svdmethod='auto', maxiterations=10, tol=0.000001, seed=0):
         self.k = k
         self.c = c
-        self.svdMethod = svdMethod
-        self.maxIter = maxIter
+        self.svdmethod = svdmethod
+        self.maxiterations = maxiterations
         self.tol = tol
         self.seed = seed
         self.w = None
@@ -99,39 +99,39 @@ class ICA(object):
                             " must be less than the data dimensionality " + str(d))
 
         # reduce dimensionality
-        svd = SVD(k=self.k, method=self.svdMethod).calc(data)
+        svd = SVD(k=self.k, method=self.svdmethod).calc(data)
 
         # whiten data
-        whtMat = real(dot(inv(diag(svd.s/sqrt(data.nrows))), svd.v))
-        unWhtMat = real(dot(transpose(svd.v), diag(svd.s/sqrt(data.nrows))))
-        wht = data.times(whtMat.T)
+        whtmat = real(dot(inv(diag(svd.s/sqrt(data.nrows))), svd.v))
+        unwhtmat = real(dot(transpose(svd.v), diag(svd.s/sqrt(data.nrows))))
+        wht = data.times(whtmat.T)
 
         # do multiple independent component extraction
         if self.seed != 0:
             random.seed(self.seed)
         b = orth(random.randn(self.k, self.c))
-        bOld = zeros((self.k, self.c))
+        bold = zeros((self.k, self.c))
         niter = 0
-        minAbsCos = 0
-        errVec = zeros(self.maxIter)
+        minabscos = 0
+        errVec = zeros(self.maxiterations)
 
-        while (niter < self.maxIter) & ((1 - minAbsCos) > self.tol):
+        while (niter < self.maxiterations) & ((1 - minabscos) > self.tol):
             niter += 1
             # update rule for pow3 non-linearity (TODO: add others)
             b = wht.rows().map(lambda x: outer(x, dot(x, b) ** 3)).sum() / wht.nrows - 3 * b
             # make orthogonal
             b = dot(b, real(sqrtm(inv(dot(transpose(b), b)))))
             # evaluate error
-            minAbsCos = min(abs(diag(dot(transpose(b), bOld))))
+            minAbsCos = min(abs(diag(dot(transpose(b), bold))))
             # store results
-            bOld = b
+            bold = b
             errVec[niter-1] = (1 - minAbsCos)
 
         # get un-mixing matrix
-        w = dot(b.T, whtMat)
+        w = dot(b.T, whtmat)
 
         # get mixing matrix
-        a = dot(unWhtMat, b)
+        a = dot(unwhtmat, b)
 
         # get components
         sigs = data.times(w.T)

@@ -1,6 +1,7 @@
+import bisect
 import itertools
 import checkist
-from numpy import expand_dims, zeros
+from numpy import expand_dims, zeros, cumprod, prod
 from numpy import dtype as dtypeFunc
 
 from .blocks import BlockGroupingKey, Blocks, PaddedBlockGroupingKey, PaddedBlocks, \
@@ -19,10 +20,11 @@ def parse_memory_string(memstring):
     """
     if isinstance(memstring, basestring):
         import re
-        regPat = r"""(\d+)([bBkKmMgG])?"""
-        m = re.match(regPat, memstring)
+        pattern = r"""(\d+)([bBkKmMgG])?"""
+        m = re.match(pattern, memstring)
         if not m:
-            raise ValueError("Could not parse '%s' as memory specification; should be NUMBER[k|m|g]" % memStr)
+            raise ValueError("Could not parse '%s' as memory specification; "
+                             "should be NUMBER[k|m|g]" % memstring)
         quant = int(m.group(1))
         units = m.group(2).lower()
         if units == "g":
@@ -40,9 +42,6 @@ class BlockingStrategy(object):
     """
     Superclass for objects that define ways to split up images into smaller blocks.
     """
-    # max block size that we will produce from images without printing a warning
-    DEFAULT_MAX_BLOCK_SIZE = 500000000  # 500 MB
-
     def __init__(self):
         self._dims = None
         self._nimages = None
@@ -53,20 +52,16 @@ class BlockingStrategy(object):
         """
         Shape of the Images data to which this BlockingStrategy is to be applied.
 
-        dims will be taken from the Images passed in the last call to setSource().
-
-        n-tuple of positive int, or None if setSource has not been called
+        Will be taken from the Images passed in the last call to setsource().
         """
         return self._dims
 
     @property
     def nimages(self):
         """
-        Number of images (time points) in the Images data to which this BlockingStrategy is to be applied.
+        Number of images (time points) in the Images data.
 
-        nimages will be taken from the Images passed in the last call to setSource().
-
-        positive int, or None if setSource has not been called
+        Will be taken from the Images passed in the last call to setsource().
         """
         return self._nimages
 
@@ -75,11 +70,11 @@ class BlockingStrategy(object):
         """
         Numpy data type of the Data object to which this BlockingStrategy is to be applied.
 
-        String of numpy dtype spec, or None if setSource has not been called
+        String of numpy dtype spec, or None if setsource has not been called
         """
         return self._dtype
 
-    def setSource(self, source):
+    def setsource(self, source):
         """
         Readies the BlockingStrategy to operate over the passed object.
 
@@ -87,13 +82,11 @@ class BlockingStrategy(object):
 
         Subclasses should override this implementation to set self.nimages; this implementation
         sets only self.dims and self.dtype.
-
-        No return value.
         """
-        self._dims = _normDimsToShapeTuple(source.dims)
+        self._dims = dims_to_shape(source.dims)
         self._dtype = str(source.dtype)
 
-    def getBlocksClass(self):
+    def getclass(self):
         """
         Get the subtype of Blocks that instances of this strategy will produce.
 
@@ -101,32 +94,31 @@ class BlockingStrategy(object):
         """
         return Blocks
 
-    def calcAverageBlockSize(self):
+    def calcsize(self):
         """
-        Calculates the estimated average block size in bytes for this strategy applied to the Images
-        last passed to setSource.
+        Calculates the estimated average block size in bytes for this
+        strategy applied to the Images last passed to setsource.
 
         Returns
         -------
         float block size in bytes
         """
-        raise NotImplementedError("calcAverageBlockSize not implemented")
+        raise NotImplementedError("calcsize not implemented")
 
-    def blockingFunction(self, timePointIdxAndImageArray):
-        raise NotImplementedError("blockingFunction not implemented")
+    def blocker(self, images):
+        raise NotImplementedError("blocker not implemented")
 
-    def combiningFunction(self, spatialIdxAndBlocksSequence):
-        raise NotImplementedError("combiningFunction not implemented")
+    def combiner(self, blocks):
+        raise NotImplementedError("combiner not implemented")
 
 
 class SimpleBlockingStrategy(BlockingStrategy):
     """
-    A BlockingStrategy that groups Images into nonoverlapping, roughly equally-sized blocks.
+    A BlockingStrategy that groups Images into nonoverlapping blocks.
 
-    The number and dimensions of image blocks are specified as "splits per dimension", which is for each
-    spatial dimension of the original Images the number of partitions to generate along that dimension. So
-    for instance, given a 12 x 12 Images object, a SimpleBlockingStrategy with splitsPerDim=(2,2)
-    would yield Blocks objects with 4 blocks, each 6 x 6.
+    The number and dimensions of image blocks are specified as "splits per dimension",
+    which is for each spatial dimension of the original Images the number of partitions
+    to generate along that dimension.
     """
     def __init__(self, units_per_dim, units='pixels', **kwargs):
         """
@@ -134,90 +126,89 @@ class SimpleBlockingStrategy(BlockingStrategy):
 
         Parameters
         ----------
-        units_per_dim : n-tuple of positive int, where n = dimensionality of image
+        units_per_dim : tuple positive int
+            Should have length equal to dimensionality of images.
             Specifies that intermediate blocks are to be generated by splitting the i-th dimension
-            of the image into splitsPerDim[i] roughly equally-sized partitions.
-            1 <= splitsPerDim[i] <= self.dims[i]
+            of the image into splits_per_dim[i] roughly equally-sized partitions.
+            1 <= splits_per_dim[i] <= self.dims[i]
         """
         super(SimpleBlockingStrategy, self).__init__()
         checkist.opts(units, ['pixels', 'splits'])
 
-        units_per_dim = SimpleBlockingStrategy.normalizeUnitsPerDim(units_per_dim)
+        units_per_dim = SimpleBlockingStrategy.normalize(units_per_dim)
 
         if units == 'pixels':
-            self._pix_per_dim = units_per_dim
+            self._pixels_per_dim = units_per_dim
             self._splits_per_dim = None
 
         if units == 'splits':
-            self._pix_per_dim = None
+            self._pixels_per_dim = None
             self._splits_per_dim = units_per_dim
         self._slices = None
 
     @property
-    def splitsPerDim(self):
+    def splits_per_dim(self):
         return self._splits_per_dim
 
     @property
-    def pixelsPerDim(self):
-        return self._pix_per_dim
+    def pixels_per_dim(self):
+        return self._pixels_per_dim
 
-    def getBlocksClass(self):
+    def getclass(self):
         return SimpleBlocks
 
     @classmethod
-    def generateFromBlockSize(cls, images, blockSize, **kwargs):
+    def fromsize(cls, images, size, **kwargs):
         """
-        Returns a new SimpleBlockingStrategy, that yields blocks
-        closely matching the requested size in bytes.
+        Returns a new SimpleBlockingStrategy for the requested size in bytes.
 
         Parameters
         ----------
         images : Images object
             Images for which blocking strategy is to be generated.
 
-        blockSize : positive int or string
-            Requests an average size for the intermediate blocks in bytes. A passed string should
-            be in a format like "256k" or "150M". If blocksPerDim
-            or groupingDim are passed, they will take precedence over this argument. See
-            strategy._BlockMemoryAsSequence for a description of the blocking strategy used.
+        size : positive int or string
+            Average size of blocks in bytes. A passed string should
+            be in a format like "256k" or "150M".
 
         Returns
         -------
         SimpleBlockingStrategy or subclass
-            new BlockingStrategy will be created and setSource() called on it with the passed images object
+            A new BlockingStrategy will be created and setsource() called.
         """
         dims, nimages, dtype = images.dims, images.nrecords, images.dtype
-        minSeriesSize = nimages * dtypeFunc(dtype).itemsize
+        minsize = nimages * dtypeFunc(dtype).itemsize
 
-        splitsPerDim = _calcSplitsForBlockSize(blockSize, minSeriesSize, dims)
-        strategy = cls(splitsPerDim, units="splits", **kwargs)
-        strategy.setSource(images)
+        splits_per_dim = splits_from_size(size, minsize, dims)
+        strategy = cls(splits_per_dim, units="splits", **kwargs)
+        strategy.setsource(images)
         return strategy
 
     @staticmethod
-    def normalizeUnitsPerDim(unitsPerDim):
-        unitsPerDim = map(int, unitsPerDim)
-        if any((nsplits <= 0 for nsplits in unitsPerDim)):
-            raise ValueError("All unit values must be positive; got " + str(unitsPerDim))
-        return unitsPerDim
+    def normalize(units_per_dim):
+        units_per_dim = map(int, units_per_dim)
+        if any((nsplits <= 0 for nsplits in units_per_dim)):
+            raise ValueError("All unit values must be positive; got " + str(units_per_dim))
+        return units_per_dim
 
-    def __validateUnitsPerDimForImage(self):
+    def validate(self):
         dims = self.dims
-        unitsPerDim, attrName = (self._splits_per_dim, "splitsPerDim") if \
+        units_per_dim, attr = (self._splits_per_dim, "splits_per_dim") if \
             not (self._splits_per_dim is None) \
-            else (self._pix_per_dim, "pixelsPerDim")
+            else (self._pixels_per_dim, "pixels_per_dim")
         ndim = len(dims)
-        if not len(unitsPerDim) == ndim:
+        if not len(units_per_dim) == ndim:
             raise ValueError("%s length (%d) must match image dimensionality (%d); " %
-                             (attrName, len(unitsPerDim), ndim) +
-                             "have %s %s and image shape %s" % (attrName, str(unitsPerDim), str(dims)))
+                             (attr, len(units_per_dim), ndim) +
+                             "have %s %s and image shape %s" %
+                             (attr, str(units_per_dim), str(dims)))
 
     @staticmethod
-    def generateSlicesFromSplits(splitsPerDim, dims):
+    def slices_from_splits(splits_per_dim, dims):
         # slices will be sequence of sequences of slices
         # slices[i] will hold slices for ith dimension
         slices = []
-        for nsplits, dimSize in zip(splitsPerDim, dims):
+        for nsplits, dimSize in zip(splits_per_dim, dims):
             blockSize = dimSize / nsplits  # integer division
             blockRem = dimSize % nsplits
             start = 0
@@ -233,11 +224,11 @@ class SimpleBlockingStrategy(BlockingStrategy):
         return slices
 
     @staticmethod
-    def generateSlicesFromPixels(pixPerDim, dims):
+    def slices_from_pixels(pixels_per_dim, dims):
         # slices will be sequence of sequences of slices
         # slices[i] will hold slices for ith dimension
         slices = []
-        for pix, dimSize in zip(pixPerDim, dims):
+        for pix, dimSize in zip(pixels_per_dim, dims):
             start = 0
             dimSlices = []
             while start < dimSize:
@@ -248,93 +239,261 @@ class SimpleBlockingStrategy(BlockingStrategy):
             slices.append(dimSlices)
         return slices
 
-    def setSource(self, images):
-        super(SimpleBlockingStrategy, self).setSource(images)
+    def setsource(self, images):
+        super(SimpleBlockingStrategy, self).setsource(images)
         self._nimages = images.nrecords
-        self.__validateUnitsPerDimForImage()
+        self.validate()
         if not (self._splits_per_dim is None):
-            self._slices = SimpleBlockingStrategy.generateSlicesFromSplits(self._splits_per_dim, self.dims)
+            self._slices = SimpleBlockingStrategy.slices_from_splits(
+                self._splits_per_dim, self.dims)
         else:
-            self._slices = SimpleBlockingStrategy.generateSlicesFromPixels(self._pix_per_dim, self.dims)
+            self._slices = SimpleBlockingStrategy.slices_from_pixels(
+                self._pixels_per_dim, self.dims)
 
-    def calcAverageBlockSize(self):
+    def calcsize(self):
         if not (self._splits_per_dim is None):
-            elts = _BlockMemoryAsSequence.avgElementsPerBlock(self.dims, self._splits_per_dim)
+            elts = BlockMemory.elements_per_block(self.dims, self._splits_per_dim)
         else:
-            elts = reduce(lambda x, y: x * y, self._pix_per_dim)
+            elts = reduce(lambda x, y: x * y, self._pixels_per_dim)
         return elts * dtypeFunc(self.dtype).itemsize * self.nimages
 
-    def extractBlockFromImage(self, imgAry, blockSlices, timepoint, numTimepoints):
+    def block_from_image(self, imgAry, blockSlices, timepoint, numTimepoints):
         # add additional "time" dimension onto front of val
         val = expand_dims(imgAry[blockSlices], axis=0)
         origShape = [numTimepoints] + list(imgAry.shape)
         imgSlices = [slice(timepoint, timepoint+1, 1)] + list(blockSlices)
-        pixelsPerDim = self.pixelsPerDim
+        pixelsPerDim = self.pixels_per_dim
         return BlockGroupingKey(origShape, imgSlices, pixelsPerDim), val
 
-    def blockingFunction(self, timePointIdxAndImageArray):
-        tpIdx, imgAry = timePointIdxAndImageArray
+    def blocker(self, images):
+        tpIdx, imgAry = images
         totNumImages = self.nimages
         slices = self._slices
 
         sliceProduct = itertools.product(*slices)
         for blockSlices in sliceProduct:
-            yield self.extractBlockFromImage(imgAry, blockSlices, tpIdx, totNumImages)
+            yield self.block_from_image(imgAry, blockSlices, tpIdx, totNumImages)
 
-    def combiningFunction(self, spatialIdxAndBlocksSequence):
-        _, partitionedSequence = spatialIdxAndBlocksSequence
+    def combiner(self, blocks):
+        _, sequence = blocks
         # sequence will be of (partitioning key, np array) pairs
         ary = None
-        firstKey = None
-        for key, block in partitionedSequence:
+        firstkey = None
+        for key, block in sequence:
             if ary is None:
                 # set up collection array:
-                newShape = [key.shape[0]] + list(block.shape)[1:]
-                ary = zeros(newShape, block.dtype)
-                firstKey = key
+                newshape = [key.shape[0]] + list(block.shape)[1:]
+                ary = zeros(newshape, block.dtype)
+                firstkey = key
 
             # put values into collection array:
-            targSlices = [key.temporal] + ([slice(None)] * (block.ndim - 1))
-            ary[targSlices] = block
+            target_slices = [key.temporal] + ([slice(None)] * (block.ndim - 1))
+            ary[target_slices] = block
 
-        return firstKey.concatenated(), ary
+        return firstkey.concatenated(), ary
+
+
+class SeriesBlockingStrategy(BlockingStrategy):
+    """
+    A BlockingStrategy that recombines Series objects (with spatial indices x,y,z) into
+    nonoverlapping, spatially-contiguous Blocks.
+    """
+
+    def __init__(self, splits_per_dim, **kwargs):
+        """
+        Returns a new SeriesBlockingStrategy.
+
+        Parameters
+        ----------
+        splits_per_dim : tuple positive int
+            Should have length equal to dimensionality of images.
+            Specifies that intermediate blocks are to be generated by splitting the i-th dimension
+            of the image into splits_per_dim[i] roughly equally-sized partitions.
+            1 <= splits_per_dim[i] <= self.dims[i]
+        """
+        super(SeriesBlockingStrategy, self).__init__()
+        self._splits_per_dim = SimpleBlockingStrategy.normalize(splits_per_dim)
+        self._slices_product = None
+        self._linear_indices = None
+        self._subtoind = None
+
+    def setsource(self, series):
+        """
+        Readies the BlockingStrategy to operate over the passed Series.
+        This implementation will set .nimages from the length of the passed object's index.
+        No return value.
+        """
+        super(SeriesBlockingStrategy, self).setsource(series)
+        self._nimages = len(series.index)
+        slices = SimpleBlockingStrategy.slices_from_splits(self.splits_per_dim, self.dims)
+        # flip slice ordering so that z index increments first
+        reversedSlicesIter = itertools.product(*(slices[::-1]))
+        self._slices_product = [sl[::-1] for sl in reversedSlicesIter]
+        dimprod = cumprod(self.dims)[0:-1]
+        self._subtoind = lambda k: sum(map(prod, zip(k[1:], dimprod))) + k[0]
+        self._linear_indices = self.indices_from_slices()
+        self.validate_for_series()
+
+    @property
+    def splits_per_dim(self):
+        return self._splits_per_dim
+
+    @property
+    def linear_indices(self):
+        return self._linear_indices
+
+    @property
+    def nblocks(self):
+        if self._linear_indices is None:
+            raise ValueError("Must call strategy.setsource() before referencing strategy.nblocks")
+        return len(self._linear_indices)
+
+    def getclass(self):
+        return SimpleBlocks
+
+    def validate_for_series(self):
+        dims = self.dims
+        splits_per_dim = self.splits_per_dim
+        ndim = len(dims)
+        if not len(splits_per_dim) == ndim:
+            raise ValueError("splitsPerDim length (%d) must match image dimensionality (%d); " %
+                             (len(splits_per_dim), ndim) + "have splitsPerDim %s and image shape %s"
+                             % (str(splits_per_dim), str(dims)))
+        sawLastSplitDim = False
+        splitsAndDims = zip(splits_per_dim, dims)
+        for splits, dim in reversed(splitsAndDims):
+            if splits > dim:
+                raise ValueError("Cannot have a greater number of splits in a dimension "
+                                 "than the size of that dimension; got splits %s for dimension %s "
+                                 "(%d > %d" % (str(splits_per_dim), str(dims), splits, dim))
+            if sawLastSplitDim and splits > 1:
+                raise ValueError("To recombine a Series into Blocks, only one dimension can "
+                                 "be incompletely split (splits < dimension size); all later "
+                                 "dimensions must be completely split (splits == dimension size) "
+                                 "and all earlier dimension cannot be split at all (splits == 1). "
+                                 "Got splits %s for dimensions %s."
+                                 % (str(splits_per_dim), str(dims)))
+            if splits < dim:
+                sawLastSplitDim = True
+
+    def indices_from_slices(self):
+        linearIndices = []
+        for blockSlices in self._slices_product:
+            maxIdxs = []
+            for slise, dimSize in zip(blockSlices, self.dims):
+                maxIdx = slise.stop - 1 if slise.stop is not None else dimSize - 1
+                maxIdxs.append(maxIdx)
+            linearIdx = self._subtoind(maxIdxs)
+            linearIndices.append(linearIdx)
+        linearIndices.sort()
+        return linearIndices
+
+    @classmethod
+    def generateFromBlockSize(cls, series, blockSize, **kwargs):
+        """
+        Returns a new SeriesBlockingStrategy, that yields blocks
+        closely matching the requested size in bytes.
+
+        Parameters
+        ----------
+        series : Series object
+            Series for which blocking strategy is to be generated.
+
+        blockSize : positive int or string
+            Requests an average size for the intermediate blocks in bytes. A passed string should
+            be in a format like "256k" or "150M" (see util.common.parseMemoryString).
+            If blocksPerDim or groupingDim are passed, they will take precedence over this argument.
+            See strategy.BlockMemory for a description of the blocking strategy used.
+
+        Returns
+        -------
+        SeriesBlockingStrategy or subclass
+            new BlockingStrategy will be created and setSource() called.
+        """
+        dims, nimages, dtype = series.dims, len(series.index), series.dtype
+        elementSize = nimages * dtypeFunc(dtype).itemsize
+
+        splitsPerDim = splits_from_size(blockSize, elementSize, dims)
+        strategy = cls(splitsPerDim, units="splits", **kwargs)
+        strategy.setsource(series)
+        return strategy
+
+    def calcsize(self):
+        if self.splits_per_dim is None:
+            raise Exception("setSource() must be called before calcAverageBlockSize()")
+        elts = BlockMemory.elements_per_block(self.dims, self.splits_per_dim)
+        return elts * dtypeFunc(self.dtype).itemsize * self.nimages
+
+    def blocker(self, seriesKeyAndValues):
+        seriesKey, seriesValues = seriesKeyAndValues
+        linearKey = self._subtoind(seriesKey)
+        linIdxs = self.linear_indices
+        blockIdx = bisect.bisect_left(linIdxs, linearKey)
+        if blockIdx >= len(linIdxs):
+            raise Exception("Error: series linear key %d is greater than max expected key %d" %
+                            (seriesKey, self.linear_indices[-1]))
+        return blockIdx, seriesKeyAndValues
+
+    def combiner(self, blockNumAndCollectedSeries):
+        blockNum, collectedSeries = blockNumAndCollectedSeries
+        blockSlices = self._slices_product[blockNum]
+        imgShape = [self.nimages] + list(self.dims)
+        vecShape = [-1] + [1] * len(self.dims)  # needed to coerce vector broadcast to work
+        key = BlockGroupingKey(
+            tuple(imgShape), tuple([slice(0, self.nimages, 1)] + list(blockSlices)))
+        aryShape = [self.nimages]
+        arySpatialOffsets = []
+        for blockSlice, refSize in zip(blockSlices, self.dims):
+            start, stop, _ = slice_to_tuple(blockSlice, refSize)
+            aryShape.append(stop - start)
+            arySpatialOffsets.append(start)
+
+        ary = zeros(aryShape, dtype=self.dtype)
+        for seriesKey, seriesAry in collectedSeries:
+            arySlices = [slice(0, self.nimages)] + \
+                        [slice(i-offset, i-offset+1) for (i, offset)
+                         in zip(seriesKey, arySpatialOffsets)]
+            ary[arySlices] = seriesAry.reshape(vecShape)
+        return key, ary
+
 
 class PaddedBlockingStrategy(SimpleBlockingStrategy):
     def __init__(self, units_per_dim, padding, units="pixels", **kwargs):
         super(PaddedBlockingStrategy, self).__init__(units_per_dim, units=units, **kwargs)
-        self._padding = self.__normalizePadding(padding)
+        self._padding = self.normalize_padding(padding)
 
     @property
     def padding(self):
         return self._padding
 
-    def __normalizePadding(self, padding):
-        # check whether padding is already sequence; if so, validate that it has the expected dimensionality
-        unitsTuple, unitsName = (self._pix_per_dim, "pixPerDim") if not (self._pix_per_dim is None) \
-            else (self._splits_per_dim, "splitsPerDim")
+    def normalize_padding(self, padding):
+        units_tuple, units_name = (self._pixels_per_dim, "pixPerDim") if not (
+            self._pixels_per_dim is None) else (
+            self._splits_per_dim, "splits_per_dim")
         try:
             lpad = len(padding)
         except TypeError:
-            padding = [padding] * len(unitsTuple)
+            padding = [padding] * len(units_tuple)
             lpad = len(padding)
-        if not lpad == len(unitsTuple):
-            raise ValueError("Padding tuple must be of equal size as %s tuple;" % unitsName +
+        if not lpad == len(units_tuple):
+            raise ValueError("Padding tuple must be of equal size as %s tuple;" % units_name +
                              " got '%s', must be length %d to match %s '%s'" %
-                             (str(padding), len(self.splitsPerDim), unitsName, self.splitsPerDim))
+                             (str(padding), len(self.splits_per_dim),
+                              units_name, self.splits_per_dim))
         # cast to int and validate nonnegative
         padding = map(int, padding)
         if any((pad < 0 for pad in padding)):
             raise ValueError("All block padding must be nonnegative; got '%s'" % padding)
         return tuple(padding)
 
-    def getBlocksClass(self):
+    def getclass(self):
         return PaddedBlocks
 
     @classmethod
-    def generateFromBlockSize(cls, images, blockSize, padding=10, **kwargs):
-        return super(PaddedBlockingStrategy, cls).generateFromBlockSize(images, blockSize, padding=padding, **kwargs)
+    def fromsize(cls, images, size, padding=10, **kwargs):
+        return super(PaddedBlockingStrategy, cls).fromsize(images, size, padding=padding, **kwargs)
 
-    def extractBlockFromImage(self, imgAry, blockSlices, timepoint, numTimepoints):
+    def block_from_image(self, imgAry, blockSlices, timepoint, numTimepoints):
         padSlices = []
         actualPadding = []
         for coreSlice, pad, l in zip(blockSlices, self.padding, imgAry.shape):
@@ -360,10 +519,9 @@ class PaddedBlockingStrategy(SimpleBlockingStrategy):
         imgSlices = [slice(timepoint, timepoint+1, 1)] + list(blockSlices)
         padSlices = [slice(timepoint, timepoint+1, 1)] + padSlices
         return PaddedBlockGroupingKey(origShape, imgSlices, padSlices, tuple(val.shape),
-                                      coreValSlices, self.pixelsPerDim), val
+                                      coreValSlices, self.pixels_per_dim), val
 
-
-def _normDimsToShapeTuple(dims):
+def dims_to_shape(dims):
     """
     Returns a shape tuple from the passed object, which may be either already a tuple of int
     or a Dimensions object.
@@ -373,30 +531,29 @@ def _normDimsToShapeTuple(dims):
         return dims.count
     return dims
 
-
-def _calcSplitsForBlockSize(blockSize, elementSize, dims):
+def splits_from_size(size, element_size, dims):
     import bisect
-    if isinstance(blockSize, basestring):
-        blockSize = parse_memory_string(blockSize)
+    if isinstance(size, basestring):
+        size = parse_memory_string(size)
 
-    memSeq = _BlockMemoryAsReversedSequence(_normDimsToShapeTuple(dims))
-    tmpIdx = bisect.bisect_left(memSeq, blockSize / float(elementSize))
-    if tmpIdx == len(memSeq):
+    sequence = BlockMemoryReversed(dims_to_shape(dims))
+    index = bisect.bisect_left(sequence, size / float(element_size))
+    if index == len(sequence):
         # handle case where requested block is bigger than the biggest image
         # we can produce; just give back the biggest block size
-        tmpIdx -= 1
-    return memSeq.indToSub(tmpIdx)
+        index -= 1
+    return sequence.ind_to_sub(index)
 
 
-class _BlockMemoryAsSequence(object):
+class BlockMemory(object):
     """
     Helper class used in calculation of slices for requested blocks of a particular size.
 
     The blocking strategy represented by objects of this class is to split into N equally-sized
     subdivisions along each dimension, starting with the rightmost dimension.
 
-    So for instance consider an Image with spatial dimensions 5, 10, 3 in x, y, z. The first nontrivial
-    subdivision would be to split into 2 blocks along the z axis:
+    So for instance consider an Image with spatial dimensions 5, 10, 3 in x, y, z.
+    The first nontrivial subdivision would be to split into 2 blocks along the z axis:
     splits: (1, 1, 2)
     In this example, downstream this would turn into two blocks, one of size (5, 10, 2) and another
     of size (5, 10, 1).
@@ -425,7 +582,7 @@ class _BlockMemoryAsSequence(object):
     def __init__(self, dims):
         self._dims = dims
 
-    def indToSub(self, idx):
+    def ind_to_sub(self, idx):
         """Converts a linear index to a corresponding blocking strategy, represented as
         number of splits along each dimension.
         """
@@ -443,10 +600,10 @@ class _BlockMemoryAsSequence(object):
         return tuple(sub)
 
     @staticmethod
-    def avgElementsPerBlock(imageShape, splitsPerDim):
+    def elements_per_block(imageShape, splitsPerDim):
         """
-        Calculates the average number of elements per block, defined by the passed sequence of splits
-        applied to an array of the passed shape
+        Calculates the average number of elements per block,
+        defined by the passed sequence of splits applied to an array of the passed shape.
         """
         sz = [d / float(s) for (d, s) in zip(imageShape, splitsPerDim)]
         return reduce(lambda x, y: x * y, sz)
@@ -455,11 +612,11 @@ class _BlockMemoryAsSequence(object):
         return sum([d-1 for d in self._dims]) + 1
 
     def __getitem__(self, item):
-        splits = self.indToSub(item)
-        return _BlockMemoryAsSequence.avgElementsPerBlock(self._dims, splits)
+        splits = self.ind_to_sub(item)
+        return BlockMemory.elements_per_block(self._dims, splits)
 
 
-class _BlockMemoryAsReversedSequence(_BlockMemoryAsSequence):
+class BlockMemoryReversed(BlockMemory):
     """
     A version of _BlockMemoryAsSequence that represents the linear ordering of splits in the
     opposite order, starting with the finest blocking scheme allowable for the array dimensions.
@@ -467,11 +624,11 @@ class _BlockMemoryAsReversedSequence(_BlockMemoryAsSequence):
     This can yield a sequence of block sizes in increasing order, which is required for binary
     search using python's 'bisect' library.
     """
-    def _reverseIdx(self, idx):
+    def reverse(self, index):
         l = len(self)
-        if idx < 0 or idx >= l:
+        if index < 0 or index >= l:
             raise IndexError("list index out of range")
-        return l - (idx + 1)
+        return l - (index + 1)
 
-    def indToSub(self, idx):
-        return super(_BlockMemoryAsReversedSequence, self).indToSub(self._reverseIdx(idx))
+    def ind_to_sub(self, index):
+        return super(BlockMemoryReversed, self).ind_to_sub(self.reverse(index))

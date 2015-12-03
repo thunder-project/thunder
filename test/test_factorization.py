@@ -18,7 +18,7 @@ def test_pca():
         array([6.0, 0.0, 6.0, 6.0])
     ]
     mat = fromlist(local)
-    pca1 = PCA(k=1, svdMethod='direct')
+    pca1 = PCA(k=1, svdmethod='direct')
     pca1.fit(mat)
     out1_comps = pca1.comps
     out1_scores = pca1.scores.toarray() * pca1.latent
@@ -88,7 +88,7 @@ def test_svd_conversion():
 def test_ica():
     random.seed(42)
     data, s, a = ICA.make(shape=(100, 10), withparams=True)
-    ica = ICA(c=2, svdMethod="direct", seed=1)
+    ica = ICA(c=2, svdmethod="direct", seed=1)
     ica.fit(data)
     s_ = array(ica.sigs.rows().collect())
     tol = 0.01
@@ -120,7 +120,7 @@ def test_nmf_als():
     matscale = diag(norm(htrue, axis=1))
     htrue = dot(inv(matscale), htrue)
     wtrue = dot(wtrue, matscale)
-    nmfthunder = NMF(k=2, method="als", h0=h0, maxIter=9)
+    nmfthunder = NMF(k=2, method="als", h0=h0, maxiterations=9)
     nmfthunder.fit(mat)
     hthunder = nmfthunder.h
     wthunder = array(nmfthunder.w.values().collect())
@@ -136,6 +136,6 @@ def test_nmf_init():
         [1.0, 4.0, 6.0],
         [5.0, 1.0, 4.0]])
     mat = fromlist(local)
-    nmfthunder = NMF(k=2, reconHist='final')
+    nmfthunder = NMF(k=2, history=True)
     nmfthunder.fit(mat)
-    assert nmfthunder.reconErr < 2.9950
+    assert nmfthunder.error[-1] < 2.9950

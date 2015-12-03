@@ -88,25 +88,19 @@ class Images(Data):
             blockingStrategy = size
         elif isinstance(size, basestring) or isinstance(size, int):
             # make blocks close to the desired size
-            blockingStrategy = stratClass.generateFromBlockSize(self, size, padding=padding)
+            blockingStrategy = stratClass.fromsize(self, size, padding=padding)
         else:
             # assume it is a tuple of positive int specifying splits
             blockingStrategy = stratClass(size, units=units, padding=padding)
 
-        blockingStrategy.setSource(self)
-        avgSize = blockingStrategy.calcAverageBlockSize()
-        if avgSize >= BlockingStrategy.DEFAULT_MAX_BLOCK_SIZE:
-            print "Thunder WARNING: average block size of %g bytes " \
-                  "exceeds suggested max size of %g bytes" % \
-                  (avgSize, BlockingStrategy.DEFAULT_MAX_BLOCK_SIZE)
-
-        returntype = blockingStrategy.getBlocksClass()
-        vals = self.rdd.flatMap(blockingStrategy.blockingFunction, preservesPartitioning=False)
+        blockingStrategy.setsource(self)
+        returntype = blockingStrategy.getclass()
+        vals = self.rdd.flatMap(blockingStrategy.blocker, preservesPartitioning=False)
         # fastest changing dimension (e.g. x) is first, so must sort reversed keys
         # sort must come after group, b/c group will mess with ordering.
         groupedvals = vals.groupBy(lambda (k, _): k.spatial).sortBy(lambda (k, _): tuple(k[::-1]))
         # groupedvals is now rdd of (z, y, x spatial key, [(partitioning key, numpy array)...]
-        blockedvals = groupedvals.map(blockingStrategy.combiningFunction)
+        blockedvals = groupedvals.map(blockingStrategy.combiner)
         return returntype(blockedvals, dims=self.dims, nimages=self.nrecords, dtype=self.dtype)
 
     def totimeseries(self, size="150M"):

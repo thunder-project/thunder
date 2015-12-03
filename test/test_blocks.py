@@ -89,6 +89,20 @@ def test_blocks_roundtrip():
     assert allclose(vals.toarray(), data.toarray())
 
 
+def test_blocks_series_roundtrip():
+    a = arange(8).reshape((4, 2))
+    data = fromlist([a, a])
+    vals = data.toseries().toblocks().toimages()
+    assert allclose(vals.toarray(), data.toarray())
+
+
+def test_blocks_series_roundtrip_simple():
+    a = arange(8).reshape((4, 2))
+    data = fromlist([a, a])
+    vals = data.toseries().toimages()
+    assert allclose(vals.toarray(), data.toarray())
+
+
 def test_padded_blocks_roundtrip():
     a = arange(8).reshape((4, 2))
     data = fromlist([a, a])

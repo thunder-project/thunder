@@ -785,6 +785,43 @@ class Series(Data):
         from thunder.data.series.timeseries import TimeSeries
         return TimeSeries(self.rdd).__finalize__(self)
 
+    def toblocks(self, size="150M"):
+        """
+        Convert Series to Blocks.
+
+        Parameters
+        ----------
+        size : str, optional, default = "150M"
+            String interpreted as memory size.
+        """
+        from thunder.data.blocks.strategy import SeriesBlockingStrategy
+        if isinstance(size, SeriesBlockingStrategy):
+            strategy = size
+        elif isinstance(size, basestring) or isinstance(size, int):
+            strategy = SeriesBlockingStrategy.generateFromBlockSize(self, size)
+        else:
+            strategy = SeriesBlockingStrategy(size)
+
+        strategy.setsource(self)
+        block_class = strategy.getclass()
+        blocked = self.rdd.map(strategy.blocker)
+        grouped = blocked.groupByKey(numPartitions=strategy.nblocks)
+        rdd = grouped.map(strategy.combiner)
+        return block_class(rdd, dims=self.dims, nimages=len(self.index), dtype=self.dtype)
+
+    def toimages(self, size="150M"):
+        """
+        Converts Series to Images.
+
+        Equivalent to calling series.toBlocks(size).toImages()
+
+        Parameters
+        ----------
+        size : str, optional, default = "150M"
+            String interpreted as memory size.
+        """
+        return self.toblocks(size).toimages()
+
     def tobinary(self, path, overwrite=False):
         """
         Write data to binary files.
