@@ -1,7 +1,3 @@
-"""
-Classes for KMeans clustering
-"""
-
 from numpy import array, argmin, corrcoef, ndarray, asarray, std, random, floor
 
 from ..data.series.series import Series
@@ -134,7 +130,8 @@ class KMeans(object):
 
         import pyspark.mllib.clustering as mllib
 
-        model = mllib.KMeans.train(data.astype('float').rdd.values(), k=self.k, maxIterations=self.maxiterations)
+        model = mllib.KMeans.train(
+            data.astype('float').rdd.values(), k=self.k, maxIterations=self.maxiterations)
 
         return KMeansModel(asarray(model.clusterCenters))
 
