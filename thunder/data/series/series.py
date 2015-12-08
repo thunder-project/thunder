@@ -47,7 +47,7 @@ class Series(Data):
     @property
     def index(self):
         if self._index is None:
-            self._index = range(self.shape[-1])
+            self._index = arange(self.shape[-1])
         return self._index
         
     @index.setter
@@ -79,6 +79,28 @@ class Series(Data):
     @property
     def _constructor(self):
         return Series
+
+    def tolocal(self):
+        """
+        Convert to local representation.
+        """
+        from thunder.data.series.readers import fromarray
+
+        if self.mode == 'local':
+            raise ValueError('series already in local mode')
+
+        return fromarray(self.toarray(), index=self.index)
+
+    def tospark(self, engine=None):
+        """
+        Convert to spark representation.
+        """
+        from thunder.data.series.readers import fromarray
+
+        if self.mode == 'spark':
+            raise ValueError('series already in spark mode')
+
+        return fromarray(self.toarray(), index=self.index, engine=engine)
 
     def apply(self, func, index=None):
         """
@@ -308,7 +330,7 @@ class Series(Data):
         elif s.ndim == 2:
             if s.shape[1] != size(self.index):
                 raise ValueError('Length of signal `%g` does not match size of data' % s.shape[1])
-            newindex = range(0, s.shape[0])
+            newindex = arange(0, s.shape[0])
             return self.apply(lambda x: array([corrcoef(x, y)[0, 1] for y in s]), index=newindex)
 
         else:

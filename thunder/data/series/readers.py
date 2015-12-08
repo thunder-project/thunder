@@ -147,8 +147,7 @@ def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64', eng
         raise NotImplementedError("Loading not implemented for local mode")
 
 def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
-               keytype=None, valuetype=None, newdtype='smallfloat', casting='safe',
-               engine=None, credentials=None):
+               keytype=None, valuetype=None, engine=None, credentials=None):
     """
     Load a Series object from a binary files.
 
@@ -171,7 +170,7 @@ def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
     keytype, valuetype : str
         Parameters of binary data, can be specified here or in a configuration file.
 
-    newdtype : dtype or string 'smallfloat' or None, optional, default='smallfloat'
+    newdtype : dtype, optional, default='float32'
         Numpy dtype to recast output series data to.
 
     casting : 'no' | 'equiv' | 'safe' | 'same_kind' | 'unsafe', optional, default='safe'
@@ -201,8 +200,7 @@ def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
         raw = lines.map(get)
         if keysize == 0:
             raw = raw.zipWithIndex().map(lambda (v, k): ((k,), v))
-        data = fromrdd(raw, dtype=str(valuetype), index=arange(params.nvalues))
-        return data.astype(newdtype, casting)
+        return fromrdd(raw, dtype=str(valuetype), index=arange(params.nvalues))
 
     else:
         raise NotImplementedError("Loading not implemented for local mode")
@@ -308,7 +306,7 @@ def fromexample(name=None, engine=None):
                 key.get_contents_to_filename(os.path.join(d, key.name))
         data = frombinary(os.path.join(d, 'series', name), engine=engine)
         data.cache()
-        data.count()
+        data.compute()
     finally:
         shutil.rmtree(d)
 

@@ -118,7 +118,7 @@ class Images(Data):
             return Series(self.values.swap((0,), tuple(range(n)), size=size))
 
         if self.mode == 'local':
-            return Series(self.values.transpose(tuple(range(n)) + (0,)))
+            return Series(self.values.transpose(tuple(range(1, n+1)) + (0,)))
 
     def tolocal(self):
         """
@@ -136,6 +136,9 @@ class Images(Data):
         Convert to spark representation.
         """
         from thunder.data.images.readers import fromarray
+
+        if self.mode == 'spark':
+            raise ValueError('images already in spark mode')
 
         return fromarray(self.toarray(), engine=engine)
 
