@@ -1,18 +1,37 @@
+import itertools
 import checkist
 from io import BytesIO
-from numpy import frombuffer, prod, load, swapaxes, random, asarray
+from numpy import frombuffer, prod, random, asarray
 
-from thunder import engine, mode, credentials
+from ...utils.common import check_spark
+from .images import Images
+spark = check_spark()
 
 
-def fromrdd(rdd, **kwargs):
+def fromlocal(values):
     """
-    Load images from an Spark RDD.
+    Load images object from a local array
     """
-    from .images import Images
-    return Images(rdd, **kwargs)
+    return Images(asarray(values), mode='local')
 
-def fromlist(items, accessor=None, keys=None, npartitions=None, **kwargs):
+def fromrdd(rdd, dims=None, nrecords=None, dtype=None):
+    """
+    Load Images object from a Spark RDD
+    """
+    from bolt.spark.array import BoltArraySpark
+
+    if dims is None or dtype is None:
+        item = rdd.values().first()
+        dtype = item.dtype
+        dims = item.shape
+
+    if nrecords is None:
+        nrecords = rdd.count()
+
+    values = BoltArraySpark(rdd, shape=(nrecords,) + tuple(dims), dtype=dtype, split=1)
+    return Images(values, mode='spark')
+
+def fromlist(items, accessor=None, keys=None, dims=None, dtype=None, npartitions=None, engine=None):
     """
     Load images from a list of items using the given accessor.
 
@@ -24,52 +43,36 @@ def fromlist(items, accessor=None, keys=None, npartitions=None, **kwargs):
     keys : list, optional, default=None
         An optional list of keys
 
+    dims : tuple, optional, default=None
+        Specify a known image dimension to avoid computation.
+
     npartitions : int
         Number of partitions for computational engine
     """
-    if mode() == 'spark':
+    if spark and isinstance(engine, spark):
+        print('counting records')
         nrecords = len(items)
         if keys:
             items = zip(keys, items)
         else:
-            items = enumerate(items)
+            keys = [(i,) for i in range(nrecords)]
+            items = zip(keys, items)
         if not npartitions:
-            npartitions = engine().defaultParallelism
-        rdd = engine().parallelize(items, npartitions)
+            npartitions = engine.defaultParallelism
+        print('parallelizing')
+        rdd = engine.parallelize(items, npartitions)
         if accessor:
             rdd = rdd.mapValues(accessor)
-        return fromrdd(rdd, nrecords=nrecords, **kwargs)
+        return fromrdd(rdd, nrecords=nrecords, dims=dims, dtype=dtype)
 
     else:
-        raise NotImplementedError("Loading not implemented for '%s' mode" % mode())
-
-def fromurls(urls, accessor=None, keys=None, npartitions=None, **kwargs):
-    """
-    Load images from a list of URLs using the given accessor.
-
-    Parameters
-    ----------
-    accessor : function
-        Apply to each item from the list to yield an image
-
-    keys : list, optional, default=None
-        An optional list of keys
-
-    npartitions : int
-        Number of partitions for computational engine
-    """
-    if mode() == 'spark':
-        if keys:
-            urls = zip(keys, urls)
-        else:
-            urls = enumerate(urls)
-        rdd = engine().parallelize(urls, npartitions)
         if accessor:
-            rdd = rdd.mapValues(accessor)
-        return fromrdd(rdd, **kwargs)
+            items = asarray([accessor(i) for i in items])
+        return fromlocal(items)
 
 def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=False,
-             npartitions=None, dims=None, dtype=None, recount=False):
+             npartitions=None, dims=None, dtype=None, recount=False,
+             engine=None, credentials=None):
     """
     Load images from a path using the given accessor.
 
@@ -103,23 +106,29 @@ def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=Fal
     recount : boolean, optional, default=False
         Force subsequent record counting.
     """
-    if mode() == 'spark':
-        from thunder.data.readers import get_parallel_reader
-        reader = get_parallel_reader(path)(engine(), credentials=credentials())
-        rdd = reader.read(path, ext=ext, start=start, stop=stop,
-                          recursive=recursive, npartitions=npartitions)
+    from thunder.data.readers import get_parallel_reader
+    reader = get_parallel_reader(path)(engine, credentials=credentials)
+    data = reader.read(path, ext=ext, start=start, stop=stop,
+                       recursive=recursive, npartitions=npartitions)
+
+    if spark and isinstance(engine, spark):
         if accessor:
-            rdd = rdd.flatMap(accessor)
+            data = data.flatMap(accessor)
         if recount:
             nrecords = None
         else:
             nrecords = reader.nfiles
-        return fromrdd(rdd, nrecords=nrecords, dims=dims, dtype=dtype)
+        return fromrdd(data, nrecords=nrecords, dims=dims, dtype=dtype)
 
     else:
-        raise NotImplementedError("Loading not implemented for '%s' mode" % mode())
+        if accessor:
+            data = [accessor(d) for d in data]
+        flattened = list(itertools.chain(*data))
+        values = [kv[1] for kv in flattened]
+        return fromlocal(values)
 
-def fromarray(arrays, npartitions=None):
+
+def fromarray(arrays, npartitions=None, engine=None):
     """
     Load images from a sequence of ndarrays.
     """
@@ -139,11 +148,12 @@ def fromarray(arrays, npartitions=None):
                              (str(dtype), str(ary.dtype)))
     narrays = len(arrays)
     npartitions = min(narrays, npartitions) if npartitions else narrays
-    return fromlist(arrays, npartitions=npartitions, dims=shape, dtype=str(dtype))
+    return fromlist(arrays, npartitions=npartitions, dims=shape, dtype=str(dtype), engine=engine)
 
 
 def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, recursive=False,
-               nplanes=None, npartitions=None, conf='conf.json', order='C'):
+               nplanes=None, npartitions=None, conf='conf.json', order='C',
+               engine=None, credentials=None):
     """
     Load images from binary files.
 
@@ -178,7 +188,7 @@ def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, re
     import json
     from thunder.data.readers import get_file_reader, FileNotFoundError
     try:
-        reader = get_file_reader(path)(credentials=credentials())
+        reader = get_file_reader(path)(credentials=credentials)
         buf = reader.read(path, filename=conf)
         params = json.loads(buf)
     except FileNotFoundError:
@@ -231,10 +241,11 @@ def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, re
     newdims = tuple(list(dims[:-1]) + append) if nplanes else dims
     return frompath(path, accessor=getarray, ext=ext, start=start,
                     stop=stop, recursive=recursive, npartitions=npartitions,
-                    dims=newdims, dtype=dtype, recount=recount)
+                    dims=newdims, dtype=dtype, recount=recount,
+                    engine=engine, credentials=credentials)
 
 def fromtif(path, ext='tif', start=None, stop=None, recursive=False,
-            nplanes=None, npartitions=None):
+            nplanes=None, npartitions=None, engine=None, credentials=None):
     """
     Loads images from single or multi-page TIF files.
 
@@ -292,9 +303,11 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False,
 
     recount = False if nplanes is None else True
     return frompath(path, accessor=getarray, ext=ext, start=start, stop=stop,
-                    recursive=recursive, npartitions=npartitions, recount=recount)
+                    recursive=recursive, npartitions=npartitions, recount=recount,
+                    engine=engine, credentials=credentials)
 
-def frompng(path, ext='png', start=None, stop=None, recursive=False, npartitions=None):
+def frompng(path, ext='png', start=None, stop=None, recursive=False, npartitions=None,
+            engine=None, credentials=None):
     """
     Load images from PNG files.
 
@@ -327,105 +340,10 @@ def frompng(path, ext='png', start=None, stop=None, recursive=False, npartitions
         yield idx, imread(fbuf)
 
     return frompath(path, accessor=getarray, ext=ext, start=start,
-                    stop=stop, recursive=recursive, npartitions=npartitions)
+                    stop=stop, recursive=recursive, npartitions=npartitions,
+                    engine=engine, credentials=credentials)
 
-def fromocp(bucketName, resolution, server='ocp.me', start=None, stop=None,
-            minBound=None, maxBound=None):
-    """
-    Load data from OCP
-
-    Parameters
-    ----------
-    bucketName: string
-        Name of the token/bucket in OCP. You can use the token name you created in OCP here.
-        You can also access publicly available data on OCP at this URL "http://ocp.me/ocp/ca/public_tokens/"
-
-    resolution: nonnegative int
-        Resolution of the data in OCP
-
-    server: string. optional.
-        Name of the server in OCP which has the corresponding token.
-
-    start, stop: nonnegative int. optional.
-        Indices of the first and last-plus-one data file to load, relative to the sorted filenames matching
-        `datapath` and `ext`. Interpreted according to python slice indexing conventions.
-
-    minBound, maxBound: tuple of nonnegative int. optional.
-        X,Y,Z bounds of the data you want to fetch from OCP. minBound contains
-        the (xMin,yMin,zMin) while maxBound contains (xMax,yMax,zMax)
-    """
-    # Given a data-path/bucket Query JSON
-    # Given bounds get a list of URI's
-    import urllib2
-    urlList = []
-    url = 'http://{}/ocp/ca/{}/info/'.format(server, bucketName)
-
-    try:
-        f = urllib2.urlopen(url)
-    except urllib2.URLError:
-        raise Exception("Failed URL {}".format(url))
-
-    import json
-    projInfo = json.loads(f.read())
-
-    # Loading Information from JSON object
-    ximageSize, yimageSize = projInfo['dataset']['imagesize']['{}'.format(resolution)]
-    zimageStart, zimageStop = projInfo['dataset']['slicerange']
-    timageStart, timageStop = projInfo['dataset']['timerange']
-
-    # Checking if dimensions are within bounds
-    if start is None:
-        start = timageStart
-    elif start < timageStart or start > timageStop:
-        raise Exception("start out of bounds {},{}".format(timageStart, timageStop))
-
-    if stop is None:
-        stop = timageStop
-    elif stop < timageStart or stop > timageStop:
-        raise Exception("start out of bounds {},{}".format(timageStart, timageStop))
-
-    if minBound is None:
-        minBound = (0, 0, zimageStart)
-    elif minBound < (0, 0, zimageStart) or minBound > (ximageSize, yimageSize, zimageStop):
-        raise Exception("minBound is incorrect {},{}".format((0, 0, zimageStart),
-                                                             (ximageSize, yimageSize, zimageStop)))
-
-    if maxBound is None:
-        maxBound = (ximageSize, yimageSize, zimageStop)
-    elif maxBound < (0, 0, zimageStart) or maxBound > (ximageSize, yimageSize, zimageStop):
-        raise Exception("minBound is incorrect {},{}".format((0, 0, zimageStart), (ximageSize, yimageSize,
-                                                                                   zimageStop)))
-
-    for t in range(timageStart, timageStop, 1):
-        urlList.append("http://{}/ocp/ca/{}/npz/{},{}/{}/{},{}/{},{}/{},{}/".
-                       format(server, bucketName, t, t + 1, resolution, minBound[0],
-                              maxBound[0], minBound[1], maxBound[1], minBound[2], maxBound[2]))
-
-    def read(target):
-        """
-        Fetch URL from the server
-        """
-        try:
-            npzFile = urllib2.urlopen(target)
-        except urllib2.URLError:
-            raise Exception("Failed URL {}.".format(target))
-
-        imgData = npzFile.read()
-
-        import zlib
-        import cStringIO
-        pageStr = zlib.decompress(imgData[:])
-        pageObj = cStringIO.StringIO(pageStr)
-        data = load(pageObj)
-        # Data is a 4d numpy array in t,z,y,x order. Swap axes and remove time dimension
-        # to give back a 3d numpy array in x,y,z order
-        data = swapaxes(data[0, :, :, :], 0, 2)
-
-        return data
-
-    return fromurls(enumerate(urlList), accessor=read, npartitions=len(urlList))
-
-def fromrandom(shape=(10, 50, 50), npartitions=1, seed=42):
+def fromrandom(shape=(10, 50, 50), npartitions=1, seed=42, engine=None):
     """
     Generate random image data.
 
@@ -446,9 +364,9 @@ def fromrandom(shape=(10, 50, 50), npartitions=1, seed=42):
         random.seed(seed + v)
         return random.randn(*shape[1:])
 
-    return fromlist(range(shape[0]), accessor=generate, npartitions=npartitions)
+    return fromlist(range(shape[0]), accessor=generate, npartitions=npartitions, engine=engine)
 
-def fromexample(name=None):
+def fromexample(name=None, engine=None):
     """
     Load example image data.
 
@@ -471,19 +389,14 @@ def fromexample(name=None):
 
     checkist.opts(name, datasets)
 
-    if mode() == 'spark':
+    path = 's3n://thunder-sample-data/images/' + name
 
-        path = 's3n://thunder-sample-data/images/' + name
+    if name == 'mouse':
+        data = frombinary(path=path, npartitions=1, order='F', engine=engine)
 
-        if name == 'mouse':
-            data = frombinary(path=path, npartitions=1, order='F')
+    if name == 'fish':
+        data = fromtif(path=path, npartitions=1, engine=engine)
 
-        if name == 'fish':
-            data = fromtif(path=path, npartitions=1)
-
-        data.cache()
-        data.count()
-        return data
-
-    else:
-        raise NotImplementedError("Loading not implemented for '%s' mode" % mode())
+    data.cache()
+    data.compute()
+    return data

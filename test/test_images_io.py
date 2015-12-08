@@ -6,121 +6,109 @@ from numpy import arange, allclose
 
 from thunder.data.images.readers import fromlist, fromarray, frompng, fromtif, frombinary, fromexample
 
-pytestmark = pytest.mark.usefixtures("context")
+pytestmark = pytest.mark.usefixtures("eng")
 
 resources = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'resources')
 
 
-def test_from_list():
+def test_from_list(eng):
     a = arange(8).reshape((2, 4))
-    data = fromlist([a])
-    vals = data.collect()
-    assert len(vals) == 1
+    data = fromlist([a], engine=eng)
+    assert allclose(data.shape, (1,) + a.shape)
     assert allclose(data.dims, a.shape)
     assert allclose(data.toarray(), a)
 
 
-def test_from_array():
+def test_from_array(eng):
     a = arange(8).reshape((1, 2, 4))
-    data = fromarray(a)
-    vals = data.collect()
-    assert len(vals) == 1
-    assert allclose(data.dims, a[0].shape)
+    data = fromarray(a, engine=eng)
+    assert allclose(data.shape, a.shape)
+    assert allclose(data.dims, a.shape[1:])
     assert allclose(data.toarray(), a)
 
 
-def test_from_png():
+def test_from_png(eng):
     path = os.path.join(resources, 'singlelayer_png', 'dot1_grey.png')
-    data = frompng(path)
-    assert data.count() == 1
-    assert allclose(data.dims, (70, 75))
-    assert allclose(data.values().first().shape, (70, 75))
-    assert allclose(data.values().first().max(), 239)
-    assert allclose(data.values().first().min(), 1)
+    data = frompng(path, engine=eng)
+    assert allclose(data.shape, (1, 70, 75))
+    assert allclose(data.toarray().shape, (70, 75))
+    assert allclose(data.toarray().max(), 239)
+    assert allclose(data.toarray().min(), 1)
 
 
 def test_from_tif():
     path = os.path.join(resources, "singlelayer_tif", "dot1_grey_lzw.tif")
     data = fromtif(path)
-    assert data.count() == 1
-    assert allclose(data.dims, (70, 75))
-    assert allclose(data.values().first().shape, (70, 75))
-    assert allclose(data.values().first().max(), 239)
-    assert allclose(data.values().first().min(), 1)
+    assert allclose(data.shape, (1, 70, 75))
+    assert allclose(data.toarray().shape, (70, 75))
+    assert allclose(data.toarray().max(), 239)
+    assert allclose(data.toarray().min(), 1)
 
 
 def test_from_tif_many():
     path = os.path.join(resources, "singlelayer_tif", "dot*_grey_lzw.tif")
     data = fromtif(path)
-    assert data.count() == 3
-    assert allclose(data.dims, (70, 75))
-    assert allclose(data.values().first().shape, (70, 75))
-    assert [x.sum() for x in data.values().collect()] == [1233881, 1212169, 1191300]
+    assert allclose(data.shape, (3, 70, 75))
+    assert allclose(data.toarray().shape, (3, 70, 75))
+    assert [x.sum() for x in data.toarray()] == [1233881, 1212169, 1191300]
 
 
 def test_from_tif_multi_lzw():
     path = os.path.join(resources, 'multilayer_tif', 'dotdotdot_lzw.tif')
     data = fromtif(path)
-    val = data.values().first()
-    assert data.count() == 1
-    assert allclose(data.dims, (70, 75, 3))
-    assert allclose(data.values().first().shape, (70, 75, 3))
+    val = data.toarray()
+    assert allclose(data.shape, (1, 70, 75, 3))
+    assert allclose(data.toarray().shape, (70, 75, 3))
     assert [val[:, :, i].sum() for i in range(3)] == [1140006, 1119161, 1098917]
 
 
 def test_from_tif_multi_float():
     path = os.path.join(resources, 'multilayer_tif', 'dotdotdot_float32.tif')
     data = fromtif(path)
-    val = data.values().first()
-    assert data.count() == 1
-    assert allclose(data.dims, (70, 75, 3))
-    assert allclose(data.values().first().shape, (70, 75, 3))
+    val = data.toarray()
+    assert allclose(data.shape, (1, 70, 75, 3))
+    assert allclose(data.toarray().shape, (70, 75, 3))
     assert [val[:, :, i].sum() for i in range(3)] == [1140006, 1119161, 1098917]
 
 
 def test_from_tif_multi_planes():
     path = os.path.join(resources, 'multilayer_tif', 'dotdotdot_lzw.tif')
     data = fromtif(path, nplanes=3)
-    assert data.count() == 1
+    assert data.shape[0] == 1
     data = fromtif(path, nplanes=1)
-    assert data.count() == 3
-    assert allclose(data.keys().collect(), [0, 1, 2])
-    assert allclose(data.values().first().shape, (70, 75))
-    assert [x.sum() for x in data.values().collect()] == [1140006, 1119161, 1098917]
+    assert data.shape[0] == 3
+    assert allclose(data.toarray().shape, (3, 70, 75))
+    assert [x.sum() for x in data.toarray()] == [1140006, 1119161, 1098917]
 
 
 def test_from_tif_multi_planes_many():
     path = os.path.join(resources, 'multilayer_tif', 'dotdotdot_lzw*.tif')
     data = fromtif(path, nplanes=3)
-    assert data.nrecords == 2
-    assert allclose(data.keys().collect(), [0, 1])
-    assert allclose(data.dims, (70, 75, 3))
-    assert allclose(data.values().first().shape, (70, 75, 3))
+    assert data.shape[0] == 2
+    assert allclose(data.shape, (2, 70, 75, 3))
+    assert allclose(data.toarray().shape, (2, 70, 75, 3))
     data = fromtif(path, nplanes=1)
-    assert data.nrecords == 6
-    assert allclose(data.keys().collect(), [0, 1, 2, 3, 4, 5])
-    assert allclose(data.dims, (70, 75))
-    assert allclose(data.values().first().shape, (70, 75))
-    assert [x.sum() for x in data.values().collect()] == [1140006, 1119161, 1098917, 1140006, 1119161, 1098917]
+    assert data.shape[0] == 6
+    assert allclose(data.shape, (6, 70, 75))
+    assert allclose(data.toarray().shape, (6, 70, 75))
+    assert [x.sum() for x in data.toarray()] == [1140006, 1119161, 1098917, 1140006, 1119161, 1098917]
 
 
 def test_from_tif_signed():
     path = os.path.join(resources, 'multilayer_tif', 'test_signed.tif')
     data = fromtif(path, nplanes=1)
-    assert data.count() == 2
     assert data.dtype == 'int16'
-    assert allclose(data.values().first().shape, (120, 120))
-    assert [x.sum() for x in data.values().collect()] == [1973201, 2254767]
+    assert allclose(data.toarray().shape, (2, 120, 120))
+    assert [x.sum() for x in data.toarray()] == [1973201, 2254767]
 
 
 def test_from_binary(tmpdir):
     a = arange(8, dtype='int16').reshape((2, 4))
     a.tofile(os.path.join(str(tmpdir), 'test.bin'))
     data = frombinary(str(tmpdir), dims=(2, 4), dtype='int16')
-    assert data.nrecords == 1
     assert data.dtype == 'int16'
-    assert allclose(data.dims, (2, 4))
-    assert allclose(data.values().first(), a)
+    assert allclose(data.shape, (1, 2, 4))
+    assert allclose(data.toarray(), a)
 
 
 def test_from_binary_many(tmpdir):
@@ -128,9 +116,8 @@ def test_from_binary_many(tmpdir):
     a[0].tofile(os.path.join(str(tmpdir), 'test0.bin'))
     a[1].tofile(os.path.join(str(tmpdir), 'test1.bin'))
     data = frombinary(str(tmpdir), dims=(2, 4), dtype='int16')
-    assert data.nrecords == 2
     assert data.dtype == 'int16'
-    assert allclose(data.dims, (2, 4))
+    assert allclose(data.shape, (2, 2, 4))
     assert allclose(data.toarray(), a)
 
 
@@ -141,9 +128,8 @@ def test_from_binary_conf(tmpdir):
     with open(os.path.join(str(tmpdir), 'conf.json'), 'w') as f:
         json.dump({'dims': [2, 4], 'dtype': 'int32'}, f)
     data = frombinary(str(tmpdir))
-    assert data.nrecords == 2
     assert data.dtype == 'int32'
-    assert allclose(data.dims, (2, 4))
+    assert allclose(data.shape, (2, 2, 4))
     assert allclose(data.toarray(), a)
 
 
@@ -151,10 +137,9 @@ def test_from_binary_multi(tmpdir):
     a = arange(24, dtype='int16').reshape((2, 3, 4))
     a.tofile(os.path.join(str(tmpdir), 'test.bin'))
     data = frombinary(str(tmpdir), dims=(2, 3, 4), dtype='int16')
-    assert data.nrecords == 1
     assert data.dtype == 'int16'
-    assert allclose(data.dims, (2, 3, 4))
-    assert allclose(data.values().first(), a)
+    assert allclose(data.shape, (1, 2, 3, 4))
+    assert allclose(data.toarray(), a)
 
 
 def test_from_binary_multi_planes_many(tmpdir):
@@ -162,73 +147,71 @@ def test_from_binary_multi_planes_many(tmpdir):
     a[0].tofile(os.path.join(str(tmpdir), 'test0.bin'))
     a[1].tofile(os.path.join(str(tmpdir), 'test1.bin'))
     data = frombinary(str(tmpdir), dims=(4, 2, 2), dtype='int16', nplanes=2)
-    assert data.nrecords == 2
-    assert allclose(data.dims, (4, 2, 2))
-    assert allclose(data.values().first().shape, (4, 2, 2))
+    assert allclose(data.shape, (2, 4, 2, 2))
+    assert allclose(data.toarray().shape, (2, 4, 2, 2))
     data = frombinary(str(tmpdir), dims=(4, 2, 2), dtype='int16', nplanes=1)
-    assert data.nrecords == 4
-    assert allclose(data.dims, (4, 2))
-    assert allclose(data.values().first().shape, (4, 2))
+    assert allclose(data.shape, (4, 4, 2))
+    assert allclose(data.toarray().shape, (4, 4, 2))
 
-
-def test_to_binary(tmpdir):
-    a = [arange(8, dtype='int16').reshape((4, 2)), arange(8, 16, dtype='int16').reshape((4, 2))]
-    fromlist(a).tobinary(os.path.join(str(tmpdir), 'binary'), prefix='image')
-    files = [os.path.basename(f) for f in glob.glob(str(tmpdir) + '/binary/image*')]
-    f = open(str(tmpdir) + '/binary/conf.json', 'r')
-    conf = json.load(f)
-    f.close()
-    assert sorted(files) == ['image-00000.bin', 'image-00001.bin']
-    assert conf['dims'] == [4, 2]
-    assert conf['dtype'] == 'int16'
-
-
-def test_to_binary_roundtrip(tmpdir):
-    a = [arange(8).reshape((4, 2)), arange(8, 16).reshape((4, 2))]
-    data = fromlist(a)
-    data.tobinary(os.path.join(str(tmpdir), 'images'))
-    loaded = frombinary(os.path.join(str(tmpdir), 'images'))
-    assert allclose(data.toarray(), loaded.toarray())
-
-
-def test_to_binary_roundtrip_3d(tmpdir):
-    a = [arange(24).reshape((2, 3, 4)), arange(24, 48).reshape((2, 3, 4))]
-    data = fromlist(a)
-    data.tobinary(os.path.join(str(tmpdir), 'images'))
-    loaded = frombinary(os.path.join(str(tmpdir), 'images'))
-    assert allclose(data.toarray(), loaded.toarray())
-
-
-def test_to_png(tmpdir):
-    a = [arange(8, dtype='int16').reshape((4, 2)), arange(8, 16, dtype='int16').reshape((4, 2))]
-    fromlist(a).topng(os.path.join(str(tmpdir), 'images'), prefix='image')
-    files = [os.path.basename(f) for f in glob.glob(str(tmpdir) + '/images/image*')]
-    assert sorted(files) == ['image-00000.png', 'image-00001.png']
-
-
-def test_to_png_roundtrip(tmpdir):
-    a = [arange(8, dtype='uint8').reshape((4, 2))]
-    data = fromlist(a)
-    data.topng(os.path.join(str(tmpdir), 'images'), prefix='image')
-    loaded = frompng(os.path.join(str(tmpdir), 'images'))
-    assert allclose(data.toarray(), loaded.toarray())
-
-
-def test_to_tif(tmpdir):
-    a = [arange(8, dtype='int16').reshape((4, 2)), arange(8, 16, dtype='int16').reshape((4, 2))]
-    fromlist(a).totif(os.path.join(str(tmpdir), 'images'), prefix='image')
-    files = [os.path.basename(f) for f in glob.glob(str(tmpdir) + '/images/image*')]
-    assert sorted(files) == ['image-00000.tif', 'image-00001.tif']
-
-
-def test_to_tif_roundtrip(tmpdir):
-    a = [arange(8, dtype='uint8').reshape((4, 2))]
-    data = fromlist(a)
-    data.totif(os.path.join(str(tmpdir), 'images'), prefix='image')
-    loaded = fromtif(os.path.join(str(tmpdir), 'images'))
-    assert allclose(data.toarray(), loaded.toarray())
-
-
-def test_fromexample():
-    for d in ['fish', 'mouse']:
-        fromexample(d).count()
+#
+# def test_to_binary(tmpdir):
+#     a = [arange(8, dtype='int16').reshape((4, 2)), arange(8, 16, dtype='int16').reshape((4, 2))]
+#     fromlist(a).tobinary(os.path.join(str(tmpdir), 'binary'), prefix='image')
+#     files = [os.path.basename(f) for f in glob.glob(str(tmpdir) + '/binary/image*')]
+#     f = open(str(tmpdir) + '/binary/conf.json', 'r')
+#     conf = json.load(f)
+#     f.close()
+#     assert sorted(files) == ['image-00000.bin', 'image-00001.bin']
+#     assert conf['dims'] == [4, 2]
+#     assert conf['dtype'] == 'int16'
+#
+#
+# def test_to_binary_roundtrip(tmpdir):
+#     a = [arange(8).reshape((4, 2)), arange(8, 16).reshape((4, 2))]
+#     data = fromlist(a)
+#     data.tobinary(os.path.join(str(tmpdir), 'images'))
+#     loaded = frombinary(os.path.join(str(tmpdir), 'images'))
+#     assert allclose(data.toarray(), loaded.toarray())
+#
+#
+# def test_to_binary_roundtrip_3d(tmpdir):
+#     a = [arange(24).reshape((2, 3, 4)), arange(24, 48).reshape((2, 3, 4))]
+#     data = fromlist(a)
+#     data.tobinary(os.path.join(str(tmpdir), 'images'))
+#     loaded = frombinary(os.path.join(str(tmpdir), 'images'))
+#     assert allclose(data.toarray(), loaded.toarray())
+#
+#
+# def test_to_png(tmpdir):
+#     a = [arange(8, dtype='int16').reshape((4, 2)), arange(8, 16, dtype='int16').reshape((4, 2))]
+#     fromlist(a).topng(os.path.join(str(tmpdir), 'images'), prefix='image')
+#     files = [os.path.basename(f) for f in glob.glob(str(tmpdir) + '/images/image*')]
+#     assert sorted(files) == ['image-00000.png', 'image-00001.png']
+#
+#
+# def test_to_png_roundtrip(tmpdir):
+#     a = [arange(8, dtype='uint8').reshape((4, 2))]
+#     data = fromlist(a)
+#     data.topng(os.path.join(str(tmpdir), 'images'), prefix='image')
+#     loaded = frompng(os.path.join(str(tmpdir), 'images'))
+#     assert allclose(data.toarray(), loaded.toarray())
+#
+#
+# def test_to_tif(tmpdir):
+#     a = [arange(8, dtype='int16').reshape((4, 2)), arange(8, 16, dtype='int16').reshape((4, 2))]
+#     fromlist(a).totif(os.path.join(str(tmpdir), 'images'), prefix='image')
+#     files = [os.path.basename(f) for f in glob.glob(str(tmpdir) + '/images/image*')]
+#     assert sorted(files) == ['image-00000.tif', 'image-00001.tif']
+#
+#
+# def test_to_tif_roundtrip(tmpdir):
+#     a = [arange(8, dtype='uint8').reshape((4, 2))]
+#     data = fromlist(a)
+#     data.totif(os.path.join(str(tmpdir), 'images'), prefix='image')
+#     loaded = fromtif(os.path.join(str(tmpdir), 'images'))
+#     assert allclose(data.toarray(), loaded.toarray())
+#
+#
+# def test_fromexample():
+#     for d in ['fish', 'mouse']:
+#         fromexample(d).count()

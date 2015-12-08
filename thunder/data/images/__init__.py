@@ -1,2 +1,2 @@
-from .readers import (fromrdd, fromlist, frompath, fromarray, frompng,
+from .readers import (fromlist, frompath, fromarray, frompng,
                       fromtif, frombinary, fromexample, fromrandom)

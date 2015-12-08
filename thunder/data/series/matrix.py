@@ -31,14 +31,14 @@ class Matrix(Series):
         Number of columns, will be automatically computed if not provided,
         can save computation to specify if known in advance
     """
-    _metadata = Series._metadata + ['_ncols', '_nrows']
+    _metadata = Series._metadata + ['ncols', 'nrows']
 
-    def __init__(self, rdd, index=None, dims=None, dtype=None, nrecords=None):
-        super(Matrix, self).__init__(rdd, nrecords=nrecords, dtype=dtype, dims=dims, index=index)
+    def __init__(self, values, index=None, mode='local'):
+        super(Matrix, self).__init__(values, index=index, mode=mode)
 
     @property
     def nrows(self):
-        return self.nrecords
+        return self.shape[0]
 
     @property
     def ncols(self):
@@ -47,12 +47,6 @@ class Matrix(Series):
     @property
     def _constructor(self):
         return Matrix
-
-    def rows(self):
-        """
-        Get the rows of the matrix, dropping the keys.
-        """
-        return self.rdd.map(lambda (_, v): v)
 
     def cov(self, axis=None):
         """

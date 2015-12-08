@@ -1,43 +1,76 @@
 from numpy import array, arange, frombuffer, load, ndarray, asarray, random
 
-from thunder import engine, mode, credentials
+from ...utils.common import check_spark
+from .series import Series
+spark = check_spark()
 
 
-def fromrdd(rdd, **kwargs):
-    from .series import Series
-    return Series(rdd, **kwargs)
+def fromrdd(rdd, nrecords=None, index=None, dtype=None):
+    """
+    Load Series object from a Spark RDD
+    """
+    from bolt.spark.array import BoltArraySpark
 
-def fromlist(items, accessor=None, keys=None, npartitions=None, index=None, **kwargs):
+    if index is None or dtype is None:
+        item = rdd.values().first()
+
+    if index is None:
+        index = range(len(item))
+
+    if dtype is None:
+        dtype = item.dtype
+
+    if nrecords is None:
+        nrecords = rdd.count()
+
+    values = BoltArraySpark(rdd, shape=(nrecords, len(index)), dtype=dtype, split=1)
+    return Series(values, index=index, mode='spark')
+
+
+def fromlocal(values, index=None):
+    """
+    Load Series object from a local numpy array.
+    """
+    values = asarray(values)
+    if index is None:
+        index = range(len(values[0]))
+
+    return Series(asarray(values), index=index)
+
+def fromlist(items, accessor=None, keys=None, npartitions=None,
+             index=None, dtype=None, engine=None):
     """
     Create a Series object from a list.
     """
-    if mode() == 'spark':
+    if spark and isinstance(engine, spark):
+        if dtype is None:
+            dtype = accessor(items[0]).dtype if accessor else items[0].dtype
         nrecords = len(items)
         if not keys:
             keys = map(lambda k: (k, ), range(len(items)))
         if not npartitions:
-            npartitions = engine().defaultParallelism
+            npartitions = engine.defaultParallelism
         items = zip(keys, items)
-        rdd = engine().parallelize(items, npartitions)
+        rdd = engine.parallelize(items, npartitions)
         if accessor:
             rdd = rdd.mapValues(accessor)
-        return fromrdd(rdd, nrecords=nrecords, index=index, **kwargs)
+        return fromrdd(rdd, nrecords=nrecords, index=index, dtype=dtype)
 
     else:
-        raise NotImplementedError("Loading not implemented for '%s' mode" % mode())
+        if accessor:
+            items = [accessor(i) for i in items]
+        return fromlocal(items, index=index)
 
-def fromarray(arrays, npartitions=None, index=None, keys=None):
+def fromarray(arrays, npartitions=None, index=None, keys=None, engine=None):
     """
     Create a Series object from a sequence of 1d numpy arrays.
     """
-    # recast singleton
     if isinstance(arrays, list):
         arrays = asarray(arrays)
 
     if isinstance(arrays, ndarray) and arrays.ndim > 1:
         arrays = list(arrays)
 
-    # check shape and dtype
     shape = arrays[0].shape
     dtype = arrays[0].dtype
     for ary in arrays:
@@ -48,9 +81,10 @@ def fromarray(arrays, npartitions=None, index=None, keys=None):
             raise ValueError("Inconsistent array dtypes: first array had dtype %s, "
                              "but other array has dtype %s" % (str(dtype), str(ary.dtype)))
 
-    return fromlist(arrays, keys=keys, npartitions=npartitions, dtype=str(dtype), index=index)
+    return fromlist(arrays, keys=keys, npartitions=npartitions, dtype=str(dtype),
+                    index=index, engine=engine)
 
-def frommat(path, var, npartitions=None, keyFile=None, index=None):
+def frommat(path, var, npartitions=None, keyFile=None, index=None, engine=None):
     """
     Loads Series data stored in a Matlab .mat file.
     """
@@ -63,9 +97,10 @@ def frommat(path, var, npartitions=None, keyFile=None, index=None):
     else:
         keys = None
 
-    return fromlist(data, keys=keys, npartitions=npartitions, dtype=str(data.dtype), index=index)
+    return fromlist(data, keys=keys, npartitions=npartitions, dtype=str(data.dtype),
+                    index=index, engine=engine)
 
-def fromnpy(path, npartitions=None, keyfile=None, index=None):
+def fromnpy(path, npartitions=None, keyfile=None, index=None, engine=None):
     """
     Loads Series data stored in the numpy save() .npy format.
     """
@@ -77,9 +112,10 @@ def fromnpy(path, npartitions=None, keyfile=None, index=None):
     else:
         keys = None
 
-    return fromlist(data, keys=keys, npartitions=npartitions, dtype=str(data.dtype), index=index)
+    return fromlist(data, keys=keys, npartitions=npartitions, dtype=str(data.dtype),
+                    index=index, engine=engine)
 
-def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64'):
+def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64', engine=None):
     """
     Loads Series data from text files.
 
@@ -93,7 +129,7 @@ def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64'):
     dtype: dtype or dtype specifier, default 'float64'
         Numerical type to use for data after converting from text.
     """
-    if mode() == 'spark':
+    if spark and isinstance(engine, spark):
         from thunder.data.readers import normalize_scheme
         path = normalize_scheme(path, ext)
 
@@ -103,15 +139,16 @@ def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64'):
             keys = tuple(int(x) for x in vec[:nkeys_])
             return keys, ts
 
-        lines = engine().textFile(path, npartitions)
+        lines = engine.textFile(path, npartitions)
         data = lines.map(lambda x: parse(x, nkeys))
         return fromrdd(data, dtype=str(dtype))
 
     else:
-        raise NotImplementedError("Loading not implemented for '%s' mode" % mode())
+        raise NotImplementedError("Loading not implemented for local mode")
 
 def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
-               keytype=None, valuetype=None, newdtype='smallfloat', casting='safe'):
+               keytype=None, valuetype=None, newdtype='smallfloat', casting='safe',
+               engine=None, credentials=None):
     """
     Load a Series object from a binary files.
 
@@ -141,7 +178,7 @@ def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
         Casting method to pass on to numpy's `astype()` method.
 
     """
-    params = binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype)
+    params = binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype, credentials)
 
     from thunder.data.readers import normalize_scheme
     path = normalize_scheme(path, ext)
@@ -153,8 +190,8 @@ def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
     keysize = params.nkeys * keytype.itemsize
     recordsize = keysize + params.nvalues * valuetype.itemsize
 
-    if mode() == 'spark':
-        lines = engine().binaryRecords(path, recordsize)
+    if spark and isinstance(engine, spark):
+        lines = engine.binaryRecords(path, recordsize)
 
         def get(kv):
             k = tuple(int(x) for x in frombuffer(buffer(kv, 0, keysize), dtype=keytype))
@@ -168,9 +205,9 @@ def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
         return data.astype(newdtype, casting)
 
     else:
-        raise NotImplementedError("Loading not implemented for '%s' mode" % mode())
+        raise NotImplementedError("Loading not implemented for local mode")
 
-def binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype):
+def binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype, credentials):
     """
     Collects parameters to use for binary series loading.
     """
@@ -181,7 +218,7 @@ def binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype):
     Parameters = namedtuple('BinaryLoadParameters', 'nkeys nvalues keytype valuetype')
     Parameters.__new__.__defaults__ = (None, None, 'int16', 'int16')
 
-    reader = get_file_reader(path)(credentials=credentials())
+    reader = get_file_reader(path)(credentials=credentials)
     try:
         buf = reader.read(path, filename=conf)
         params = json.loads(buf)
@@ -208,7 +245,7 @@ def binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype):
                          str(tuple(missing)))
     return params
 
-def fromrandom(shape=(100, 10), npartitions=1, seed=42):
+def fromrandom(shape=(100, 10), npartitions=1, seed=42, engine=None):
     """
     Generate gaussian random series data.
 
@@ -229,9 +266,9 @@ def fromrandom(shape=(100, 10), npartitions=1, seed=42):
         random.seed(seed + v)
         return random.randn(shape[1])
 
-    return fromlist(range(shape[0]), accessor=generate, npartitions=npartitions)
+    return fromlist(range(shape[0]), accessor=generate, npartitions=npartitions, engine=engine)
 
-def fromexample(name=None):
+def fromexample(name=None, engine=None):
     """
     Load example series data.
 
@@ -260,24 +297,19 @@ def fromexample(name=None):
 
     checkist.opts(name, datasets)
 
-    if mode() == 'spark':
+    d = tempfile.mkdtemp()
+    try:
+        os.mkdir(os.path.join(d, 'series'))
+        os.mkdir(os.path.join(d, 'series', name))
+        conn = S3Connection(anon=True)
+        bucket = conn.get_bucket('thunder-sample-data')
+        for key in bucket.list(os.path.join('series', name)):
+            if not key.name.endswith('/'):
+                key.get_contents_to_filename(os.path.join(d, key.name))
+        data = frombinary(os.path.join(d, 'series', name), engine=engine)
+        data.cache()
+        data.count()
+    finally:
+        shutil.rmtree(d)
 
-        d = tempfile.mkdtemp()
-        try:
-            os.mkdir(os.path.join(d, 'series'))
-            os.mkdir(os.path.join(d, 'series', name))
-            conn = S3Connection(anon=True)
-            bucket = conn.get_bucket('thunder-sample-data')
-            for key in bucket.list(os.path.join('series', name)):
-                if not key.name.endswith('/'):
-                    key.get_contents_to_filename(os.path.join(d, key.name))
-            data = frombinary(os.path.join(d, 'series', name))
-            data.cache()
-            data.count()
-        finally:
-            shutil.rmtree(d)
-
-        return data
-
-    else:
-        raise NotImplementedError("Loading not implemented for '%s' mode" % mode())
+    return data

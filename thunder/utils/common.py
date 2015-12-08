@@ -1,19 +1,9 @@
-def smallfloat(dtype):
-    """
-    Returns the smallest floating point dtype to which the passed dtype can be safely cast.
-
-    For integers and unsigned ints, this will generally be next floating point type larger than the integer type. So
-    for instance, smallest_float_type('uint8') -> dtype('float16'), smallest_float_type('int16') -> dtype('float32'),
-    smallest_float_type('uint32') -> dtype('float64').
-
-    This function relies on numpy's promote_types function.
-    """
-    from numpy import dtype as dtypefunc
-    from numpy import promote_types
-    intype = dtypefunc(dtype)
-    compsize = max(2, intype.itemsize)  # smallest float is at least 16 bits
-    comptype = dtypefunc('=f'+str(compsize))  # compare to a float of the same size
-    return promote_types(intype, comptype)
+def check_spark():
+    SparkContext = False
+    try:
+        from pyspark import SparkContext
+    finally:
+        return SparkContext
 
 def check_path(path, credentials=None):
     """

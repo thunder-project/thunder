@@ -8,10 +8,9 @@ import urlparse
 import logging
 import boto
 
-from thunder.utils.common import connection_with_anon
-
+from ..utils.common import check_spark, connection_with_anon
 logging.getLogger('boto').setLevel(logging.CRITICAL)
-
+spark = check_spark()
 
 def addextension(path, ext=None):
     """
@@ -140,9 +139,14 @@ class LocalParallelReader(object):
 
         nfiles = len(files)
         self.nfiles = nfiles
-        npartitions = min(npartitions, nfiles) if npartitions else nfiles
-        rdd = self.engine.parallelize(enumerate(files), npartitions)
-        return rdd.map(lambda (k, v): (k, readlocal(v)))
+
+        if spark and isinstance(self.engine, spark):
+            npartitions = min(npartitions, nfiles) if npartitions else nfiles
+            rdd = self.engine.parallelize(enumerate(files), npartitions)
+            return rdd.map(lambda (k, v): (k, readlocal(v)))
+
+        else:
+            return [(k, readlocal(v)) for k, v in enumerate(files)]
 
 
 class LocalFileReader(object):
@@ -360,7 +364,32 @@ class BotoParallelReader(BotoClient):
 
         credentials = self.credentials
 
-        def getsplit(kvIter):
+        self.nfiles = len(keylist)
+
+        if spark and isinstance(self.engine, spark):
+
+            def getsplit(kvIter):
+                if scheme == 's3' or scheme == 's3n':
+                    conn = connection_with_anon(credentials)
+                    bucket = conn.get_bucket(bucket_name)
+                elif scheme == 'gs':
+                    conn = boto.storage_uri(bucket_name, 'gs')
+                    bucket = conn.get_bucket()
+                else:
+                    raise NotImplementedError("No file reader implementation for URL scheme " + scheme)
+
+                for kv in kvIter:
+                    idx, keyName = kv
+                    key = bucket.get_key(keyName)
+                    buf = key.get_contents_as_string()
+                    yield idx, buf
+
+            npartitions = min(npartitions, self.nfiles) if npartitions else self.nfiles
+            rdd = self.engine.parallelize(enumerate(keylist), npartitions)
+            return rdd.mapPartitions(getsplit)
+
+        else:
+
             if scheme == 's3' or scheme == 's3n':
                 conn = connection_with_anon(credentials)
                 bucket = conn.get_bucket(bucket_name)
@@ -370,15 +399,13 @@ class BotoParallelReader(BotoClient):
             else:
                 raise NotImplementedError("No file reader implementation for URL scheme " + scheme)
 
-            for kv in kvIter:
+            def getsplit(kv):
                 idx, keyName = kv
                 key = bucket.get_key(keyName)
                 buf = key.get_contents_as_string()
-                yield idx, buf
+                return idx, buf
 
-        self.nfiles = len(keylist)
-        npartitions = min(npartitions, self.nfiles) if npartitions else self.nfiles
-        return self.engine.parallelize(enumerate(keylist), npartitions).mapPartitions(getsplit)
+            return [getsplit(kv) for kv in enumerate(keylist)]
 
 
 class BotoFileReader(BotoClient):

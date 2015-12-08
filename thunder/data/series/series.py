@@ -4,7 +4,6 @@ from numpy import array, sum, mean, median, std, size, arange, percentile,\
     ravel, logical_not, max, min
 
 from ..base import Data
-from ..keys import Dimensions
 
 
 class Series(Data):
@@ -37,25 +36,18 @@ class Series(Data):
     --------
     TimeSeries : a Series where the indices represent time
     """
-    _metadata = Data._metadata + ['_dims', '_index']
+    _metadata = Data._metadata + ['index']
 
-    def __init__(self, rdd, nrecords=None, dtype=None, index=None, dims=None):
-        super(Series, self).__init__(rdd, nrecords=nrecords, dtype=dtype)
+    def __init__(self, values, index=None, mode='local'):
+        super(Series, self).__init__(values, mode=mode)
         self._index = None
         if index is not None:
             self._index = index
-        if dims and not isinstance(dims, Dimensions):
-            try:
-                dims = Dimensions.fromTuple(dims)
-            except:
-                raise TypeError("Series dims parameter must be castable to Dimensions object, "
-                                "got: %s" % str(dims))
-        self._dims = dims
 
     @property
     def index(self):
         if self._index is None:
-            self.fromfirst()
+            self._index = range(self.shape[-1])
         return self._index
         
     @index.setter
@@ -77,51 +69,61 @@ class Series(Data):
         self._index = value
 
     @property
-    def dims(self):
-        from thunder.data.keys import Dimensions
-        if self._dims is None:
-            entry = self.fromfirst()[0]
-            n = size(entry)
-            d = self.rdd.keys().mapPartitions(lambda i: [Dimensions(i, n)])\
-                .reduce(lambda x, y: x.mergeDims(y))
-            self._dims = d
-        return self._dims
+    def length(self):
+        return len(self.index)
 
     @property
-    def shape(self):
-        if self._shape is None:
-            self._shape = tuple(self.dims) + (size(self.index),)
-        return self._shape
-
-    @property
-    def dtype(self):
-        return super(Series, self).dtype
-
-    def fromfirst(self):
-        """
-        Calls first() to get a single record to determine attributes.
-
-        Returns the result of calling self.rdd.first().
-        """
-        record = super(Series, self).fromfirst()
-        if self._index is None:
-            val = record[1]
-            try:
-                l = len(val)
-            except TypeError:
-                # TypeError thrown after calling len() on object with no __len__ method
-                l = 1
-            self._index = arange(0, l)
-        return record
+    def baseaxes(self):
+        return tuple(range(0, len(self.shape) - 1))
 
     @property
     def _constructor(self):
         return Series
 
-    def _reset(self):
-        self._nrecords = None
-        self._dims = None
-        return self
+    def apply(self, func, index=None):
+        """
+        Apply a function to each series
+        """
+        if index is None:
+            index = self.index
+        new = self.map(func, axis=self.baseaxes, value_shape=len(index))
+        return self._constructor(new.values, index=index)
+
+    def mean(self):
+        """
+        Compute the mean across images
+        """
+        return self._constructor(self.values.mean(axis=self.baseaxes, keepdims=True))
+
+    def var(self):
+        """
+        Compute the variance across images
+        """
+        return self._constructor(self.values.var(axis=self.baseaxes, keepdims=True))
+
+    def std(self):
+        """
+        Compute the standard deviation across images
+        """
+        return self._constructor(self.values.std(axis=self.baseaxes, keepdims=True))
+
+    def sum(self):
+        """
+        Compute the sum across images
+        """
+        return self._constructor(self.values.sum(axis=self.baseaxes, keepdims=True))
+
+    def max(self):
+        """
+        Compute the max across images
+        """
+        return self._constructor(self.values.max(axis=self.baseaxes, keepdims=True))
+
+    def min(self):
+        """
+        Compute the min across images
+        """
+        return self._constructor(self.values.min(axis=self.baseaxes, keepdims=True))
 
     def between(self, left, right, inclusive=True):
         """
@@ -167,40 +169,49 @@ class Series(Data):
                 except TypeError:
                     # typically means crit is not an iterable type; for instance, crit is an int
                     critlist = set([crit])
+            print('printing critlist')
+            print(critlist)
             crit = lambda x: x in critlist
 
         # if only one index, return it directly or throw an error
         index = self.index
+        print(index)
         if size(index) == 1:
-            if crit(index):
+            if crit(index[0]):
                 return self
             else:
                 raise Exception("No indices found matching criterion")
 
         # determine new index and check the result
+        for i in index:
+            print(i)
+            print(crit(i))
         newindex = [i for i in index if crit(i)]
+        print(newindex)
         if len(newindex) == 0:
             raise Exception("No indices found matching criterion")
         if array(newindex == index).all():
             return self
 
         # use fast logical indexing to get the new values
-        subInds = where(map(lambda x: crit(x), index))
-        rdd = self.rdd.mapValues(lambda x: x[subInds])
+        subinds = where(map(lambda x: crit(x), index))
+        new = self.apply(lambda x: x[subinds], index=newindex)
 
         # if singleton, need to check whether it's an array or a scalar/int
         # if array, recompute a new set of indices
         if len(newindex) == 1:
-            rdd = rdd.mapValues(lambda x: x[0])
-            val = rdd.first()[1]
+            new = new.apply(lambda x: x[0], index=newindex)
+            val = new.first()
             if size(val) == 1:
                 newindex = newindex[0]
             else:
                 newindex = arange(0, size(val))
 
-        return self._constructor(rdd, index=newindex).__finalize__(self)
+        new._index = newindex
 
-    def center(self, axis=0):
+        return new
+
+    def center(self, axis=1):
         """
         Center series data by subtracting the mean
         either within or across records
@@ -208,17 +219,17 @@ class Series(Data):
         Parameters
         ----------
         axis : int, optional, default = 0
-            Which axis to center along, rows (0) or columns (1)
+            Which axis to center along, within (1) or across (0) records
         """
-        if axis == 0:
-            return self.apply_values(lambda x: x - mean(x), keepindex=True)
-        elif axis == 1:
-            meanval = self.mean()
-            return self.apply_values(lambda x: x - meanval, keepindex=True)
+        if axis == 1:
+            return self.apply(lambda x: x - mean(x))
+        elif axis == 0:
+            meanval = self.mean().toarray()
+            return self.apply(lambda x: x - meanval)
         else:
             raise Exception('Axis must be 0 or 1')
 
-    def standardize(self, axis=0):
+    def standardize(self, axis=1):
         """
         Standardize series data by dividing by the standard deviation
         either within or across records
@@ -226,17 +237,17 @@ class Series(Data):
         Parameters
         ----------
         axis : int, optional, default = 0
-            Which axis to standardize along, rows (0) or columns (1)
+            Which axis to standardize along, within (1) or across (0) records
         """
-        if axis == 0:
-            return self.apply_values(lambda x: x / std(x), keepindex=True)
-        elif axis == 1:
-            stdval = self.std()
-            return self.apply_values(lambda x: x / stdval, keepindex=True)
+        if axis == 1:
+            return self.apply(lambda x: x / std(x))
+        elif axis == 0:
+            stdval = self.std().toarray()
+            return self.apply(lambda x: x / stdval)
         else:
             raise Exception('Axis must be 0 or 1')
 
-    def zscore(self, axis=0):
+    def zscore(self, axis=1):
         """
         Zscore series data by subtracting the mean and
         dividing by the standard deviation either
@@ -245,15 +256,14 @@ class Series(Data):
         Parameters
         ----------
         axis : int, optional, default = 0
-            Which axis to zscore along, rows (0) or columns (1)
+            Which axis to zscore along, within (1) or across (0) records
         """
-        if axis == 0:
-            return self.apply_values(lambda x: (x - mean(x)) / std(x), keepindex=True)
-        elif axis == 1:
-            stats = self.stats()
-            meanval = stats.mean()
-            stdval = stats.std()
-            return self.apply_values(lambda x: (x - meanval) / stdval, keepindex=True)
+        if axis == 1:
+            return self.apply(lambda x: (x - mean(x)) / std(x))
+        elif axis == 0:
+            meanval = self.mean().toarray()
+            stdval = self.std().toarray()
+            return self.apply(lambda x: (x - meanval) / stdval)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -267,7 +277,7 @@ class Series(Data):
             Level below which to set records to zero
         """
         func = lambda x: zeros(x.shape) if max(x) < threshold else x
-        return self.apply_values(func, keepdtype=True, keepindex=True)
+        return self.apply(func)
 
     def correlate(self, signal, var='s'):
         """
@@ -292,18 +302,17 @@ class Series(Data):
         if s.ndim == 1:
             if size(s) != size(self.index):
                 raise ValueError('Size of signal `%g` does not match size of data' % size(s))
-            rdd = self.rdd.mapValues(lambda x: corrcoef(x, s)[0, 1])
-            newindex = 0
+
+            return self.apply(lambda x: corrcoef(x, s)[0, 1], index=[1])
 
         elif s.ndim == 2:
             if s.shape[1] != size(self.index):
                 raise ValueError('Length of signal `%g` does not match size of data' % s.shape[1])
-            rdd = self.rdd.mapValues(lambda x: array([corrcoef(x, y)[0, 1] for y in s]))
             newindex = range(0, s.shape[0])
+            return self.apply(lambda x: array([corrcoef(x, y)[0, 1] for y in s]), index=newindex)
+
         else:
             raise Exception('Signal to correlate with must have 1 or 2 dimensions')
-
-        return self._constructor(rdd, dtype='float64', index=newindex).__finalize__(self)
 
     def series_max(self):
         """
@@ -344,8 +353,7 @@ class Series(Data):
         q : scalar
             Floating point number between 0 and 100 inclusive, specifying percentile.
         """
-        rdd = self.rdd.mapValues(lambda x: percentile(x, q))
-        return self._constructor(rdd, index=q).__finalize__(self, noprop=('_dtype',))
+        return self.apply(lambda x: percentile(x, q), index=[q])
 
     def series_std(self):
         """ Compute the value std of each record in a Series """
@@ -370,16 +378,15 @@ class Series(Data):
             'count': size
         }
         func = STATS[stat.lower()]
-        rdd = self.rdd.mapValues(lambda x: func(x))
-        return self._constructor(rdd, index=stat).__finalize__(self, noprop=('_dtype',))
+        return self.apply(lambda x: func(x), index=[stat])
 
     def series_stats(self):
         """
         Compute many statistics for each record in a Series
         """
-        rdd = self.rdd.mapValues(lambda x: array([x.size, mean(x), std(x), max(x), min(x)]))
-        return self._constructor(rdd, index=['count', 'mean', 'std', 'max', 'min'])\
-            .__finalize__(self, noprop=('_dtype',))
+        newindex = ['count', 'mean', 'std', 'max', 'min']
+        return self.apply(lambda x: array([x.size, mean(x), std(x), max(x), min(x)]),
+                          index=newindex)
 
     def _check_panel(self, length):
         """
@@ -409,72 +416,8 @@ class Series(Data):
         """
         self._check_panel(length)
         func = lambda v: v.reshape(-1, length).mean(axis=0)
-        rdd = self.rdd.mapValues(func)
-        index = arange(0, length)
-        return self._constructor(rdd, index=index).__finalize__(self)
-
-    def group_by_panel(self, length):
-        """
-        Regroup each record by subdividing into fixed length panels
-
-        Will yield a new Series with N times as many records
-        as the initial Series, where N is the number of blocks
-        of fixed length.
-
-        Parameters
-        ----------
-        length : int
-            Fixed panel length with which to subdivide
-        """
-        self._check_panel(length)
-        n = len(self.index) / length
-        tupleize = lambda k: k if isinstance(k, tuple) else (k,)
-        func = lambda (k, v): zip([tupleize(k) + (i,) for i in range(0, n)],
-                                  list(v.reshape(-1, length)))
-        rdd = self.rdd.flatMap(func)
-        index = arange(0, length)
-        count = self.nrecords * n
-        return self._constructor(rdd, index=index, nrecords=count).__finalize__(self)
-
-    def subset(self, nsamples=100, thresh=None, stat='std', seed=None):
-        """
-        Extract random subset of records, filtering on a summary statistic.
-
-        Parameters
-        ----------
-        nsamples : int, optional, default = 100
-            The number of data points to sample
-
-        thresh : float, optional, default = None
-            A threshold on statistic to use when picking points
-
-        stat : str, optional, default = 'std'
-            Statistic to use for thresholding
-
-        Returns
-        -------
-        result : array
-            A local numpy array with the subset of points
-        """
-        from numpy.linalg import norm
-        from numpy import random
-
-        statdict = {'mean': mean, 'std': std, 'max': max, 'min': min, 'norm': norm}
-
-        if seed is None:
-            seed = random.randint(0, 2 ** 32)
-
-        if thresh is not None:
-            func = statdict[stat]
-            result = array(self.rdd.values().filter(
-                lambda x: func(x) > thresh).takeSample(False, nsamples, seed))
-        else:
-            result = array(self.rdd.values().takeSample(False, nsamples, seed))
-
-        if size(result) == 0:
-            raise Exception("Nothing found, try changing '%s' threshold on '%s'" % (stat, thresh))
-
-        return result
+        newindex = arange(0, length)
+        return self.apply(func, index=newindex)
 
     def _makemasks(self, index=None, level=0):
         """
@@ -522,14 +465,12 @@ class Series(Data):
             level = [level]
 
         masks, ind = self._makemasks(index=self.index, level=level)
-        bcMasks = self.rdd.ctx.broadcast(masks)
         nMasks = len(masks)
-        newrdd = self.rdd.mapValues(lambda v: [
-            array(function(v[bcMasks.value[x]])) for x in xrange(nMasks)])
-        index = array(ind)
-        if len(index[0]) == 1:
-            index = ravel(index)
-        return self._constructor(newrdd, index=index).__finalize__(self, noprop=('_dtype',))
+        newindex = array(ind)
+        if len(newindex[0]) == 1:
+            newindex = ravel(newindex)
+        return self.apply(lambda v: [array(function(v[masks[x]])) for x in xrange(nMasks)],
+                          index=newindex)
 
     def select_by_index(self, val, level=0, squeeze=False, filter=False, return_mask=False):
         """
@@ -607,9 +548,7 @@ class Series(Data):
         final_mask = masks.any(axis=0)
         if filter:
             final_mask = logical_not(final_mask)
-        bcMask = self.rdd.ctx.broadcast(final_mask)
-        
-        newrdd = self.rdd.mapValues(lambda v: v[bcMask.value])
+
         indFinal = array(self.index)
         if len(indFinal.shape) == 1:
             indFinal = array(indFinal, ndmin=2).T
@@ -624,7 +563,7 @@ class Series(Data):
         elif len(indFinal[1]) == 0:
             indFinal = arange(sum(final_mask))
 
-        result = self._constructor(newrdd, index=indFinal).__finalize__(self)
+        result = self.apply(lambda v: v[final_mask], index=indFinal)
 
         if return_mask:
             return result, final_mask
@@ -651,8 +590,7 @@ class Series(Data):
             Specifies the levels of the multi-index to use when determining unique index values.
             If only a single level is desired, can be an int.
         """
-        return self._apply_by_index(function, level=level).apply_values(
-            lambda v: array(v), keepindex=True)
+        return self._apply_by_index(function, level=level).apply(lambda v: array(v))
 
     def stat_by_index(self, stat, level=0):
         """
@@ -721,69 +659,19 @@ class Series(Data):
         """
         return self.stat_by_index(level=level, stat='count')
 
-    def pack(self, sorting=False, transpose=False, dtype=None, casting='safe'):
-        """
-        Pack a Series into a local array (e.g. for saving)
-
-        Constructs a ndarray from the values in this Series object,
-        with indexing into the returned array as implied by keys. Data should be
-        reasonably sized before performing this operation on distributed data.
-
-        Parameters
-        ----------
-        sorting : boolean, optional, default False
-            Whether to explicitly sort the local array based on the keys.
-            May be required depending on previous computations.
-
-        transpose : boolean, optional, default False
-            Transpose the spatial dimensions of the returned array.
-
-        dtype : str, optional, default=None.
-            Will cast the values to the requested dtype before collecting on the driver.
-
-        casting : casting: 'no' | 'equiv' | 'safe' | 'same_kind' | 'unsafe', optional, default='safe'
-            Casting method to pass on to numpy's astype() method.
-        """
-        out = self
-
-        if not (dtype is None):
-            out = out.astype(dtype, casting)
-
-        if sorting is True:
-            result = out.sortByKey().values().collect()
-        else:
-            result = out.rdd.values().collect()
-
-        nout = size(result[0])
-
-        # reshape into a dense array of shape (b, x, y, z)  or (b, x, y) or (b, x)
-        # where b is the number of outputs per record
-        out = asarray(result).reshape(((nout,) + self.dims.count)[::-1]).T
-
-        if transpose:
-            # swap arrays so that in-memory representation matches that
-            # of original input. default is to return array whose shape matches
-            # that of the series dims object.
-            if size(self.dims.count) == 3:
-                out = out.transpose([0, 3, 2, 1])
-            if size(self.dims.count) == 2:  # (b, x, y) -> (b, y, x)
-                out = out.transpose([0, 2, 1])
-
-        return out.squeeze()
-
     def tomatrix(self):
         """
         Convert Series to Matrix, a subclass with methods for matrix computations.
         """
         from thunder.data.series.matrix import Matrix
-        return Matrix(self.rdd).__finalize__(self)
+        return Matrix(self.values, index=self.index)
 
     def totimeseries(self):
         """
         Convert Series to TimeSeries, a subclass for time series computation.
         """
         from thunder.data.series.timeseries import TimeSeries
-        return TimeSeries(self.rdd).__finalize__(self)
+        return TimeSeries(self.values, index=self.index)
 
     def toblocks(self, size="150M"):
         """

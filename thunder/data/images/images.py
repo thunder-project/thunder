@@ -1,60 +1,24 @@
-from numpy import ndarray, arange, amax, amin, size
+from numpy import ndarray, arange, amax, amin, size, asarray
 
 from ..base import Data
-from ..keys import Dimensions
 
 
 class Images(Data):
     """
-    Distributed collection of images or volumes.
-
-    Backed by an RDD of key-value pairs, where the key
-    is an identifier and the value is a two or three-dimensional array.
+    Collection of images or volumes.
     """
-    _metadata = Data._metadata + ['_dims']
+    _metadata = Data._metadata
 
-    def __init__(self, rdd, dims=None, nrecords=None, dtype=None):
-        super(Images, self).__init__(rdd, nrecords=nrecords, dtype=dtype)
-        if dims and not isinstance(dims, Dimensions):
-            try:
-                dims = Dimensions.fromTuple(dims)
-            except:
-                raise TypeError("Images dims parameter must be castable to "
-                                "Dimensions object, got: %s" % str(dims))
-        self._dims = dims
-
-    @property
-    def dims(self):
-        if self._dims is None:
-            self.fromfirst()
-        return self._dims
-
-    @property
-    def shape(self):
-        if self._shape is None:
-            self._shape = (self.nrecords,) + self.dims.count
-        return self._shape
-
-    @property
-    def dtype(self):
-        # override just calls superclass; here for explicitness
-        return super(Images, self).dtype
+    def __init__(self, values, mode='local'):
+        super(Images, self).__init__(values, mode=mode)
 
     @property
     def _constructor(self):
         return Images
 
-    def fromfirst(self):
-        record = super(Images, self).fromfirst()
-        self._dims = Dimensions.fromTuple(record[1].shape)
-        return record
-
-    @staticmethod
-    def _check_type(record):
-        if not isinstance(record[0], tuple):
-            raise Exception('Keys must be tuples')
-        if not isinstance(record[1], ndarray):
-            raise Exception('Values must be ndarrays')
+    @property
+    def dims(self):
+        return self.shape[1:]
 
     def toblocks(self, size="150M", units="pixels", padding=0):
         """
@@ -127,7 +91,7 @@ class Images(Data):
         """
         return self.toblocks(size).toseries().totimeseries()
 
-    def toseries(self, size="150M"):
+    def toseries(self, size="150"):
         """
         Converts this Images object to a Series object.
 
@@ -146,9 +110,89 @@ class Images(Data):
         --------
         Images.toBlocks
         """
-        return self.toblocks(size).toseries()
+        from thunder.data.series.series import Series
 
-    def maxProjection(self, axis=2):
+        n = len(self.shape) - 1
+
+        if self.mode == 'spark':
+            return Series(self.values.swap((0,), tuple(range(n)), size=size))
+
+        if self.mode == 'local':
+            return Series(self.values.transpose(tuple(range(n)) + (0,)))
+
+    def tolocal(self):
+        """
+        Convert to local representation.
+        """
+        from thunder.data.images.readers import fromarray
+
+        if self.mode == 'local':
+            raise ValueError('images already in local mode')
+
+        return fromarray(self.toarray())
+
+    def tospark(self, engine=None):
+        """
+        Convert to spark representation.
+        """
+        from thunder.data.images.readers import fromarray
+
+        return fromarray(self.toarray(), engine=engine)
+
+    def toarray(self):
+        """
+        Return a local array
+        """
+        out = asarray(self.values)
+        if out.shape[0] == 1:
+            out = out.squeeze(axis=0)
+        return out
+
+    def apply(self, func, dims=None):
+        """
+        Apply a function to each image
+        """
+        if dims is None:
+            dims = self.dims
+        return self.map(func, axis=0, value_shape=dims)
+
+    def mean(self):
+        """
+        Compute the mean across images
+        """
+        return self._constructor(self.values.mean(axis=0, keepdims=True))
+
+    def var(self):
+        """
+        Compute the variance across images
+        """
+        return self._constructor(self.values.var(axis=0, keepdims=True))
+
+    def std(self):
+        """
+        Compute the standard deviation across images
+        """
+        return self._constructor(self.values.std(axis=0, keepdims=True))
+
+    def sum(self):
+        """
+        Compute the sum across images
+        """
+        return self._constructor(self.values.sum(axis=0, keepdims=True))
+
+    def max(self):
+        """
+        Compute the max across images
+        """
+        return self._constructor(self.values.max(axis=0, keepdims=True))
+
+    def min(self):
+        """
+        Compute the min across images
+        """
+        return self._constructor(self.values.min(axis=0, keepdims=True))
+
+    def max_projection(self, axis=2):
         """
         Compute maximum projections of images / volumes
         along the specified dimension.
@@ -162,13 +206,11 @@ class Images(Data):
             raise Exception("Axis for projection (%s) exceeds "
                             "image dimensions (%s-%s)" % (axis, 0, size(self.dims)-1))
 
-        proj = self.rdd.mapValues(lambda x: amax(x, axis))
-        # update dimensions to remove axis of projection
-        newDims = list(self.dims)
-        del newDims[axis]
-        return self._constructor(proj, dims=newDims).__finalize__(self)
+        newdims = list(self.dims)
+        del newdims[axis]
+        return self.apply(lambda x: amax(x, axis), dims=newdims)
 
-    def maxminProjection(self, axis=2):
+    def max_min_projection(self, axis=2):
         """
         Compute maximum-minimum projections of images / volumes
         along the specified dimension. This computes the sum
@@ -179,19 +221,21 @@ class Images(Data):
         axis : int, optional, default = 2
             Which axis to compute projection along
         """
-        proj = self.rdd.mapValues(lambda x: amax(x, axis) + amin(x, axis))
-        # update dimensions to remove axis of projection
-        newDims = list(self.dims)
-        del newDims[axis]
-        return self._constructor(proj, dims=newDims).__finalize__(self)
+        if axis >= size(self.dims):
+            raise Exception("Axis for projection (%s) exceeds "
+                            "image dimensions (%s-%s)" % (axis, 0, size(self.dims)-1))
 
-    def subsample(self, sampleFactor):
+        newdims = list(self.dims)
+        del newdims[axis]
+        return self.apply(lambda x: amax(x, axis) + amin(x, axis), dims=newdims)
+
+    def subsample(self, factor):
         """
         Downsample an image volume by an integer factor
 
         Parameters
         ----------
-        sampleFactor : positive int or tuple of positive ints
+        sample_factor : positive int or tuple of positive ints
             Stride to use in subsampling. If a single int is passed, each dimension of the image
             will be downsampled by this same factor. If a tuple is passed, it must have the same
             dimensionality of the image. The strides given in a passed tuple will be applied to
@@ -199,23 +243,22 @@ class Images(Data):
         """
         dims = self.dims
         ndims = len(dims)
-        if not hasattr(sampleFactor, "__len__"):
-            sampleFactor = [sampleFactor] * ndims
-        sampleFactor = [int(sf) for sf in sampleFactor]
+        if not hasattr(factor, "__len__"):
+            factor = [factor] * ndims
+        factor = [int(sf) for sf in factor]
 
-        if any((sf <= 0 for sf in sampleFactor)):
-            raise ValueError("All sampling factors must be positive; got " + str(sampleFactor))
+        if any((sf <= 0 for sf in factor)):
+            raise ValueError("All sampling factors must be positive; got " + str(factor))
 
-        def divRoundup(a, b):
+        def roundup(a, b):
             return (a + b - 1) // b
 
-        sampleSlices = [slice(0, dims[i], sampleFactor[i]) for i in xrange(ndims)]
-        newDims = [divRoundup(dims[i], sampleFactor[i]) for i in xrange(ndims)]
+        slices = [slice(0, dims[i], factor[i]) for i in xrange(ndims)]
+        newdims = tuple([roundup(dims[i], factor[i]) for i in xrange(ndims)])
 
-        return self._constructor(
-            self.rdd.mapValues(lambda v: v[sampleSlices]), dims=newDims).__finalize__(self)
-            
-    def gaussianFilter(self, sigma=2, order=0):
+        return self.apply(lambda v: v[slices], dims=newdims)
+
+    def gaussian_filter(self, sigma=2, order=0):
         """
         Spatially smooth images with a gaussian filter.
 
@@ -242,10 +285,9 @@ class Images(Data):
         if ndims == 3 and size(sigma) == 1:
             sigma = [sigma, sigma, 0]
 
-        return self._constructor(
-            self.rdd.mapValues(lambda v: gaussian_filter(v, sigma, order))).__finalize__(self)
+        return self.apply(lambda v: gaussian_filter(v, sigma, order), dims=self.dims)
 
-    def uniformFilter(self, size=2):
+    def uniform_filter(self, size=2):
         """
         Spatially filter images using a uniform filter.
 
@@ -260,9 +302,9 @@ class Images(Data):
             as the neighborhood size for each axis. For three-dimensional data, a single
             scalar is intrepreted as the neighborhood in x and y, with no filtering in z.
         """
-        return self._imageFilter(filter='uniform', size=size)
+        return self._image_filter(filter='uniform', size=size)
 
-    def medianFilter(self, size=2):
+    def median_filter(self, size=2):
         """
         Spatially filter images using a median filter.
 
@@ -277,9 +319,9 @@ class Images(Data):
             as the neighborhood size for each axis. For three-dimensional data, a single
             scalar is intrepreted as the neighborhood in x and y, with no filtering in z.
         """
-        return self._imageFilter(filter='median', size=size)
+        return self._image_filter(filter='median', size=size)
 
-    def _imageFilter(self, filter=None, size=2):
+    def _image_filter(self, filter=None, size=2):
         """
         Generic function for applying a filtering operation to images or volumes.
 
@@ -310,8 +352,7 @@ class Images(Data):
         else:
             filter_ = lambda x: func(x, size)
 
-        return self._constructor(
-            self.rdd.mapValues(lambda v: filter_(v))).__finalize__(self)
+        return self.apply(lambda v: filter_(v), dims=self.dims)
 
     def localcorr(self, neighborhood=2):
         """
@@ -369,35 +410,33 @@ class Images(Data):
         """
         dims = self.dims
         ndims = len(dims)
-        dimsCount = dims.count
 
         if ndims < 2 or ndims > 3:
             raise Exception("Cropping only supported on 2D or 3D image data.")
 
-        dimMinMaxTuples = zip(dimsCount, minbound, maxbound)
-        if len(dimMinMaxTuples) != ndims:
+        pairs = zip(dims, minbound, maxbound)
+        if len(pairs) != ndims:
             raise ValueError("Number of bounds (%d) must equal image dimensionality (%d)" %
-                             (len(dimMinMaxTuples), ndims))
+                             (len(pairs), ndims))
         slices = []
         newdims = []
-        for dim, minb, maxb in dimMinMaxTuples:
+        for dim, minb, maxb in pairs:
             if maxb > dim:
                 raise ValueError("Maximum bound (%d) may not exceed image size (%d)" % (maxb, dim))
             if minb < 0:
                 raise ValueError("Minumum bound (%d) must be positive" % minb)
             if minb < maxb:
-                slise = slice(minb, maxb)
+                s = slice(minb, maxb)
                 newdims.append(maxb - minb)
             elif minb == maxb:
-                slise = minb
+                s = minb
             else:
                 raise ValueError("Minimum bound (%d) must be <= max bound (%d)" % (minb, maxb))
-            slices.append(slise)
+            slices.append(s)
 
-        newrdd = self.rdd.mapValues(lambda v: v[slices])
         newdims = tuple(newdims)
 
-        return self._constructor(newrdd, dims=newdims).__finalize__(self)
+        return self.apply(lambda v: v[slices], dims=newdims)
 
     def planes(self, start, stop):
         """
@@ -430,22 +469,12 @@ class Images(Data):
         val : int, float, or ndarray
             Value to subtract
         """
-        if size(val) != 1:
-            if val.shape != self.dims.count:
+        if isinstance(val, ndarray):
+            if val.shape != self.dims:
                 raise Exception('Cannot subtract image with dimensions %s '
                                 'from images with dimension %s' % (str(val.shape), str(self.dims)))
 
-        return self.apply_values(lambda x: x - val)
-
-    def renumber(self):
-        """
-        Recalculates keys for this Images object.
-
-        New keys will be a sequence of consecutive integers,
-        starting at 0 and ending at self.nrecords-1.
-        """
-        renumberedRdd = self.rdd.values().zipWithIndex().map(lambda (ary, idx): (idx, ary))
-        return self._constructor(renumberedRdd).__finalize__(self)
+        return self.apply(lambda x: x - val, dims=self.dims)
 
     def topng(self, path, prefix="image", overwrite=False):
         """

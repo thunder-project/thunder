@@ -1,10 +1,11 @@
 import pytest
-import thunder
+import station
 
-@pytest.fixture(scope='module', params=['spark'])
-def context(request):
+@pytest.fixture(scope='module', params=['local', 'spark'])
+def eng(request):
     if request.param == 'local':
-        thunder.setup()
+        return None
     if request.param == 'spark':
-        thunder.setup(spark=True)
+        station.setup(spark=True)
+        return station.engine()
 
