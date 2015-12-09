@@ -1,11 +1,11 @@
-from numpy import array, arange, frombuffer, load, ndarray, asarray, random
+from numpy import array, arange, frombuffer, load, ndarray, asarray, random, maximum, fromstring
 
 from ...utils.common import check_spark
 from .series import Series
 spark = check_spark()
 
 
-def fromrdd(rdd, nrecords=None, index=None, dtype=None):
+def fromrdd(rdd, nrecords=None, shape=None, index=None, dtype=None):
     """
     Load Series object from a Spark RDD
     """
@@ -20,10 +20,13 @@ def fromrdd(rdd, nrecords=None, index=None, dtype=None):
     if dtype is None:
         dtype = item.dtype
 
-    if nrecords is None:
+    if shape is None or nrecords is None:
         nrecords = rdd.count()
 
-    values = BoltArraySpark(rdd, shape=(nrecords, len(index)), dtype=dtype, split=1)
+    if shape is None:
+        shape = (nrecords, len(index))
+
+    values = BoltArraySpark(rdd, shape=shape, dtype=dtype, split=1)
     return Series(values, index=index, mode='spark')
 
 
@@ -33,12 +36,11 @@ def fromlocal(values, index=None):
     """
     values = asarray(values)
     if index is None:
-        index = range(len(values[0]))
+        index = range(values.shape[-1])
 
     return Series(asarray(values), index=index)
 
-def fromlist(items, accessor=None, keys=None, npartitions=None,
-             index=None, dtype=None, engine=None):
+def fromlist(items, accessor=None, npartitions=None, index=None, dtype=None, engine=None):
     """
     Create a Series object from a list.
     """
@@ -46,8 +48,7 @@ def fromlist(items, accessor=None, keys=None, npartitions=None,
         if dtype is None:
             dtype = accessor(items[0]).dtype if accessor else items[0].dtype
         nrecords = len(items)
-        if not keys:
-            keys = map(lambda k: (k, ), range(len(items)))
+        keys = map(lambda k: (k, ), range(len(items)))
         if not npartitions:
             npartitions = engine.defaultParallelism
         items = zip(keys, items)
@@ -61,7 +62,7 @@ def fromlist(items, accessor=None, keys=None, npartitions=None,
             items = [accessor(i) for i in items]
         return fromlocal(items, index=index)
 
-def fromarray(arrays, npartitions=None, index=None, keys=None, engine=None):
+def fromarray(arrays, npartitions=None, index=None, engine=None):
     """
     Create a Series object from a sequence of 1d numpy arrays.
     """
@@ -81,10 +82,9 @@ def fromarray(arrays, npartitions=None, index=None, keys=None, engine=None):
             raise ValueError("Inconsistent array dtypes: first array had dtype %s, "
                              "but other array has dtype %s" % (str(dtype), str(ary.dtype)))
 
-    return fromlist(arrays, keys=keys, npartitions=npartitions, dtype=str(dtype),
-                    index=index, engine=engine)
+    return fromlist(arrays, npartitions=npartitions, dtype=str(dtype), index=index, engine=engine)
 
-def frommat(path, var, npartitions=None, keyFile=None, index=None, engine=None):
+def frommat(path, var, npartitions=None, index=None, engine=None):
     """
     Loads Series data stored in a Matlab .mat file.
     """
@@ -92,30 +92,23 @@ def frommat(path, var, npartitions=None, keyFile=None, index=None, engine=None):
     data = loadmat(path)[var]
     if data.ndim > 2:
         raise IOError('Input data must be one or two dimensional')
-    if keyFile:
-        keys = map(lambda x: tuple(x), loadmat(keyFile)['keys'])
-    else:
-        keys = None
+    dtype = str(data.dtype)
 
-    return fromlist(data, keys=keys, npartitions=npartitions, dtype=str(data.dtype),
-                    index=index, engine=engine)
+    return fromlist(data, npartitions=npartitions, dtype=dtype, index=index, engine=engine)
 
-def fromnpy(path, npartitions=None, keyfile=None, index=None, engine=None):
+def fromnpy(path, npartitions=None, index=None, engine=None):
     """
     Loads Series data stored in the numpy save() .npy format.
     """
     data = load(path)
     if data.ndim > 2:
         raise IOError('Input data must be one or two dimensional')
-    if keyfile:
-        keys = map(lambda x: tuple(x), load(keyfile))
-    else:
-        keys = None
+    dtype = str(data.dtype)
 
-    return fromlist(data, keys=keys, npartitions=npartitions, dtype=str(data.dtype),
-                    index=index, engine=engine)
+    return fromlist(data, npartitions=npartitions, dtype=dtype, index=index, engine=engine)
 
-def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64', engine=None):
+def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64',
+             engine=None, credentials=None):
     """
     Loads Series data from text files.
 
@@ -129,9 +122,10 @@ def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64', eng
     dtype: dtype or dtype specifier, default 'float64'
         Numerical type to use for data after converting from text.
     """
+    from thunder.data.readers import normalize_scheme, get_parallel_reader
+    path = normalize_scheme(path, ext)
+
     if spark and isinstance(engine, spark):
-        from thunder.data.readers import normalize_scheme
-        path = normalize_scheme(path, ext)
 
         def parse(line, nkeys_):
             vec = [float(x) for x in line.split(' ')]
@@ -144,7 +138,22 @@ def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64', eng
         return fromrdd(data, dtype=str(dtype))
 
     else:
-        raise NotImplementedError("Loading not implemented for local mode")
+        reader = get_parallel_reader(path)(engine, credentials=credentials)
+        data = reader.read(path, ext=ext)
+
+        values = []
+        for kv in data:
+            for line in kv[1].split('\n')[:-1]:
+                values.append(fromstring(line, sep=' '))
+
+        values = asarray(values)
+
+        if nkeys:
+            basedims = tuple(asarray(values[:, 0:nkeys]).max(axis=0) + 1)
+            nvalues = values.shape[-1] - nkeys
+            values = values[:, nkeys:].reshape(basedims + (nvalues,))
+
+        return fromlocal(values)
 
 def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
                keytype=None, valuetype=None, engine=None, credentials=None):
@@ -179,7 +188,7 @@ def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
     """
     params = binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype, credentials)
 
-    from thunder.data.readers import normalize_scheme
+    from thunder.data.readers import normalize_scheme, get_parallel_reader
     path = normalize_scheme(path, ext)
 
     from numpy import dtype as dtypeFunc
@@ -187,7 +196,8 @@ def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
     valuetype = dtypeFunc(params.valuetype)
 
     keysize = params.nkeys * keytype.itemsize
-    recordsize = keysize + params.nvalues * valuetype.itemsize
+    valuesize = params.nvalues * valuetype.itemsize
+    recordsize = keysize + valuesize
 
     if spark and isinstance(engine, spark):
         lines = engine.binaryRecords(path, recordsize)
@@ -200,10 +210,34 @@ def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
         raw = lines.map(get)
         if keysize == 0:
             raw = raw.zipWithIndex().map(lambda (v, k): ((k,), v))
-        return fromrdd(raw, dtype=str(valuetype), index=arange(params.nvalues))
+        shape = tuple(raw.keys().reduce(maximum) + 1) + (params.nvalues,)
+
+        return fromrdd(raw, dtype=str(valuetype), shape=shape, index=arange(params.nvalues))
 
     else:
-        raise NotImplementedError("Loading not implemented for local mode")
+        reader = get_parallel_reader(path)(engine, credentials=credentials)
+        data = reader.read(path, ext=ext)
+
+        keys = []
+        values = []
+        for kv in data:
+            buf = kv[1]
+            offset = 0
+            while offset < len(buf):
+                k = frombuffer(buffer(buf, offset, keysize), dtype=keytype)
+                v = frombuffer(buffer(buf, offset + keysize, valuesize), dtype=valuetype)
+                keys.append(k)
+                values.append(v)
+                offset += recordsize
+
+        values = asarray(values)
+        if keysize == 0:
+            basedims = (values.shape[0],)
+        else:
+            basedims = tuple(asarray(keys).max(axis=0) + 1)
+        values = values.reshape(basedims + (params.nvalues,))
+
+        return fromlocal(values)
 
 def binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype, credentials):
     """

@@ -1,4 +1,4 @@
-from numpy import asarray, maximum, minimum, add, ndarray, prod, ufunc, array, mean, std, size
+from numpy import asarray, ndarray, prod, ufunc
 from bolt.utils import inshape, tupleize
 from bolt.base import BoltArray
 
@@ -100,16 +100,14 @@ class Data(object):
         """
         Cast values to the specified type.
         """
-        return self._constructor(self.values.astype(dtype=dtype, casting=casting)).__finalize__(self)
+        return self._constructor(
+            self.values.astype(dtype=dtype, casting=casting)).__finalize__(self)
 
     def compute(self):
         """
-        Calculates and returns the number of records in the RDD.
-
-        This calls the Spark count() method on the underlying RDD and updates
-        the .nrecords metadata attribute.
+        Force lazy computations to execute.
         """
-        if isinstance(self.values, BoltArray):
+        if self.mode == 'spark':
             self.values.tordd().count()
 
     def mean(self):
@@ -217,7 +215,13 @@ class Data(object):
 
         return reshaped
 
-    def filter(self, func, axis=(0,)):
+    def filter(self, func):
+        raise NotImplementedError
+
+    def map(self, func, **kwargs):
+        raise NotImplementedError
+
+    def _filter(self, func, axis=(0,)):
         """
         Filter array along an axis.
 
@@ -238,13 +242,13 @@ class Data(object):
             axes = sorted(tupleize(axis))
             reshaped = self._align(axes)
             filtered = asarray(list(filter(func, reshaped)))
-            return self._constructor(filtered)
+            return self._constructor(filtered).__finalize__(self)
 
         if self.mode == 'spark':
             filtered = self.values.filter(func)
-            return self._constructor(filtered, mode=self.mode)
+            return self._constructor(filtered).__finalize__(self)
 
-    def map(self, func, axis=(0,), value_shape=None):
+    def _map(self, func, axis=(0,), value_shape=None):
         """
         Apply a function across an axis.
 
@@ -271,13 +275,13 @@ class Data(object):
             linearized_shape_inv = key_shape + list(elem_shape)
             reordered = mapped.reshape(*linearized_shape_inv)
 
-            return self._constructor(reordered, mode=self.mode)
+            return self._constructor(reordered, mode=self.mode).__finalize__(self)
 
         if self.mode == 'spark':
             mapped = self.values.map(func, axis, value_shape)
-            return self._constructor(mapped, mode=self.mode)
+            return self._constructor(mapped, mode=self.mode).__finalize__(self)
 
-    def reduce(self, func, axis=0):
+    def _reduce(self, func, axis=0):
         """
         Reduce an array along an axis.
 
@@ -312,51 +316,11 @@ class Data(object):
             if new_array.shape != tuple(expected_shape):
                 raise ValueError("reduce did not yield a BoltArray with valid dimensions")
 
-            return self._constructor(new_array, mode=self.mode)
+            return self._constructor(new_array).__finalize__(self)
 
         if self.mode == 'spark':
             reduced = self.values.reduce(func, axis)
-            return self._constructor(reduced, mode=self.mode)
-
-    def sample(self, nsamples=100, thresh=None, stat='std', seed=None):
-        """
-        Extract random subset of records, filtering on a summary statistic.
-
-        Parameters
-        ----------
-        nsamples : int, optional, default = 100
-            The number of data points to sample
-
-        thresh : float, optional, default = None
-            A threshold on statistic to use when picking points
-
-        stat : str, optional, default = 'std'
-            Statistic to use for thresholding
-
-        Returns
-        -------
-        result : array
-            A local numpy array with the subset of points
-        """
-        from numpy.linalg import norm
-        from numpy import random
-
-        statdict = {'mean': mean, 'std': std, 'max': max, 'min': min, 'norm': norm}
-
-        if seed is None:
-            seed = random.randint(0, 2 ** 32)
-
-        if thresh is not None:
-            func = statdict[stat]
-            result = array(self.values.filter(
-                lambda x: func(x) > thresh).takeSample(False, nsamples, seed))
-        else:
-            result = array(self.values.takeSample(False, nsamples, seed))
-
-        if size(result) == 0:
-            raise Exception("Nothing found, try changing '%s' threshold on '%s'" % (stat, thresh))
-
-        return result
+            return self._constructor(reduced).__finalize__(self)
 
     def first(self):
         """

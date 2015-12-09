@@ -1,4 +1,4 @@
-from numpy import ndarray, arange, amax, amin, size, asarray
+from numpy import ndarray, arange, amax, amin, size, asarray, random
 
 from ..base import Data
 
@@ -89,7 +89,7 @@ class Images(Data):
         --------
         Images.toBlocks
         """
-        return self.toblocks(size).toseries().totimeseries()
+        return self.toseries().totimeseries()
 
     def toseries(self, size="150"):
         """
@@ -151,13 +151,61 @@ class Images(Data):
             out = out.squeeze(axis=0)
         return out
 
-    def apply(self, func, dims=None):
+    def foreach(self, func):
         """
-        Apply a function to each image
+        Execute a function on each image
+        """
+        if self.mode == 'spark':
+            self.values.tordd().map(lambda (k, v): (k[0], v)).foreach(func)
+        else:
+            [func(kv) for kv in enumerate(self.values)]
+
+    def sample(self, nsamples=100, seed=None):
+        """
+        Extract random sample of series.
+
+        Parameters
+        ----------
+        nsamples : int, optional, default = 100
+            The number of data points to sample.
+
+        seed : int, optional, default = None
+            Random seed.
+        """
+        if nsamples < 1:
+            raise ValueError("number of samples must be larger than 0, got '%g'" % nsamples)
+
+        if seed is None:
+            seed = random.randint(0, 2 ** 32)
+
+        if self.mode == 'spark':
+            result = asarray(self.values.tordd().values().takeSample(False, nsamples, seed))
+
+        else:
+            inds = [int(k) for k in random.rand(nsamples) * self.shape[0]]
+            result = asarray([self.values[i] for i in inds])
+
+        return self._constructor(result)
+
+    def map(self, func, dims=None):
+        """
+        Map a function to each image
         """
         if dims is None:
             dims = self.dims
-        return self.map(func, axis=0, value_shape=dims)
+        return self._map(func, axis=0, value_shape=dims)
+
+    def filter(self, func):
+        """
+        Filter images
+        """
+        return self._filter(func, axis=0)
+
+    def reduce(self, func):
+        """
+        Reduce over images
+        """
+        return self._reduce(func, axis=0)
 
     def mean(self):
         """
@@ -211,7 +259,7 @@ class Images(Data):
 
         newdims = list(self.dims)
         del newdims[axis]
-        return self.apply(lambda x: amax(x, axis), dims=newdims)
+        return self.map(lambda x: amax(x, axis), dims=newdims)
 
     def max_min_projection(self, axis=2):
         """
@@ -230,7 +278,7 @@ class Images(Data):
 
         newdims = list(self.dims)
         del newdims[axis]
-        return self.apply(lambda x: amax(x, axis) + amin(x, axis), dims=newdims)
+        return self.map(lambda x: amax(x, axis) + amin(x, axis), dims=newdims)
 
     def subsample(self, factor):
         """
@@ -259,7 +307,7 @@ class Images(Data):
         slices = [slice(0, dims[i], factor[i]) for i in xrange(ndims)]
         newdims = tuple([roundup(dims[i], factor[i]) for i in xrange(ndims)])
 
-        return self.apply(lambda v: v[slices], dims=newdims)
+        return self.map(lambda v: v[slices], dims=newdims)
 
     def gaussian_filter(self, sigma=2, order=0):
         """
@@ -288,7 +336,7 @@ class Images(Data):
         if ndims == 3 and size(sigma) == 1:
             sigma = [sigma, sigma, 0]
 
-        return self.apply(lambda v: gaussian_filter(v, sigma, order), dims=self.dims)
+        return self.map(lambda v: gaussian_filter(v, sigma, order), dims=self.dims)
 
     def uniform_filter(self, size=2):
         """
@@ -326,7 +374,7 @@ class Images(Data):
 
     def _image_filter(self, filter=None, size=2):
         """
-        Generic function for applying a filtering operation to images or volumes.
+        Generic function for maping a filtering operation to images or volumes.
 
         See also
         --------
@@ -355,7 +403,7 @@ class Images(Data):
         else:
             filter_ = lambda x: func(x, size)
 
-        return self.apply(lambda v: filter_(v), dims=self.dims)
+        return self.map(lambda v: filter_(v), dims=self.dims)
 
     def localcorr(self, neighborhood=2):
         """
@@ -386,12 +434,12 @@ class Images(Data):
         # Union the averaged images with the originals to create an
         # Images object containing 2N images (where N is the original number of images),
         # ordered such that the first N images are the averaged ones.
-        combined = self.rdd.union(blurred.apply_keys(lambda k: k + nimages).rdd)
+        combined = self.rdd.union(blurred.map_keys(lambda k: k + nimages).rdd)
         combinedImages = self._constructor(combined, nrecords=(2 * nimages)).__finalize__(self)
 
         # Correlate the first N (averaged) records with the last N (original) records
         series = combinedImages.toseries()
-        corr = series.apply_values(lambda x: corrcoef(x[:nimages], x[nimages:])[0, 1])
+        corr = series.map_values(lambda x: corrcoef(x[:nimages], x[nimages:])[0, 1])
 
         return corr.pack()
 
@@ -439,7 +487,7 @@ class Images(Data):
 
         newdims = tuple(newdims)
 
-        return self.apply(lambda v: v[slices], dims=newdims)
+        return self.map(lambda v: v[slices], dims=newdims)
 
     def planes(self, start, stop):
         """
@@ -477,7 +525,7 @@ class Images(Data):
                 raise Exception('Cannot subtract image with dimensions %s '
                                 'from images with dimension %s' % (str(val.shape), str(self.dims)))
 
-        return self.apply(lambda x: x - val, dims=self.dims)
+        return self.map(lambda x: x - val, dims=self.dims)
 
     def topng(self, path, prefix="image", overwrite=False):
         """

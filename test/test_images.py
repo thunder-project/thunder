@@ -2,26 +2,42 @@ import pytest
 from numpy import arange, allclose, array, corrcoef
 
 from thunder.data.images.readers import fromlist
+from thunder.data.series.series import Series
+from thunder.data.series.timeseries import TimeSeries
 
 pytestmark = pytest.mark.usefixtures("eng")
 
 
+def test_map(eng):
+    data = fromlist([arange(6).reshape((2, 3))], engine=eng)
+    assert allclose(data.map(lambda x: x + 1).toarray(), [[1, 2, 3], [4, 5, 6]])
+
+
+def test_filter(eng):
+    data = fromlist([arange(6).reshape((2, 3)), arange(6).reshape((2, 3)) * 2], engine=eng)
+    assert allclose(data.filter(lambda x: x.sum() > 21).toarray(), [[0, 2, 4], [6, 8, 10]])
+
+
+def test_sample(eng):
+    data = fromlist([array([[1, 5], [1, 5]]), array([[1, 10], [1, 10]])], engine=eng)
+    assert allclose(data.sample(2).shape, (2, 2, 2))
+    assert allclose(data.sample(1).shape, (1, 2, 2))
+    assert allclose(data.filter(lambda x: x.max() > 5).sample(1).toarray(), [[1, 10], [1, 10]])
+
+
 def test_toseries(eng):
     data = fromlist([arange(6).reshape((2, 3))], engine=eng)
-    truth = [0, 3, 1, 4, 2, 5]
-    vals = data.toseries().toarray()
-    assert allclose(vals, truth)
-    #vals = data.toblocks((1, 1)).toseries().toarray()
-    #assert allclose(vals, truth)
+    truth = [[0, 1, 2], [3, 4, 5]]
+    assert isinstance(data.toseries(), Series)
+    assert allclose(data.toseries().toarray(), truth)
 
-#
-# def test_totimeseries(eng):
-#     data = fromlist([arange(6).reshape((2, 3))], engine=eng)
-#     vals1 = data.totimeseries().toarray()
-#     vals2 = data.totimeseries().toarray()
-#     assert allclose(vals1, vals2)
-#
-#
+
+def test_totimeseries(eng):
+    data = fromlist([arange(6).reshape((2, 3))], engine=eng)
+    assert isinstance(data.totimeseries(), TimeSeries)
+    assert allclose(data.toseries().toarray(), data.totimeseries().toarray())
+
+
 def test_toseries_pack_2d(eng):
     original = arange(6).reshape((2, 3))
     data = fromlist([original], engine=eng)

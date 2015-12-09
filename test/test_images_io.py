@@ -153,65 +153,67 @@ def test_from_binary_multi_planes_many(tmpdir):
     assert allclose(data.shape, (4, 4, 2))
     assert allclose(data.toarray().shape, (4, 4, 2))
 
-#
-# def test_to_binary(tmpdir):
-#     a = [arange(8, dtype='int16').reshape((4, 2)), arange(8, 16, dtype='int16').reshape((4, 2))]
-#     fromlist(a).tobinary(os.path.join(str(tmpdir), 'binary'), prefix='image')
-#     files = [os.path.basename(f) for f in glob.glob(str(tmpdir) + '/binary/image*')]
-#     f = open(str(tmpdir) + '/binary/conf.json', 'r')
-#     conf = json.load(f)
-#     f.close()
-#     assert sorted(files) == ['image-00000.bin', 'image-00001.bin']
-#     assert conf['dims'] == [4, 2]
-#     assert conf['dtype'] == 'int16'
-#
-#
-# def test_to_binary_roundtrip(tmpdir):
-#     a = [arange(8).reshape((4, 2)), arange(8, 16).reshape((4, 2))]
-#     data = fromlist(a)
-#     data.tobinary(os.path.join(str(tmpdir), 'images'))
-#     loaded = frombinary(os.path.join(str(tmpdir), 'images'))
-#     assert allclose(data.toarray(), loaded.toarray())
-#
-#
-# def test_to_binary_roundtrip_3d(tmpdir):
-#     a = [arange(24).reshape((2, 3, 4)), arange(24, 48).reshape((2, 3, 4))]
-#     data = fromlist(a)
-#     data.tobinary(os.path.join(str(tmpdir), 'images'))
-#     loaded = frombinary(os.path.join(str(tmpdir), 'images'))
-#     assert allclose(data.toarray(), loaded.toarray())
-#
-#
-# def test_to_png(tmpdir):
-#     a = [arange(8, dtype='int16').reshape((4, 2)), arange(8, 16, dtype='int16').reshape((4, 2))]
-#     fromlist(a).topng(os.path.join(str(tmpdir), 'images'), prefix='image')
-#     files = [os.path.basename(f) for f in glob.glob(str(tmpdir) + '/images/image*')]
-#     assert sorted(files) == ['image-00000.png', 'image-00001.png']
-#
-#
-# def test_to_png_roundtrip(tmpdir):
-#     a = [arange(8, dtype='uint8').reshape((4, 2))]
-#     data = fromlist(a)
-#     data.topng(os.path.join(str(tmpdir), 'images'), prefix='image')
-#     loaded = frompng(os.path.join(str(tmpdir), 'images'))
-#     assert allclose(data.toarray(), loaded.toarray())
-#
-#
-# def test_to_tif(tmpdir):
-#     a = [arange(8, dtype='int16').reshape((4, 2)), arange(8, 16, dtype='int16').reshape((4, 2))]
-#     fromlist(a).totif(os.path.join(str(tmpdir), 'images'), prefix='image')
-#     files = [os.path.basename(f) for f in glob.glob(str(tmpdir) + '/images/image*')]
-#     assert sorted(files) == ['image-00000.tif', 'image-00001.tif']
-#
-#
-# def test_to_tif_roundtrip(tmpdir):
-#     a = [arange(8, dtype='uint8').reshape((4, 2))]
-#     data = fromlist(a)
-#     data.totif(os.path.join(str(tmpdir), 'images'), prefix='image')
-#     loaded = fromtif(os.path.join(str(tmpdir), 'images'))
-#     assert allclose(data.toarray(), loaded.toarray())
-#
-#
-# def test_fromexample():
-#     for d in ['fish', 'mouse']:
-#         fromexample(d).count()
+
+def test_to_binary(tmpdir):
+    a = [arange(8, dtype='int16').reshape((4, 2)), arange(8, 16, dtype='int16').reshape((4, 2))]
+    fromlist(a).tobinary(os.path.join(str(tmpdir), 'binary'), prefix='image')
+    files = [os.path.basename(f) for f in glob.glob(str(tmpdir) + '/binary/image*')]
+    f = open(str(tmpdir) + '/binary/conf.json', 'r')
+    conf = json.load(f)
+    f.close()
+    assert sorted(files) == ['image-00000.bin', 'image-00001.bin']
+    assert conf['dims'] == [4, 2]
+    assert conf['dtype'] == 'int16'
+
+
+def test_to_binary_roundtrip(tmpdir):
+    a = [arange(8).reshape((4, 2)), arange(8, 16).reshape((4, 2))]
+    data = fromlist(a)
+    data.tobinary(os.path.join(str(tmpdir), 'images'))
+    loaded = frombinary(os.path.join(str(tmpdir), 'images'))
+    assert allclose(data.toarray(), loaded.toarray())
+
+
+def test_to_binary_roundtrip_3d(tmpdir):
+    a = [arange(24).reshape((2, 3, 4)), arange(24, 48).reshape((2, 3, 4))]
+    data = fromlist(a)
+    data.tobinary(os.path.join(str(tmpdir), 'images'))
+    loaded = frombinary(os.path.join(str(tmpdir), 'images'))
+    assert allclose(data.toarray(), loaded.toarray())
+
+
+def test_to_png(tmpdir, eng):
+    a = [arange(8, dtype='int16').reshape((4, 2)), arange(8, 16, dtype='int16').reshape((4, 2))]
+    fromlist(a, engine=eng).topng(os.path.join(str(tmpdir), 'images'), prefix='image')
+    files = [os.path.basename(f) for f in glob.glob(str(tmpdir) + '/images/image*')]
+    assert sorted(files) == ['image-00000.png', 'image-00001.png']
+
+
+def test_to_png_roundtrip(tmpdir, eng):
+    a = [arange(8, dtype='uint8').reshape((4, 2))]
+    data = fromlist(a, engine=eng)
+    data.topng(os.path.join(str(tmpdir), 'images'), prefix='image')
+    loaded = frompng(os.path.join(str(tmpdir), 'images'))
+    assert allclose(data.toarray(), loaded.toarray())
+
+
+def test_to_tif(tmpdir, eng):
+    a = [arange(8, dtype='int16').reshape((4, 2)), arange(8, 16, dtype='int16').reshape((4, 2))]
+    fromlist(a, engine=eng).totif(os.path.join(str(tmpdir), 'images'), prefix='image')
+    files = [os.path.basename(f) for f in glob.glob(str(tmpdir) + '/images/image*')]
+    assert sorted(files) == ['image-00000.tif', 'image-00001.tif']
+
+
+def test_to_tif_roundtrip(tmpdir, eng):
+    a = [arange(8, dtype='uint8').reshape((4, 2))]
+    data = fromlist(a, engine=eng)
+    data.totif(os.path.join(str(tmpdir), 'images'), prefix='image')
+    loaded = fromtif(os.path.join(str(tmpdir), 'images'))
+    assert allclose(data.toarray(), loaded.toarray())
+
+
+def test_fromexample(eng):
+    data = fromexample('fish', engine=eng)
+    assert allclose(data.shape, (20, 76, 87, 2))
+    data = fromexample('mouse', engine=eng)
+    assert allclose(data.shape, (20, 64, 64))

@@ -1,7 +1,8 @@
 from itertools import product
 from numpy import array, sum, mean, median, std, size, arange, percentile,\
     asarray, zeros, corrcoef, where, unique, array_equal, delete, \
-    ravel, logical_not, max, min
+    ravel, logical_not, max, min, unravel_index, prod, random
+from bolt.utils import tupleize
 
 from ..base import Data
 
@@ -102,14 +103,54 @@ class Series(Data):
 
         return fromarray(self.toarray(), index=self.index, engine=engine)
 
-    def apply(self, func, index=None):
+    def sample(self, nsamples=100, seed=None):
         """
-        Apply a function to each series
+        Extract random sample of series.
+
+        Parameters
+        ----------
+        nsamples : int, optional, default = 100
+            The number of data points to sample.
+
+        seed : int, optional, default = None
+            Random seed.
+        """
+        if nsamples < 1:
+            raise ValueError("number of samples must be larger than 0, got '%g'" % nsamples)
+
+        if seed is None:
+            seed = random.randint(0, 2 ** 32)
+
+        if self.mode == 'spark':
+            result = asarray(self.values.tordd().values().takeSample(False, nsamples, seed))
+
+        else:
+            basedims = [self.shape[d] for d in self.baseaxes]
+            inds = [unravel_index(int(k), basedims) for k in random.rand(nsamples) * prod(basedims)]
+            result = asarray([self.values[tupleize(i) + (slice(None, None),)] for i in inds])
+
+        return self._constructor(result, index=self.index)
+
+    def map(self, func, index=None):
+        """
+        Map a function on each series
         """
         if index is None:
             index = self.index
-        new = self.map(func, axis=self.baseaxes, value_shape=len(index))
+        new = self._map(func, axis=self.baseaxes, value_shape=len(index))
         return self._constructor(new.values, index=index)
+
+    def filter(self, func):
+        """
+        Filter by applying a function to each series.
+        """
+        return self._filter(func, axis=self.baseaxes)
+    
+    def reduce(self, func):
+        """
+        Reduce over series.
+        """
+        return self._reduce(func, axis=self.baseaxes)
 
     def mean(self):
         """
@@ -175,7 +216,7 @@ class Series(Data):
         Parameters
         ----------
         crit : function, list, str, int
-            Criterion function to apply to indices, specific index value,
+            Criterion function to map to indices, specific index value,
             or list of indices
         """
         import types
@@ -191,13 +232,10 @@ class Series(Data):
                 except TypeError:
                     # typically means crit is not an iterable type; for instance, crit is an int
                     critlist = set([crit])
-            print('printing critlist')
-            print(critlist)
             crit = lambda x: x in critlist
 
         # if only one index, return it directly or throw an error
         index = self.index
-        print(index)
         if size(index) == 1:
             if crit(index[0]):
                 return self
@@ -205,11 +243,7 @@ class Series(Data):
                 raise Exception("No indices found matching criterion")
 
         # determine new index and check the result
-        for i in index:
-            print(i)
-            print(crit(i))
         newindex = [i for i in index if crit(i)]
-        print(newindex)
         if len(newindex) == 0:
             raise Exception("No indices found matching criterion")
         if array(newindex == index).all():
@@ -217,15 +251,15 @@ class Series(Data):
 
         # use fast logical indexing to get the new values
         subinds = where(map(lambda x: crit(x), index))
-        new = self.apply(lambda x: x[subinds], index=newindex)
+        new = self.map(lambda x: x[subinds], index=newindex)
 
         # if singleton, need to check whether it's an array or a scalar/int
         # if array, recompute a new set of indices
         if len(newindex) == 1:
-            new = new.apply(lambda x: x[0], index=newindex)
+            new = new.map(lambda x: x[0], index=newindex)
             val = new.first()
             if size(val) == 1:
-                newindex = newindex[0]
+                newindex = [newindex[0]]
             else:
                 newindex = arange(0, size(val))
 
@@ -244,10 +278,10 @@ class Series(Data):
             Which axis to center along, within (1) or across (0) records
         """
         if axis == 1:
-            return self.apply(lambda x: x - mean(x))
+            return self.map(lambda x: x - mean(x))
         elif axis == 0:
             meanval = self.mean().toarray()
-            return self.apply(lambda x: x - meanval)
+            return self.map(lambda x: x - meanval)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -262,10 +296,10 @@ class Series(Data):
             Which axis to standardize along, within (1) or across (0) records
         """
         if axis == 1:
-            return self.apply(lambda x: x / std(x))
+            return self.map(lambda x: x / std(x))
         elif axis == 0:
             stdval = self.std().toarray()
-            return self.apply(lambda x: x / stdval)
+            return self.map(lambda x: x / stdval)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -281,11 +315,11 @@ class Series(Data):
             Which axis to zscore along, within (1) or across (0) records
         """
         if axis == 1:
-            return self.apply(lambda x: (x - mean(x)) / std(x))
+            return self.map(lambda x: (x - mean(x)) / std(x))
         elif axis == 0:
             meanval = self.mean().toarray()
             stdval = self.std().toarray()
-            return self.apply(lambda x: (x - meanval) / stdval)
+            return self.map(lambda x: (x - meanval) / stdval)
         else:
             raise Exception('Axis must be 0 or 1')
 
@@ -299,7 +333,7 @@ class Series(Data):
             Level below which to set records to zero
         """
         func = lambda x: zeros(x.shape) if max(x) < threshold else x
-        return self.apply(func)
+        return self.map(func)
 
     def correlate(self, signal, var='s'):
         """
@@ -325,13 +359,13 @@ class Series(Data):
             if size(s) != size(self.index):
                 raise ValueError('Size of signal `%g` does not match size of data' % size(s))
 
-            return self.apply(lambda x: corrcoef(x, s)[0, 1], index=[1])
+            return self.map(lambda x: corrcoef(x, s)[0, 1], index=[1])
 
         elif s.ndim == 2:
             if s.shape[1] != size(self.index):
                 raise ValueError('Length of signal `%g` does not match size of data' % s.shape[1])
             newindex = arange(0, s.shape[0])
-            return self.apply(lambda x: array([corrcoef(x, y)[0, 1] for y in s]), index=newindex)
+            return self.map(lambda x: array([corrcoef(x, y)[0, 1] for y in s]), index=newindex)
 
         else:
             raise Exception('Signal to correlate with must have 1 or 2 dimensions')
@@ -375,7 +409,7 @@ class Series(Data):
         q : scalar
             Floating point number between 0 and 100 inclusive, specifying percentile.
         """
-        return self.apply(lambda x: percentile(x, q), index=[q])
+        return self.map(lambda x: percentile(x, q), index=[q])
 
     def series_std(self):
         """ Compute the value std of each record in a Series """
@@ -400,14 +434,14 @@ class Series(Data):
             'count': size
         }
         func = STATS[stat.lower()]
-        return self.apply(lambda x: func(x), index=[stat])
+        return self.map(lambda x: func(x), index=[stat])
 
     def series_stats(self):
         """
         Compute many statistics for each record in a Series
         """
         newindex = ['count', 'mean', 'std', 'max', 'min']
-        return self.apply(lambda x: array([x.size, mean(x), std(x), max(x), min(x)]),
+        return self.map(lambda x: array([x.size, mean(x), std(x), max(x), min(x)]),
                           index=newindex)
 
     def _check_panel(self, length):
@@ -439,7 +473,7 @@ class Series(Data):
         self._check_panel(length)
         func = lambda v: v.reshape(-1, length).mean(axis=0)
         newindex = arange(0, length)
-        return self.apply(func, index=newindex)
+        return self.map(func, index=newindex)
 
     def _makemasks(self, index=None, level=0):
         """
@@ -473,9 +507,9 @@ class Series(Data):
 
         return zip(*[(masks[x], combs[x]) for x in xrange(len(masks)) if masks[x].any()])
 
-    def _apply_by_index(self, function, level=0):
+    def _map_by_index(self, function, level=0):
         """
-        An internal function for applying a function to groups of values based on a multi-index
+        An internal function for maping a function to groups of values based on a multi-index
 
         Elements of each record are grouped according to unique value combinations of the multi-
         index across the given levels of the multi-index. Then the given function is applied
@@ -491,7 +525,7 @@ class Series(Data):
         newindex = array(ind)
         if len(newindex[0]) == 1:
             newindex = ravel(newindex)
-        return self.apply(lambda v: [array(function(v[masks[x]])) for x in xrange(nMasks)],
+        return self.map(lambda v: [array(function(v[masks[x]])) for x in xrange(nMasks)],
                           index=newindex)
 
     def select_by_index(self, val, level=0, squeeze=False, filter=False, return_mask=False):
@@ -585,7 +619,7 @@ class Series(Data):
         elif len(indFinal[1]) == 0:
             indFinal = arange(sum(final_mask))
 
-        result = self.apply(lambda v: v[final_mask], index=indFinal)
+        result = self.map(lambda v: v[final_mask], index=indFinal)
 
         if return_mask:
             return result, final_mask
@@ -605,14 +639,14 @@ class Series(Data):
         Parameters:
         -----------
         function : function
-            Aggregating function to apply to Series values. Should take a list or ndarray
+            Aggregating function to map to Series values. Should take a list or ndarray
             as input and return a simple numeric value.
             
         level : list of ints, optional, default=0
             Specifies the levels of the multi-index to use when determining unique index values.
             If only a single level is desired, can be an int.
         """
-        return self._apply_by_index(function, level=level).apply(lambda v: array(v))
+        return self._map_by_index(function, level=level).map(lambda v: array(v))
 
     def stat_by_index(self, stat, level=0):
         """

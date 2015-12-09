@@ -1,6 +1,6 @@
-from thunder import credentials
+from numpy import prod, unravel_index
 
-def tobinary(series, path, overwrite=False):
+def tobinary(series, path, overwrite=False, credentials=None):
     """
     Writes out data to binary format.
 
@@ -19,12 +19,11 @@ def tobinary(series, path, overwrite=False):
     """
     import cStringIO as StringIO
     import struct
-    from thunder import credentials
     from thunder.utils.common import check_path
     from thunder.data.writers import get_parallel_writer
 
     if not overwrite:
-        check_path(path, credentials=credentials())
+        check_path(path, credentials=credentials)
         overwrite = True
 
     def tobuffer(kv):
@@ -40,21 +39,35 @@ def tobinary(series, path, overwrite=False):
         val = buf.getvalue()
         buf.close()
         if firstkey is None:
-            # empty partition
             return iter([])
         else:
             label = getlabel(firstkey) + ".bin"
             return iter([(label, val)])
 
-    writer = get_parallel_writer(path)(path, overwrite=overwrite, credentials=credentials())
-    binary = series.rdd.mapPartitions(tobuffer)
-    binary.foreach(writer.write)
-    firstkey, firstvalue = series.first()
-    write_config(path, len(firstkey), len(firstvalue), keytype='int16',
-                 valuetype=series.dtype, overwrite=overwrite)
+    writer = get_parallel_writer(path)(path, overwrite=overwrite, credentials=credentials)
+
+    if series.mode == 'spark':
+        binary = series.values.tordd().mapPartitions(tobuffer)
+        binary.foreach(writer.write)
+
+    else:
+        basedims = [series.shape[d] for d in series.baseaxes]
+
+        def split(k):
+            ind = unravel_index(k, basedims)
+            return ind, series.values[ind]
+
+        buf = tobuffer([split(i) for i in range(prod(basedims))])
+        [writer.write(b) for b in buf]
+
+    nkeys = len(series.baseaxes)
+    nvalues = series.length
+
+    write_config(path, nkeys, nvalues, keytype='int16', valuetype=series.dtype,
+                 overwrite=overwrite, credentials=credentials)
 
 def write_config(path, nkeys, nvalues, keytype='int16', valuetype='int16',
-                 name="conf.json", overwrite=True):
+                 name="conf.json", overwrite=True, credentials=None):
     """
     Write a conf.json file with required information to load Series binary data.
     """
@@ -65,10 +78,10 @@ def write_config(path, nkeys, nvalues, keytype='int16', valuetype='int16',
     conf = {'input': path, 'nkeys': nkeys, 'nvalues': nvalues,
             'valuetype': str(valuetype), 'keytype': str(keytype)}
 
-    confwriter = writer(path, name, overwrite=overwrite, credentials=credentials())
+    confwriter = writer(path, name, overwrite=overwrite, credentials=credentials)
     confwriter.write(json.dumps(conf, indent=2))
 
-    successwriter = writer(path, "SUCCESS", overwrite=overwrite, credentials=credentials())
+    successwriter = writer(path, "SUCCESS", overwrite=overwrite, credentials=credentials)
     successwriter.write('')
 
 def getlabel(key):

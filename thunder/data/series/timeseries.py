@@ -78,28 +78,8 @@ class TimeSeries(Series):
             Window size
         """
         masks = self._makewindows(indices, window)
-        rdd = self.rdd.mapValues(lambda x: mean([x[m] for m in masks], axis=0))
-        index = arange(0, len(masks[0]))
-        return self._constructor(rdd, index=index).__finalize__(self)
-
-    def group_by_window(self, indices, window):
-        """
-        Group time series into multiple windows specified by their centers
-
-        Parameters
-        ----------
-        indices : array-like
-            List of times specifying window centers
-
-        window : int
-            Window size
-        """
-        masks = self._makewindows(indices, window)
-        tupleize = lambda k: k if isinstance(k, tuple) else (k,)
-        rdd = self.rdd.flatMap(lambda (k, x): [(tupleize(k) + (i, ), x[m]) for i, m in enumerate(masks)])
-        index = arange(0, len(masks[0]))
-        nrecords = self.nrecords * len(indices)
-        return self._constructor(rdd, index=index, nrecords=nrecords).__finalize__(self)
+        newindex = arange(0, len(masks[0]))
+        return self.map(lambda x: mean([x[m] for m in masks], axis=0), index=newindex)
 
     def subsample(self, sampleFactor=2):
         """
@@ -113,9 +93,8 @@ class TimeSeries(Series):
         if sampleFactor < 0:
             raise Exception('Factor for subsampling must be postive, got %g' % sampleFactor)
         s = slice(0, len(self.index), sampleFactor)
-        newIndex = self.index[s]
-        return self._constructor(
-            self.rdd.mapValues(lambda v: v[s]), index=newIndex).__finalize__(self)
+        newindex = self.index[s]
+        return self.map(lambda v: v[s], index=newindex)
 
     def fourier(self, freq=None):
         """
@@ -141,10 +120,11 @@ class TimeSeries(Series):
             return array([co, ph])
 
         if freq >= int(fix(size(self.index)/2)):
-            raise Exception('Requested frequency, %g, is too high, must be less than half the series duration' % freq)
+            raise Exception('Requested frequency, %g, is too high, '
+                            'must be less than half the series duration' % freq)
 
-        rdd = self.rdd.mapValues(lambda x: get(x, freq))
-        return Series(rdd, index=['coherence', 'phase']).__finalize__(self)
+        index = ['coherence', 'phase']
+        return self.map(lambda x: get(x, freq), index=index)
 
     def convolve(self, signal, mode='full', var=None):
         """
@@ -169,8 +149,6 @@ class TimeSeries(Series):
         n = size(self.index)
         m = size(s)
 
-        newrdd = self.rdd.mapValues(lambda x: convolve(x, signal, mode))
-
         # use expected lengths to make a new index
         if mode == 'same':
             newmax = max(n, m)
@@ -180,7 +158,7 @@ class TimeSeries(Series):
             newmax = n+m-1
         newindex = arange(0, newmax)
 
-        return self._constructor(newrdd, index=newindex).__finalize__(self)
+        return self.map(lambda x: convolve(x, signal, mode), index=newindex)
 
     def crosscorr(self, signal, lag=0):
         """
@@ -208,17 +186,17 @@ class TimeSeries(Series):
             shifts = range(-lag, lag+1)
             d = len(s)
             m = len(shifts)
-            sShifted = zeros((m, d))
+            sshifted = zeros((m, d))
             for i in range(0, len(shifts)):
                 tmp = roll(s, shifts[i])
                 if shifts[i] < 0:
                     tmp[(d+shifts[i]):] = 0
                 if shifts[i] > 0:
                     tmp[:shifts[i]] = 0
-                sShifted[i, :] = tmp
-            s = sShifted
+                sshifted[i, :] = tmp
+            s = sshifted
         else:
-            shifts = 0
+            shifts = [0]
 
         def get(y, s):
             y = y - mean(y)
@@ -230,8 +208,7 @@ class TimeSeries(Series):
                 b = dot(s, y)
             return b
 
-        rdd = self.rdd.mapValues(lambda x: get(x, s))
-        return self._constructor(rdd, index=shifts).__finalize__(self)
+        return self.map(lambda x: get(x, s), index=shifts)
 
     def detrend(self, method='linear', **kwargs):
         """
@@ -264,7 +241,7 @@ class TimeSeries(Series):
             yy = polyval(p, x)
             return y - yy
 
-        return self.apply_values(func, keepindex=True)
+        return self.map(func)
 
     def normalize(self, method='percentile', window=None, perc=20):
         """
@@ -314,5 +291,4 @@ class TimeSeries(Series):
             b = baseFunc(y)
             return (y - b) / (b + 0.1)
 
-        return self.apply_values(get, keepindex=True)
-
+        return self.map(get)

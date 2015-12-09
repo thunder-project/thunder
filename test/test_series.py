@@ -14,14 +14,27 @@ def test_tomatrix(eng):
     assert isinstance(mat, Matrix)
     assert mat.nrows == 2
     assert mat.ncols == 4
-    out = mat.apply(lambda x: x + 1).toarray()
-    assert allclose(out, array([[5, 6, 7, 8], [9, 10, 11, 12]]))
-
 
 def test_totimeseries(eng):
     data = fromlist([array([4, 5, 6, 7]), array([8, 9, 10, 11])], engine=eng)
     ts = data.totimeseries()
     assert isinstance(ts, TimeSeries)
+
+
+def test_map(eng):
+    data = fromlist([array([1, 2]), array([3, 4])], engine=eng)
+    assert allclose(data.map(lambda x: x + 1).toarray(), [[2, 3], [4, 5]])
+
+
+def test_filter(eng):
+    data = fromlist([array([1, 2]), array([3, 4])], engine=eng)
+    assert allclose(data.filter(lambda x: x.sum() > 3).toarray(), [3, 4])
+
+
+def test_sample(eng):
+    data = fromlist([array([1, 5]), array([1, 10]), array([1, 15])], engine=eng)
+    assert allclose(data.sample(3).shape, (3, 2))
+    assert allclose(data.filter(lambda x: x.max() > 10).sample(1).toarray(), [1, 15])
 
 
 def test_between(eng):
@@ -34,8 +47,11 @@ def test_between(eng):
 def test_select():
     index = ['label1', 'label2', 'label3', 'label4']
     data = fromlist([array([4, 5, 6, 7]), array([8, 9, 10, 11])], index=index)
+    assert allclose(data.select('label1').toarray(), [4, 8])
     assert allclose(data.select(['label1']).toarray(), [4, 8])
     assert allclose(data.select(['label1', 'label2']).toarray(), array([[4, 5], [8, 9]]))
+    assert data.select('label1').index == ['label1']
+    assert data.select(['label1']).index == ['label1']
 
 
 def test_series_stats():
@@ -93,14 +109,51 @@ def test_correlate():
     assert allclose(corrs, [1, -1])
 
 
-# def test_subset():
-#     data = fromlist([array([1, 5]), array([1, 10]), array([1, 15])])
-#     assert len(data.subset(3, stat='min', thresh=0)) == 3
-#     assert allclose(data.subset(1, stat='max', thresh=10), [[1, 15]])
-#     assert allclose(data.subset(1, stat='mean', thresh=6), [[1, 15]])
-#     assert allclose(data.subset(1, stat='std', thresh=6), [[1, 15]])
-#     assert allclose(data.subset(1, thresh=6), [[1, 15]])
-#
+def test_mean():
+    data = fromlist([arange(8), arange(8)])
+    val = data.mean().toarray()
+    expected = data.toarray().mean(axis=0)
+    assert allclose(val, expected)
+    assert str(val.dtype) == 'float64'
+
+
+def test_sum():
+    data = fromlist([arange(8), arange(8)])
+    val = data.sum().toarray()
+    expected = data.toarray().sum(axis=0)
+    assert allclose(val, expected)
+    assert str(val.dtype) == 'int64'
+
+
+def test_var():
+    data = fromlist([arange(8), arange(8)])
+    val = data.var().toarray()
+    expected = data.toarray().var(axis=0)
+    assert allclose(val, expected)
+    assert str(val.dtype) == 'float64'
+
+
+def test_std():
+    data = fromlist([arange(8), arange(8)])
+    val = data.std().toarray()
+    expected = data.toarray().std(axis=0)
+    assert allclose(val, expected)
+    assert str(val.dtype) == 'float64'
+
+
+def test_max():
+    data = fromlist([arange(8), arange(8)])
+    val = data.max().toarray()
+    expected = data.toarray().max(axis=0)
+    assert allclose(val, expected)
+
+
+def test_min():
+    data = fromlist([arange(8), arange(8)])
+    val = data.min().toarray()
+    expected = data.toarray().min(axis=0)
+    assert allclose(val, expected)
+
 
 def test_index_setting():
     data = fromlist([array([1, 2, 3]), array([2, 2, 4]), array([4, 2, 1])])

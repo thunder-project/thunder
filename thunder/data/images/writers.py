@@ -1,10 +1,8 @@
 from numpy import asarray
 import json
 
-from thunder import credentials
 
-
-def topng(images, path, prefix="image", overwrite=False):
+def topng(images, path, prefix="image", overwrite=False, credentials=None):
     """
     Write out PNG files for 2d or 3d image data.
 
@@ -28,11 +26,10 @@ def topng(images, path, prefix="image", overwrite=False):
         imsave(bytebuf, img, format='PNG')
         return fname, bytebuf.getvalue()
 
-    bufRdd = images.rdd.map(tobuffer)
-    writer = get_parallel_writer(path)(path, overwrite=overwrite, credentials=credentials())
-    bufRdd.foreach(writer.write)
+    writer = get_parallel_writer(path)(path, overwrite=overwrite, credentials=credentials)
+    images.foreach(lambda x: writer.write(tobuffer(x)))
 
-def totif(images, path, prefix="image", overwrite=False):
+def totif(images, path, prefix="image", overwrite=False, credentials=None):
     """
     Write out TIF files for 2d or 3d image data.
 
@@ -56,11 +53,10 @@ def totif(images, path, prefix="image", overwrite=False):
         imsave(bytebuf, img, format='TIFF')
         return fname, bytebuf.getvalue()
 
-    bufRdd = images.rdd.map(tobuffer)
-    writer = get_parallel_writer(path)(path, overwrite=overwrite, credentials=credentials())
-    bufRdd.foreach(writer.write)
+    writer = get_parallel_writer(path)(path, overwrite=overwrite, credentials=credentials)
+    images.foreach(lambda x: writer.write(tobuffer(x)))
 
-def tobinary(images, path, prefix="image", overwrite=False):
+def tobinary(images, path, prefix="image", overwrite=False, credentials=None):
     """
     Write out binary files for image data.
 
@@ -70,20 +66,18 @@ def tobinary(images, path, prefix="image", overwrite=False):
     """
     from thunder.data.writers import get_parallel_writer
 
-    dims = list(asarray(images.dims.max) - asarray(images.dims.min) + 1)
+    dims = list(images.dims)
 
     def tobuffer(kv):
         key, img = kv
         fname = prefix + "-" + "%05d.bin" % int(key)
         return fname, img.copy()
 
-    bufRdd = images.rdd.map(tobuffer)
-
-    writer = get_parallel_writer(path)(path, overwrite=overwrite, credentials=credentials())
-    bufRdd.foreach(writer.write)
+    writer = get_parallel_writer(path)(path, overwrite=overwrite, credentials=credentials)
+    images.foreach(lambda x: writer.write(tobuffer(x)))
     config(path, dims=dims, dtype=images.dtype, overwrite=overwrite)
 
-def config(path, dims, dtype='int16', name="conf.json", overwrite=True):
+def config(path, dims, dtype='int16', name="conf.json", overwrite=True, credentials=None):
     """
     Helper function to write a JSON file with configuration for binary image data.
     """
@@ -91,9 +85,9 @@ def config(path, dims, dtype='int16', name="conf.json", overwrite=True):
 
     writer = get_file_writer(path)
 
-    conf = {'dims': dims, 'dtype': dtype}
-    confwriter = writer(path, name, overwrite=overwrite, credentials=credentials())
+    conf = {'dims': dims, 'dtype': str(dtype)}
+    confwriter = writer(path, name, overwrite=overwrite, credentials=credentials)
     confwriter.write(json.dumps(conf, indent=2))
 
-    successwriter = writer(path, "SUCCESS", overwrite=overwrite, credentials=credentials())
+    successwriter = writer(path, "SUCCESS", overwrite=overwrite, credentials=credentials)
     successwriter.write('')
