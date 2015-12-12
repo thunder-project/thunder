@@ -4,130 +4,80 @@ from numpy import arange, array, allclose, ones
 from thunder.data.images.readers import fromlist
 from thunder.data.series.readers import frombinary
 
-pytestmark = pytest.mark.usefixtures("context")
+pytestmark = pytest.mark.usefixtures("engspark")
 
 
-def test_blocks_pixels():
+def test_blocks(engspark):
     a = arange(8).reshape((4, 2))
-    data = fromlist([a, a])
-    vals = data.toblocks((2, 2), units='pixels').values().collect()
+    data = fromlist([a, a], engine=engspark)
+    vals = data.toblocks((2, 2)).tordd().sortByKey().values().collect()
     truth = [array([a[0:2, 0:2], a[0:2, 0:2]]), array([a[2:4, 0:2], a[2:4, 0:2]])]
     assert allclose(vals, truth)
 
-
-def test_blocks_splits():
+def test_blocks_full(engspark):
     a = arange(8).reshape((4, 2))
-    data = fromlist([a, a])
-    vals = data.toblocks((2, 1), units='splits').values().collect()
-    truth = [array([a[0:2, 0:2], a[0:2, 0:2]]), array([a[2:4, 0:2], a[2:4, 0:2]])]
-    assert allclose(vals, truth)
-
-
-def test_blocks_pixels_full():
-    a = arange(8).reshape((4, 2))
-    data = fromlist([a, a])
-    vals = data.toblocks((4, 2), units='pixels').values().collect()
+    data = fromlist([a, a], engine=engspark)
+    vals = data.toblocks((4, 2)).tordd().values().collect()
     truth = [a, a]
     assert allclose(vals, truth)
 
-
-def test_blocks_splits_full():
-    a = arange(8).reshape((4, 2))
-    data = fromlist([a, a])
-    vals = data.toblocks((1, 1), units='splits').values().collect()
-    truth = [a, a]
-    assert allclose(vals, truth)
-
-
-def test_blocks_splits_count():
+def test_blocks_count(engspark):
     a = arange(8).reshape((2, 4))
-    data = fromlist([a])
-    assert data.toblocks((2, 4), units='splits').count() == 8
+    data = fromlist([a], engine=engspark)
+    assert data.toblocks((1, 1)).count() == 8
+    assert data.toblocks((1, 2)).count() == 4
+    assert data.toblocks((2, 2)).count() == 2
+    assert data.toblocks((2, 4)).count() == 1
 
 
-def test_blocks_pixels_count():
-    a = arange(8).reshape((2, 4))
-    data = fromlist([a])
-    assert data.toblocks((1, 1), units='pixels').count() == 8
-
-
-def test_blocks_conversion():
+def test_blocks_conversion(engspark):
     a = arange(8).reshape((4, 2))
-    data = fromlist([a])
-    vals = data.toblocks((1, 2), units='splits').toseries().pack()
+    data = fromlist([a], engine=engspark)
+    vals = data.toblocks((1, 2)).toseries().toarray()
     assert allclose(vals, a)
 
 
-def test_blocks_conversion_3d():
+def test_blocks_conversion_3d(engspark):
     a = arange(24).reshape((2, 3, 4))
-    data = fromlist([a])
-    vals = data.toblocks((2, 3, 4), units='splits').toseries().pack()
+    data = fromlist([a], engine=engspark)
+    vals = data.toblocks((2, 3, 4)).toseries().toarray()
     assert allclose(vals, a)
 
 
-def test_blocks_io(tmpdir):
+def test_blocks_io(tmpdir, engspark):
     a = arange(24).reshape((2, 3, 4))
     p = str(tmpdir) + '/data'
-    data = fromlist([a, a])
-    data.toblocks((2, 3, 4), units='splits').tobinary(p)
+    data = fromlist([a, a], engine=engspark)
+    data.toblocks((2, 3, 4)).tobinary(p)
     loaded = frombinary(p)
-    assert loaded.nrecords == 2 * 3 * 4
     assert loaded.shape == (2, 3, 4, 2)
 
 
-def test_padded_blocks_conversion():
+def test_blocks_roundtrip(engspark):
     a = arange(8).reshape((4, 2))
-    data = fromlist([a])
-    vals = data.toblocks((1, 2), padding=(1, 1), units='splits').toseries().pack()
-    assert allclose(vals, a)
-
-
-def test_blocks_roundtrip():
-    a = arange(8).reshape((4, 2))
-    data = fromlist([a, a])
+    data = fromlist([a, a], engine=engspark)
     vals = data.toblocks((2, 2)).toimages()
     assert allclose(vals.toarray(), data.toarray())
 
 
-def test_blocks_series_roundtrip():
-    a = arange(8).reshape((4, 2))
-    data = fromlist([a, a])
-    vals = data.toseries().toblocks().toimages()
-    assert allclose(vals.toarray(), data.toarray())
+# def test_blocks_series_roundtrip(engspark):
+#     a = arange(8).reshape((4, 2))
+#     data = fromlist([a, a], engine=engspark)
+#     vals = data.toseries().toblocks().toimages()
+#     assert allclose(vals.toarray(), data.toarray())
+#
+#
+# def test_blocks_series_roundtrip_simple():
+#     a = arange(8).reshape((4, 2))
+#     data = fromlist([a, a])
+#     vals = data.toseries().toimages()
+#     assert allclose(vals.toarray(), data.toarray())
+#
 
 
-def test_blocks_series_roundtrip_simple():
-    a = arange(8).reshape((4, 2))
-    data = fromlist([a, a])
-    vals = data.toseries().toimages()
-    assert allclose(vals.toarray(), data.toarray())
-
-
-def test_padded_blocks_roundtrip():
-    a = arange(8).reshape((4, 2))
-    data = fromlist([a, a])
-    vals = data.toblocks((2, 2), padding=(2, 2)).toimages()
-    assert allclose(vals.toarray(), data.toarray())
-
-
-def test_blocks_shape():
-    data = fromlist([ones((30, 30)) for _ in range(0, 3)])
-    blocks = data.toblocks((10, 10)).collect()
-    keys = [k for k, v in blocks]
-    assert all(k.pixels_per_dim == (10, 10) for k in keys)
-    assert all(k.block_shape == (10, 10) for k in keys)
-
-
-def test_blocks_neighbors():
-    data = fromlist([ones((30, 30)) for _ in range(0, 3)])
-    blocks = data.toblocks((10, 10)).collect()
-    keys = [k for k, v in blocks]
-    assert keys[0].neighbors() == [(0, 10), (10, 0), (10, 10)]
-    assert keys[1].neighbors() == [(0, 0), (0, 10), (10, 10), (20, 0), (20, 10)]
-    assert keys[2].neighbors() == [(10, 0), (10, 10), (20, 10)]
-    assert keys[3].neighbors() == [(0, 0), (0, 20), (10, 0), (10, 10), (10, 20)]
-    assert keys[4].neighbors() == [(0, 0), (0, 10), (0, 20), (10, 0), (10, 20), (20, 0), (20, 10), (20, 20)]
-    assert keys[5].neighbors() == [(10, 0), (10, 10), (10, 20), (20, 0), (20, 20)]
-    assert keys[6].neighbors() == [(0, 10), (10, 10), (10, 20)]
-    assert keys[7].neighbors() == [(0, 10), (0, 20), (10, 10), (20, 10), (20, 20)]
-    assert keys[8].neighbors() == [(10, 10), (10, 20), (20, 10)]
+def test_blocks_shape(engspark):
+    data = fromlist([ones((30, 30)) for _ in range(0, 3)], engine=engspark)
+    blocks = data.toblocks((10, 10))
+    values = [v for k, v in blocks.tordd().collect()]
+    assert blocks.subshape == (3, 10, 10)
+    assert all([v.shape == (3, 10, 10) for v in values])

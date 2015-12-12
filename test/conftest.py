@@ -9,3 +9,7 @@ def eng(request):
         station.setup(spark=True)
         return station.engine()
 
+@pytest.fixture(scope='module')
+def engspark():
+    station.setup(spark=True)
+    return station.engine()
