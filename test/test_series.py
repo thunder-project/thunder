@@ -51,7 +51,8 @@ def test_first(eng):
 
 def test_select(eng):
     index = ['label1', 'label2', 'label3', 'label4']
-    data = fromlist([array([4, 5, 6, 7]), array([8, 9, 10, 11])], index=index)
+    data = fromlist([array([4, 5, 6, 7]), array([8, 9, 10, 11])], engine=eng, index=index)
+    assert data.select('label1').shape == (2, 1)
     assert allclose(data.select('label1').toarray(), [4, 8])
     assert allclose(data.select(['label1']).toarray(), [4, 8])
     assert allclose(data.select(['label1', 'label2']).toarray(), array([[4, 5], [8, 9]]))
@@ -59,8 +60,8 @@ def test_select(eng):
     assert data.select(['label1']).index == ['label1']
 
 
-def test_series_stats():
-    data = fromlist([array([1, 2, 3, 4, 5])])
+def test_series_stats(eng):
+    data = fromlist([array([1, 2, 3, 4, 5])], engine=eng)
     assert allclose(data.series_mean().toarray(), 3.0)
     assert allclose(data.series_sum().toarray(), 15.0)
     assert allclose(data.series_median().toarray(), 3.0)
@@ -72,8 +73,8 @@ def test_series_stats():
     assert allclose(data.series_percentile((25, 75)).toarray(), array([2.0, 4.0]))
 
 
-def test_standardize_axis1():
-    data = fromlist([array([1, 2, 3, 4, 5])])
+def test_standardize_axis1(eng):
+    data = fromlist([array([1, 2, 3, 4, 5])], engine=eng)
     centered = data.center(1)
     standardized = data.standardize(1)
     zscored = data.zscore(1)
@@ -84,8 +85,8 @@ def test_standardize_axis1():
                     array([-1.41421, -0.70710,  0,  0.70710,  1.41421]), atol=1e-3)
 
 
-def test_standardize_axis0():
-    data = fromlist([array([1, 2]), array([3, 4])])
+def test_standardize_axis0(eng):
+    data = fromlist([array([1, 2]), array([3, 4])], engine=eng)
     centered = data.center(0)
     standardized = data.standardize(0)
     zscored = data.zscore(0)
@@ -94,8 +95,8 @@ def test_standardize_axis0():
     assert allclose(zscored.toarray(), array([[-1, -1], [1, 1]]), atol=1e-3)
 
 
-def test_squelch():
-    data = fromlist([array([1, 2]), array([3, 4])])
+def test_squelch(eng):
+    data = fromlist([array([1, 2]), array([3, 4])], engine=eng)
     squelched = data.squelch(5)
     assert allclose(squelched.toarray(), [[0, 0], [0, 0]])
     squelched = data.squelch(3)
@@ -104,8 +105,8 @@ def test_squelch():
     assert allclose(squelched.toarray(), [[1, 2], [3, 4]])
 
 
-def test_correlate():
-    data = fromlist([array([1, 2, 3, 4, 5])])
+def test_correlate(eng):
+    data = fromlist([array([1, 2, 3, 4, 5])], engine=eng)
     sig = [4, 5, 6, 7, 8]
     corr = data.correlate(sig).toarray()
     assert allclose(corr, 1)
@@ -114,54 +115,54 @@ def test_correlate():
     assert allclose(corrs, [1, -1])
 
 
-def test_mean():
-    data = fromlist([arange(8), arange(8)])
+def test_mean(eng):
+    data = fromlist([arange(8), arange(8)], engine=eng)
     val = data.mean().toarray()
     expected = data.toarray().mean(axis=0)
     assert allclose(val, expected)
     assert str(val.dtype) == 'float64'
 
 
-def test_sum():
-    data = fromlist([arange(8), arange(8)])
+def test_sum(eng):
+    data = fromlist([arange(8), arange(8)], engine=eng)
     val = data.sum().toarray()
     expected = data.toarray().sum(axis=0)
     assert allclose(val, expected)
     assert str(val.dtype) == 'int64'
 
 
-def test_var():
-    data = fromlist([arange(8), arange(8)])
+def test_var(eng):
+    data = fromlist([arange(8), arange(8)], engine=eng)
     val = data.var().toarray()
     expected = data.toarray().var(axis=0)
     assert allclose(val, expected)
     assert str(val.dtype) == 'float64'
 
 
-def test_std():
-    data = fromlist([arange(8), arange(8)])
+def test_std(eng):
+    data = fromlist([arange(8), arange(8)], engine=eng)
     val = data.std().toarray()
     expected = data.toarray().std(axis=0)
     assert allclose(val, expected)
     assert str(val.dtype) == 'float64'
 
 
-def test_max():
-    data = fromlist([arange(8), arange(8)])
+def test_max(eng):
+    data = fromlist([arange(8), arange(8)], engine=eng)
     val = data.max().toarray()
     expected = data.toarray().max(axis=0)
     assert allclose(val, expected)
 
 
-def test_min():
-    data = fromlist([arange(8), arange(8)])
+def test_min(eng):
+    data = fromlist([arange(8), arange(8)], engine=eng)
     val = data.min().toarray()
     expected = data.toarray().min(axis=0)
     assert allclose(val, expected)
 
 
-def test_index_setting():
-    data = fromlist([array([1, 2, 3]), array([2, 2, 4]), array([4, 2, 1])])
+def test_index_setting(eng):
+    data = fromlist([array([1, 2, 3]), array([2, 2, 4]), array([4, 2, 1])], engine=eng)
     assert allclose(data.index, array([0, 1, 2]))
     data.index = [3, 2, 1]
     assert allclose(data.index, [3, 2, 1])
@@ -171,8 +172,8 @@ def test_index_setting():
         data.index = [1, 2]
 
 
-def test_select_by_index():
-    data = fromlist([arange(12)], index=[0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2])
+def test_select_by_index(eng):
+    data = fromlist([arange(12)], index=[0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2], engine=eng)
     result = data.select_by_index(1)
     assert allclose(result.toarray(), array([4, 5, 6, 7]))
     assert allclose(result.index, array([1, 1, 1, 1]))
@@ -202,8 +203,8 @@ def test_select_by_index():
     assert allclose(result.index, array([[0, 0, 0], [0, 0, 1], [1, 0, 0], [1, 0, 1]]))
 
 
-def test_aggregate_by_index():
-    data = fromlist([arange(12)], index=[0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2])
+def test_aggregate_by_index(eng):
+    data = fromlist([arange(12)], index=[0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2], engine=eng)
     result = data.aggregate_by_index(sum)
     assert allclose(result.toarray(), array([6, 22, 38]))
     assert allclose(result.index, array([0, 1, 2]))
@@ -218,8 +219,8 @@ def test_aggregate_by_index():
     assert allclose(result.index, array([[0, 0], [0, 1], [1, 0], [1, 1]]))
 
 
-def test_stat_by_index():
-    data = fromlist([arange(12)], index=[0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2])
+def test_stat_by_index(eng):
+    data = fromlist([arange(12)], index=[0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2], engine=eng)
     assert allclose(data.stat_by_index('sum').toarray(), array([6, 22, 38]))
     assert allclose(data.stat_by_index('mean').toarray(), array([1.5, 5.5, 9.5]))
     assert allclose(data.stat_by_index('min').toarray(), array([0, 4, 8]))
@@ -234,13 +235,13 @@ def test_stat_by_index():
     assert allclose(data.median_by_index().toarray(), array([1.5, 5.5, 9.5]))
 
 
-def test_stat_by_index_multi():
+def test_stat_by_index_multi(eng):
     index = [
         [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1],
         [0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1],
         [0, 1, 0, 1, 2, 3, 0, 1, 0, 1, 2, 3]
     ]
-    data = fromlist([arange(12)], index=array(index).T)
+    data = fromlist([arange(12)], index=array(index).T, engine=eng)
     result = data.stat_by_index('sum', level=[0, 1])
     assert allclose(result.toarray(), array([1, 14, 13, 38]))
     assert allclose(result.index, array([[0, 0], [0, 1], [1, 0], [1, 1]]))
@@ -249,8 +250,8 @@ def test_stat_by_index_multi():
     assert allclose(result.index, array([[0, 0], [0, 1], [1, 0], [1, 1]]))
 
 
-def test_mean_by_panel():
-    data = fromlist([arange(8)])
+def test_mean_by_panel(eng):
+    data = fromlist([arange(8)], engine=eng)
     test1 = data.mean_by_panel(4)
     assert allclose(test1.index, array([0, 1, 2, 3]))
     assert allclose(test1.toarray(), [[2, 3, 4, 5]])
