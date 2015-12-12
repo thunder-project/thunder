@@ -30,12 +30,12 @@ def tobinary(series, path, overwrite=False, credentials=None):
         keypacker = None
         firstkey = None
         buf = StringIO.StringIO()
-        for serieskey, series in kv:
+        for k, v in kv:
             if keypacker is None:
-                keypacker = struct.Struct('h'*len(serieskey))
-                firstkey = serieskey
-            buf.write(keypacker.pack(*serieskey))
-            buf.write(series.tostring())
+                keypacker = struct.Struct('h'*len(k))
+                firstkey = k
+            buf.write(keypacker.pack(*k))
+            buf.write(v.tostring())
         val = buf.getvalue()
         buf.close()
         if firstkey is None:
