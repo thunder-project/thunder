@@ -19,8 +19,7 @@ setup(
               'thunder.data.images',
               'thunder.regression',
               'thunder.regression.linear',
-              'thunder.regression.nonlinear',
-              'thunder.utils'
+              'thunder.regression.nonlinear'
               ],
     package_data={'thunder.lib': ['thunder_python-' + version + '-py2.7.egg']},
     install_requires=open('requirements.txt').read().split(),
