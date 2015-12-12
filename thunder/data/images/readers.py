@@ -57,7 +57,6 @@ def fromlist(items, accessor=None, keys=None, dims=None, dtype=None, npartitions
         Number of partitions for computational engine
     """
     if spark and isinstance(engine, spark):
-        print('counting records')
         nrecords = len(items)
         if keys:
             items = zip(keys, items)
@@ -66,7 +65,6 @@ def fromlist(items, accessor=None, keys=None, dims=None, dtype=None, npartitions
             items = zip(keys, items)
         if not npartitions:
             npartitions = engine.defaultParallelism
-        print('parallelizing')
         rdd = engine.parallelize(items, npartitions)
         if accessor:
             rdd = rdd.mapValues(accessor)

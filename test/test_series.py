@@ -15,6 +15,7 @@ def test_tomatrix(eng):
     assert mat.nrows == 2
     assert mat.ncols == 4
 
+
 def test_totimeseries(eng):
     data = fromlist([array([4, 5, 6, 7]), array([8, 9, 10, 11])], engine=eng)
     ts = data.totimeseries()

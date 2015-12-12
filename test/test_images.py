@@ -4,6 +4,7 @@ from numpy import arange, allclose, array, corrcoef
 from thunder.data.images.readers import fromlist
 from thunder.data.series.series import Series
 from thunder.data.series.timeseries import TimeSeries
+from thunder.data.images.images import Images
 
 pytestmark = pytest.mark.usefixtures("eng")
 
@@ -30,6 +31,13 @@ def test_toseries(eng):
     truth = [[0, 1, 2], [3, 4, 5]]
     assert isinstance(data.toseries(), Series)
     assert allclose(data.toseries().toarray(), truth)
+
+
+def test_toseries_roundtrip(eng):
+    data = fromlist([arange(6).reshape((2, 3)), arange(6).reshape((2, 3))], engine=eng)
+    assert isinstance(data.toseries(), Series)
+    assert isinstance(data.toseries().toimages(), Images)
+    assert allclose(data.toseries().toimages().toarray(), data.toarray())
 
 
 def test_totimeseries(eng):

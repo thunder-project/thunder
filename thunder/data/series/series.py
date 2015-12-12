@@ -741,31 +741,7 @@ class Series(Data):
         from thunder.data.series.timeseries import TimeSeries
         return TimeSeries(self.values, index=self.index)
 
-    def toblocks(self, size="150M"):
-        """
-        Convert Series to Blocks.
-
-        Parameters
-        ----------
-        size : str, optional, default = "150M"
-            String interpreted as memory size.
-        """
-        from thunder.data.blocks.strategy import SeriesBlockingStrategy
-        if isinstance(size, SeriesBlockingStrategy):
-            strategy = size
-        elif isinstance(size, basestring) or isinstance(size, int):
-            strategy = SeriesBlockingStrategy.generateFromBlockSize(self, size)
-        else:
-            strategy = SeriesBlockingStrategy(size)
-
-        strategy.setsource(self)
-        block_class = strategy.getclass()
-        blocked = self.rdd.map(strategy.blocker)
-        grouped = blocked.groupByKey(numPartitions=strategy.nblocks)
-        rdd = grouped.map(strategy.combiner)
-        return block_class(rdd, dims=self.dims, nimages=len(self.index), dtype=self.dtype)
-
-    def toimages(self, size="150M"):
+    def toimages(self, size='150'):
         """
         Converts Series to Images.
 
@@ -776,9 +752,17 @@ class Series(Data):
         size : str, optional, default = "150M"
             String interpreted as memory size.
         """
-        return self.toblocks(size).toimages()
+        from thunder.data.images.images import Images
 
-    def tobinary(self, path, overwrite=False):
+        n = len(self.shape) - 1
+
+        if self.mode == 'spark':
+            return Images(self.values.swap(tuple(range(n)), (0,), size=size))
+
+        if self.mode == 'local':
+            return Images(self.values.transpose((n,) + tuple(range(0, n))))
+
+    def tobinary(self, path, overwrite=False, credentials=None):
         """
         Write data to binary files.
 
@@ -793,4 +777,4 @@ class Series(Data):
             recreated as partof this call.
         """
         from thunder.data.series.writers import tobinary
-        tobinary(self, path, overwrite=overwrite)
+        tobinary(self, path, overwrite=overwrite, credentials=credentials)

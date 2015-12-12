@@ -101,12 +101,13 @@ class Images(Data):
         from thunder.data.series.series import Series
 
         n = len(self.shape) - 1
+        index = arange(self.shape[0])
 
         if self.mode == 'spark':
-            return Series(self.values.swap((0,), tuple(range(n)), size=size))
+            return Series(self.values.swap((0,), tuple(range(n)), size=size), index=index)
 
         if self.mode == 'local':
-            return Series(self.values.transpose(tuple(range(1, n+1)) + (0,)))
+            return Series(self.values.transpose(tuple(range(1, n+1)) + (0,)), index=index)
 
     def tolocal(self):
         """
