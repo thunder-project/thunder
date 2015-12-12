@@ -1,22 +1,17 @@
 from numpy import asarray, ndarray, prod, ufunc
 from bolt.utils import inshape, tupleize
 from bolt.base import BoltArray
+from bolt.spark.chunk import ChunkedArray
 
-class Data(object):
-    """
-    Generic base class for data types.
+from ..utils.common import notsupported
 
-    All data types are backed by a bolt array.
+class Base(object):
 
-    This base class mainly provides convenience functions for accessing
-    properties of the object using methods appropriate for the
-    underlying computational backend.
-    """
     _metadata = ['dtype', 'shape', 'mode']
 
     def __init__(self, values, mode='local'):
         self._values = values
-        if isinstance(values, BoltArray):
+        if isinstance(values, BoltArray) or isinstance(values, ChunkedArray):
             mode = 'spark'
         if isinstance(values, ndarray):
             mode = 'local'
@@ -59,9 +54,6 @@ class Data(object):
                         object.__setattr__(self, name, attr)
         return self
 
-    def __getitem__(self, item):
-        return self._values.__getitem__(item)
-
     @property
     def _constructor(self):
         return Data
@@ -81,6 +73,104 @@ class Data(object):
     @property
     def values(self):
         return self._values
+
+    def tordd(self):
+        """
+        Return an RDD for datasets backed by Spark
+        """
+        if self.mode == 'spark':
+            return self.values.tordd()
+        else:
+            notsupported(self.mode)
+
+    def compute(self):
+        """
+        Force lazy computations to execute for datasets backed by Spark.
+        """
+        if self.mode == 'spark':
+            self.values.tordd().count()
+        else:
+            notsupported(self.mode)
+
+    def coalesce(self, npartitions):
+        """
+        Coalesce data (Spark only).
+
+        Parameters
+        ----------
+        npartitions : int
+            Number of partitions after coalescing.
+        """
+        if self.mode == 'spark':
+            current = self.values.tordd().getNumPartitions()
+            if npartitions > current:
+                raise Exception('Trying to increase number of partitions (from %g to %g), '
+                                'cannot use coalesce, try repartition' % (current, npartitions))
+            self.values._rdd = self.values._rdd.coalesce(npartitions)
+            return self
+        else:
+            notsupported(self.mode)
+
+    def cache(self):
+        """
+        Enable in-memory caching.
+        """
+        if self.mode == 'spark':
+            self.values.cache()
+            return self
+        else:
+            notsupported(self.mode)
+
+    def uncache(self):
+        """
+        Enable in-memory caching.
+        """
+        if self.mode == 'spark':
+            self.values.unpersist()
+            return self
+        else:
+            notsupported(self.mode)
+
+    def repartition(self, npartitions):
+        """
+        Repartition data (Spark only).
+
+        Parameters
+        ----------
+        npartitions : int
+            Number of partitions after repartitions.
+        """
+        if self.mode == 'spark':
+            self.values._rdd = self.values._rdd.repartition(npartitions)
+            return self
+        else:
+            notsupported(self.mode)
+
+    def first(self):
+        """
+        Return the first element.
+        """
+        if self.mode == 'local':
+            return self.values[0]
+
+        if self.mode == 'spark':
+            return self.values.tordd().values().first()
+
+
+class Data(Base):
+    """
+    Generic base class for data types.
+
+    All data types are backed by a bolt array.
+
+    This base class mainly provides convenience functions for accessing
+    properties of the object using methods appropriate for the
+    underlying computational backend.
+    """
+    _metadata = Base._metadata
+
+    def __getitem__(self, item):
+        return self._values.__getitem__(item)
 
     def tospark(self):
         pass
@@ -102,13 +192,6 @@ class Data(object):
         """
         return self._constructor(
             self.values.astype(dtype=dtype, casting=casting)).__finalize__(self)
-
-    def compute(self):
-        """
-        Force lazy computations to execute.
-        """
-        if self.mode == 'spark':
-            self.values.tordd().count()
 
     def mean(self):
         """
@@ -146,43 +229,11 @@ class Data(object):
         """
         raise NotImplementedError
 
-    def coalesce(self, npartitions):
-        """
-        Coalesce data (Spark only).
+    def filter(self, func):
+        raise NotImplementedError
 
-        Parameters
-        ----------
-        npartitions : int
-            Number of partitions after coalescing.
-        """
-        if self.mode == 'spark':
-            current = self.values.tordd().getNumPartitions()
-            if npartitions > current:
-                raise Exception('Trying to increase number of partitions (from %g to %g), '
-                                'cannot use coalesce, try repartition' % (current, npartitions))
-            self.values._rdd = self.values._rdd.coalesce(npartitions)
-            return self
-
-    def cache(self):
-        """
-        Enable in-memory caching.
-        """
-        if self.mode == 'spark':
-            self.values.cache()
-            return self
-
-    def repartition(self, npartitions):
-        """
-        Repartition data (Spark only).
-
-        Parameters
-        ----------
-        npartitions : int
-            Number of partitions after repartitions.
-        """
-        if self.mode == 'spark':
-            self.values._rdd = self.values._rdd.repartition(npartitions)
-            return self
+    def map(self, func, **kwargs):
+        raise NotImplementedError
 
     def _align(self, axes, key_shape=None):
         """
@@ -214,12 +265,6 @@ class Data(object):
         reshaped = self.values.transpose(*transpose_order).reshape(*linearized_shape)
 
         return reshaped
-
-    def filter(self, func):
-        raise NotImplementedError
-
-    def map(self, func, **kwargs):
-        raise NotImplementedError
 
     def _filter(self, func, axis=(0,)):
         """
@@ -321,13 +366,3 @@ class Data(object):
         if self.mode == 'spark':
             reduced = self.values.reduce(func, axis)
             return self._constructor(reduced).__finalize__(self)
-
-    def first(self):
-        """
-        Return the first element.
-        """
-        if self.mode == 'local':
-            return self.values[0]
-
-        if self.mode == 'spark':
-            return self.values.tordd().values().first()
