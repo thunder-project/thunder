@@ -93,6 +93,16 @@ class Series(Data):
         if self.mode == 'spark':
             return self.tordd().count()
 
+    def first(self):
+        """
+        Return the first element.
+        """
+        if self.mode == 'local':
+            return self.values[tuple(zeros(len(self.baseaxes))) + (slice(None, None),)]
+
+        if self.mode == 'spark':
+            return self.values.tordd().values().first()
+
     def tolocal(self):
         """
         Convert to local representation.
@@ -421,7 +431,8 @@ class Series(Data):
         q : scalar
             Floating point number between 0 and 100 inclusive, specifying percentile.
         """
-        return self.map(lambda x: percentile(x, q), index=[q])
+        index = q if hasattr(q, '__iter__') else [q]
+        return self.map(lambda x: percentile(x, q), index=index)
 
     def series_std(self):
         """ Compute the value std of each record in a Series """
@@ -537,8 +548,8 @@ class Series(Data):
         newindex = array(ind)
         if len(newindex[0]) == 1:
             newindex = ravel(newindex)
-        return self.map(lambda v: [array(function(v[masks[x]])) for x in xrange(nMasks)],
-                          index=newindex)
+        return self.map(lambda v: asarray([array(function(v[masks[x]])) for x in xrange(nMasks)]),
+                        index=newindex)
 
     def select_by_index(self, val, level=0, squeeze=False, filter=False, return_mask=False):
         """
