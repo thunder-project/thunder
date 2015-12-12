@@ -1,3 +1,7 @@
+def notsupported(mode):
+    raise NotImplementedError("Operation not supported for mode '%s'" % mode)
+
+
 def check_spark():
     SparkContext = False
     try:
