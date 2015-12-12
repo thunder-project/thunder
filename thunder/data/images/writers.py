@@ -1,4 +1,3 @@
-from numpy import asarray
 import json
 
 
