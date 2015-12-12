@@ -19,7 +19,7 @@ def tobinary(series, path, overwrite=False, credentials=None):
     """
     import cStringIO as StringIO
     import struct
-    from thunder.utils.common import check_path
+    from thunder.utils import check_path
     from thunder.data.writers import get_parallel_writer
 
     if not overwrite:

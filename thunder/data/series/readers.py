@@ -1,6 +1,6 @@
 from numpy import array, arange, frombuffer, load, ndarray, asarray, random, maximum, fromstring
 
-from ...utils.common import check_spark
+from ...utils import check_spark
 from .series import Series
 spark = check_spark()
 

@@ -5,7 +5,7 @@ import urlparse
 import boto
 
 from thunder.data.readers import BotoClient, get_by_scheme
-from thunder.utils.common import connection_with_anon
+from thunder.utils import connection_with_anon
 
 
 class LocalParallelWriter(object):

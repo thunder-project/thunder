@@ -96,7 +96,7 @@ class Blocks(Base):
         from thunder.data.series.writers import write_config
 
         if not overwrite:
-            from thunder.utils.common import check_path
+            from thunder.utils import check_path
             check_path(path, credentials=credentials)
             overwrite = True
 

@@ -3,7 +3,7 @@ import checkist
 from io import BytesIO
 from numpy import frombuffer, prod, random, asarray
 
-from ...utils.common import check_spark
+from ...utils import check_spark
 spark = check_spark()
 
 
