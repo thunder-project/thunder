@@ -20,54 +20,42 @@ class Images(Data):
     def dims(self):
         return self.shape[1:]
 
-    def toblocks(self, size="150M", units="pixels", padding=0):
+    def count(self):
+        """
+        Explicit count of the number of items.
+
+        For lazy or distributed data, will force a computation.
+        """
+        if self.mode == 'local':
+            return self.shape[0]
+
+        if self.mode == 'spark':
+            return self.tordd().count()
+
+    def toblocks(self, size='150'):
         """
         Convert to Blocks, each representing a subdivision of the larger Images data.
 
         Parameters
         ----------
-        size : string memory size, tuple of splits per dimension, or instance of BlockingStrategy
+        size : str, or tuple of block size per dimension,
             String interpreted as memory size (e.g. "64M"). Tuple of ints interpreted as
-            "pixels per dimension" (default) or "splits per dimension", depending on units.
-            Instance of BlockingStrategy can be passed directly.
-
-        units : string, either "pixels" or "splits", default = "pixels"
-            What units to use for a tuple size.
-
-        padding : non-negative integer or tuple of int, optional, default = 0
-            Will generate blocks with extra `padding` voxels along each dimension.
-            Padded voxels will overlap with those in neighboring blocks, but will not be included
-            when converting blocks to Series or Images.
+            "pixels per dimension".
 
         Returns
         -------
         Blocks instance
         """
-        from thunder.data.blocks.strategy import \
-            BlockingStrategy, SimpleBlockingStrategy, PaddedBlockingStrategy
+        from thunder.data.blocks.blocks import Blocks
 
-        stratClass = SimpleBlockingStrategy if not padding else PaddedBlockingStrategy
+        if self.mode == 'spark':
+            blocks = self.values.chunk(size).keys_to_values((0,))
+            return Blocks(blocks)
 
-        if isinstance(size, BlockingStrategy):
-            blockingStrategy = size
-        elif isinstance(size, basestring) or isinstance(size, int):
-            # make blocks close to the desired size
-            blockingStrategy = stratClass.fromsize(self, size, padding=padding)
-        else:
-            # assume it is a tuple of positive int specifying splits
-            blockingStrategy = stratClass(size, units=units, padding=padding)
+        if self.mode == 'local':
+            raise NotImplementedError('Conversion to blocks not implemented for local mode')
 
-        blockingStrategy.setsource(self)
-        returntype = blockingStrategy.getclass()
-        vals = self.rdd.flatMap(blockingStrategy.blocker, preservesPartitioning=False)
-        # fastest changing dimension (e.g. x) is first, so must sort reversed keys
-        # sort must come after group, b/c group will mess with ordering.
-        groupedvals = vals.groupBy(lambda (k, _): k.spatial).sortBy(lambda (k, _): tuple(k[::-1]))
-        # groupedvals is now rdd of (z, y, x spatial key, [(partitioning key, numpy array)...]
-        blockedvals = groupedvals.map(blockingStrategy.combiner)
-        return returntype(blockedvals, dims=self.dims, nimages=self.nrecords, dtype=self.dtype)
-
-    def totimeseries(self, size="150M"):
+    def totimeseries(self, size='150'):
         """
         Converts this Images object to a TimeSeries object.
 
@@ -89,9 +77,9 @@ class Images(Data):
         --------
         Images.toBlocks
         """
-        return self.toseries().totimeseries()
+        return self.toseries(size).totimeseries()
 
-    def toseries(self, size="150"):
+    def toseries(self, size='150'):
         """
         Converts this Images object to a Series object.
 
