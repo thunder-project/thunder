@@ -5,6 +5,21 @@ from .series import Series
 spark = check_spark()
 
 
+def frombolt(values, index=None):
+    """
+    Load Series object from a bolt array.
+    """
+    return Series(values, index=index, mode='spark')
+
+def fromlocal(values, index=None):
+    """
+    Load Series object from a local numpy array.
+    """
+    values = asarray(values)
+    if index is None:
+        index = range(values.shape[-1])
+    return Series(asarray(values), index=index, mode='local')
+
 def fromrdd(rdd, nrecords=None, shape=None, index=None, dtype=None):
     """
     Load Series object from a Spark RDD
@@ -27,18 +42,7 @@ def fromrdd(rdd, nrecords=None, shape=None, index=None, dtype=None):
         shape = (nrecords, len(index))
 
     values = BoltArraySpark(rdd, shape=shape, dtype=dtype, split=1)
-    return Series(values, index=index, mode='spark')
-
-
-def fromlocal(values, index=None):
-    """
-    Load Series object from a local numpy array.
-    """
-    values = asarray(values)
-    if index is None:
-        index = range(values.shape[-1])
-
-    return Series(asarray(values), index=index)
+    return frombolt(values, index=index)
 
 def fromlist(items, accessor=None, npartitions=None, index=None, dtype=None, engine=None):
     """
@@ -330,6 +334,7 @@ def fromexample(name=None, engine=None):
     checkist.opts(name, datasets)
 
     d = tempfile.mkdtemp()
+
     try:
         os.mkdir(os.path.join(d, 'series'))
         os.mkdir(os.path.join(d, 'series', name))
@@ -339,8 +344,11 @@ def fromexample(name=None, engine=None):
             if not key.name.endswith('/'):
                 key.get_contents_to_filename(os.path.join(d, key.name))
         data = frombinary(os.path.join(d, 'series', name), engine=engine)
-        data.cache()
-        data.compute()
+
+        if spark and isinstance(engine, spark):
+            data.cache()
+            data.compute()
+
     finally:
         shutil.rmtree(d)
 

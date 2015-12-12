@@ -4,7 +4,6 @@ from io import BytesIO
 from numpy import frombuffer, prod, random, asarray
 
 from ...utils.common import check_spark
-from .images import Images
 spark = check_spark()
 
 
@@ -12,7 +11,15 @@ def fromlocal(values):
     """
     Load images object from a local array
     """
+    from .images import Images
     return Images(asarray(values), mode='local')
+
+def frombolt(values):
+    """
+    Load images object from a bolt array
+    """
+    from .images import Images
+    return Images(values, mode='spark')
 
 def fromrdd(rdd, dims=None, nrecords=None, dtype=None):
     """
@@ -29,7 +36,7 @@ def fromrdd(rdd, dims=None, nrecords=None, dtype=None):
         nrecords = rdd.count()
 
     values = BoltArraySpark(rdd, shape=(nrecords,) + tuple(dims), dtype=dtype, split=1)
-    return Images(values, mode='spark')
+    return frombolt(values)
 
 def fromlist(items, accessor=None, keys=None, dims=None, dtype=None, npartitions=None, engine=None):
     """
@@ -397,6 +404,8 @@ def fromexample(name=None, engine=None):
     if name == 'fish':
         data = fromtif(path=path, npartitions=1, engine=engine)
 
-    data.cache()
-    data.compute()
+    if spark and isinstance(engine, spark):
+        data.cache()
+        data.compute()
+
     return data
