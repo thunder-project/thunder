@@ -28,6 +28,12 @@ class Blocks(Base):
         """
         return self.tordd().count()
 
+    def first(self):
+        """
+        Return the first element.
+        """
+        return self.values.tordd().values().first()
+
     def toimages(self):
         """
         Convert blocks to images.

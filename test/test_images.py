@@ -26,6 +26,11 @@ def test_sample(eng):
     assert allclose(data.filter(lambda x: x.max() > 5).sample(1).toarray(), [[1, 10], [1, 10]])
 
 
+def test_first(eng):
+    data = fromlist([array([[1, 5], [1, 5]]), array([[1, 10], [1, 10]])], engine=eng)
+    assert allclose(data.first(), [[1, 5], [1, 5]])
+
+
 def test_toseries(eng):
     data = fromlist([arange(6).reshape((2, 3))], engine=eng)
     truth = [[0, 1, 2], [3, 4, 5]]

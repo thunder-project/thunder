@@ -6,7 +6,11 @@ from bolt.spark.chunk import ChunkedArray
 from ..utils import notsupported
 
 class Base(object):
+    """
+    Base methods for data objects in Thunder.
 
+    Handles construction, metadata, and backend specific methods.
+    """
     _metadata = ['dtype', 'shape', 'mode']
 
     def __init__(self, values, mode='local'):
@@ -146,37 +150,28 @@ class Base(object):
         else:
             notsupported(self.mode)
 
-    def first(self):
-        """
-        Return the first element.
-        """
-        if self.mode == 'local':
-            return self.values[0]
-
-        if self.mode == 'spark':
-            return self.values.tordd().values().first()
-
-
 class Data(Base):
     """
-    Generic base class for data types.
+    Generic base class for primary data types in Thunder.
 
-    All data types are backed by a bolt array.
+    All data types are backed by an array-like container for many homogenous arrays.
+    Data types include Images and Series and their derivatives.
 
-    This base class mainly provides convenience functions for accessing
-    properties of the object using methods appropriate for the
-    underlying computational backend.
+    This class mainly provides convenience functions for accessing
+    properties, computing generic summary statistics, and applying
+    functions along axes in a backend-specific manner.
     """
     _metadata = Base._metadata
 
     def __getitem__(self, item):
         return self._values.__getitem__(item)
 
-    def tospark(self):
-        pass
-
-    def tolocal(self):
-        return
+    def astype(self, dtype, casting='unsafe'):
+        """
+        Cast values to the specified type.
+        """
+        return self._constructor(
+            self.values.astype(dtype=dtype, casting=casting)).__finalize__(self)
 
     def toarray(self):
         """
@@ -186,12 +181,29 @@ class Data(Base):
         """
         return asarray(self.values).squeeze()
 
-    def astype(self, dtype, casting='unsafe'):
+    def tospark(self):
         """
-        Cast values to the specified type.
+        Convert data to Spark.
         """
-        return self._constructor(
-            self.values.astype(dtype=dtype, casting=casting)).__finalize__(self)
+        raise NotImplementedError
+
+    def tolocal(self):
+        """
+        Convert data to local mode.
+        """
+        raise NotImplementedError
+
+    def count(self):
+        """
+        Explicit count of elements.
+        """
+        raise NotImplementedError
+
+    def first(self):
+        """
+        Return first element.
+        """
+        raise NotImplementedError
 
     def mean(self):
         """
@@ -230,9 +242,15 @@ class Data(Base):
         raise NotImplementedError
 
     def filter(self, func):
+        """
+        Filter elements.
+        """
         raise NotImplementedError
 
     def map(self, func, **kwargs):
+        """
+        Map a function over elements.
+        """
         raise NotImplementedError
 
     def _align(self, axes, key_shape=None):
@@ -315,9 +333,11 @@ class Data(Base):
 
             mapped = asarray(list(map(func, reshaped)))
             elem_shape = mapped[0].shape
+            expand = list(elem_shape)
+            expand = [1] if len(expand) == 0 else expand
 
             # invert the previous reshape operation, using the shape of the map result
-            linearized_shape_inv = key_shape + list(elem_shape)
+            linearized_shape_inv = key_shape + expand
             reordered = mapped.reshape(*linearized_shape_inv)
 
             return self._constructor(reordered, mode=self.mode).__finalize__(self)

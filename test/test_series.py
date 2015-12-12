@@ -45,7 +45,11 @@ def test_between(eng):
     assert allclose(val.toarray(), array([[4, 5], [8, 9]]))
 
 
-def test_select():
+def test_first(eng):
+    data = fromlist([array([4, 5, 6, 7]), array([8, 9, 10, 11])], engine=eng)
+    assert allclose(data.first(), [4, 5, 6, 7])
+
+def test_select(eng):
     index = ['label1', 'label2', 'label3', 'label4']
     data = fromlist([array([4, 5, 6, 7]), array([8, 9, 10, 11])], index=index)
     assert allclose(data.select('label1').toarray(), [4, 8])

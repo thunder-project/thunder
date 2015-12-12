@@ -32,6 +32,16 @@ class Images(Data):
         if self.mode == 'spark':
             return self.tordd().count()
 
+    def first(self):
+        """
+        Return the first element.
+        """
+        if self.mode == 'local':
+            return self.values[0]
+
+        if self.mode == 'spark':
+            return self.values.tordd().values().first()
+
     def toblocks(self, size='150'):
         """
         Convert to Blocks, each representing a subdivision of the larger Images data.
