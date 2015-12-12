@@ -81,6 +81,18 @@ class Series(Data):
     def _constructor(self):
         return Series
 
+    def count(self):
+        """
+        Explicit count of the number of items.
+
+        For lazy or distributed data, will force a computation.
+        """
+        if self.mode == 'local':
+            return prod(self.shape[:-1])
+
+        if self.mode == 'spark':
+            return self.tordd().count()
+
     def tolocal(self):
         """
         Convert to local representation.
