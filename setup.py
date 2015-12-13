@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-import thunder
 
 setup(
     name='thunder-python',
-    version=str(thunder.__version__),
+    version="0.6.0.dev",
     description='Large-scale neural data analysis in Spark',
     author='The Freeman Lab',
     author_email='the.freeman.lab@gmail.com',
