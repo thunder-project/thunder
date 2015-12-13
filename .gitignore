@@ -20,3 +20,4 @@ doc/generated
 *.iml
 thunder/lib/*dev*.egg
 
+.coverage*
