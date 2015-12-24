@@ -6,10 +6,10 @@ def eng(request):
     if request.param == 'local':
         return None
     if request.param == 'spark':
-        station.setup(spark=True)
+        station.start(spark=True)
         return station.engine()
 
 @pytest.fixture(scope='module')
 def engspark():
-    station.setup(spark=True)
+    station.start(spark=True)
     return station.engine()
