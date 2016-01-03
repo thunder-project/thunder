@@ -107,7 +107,7 @@ class Series(Data):
         """
         Convert to local representation.
         """
-        from thunder.data.series.readers import fromarray
+        from thunder.series.readers import fromarray
 
         if self.mode == 'local':
             raise ValueError('series already in local mode')
@@ -118,7 +118,7 @@ class Series(Data):
         """
         Convert to spark representation.
         """
-        from thunder.data.series.readers import fromarray
+        from thunder.series.readers import fromarray
 
         if self.mode == 'spark':
             raise ValueError('series already in spark mode')
@@ -742,14 +742,14 @@ class Series(Data):
         """
         Convert Series to Matrix, a subclass with methods for matrix computations.
         """
-        from thunder.data.series.matrix import Matrix
+        from thunder.series.matrix import Matrix
         return Matrix(self.values, index=self.index)
 
     def totimeseries(self):
         """
         Convert Series to TimeSeries, a subclass for time series computation.
         """
-        from thunder.data.series.timeseries import TimeSeries
+        from thunder.series.timeseries import TimeSeries
         return TimeSeries(self.values, index=self.index)
 
     def toimages(self, size='150'):
@@ -763,7 +763,7 @@ class Series(Data):
         size : str, optional, default = "150M"
             String interpreted as memory size.
         """
-        from thunder.data.images.images import Images
+        from thunder.images.images import Images
 
         n = len(self.shape) - 1
 
@@ -787,5 +787,5 @@ class Series(Data):
             If true, path and all its contents will be deleted and
             recreated as partof this call.
         """
-        from thunder.data.series.writers import tobinary
+        from thunder.series.writers import tobinary
         tobinary(self, path, overwrite=overwrite, credentials=credentials)

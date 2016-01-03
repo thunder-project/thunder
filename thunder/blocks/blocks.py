@@ -38,7 +38,7 @@ class Blocks(Base):
         """
         Convert blocks to images.
         """
-        from thunder.data.images.readers import frombolt
+        from thunder.images.readers import frombolt
         values = self.values.values_to_keys((0,)).unchunk()
         return frombolt(values)
 
@@ -46,7 +46,7 @@ class Blocks(Base):
         """
         Converts blocks to series.
         """
-        from thunder.data.series.readers import frombolt
+        from thunder.series.readers import frombolt
         values = self.values.values_to_keys(tuple(range(1, len(self.shape)))).unchunk()
         return frombolt(values)
 
@@ -59,7 +59,7 @@ class Blocks(Base):
 
         Subclasses that can be converted to a Series object are expected to override this method.
         """
-        from thunder.data.series.writers import getlabel
+        from thunder.series.writers import getlabel
 
         def getblock(kv):
             key, val = kv
@@ -98,8 +98,8 @@ class Blocks(Base):
             If true, outputdirname and all its contents will
             be deleted and recreated as part of this call.
         """
-        from thunder.data.writers import get_parallel_writer
-        from thunder.data.series.writers import write_config
+        from thunder.writers import get_parallel_writer
+        from thunder.series.writers import write_config
 
         if not overwrite:
             from thunder.utils import check_path

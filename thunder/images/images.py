@@ -56,7 +56,7 @@ class Images(Data):
         -------
         Blocks instance
         """
-        from thunder.data.blocks.blocks import Blocks
+        from thunder.blocks.blocks import Blocks
 
         if self.mode == 'spark':
             blocks = self.values.chunk(size).keys_to_values((0,))
@@ -108,7 +108,7 @@ class Images(Data):
         --------
         Images.toBlocks
         """
-        from thunder.data.series.series import Series
+        from thunder.series.series import Series
 
         n = len(self.shape) - 1
         index = arange(self.shape[0])
@@ -123,7 +123,7 @@ class Images(Data):
         """
         Convert to local representation.
         """
-        from thunder.data.images.readers import fromarray
+        from thunder.images.readers import fromarray
 
         if self.mode == 'local':
             raise ValueError('images already in local mode')
@@ -134,7 +134,7 @@ class Images(Data):
         """
         Convert to spark representation.
         """
-        from thunder.data.images.readers import fromarray
+        from thunder.images.readers import fromarray
 
         if self.mode == 'spark':
             raise ValueError('images already in spark mode')
@@ -544,7 +544,7 @@ class Images(Data):
         overwrite : bool
             If true, the directory given by path will first be deleted if it exists.
         """
-        from thunder.data.images.writers import topng
+        from thunder.images.writers import topng
         # TODO add back colormap and vmin/vmax
         topng(self, path, prefix=prefix, overwrite=overwrite)
 
@@ -566,7 +566,7 @@ class Images(Data):
         overwrite : bool
             If true, the directory given by path will first be deleted if it exists.
         """
-        from thunder.data.images.writers import totif
+        from thunder.images.writers import totif
         # TODO add back colormap and vmin/vmax
         totif(self, path, prefix=prefix, overwrite=overwrite)
 
@@ -587,5 +587,5 @@ class Images(Data):
         overwrite : bool
             If true, the directory given by path will first be deleted if it exists.
         """
-        from thunder.data.images.writers import tobinary
+        from thunder.images.writers import tobinary
         tobinary(self, path, prefix=prefix, overwrite=overwrite)

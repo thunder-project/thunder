@@ -1,6 +1,6 @@
 import pytest
 from numpy import array, allclose, corrcoef
-from thunder.data.series import fromlist
+from thunder.series import fromlist
 
 pytestmark = pytest.mark.usefixtures("eng")
 

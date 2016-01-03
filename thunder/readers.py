@@ -8,7 +8,7 @@ import urlparse
 import logging
 import boto
 
-from ..utils import check_spark, connection_with_anon
+from .utils import check_spark, connection_with_anon
 logging.getLogger('boto').setLevel(logging.CRITICAL)
 spark = check_spark()
 

@@ -3,7 +3,7 @@ from bolt.utils import inshape, tupleize
 from bolt.base import BoltArray
 from bolt.spark.chunk import ChunkedArray
 
-from ..utils import notsupported
+from .utils import notsupported
 
 class Base(object):
     """

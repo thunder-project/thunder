@@ -1,10 +1,11 @@
 import pytest
 from numpy import arange, allclose, array, corrcoef
 
-from thunder.data.images.readers import fromlist
-from thunder.data.series.series import Series
-from thunder.data.series.timeseries import TimeSeries
-from thunder.data.images.images import Images
+from thunder.images.readers import fromlist
+from thunder.images.images import Images
+from thunder.series.series import Series
+from thunder.series.timeseries import TimeSeries
+
 
 pytestmark = pytest.mark.usefixtures("eng")
 

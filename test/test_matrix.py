@@ -1,6 +1,6 @@
 import pytest
 from numpy import array, allclose, add
-from thunder.data.series.readers import fromlist
+from thunder.series.readers import fromlist
 
 pytestmark = pytest.mark.usefixtures("context")
 

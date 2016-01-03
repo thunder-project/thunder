@@ -4,7 +4,7 @@ import glob
 from numpy import arange, array, allclose, save, savetxt
 from scipy.io import savemat
 
-from thunder.data.series.readers import fromarray, fromnpy, frommat, fromtext, frombinary, fromexample
+from thunder.series.readers import fromarray, fromnpy, frommat, fromtext, frombinary, fromexample
 
 pytestmark = pytest.mark.usefixtures("eng")
 

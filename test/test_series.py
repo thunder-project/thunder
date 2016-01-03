@@ -1,9 +1,9 @@
 import pytest
 from numpy import allclose, arange, array
 
-from thunder.data.series.readers import fromlist
-from thunder.data.series.matrix import Matrix
-from thunder.data.series.timeseries import TimeSeries
+from thunder.series.readers import fromlist
+from thunder.series.matrix import Matrix
+from thunder.series.timeseries import TimeSeries
 
 pytestmark = pytest.mark.usefixtures("eng")
 

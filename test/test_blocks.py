@@ -1,8 +1,8 @@
 import pytest
 from numpy import arange, array, allclose, ones
 
-from thunder.data.images.readers import fromlist
-from thunder.data.series.readers import frombinary
+from thunder.images.readers import fromlist
+from thunder.series.readers import frombinary
 
 pytestmark = pytest.mark.usefixtures("engspark")
 

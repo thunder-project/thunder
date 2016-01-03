@@ -16,7 +16,7 @@ def topng(images, path, prefix="image", overwrite=False, credentials=None):
 
     from scipy.misc import imsave
     from io import BytesIO
-    from thunder.data.writers import get_parallel_writer
+    from thunder.writers import get_parallel_writer
 
     def tobuffer(kv):
         key, img = kv
@@ -43,7 +43,7 @@ def totif(images, path, prefix="image", overwrite=False, credentials=None):
 
     from scipy.misc import imsave
     from io import BytesIO
-    from thunder.data.writers import get_parallel_writer
+    from thunder.writers import get_parallel_writer
 
     def tobuffer(kv):
         key, img = kv
@@ -63,7 +63,7 @@ def tobinary(images, path, prefix="image", overwrite=False, credentials=None):
     --------
     thunder.data.images.tobinary
     """
-    from thunder.data.writers import get_parallel_writer
+    from thunder.writers import get_parallel_writer
 
     dims = list(images.dims)
 
@@ -80,7 +80,7 @@ def config(path, dims, dtype='int16', name="conf.json", overwrite=True, credenti
     """
     Helper function to write a JSON file with configuration for binary image data.
     """
-    from thunder.data.writers import get_file_writer
+    from thunder.writers import get_file_writer
 
     writer = get_file_writer(path)
 

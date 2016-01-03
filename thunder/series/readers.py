@@ -1,6 +1,6 @@
 from numpy import array, arange, frombuffer, load, ndarray, asarray, random, maximum, fromstring
 
-from ...utils import check_spark
+from ..utils import check_spark
 from .series import Series
 spark = check_spark()
 
@@ -126,7 +126,7 @@ def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64',
     dtype: dtype or dtype specifier, default 'float64'
         Numerical type to use for data after converting from text.
     """
-    from thunder.data.readers import normalize_scheme, get_parallel_reader
+    from thunder.readers import normalize_scheme, get_parallel_reader
     path = normalize_scheme(path, ext)
 
     if spark and isinstance(engine, spark):
@@ -192,7 +192,7 @@ def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
     """
     params = binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype, credentials)
 
-    from thunder.data.readers import normalize_scheme, get_parallel_reader
+    from thunder.readers import normalize_scheme, get_parallel_reader
     path = normalize_scheme(path, ext)
 
     from numpy import dtype as dtypeFunc
@@ -249,7 +249,7 @@ def binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype, credentials):
     """
     import json
     from collections import namedtuple
-    from thunder.data.readers import get_file_reader, FileNotFoundError
+    from thunder.readers import get_file_reader, FileNotFoundError
 
     Parameters = namedtuple('BinaryLoadParameters', 'nkeys nvalues keytype valuetype')
     Parameters.__new__.__defaults__ = (None, None, 'int16', 'int16')
