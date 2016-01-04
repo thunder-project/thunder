@@ -5,7 +5,20 @@ from ..base import Data
 
 class Images(Data):
     """
-    Collection of images or volumes.
+    Collection of images or volum.es
+
+    Backed by an array-like object, including a numpy array
+    (for local computation) or a bolt array (for spark computation).
+
+    Attributes
+    ----------
+    values : array-like
+        numpy array or bolt array
+
+    See also
+    --------
+    TimeSeries : a Series where the indices represent time
+    Matrix : a Series intended for matrix computation
     """
     _metadata = Data._metadata
 

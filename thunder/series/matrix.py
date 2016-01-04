@@ -5,36 +5,11 @@ from ..series.series import Series
 
 class Matrix(Series):
     """
-    Distributed matrix data.
-
-    Backed by an RDD of key-value pairs where the
-    key is a tuple identifier, and the value is a one-dimensional array.
-
-    Parameters
-    ----------
-    rdd : RDD of (tuple, array) pairs
-        RDD containing the series data
-
-    index : array-like or one-dimensional list
-        Values must be unique, same length as the arrays in the input data.
-        Defaults to arange(len(data)) if not provided.
-
-    dims : Dimensions
-        Specify the dimensions of the keys (min, max, and count),
-        can avoid computation if known in advance
-
-    nrows : int
-        Number of rows, will be automatially computed if not provided,
-        can save computation to specify if known in advance
-
-    ncols : int
-        Number of columns, will be automatically computed if not provided,
-        can save computation to specify if known in advance
+    Collection of rows of a dense matrix.
     """
-    _metadata = Series._metadata + ['ncols', 'nrows']
-
-    def __init__(self, values, index=None, mode='local'):
-        super(Matrix, self).__init__(values, index=index, mode=mode)
+    @property
+    def _constructor(self):
+        return Matrix
 
     @property
     def nrows(self):
@@ -42,11 +17,7 @@ class Matrix(Series):
 
     @property
     def ncols(self):
-        return len(self.index)
-
-    @property
-    def _constructor(self):
-        return Matrix
+        return self.shape[1]
 
     def cov(self, axis=None):
         """

@@ -9,33 +9,24 @@ from ..base import Data
 
 class Series(Data):
     """
-    Distributed collection of 1d array data with axis labels.
+    Collection of 1d array data with axis labels.
 
-    Backed by an RDD of key-value pairs, where the
-    key is a tuple identifier, and the value is a one-dimensional array of floating-point values.
-    It also has a fixed index to represent a label for each value in the arrays.
-    Can optionally store and use the dimensions of the keys (min, max, and count).
+    Backed by an array-like object, including a numpy array
+    (for local computation) or a bolt array (for spark computation).
 
-    Series data will be automatically cast to a floating-point value on loading if its on-disk
-    representation is integer valued.
-
-    Parameters
+    Attributes
     ----------
-
-    rdd : RDD of (tuple, array) pairs
-        RDD containing the series data
+    values : array-like
+        numpy array or bolt array
 
     index : array-like or one-dimensional list
         Values must be unique, same length as the arrays in the input data.
         Defaults to arange(len(data)) if not provided.
 
-    dims : Dimensions
-        Specify the dimensions of the keys (min, max, and count), can
-        avoid computation if known in advance
-
     See also
     --------
     TimeSeries : a Series where the indices represent time
+    Matrix : a Series intended for matrix computation
     """
     _metadata = Data._metadata + ['index']
 

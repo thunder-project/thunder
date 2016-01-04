@@ -7,7 +7,11 @@ from .utils import notsupported
 
 class Base(object):
     """
-    Base methods for data objects in Thunder.
+    Base methods for data objects in thunder.
+
+    Data objects are backed by array-like objects,
+    including numpy arrays (for local computation),
+    and bolt arrays (for spark computation).
 
     Handles construction, metadata, and backend specific methods.
     """

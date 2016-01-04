@@ -7,31 +7,8 @@ from ..series.series import Series
 
 class TimeSeries(Series):
     """
-    Distributed collection of time series data.
-
-    Backed by an RDD of key-value pairs where the key is an identifier
-    and the value is a one-dimensional array. The common index
-    specifies the time of each entry in the array.
-
-    Parameters
-    ----------
-    rdd : RDD of (tuple, array) pairs
-        RDD containing the series data.
-
-    index : array-like
-        Time indices, must be same length as the arrays in the input data.
-        Defaults to arange(len(data)) if not provided.
-
-    dims : Dimensions
-        Specify the dimensions of the keys (min, max, and count), can
-        avoid computation if known in advance.
-
-    See also
-    --------
-    Series : base class for Series data
+    Collection of time series data.
     """
-    # use superclass __init__
-
     @property
     def _constructor(self):
         return TimeSeries
