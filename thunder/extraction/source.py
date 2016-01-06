@@ -631,7 +631,7 @@ class SourceModel(Serializable, object):
             colors = get_cmap('rainbow', ncolors)(range(0, ncolors, 1))[:, 0:3]
             for i in inds:
                 combined = maximum(self.sources[i].mask(dims, binary, outline, colors[i % len(colors)]), combined)
-        else if values is None:
+        elif values is None:
             combined = zeros(dims)
             for i in inds:
                 combined = maximum(self.sources[i].mask(dims, binary, outline), combined)
