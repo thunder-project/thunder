@@ -4,4 +4,5 @@ scikit-learn
 scikit-image
 matplotlib
 boto
+bolt
 checkist
