@@ -636,7 +636,7 @@ class SourceModel(Serializable, object):
             for i in inds:
                 combined = maximum(self.sources[i].mask(dims, binary, outline), combined)
 
-        if color is not None and color != 'random':
+        if color is not None and color != 'random' and values is None:
             combined = Colorize(cmap='indexed', colors=[color]).transform([combined])
 
         if base is not None:
