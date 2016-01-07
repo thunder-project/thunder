@@ -23,6 +23,7 @@ install:
   - conda create --yes -q -n test python=$TRAVIS_PYTHON_VERSION pip numpy scipy scikit-learn scikit-image matplotlib pytest boto
   - source activate test
   - pip install .
+  - pip install -r requirements-dev.txt
   - wget http://d3kbcqa49mib13.cloudfront.net/spark-1.5.2-bin-hadoop2.6.tgz
   - tar -xzf spark-1.5.2-bin-hadoop2.6.tgz
 
