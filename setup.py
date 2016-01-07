@@ -23,6 +23,6 @@ setup(
     ],
     package_data={'thunder.lib': ['thunder_python-' + version + '-py2.7.egg']},
     install_requires=required,
-    extra_requires=extra,
+    extras_require=extra,
     long_description='See https://github.com/thunder-project/thunder'
 )
