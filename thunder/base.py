@@ -18,6 +18,7 @@ class Base(object):
     Handles construction, metadata, and backend specific methods.
     """
     _metadata = ['dtype', 'shape', 'mode']
+    _attributes = []
 
     def __init__(self, values, mode='local'):
         self._values = values
@@ -57,10 +58,10 @@ class Base(object):
             Attributes found in noprop will *not* have their values propagated forward.
         """
         if isinstance(other, Data):
-            for name in self._metadata:
+            for name in self._attributes:
                 if name not in noprop:
                     attr = getattr(other, name, None)
-                    if (attr is not None) and (getattr(self, name, None) is None):
+                    if attr is not None:
                         object.__setattr__(self, name, attr)
         return self
 
@@ -170,7 +171,10 @@ class Data(Base):
     _metadata = Base._metadata
 
     def __getitem__(self, item):
-        return self._values.__getitem__(item)
+        new = self._values.__getitem__(item)
+        # if first index is a singleton, return a local array
+        # if all remaining indices are singleton, for series, set index
+        return self._constructor(new).__finalize__(self, noprop=('index'))
 
     def astype(self, dtype, casting='unsafe'):
         """
@@ -346,11 +350,11 @@ class Data(Base):
             linearized_shape_inv = key_shape + expand
             reordered = mapped.reshape(*linearized_shape_inv)
 
-            return self._constructor(reordered, mode=self.mode).__finalize__(self)
+            return self._constructor(reordered, mode=self.mode).__finalize__(self, noprop=('index'))
 
         if self.mode == 'spark':
             mapped = self.values.map(func, axis, value_shape)
-            return self._constructor(mapped, mode=self.mode).__finalize__(self)
+            return self._constructor(mapped, mode=self.mode).__finalize__(self, noprop=('index'))
 
     def _reduce(self, func, axis=0):
         """
@@ -385,7 +389,7 @@ class Data(Base):
             # ensure that the shape of the reduced array is valid
             expected_shape = [self.shape[i] for i in range(len(self.shape)) if i not in axes]
             if new_array.shape != tuple(expected_shape):
-                raise ValueError("reduce did not yield a BoltArray with valid dimensions")
+                raise ValueError("reduce did not yield an array with valid dimensions")
 
             return self._constructor(new_array).__finalize__(self)
 

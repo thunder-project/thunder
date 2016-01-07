@@ -29,7 +29,8 @@ class Series(Data):
     TimeSeries : a Series where the indices represent time
     Matrix : a Series intended for matrix computation
     """
-    _metadata = Data._metadata + ['index']
+    _metadata = Data._metadata
+    _attributes = Data._attributes + ['index']
 
     def __init__(self, values, index=None, mode='local'):
         super(Series, self).__init__(values, mode=mode)
