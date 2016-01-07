@@ -49,3 +49,11 @@ def connection_with_anon(credentials, anon=True):
             return conn
         else:
             raise
+
+def connection_with_gs(name):
+    """
+    Connect to GS
+    """
+    import boto
+    conn = boto.storage_uri(name, 'gs')
+    return conn

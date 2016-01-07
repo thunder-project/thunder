@@ -6,11 +6,11 @@ import os
 import urllib
 import urlparse
 import logging
-import boto
 
-from .utils import check_spark, connection_with_anon
-logging.getLogger('boto').setLevel(logging.CRITICAL)
+from .utils import check_spark
 spark = check_spark()
+logging.getLogger('boto').setLevel(logging.CRITICAL)
+
 
 def addextension(path, ext=None):
     """
@@ -316,6 +316,8 @@ class BotoParallelReader(BotoClient):
         """
         Get scheme, bucket, and keys for a set of files
         """
+        from .utils import connection_with_anon, connection_with_gs
+
         parse = BotoClient.parse_query(path)
 
         scheme = parse[0]
@@ -325,7 +327,7 @@ class BotoParallelReader(BotoClient):
             conn = connection_with_anon(self.credentials)
             bucket = conn.get_bucket(parse[1])
         elif scheme == 'gs':
-            conn = boto.storage_uri(bucket_name, 'gs')
+            conn = connection_with_gs(bucket_name)
             bucket = conn.get_bucket()
         else:
             raise NotImplementedError("No file reader implementation for URL scheme " + scheme)
@@ -355,6 +357,8 @@ class BotoParallelReader(BotoClient):
 
         Returns RDD of <string bucket keyname, string buffer> k/v pairs.
         """
+        from .utils import connection_with_anon, connection_with_gs
+
         path = addextension(path, ext)
         scheme, bucket_name, keylist = self.getfiles(
             path, start=start, stop=stop, recursive=recursive)
@@ -394,7 +398,7 @@ class BotoParallelReader(BotoClient):
                 conn = connection_with_anon(credentials)
                 bucket = conn.get_bucket(bucket_name)
             elif scheme == 'gs':
-                conn = boto.storage_uri(bucket_name, 'gs')
+                conn = connection_with_gs(bucket_name)
                 bucket = conn.get_bucket()
             else:
                 raise NotImplementedError("No file reader implementation for URL scheme " + scheme)
@@ -416,6 +420,8 @@ class BotoFileReader(BotoClient):
         """
         Get matching keys for a path
         """
+        from .utils import connection_with_anon, connection_with_gs
+
         parse = BotoClient.parse_query(path)
 
         scheme = parse[0]
@@ -426,7 +432,7 @@ class BotoFileReader(BotoClient):
             conn = connection_with_anon(self.credentials)
             bucket = conn.get_bucket(bucket_name)
         elif scheme == 'gs':
-            conn = boto.storage_uri(bucket_name, 'gs')
+            conn = connection_with_gs(bucket_name)
             bucket = conn.get_bucket()
         else:
             raise NotImplementedError("No file reader implementation for URL scheme " + scheme)

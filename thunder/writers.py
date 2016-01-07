@@ -2,10 +2,8 @@ import os
 import shutil
 import urllib
 import urlparse
-import boto
 
 from thunder.readers import BotoClient, get_by_scheme
-from thunder.utils import connection_with_anon
 
 
 class LocalParallelWriter(object):
@@ -48,6 +46,8 @@ class BotoWriter(BotoClient):
         """
         Set up a boto connection.
         """
+        from .utils import connection_with_anon, connection_with_gs
+
         parsed = BotoClient.parse_query(path)
 
         scheme = parsed[0]
@@ -58,7 +58,7 @@ class BotoWriter(BotoClient):
             conn = connection_with_anon(self.credentials)
             bucket = conn.get_bucket(bucket_name)
         elif scheme == 'gs':
-            conn = boto.storage_uri(bucket_name, 'gs')
+            conn = connection_with_gs(bucket_name)
             bucket = conn.get_bucket()
         else:
             raise NotImplementedError("No file reader implementation for URL scheme " + scheme)
