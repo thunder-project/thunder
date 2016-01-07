@@ -1,2 +1,2 @@
 pytest
-station
+station >= 2.0.0
