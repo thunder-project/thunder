@@ -1,7 +1,8 @@
 from itertools import product
 from numpy import array, sum, mean, median, std, size, arange, percentile,\
     asarray, zeros, corrcoef, where, unique, array_equal, delete, \
-    ravel, logical_not, max, min, unravel_index, prod, random
+    ravel, logical_not, max, min, unravel_index, prod, random, shape, \
+    dot, outer, expand_dims, ScalarType, ndarray
 from bolt.utils import tupleize
 
 from ..base import Data
@@ -729,12 +730,92 @@ class Series(Data):
         """
         return self.stat_by_index(level=level, stat='count')
 
-    def tomatrix(self):
+    def cov(self):
         """
-        Convert Series to Matrix, a subclass with methods for matrix computations.
+        Compute covariance of a distributed matrix.
+
+        Parameters
+        ----------
+        axis : int, optional, default = None
+            Axis for performing mean subtraction, None (no subtraction), 0 (rows) or 1 (columns)
         """
-        from thunder.series.matrix import Matrix
-        return Matrix(self.values, index=self.index)
+        return self.center(axis=0).gramian().times(1.0 / (self.shape[0] - 1))
+
+    def gramian(self):
+        """
+        Compute gramian of a distributed matrix.
+
+        The gramian is defined as the product of the matrix
+        with its transpose, i.e. A^T * A.
+        """
+        if self.mode == 'spark':
+            rdd = self.values.tordd()
+
+            from pyspark.accumulators import AccumulatorParam
+
+            class MatrixAccumulator(AccumulatorParam):
+                def zero(self, value):
+                    return zeros(shape(value))
+
+                def addInPlace(self, val1, val2):
+                    val1 += val2
+                    return val1
+
+            global mat
+            init = zeros((self.shape[1], self.shape[1]))
+            mat = rdd.context.accumulator(init, MatrixAccumulator())
+
+            def outer_sum(x):
+                global mat
+                mat += outer(x, x)
+
+            rdd.map(lambda (k, v): v).foreach(outer_sum)
+            return self._constructor(mat.value, index=self.index)
+
+        if self.mode == 'local':
+            return self._constructor(dot(self.values.T, self.values), index=self.index)
+
+    def times(self, other):
+        """
+        Multiply a matrix by another one.
+
+        Other matrix must be a numpy array, a scalar,
+        or another matrix in local mode.
+
+        Parameters
+        ----------
+        other : Matrix, scalar, or numpy array
+            A matrix to multiply with
+        """
+        if isinstance(other, ScalarType):
+            other = asarray(other)
+            index = self.index
+        else:
+            if isinstance(other, list):
+                other = asarray(other)
+            if isinstance(other, ndarray) and other.ndim < 2:
+                other = expand_dims(other, 1)
+            if not self.shape[1] == other.shape[0]:
+                raise ValueError('shapes %s and %s are not aligned' % (self.shape, other.shape))
+            index = arange(other.shape[1])
+
+        if self.mode == 'local' and isinstance(other, Series) and other.mode == 'spark':
+            raise NotImplementedError
+
+        if self.mode == 'spark' and isinstance(other, Series) and other.mode == 'spark':
+            raise NotImplementedError
+
+        if self.mode == 'local' and isinstance(other, (ndarray, ScalarType)):
+            return self._constructor(dot(self.values, other), index=index)
+
+        if self.mode == 'local' and isinstance(other, Series):
+            return self._constructor(dot(self.values, other.values), index=index)
+
+        if self.mode == 'spark' and isinstance(other, (ndarray, ScalarType)):
+            return self.map(lambda x: dot(x, other), index=index)
+
+        if self.mode == 'spark' and isinstance(other, Series):
+            return self.map(lambda x: dot(x, other.values), index=index)
 
     def totimeseries(self):
         """

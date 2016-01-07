@@ -1,19 +1,10 @@
 import pytest
-from numpy import allclose, arange, array
+from numpy import allclose, arange, array, asarray, dot, cov
 
 from thunder.series.readers import fromlist
-from thunder.series.matrix import Matrix
 from thunder.series.timeseries import TimeSeries
 
 pytestmark = pytest.mark.usefixtures("eng")
-
-
-def test_tomatrix(eng):
-    data = fromlist([array([4, 5, 6, 7]), array([8, 9, 10, 11])], engine=eng)
-    mat = data.tomatrix()
-    assert isinstance(mat, Matrix)
-    assert mat.nrows == 2
-    assert mat.ncols == 4
 
 
 def test_totimeseries(eng):
@@ -258,3 +249,59 @@ def test_mean_by_panel(eng):
     test2 = data.mean_by_panel(2)
     assert allclose(test2.index, array([0, 1]))
     assert allclose(test2.toarray(), [[3, 4]])
+
+
+def test_times_array(eng):
+    mat1raw = asarray([[1, 2, 3], [4, 5, 6]])
+    mat2 = asarray([[7, 8], [9, 10], [11, 12]])
+    mat1 = fromlist(mat1raw, engine=eng)
+    truth = dot(mat1raw, mat2)
+    result = mat1.times(mat2)
+    assert allclose(result.toarray(), truth)
+    assert allclose(result.index, range(0, 2))
+
+
+def test_times_array_alt(eng):
+    mat1raw = asarray([[1, 2, 3], [4, 5, 6]])
+    mat2 = asarray([[7, 8, 7, 8], [9, 10, 9, 10], [11, 12, 11, 12]])
+    mat1 = fromlist(mat1raw, engine=eng)
+    truth = dot(mat1raw, mat2)
+    result = mat1.times(mat2)
+    assert allclose(result.toarray(), truth)
+    assert allclose(result.index, range(0, 4))
+
+
+def test_times_vector(eng):
+    mat1raw = asarray([[1, 2, 3], [4, 5, 6]])
+    mat2 = [7, 8, 9]
+    mat1 = fromlist(mat1raw, engine=eng)
+    truth = dot(mat1raw, mat2)
+    result = mat1.times(mat2)
+    assert allclose(result.toarray(), truth)
+    assert allclose(result.index, [0])
+
+
+def test_times_scalar(eng):
+    mat1raw = asarray([[1, 2, 3], [4, 5, 6]])
+    mat2 = 5
+    mat1 = fromlist(mat1raw, engine=eng)
+    truth = mat1raw * mat2
+    result = mat1.times(mat2)
+    assert allclose(result.toarray(), truth)
+    assert allclose(result.index, range(0, 3))
+
+
+def test_gramian(eng):
+    mat1raw = asarray([[1, 2, 3], [4, 5, 6]])
+    mat1 = fromlist(mat1raw, engine=eng)
+    result = mat1.gramian()
+    truth = dot(mat1raw.T, mat1raw)
+    assert allclose(result.toarray(), truth)
+
+
+def test_cov(eng):
+    mat1raw = asarray([[1, 2, 3], [4, 5, 6]])
+    mat1 = fromlist(mat1raw, engine=eng)
+    result = mat1.cov()
+    truth = cov(mat1raw.T)
+    assert allclose(result.toarray(), truth)

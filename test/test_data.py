@@ -1,5 +1,5 @@
 import pytest
-from numpy import allclose, array
+from numpy import allclose, array, asarray, add
 
 from thunder import series, images
 
@@ -28,3 +28,25 @@ def test_toarray(eng):
     original = [array([[1, 2], [3, 4]]), array([[5, 6], [7, 8]])]
     data = images.fromlist(original, engine=eng)
     assert allclose(data.toarray(), original)
+
+
+def test_elementwise(eng):
+    mat1raw = asarray([[1, 2, 3], [4, 5, 6]])
+    mat2raw = asarray([[7, 8, 9], [10, 11, 12]])
+    mat1 = series.fromlist(mat1raw, engine=eng)
+    mat2 = series.fromlist(mat2raw, engine=eng)
+    result = mat1.element_wise(mat2, add)
+    truth = mat1raw + mat2raw
+    assert allclose(result.toarray(), truth)
+    assert allclose(result.index, range(3))
+
+
+def test_elementwise_plus(eng):
+    mat1raw = asarray([[1, 2, 3], [4, 5, 6]])
+    mat2raw = asarray([[7, 8, 9], [10, 11, 12]])
+    mat1 = series.fromlist(mat1raw, engine=eng)
+    mat2 = series.fromlist(mat2raw, engine=eng)
+    result = mat1.plus(mat2)
+    truth = mat1raw + mat2raw
+    assert allclose(result.toarray(), truth)
+    assert allclose(result.index, range(3))

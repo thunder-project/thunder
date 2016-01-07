@@ -1,7 +1,9 @@
-from numpy import asarray, ndarray, prod, ufunc
+from numpy import asarray, ndarray, prod, ufunc, ScalarType, add, subtract, multiply, divide
 from bolt.utils import inshape, tupleize
 from bolt.base import BoltArray
+from bolt.spark.array import BoltArraySpark
 from bolt.spark.chunk import ChunkedArray
+
 
 from .utils import notsupported
 
@@ -390,3 +392,76 @@ class Data(Base):
         if self.mode == 'spark':
             reduced = self.values.reduce(func, axis)
             return self._constructor(reduced).__finalize__(self)
+
+    def element_wise(self, other, op):
+        """
+        Apply an elementwise operation to data.
+
+        Both self and other data must have the same mode.
+        If self is in local mode, other can also be a numpy array.
+
+        Parameters
+        ----------
+        other : Data or numpy array
+           Data to apply elementwise operation to
+
+        op : function
+            Binary operator to use for elementwise operations, e.g. add, subtract
+        """
+        if not self.shape == other.shape:
+            raise ValueError("shapes %s and %s must be equal" % (self.shape, other.shape))
+
+        if isinstance(other, Data) and not self.mode == other.mode:
+            raise NotImplementedError
+
+        if self.mode == 'local' and isinstance(other, (ndarray, ScalarType)):
+            return self._constructor(op(self.values, other)).__finalize__(self)
+
+        if self.mode == 'local' and isinstance(other, Data):
+            return self._constructor(op(self.values, other.values)).__finalize__(self)
+
+        if self.mode == 'spark' and isinstance(other, Data):
+            func = lambda ((k1, x), (k2, y)): (k1, op(x, y))
+            rdd = self.tordd().zip(other.tordd()).map(func)
+            barray = BoltArraySpark(rdd, shape=self.shape, dtype=self.dtype)
+            return self._constructor(barray).__finalize__(self)
+
+    def plus(self, other):
+        """
+        Elementwise addition.
+
+        See also
+        --------
+        elementwise
+        """
+        return Data.element_wise(self, other, add)
+
+    def minus(self, other):
+        """
+        Elementwise subtraction.
+
+        See also
+        --------
+        elementwise
+        """
+        return Data.element_wise(self, other, subtract)
+
+    def dottimes(self, other):
+        """
+        Elementwise multiplication.
+
+        See also
+        --------
+        elementwise
+        """
+        return Data.element_wise(self, other, multiply)
+
+    def dotdivide(self, other):
+        """
+        Elementwise divison.
+
+        See also
+        --------
+        elementwise
+        """
+        return Data.element_wise(self, other, divide)
