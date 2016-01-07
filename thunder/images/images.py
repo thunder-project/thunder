@@ -346,7 +346,7 @@ class Images(Data):
         ndims = len(dims)
 
         if ndims == 3 and size(sigma) == 1:
-            sigma = [sigma, sigma, 0]
+            sigma = [sigma, sigma, sigma]
 
         return self.map(lambda v: gaussian_filter(v, sigma, order), dims=self.dims)
 
@@ -403,16 +403,24 @@ class Images(Data):
 
         func = FILTERS[filter]
 
+        mode = self.mode
         dims = self.dims
         ndims = len(dims)
 
         if ndims == 3 and isscalar(size) == 1:
+            size = [size, size, size]
+
+        if ndims == 3 and size[2] == 0:
             def filter_(im):
-                im.setflags(write=True)
+                if mode == 'spark':
+                    im.setflags(write=True)
+                else:
+                    im = im.copy()
                 for z in arange(0, dims[2]):
-                    im[:, :, z] = func(im[:, :, z], size)
+                    im[:, :, z] = func(im[:, :, z], size[0:2])
                 return im
         else:
+            print(self.values[0])
             filter_ = lambda x: func(x, size)
 
         return self.map(lambda v: filter_(v), dims=self.dims)

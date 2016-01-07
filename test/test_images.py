@@ -82,6 +82,17 @@ def test_median_filter_3d(eng):
     data = fromlist([arange(24).reshape((2, 3, 4))], engine=eng)
     assert data.median_filter(2).toarray().shape == (2, 3, 4)
     assert data.median_filter([2, 2, 2]).toarray().shape == (2, 3, 4)
+    assert data.median_filter([2, 2, 0]).toarray().shape == (2, 3, 4)
+    assert allclose(data.median_filter(2).toarray(), data.median_filter([2, 2, 2]).toarray())
+
+
+def test_median_filter_3d_empty(eng):
+    data = fromlist([arange(24).reshape((2, 3, 4))], engine=eng)
+    test1 = data.median_filter([2, 2, 0])[:, :, :, 0].toarray()
+    test2 = data[:, :, :, 0].median_filter([2, 2]).toarray()
+    assert test1.shape == (2, 3)
+    assert test2.shape == (2, 3)
+    assert allclose(test1, test2)
 
 
 def test_gaussian_filter_2d(eng):
@@ -95,6 +106,8 @@ def test_gaussian_filter_3d(eng):
     data = fromlist([arange(24).reshape((2, 3, 4))], engine=eng)
     assert data.gaussian_filter(2).toarray().shape == (2, 3, 4)
     assert data.gaussian_filter([2, 2, 2]).toarray().shape == (2, 3, 4)
+    assert data.gaussian_filter([2, 2, 0]).toarray().shape == (2, 3, 4)
+    assert allclose(data.gaussian_filter(2).toarray(), data.gaussian_filter([2, 2, 2]).toarray())
 
 
 def test_uniform_filter_2d(eng):
@@ -108,6 +121,8 @@ def test_uniform_filter_3d(eng):
     data = fromlist([arange(24).reshape((2, 3, 4))], engine=eng)
     assert data.uniform_filter(2).toarray().shape == (2, 3, 4)
     assert data.uniform_filter([2, 2, 2]).toarray().shape == (2, 3, 4)
+    assert data.uniform_filter([2, 2, 0]).toarray().shape == (2, 3, 4)
+    assert allclose(data.uniform_filter(2).toarray(), data.uniform_filter([2, 2, 2]).toarray())
 
 
 def test_mean(eng):
