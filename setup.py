@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-version = "0.6.0.dev"
+version = "0.6.0"
 
 setup(
     name='thunder-python',
@@ -19,6 +19,7 @@ setup(
               'thunder.extraction.feature',
               'thunder.extraction.block.methods',
               'thunder.extraction.feature.methods',
+              'thunder.lib',
               'thunder.registration',
               'thunder.registration.methods',
               'thunder.rdds',
