@@ -106,6 +106,17 @@ def test_correlate(eng):
     assert allclose(corrs, [1, -1])
 
 
+def test_correlate_multiindex(eng):
+    index = [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]
+    data = fromlist([array([1, 2, 3, 4, 5])], index=asarray(index), engine=eng)
+    sig = [4, 5, 6, 7, 8]
+    corr = data.correlate(sig).toarray()
+    assert allclose(corr, 1)
+    sigs = [[4, 5, 6, 7, 8], [8, 7, 6, 5, 4]]
+    corrs = data.correlate(sigs).toarray()
+    assert allclose(corrs, [1, -1])
+
+
 def test_mean(eng):
     data = fromlist([arange(8), arange(8)], engine=eng)
     val = data.mean().toarray()

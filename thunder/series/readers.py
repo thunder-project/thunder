@@ -39,7 +39,7 @@ def fromrdd(rdd, nrecords=None, shape=None, index=None, dtype=None):
         nrecords = rdd.count()
 
     if shape is None:
-        shape = (nrecords, len(index))
+        shape = (nrecords, asarray(index).shape[-1])
 
     values = BoltArraySpark(rdd, shape=shape, dtype=dtype, split=1)
     return frombolt(values, index=index)

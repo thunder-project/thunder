@@ -363,13 +363,13 @@ class Series(Data):
         s = asarray(signal)
 
         if s.ndim == 1:
-            if size(s) != size(self.index):
+            if size(s) != self.shape[1]:
                 raise ValueError('Size of signal `%g` does not match size of data' % size(s))
 
             return self.map(lambda x: corrcoef(x, s)[0, 1], index=[1])
 
         elif s.ndim == 2:
-            if s.shape[1] != size(self.index):
+            if s.shape[1] != self.shape[1]:
                 raise ValueError('Length of signal `%g` does not match size of data' % s.shape[1])
             newindex = arange(0, s.shape[0])
             return self.map(lambda x: array([corrcoef(x, y)[0, 1] for y in s]), index=newindex)
