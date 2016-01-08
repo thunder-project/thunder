@@ -350,25 +350,17 @@ class Series(Data):
         func = lambda x: zeros(x.shape) if max(x) < threshold else x
         return self.map(func)
 
-    def correlate(self, signal, var='s'):
+    def correlate(self, signal):
         """
-        Correlate series data against one or many one-dimensional arrays
+        Correlate series data against one or many one-dimensional arrays.
 
         Parameters
         ----------
         signal : array, or str
             Signal(s) to correlate against, can be a numpy array or a
             MAT file containing the signal as a variable
-
-        var : str
-            Variable name if loading from a MAT file
         """
-        from scipy.io import loadmat
-
-        if type(signal) is str:
-            s = loadmat(signal)[var]
-        else:
-            s = asarray(signal)
+        s = asarray(signal)
 
         if s.ndim == 1:
             if size(s) != size(self.index):
