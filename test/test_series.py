@@ -117,6 +117,12 @@ def test_correlate_multiindex(eng):
     assert allclose(corrs, [1, -1])
 
 
+def test_clip(eng):
+    data = fromlist([array([1, 2, 3, 4, 5])], engine=eng)
+    assert allclose(data.clip(2).toarray(), [2, 2, 3, 4, 5])
+    assert allclose(data.clip(2, 3).toarray(), [2, 2, 3, 3, 3])
+
+
 def test_mean(eng):
     data = fromlist([arange(8), arange(8)], engine=eng)
     val = data.mean().toarray()

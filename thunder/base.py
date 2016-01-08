@@ -473,4 +473,19 @@ class Data(Base):
         --------
         elementwise
         """
-        return Data.element_wise(self, other, divide)
+        return self.element_wise(other, divide)
+
+    def clip(self, min=None, max=None):
+        """
+        Clip values above and below.
+
+        Parameters
+        ----------
+        min : scalar or array-like
+            Minimum value. If array, will be broadcasted
+
+        max : scalar or array-like
+            Maximum value. If array, will be broadcasted.
+        """
+        return self._constructor(
+            self.values.clip(min=min, max=max)).__finalize__(self)
