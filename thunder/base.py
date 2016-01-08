@@ -443,7 +443,7 @@ class Data(Base):
         --------
         elementwise
         """
-        return Data.element_wise(self, other, add)
+        return self.element_wise(other, add)
 
     def minus(self, other):
         """
@@ -453,7 +453,7 @@ class Data(Base):
         --------
         elementwise
         """
-        return Data.element_wise(self, other, subtract)
+        return self.element_wise(other, subtract)
 
     def dottimes(self, other):
         """
@@ -463,7 +463,7 @@ class Data(Base):
         --------
         elementwise
         """
-        return Data.element_wise(self, other, multiply)
+        return self.element_wise(other, multiply)
 
     def dotdivide(self, other):
         """
