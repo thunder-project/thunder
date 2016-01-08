@@ -78,6 +78,6 @@ Contributions
 -------------
 Thunder is a community effort, and thus far features contributions from the following individuals:
 
-Andrew Osheroff, Ben Poole, Chris Stock, Davis Bennett, Jascha Swisher, Jason Wittenbach, Jeremy Freeman, Josh Rosen, Kunal Lillaney, Logan Grosenick, Matt Conlen, Michael Broxton, Noah Young, Ognen Duzlevski, Richard Hofer, Owen Kahn, Ted Fujimoto, Tom Sainsbury, Uri Laseron
+Andrew Giessel, Andrew Osheroff, Baldwin Raymond, Ben Poole, Chris Stock, Davis Bennett, Jascha Swisher, Jason Wittenbach, Jeremy Freeman, Josh Rosen, Kunal Lillaney, Logan Grosenick, Matt Conlen, Michael Broxton, Noah Young, Ognen Duzlevski, Owen Kahn, Richard Hofer, Owen Kahn, Ted Fujimoto, Tom Sainsbury, Uri Laseron
 
 If you have ideas or want to contribute, submit an issue or pull request, or reach out to us on [gitter](https://gitter.im/thunder-project/thunder), [twitter](https://twitter.com/thefreemanlab), or the [mailing list](https://groups.google.com/forum/?hl=en#!forum/thunder-user).
