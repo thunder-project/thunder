@@ -41,6 +41,15 @@ def test_elementwise(eng):
     assert allclose(result.index, range(3))
 
 
+def test_elementwise_scalar(eng):
+    matraw = asarray([[1, 2, 3], [4, 5, 6]])
+    mat = series.fromlist(matraw, engine=eng)
+    result = mat.element_wise(2, add)
+    truth = matraw + 2
+    assert allclose(result.toarray(), truth)
+    assert allclose(result.index, range(3))
+
+
 def test_elementwise_plus(eng):
     mat1raw = asarray([[1, 2, 3], [4, 5, 6]])
     mat2raw = asarray([[7, 8, 9], [10, 11, 12]])

@@ -1,4 +1,5 @@
-from numpy import asarray, ndarray, prod, ufunc, ScalarType, add, subtract, multiply, divide
+from numpy import asarray, ndarray, prod, ufunc, ScalarType, add, subtract, \
+    multiply, divide, isscalar
 from bolt.utils import inshape, tupleize
 from bolt.base import BoltArray
 from bolt.spark.array import BoltArraySpark
@@ -403,6 +404,7 @@ class Data(Base):
 
         Both self and other data must have the same mode.
         If self is in local mode, other can also be a numpy array.
+        Self and other must have the same shape, or other must be a scalar.
 
         Parameters
         ----------
@@ -412,13 +414,16 @@ class Data(Base):
         op : function
             Binary operator to use for elementwise operations, e.g. add, subtract
         """
-        if not self.shape == other.shape:
+        if not isscalar(other) and not self.shape == other.shape:
             raise ValueError("shapes %s and %s must be equal" % (self.shape, other.shape))
 
-        if isinstance(other, Data) and not self.mode == other.mode:
+        if not isscalar(other) and isinstance(other, Data) and not self.mode == other.mode:
             raise NotImplementedError
 
-        if self.mode == 'local' and isinstance(other, (ndarray, ScalarType)):
+        if isscalar(other):
+            return self.map(lambda x: op(x, other))
+
+        if self.mode == 'local' and isinstance(other, ndarray):
             return self._constructor(op(self.values, other)).__finalize__(self)
 
         if self.mode == 'local' and isinstance(other, Data):
