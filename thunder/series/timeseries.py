@@ -212,7 +212,7 @@ class TimeSeries(Series):
                 order = 5
 
         def func(y):
-            x = arange(1, len(y)+1)
+            x = arange(len(y))
             p = polyfit(x, y, order)
             p[-1] = 0
             yy = polyval(p, x)
@@ -220,7 +220,7 @@ class TimeSeries(Series):
 
         return self.map(func)
 
-    def normalize(self, method='percentile', window=None, perc=20):
+    def normalize(self, method='percentile', window=None, perc=20, offset=0.1):
         """
         Normalize each time series by subtracting and dividing by a baseline.
 
@@ -230,13 +230,19 @@ class TimeSeries(Series):
         Parameters
         ----------
         baseline : str, optional, default = 'percentile'
-            Quantity to use as the baseline, options are 'mean', 'percentile', 'window', or 'window-exact'
+            Quantity to use as the baseline, options are 'mean', 'percentile',
+            'window', or 'window-exact'.
 
         window : int, optional, default = 6
-            Size of window for baseline estimation, for 'window' and 'window-exact' baseline only
+            Size of window for baseline estimation,
+            for 'window' and 'window-exact' baseline only.
 
         perc : int, optional, default = 20
-            Percentile value to use, for 'percentile', 'window', or 'window-exact' baseline only
+            Percentile value to use, for 'percentile',
+            'window', or 'window-exact' baseline only.
+
+        offset : float, optional, default = 0.1
+             Scalar added to baseline during division to avoid division by 0.
         """
         checkist.opts(method, ['mean', 'percentile', 'window', 'window-exact'])
     
@@ -266,6 +272,6 @@ class TimeSeries(Series):
 
         def get(y):
             b = baseFunc(y)
-            return (y - b) / (b + 0.1)
+            return (y - b) / (b + offset)
 
         return self.map(get)

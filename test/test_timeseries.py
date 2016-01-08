@@ -33,7 +33,7 @@ def test_crosscorr(eng):
 def test_detrend(eng):
     data = fromlist([array([1, 2, 3, 4, 5])], engine=eng).totimeseries()
     out = data.detrend('linear')
-    assert allclose(out.toarray(), array([0, 0, 0, 0, 0]))
+    assert(allclose(out.toarray(), array([1, 1, 1, 1, 1])))
 
 
 def test_normalize_percentile(eng):
