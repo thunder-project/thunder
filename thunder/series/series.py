@@ -364,13 +364,15 @@ class Series(Data):
 
         if s.ndim == 1:
             if size(s) != self.shape[1]:
-                raise ValueError('Size of signal `%g` does not match size of data' % size(s))
+                raise ValueError("Length of signal '%g' does not match record length '%g'"
+                                 % (size(s), self.shape[1]))
 
             return self.map(lambda x: corrcoef(x, s)[0, 1], index=[1])
 
         elif s.ndim == 2:
             if s.shape[1] != self.shape[1]:
-                raise ValueError('Length of signal `%g` does not match size of data' % s.shape[1])
+                raise ValueError("Length of signal '%g' does not match record length '%g'"
+                                 % (s.shape[1], self.shape[1]))
             newindex = arange(0, s.shape[0])
             return self.map(lambda x: array([corrcoef(x, y)[0, 1] for y in s]), index=newindex)
 
@@ -454,7 +456,7 @@ class Series(Data):
 
     def _check_panel(self, length):
         """
-        Check that given fixed panel length evenly divides index
+        Check that given fixed panel length evenly divides index.
 
         Parameters
         ----------
@@ -471,16 +473,20 @@ class Series(Data):
 
     def mean_by_panel(self, length):
         """
-        Compute the mean across fixed sized panels of each record
+        Compute the mean across fixed sized panels of each record.
+
+        Splits each record into panels of size `length`,
+        and then computes the mean across panels.
+        Panel length must subdivide record exactly.
 
         Parameters
         ----------
         length : int
-            Fixed length with which to subdivide
+            Fixed length with which to subdivide.
         """
         self._check_panel(length)
         func = lambda v: v.reshape(-1, length).mean(axis=0)
-        newindex = arange(0, length)
+        newindex = arange(length)
         return self.map(func, index=newindex)
 
     def _makemasks(self, index=None, level=0):

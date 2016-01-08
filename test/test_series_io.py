@@ -18,9 +18,18 @@ def test_from_array(eng):
     assert allclose(data.toarray(), a)
 
 
-def test_from_array_index(eng):
+def test_from_array_vector(eng):
     a = arange(8, dtype='int16').reshape((4, 2))
-    data = fromarray(a, index=[2, 3], engine=eng)
+    data = fromarray(a, engine=eng)
+    assert data.shape == (4, 2)
+    assert data.dtype == 'int16'
+    assert allclose(data.index, [0, 1])
+    assert allclose(data.toarray(), a)
+
+
+def test_from_array_index():
+    a = arange(8, dtype='int16').reshape((4, 2))
+    data = fromarray(a, index=[2, 3])
     assert allclose(data.index, [2, 3])
 
 

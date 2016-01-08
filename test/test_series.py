@@ -108,7 +108,7 @@ def test_correlate(eng):
 
 def test_correlate_multiindex(eng):
     index = [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]
-    data = fromlist([array([1, 2, 3, 4, 5])], index=asarray(index), engine=eng)
+    data = fromlist([array([1, 2, 3, 4, 5])], index=asarray(index).T, engine=eng)
     sig = [4, 5, 6, 7, 8]
     corr = data.correlate(sig).toarray()
     assert allclose(corr, 1)

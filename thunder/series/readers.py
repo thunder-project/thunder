@@ -1,28 +1,18 @@
-from numpy import array, arange, frombuffer, load, ndarray, asarray, random, maximum, fromstring
+from numpy import array, arange, frombuffer, load, asarray, random, maximum, \
+    fromstring, expand_dims
 
 from ..utils import check_spark
 from .series import Series
 spark = check_spark()
 
 
-def frombolt(values, index=None):
-    """
-    Load Series object from a bolt array.
-    """
-    return Series(values, index=index, mode='spark')
-
-def fromlocal(values, index=None):
-    """
-    Load Series object from a local numpy array.
-    """
-    values = asarray(values)
-    if index is None:
-        index = range(values.shape[-1])
-    return Series(asarray(values), index=index, mode='local')
-
 def fromrdd(rdd, nrecords=None, shape=None, index=None, dtype=None):
     """
     Load Series object from a Spark RDD
+
+    Assumes keys are tuples with increasing and unique indices,
+    and values are 1d ndarrays. Will try to infer properties
+    that are not explicitly provided.
     """
     from bolt.spark.array import BoltArraySpark
 
@@ -39,10 +29,36 @@ def fromrdd(rdd, nrecords=None, shape=None, index=None, dtype=None):
         nrecords = rdd.count()
 
     if shape is None:
-        shape = (nrecords, asarray(index).shape[-1])
+        shape = (nrecords, asarray(index).shape[0])
 
     values = BoltArraySpark(rdd, shape=shape, dtype=dtype, split=1)
-    return frombolt(values, index=index)
+    return Series(values, index=index)
+
+def fromarray(values, index=None, npartitions=None, engine=None):
+    """
+    Load Series object from a local numpy array.
+
+    Final dimension will be used for the index.
+    """
+    import bolt
+
+    values = asarray(values)
+
+    if values.ndim < 2:
+        values = expand_dims(values, 0)
+
+    if index is not None and not asarray(index).shape[0] == values.shape[-1]:
+        raise ValueError('Index length %s not equal to record length %s'
+                         % (asarray(index).shape[0], values.shape[-1]))
+    if index is None:
+        index = arange(values.shape[-1])
+
+    if spark and isinstance(engine, spark):
+        axis = tuple(range(values.ndim - 1))
+        values = bolt.array(values, context=engine, npartitions=npartitions, axis=axis)
+        return Series(values, index=index)
+
+    return Series(values, index=index)
 
 def fromlist(items, accessor=None, npartitions=None, index=None, dtype=None, engine=None):
     """
@@ -64,29 +80,7 @@ def fromlist(items, accessor=None, npartitions=None, index=None, dtype=None, eng
     else:
         if accessor:
             items = [accessor(i) for i in items]
-        return fromlocal(items, index=index)
-
-def fromarray(arrays, npartitions=None, index=None, engine=None):
-    """
-    Create a Series object from a sequence of 1d numpy arrays.
-    """
-    if isinstance(arrays, list):
-        arrays = asarray(arrays)
-
-    if isinstance(arrays, ndarray) and arrays.ndim > 1:
-        arrays = list(arrays)
-
-    shape = arrays[0].shape
-    dtype = arrays[0].dtype
-    for ary in arrays:
-        if not ary.shape == shape:
-            raise ValueError("Inconsistent array shapes: first array had shape %s, "
-                             "but other array has shape %s" % (str(shape), str(ary.shape)))
-        if not ary.dtype == dtype:
-            raise ValueError("Inconsistent array dtypes: first array had dtype %s, "
-                             "but other array has dtype %s" % (str(dtype), str(ary.dtype)))
-
-    return fromlist(arrays, npartitions=npartitions, dtype=str(dtype), index=index, engine=engine)
+        return fromarray(items, index=index)
 
 def frommat(path, var, npartitions=None, index=None, engine=None):
     """
@@ -157,7 +151,7 @@ def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64',
             nvalues = values.shape[-1] - nkeys
             values = values[:, nkeys:].reshape(basedims + (nvalues,))
 
-        return fromlocal(values)
+        return fromarray(values)
 
 def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
                keytype=None, valuetype=None, engine=None, credentials=None):
@@ -241,7 +235,7 @@ def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
             basedims = tuple(asarray(keys).max(axis=0) + 1)
         values = values.reshape(basedims + (params.nvalues,))
 
-        return fromlocal(values)
+        return fromarray(values)
 
 def binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype, credentials):
     """

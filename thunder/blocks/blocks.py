@@ -46,9 +46,9 @@ class Blocks(Base):
         """
         Converts blocks to series.
         """
-        from thunder.series.readers import frombolt
+        from thunder.series.series import Series
         values = self.values.values_to_keys(tuple(range(1, len(self.shape)))).unchunk()
-        return frombolt(values)
+        return Series(values)
 
     def getbinary(self):
         """
