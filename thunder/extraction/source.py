@@ -585,8 +585,9 @@ class SourceModel(Serializable, object):
             Base background image on which to put masks,
             or another set of sources (usually for comparisons).
 
-        color : str, optional, deafult = None
-            Color to assign regions or colormap, will assign randomly if 'random'
+        color : str or LinearSegmentedColormap, optional, deafult = None
+            Color to assign regions or colormap, will used named colormap
+            or use the provided colormap, or assign randomly if 'random'
             
         values : array-like
             List of values to use with colormap
@@ -596,6 +597,7 @@ class SourceModel(Serializable, object):
         """
         from thunder import Colorize
         from matplotlib.cm import get_cmap
+        from matplotlib.colors import LinearSegmentedColormap
 
         if inds is None:
             inds = range(0, self.count)
@@ -619,7 +621,13 @@ class SourceModel(Serializable, object):
         if base is not None and color is None:
             color = 'deeppink'
             
-        if color is not None and values is not None and not color == 'random':
+        if isinstance(color, LinearSegmentedColormap) and values is not None:
+            combined = zeros(list(dims) + [3])
+            colors = color(values)[:, 0:3]
+            for i in inds:
+                combined = maximum(self.sources[i].mask(dims, binary, outline, colors[i]), combined)
+            
+        if isinstance(color, str) and values is not None and not color == 'random':
             combined = zeros(list(dims) + [3])
             colors = get_cmap(color, self.count)(values)[:, 0:3]
             for i in inds:
@@ -636,7 +644,7 @@ class SourceModel(Serializable, object):
             for i in inds:
                 combined = maximum(self.sources[i].mask(dims, binary, outline), combined)
 
-        if color is not None and color != 'random' and values is None:
+        if isinstance(color, str) and color != 'random' and values is None:
             combined = Colorize(cmap='indexed', colors=[color]).transform([combined])
 
         if base is not None:
