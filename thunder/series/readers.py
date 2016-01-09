@@ -167,9 +167,8 @@ def frommat(path, var, index=None, npartitions=None, engine=None):
     data = loadmat(path)[var]
     if data.ndim > 2:
         raise IOError('Input data must be one or two dimensional')
-    dtype = str(data.dtype)
 
-    return fromlist(data, npartitions=npartitions, dtype=dtype, index=index, engine=engine)
+    return fromarray(data, npartitions=npartitions, index=index, engine=engine)
 
 def fromnpy(path,  index=None, npartitions=None, engine=None):
     """
@@ -193,9 +192,8 @@ def fromnpy(path,  index=None, npartitions=None, engine=None):
     data = load(path)
     if data.ndim > 2:
         raise IOError('Input data must be one or two dimensional')
-    dtype = str(data.dtype)
 
-    return fromlist(data, npartitions=npartitions, dtype=dtype, index=index, engine=engine)
+    return fromarray(data, npartitions=npartitions, index=index, engine=engine)
 
 def fromtext(path, npartitions=None, nkeys=None, ext='txt', dtype='float64',
              index=None, engine=None, credentials=None):
