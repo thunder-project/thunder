@@ -27,6 +27,14 @@ def test_from_array(eng):
     assert allclose(data.toarray(), a)
 
 
+def test_from_array_single(eng):
+    a = arange(8).reshape((2, 4))
+    data = fromarray(a, engine=eng)
+    assert allclose(data.shape, (1,) + a.shape)
+    assert allclose(data.dims, a.shape)
+    assert allclose(data.toarray(), a)
+
+
 def test_from_png(eng):
     path = os.path.join(resources, 'singlelayer_png', 'dot1_grey.png')
     data = frompng(path, engine=eng)

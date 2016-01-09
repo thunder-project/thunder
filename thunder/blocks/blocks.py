@@ -38,9 +38,9 @@ class Blocks(Base):
         """
         Convert blocks to images.
         """
-        from thunder.images.readers import frombolt
+        from thunder.images.images import Images
         values = self.values.values_to_keys((0,)).unchunk()
-        return frombolt(values)
+        return Images(values)
 
     def toseries(self):
         """

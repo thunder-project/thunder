@@ -1,25 +1,12 @@
 import itertools
 import checkist
 from io import BytesIO
-from numpy import frombuffer, prod, random, asarray
+from numpy import frombuffer, prod, random, asarray, expand_dims
 
 from ..utils import check_spark
+from .images import Images
 spark = check_spark()
 
-
-def fromlocal(values):
-    """
-    Load images object from a local array
-    """
-    from .images import Images
-    return Images(asarray(values), mode='local')
-
-def frombolt(values):
-    """
-    Load images object from a bolt array
-    """
-    from .images import Images
-    return Images(values, mode='spark')
 
 def fromrdd(rdd, dims=None, nrecords=None, dtype=None):
     """
@@ -36,7 +23,49 @@ def fromrdd(rdd, dims=None, nrecords=None, dtype=None):
         nrecords = rdd.count()
 
     values = BoltArraySpark(rdd, shape=(nrecords,) + tuple(dims), dtype=dtype, split=1)
-    return frombolt(values)
+    return Images(values)
+
+def fromarray(values, npartitions=None, engine=None):
+    """
+    Load Series object from a local array-like.
+
+    First dimension will be used to index images,
+    so remaining dimensions after the first should
+    be the dimensions of the images/volumes,
+    e.g. (3, 100, 200) for 3 x (100, 200) images
+    """
+    import bolt
+
+    values = asarray(values)
+
+    if values.ndim < 2:
+        raise ValueError("Array for images must have at least 2 dimensions, got %g" % values.ndim)
+
+    if values.ndim == 2:
+        values = expand_dims(values, 0)
+        print(values.shape)
+
+    shape = None
+    dtype = None
+    for im in values:
+        if shape is None:
+            shape = im.shape
+            dtype = im.dtype
+        if not im.shape == shape:
+            raise ValueError("Arrays must all be of same shape; got both %s and %s" %
+                             (str(shape), str(im.shape)))
+        if not im.dtype == dtype:
+            raise ValueError("Arrays must all be of same data type; got both %s and %s" %
+                             (str(dtype), str(im.dtype)))
+
+    if spark and isinstance(engine, spark):
+        if not npartitions:
+            npartitions = engine.defaultParallelism
+        values = bolt.array(values, context=engine, npartitions=npartitions, axis=(0,))
+        return Images(values)
+
+    return Images(values)
+
 
 def fromlist(items, accessor=None, keys=None, dims=None, dtype=None, npartitions=None, engine=None):
     """
@@ -73,7 +102,7 @@ def fromlist(items, accessor=None, keys=None, dims=None, dtype=None, npartitions
     else:
         if accessor:
             items = asarray([accessor(i) for i in items])
-        return fromlocal(items)
+        return fromarray(items)
 
 def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=False,
              npartitions=None, dims=None, dtype=None, recount=False,
@@ -130,30 +159,7 @@ def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=Fal
             data = [accessor(d) for d in data]
         flattened = list(itertools.chain(*data))
         values = [kv[1] for kv in flattened]
-        return fromlocal(values)
-
-
-def fromarray(arrays, npartitions=None, engine=None):
-    """
-    Load images from a sequence of ndarrays.
-    """
-    arrays = asarray(arrays)
-
-    shape = None
-    dtype = None
-    for ary in arrays:
-        if shape is None:
-            shape = ary.shape
-            dtype = ary.dtype
-        if not ary.shape == shape:
-            raise ValueError("Arrays must all be of same shape; got both %s and %s" %
-                             (str(shape), str(ary.shape)))
-        if not ary.dtype == dtype:
-            raise ValueError("Arrays must all be of same data type; got both %s and %s" %
-                             (str(dtype), str(ary.dtype)))
-    narrays = len(arrays)
-    npartitions = min(narrays, npartitions) if npartitions else narrays
-    return fromlist(arrays, npartitions=npartitions, dims=shape, dtype=str(dtype), engine=engine)
+        return fromarray(values)
 
 
 def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, recursive=False,
