@@ -1,4 +1,4 @@
-from numpy import asarray, ndarray, prod, ufunc, ScalarType, add, subtract, \
+from numpy import asarray, ndarray, prod, ufunc, add, subtract, \
     multiply, divide, isscalar
 from bolt.utils import inshape, tupleize
 from bolt.base import BoltArray
@@ -88,7 +88,7 @@ class Base(object):
 
     def tordd(self):
         """
-        Return an RDD for datasets backed by Spark
+        Return an RDD for datasets backed by Spark (Spark only).
         """
         if self.mode == 'spark':
             return self.values.tordd()
@@ -97,7 +97,7 @@ class Base(object):
 
     def compute(self):
         """
-        Force lazy computations to execute for datasets backed by Spark.
+        Force lazy computations to execute for datasets backed by Spark (Spark only).
         """
         if self.mode == 'spark':
             self.values.tordd().count()
@@ -125,7 +125,7 @@ class Base(object):
 
     def cache(self):
         """
-        Enable in-memory caching.
+        Enable in-memory caching (Spark only).
         """
         if self.mode == 'spark':
             self.values.cache()

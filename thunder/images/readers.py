@@ -4,14 +4,32 @@ from io import BytesIO
 from numpy import frombuffer, prod, random, asarray, expand_dims
 
 from ..utils import check_spark
-from .images import Images
 spark = check_spark()
 
 
 def fromrdd(rdd, dims=None, nrecords=None, dtype=None):
     """
-    Load Images object from a Spark RDD
+    Load Images object from a Spark RDD.
+
+    Must be a collection of key-value pairs
+    where keys are singleton tuples indexing images,
+    and values are 2d or 3d ndarrays.
+
+    Parameters
+    ----------
+    rdd : SparkRDD
+        An RDD containing images
+
+    dims : tuple or array, optional, default = None
+        Image dimensions (if provided will avoid check).
+
+    nrecords : int, optional, default = None
+        Number of images (if provided will avoid check).
+
+    dtype : string, default = None
+       Data numerical type (if provided will avoid check)
     """
+    from .images import Images
     from bolt.spark.array import BoltArraySpark
 
     if dims is None or dtype is None:
@@ -33,7 +51,19 @@ def fromarray(values, npartitions=None, engine=None):
     so remaining dimensions after the first should
     be the dimensions of the images/volumes,
     e.g. (3, 100, 200) for 3 x (100, 200) images
+
+    Parameters
+    ----------
+    values : array-like
+        The array of images
+
+    npartitions : int, default = None
+        Number of partitions for parallelization (Spark only)
+
+    engine : object, default = None
+        Computational engine (e.g. a SparkContext for Spark)
     """
+    from .images import Images
     import bolt
 
     values = asarray(values)
@@ -393,7 +423,7 @@ def fromexample(name=None, engine=None):
     datasets = ['mouse', 'fish']
 
     if name is None:
-        print 'Availiable example datasets'
+        print 'Availiable example image datasets'
         for d in datasets:
             print '- ' + d
         return

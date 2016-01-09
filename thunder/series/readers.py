@@ -2,18 +2,35 @@ from numpy import array, arange, frombuffer, load, asarray, random, maximum, \
     fromstring, expand_dims
 
 from ..utils import check_spark
-from .series import Series
 spark = check_spark()
 
 
 def fromrdd(rdd, nrecords=None, shape=None, index=None, dtype=None):
     """
-    Load Series object from a Spark RDD
+    Load Series object from a Spark RDD.
 
     Assumes keys are tuples with increasing and unique indices,
     and values are 1d ndarrays. Will try to infer properties
     that are not explicitly provided.
+
+    Parameters
+    ----------
+    rdd : SparkRDD
+        An RDD containing series data.
+
+    shape : tuple or array, optional, default = None
+        Total shape of data (if provided will avoid check).
+
+    nrecords : int, optional, default = None
+        Number of records (if provided will avoid check).
+
+    index : array, optional, default = None
+        Index for records, if not provided will use (0, 1, ...)
+
+    dtype : string, default = None
+       Data numerical type (if provided will avoid check)
     """
+    from .series import Series
     from bolt.spark.array import BoltArraySpark
 
     if index is None or dtype is None:
@@ -38,8 +55,26 @@ def fromarray(values, index=None, npartitions=None, engine=None):
     """
     Load Series object from a local numpy array.
 
-    Final dimension will be used for the index.
+    Assumes that all but final dimension index the records,
+    and the size of the final dimension is the length of each record,
+    e.g. a (2, 3, 4) array will be treated as 2 x 3 records of size (4,)
+
+    Parameters
+    ----------
+    values : array-like
+        An array containing the data.
+
+    index : array, optional, default = None
+        Index for records, if not provided will use (0,1,...,N)
+        where N is the length of each record.
+
+    npartitions : int, default = None
+        Number of partitions for parallelization (Spark only)
+
+    engine : object, default = None
+        Computational engine (e.g. a SparkContext for Spark)
     """
+    from .series import Series
     import bolt
 
     values = asarray(values)
@@ -60,9 +95,33 @@ def fromarray(values, index=None, npartitions=None, engine=None):
 
     return Series(values, index=index)
 
-def fromlist(items, accessor=None, npartitions=None, index=None, dtype=None, engine=None):
+def fromlist(items, accessor=None, index=None, dtype=None, npartitions=None, engine=None):
     """
-    Create a Series object from a list.
+    Create a Series object from a list of items and optional accessor function.
+
+    Will call accessor function on each item from the list,
+    providing a generic interface for data loading.
+
+    Parameters
+    ----------
+    items : list
+        A list of items to load.
+
+    accessor : function, optional, default = None
+        A function to apply to each item in the list during loading.
+
+    index : array, optional, default = None
+        Index for records, if not provided will use (0,1,...,N)
+        where N is the length of each record.
+
+    dtype : string, default = None
+       Data numerical type (if provided will avoid check)
+
+    npartitions : int, default = None
+        Number of partitions for parallelization (Spark only)
+
+    engine : object, default = None
+        Computational engine (e.g. a SparkContext for Spark)
     """
     if spark and isinstance(engine, spark):
         if dtype is None:
@@ -82,9 +141,27 @@ def fromlist(items, accessor=None, npartitions=None, index=None, dtype=None, eng
             items = [accessor(i) for i in items]
         return fromarray(items, index=index)
 
-def frommat(path, var, npartitions=None, index=None, engine=None):
+def frommat(path, var, index=None, npartitions=None, engine=None):
     """
     Loads Series data stored in a Matlab .mat file.
+
+    Parameters
+    ----------
+    path : str
+        Path to data file.
+
+    var : str
+        Variable name.
+
+    index : array, optional, default = None
+        Index for records, if not provided will use (0,1,...,N)
+        where N is the length of each record.
+
+    npartitions : int, default = None
+        Number of partitions for parallelization (Spark only)
+
+    engine : object, default = None
+        Computational engine (e.g. a SparkContext for Spark)
     """
     from scipy.io import loadmat
     data = loadmat(path)[var]
@@ -94,9 +171,24 @@ def frommat(path, var, npartitions=None, index=None, engine=None):
 
     return fromlist(data, npartitions=npartitions, dtype=dtype, index=index, engine=engine)
 
-def fromnpy(path, npartitions=None, index=None, engine=None):
+def fromnpy(path,  index=None, npartitions=None, engine=None):
     """
     Loads Series data stored in the numpy save() .npy format.
+
+    Parameters
+    ----------
+    path : str
+        Path to data file.
+
+    index : array, optional, default = None
+        Index for records, if not provided will use (0,1,...,N)
+        where N is the length of each record.
+
+    npartitions : int, default = None
+        Number of partitions for parallelization (Spark only)
+
+    engine : object, default = None
+        Computational engine (e.g. a SparkContext for Spark)
     """
     data = load(path)
     if data.ndim > 2:
@@ -105,10 +197,15 @@ def fromnpy(path, npartitions=None, index=None, engine=None):
 
     return fromlist(data, npartitions=npartitions, dtype=dtype, index=index, engine=engine)
 
-def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64',
-             engine=None, credentials=None):
+def fromtext(path, npartitions=None, nkeys=None, ext='txt', dtype='float64',
+             index=None, engine=None, credentials=None):
     """
     Loads Series data from text files.
+
+    Assumes data are formatted as rows, where each record is a row
+    of numbers separated by spaces, the first numbers in each row
+    are keys, and the remaining numbers are values, e.g.
+    'k v v v v'
 
     Parameters
     ----------
@@ -117,8 +214,26 @@ def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64',
         (e.g. "file://", "s3n://", or "gs://"), or a single file,
         or a directory, or a directory with a single wildcard character.
 
+    npartitions : int, default = None
+        Number of partitions for parallelization (Spark only)
+
+    nkeys : int, optional, default = None
+        Number of keys per record.
+
+    ext : str, optional, default = 'txt'
+        File extension.
+
     dtype: dtype or dtype specifier, default 'float64'
         Numerical type to use for data after converting from text.
+
+    index : array, optional, default = None
+        Index for records, if not provided will use (0, 1, ...)
+
+    engine : object, default = None
+        Computational engine (e.g. a SparkContext for Spark)
+
+    credentials : dict, default = None
+        Credentials for remote storage (e.g. S3) in the form {access: ***, secret: ***}
     """
     from thunder.readers import normalize_scheme, get_parallel_reader
     path = normalize_scheme(path, ext)
@@ -133,7 +248,7 @@ def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64',
 
         lines = engine.textFile(path, npartitions)
         data = lines.map(lambda x: parse(x, nkeys))
-        return fromrdd(data, dtype=str(dtype))
+        return fromrdd(data, dtype=str(dtype), index=index)
 
     else:
         reader = get_parallel_reader(path)(engine, credentials=credentials)
@@ -151,12 +266,12 @@ def fromtext(path, npartitions=None, nkeys=None, ext="txt", dtype='float64',
             nvalues = values.shape[-1] - nkeys
             values = values[:, nkeys:].reshape(basedims + (nvalues,))
 
-        return fromarray(values)
+        return fromarray(values, index=index)
 
 def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
-               keytype=None, valuetype=None, engine=None, credentials=None):
+               keytype=None, valuetype=None, index=None, engine=None, credentials=None):
     """
-    Load a Series object from a binary files.
+    Load a Series object from flat binary files.
 
     Parameters
     ----------
@@ -165,24 +280,26 @@ def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
         (e.g. "file://", "s3n://", or "gs://"), or a single file,
         or a directory, or a directory with a single wildcard character.
 
-    ext : str, optional, default='bin'
+    ext : str, optional, default = 'bin'
         Optional file extension specifier.
 
-    conf : str
+    conf : str, optional, default = 'conf.json'
         Name of conf file with type and size information.
 
-    nkeys, nvalues : int
+    nkeys, nvalues : int, optional, default = None
         Parameters of binary data, can be specified here or in a configuration file.
 
-    keytype, valuetype : str
+    keytype, valuetype : str, optional, default = None
         Parameters of binary data, can be specified here or in a configuration file.
 
-    newdtype : dtype, optional, default='float32'
-        Numpy dtype to recast output series data to.
+    index : array, optional, default = None
+        Index for records, if not provided will use (0, 1, ...)
 
-    casting : 'no' | 'equiv' | 'safe' | 'same_kind' | 'unsafe', optional, default='safe'
-        Casting method to pass on to numpy's `astype()` method.
+    engine : object, default = None
+        Computational engine (e.g. a SparkContext for Spark)
 
+    credentials : dict, default = None
+        Credentials for remote storage (e.g. S3) in the form {access: ***, secret: ***}
     """
     params = binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype, credentials)
 
@@ -210,7 +327,10 @@ def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
             raw = raw.zipWithIndex().map(lambda (v, k): ((k,), v))
         shape = tuple(raw.keys().reduce(maximum) + 1) + (params.nvalues,)
 
-        return fromrdd(raw, dtype=str(valuetype), shape=shape, index=arange(params.nvalues))
+        if not index:
+            index = arange(params.nvalues)
+
+        return fromrdd(raw, dtype=str(valuetype), shape=shape, index=index)
 
     else:
         reader = get_parallel_reader(path)(engine, credentials=credentials)
@@ -235,7 +355,7 @@ def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
             basedims = tuple(asarray(keys).max(axis=0) + 1)
         values = values.reshape(basedims + (params.nvalues,))
 
-        return fromarray(values)
+        return fromarray(values, index=index)
 
 def binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype, credentials):
     """
@@ -320,7 +440,7 @@ def fromexample(name=None, engine=None):
     datasets = ['iris', 'mouse', 'fish']
 
     if name is None:
-        print 'Availiable example datasets'
+        print 'Availiable example series datasets'
         for d in datasets:
             print '- ' + d
         return

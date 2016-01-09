@@ -1,5 +1,5 @@
 def notsupported(mode):
-    raise NotImplementedError("Operation not supported for mode '%s'" % mode)
+    raise NotImplementedError("Operation not supported for '%s' mode" % mode)
 
 
 def check_spark():
@@ -13,15 +13,16 @@ def check_path(path, credentials=None):
     """
     Check that specified output path does not already exist
 
-    The ValueError message will suggest calling with overwrite=True; this function is expected to be
-    called from the various output methods that accept an 'overwrite' keyword argument.
+    The ValueError message will suggest calling with overwrite=True;
+    this function is expected to be called from the various output methods
+    that accept an 'overwrite' keyword argument.
     """
     from thunder.readers import get_file_reader
     reader = get_file_reader(path)(credentials=credentials)
     existing = reader.list(path, directories=True)
     if existing:
-        raise ValueError("Path %s appears to already exist. Specify a new directory, "
-                         "or call " % path + "with overwrite=True to overwrite.")
+        raise ValueError('Path %s appears to already exist. Specify a new directory, '
+                         'or call " % path + "with overwrite=True to overwrite.')
 
 def connection_with_anon(credentials, anon=True):
     """
