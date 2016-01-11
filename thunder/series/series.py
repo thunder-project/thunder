@@ -150,9 +150,8 @@ class Series(Data):
         """
         Map a function on each series
         """
-        if index is None:
-            index = self.index
-        new = self._map(func, axis=self.baseaxes, value_shape=len(index))
+        value_shape = len(index) if index is not None else None
+        new = self._map(func, axis=self.baseaxes, value_shape=value_shape)
         return self._constructor(new.values, index=index)
 
     def filter(self, func):
@@ -660,7 +659,8 @@ class Series(Data):
             Specifies the levels of the multi-index to use when determining unique index values.
             If only a single level is desired, can be an int.
         """
-        return self._map_by_index(function, level=level).map(lambda v: array(v))
+        result = self._map_by_index(function, level=level)
+        return result.map(lambda v: array(v), index=result.index)
 
     def stat_by_index(self, stat, level=0):
         """

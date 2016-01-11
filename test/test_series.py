@@ -18,6 +18,12 @@ def test_map(eng):
     assert allclose(data.map(lambda x: x + 1).toarray(), [[2, 3], [4, 5]])
 
 
+def test_map_singletons(eng):
+    data = fromlist([array([4, 5, 6, 7]), array([8, 9, 10, 11])], engine=eng)
+    mapped = data.map(lambda x: x.mean())
+    assert mapped.shape == (2, 1)
+
+
 def test_filter(eng):
     data = fromlist([array([1, 2]), array([3, 4])], engine=eng)
     assert allclose(data.filter(lambda x: x.sum() > 3).toarray(), [3, 4])
@@ -39,6 +45,7 @@ def test_between(eng):
 def test_first(eng):
     data = fromlist([array([4, 5, 6, 7]), array([8, 9, 10, 11])], engine=eng)
     assert allclose(data.first(), [4, 5, 6, 7])
+
 
 def test_select(eng):
     index = ['label1', 'label2', 'label3', 'label4']

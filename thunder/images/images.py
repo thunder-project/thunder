@@ -203,8 +203,6 @@ class Images(Data):
         """
         Map a function to each image
         """
-        if dims is None:
-            dims = self.dims
         return self._map(func, axis=0, value_shape=dims)
 
     def filter(self, func):

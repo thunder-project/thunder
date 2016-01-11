@@ -1,4 +1,4 @@
-from numpy import asarray, ndarray, prod, ufunc, add, subtract, \
+from numpy import array, asarray, ndarray, prod, ufunc, add, subtract, \
     multiply, divide, isscalar
 from bolt.utils import inshape, tupleize
 from bolt.base import BoltArray
@@ -354,7 +354,8 @@ class Data(Base):
             return self._constructor(reordered, mode=self.mode).__finalize__(self, noprop=('index'))
 
         if self.mode == 'spark':
-            mapped = self.values.map(func, axis, value_shape)
+            expand = lambda x: array(func(x), ndmin=1)
+            mapped = self.values.map(expand, axis, value_shape)
             return self._constructor(mapped, mode=self.mode).__finalize__(self, noprop=('index'))
 
     def _reduce(self, func, axis=0):

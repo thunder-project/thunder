@@ -15,6 +15,12 @@ def test_map(eng):
     assert allclose(data.map(lambda x: x + 1).toarray(), [[1, 2, 3], [4, 5, 6]])
 
 
+def test_map_singleton(eng):
+    data = fromlist([arange(6).reshape((2, 3)), arange(6).reshape((2, 3))], engine=eng)
+    mapped = data.map(lambda x: x.mean())
+    assert mapped.shape == (2, 1)
+
+
 def test_filter(eng):
     data = fromlist([arange(6).reshape((2, 3)), arange(6).reshape((2, 3)) * 2], engine=eng)
     assert allclose(data.filter(lambda x: x.sum() > 21).toarray(), [[0, 2, 4], [6, 8, 10]])
