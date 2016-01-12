@@ -108,7 +108,7 @@ def test_to_binary_roundtrip(tmpdir, eng):
     assert allclose(data.toarray(), loaded.toarray())
 
 
-def test_fromexample(eng):
+def test_from_example(eng):
     data = fromexample('fish', engine=eng)
     assert allclose(data.shape, (76, 87, 2, 240))
     data = fromexample('mouse', engine=eng)
