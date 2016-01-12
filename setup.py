@@ -2,7 +2,7 @@
 
 from setuptools import setup
 
-version = '0.6.0.dev'
+version = '1.0.0'
 
 required = open('requirements.txt').read().split('\n')
 extra = {'all': ['mist', 'rime']}
