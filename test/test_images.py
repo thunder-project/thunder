@@ -7,7 +7,7 @@ from thunder.series.series import Series
 from thunder.series.timeseries import TimeSeries
 
 
-pytestmark = pytest.mark.usefixtures("eng")
+pytest.mark.usefixtures("eng")
 
 
 def test_map(eng):

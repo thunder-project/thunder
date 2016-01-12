@@ -6,7 +6,8 @@ from numpy import arange, allclose
 
 from thunder.images.readers import fromlist, fromarray, frompng, fromtif, frombinary, fromexample
 
-pytestmark = pytest.mark.usefixtures("eng")
+pytest.mark.usefixtures("eng")
+pytest.mark.userfixtures("engspark")
 
 resources = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'resources')
 

@@ -2,7 +2,7 @@ import pytest
 from numpy import array, allclose, corrcoef
 from thunder.series import fromlist
 
-pytestmark = pytest.mark.usefixtures("eng")
+pytest.mark.usefixtures("eng")
 
 
 def test_fourier(eng):

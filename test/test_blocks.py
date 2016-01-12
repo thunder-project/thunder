@@ -4,7 +4,7 @@ from numpy import arange, array, allclose, ones
 from thunder.images.readers import fromlist
 from thunder.series.readers import frombinary
 
-pytestmark = pytest.mark.usefixtures("engspark")
+pytest.mark.usefixtures("engspark")
 
 
 def test_conversion(engspark):

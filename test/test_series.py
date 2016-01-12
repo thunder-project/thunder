@@ -4,7 +4,7 @@ from numpy import allclose, arange, array, asarray, dot, cov
 from thunder.series.readers import fromlist
 from thunder.series.timeseries import TimeSeries
 
-pytestmark = pytest.mark.usefixtures("eng")
+pytest.mark.usefixtures("eng")
 
 
 def test_totimeseries(eng):

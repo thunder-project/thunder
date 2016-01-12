@@ -6,7 +6,7 @@ from scipy.io import savemat
 
 from thunder.series.readers import fromarray, fromnpy, frommat, fromtext, frombinary, fromexample
 
-pytestmark = pytest.mark.usefixtures("eng")
+pytest.mark.usefixtures("eng")
 
 
 def test_from_array(eng):
