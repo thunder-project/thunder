@@ -257,7 +257,7 @@ def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, re
         idx, buf = idxAndBuf
         ary = frombuffer(buf, dtype=dtype, count=int(prod(dims))).reshape(dims, order=order)
         if nplanes is None:
-            yield idx, ary
+            yield (idx,), ary
         else:
             # divide array into chunks of nplanes
             npoints = dims[-1] / nplanes  # integer division
@@ -275,7 +275,7 @@ def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, re
                 curPlane += 1
             # yield remaining planes
             slices = [slice(None)] * (ary.ndim - 1) + [slice(lastPlane, ary.shape[-1])]
-            yield idx*npoints + timepoint, ary[slices].squeeze()
+            yield (idx*npoints + timepoint,), ary[slices].squeeze()
 
     recount = False if nplanes is None else True
     append = [nplanes] if nplanes > 1 else []
@@ -339,7 +339,7 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False,
         if nplanes and (pageCount % nplanes):
             raise ValueError("nplanes '%d' does not evenly divide '%d'" % (nplanes, pageCount))
         nvals = len(values)
-        keys = [idx*nvals + timepoint for timepoint in xrange(nvals)]
+        keys = [(idx*nvals + timepoint,) for timepoint in xrange(nvals)]
         return zip(keys, values)
 
     recount = False if nplanes is None else True
@@ -378,7 +378,7 @@ def frompng(path, ext='png', start=None, stop=None, recursive=False, npartitions
     def getarray(idxAndBuf):
         idx, buf = idxAndBuf
         fbuf = BytesIO(buf)
-        yield idx, imread(fbuf)
+        yield (idx,), imread(fbuf)
 
     return frompath(path, accessor=getarray, ext=ext, start=start,
                     stop=stop, recursive=recursive, npartitions=npartitions,
