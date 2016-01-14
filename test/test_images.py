@@ -43,7 +43,7 @@ def test_squeeze(eng):
     assert data.shape == (2, 2, 2)
     assert data[:, :, 0].shape == (2, 2, 1)
     assert data[:, 0, 0].shape == (2, 1, 1)
-    assert data[:, :, 0].squeeze().shape == (2, 2, 1)
+    assert data[:, :, 0].squeeze().shape == (2, 2)
     assert data[:, 0, 0].squeeze().shape == (2, 1)
 
 
