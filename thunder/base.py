@@ -195,8 +195,6 @@ class Data(Base):
         if isinstance(item, (tuple, list)):
             item = tuple([slice(i, i+1, None) if isinstance(i, int) else i for i in item])
         new = self._values.__getitem__(item)
-        # if first index is a singleton, return a local array
-        # if all remaining indices are singleton, for series, set index
         return self._constructor(new).__finalize__(self, noprop=('index'))
 
     def astype(self, dtype, casting='unsafe'):
