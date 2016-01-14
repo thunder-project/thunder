@@ -114,6 +114,16 @@ def test_from_tif_multi_planes_many(eng):
         1140006, 1119161, 1098917, 1140006, 1119161, 1098917]
 
 
+def test_from_tif_multi_planes_variable(eng):
+    path = os.path.join(resources, 'multilayer_tif', 'dotdot*_lzw*.tif')
+    data = fromtif(path, nplanes=1, engine=eng)
+    assert allclose(data.shape, (8, 70, 75))
+    assert allclose(data.toarray().shape, (8, 70, 75))
+    assert allclose(data[:, :, :].toarray().shape, (8, 70, 75))
+    assert [x.sum() for x in data.toarray()] == [
+        1140006, 1119161, 1140006, 1119161, 1098917, 1140006, 1119161, 1098917]
+
+
 def test_from_tif_signed(eng):
     path = os.path.join(resources, 'multilayer_tif', 'test_signed.tif')
     data = fromtif(path, nplanes=1, engine=eng)
