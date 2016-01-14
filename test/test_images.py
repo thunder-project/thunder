@@ -38,6 +38,15 @@ def test_first(eng):
     assert allclose(data.first(), [[1, 5], [1, 5]])
 
 
+def test_squeeze(eng):
+    data = fromlist([array([[1, 5], [1, 5]]), array([[1, 10], [1, 10]])], engine=eng)
+    assert data.shape == (2, 2, 2)
+    assert data[:, :, 0].shape == (2, 2, 1)
+    assert data[:, 0, 0].shape == (2, 1, 1)
+    assert data[:, :, 0].squeeze().shape == (2, 2, 1)
+    assert data[:, 0, 0].squeeze().shape == (2, 1)
+
+
 def test_toseries(eng):
     data = fromlist([arange(6).reshape((2, 3))], engine=eng)
     truth = [[0, 1, 2], [3, 4, 5]]
@@ -94,8 +103,8 @@ def test_median_filter_3d(eng):
 
 def test_median_filter_3d_empty(eng):
     data = fromlist([arange(24).reshape((2, 3, 4))], engine=eng)
-    test1 = data.median_filter([2, 2, 0])[:, :, :, 0].toarray()
-    test2 = data[:, :, :, 0].median_filter([2, 2]).toarray()
+    test1 = data.median_filter([2, 2, 0])[:, :, :, 0].squeeze().toarray()
+    test2 = data[:, :, :, 0].squeeze().median_filter([2, 2]).toarray()
     assert test1.shape == (2, 3)
     assert test2.shape == (2, 3)
     assert allclose(test1, test2)

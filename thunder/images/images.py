@@ -253,6 +253,13 @@ class Images(Data):
         """
         return self._constructor(self.values.min(axis=0, keepdims=True))
 
+    def squeeze(self):
+        """
+        Remove single-dimensional axes from images.
+        """
+        axis = tuple(range(1, len(self.shape) - 1)) if prod(self.shape[1:]) == 1 else None
+        return self.map(lambda x: x.squeeze(axis=axis))
+
     def max_projection(self, axis=2):
         """
         Compute maximum projections of images / volumes
