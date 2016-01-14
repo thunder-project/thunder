@@ -1,8 +1,6 @@
 numpy
 scipy
-scikit-learn
 scikit-image
-matplotlib
 boto
 bolt-python >= 0.3.0
 checkist >= 1.0.0
