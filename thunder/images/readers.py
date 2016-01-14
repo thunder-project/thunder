@@ -180,6 +180,7 @@ def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=Fal
             data = data.flatMap(accessor)
         if recount:
             nrecords = None
+            data = data.values().zipWithIndex().map(lambda (ary, idx): ((idx,), ary))
         else:
             nrecords = reader.nfiles
         return fromrdd(data, nrecords=nrecords, dims=dims, dtype=dtype)
