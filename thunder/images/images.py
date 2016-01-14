@@ -1,4 +1,4 @@
-from numpy import ndarray, arange, amax, amin, size, asarray, random
+from numpy import ndarray, arange, amax, amin, size, asarray, random, prod
 
 from ..base import Data
 
