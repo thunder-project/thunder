@@ -21,6 +21,15 @@ def test_casting(eng):
     assert data.astype('float16', casting='unsafe').toarray().dtype == 'float16'
 
 
+def test_slicing(eng):
+    data = series.fromlist([array([1, 2, 3]), array([4, 5, 6])], engine=eng)
+    assert data.toarray().shape == (2, 3)
+    assert data[:, :].shape == (2, 3)
+    assert data[:, :].toarray().shape == (2, 3)
+    assert data[0, :].shape == (1, 3)
+    assert data[0, :].toarray().shape == (3,)
+
+
 def test_toarray(eng):
     original = [array([1, 2, 3]), array([4, 5, 6])]
     data = series.fromlist(original, engine=eng)
