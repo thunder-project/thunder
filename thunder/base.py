@@ -143,6 +143,24 @@ class Base(object):
         else:
             notsupported(self.mode)
 
+    def iscached(self):
+        """
+        Get whether object is cached.
+        """
+        if self.mode == 'spark':
+            return self.tordd().iscached
+        else:
+            notsupported(self.mode)
+
+    def npartitions(self):
+        """
+        Get number of partitions.
+        """
+        if self.mode == 'spark':
+            return self.tordd().getNumPartitions()
+        else:
+            notsupported(self.mode)
+
     def repartition(self, npartitions):
         """
         Repartition data (Spark only).
