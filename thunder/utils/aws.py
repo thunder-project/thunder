@@ -53,15 +53,17 @@ def S3ConnectionWithAnon(access, secret, anon=True):
         Whether to make an anonymous connection if credentials fail to authenticate
     """
     from boto.s3.connection import S3Connection
+    from boto.s3.connection import OrdinaryCallingFormat
     from boto.exception import NoAuthHandlerFound
 
     try:
-        conn = S3Connection(aws_access_key_id=access, aws_secret_access_key=secret)
+        conn = S3Connection(aws_access_key_id=access, aws_secret_access_key=secret,
+                            calling_format=OrdinaryCallingFormat())
         return conn
 
     except NoAuthHandlerFound:
         if anon:
-            conn = S3Connection(anon=True)
+            conn = S3Connection(anon=True, calling_format=OrdinaryCallingFormat())
             return conn
         else:
             raise

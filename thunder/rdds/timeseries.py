@@ -270,7 +270,7 @@ class TimeSeries(Series):
                 order = 5
 
         def func(y):
-            x = arange(1, len(y)+1)
+            x = arange(len(y))
             p = polyfit(x, y, order)
             p[-1] = 0
             yy = polyval(p, x)
@@ -278,7 +278,7 @@ class TimeSeries(Series):
 
         return self.applyValues(func, keepIndex=True)
 
-    def normalize(self, baseline='percentile', window=None, perc=20):
+    def normalize(self, baseline='percentile', window=None, perc=20, offset=0.1):
         """
         Normalize each time series by subtracting and dividing by a baseline.
 
@@ -295,6 +295,9 @@ class TimeSeries(Series):
 
         perc : int, optional, default = 20
             Percentile value to use, for 'percentile', 'window', or 'window-fast' baseline only
+
+        offset : float, optional, default = 0.1
+            Scalar added to baseline during division
         """
         checkParams(baseline, ['mean', 'percentile', 'window', 'window-fast'])
         method = baseline.lower()
@@ -325,7 +328,7 @@ class TimeSeries(Series):
 
         def get(y):
             b = baseFunc(y)
-            return (y - b) / (b + 0.1)
+            return (y - b) / (b + offset)
 
         return self.applyValues(get, keepIndex=True)
 

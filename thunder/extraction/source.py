@@ -565,7 +565,7 @@ class SourceModel(Serializable, object):
         """
         return len(self.sources)
 
-    def masks(self, dims=None, binary=True, outline=False, base=None, color=None, inds=None):
+    def masks(self, dims=None, binary=True, outline=False, base=None, color=None, values=None, inds=None):
         """
         Composite masks combined across sources as an image.
 
@@ -585,14 +585,19 @@ class SourceModel(Serializable, object):
             Base background image on which to put masks,
             or another set of sources (usually for comparisons).
 
-        color : str, optional, deafult = None
-            Color to assign regions, will assign randomly if 'random'
+        color : str or LinearSegmentedColormap, optional, deafult = None
+            Color to assign regions or colormap, will used named colormap
+            or use the provided colormap, or assign randomly if 'random'
+            
+        values : array-like
+            List of values to use with colormap
 
         inds : array-like, optional, deafult = None
             List of indices if only showing a subset
         """
         from thunder import Colorize
         from matplotlib.cm import get_cmap
+        from matplotlib.colors import LinearSegmentedColormap
 
         if inds is None:
             inds = range(0, self.count)
@@ -615,6 +620,18 @@ class SourceModel(Serializable, object):
 
         if base is not None and color is None:
             color = 'deeppink'
+            
+        if isinstance(color, LinearSegmentedColormap) and values is not None:
+            combined = zeros(list(dims) + [3])
+            colors = color(values)[:, 0:3]
+            for i in inds:
+                combined = maximum(self.sources[i].mask(dims, binary, outline, colors[i]), combined)
+            
+        if isinstance(color, str) and values is not None and not color == 'random':
+            combined = zeros(list(dims) + [3])
+            colors = get_cmap(color, self.count)(values)[:, 0:3]
+            for i in inds:
+                combined = maximum(self.sources[i].mask(dims, binary, outline, colors[i]), combined)
 
         if color == 'random':
             combined = zeros(list(dims) + [3])
@@ -622,12 +639,12 @@ class SourceModel(Serializable, object):
             colors = get_cmap('rainbow', ncolors)(range(0, ncolors, 1))[:, 0:3]
             for i in inds:
                 combined = maximum(self.sources[i].mask(dims, binary, outline, colors[i % len(colors)]), combined)
-        else:
+        elif values is None:
             combined = zeros(dims)
             for i in inds:
                 combined = maximum(self.sources[i].mask(dims, binary, outline), combined)
 
-        if color is not None and color != 'random':
+        if isinstance(color, str) and color != 'random' and values is None:
             combined = Colorize(cmap='indexed', colors=[color]).transform([combined])
 
         if base is not None:

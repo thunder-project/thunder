@@ -22,9 +22,13 @@ from thunder.utils.launch import getFilteredHelpMessage, getSparkHome, transform
 
 def getUsage(wrappedScriptName='pyspark'):
     scriptName = os.path.basename(sys.argv[0])
-    return "Usage: %s [%s options]\n" % (sys.argv[0], wrappedScriptName) + \
+    return "Usage: %s [-i | -n] [%s options]\n\n" % (sys.argv[0], wrappedScriptName) + \
            "The '%s' script is a wrapper around Spark's '%s', and accepts all the same options, " % (scriptName, wrappedScriptName) + \
-           "although not all are meaningful when running python scripts. Options for '%s' follow.\n" % wrappedScriptName
+           "although not all are meaningful when running python scripts." + \
+           "\n\nThunder options:\n" + \
+           "  -i : Start thunder via an IPython shell, equivalent to running with $IPYTHON=1\n" + \
+           "  -n : Start thunder via an IPython Notebook, equivalent to running with $IPYTHON_OPTS=\"notebook\"\n\n" + \
+           "Options for '%s' follow.\n" % wrappedScriptName
 
 
 def main():
