@@ -1,3 +1,4 @@
+import logging
 from numpy import ndarray, arange, amax, amin, size, asarray, random, prod
 
 from ..base import Data
@@ -139,7 +140,8 @@ class Images(Data):
         from thunder.images.readers import fromarray
 
         if self.mode == 'local':
-            raise ValueError('images already in local mode')
+            logging.getLogger('thunder').warn('images already in local mode')
+            pass
 
         return fromarray(self.toarray())
 
@@ -150,18 +152,13 @@ class Images(Data):
         from thunder.images.readers import fromarray
 
         if self.mode == 'spark':
-            raise ValueError('images already in spark mode')
+            logging.getLogger('thunder').warn('images already in spark mode')
+            pass
+
+        if engine is None:
+            raise ValueError("Must provide a SparkContext")
 
         return fromarray(self.toarray(), engine=engine)
-
-    def toarray(self):
-        """
-        Return a local array
-        """
-        out = asarray(self.values)
-        if out.shape[0] == 1:
-            out = out.squeeze(axis=0)
-        return out
 
     def foreach(self, func):
         """

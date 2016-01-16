@@ -1,6 +1,8 @@
-def notsupported(mode):
-    raise NotImplementedError("Operation not supported for '%s' mode" % mode)
+import logging
 
+def notsupported(mode):
+    logging.getLogger('thunder').warn("Operation does nothing in '%s' mode" % mode)
+    pass
 
 def check_spark():
     SparkContext = False
@@ -22,7 +24,7 @@ def check_path(path, credentials=None):
     existing = reader.list(path, directories=True)
     if existing:
         raise ValueError('Path %s appears to already exist. Specify a new directory, '
-                         'or call " % path + "with overwrite=True to overwrite.')
+                         'or call with overwrite=True to overwrite.' % path)
 
 def connection_with_anon(credentials, anon=True):
     """

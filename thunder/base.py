@@ -93,7 +93,7 @@ class Base(object):
         if self.mode == 'spark':
             return self.values.tordd()
         else:
-            notsupported(self.mode)
+            raise NotImplementedError('Cannot return RDD for local data')
 
     def compute(self):
         """

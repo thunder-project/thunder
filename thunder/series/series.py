@@ -1,3 +1,4 @@
+import logging
 from itertools import product
 from numpy import array, sum, mean, median, std, size, arange, percentile,\
     asarray, zeros, corrcoef, where, unique, array_equal, delete, \
@@ -103,7 +104,8 @@ class Series(Data):
         from thunder.series.readers import fromarray
 
         if self.mode == 'local':
-            raise ValueError('series already in local mode')
+            logging.getLogger('thunder').warn('images already in local mode')
+            pass
 
         return fromarray(self.toarray(), index=self.index)
 
@@ -114,7 +116,11 @@ class Series(Data):
         from thunder.series.readers import fromarray
 
         if self.mode == 'spark':
-            raise ValueError('series already in spark mode')
+            logging.getLogger('thunder').warn('images already in local mode')
+            pass
+
+        if engine is None:
+            raise ValueError("Must provide SparkContext")
 
         return fromarray(self.toarray(), index=self.index, engine=engine)
 
@@ -131,7 +137,7 @@ class Series(Data):
             Random seed.
         """
         if nsamples < 1:
-            raise ValueError("number of samples must be larger than 0, got '%g'" % nsamples)
+            raise ValueError("Number of samples must be larger than 0, got '%g'" % nsamples)
 
         if seed is None:
             seed = random.randint(0, 2 ** 32)
