@@ -413,7 +413,11 @@ def fromexample(name=None, engine=None):
         Name of dataset, options include 'iris' | 'mouse' | 'fish'.
         If not specified will print options.
     """
+    import os
+    import tempfile
+    import shutil
     import checkist
+    from boto.s3.connection import S3Connection
 
     datasets = ['iris', 'mouse', 'fish']
 
@@ -425,11 +429,23 @@ def fromexample(name=None, engine=None):
 
     checkist.opts(name, datasets)
 
-    path = 's3n://thunder-sample-data/series/' + name
-    data = frombinary(path=path, engine=engine)
+    d = tempfile.mkdtemp()
 
-    if spark and isinstance(engine, spark):
-        data.cache()
-        data.compute()
+    try:
+        os.mkdir(os.path.join(d, 'series'))
+        os.mkdir(os.path.join(d, 'series', name))
+        conn = S3Connection(anon=True)
+        bucket = conn.get_bucket('thunder-sample-data')
+        for key in bucket.list(os.path.join('series', name) + '/'):
+            if not key.name.endswith('/'):
+                key.get_contents_to_filename(os.path.join(d, key.name))
+        data = frombinary(os.path.join(d, 'series', name), engine=engine)
+
+        if spark and isinstance(engine, spark):
+            data.cache()
+            data.compute()
+
+    finally:
+        shutil.rmtree(d)
 
     return data
