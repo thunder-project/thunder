@@ -3,7 +3,7 @@ from numpy import allclose, array, asarray, add
 
 from thunder import series, images
 
-pytest.mark.usefixtures("eng")
+pytestmark = pytest.mark.usefixtures("eng")
 
 
 def test_first(eng):
