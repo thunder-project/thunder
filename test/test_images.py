@@ -1,5 +1,5 @@
 import pytest
-from numpy import arange, allclose, array, corrcoef
+from numpy import arange, allclose, array
 
 from thunder.images.readers import fromlist
 from thunder.images.images import Images
@@ -7,7 +7,7 @@ from thunder.series.series import Series
 from thunder.series.timeseries import TimeSeries
 
 
-pytest.mark.usefixtures("eng")
+pytestmark = pytest.mark.usefixtures("eng")
 
 
 def test_map(eng):

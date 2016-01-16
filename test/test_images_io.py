@@ -6,8 +6,7 @@ from numpy import arange, allclose
 
 from thunder.images.readers import fromlist, fromarray, frompng, fromtif, frombinary, fromexample
 
-pytest.mark.usefixtures("eng")
-pytest.mark.userfixtures("engspark")
+pytestmark = pytest.mark.usefixtures("eng")
 
 resources = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'resources')
 
@@ -45,10 +44,10 @@ def test_from_png(eng):
     assert allclose(data.toarray().min(), 1)
 
 
-def test_from_png_keys(engspark):
+def test_from_png_keys(eng):
     path = os.path.join(resources, 'singlelayer_png', 'dot1_grey.png')
-    data = frompng(path, engine=engspark)
-    assert data.tordd().keys().first() == (0,)
+    data = frompng(path, engine=eng)
+    assert (data.tordd().keys().first() == (0,) if data.mode == 'spark' else True)
 
 
 def test_from_tif(eng):
@@ -60,10 +59,10 @@ def test_from_tif(eng):
     assert allclose(data.toarray().min(), 1)
 
 
-def test_from_tif_keys(engspark):
+def test_from_tif_keys(eng):
     path = os.path.join(resources, "singlelayer_tif", "dot1_grey_lzw.tif")
-    data = fromtif(path, engine=engspark)
-    assert data.tordd().keys().first() == (0,)
+    data = fromtif(path, engine=eng)
+    assert (data.tordd().keys().first() == (0,) if data.mode == 'spark' else True)
 
 
 def test_from_tif_many(eng):
@@ -141,11 +140,11 @@ def test_from_binary(tmpdir, eng):
     assert allclose(data.toarray(), a)
 
 
-def test_from_binary_keys(tmpdir, engspark):
+def test_from_binary_keys(tmpdir, eng):
     a = arange(8, dtype='int16').reshape((2, 4))
     a.tofile(os.path.join(str(tmpdir), 'test.bin'))
-    data = frombinary(str(tmpdir), dims=(2, 4), dtype='int16', engine=engspark)
-    assert data.tordd().keys().first() == (0,)
+    data = frombinary(str(tmpdir), dims=(2, 4), dtype='int16', engine=eng)
+    assert (data.tordd().keys().first() == (0,) if data.mode == 'spark' else True)
 
 
 def test_from_binary_many(tmpdir, eng):
@@ -180,7 +179,9 @@ def test_from_binary_multi(tmpdir, eng):
 
 
 def test_from_binary_multi_planes_many(tmpdir, eng):
-    a = [arange(16, dtype='int16').reshape((4, 2, 2)), arange(16, 32, dtype='int16').reshape((4, 2, 2))]
+    a1 = arange(16, dtype='int16').reshape((4, 2, 2))
+    a2 = arange(16, 32, dtype='int16').reshape((4, 2, 2))
+    a = [a1, a2]
     a[0].tofile(os.path.join(str(tmpdir), 'test0.bin'))
     a[1].tofile(os.path.join(str(tmpdir), 'test1.bin'))
     data = frombinary(str(tmpdir), dims=(4, 2, 2), dtype='int16', nplanes=2, engine=eng)

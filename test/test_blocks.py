@@ -2,9 +2,8 @@ import pytest
 from numpy import arange, array, allclose, ones
 
 from thunder.images.readers import fromlist
-from thunder.series.readers import frombinary
 
-pytest.mark.usefixtures("engspark")
+pytestmark = pytest.mark.usefixtures("engspark")
 
 
 def test_conversion(engspark):
@@ -44,15 +43,6 @@ def test_conversion_series_3d(engspark):
     data = fromlist([a], engine=engspark)
     vals = data.toblocks((2, 3, 4)).toseries().toarray()
     assert allclose(vals, a)
-
-
-def test_io(tmpdir, engspark):
-    a = arange(24).reshape((2, 3, 4))
-    p = str(tmpdir) + '/data'
-    data = fromlist([a, a], engine=engspark)
-    data.toblocks((2, 3, 4)).tobinary(p)
-    loaded = frombinary(p)
-    assert loaded.shape == (2, 3, 4, 2)
 
 
 def test_roundtrip(engspark):
