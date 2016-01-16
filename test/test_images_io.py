@@ -134,7 +134,7 @@ def test_from_tif_signed(eng):
 def test_from_binary(tmpdir, eng):
     a = arange(8, dtype='int16').reshape((2, 4))
     a.tofile(os.path.join(str(tmpdir), 'test.bin'))
-    data = frombinary(str(tmpdir), dims=(2, 4), dtype='int16', engine=eng)
+    data = frombinary(str(tmpdir), shape=(2, 4), dtype='int16', engine=eng)
     assert data.dtype == 'int16'
     assert allclose(data.shape, (1, 2, 4))
     assert allclose(data.toarray(), a)
@@ -143,7 +143,7 @@ def test_from_binary(tmpdir, eng):
 def test_from_binary_keys(tmpdir, eng):
     a = arange(8, dtype='int16').reshape((2, 4))
     a.tofile(os.path.join(str(tmpdir), 'test.bin'))
-    data = frombinary(str(tmpdir), dims=(2, 4), dtype='int16', engine=eng)
+    data = frombinary(str(tmpdir), shape=(2, 4), dtype='int16', engine=eng)
     assert (data.tordd().keys().first() == (0,) if data.mode == 'spark' else True)
 
 
@@ -151,7 +151,7 @@ def test_from_binary_many(tmpdir, eng):
     a = [arange(8, dtype='int16').reshape((2, 4)), arange(8, 16, dtype='int16').reshape((2, 4))]
     a[0].tofile(os.path.join(str(tmpdir), 'test0.bin'))
     a[1].tofile(os.path.join(str(tmpdir), 'test1.bin'))
-    data = frombinary(str(tmpdir), dims=(2, 4), dtype='int16', engine=eng)
+    data = frombinary(str(tmpdir), shape=(2, 4), dtype='int16', engine=eng)
     assert data.dtype == 'int16'
     assert allclose(data.shape, (2, 2, 4))
     assert allclose(data.toarray(), a)
@@ -172,7 +172,7 @@ def test_from_binary_conf(tmpdir, eng):
 def test_from_binary_multi(tmpdir, eng):
     a = arange(24, dtype='int16').reshape((2, 3, 4))
     a.tofile(os.path.join(str(tmpdir), 'test.bin'))
-    data = frombinary(str(tmpdir), dims=(2, 3, 4), dtype='int16', engine=eng)
+    data = frombinary(str(tmpdir), shape=(2, 3, 4), dtype='int16', engine=eng)
     assert data.dtype == 'int16'
     assert allclose(data.shape, (1, 2, 3, 4))
     assert allclose(data.toarray(), a)
@@ -184,10 +184,10 @@ def test_from_binary_multi_planes_many(tmpdir, eng):
     a = [a1, a2]
     a[0].tofile(os.path.join(str(tmpdir), 'test0.bin'))
     a[1].tofile(os.path.join(str(tmpdir), 'test1.bin'))
-    data = frombinary(str(tmpdir), dims=(4, 2, 2), dtype='int16', nplanes=2, engine=eng)
+    data = frombinary(str(tmpdir), shape=(4, 2, 2), dtype='int16', nplanes=2, engine=eng)
     assert allclose(data.shape, (2, 4, 2, 2))
     assert allclose(data.toarray().shape, (2, 4, 2, 2))
-    data = frombinary(str(tmpdir), dims=(4, 2, 2), dtype='int16', nplanes=1, engine=eng)
+    data = frombinary(str(tmpdir), shape=(4, 2, 2), dtype='int16', nplanes=1, engine=eng)
     assert allclose(data.shape, (4, 4, 2))
     assert allclose(data.toarray().shape, (4, 4, 2))
 
@@ -196,12 +196,11 @@ def test_to_binary(tmpdir, eng):
     a = [arange(8, dtype='int16').reshape((4, 2)), arange(8, 16, dtype='int16').reshape((4, 2))]
     fromlist(a, engine=eng).tobinary(os.path.join(str(tmpdir), 'binary'), prefix='image')
     files = [os.path.basename(f) for f in glob.glob(str(tmpdir) + '/binary/image*')]
-    f = open(str(tmpdir) + '/binary/conf.json', 'r')
-    conf = json.load(f)
-    f.close()
     assert sorted(files) == ['image-00000.bin', 'image-00001.bin']
-    assert conf['dims'] == [4, 2]
-    assert conf['dtype'] == 'int16'
+    with open(str(tmpdir) + '/binary/conf.json', 'r') as f:
+        conf = json.load(f)
+        assert conf['shape'] == [4, 2]
+        assert conf['dtype'] == 'int16'
 
 
 def test_to_binary_roundtrip(tmpdir, eng):

@@ -844,7 +844,7 @@ class Series(Data):
         if self.mode == 'local':
             return Images(self.values.transpose((n,) + tuple(range(0, n))))
 
-    def tobinary(self, path, overwrite=False, credentials=None):
+    def tobinary(self, path, prefix='series', overwrite=False, credentials=None):
         """
         Write data to binary files.
 
@@ -854,9 +854,12 @@ class Series(Data):
             Output files will be written underneath path.
             Directory will be created as a result of this call.
 
+        prefix : str, optional, default = 'series'
+            String prefix for files.
+
         overwrite : bool
             If true, path and all its contents will be deleted and
             recreated as partof this call.
         """
         from thunder.series.writers import tobinary
-        tobinary(self, path, overwrite=overwrite, credentials=credentials)
+        tobinary(self, path, prefix=prefix, overwrite=overwrite, credentials=credentials)

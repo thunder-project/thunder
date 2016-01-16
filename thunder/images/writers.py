@@ -57,15 +57,13 @@ def totif(images, path, prefix="image", overwrite=False, credentials=None):
 
 def tobinary(images, path, prefix="image", overwrite=False, credentials=None):
     """
-    Write out binary files for image data.
+    Write out images as binary files.
 
     See also
     --------
     thunder.data.images.tobinary
     """
     from thunder.writers import get_parallel_writer
-
-    dims = list(images.dims)
 
     def tobuffer(kv):
         key, img = kv
@@ -74,9 +72,9 @@ def tobinary(images, path, prefix="image", overwrite=False, credentials=None):
 
     writer = get_parallel_writer(path)(path, overwrite=overwrite, credentials=credentials)
     images.foreach(lambda x: writer.write(tobuffer(x)))
-    config(path, dims=dims, dtype=images.dtype, overwrite=overwrite)
+    config(path, list(images.dims), images.dtype, overwrite=overwrite)
 
-def config(path, dims, dtype='int16', name="conf.json", overwrite=True, credentials=None):
+def config(path, shape, dtype, name="conf.json", overwrite=True, credentials=None):
     """
     Helper function to write a JSON file with configuration for binary image data.
     """
@@ -84,7 +82,7 @@ def config(path, dims, dtype='int16', name="conf.json", overwrite=True, credenti
 
     writer = get_file_writer(path)
 
-    conf = {'dims': dims, 'dtype': str(dtype)}
+    conf = {'shape': shape, 'dtype': str(dtype)}
     confwriter = writer(path, name, overwrite=overwrite, credentials=credentials)
     confwriter.write(json.dumps(conf, indent=2))
 

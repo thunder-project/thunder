@@ -193,11 +193,14 @@ def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=Fal
         return fromarray(values)
 
 
-def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, recursive=False,
+def frombinary(path, shape=None, dtype=None, ext='bin', start=None, stop=None, recursive=False,
                nplanes=None, npartitions=None, conf='conf.json', order='C',
                engine=None, credentials=None):
     """
-    Load images from binary files.
+    Load images from flat binary files.
+
+    Assumes one image per file, each with the shape and ordering as given
+    by the input arguments.
 
     Parameters
     ----------
@@ -205,8 +208,8 @@ def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, re
         Path to data files or directory, specified as either a local filesystem path
         or in a URI-like format, including scheme. May include a single '*' wildcard character.
 
-    dims : tuple of positive int
-        Dimensions of input image data, ordered with fastest-changing dimension first
+    shape : tuple of positive int
+        Dimensions of input image data.
 
     ext : string, optional, default="bin"
         Extension required on data files to be loaded.
@@ -239,10 +242,12 @@ def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, re
     if 'dtype' in params.keys():
         dtype = params['dtype']
     if 'dims' in params.keys():
-        dims = params['dims']
+        shape = params['dims']
+    if 'shape' in params.keys():
+        shape = params['shape']
 
-    if not dims:
-        raise ValueError("Image dimensions must be specified as argument or in a conf.json file")
+    if not shape:
+        raise ValueError("Image shape must be specified as argument or in a conf.json file")
 
     if not dtype:
         dtype = 'int16'
@@ -250,19 +255,19 @@ def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, re
     if nplanes is not None:
         if nplanes <= 0:
             raise ValueError("nplanes must be positive if passed, got %d" % nplanes)
-        if dims[-1] % nplanes:
+        if shape[-1] % nplanes:
             raise ValueError("Last dimension '%d' must be divisible by nplanes '%d'" %
-                             (dims[-1], nplanes))
+                             (shape[-1], nplanes))
 
     def getarray(idxAndBuf):
         idx, buf = idxAndBuf
-        ary = frombuffer(buf, dtype=dtype, count=int(prod(dims))).reshape(dims, order=order)
+        ary = frombuffer(buf, dtype=dtype, count=int(prod(shape))).reshape(shape, order=order)
         if nplanes is None:
             yield (idx,), ary
         else:
             # divide array into chunks of nplanes
-            npoints = dims[-1] / nplanes  # integer division
-            if dims[-1] % nplanes:
+            npoints = shape[-1] / nplanes  # integer division
+            if shape[-1] % nplanes:
                 npoints += 1
             timepoint = 0
             lastPlane = 0
@@ -280,7 +285,7 @@ def frombinary(path, dims=None, dtype=None, ext='bin', start=None, stop=None, re
 
     recount = False if nplanes is None else True
     append = [nplanes] if nplanes > 1 else []
-    newdims = tuple(list(dims[:-1]) + append) if nplanes else dims
+    newdims = tuple(list(shape[:-1]) + append) if nplanes else shape
     return frompath(path, accessor=getarray, ext=ext, start=start,
                     stop=stop, recursive=recursive, npartitions=npartitions,
                     dims=newdims, dtype=dtype, recount=recount,
@@ -302,7 +307,7 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False,
 
     start, stop : nonnegative int, optional, default=None
         Indices of the first and last-plus-one file to load, relative to the sorted
-        filenames matching `path` and `ext`. Interpreted using python slice indexing conventions.
+        filenames matching 'path' and 'ext'. Interpreted using python slice indexing conventions.
 
     recursive : boolean, optional, default=False
         If true, will recursively descend directories from path, loading all files
@@ -418,8 +423,7 @@ def fromexample(name=None, engine=None):
     Parameters
     ----------
     name : str
-        Name of dataset, options include 'mouse' | 'fish.
-        If not specified will print options.
+        Name of dataset, if not specified will print options.
     """
     datasets = ['mouse', 'fish']
 

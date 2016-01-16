@@ -1,6 +1,6 @@
 from numpy import prod, unravel_index
 
-def tobinary(series, path, overwrite=False, credentials=None):
+def tobinary(series, path, prefix='series', overwrite=False, credentials=None):
     """
     Writes out data to binary format.
 
@@ -12,6 +12,9 @@ def tobinary(series, path, overwrite=False, credentials=None):
     path : string path or URI to directory to be created
         Output files will be written underneath path.
         Directory will be created as a result of this call.
+
+    prefix : str, optional, default = 'series'
+        String prefix for files.
 
     overwrite : bool
         If true, path and all its contents will be deleted and
@@ -37,13 +40,13 @@ def tobinary(series, path, overwrite=False, credentials=None):
         if firstkey is None:
             return iter([])
         else:
-            label = getlabel(firstkey) + ".bin"
+            label = prefix + '-' + getlabel(firstkey) + ".bin"
             return iter([(label, val)])
 
     writer = get_parallel_writer(path)(path, overwrite=overwrite, credentials=credentials)
 
     if series.mode == 'spark':
-        binary = series.values.tordd().mapPartitions(tobuffer)
+        binary = series.values.tordd().sortByKey().mapPartitions(tobuffer)
         binary.foreach(writer.write)
 
     else:
@@ -81,4 +84,4 @@ def getlabel(key):
     """
     Get a file label from keys with reversed order
     """
-    return '-'.join(reversed(["key%02d_%05g" % (ki, k) for (ki, k) in enumerate(key)]))
+    return '-'.join(reversed(["%05g" % k for k in key]))

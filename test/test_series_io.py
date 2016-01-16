@@ -107,7 +107,7 @@ def test_to_binary(tmpdir, eng):
     p = str(tmpdir) + '/data'
     fromarray(a, npartitions=1, engine=eng).tobinary(p)
     files = [os.path.basename(f) for f in glob.glob(str(tmpdir) + '/data/*')]
-    assert sorted(files) == ['SUCCESS', 'conf.json', 'key00_00000.bin']
+    assert sorted(files) == ['SUCCESS', 'conf.json', 'series-00000.bin']
     with open(str(tmpdir) + '/data/conf.json', 'r') as f:
         conf = json.load(f)
         assert conf['shape'] == [4, 2]
@@ -118,6 +118,15 @@ def test_to_binary_roundtrip(tmpdir, eng):
     a = arange(8, dtype='int16').reshape((4, 2))
     p = str(tmpdir) + '/data'
     data = fromarray(a, npartitions=1, engine=eng)
+    data.tobinary(p)
+    loaded = frombinary(p)
+    assert allclose(data.toarray(), loaded.toarray())
+
+
+def test_to_binary_roundtrip_partitioned(tmpdir, eng):
+    a = arange(8, dtype='int16').reshape((4, 2))
+    p = str(tmpdir) + '/data'
+    data = fromarray([a, a], npartitions=2, engine=eng)
     data.tobinary(p)
     loaded = frombinary(p)
     assert allclose(data.toarray(), loaded.toarray())
@@ -134,8 +143,8 @@ def test_to_binary_roundtrip_3d(tmpdir, eng):
 
 def test_from_example(eng):
     data = fromexample('fish', engine=eng)
-    assert allclose(data.shape, (76, 87, 2, 240))
+    assert allclose(data.toarray().shape, (76, 87, 2, 20))
     data = fromexample('mouse', engine=eng)
-    assert allclose(data.shape, (64, 64, 500))
+    assert allclose(data.toarray().shape, (64, 64, 20))
     data = fromexample('iris', engine=eng)
-    assert allclose(data.shape, (150, 4))
+    assert allclose(data.toarray().shape, (150, 4))

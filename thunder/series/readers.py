@@ -1,5 +1,5 @@
 from numpy import array, arange, frombuffer, load, asarray, random, \
-    fromstring, expand_dims, unravel_index
+    fromstring, expand_dims, unravel_index, prod
 
 from ..utils import check_spark
 spark = check_spark()
@@ -338,6 +338,10 @@ def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0
                 values.append(v[skip:])
                 offset += recordsize
 
+        if not len(values) == prod(shape[0:-1]):
+            raise ValueError('Unexpected shape, got %g records but expected %g'
+                             % (len(values), prod(shape[0:-1])))
+
         values = asarray(values, dtype=dtype)
 
         if shape:
@@ -409,11 +413,7 @@ def fromexample(name=None, engine=None):
         Name of dataset, options include 'iris' | 'mouse' | 'fish'.
         If not specified will print options.
     """
-    import os
-    import tempfile
-    import shutil
     import checkist
-    from boto.s3.connection import S3Connection
 
     datasets = ['iris', 'mouse', 'fish']
 
@@ -425,23 +425,11 @@ def fromexample(name=None, engine=None):
 
     checkist.opts(name, datasets)
 
-    d = tempfile.mkdtemp()
+    path = 's3n://thunder-sample-data/series/' + name
+    data = frombinary(path=path, engine=engine)
 
-    try:
-        os.mkdir(os.path.join(d, 'series'))
-        os.mkdir(os.path.join(d, 'series', name))
-        conn = S3Connection(anon=True)
-        bucket = conn.get_bucket('thunder-sample-data')
-        for key in bucket.list(os.path.join('series', name)):
-            if not key.name.endswith('/'):
-                key.get_contents_to_filename(os.path.join(d, key.name))
-        data = frombinary(os.path.join(d, 'series', name), engine=engine)
-
-        if spark and isinstance(engine, spark):
-            data.cache()
-            data.compute()
-
-    finally:
-        shutil.rmtree(d)
+    if spark and isinstance(engine, spark):
+        data.cache()
+        data.compute()
 
     return data
