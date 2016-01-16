@@ -2,7 +2,6 @@ from . import series
 from . import images
 
 def _setup():
-    print('we got here')
     import logging
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
