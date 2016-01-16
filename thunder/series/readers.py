@@ -1,5 +1,5 @@
-from numpy import array, arange, frombuffer, load, asarray, random, maximum, \
-    fromstring, expand_dims
+from numpy import array, arange, frombuffer, load, asarray, random, \
+    fromstring, expand_dims, unravel_index
 
 from ..utils import check_spark
 spark = check_spark()
@@ -48,7 +48,7 @@ def fromrdd(rdd, nrecords=None, shape=None, index=None, dtype=None):
     if shape is None:
         shape = (nrecords, asarray(index).shape[0])
 
-    values = BoltArraySpark(rdd, shape=shape, dtype=dtype, split=1)
+    values = BoltArraySpark(rdd, shape=shape, dtype=dtype, split=len(shape)-1)
     return Series(values, index=index)
 
 def fromarray(values, index=None, npartitions=None, engine=None):
@@ -195,15 +195,14 @@ def fromnpy(path,  index=None, npartitions=None, engine=None):
 
     return fromarray(data, npartitions=npartitions, index=index, engine=engine)
 
-def fromtext(path, npartitions=None, nkeys=None, ext='txt', dtype='float64',
-             index=None, engine=None, credentials=None):
+def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None,
+             engine=None, npartitions=None, credentials=None):
     """
     Loads Series data from text files.
 
     Assumes data are formatted as rows, where each record is a row
-    of numbers separated by spaces, the first numbers in each row
-    are keys, and the remaining numbers are values, e.g.
-    'k v v v v'
+    of numbers separated by spaces e.g. 'v v v v v'. You can
+    optionally specify a fixed number of initial items per row to skip / discard.
 
     Parameters
     ----------
@@ -212,23 +211,26 @@ def fromtext(path, npartitions=None, nkeys=None, ext='txt', dtype='float64',
         (e.g. "file://", "s3n://", or "gs://"), or a single file,
         or a directory, or a directory with a single wildcard character.
 
-    npartitions : int, default = None
-        Number of partitions for parallelization (Spark only)
-
-    nkeys : int, optional, default = None
-        Number of keys per record.
-
     ext : str, optional, default = 'txt'
         File extension.
 
     dtype: dtype or dtype specifier, default 'float64'
         Numerical type to use for data after converting from text.
 
+    skip : int, optional, default = 0
+        Number of items in each record to skip.
+
+    shape : tuple or list, optional, default = None
+        Shape of data if known, will be inferred otherwise.
+
     index : array, optional, default = None
         Index for records, if not provided will use (0, 1, ...)
 
     engine : object, default = None
         Computational engine (e.g. a SparkContext for Spark)
+
+    npartitions : int, default = None
+        Number of partitions for parallelization (Spark only)
 
     credentials : dict, default = None
         Credentials for remote storage (e.g. S3) in the form {access: ***, secret: ***}
@@ -238,15 +240,14 @@ def fromtext(path, npartitions=None, nkeys=None, ext='txt', dtype='float64',
 
     if spark and isinstance(engine, spark):
 
-        def parse(line, nkeys_):
+        def parse(line, skip):
             vec = [float(x) for x in line.split(' ')]
-            ts = array(vec[nkeys_:], dtype=dtype)
-            keys = tuple(int(x) for x in vec[:nkeys_])
-            return keys, ts
+            return array(vec[skip:], dtype=dtype)
 
         lines = engine.textFile(path, npartitions)
-        data = lines.map(lambda x: parse(x, nkeys))
-        return fromrdd(data, dtype=str(dtype), index=index)
+        data = lines.map(lambda x: parse(x, skip))
+        rdd = data.zipWithIndex().map(lambda (ary, idx): ((idx,), ary))
+        return fromrdd(rdd, dtype=str(dtype), shape=shape, index=index)
 
     else:
         reader = get_parallel_reader(path)(engine, credentials=credentials)
@@ -256,18 +257,18 @@ def fromtext(path, npartitions=None, nkeys=None, ext='txt', dtype='float64',
         for kv in data:
             for line in kv[1].split('\n')[:-1]:
                 values.append(fromstring(line, sep=' '))
-
         values = asarray(values)
 
-        if nkeys:
-            basedims = tuple(asarray(values[:, 0:nkeys]).max(axis=0) + 1)
-            nvalues = values.shape[-1] - nkeys
-            values = values[:, nkeys:].reshape(basedims + (nvalues,))
+        if skip > 0:
+            values = values[:, skip:]
+
+        if shape:
+            values = values.reshape(shape)
 
         return fromarray(values, index=index)
 
-def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
-               keytype=None, valuetype=None, index=None, engine=None, credentials=None):
+def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0,
+               index=None, engine=None, credentials=None):
     """
     Load a Series object from flat binary files.
 
@@ -284,11 +285,14 @@ def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
     conf : str, optional, default = 'conf.json'
         Name of conf file with type and size information.
 
-    nkeys, nvalues : int, optional, default = None
-        Parameters of binary data, can be specified here or in a configuration file.
+    dtype: dtype or dtype specifier, default 'float64'
+        Numerical type to use for data after converting from text.
 
-    keytype, valuetype : str, optional, default = None
-        Parameters of binary data, can be specified here or in a configuration file.
+    shape : tuple or list, optional, default = None
+        Shape of data if known, will be inferred otherwise.
+
+    skip : int, optional, default = 0
+        Number of items in each record to skip.
 
     index : array, optional, default = None
         Index for records, if not provided will use (0, 1, ...)
@@ -299,72 +303,54 @@ def frombinary(path, ext='bin', conf='conf.json', nkeys=None, nvalues=None,
     credentials : dict, default = None
         Credentials for remote storage (e.g. S3) in the form {access: ***, secret: ***}
     """
-    params = binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype, credentials)
+    shape, dtype = binaryconfig(path, conf, dtype, shape, credentials)
 
     from thunder.readers import normalize_scheme, get_parallel_reader
     path = normalize_scheme(path, ext)
 
-    from numpy import dtype as dtypeFunc
-    keytype = dtypeFunc(params.keytype)
-    valuetype = dtypeFunc(params.valuetype)
-
-    keysize = params.nkeys * keytype.itemsize
-    valuesize = params.nvalues * valuetype.itemsize
-    recordsize = keysize + valuesize
+    from numpy import dtype as dtype_func
+    recordsize = dtype_func(dtype).itemsize * (shape[-1] + skip)
 
     if spark and isinstance(engine, spark):
         lines = engine.binaryRecords(path, recordsize)
+        raw = lines.map(lambda x: frombuffer(buffer(x, 0, recordsize), dtype=dtype)[skip:])
+        rdd = raw.zipWithIndex().map(lambda (ary, idx): ((idx,), ary))
 
-        def get(kv):
-            k = tuple(int(x) for x in frombuffer(buffer(kv, 0, keysize), dtype=keytype))
-            v = frombuffer(buffer(kv, keysize), dtype=valuetype)
-            return (k, v) if keysize > 0 else v
-
-        raw = lines.map(get)
-        if keysize == 0:
-            raw = raw.zipWithIndex().map(lambda (v, k): ((k,), v))
-        shape = tuple(raw.keys().reduce(maximum) + 1) + (params.nvalues,)
+        if shape and len(shape) > 2:
+            expand = lambda k: unravel_index(k[0], shape[0:-1])
+            rdd = rdd.map(lambda (k, v): (expand(k), v))
 
         if not index:
-            index = arange(params.nvalues)
+            index = arange(shape[-1])
 
-        return fromrdd(raw, dtype=str(valuetype), shape=shape, index=index)
+        return fromrdd(rdd, dtype=dtype, shape=shape, index=index)
 
     else:
         reader = get_parallel_reader(path)(engine, credentials=credentials)
         data = reader.read(path, ext=ext)
 
-        keys = []
         values = []
-        for kv in data:
-            buf = kv[1]
+        for record in data:
+            buf = record[1]
             offset = 0
             while offset < len(buf):
-                k = frombuffer(buffer(buf, offset, keysize), dtype=keytype)
-                v = frombuffer(buffer(buf, offset + keysize, valuesize), dtype=valuetype)
-                keys.append(k)
-                values.append(v)
+                v = frombuffer(buffer(buf, offset, recordsize), dtype=dtype)
+                values.append(v[skip:])
                 offset += recordsize
 
-        values = asarray(values)
-        if keysize == 0:
-            basedims = (values.shape[0],)
-        else:
-            basedims = tuple(asarray(keys).max(axis=0) + 1)
-        values = values.reshape(basedims + (params.nvalues,))
+        values = asarray(values, dtype=dtype)
+
+        if shape:
+            values = values.reshape(shape)
 
         return fromarray(values, index=index)
 
-def binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype, credentials):
+def binaryconfig(path, conf, dtype=None, shape=None, credentials=None):
     """
     Collects parameters to use for binary series loading.
     """
     import json
-    from collections import namedtuple
     from thunder.readers import get_file_reader, FileNotFoundError
-
-    Parameters = namedtuple('BinaryLoadParameters', 'nkeys nvalues keytype valuetype')
-    Parameters.__new__.__defaults__ = (None, None, 'int16', 'int16')
 
     reader = get_file_reader(path)(credentials=credentials)
     try:
@@ -373,25 +359,19 @@ def binaryconfig(path, conf, nkeys, nvalues, keytype, valuetype, credentials):
     except FileNotFoundError:
         params = {}
 
-    for k in params.keys():
-        if k not in Parameters._fields:
-            del params[k]
-    keywords = {'nkeys': nkeys, 'nvalues': nvalues, 'keytype': keytype, 'valuetype': valuetype}
-    for k, v in keywords.items():
-        if not v and not v == 0:
-            del keywords[k]
-    params.update(keywords)
-    params = Parameters(**params)
+    if dtype:
+        params['dtype'] = dtype
 
-    missing = []
-    for name, val in params._asdict().iteritems():
-        if not val and not val == 0:
-            missing.append(name)
-    if missing:
-        raise ValueError("Missing parameters to load binary series files - " +
-                         "these must be given either as arguments or in a configuration file: " +
-                         str(tuple(missing)))
-    return params
+    if shape:
+        params['shape'] = shape
+
+    if 'dtype' not in params.keys():
+        raise ValueError('dtype not specified either in conf.json or as argument')
+
+    if 'shape' not in params.keys():
+        raise ValueError('shape not specified either in conf.json or as argument')
+
+    return params['shape'], params['dtype']
 
 def fromrandom(shape=(100, 10), npartitions=1, seed=42, engine=None):
     """

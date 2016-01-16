@@ -18,7 +18,6 @@ def tobinary(series, path, overwrite=False, credentials=None):
         recreated as partof this call.
     """
     import cStringIO as StringIO
-    import struct
     from thunder.utils import check_path
     from thunder.writers import get_parallel_writer
 
@@ -27,14 +26,11 @@ def tobinary(series, path, overwrite=False, credentials=None):
         overwrite = True
 
     def tobuffer(kv):
-        keypacker = None
         firstkey = None
         buf = StringIO.StringIO()
         for k, v in kv:
-            if keypacker is None:
-                keypacker = struct.Struct('h'*len(k))
+            if firstkey is None:
                 firstkey = k
-            buf.write(keypacker.pack(*k))
             buf.write(v.tostring())
         val = buf.getvalue()
         buf.close()
@@ -60,14 +56,12 @@ def tobinary(series, path, overwrite=False, credentials=None):
         buf = tobuffer([split(i) for i in range(prod(basedims))])
         [writer.write(b) for b in buf]
 
-    nkeys = len(series.baseaxes)
-    nvalues = series.length
+    shape = series.shape
+    dtype = series.dtype
 
-    write_config(path, nkeys, nvalues, keytype='int16', valuetype=series.dtype,
-                 overwrite=overwrite, credentials=credentials)
+    write_config(path, shape=shape, dtype=dtype, overwrite=overwrite, credentials=credentials)
 
-def write_config(path, nkeys, nvalues, keytype='int16', valuetype='int16',
-                 name="conf.json", overwrite=True, credentials=None):
+def write_config(path, shape=None, dtype=None, name="conf.json", overwrite=True, credentials=None):
     """
     Write a conf.json file with required information to load Series binary data.
     """
@@ -75,8 +69,7 @@ def write_config(path, nkeys, nvalues, keytype='int16', valuetype='int16',
     from thunder.writers import get_file_writer
 
     writer = get_file_writer(path)
-    conf = {'input': path, 'nkeys': nkeys, 'nvalues': nvalues,
-            'valuetype': str(valuetype), 'keytype': str(keytype)}
+    conf = {'shape': shape, 'dtype': str(dtype)}
 
     confwriter = writer(path, name, overwrite=overwrite, credentials=credentials)
     confwriter.write(json.dumps(conf, indent=2))
