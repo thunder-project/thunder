@@ -208,9 +208,11 @@ class Series(Data):
         """
         return self._constructor(self.values.min(axis=self.baseaxes, keepdims=True))
 
-    def between(self, left, right, inclusive=True):
+    def between(self, left, right):
         """
         Select subset of values within the given index range
+        
+        Inclusive on the left; exclusive on the right.
 
         Parameters
         ----------
@@ -219,14 +221,8 @@ class Series(Data):
 
         right: int
             Right-most index in the desired range
-
-        inclusive : boolean, optional, default = True
-            Whether selection should include bounds
         """
-        if inclusive:
-            crit = lambda x: left <= x <= right
-        else:
-            crit = lambda x: left < x < right
+        crit = lambda x: left <= x < right
         return self.select(crit)
 
     def select(self, crit):
