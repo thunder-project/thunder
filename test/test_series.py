@@ -37,7 +37,7 @@ def test_sample(eng):
 
 def test_between(eng):
     data = fromlist([array([4, 5, 6, 7]), array([8, 9, 10, 11])], engine=eng)
-    val = data.between(0, 1)
+    val = data.between(0, 2)
     assert allclose(val.index, array([0, 1]))
     assert allclose(val.toarray(), array([[4, 5], [8, 9]]))
 
