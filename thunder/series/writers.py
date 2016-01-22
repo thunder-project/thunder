@@ -20,7 +20,7 @@ def tobinary(series, path, prefix='series', overwrite=False, credentials=None):
         If true, path and all its contents will be deleted and
         recreated as partof this call.
     """
-    import cStringIO as StringIO
+    from six import BytesIO
     from thunder.utils import check_path
     from thunder.writers import get_parallel_writer
 
@@ -30,7 +30,7 @@ def tobinary(series, path, prefix='series', overwrite=False, credentials=None):
 
     def tobuffer(kv):
         firstkey = None
-        buf = StringIO.StringIO()
+        buf = BytesIO()
         for k, v in kv:
             if firstkey is None:
                 firstkey = k

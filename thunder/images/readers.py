@@ -180,7 +180,12 @@ def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=Fal
             data = data.flatMap(accessor)
         if recount:
             nrecords = None
-            data = data.values().zipWithIndex().map(lambda (ary, idx): ((idx,), ary))
+
+            def switch(record):
+                ary, idx = record
+                return (idx,), ary
+
+            data = data.values().zipWithIndex().map(switch)
         else:
             nrecords = reader.nfiles
         return fromrdd(data, nrecords=nrecords, dims=dims, dtype=dtype)
@@ -428,9 +433,9 @@ def fromexample(name=None, engine=None):
     datasets = ['mouse', 'fish']
 
     if name is None:
-        print 'Availiable example image datasets'
+        print('Availiable example image datasets')
         for d in datasets:
-            print '- ' + d
+            print('- ' + d)
         return
 
     checkist.opts(name, datasets)

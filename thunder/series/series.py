@@ -770,7 +770,7 @@ class Series(Data):
                 global mat
                 mat += outer(x, x)
 
-            rdd.map(lambda (k, v): v).foreach(outer_sum)
+            rdd.values().foreach(outer_sum)
             return self._constructor(mat.value, index=self.index)
 
         if self.mode == 'local':

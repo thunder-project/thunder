@@ -451,7 +451,11 @@ class Data(Base):
             return self._constructor(op(self.values, other.values)).__finalize__(self)
 
         if self.mode == 'spark' and isinstance(other, Data):
-            func = lambda ((k1, x), (k2, y)): (k1, op(x, y))
+
+            def func(record):
+                (k1, x), (k2, y) = record
+                return k1, op(x, y)
+
             rdd = self.tordd().zip(other.tordd()).map(func)
             barray = BoltArraySpark(rdd, shape=self.shape, dtype=self.dtype)
             return self._constructor(barray).__finalize__(self)

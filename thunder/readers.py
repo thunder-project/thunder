@@ -3,14 +3,18 @@ import fnmatch
 import glob
 import itertools
 import os
-import urllib
-import urlparse
 import logging
+# standard library reorganization between Python 2 and 3
+try:
+    from urllib.parse import urlparse
+    from urllib.request import url2pathname
+except ImportError:
+    from urlparse import urlparse
+    from urllib import url2pathname
 
 from .utils import check_spark
 spark = check_spark()
 logging.getLogger('boto').setLevel(logging.CRITICAL)
-
 
 def addextension(path, ext=None):
     """
@@ -56,7 +60,7 @@ def readlocal(path, offset=None, size=-1):
             if offset:
                 f.seek(offset)
             buf = f.read(size)
-    except IOError, e:
+    except IOError as e:
         if e.errno == errno.ENOENT:
             raise FileNotFoundError(e)
         else:
@@ -93,7 +97,7 @@ def listflat(path, ext=None):
     return sorted(files)
 
 def uri_to_path(uri):
-    path = urllib.url2pathname(urlparse.urlparse(uri).path)
+    path = url2pathname(urlparse(uri).path)
     if uri and (not path):
         raise ValueError("Could not interpret %s as URI. " +
                          "Paths in URIs should start with 'file:///', not 'file://'")
@@ -143,8 +147,7 @@ class LocalParallelReader(object):
         if spark and isinstance(self.engine, spark):
             npartitions = min(npartitions, nfiles) if npartitions else nfiles
             rdd = self.engine.parallelize(enumerate(files), npartitions)
-            return rdd.map(lambda (k, v): (k, readlocal(v)))
-
+            return rdd.map(lambda kv: (kv[0], readlocal(kv[1])))
         else:
             return [(k, readlocal(v)) for k, v in enumerate(files)]
 
@@ -225,7 +228,7 @@ class BotoClient(object):
         prefix = ''
         postfix = ''
 
-        parsed = urlparse.urlparse(query)
+        parsed = urlparse(query)
         query = parsed.path.lstrip(delim)
         bucket = parsed.netloc
 
@@ -603,10 +606,9 @@ def normalize_scheme(path, ext):
     """
     Normalize scheme for paths related to hdfs
     """
-    import urlparse
     path = addextension(path, ext)
 
-    parsed = urlparse.urlparse(path)
+    parsed = urlparse(path)
     if parsed.scheme:
         # this appears to already be a fully-qualified URI
         return path
@@ -624,7 +626,7 @@ def get_by_scheme(path, lookup, default):
     """
     Helper function used by get*ForPath().
     """
-    parsed = urlparse.urlparse(path)
+    parsed = urlparse(path)
     class_name = lookup.get(parsed.scheme, default)
     if class_name is None:
         raise NotImplementedError("No implementation for scheme " + parsed.scheme)
