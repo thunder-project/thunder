@@ -1,5 +1,7 @@
 import logging
 from numpy import ndarray, arange, amax, amin, size, asarray, random, prod
+# Name changes between Python 2 and 3
+from six.moves import xrange
 
 from ..base import Data
 

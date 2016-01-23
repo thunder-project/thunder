@@ -5,6 +5,9 @@ from numpy import array, sum, mean, median, std, size, arange, percentile,\
     ravel, logical_not, max, min, unravel_index, prod, random, shape, \
     dot, outer, expand_dims, ScalarType, ndarray
 from bolt.utils import tupleize
+# naming changes between Python 2 and 3
+from six import string_types
+from six.moves import xrange
 
 from ..base import Data
 
@@ -240,7 +243,7 @@ class Series(Data):
         # handle lists, strings, and ints
         if not isinstance(crit, types.FunctionType):
             # set("foo") -> {"f", "o"}; wrap in list to prevent:
-            if isinstance(crit, basestring):
+            if isinstance(crit, string_types):
                 critlist = set([crit])
             else:
                 try:
@@ -266,7 +269,7 @@ class Series(Data):
             return self
 
         # use fast logical indexing to get the new values
-        subinds = where(map(lambda x: crit(x), index))
+        subinds = where([crit(i) for i in index])
         new = self.map(lambda x: x[subinds], index=newindex)
 
         # if singleton, need to check whether it's an array or a scalar/int
