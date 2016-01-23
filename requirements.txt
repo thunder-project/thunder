@@ -2,5 +2,7 @@ numpy
 scipy
 scikit-image
 boto
+pillow
+six
 bolt-python >= 0.3.0
 checkist >= 1.0.0
