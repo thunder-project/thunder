@@ -165,7 +165,7 @@ class Images(Data):
         Execute a function on each image
         """
         if self.mode == 'spark':
-            self.values.tordd().map(lambda (k, v): (k[0], v)).foreach(func)
+            self.values.tordd().map(lambda kv: (kv[0][0], kv[1])).foreach(func)
         else:
             [func(kv) for kv in enumerate(self.values)]
 

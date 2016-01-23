@@ -1,16 +1,18 @@
 import errno
 import fnmatch
 import glob
-import itertools
 import os
 import logging
-# standard library reorganization between Python 2 and 3
+
+# library reorganization between Python 2 and 3
 try:
     from urllib.parse import urlparse
     from urllib.request import url2pathname
 except ImportError:
     from urlparse import urlparse
     from urllib import url2pathname
+from six.moves import filter
+from six import next
 
 from .utils import check_spark
 spark = check_spark()
@@ -298,10 +300,10 @@ class BotoClient(object):
         results = bucket.list(prefix=key, delimiter=listdelim)
         if postfix:
             func = lambda k_: BotoClient.filter_predicate(k_, postfix, inclusive=True)
-            return itertools.ifilter(func, results)
+            return filter(func, results)
         elif not directories:
             func = lambda k_: BotoClient.filter_predicate(k_, delim, inclusive=False)
-            return itertools.ifilter(func, results)
+            return filter(func, results)
         else:
             return results
 
@@ -462,14 +464,14 @@ class BotoFileReader(BotoClient):
         """
         scheme, keys = self.getkeys(path, filename=filename)
         try:
-            key = keys.next()
+            key = next(keys)
         except StopIteration:
             raise FileNotFoundError("Could not find object for: '%s'" % path)
 
         # we expect to only have a single key returned
         nextKey = None
         try:
-            nextKey = keys.next()
+            nextKey = next(keys)
         except StopIteration:
             pass
         if nextKey:

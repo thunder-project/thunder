@@ -2,6 +2,8 @@ import itertools
 import checkist
 from io import BytesIO
 from numpy import frombuffer, prod, random, asarray, expand_dims
+# library reorganization between Python 2 and 3
+from six.moves import xrange
 
 from ..utils import check_spark
 spark = check_spark()
@@ -239,7 +241,7 @@ def frombinary(path, shape=None, dtype=None, ext='bin', start=None, stop=None, r
     from thunder.readers import get_file_reader, FileNotFoundError
     try:
         reader = get_file_reader(path)(credentials=credentials)
-        buf = reader.read(path, filename=conf)
+        buf = reader.read(path, filename=conf).decode('utf-8')
         params = json.loads(buf)
     except FileNotFoundError:
         params = {}
@@ -289,7 +291,7 @@ def frombinary(path, shape=None, dtype=None, ext='bin', start=None, stop=None, r
             yield (idx*npoints + timepoint,), ary[slices].squeeze()
 
     recount = False if nplanes is None else True
-    append = [nplanes] if nplanes > 1 else []
+    append = [nplanes] if (nplanes is not None and nplanes > 1) else []
     newdims = tuple(list(shape[:-1]) + append) if nplanes else shape
     return frompath(path, accessor=getarray, ext=ext, start=start,
                     stop=stop, recursive=recursive, npartitions=npartitions,
