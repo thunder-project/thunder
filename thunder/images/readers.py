@@ -2,8 +2,6 @@ import itertools
 import checkist
 from io import BytesIO
 from numpy import frombuffer, prod, random, asarray, expand_dims
-# library reorganization between Python 2 and 3
-from six.moves import xrange
 
 from ..utils import check_spark
 spark = check_spark()
@@ -340,7 +338,7 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False,
         ary = tfh.asarray()
         pageCount = ary.shape[0]
         if nplanes is not None:
-            values = [ary[i:(i+nplanes)] for i in xrange(0, ary.shape[0], nplanes)]
+            values = [ary[i:(i+nplanes)] for i in range(0, ary.shape[0], nplanes)]
         else:
             values = [ary]
         tfh.close()
@@ -352,7 +350,7 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False,
         if nplanes and (pageCount % nplanes):
             raise ValueError("nplanes '%d' does not evenly divide '%d'" % (nplanes, pageCount))
         nvals = len(values)
-        keys = [(idx*nvals + timepoint,) for timepoint in xrange(nvals)]
+        keys = [(idx*nvals + timepoint,) for timepoint in range(nvals)]
         return zip(keys, values)
 
     recount = False if nplanes is None else True

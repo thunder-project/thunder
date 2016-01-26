@@ -1,7 +1,5 @@
 import logging
 from numpy import ndarray, arange, amax, amin, size, asarray, random, prod
-# Name changes between Python 2 and 3
-from six.moves import xrange
 
 from ..base import Data
 
@@ -320,8 +318,8 @@ class Images(Data):
         def roundup(a, b):
             return (a + b - 1) // b
 
-        slices = [slice(0, dims[i], factor[i]) for i in xrange(ndims)]
-        newdims = tuple([roundup(dims[i], factor[i]) for i in xrange(ndims)])
+        slices = [slice(0, dims[i], factor[i]) for i in range(ndims)]
+        newdims = tuple([roundup(dims[i], factor[i]) for i in range(ndims)])
 
         return self.map(lambda v: v[slices], dims=newdims)
 
