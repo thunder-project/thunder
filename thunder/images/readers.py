@@ -180,7 +180,12 @@ def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=Fal
             data = data.flatMap(accessor)
         if recount:
             nrecords = None
-            data = data.values().zipWithIndex().map(lambda (ary, idx): ((idx,), ary))
+
+            def switch(record):
+                ary, idx = record
+                return (idx,), ary
+
+            data = data.values().zipWithIndex().map(switch)
         else:
             nrecords = reader.nfiles
         return fromrdd(data, nrecords=nrecords, dims=dims, dtype=dtype)
@@ -234,7 +239,7 @@ def frombinary(path, shape=None, dtype=None, ext='bin', start=None, stop=None, r
     from thunder.readers import get_file_reader, FileNotFoundError
     try:
         reader = get_file_reader(path)(credentials=credentials)
-        buf = reader.read(path, filename=conf)
+        buf = reader.read(path, filename=conf).decode('utf-8')
         params = json.loads(buf)
     except FileNotFoundError:
         params = {}
@@ -284,7 +289,7 @@ def frombinary(path, shape=None, dtype=None, ext='bin', start=None, stop=None, r
             yield (idx*npoints + timepoint,), ary[slices].squeeze()
 
     recount = False if nplanes is None else True
-    append = [nplanes] if nplanes > 1 else []
+    append = [nplanes] if (nplanes is not None and nplanes > 1) else []
     newdims = tuple(list(shape[:-1]) + append) if nplanes else shape
     return frompath(path, accessor=getarray, ext=ext, start=start,
                     stop=stop, recursive=recursive, npartitions=npartitions,
@@ -333,7 +338,7 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False,
         ary = tfh.asarray()
         pageCount = ary.shape[0]
         if nplanes is not None:
-            values = [ary[i:(i+nplanes)] for i in xrange(0, ary.shape[0], nplanes)]
+            values = [ary[i:(i+nplanes)] for i in range(0, ary.shape[0], nplanes)]
         else:
             values = [ary]
         tfh.close()
@@ -345,7 +350,7 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False,
         if nplanes and (pageCount % nplanes):
             raise ValueError("nplanes '%d' does not evenly divide '%d'" % (nplanes, pageCount))
         nvals = len(values)
-        keys = [(idx*nvals + timepoint,) for timepoint in xrange(nvals)]
+        keys = [(idx*nvals + timepoint,) for timepoint in range(nvals)]
         return zip(keys, values)
 
     recount = False if nplanes is None else True
@@ -428,9 +433,9 @@ def fromexample(name=None, engine=None):
     datasets = ['mouse', 'fish']
 
     if name is None:
-        print 'Availiable example image datasets'
+        print('Availiable example image datasets')
         for d in datasets:
-            print '- ' + d
+            print('- ' + d)
         return
 
     checkist.opts(name, datasets)

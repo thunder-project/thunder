@@ -1,6 +1,12 @@
 from numpy import array, arange, frombuffer, load, asarray, random, \
     fromstring, expand_dims, unravel_index, prod
 
+# different naming conventions between Python 2 and 3
+try:
+    buffer
+except NameError:
+    buffer = memoryview
+
 from ..utils import check_spark
 spark = check_spark()
 
@@ -246,7 +252,12 @@ def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None,
 
         lines = engine.textFile(path, npartitions)
         data = lines.map(lambda x: parse(x, skip))
-        rdd = data.zipWithIndex().map(lambda (ary, idx): ((idx,), ary))
+
+        def switch(record):
+            ary, idx = record
+            return (idx,), ary
+
+        rdd = data.zipWithIndex().map(switch)
         return fromrdd(rdd, dtype=str(dtype), shape=shape, index=index)
 
     else:
@@ -255,7 +266,7 @@ def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None,
 
         values = []
         for kv in data:
-            for line in kv[1].split('\n')[:-1]:
+            for line in str(kv[1].decode('utf-8')).split('\n')[:-1]:
                 values.append(fromstring(line, sep=' '))
         values = asarray(values)
 
@@ -309,16 +320,22 @@ def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0
     path = normalize_scheme(path, ext)
 
     from numpy import dtype as dtype_func
-    recordsize = dtype_func(dtype).itemsize * (shape[-1] + skip)
+    nelements = shape[-1] + skip
+    recordsize = dtype_func(dtype).itemsize * nelements
 
     if spark and isinstance(engine, spark):
         lines = engine.binaryRecords(path, recordsize)
-        raw = lines.map(lambda x: frombuffer(buffer(x, 0, recordsize), dtype=dtype)[skip:])
-        rdd = raw.zipWithIndex().map(lambda (ary, idx): ((idx,), ary))
+        raw = lines.map(lambda x: frombuffer(buffer(x), offset=0, count=nelements, dtype=dtype)[skip:])
+
+        def switch(record):
+            ary, idx = record
+            return (idx,), ary
+
+        rdd = raw.zipWithIndex().map(switch)
 
         if shape and len(shape) > 2:
             expand = lambda k: unravel_index(k[0], shape[0:-1])
-            rdd = rdd.map(lambda (k, v): (expand(k), v))
+            rdd = rdd.map(lambda kv: (expand(kv[0]), kv[1]))
 
         if not index:
             index = arange(shape[-1])
@@ -334,7 +351,7 @@ def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0
             buf = record[1]
             offset = 0
             while offset < len(buf):
-                v = frombuffer(buffer(buf, offset, recordsize), dtype=dtype)
+                v = frombuffer(buffer(buf), offset=offset, count=nelements, dtype=dtype)
                 values.append(v[skip:])
                 offset += recordsize
 
@@ -359,7 +376,7 @@ def binaryconfig(path, conf, dtype=None, shape=None, credentials=None):
     reader = get_file_reader(path)(credentials=credentials)
     try:
         buf = reader.read(path, filename=conf)
-        params = json.loads(buf)
+        params = json.loads(str(buf.decode('utf-8')))
     except FileNotFoundError:
         params = {}
 
@@ -422,9 +439,9 @@ def fromexample(name=None, engine=None):
     datasets = ['iris', 'mouse', 'fish']
 
     if name is None:
-        print 'Availiable example series datasets'
+        print('Availiable example series datasets')
         for d in datasets:
-            print '- ' + d
+            print('- ' + d)
         return
 
     checkist.opts(name, datasets)

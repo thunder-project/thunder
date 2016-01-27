@@ -5,6 +5,8 @@ from numpy import array, sum, mean, median, std, size, arange, percentile,\
     ravel, logical_not, max, min, unravel_index, prod, random, shape, \
     dot, outer, expand_dims, ScalarType, ndarray
 from bolt.utils import tupleize
+# naming changes between Python 2 and 3
+from six import string_types
 
 from ..base import Data
 
@@ -44,7 +46,7 @@ class Series(Data):
         if self._index is None:
             self._index = arange(self.shape[-1])
         return self._index
-        
+
     @index.setter
     def index(self, value):
         lenself = len(self.index)
@@ -165,7 +167,7 @@ class Series(Data):
         Filter by applying a function to each series.
         """
         return self._filter(func, axis=self.baseaxes)
-    
+
     def reduce(self, func):
         """
         Reduce over series.
@@ -211,7 +213,7 @@ class Series(Data):
     def between(self, left, right):
         """
         Select subset of values within the given index range
-        
+
         Inclusive on the left; exclusive on the right.
 
         Parameters
@@ -240,7 +242,7 @@ class Series(Data):
         # handle lists, strings, and ints
         if not isinstance(crit, types.FunctionType):
             # set("foo") -> {"f", "o"}; wrap in list to prevent:
-            if isinstance(crit, basestring):
+            if isinstance(crit, string_types):
                 critlist = set([crit])
             else:
                 try:
@@ -266,7 +268,7 @@ class Series(Data):
             return self
 
         # use fast logical indexing to get the new values
-        subinds = where(map(lambda x: crit(x), index))
+        subinds = where([crit(i) for i in index])
         new = self.map(lambda x: x[subinds], index=newindex)
 
         # if singleton, need to check whether it's an array or a scalar/int
@@ -413,7 +415,7 @@ class Series(Data):
     def series_percentile(self, q):
         """
         Compute the value percentile of each record in a Series.
-        
+
         Parameters
         ----------
         q : scalar
@@ -493,13 +495,13 @@ class Series(Data):
     def _makemasks(self, index=None, level=0):
         """
         Internal function for generating masks for selecting values based on multi-index values.
-    
+
         As all other multi-index functions will call this function, basic type-checking is also
         performed at this stage.
         """
         if index is None:
             index = self.index
-        
+
         try:
             dims = len(array(index).shape)
             if dims == 1:
@@ -515,12 +517,12 @@ class Series(Data):
         lenIdx = index.shape[0]
         nlevels = index.shape[1]
 
-        combs = product(*[unique(index.T[i, :]) for i in xrange(nlevels)])
+        combs = product(*[unique(index.T[i, :]) for i in range(nlevels)])
         combs = array([l for l in combs])
 
-        masks = array([[array_equal(index[i], c) for i in xrange(lenIdx)] for c in combs])
+        masks = array([[array_equal(index[i], c) for i in range(lenIdx)] for c in combs])
 
-        return zip(*[(masks[x], combs[x]) for x in xrange(len(masks)) if masks[x].any()])
+        return zip(*[(masks[x], combs[x]) for x in range(len(masks)) if masks[x].any()])
 
     def _map_by_index(self, function, level=0):
         """
@@ -540,7 +542,7 @@ class Series(Data):
         newindex = array(ind)
         if len(newindex[0]) == 1:
             newindex = ravel(newindex)
-        return self.map(lambda v: asarray([array(function(v[masks[x]])) for x in xrange(nMasks)]),
+        return self.map(lambda v: asarray([array(function(v[masks[x]])) for x in range(nMasks)]),
                         index=newindex)
 
     def select_by_index(self, val, level=0, squeeze=False, filter=False, return_mask=False):
@@ -567,7 +569,7 @@ class Series(Data):
             Specifies which levels in the multi-index to use when performing selection. If a single
             level is selected, the list can be replaced with an integer. Must be the same length
             as val.
-        
+
         squeeze : bool, optional, default=False
             If True, the multi-index of the resulting Series will drop any levels that contain
             only a single value because of the selection. Useful if indices are used as unique
@@ -588,7 +590,7 @@ class Series(Data):
             val[0]
         except:
             val = [val]
-        
+
         remove = []
         if len(level) == 1:
             try:
@@ -598,14 +600,14 @@ class Series(Data):
             if squeeze and not filter and len(val) == 1:
                 remove.append(level[0])
         else:
-            for i in xrange(len(val)):
+            for i in range(len(val)):
                 try:
                     val[i][0]
                 except:
                     val[i] = [val[i]]
                 if squeeze and not filter and len(val[i]) == 1:
                     remove.append(level[i])
-                                
+
         if len(level) != len(val):
             raise ValueError("List of levels must be same length as list of corresponding values")
 
@@ -614,7 +616,7 @@ class Series(Data):
 
         masks, ind = self._makemasks(index=self.index, level=level)
         nmasks = len(masks)
-        masks = array([masks[x] for x in xrange(nmasks) if tuple(ind[x]) in selected])
+        masks = array([masks[x] for x in range(nmasks) if tuple(ind[x]) in selected])
 
         final_mask = masks.any(axis=0)
         if filter:
@@ -644,19 +646,19 @@ class Series(Data):
     def aggregate_by_index(self, function, level=0):
         """
         Aggregrate data in each record, grouping by index values.
-        
+
         For each unique value of the index, applies a function to the group
         indexed by that value. Returns a Series indexed by those unique values.
         For the result to be a valid Series object, the aggregating function should
         return a simple numeric type. Also allows selection of levels within a
         multi-index. See select_by_index for more info on indices and multi-indices.
-        
+
         Parameters:
         -----------
         function : function
             Aggregating function to map to Series values. Should take a list or ndarray
             as input and return a simple numeric value.
-            
+
         level : list of ints, optional, default=0
             Specifies the levels of the multi-index to use when determining unique index values.
             If only a single level is desired, can be an int.
@@ -672,7 +674,7 @@ class Series(Data):
         -----------
         stat : string
             Statistic to be computed: sum, mean, median, stdev, max, min, count
-            
+
         level : list of ints, optional, default=0
             Specifies the levels of the multi-index to use when determining unique index values.
             If only a single level is desired, can be an int.
@@ -694,7 +696,7 @@ class Series(Data):
         Compute sums for each unique index value (across levels, if multi-index)
         """
         return self.stat_by_index(level=level, stat='sum')
-    
+
     def mean_by_index(self, level=0):
         """
         Compute means for each unique index value (across levels, if multi-index)
@@ -770,7 +772,7 @@ class Series(Data):
                 global mat
                 mat += outer(x, x)
 
-            rdd.map(lambda (k, v): v).foreach(outer_sum)
+            rdd.values().foreach(outer_sum)
             return self._constructor(mat.value, index=self.index)
 
         if self.mode == 'local':

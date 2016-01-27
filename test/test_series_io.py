@@ -81,8 +81,7 @@ def test_from_text_skip(tmpdir):
 def test_from_binary(tmpdir, eng):
     a = arange(8, dtype='int16').reshape((4, 2))
     p = os.path.join(str(tmpdir), 'data.bin')
-    with open(p, 'w') as f:
-        f.write(a)
+    a.tofile(p)
     data = frombinary(p, shape=[4, 2], dtype='int16', engine=eng)
     assert allclose(data.shape, (4, 2))
     assert allclose(data.index, [0, 1])
@@ -94,8 +93,7 @@ def test_from_binary_skip(tmpdir, eng):
     v = [[0, i] for i in range(10)]
     a = array([kv[0] + kv[1] for kv in zip(k, v)], dtype='int16')
     p = os.path.join(str(tmpdir), 'data.bin')
-    with open(p, 'w') as f:
-        f.write(a)
+    a.tofile(p)
     data = frombinary(p, shape=[10, 2], dtype='int16', skip=1, engine=eng)
     assert allclose(data.shape, (10, 2))
     assert allclose(data.index, [0, 1])

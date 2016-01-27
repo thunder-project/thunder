@@ -165,7 +165,7 @@ class Images(Data):
         Execute a function on each image
         """
         if self.mode == 'spark':
-            self.values.tordd().map(lambda (k, v): (k[0], v)).foreach(func)
+            self.values.tordd().map(lambda kv: (kv[0][0], kv[1])).foreach(func)
         else:
             [func(kv) for kv in enumerate(self.values)]
 
@@ -318,8 +318,8 @@ class Images(Data):
         def roundup(a, b):
             return (a + b - 1) // b
 
-        slices = [slice(0, dims[i], factor[i]) for i in xrange(ndims)]
-        newdims = tuple([roundup(dims[i], factor[i]) for i in xrange(ndims)])
+        slices = [slice(0, dims[i], factor[i]) for i in range(ndims)]
+        newdims = tuple([roundup(dims[i], factor[i]) for i in range(ndims)])
 
         return self.map(lambda v: v[slices], dims=newdims)
 

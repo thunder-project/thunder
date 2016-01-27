@@ -1,14 +1,19 @@
 import os
 import shutil
-import urllib
-import urlparse
+# standard library reorganization between Python 2 and 3
+try:
+    from urllib.parse import urlparse
+    from urllib.request import url2pathname
+except ImportError:
+    from urlparse import urlparse
+    from urllib import url2pathname
 
 from thunder.readers import BotoClient, get_by_scheme
 
 
 class LocalParallelWriter(object):
     def __init__(self, path, overwrite=False, **kwargs):
-        self._path = urllib.url2pathname(urlparse.urlparse(path).path)
+        self._path = url2pathname(urlparse(path).path)
         self._overwrite = overwrite
         self._checked = False
         self.check_directory()
@@ -100,7 +105,7 @@ class BotoParallelWriter(BotoWriter):
 
 class LocalFileWriter(object):
     def __init__(self, path, filename, overwrite=False, **kwargs):
-        self._path = os.path.join(urllib.url2pathname(urlparse.urlparse(path).path), filename)
+        self._path = os.path.join(url2pathname(urlparse(path).path), filename)
         self._filename = filename
         self._overwrite = overwrite
         self._checked = False
@@ -118,7 +123,7 @@ class LocalFileWriter(object):
     def write(self, buf):
         self.check_file()
         with open(os.path.join(self._path), 'wb') as f:
-            f.write(buf)
+            f.write(buf.encode('utf-8'))
 
 
 class BotoFileWriter(BotoWriter):

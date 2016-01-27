@@ -29,8 +29,9 @@ class TimeSeries(Series):
         window : int
             Window size
         """
-        before = window / 2
-        after = window / 2 + divmod(window, 2)[1]
+        div = divmod(window, 2)
+        before = div[0]
+        after = div[0] + div[1]
         index = asarray(self.index)
         indices = asarray(indices)
         if where(index == max(indices))[0][0] + after > len(index):
@@ -39,7 +40,7 @@ class TimeSeries(Series):
         if where(index == min(indices))[0][0] - before < 0:
             raise ValueError("Minimum requested index %g, with window %g, is less than 0"
                              % (min(indices), window))
-        masks = [arange(where(index == i)[0][0]-before, where(index == i)[0][0]+after) for i in indices]
+        masks = [arange(where(index == i)[0][0]-before, where(index == i)[0][0]+after, dtype='int') for i in indices]
         return masks
 
     def mean_by_window(self, indices, window):
