@@ -1,9 +1,10 @@
 from numpy import array, asarray, ndarray, prod, ufunc, add, subtract, \
-    multiply, divide, isscalar
+    multiply, divide, isscalar, newaxis
 from bolt.utils import inshape, tupleize
 from bolt.base import BoltArray
 from bolt.spark.array import BoltArraySpark
 from bolt.spark.chunk import ChunkedArray
+from functools import reduce
 
 
 from .utils import notsupported
@@ -406,14 +407,12 @@ class Data(Base):
                 reshaped = self._align(axes)
                 reduced = reduce(func, reshaped)
 
-            new_array = self._constructor(reduced)
-
             # ensure that the shape of the reduced array is valid
             expected_shape = [self.shape[i] for i in range(len(self.shape)) if i not in axes]
-            if new_array.shape != tuple(expected_shape):
+            if reduced.shape != tuple(expected_shape):
                 raise ValueError("reduce did not yield an array with valid dimensions")
 
-            return self._constructor(new_array).__finalize__(self)
+            return self._constructor(reduced[newaxis, :]).__finalize__(self)
 
         if self.mode == 'spark':
             reduced = self.values.reduce(func, axis, keepdims=True)
