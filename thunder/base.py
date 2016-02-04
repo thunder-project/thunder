@@ -416,7 +416,7 @@ class Data(Base):
             return self._constructor(new_array).__finalize__(self)
 
         if self.mode == 'spark':
-            reduced = self.values.reduce(func, axis)
+            reduced = self.values.reduce(func, axis, keepdims=True)
             return self._constructor(reduced).__finalize__(self)
 
     def element_wise(self, other, op):

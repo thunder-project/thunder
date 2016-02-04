@@ -68,3 +68,20 @@ def test_elementwise_plus(eng):
     truth = mat1raw + mat2raw
     assert allclose(result.toarray(), truth)
     assert allclose(result.index, range(3))
+
+
+def test_reduce(eng):
+    data = series.fromlist([array([1, 2, 3]), array([4, 5, 6])], engine=eng)
+    reduced = data.reduce(lambda x, y: x + y)
+    assert allclose(reduced.shape, [1, 3])
+    assert allclose(reduced.toarray(), [5, 7, 9])
+
+
+def test_map(eng):
+    data = series.fromlist([array([1, 2, 3]), array([4, 5, 6])], engine=eng)
+    mapped = data.map(lambda x: x.sum())
+    assert allclose(mapped.shape, [2, 1])
+    assert allclose(mapped.toarray(), [6, 15])
+    mapped = data.map(lambda x: x + 1)
+    assert allclose(mapped.shape, [2, 3])
+    assert allclose(mapped.toarray(), [[2, 3, 4], [5, 6, 7]])
