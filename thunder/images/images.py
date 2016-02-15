@@ -448,7 +448,7 @@ class Images(Data):
 
         from numpy import corrcoef
 
-        nimages = self.nrecords
+        nimages = self.nrecords #broken
 
         # Spatially average the original image set over the specified neighborhood
         blurred = self.uniformFilter((neighborhood * 2) + 1)
