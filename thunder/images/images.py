@@ -422,7 +422,6 @@ class Images(Data):
                     im[:, :, z] = func(im[:, :, z], size[0:2])
                 return im
         else:
-            print(self.values[0])
             filter_ = lambda x: func(x, size)
 
         return self.map(lambda v: filter_(v), dims=self.dims)
@@ -446,24 +445,29 @@ class Images(Data):
         if not isinstance(neighborhood, int):
             raise ValueError("The neighborhood must be specified as an integer.")
 
-        from numpy import corrcoef
+        from thunder.images.readers import fromarray
+        from numpy import corrcoef, concatenate
 
-        nimages = self.nrecords
+        nimages = self.shape[0]
 
         # Spatially average the original image set over the specified neighborhood
-        blurred = self.uniformFilter((neighborhood * 2) + 1)
+        blurred = self.uniform_filter((neighborhood * 2) + 1)
 
         # Union the averaged images with the originals to create an
         # Images object containing 2N images (where N is the original number of images),
         # ordered such that the first N images are the averaged ones.
-        combined = self.rdd.union(blurred.map_keys(lambda k: k + nimages).rdd)
-        combinedImages = self._constructor(combined, nrecords=(2 * nimages)).__finalize__(self)
+        if self.mode == 'spark':
+            combined = self.values.concatenate(blurred.values)
+        else:
+            combined = concatenate((self.values, blurred.values), axis=0)
+        
+        combinedImages = fromarray(combined)
 
         # Correlate the first N (averaged) records with the last N (original) records
         series = combinedImages.toseries()
-        corr = series.map_values(lambda x: corrcoef(x[:nimages], x[nimages:])[0, 1])
+        corr = series.map(lambda x: corrcoef(x[:nimages], x[nimages:])[0, 1])
 
-        return corr.pack()
+        return corr.toarray()
 
     def subtract(self, val):
         """

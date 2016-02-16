@@ -168,7 +168,7 @@ def test_subtract(eng):
     sub = arange(24).reshape((4, 6))
     assert allclose(data.subtract(sub).toarray(), original - sub)
 
-#
+
 # def test_localcorr(eng):
 #     imgs = [
 #         array([[1.0, 2.0, 9.0], [5.0, 4.0, 5.0], [4.0, 6.0, 0.0]]),
