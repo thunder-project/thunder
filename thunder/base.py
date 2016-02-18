@@ -1,5 +1,5 @@
 from numpy import array, asarray, ndarray, prod, ufunc, add, subtract, \
-    multiply, divide, isscalar, newaxis
+    multiply, divide, isscalar, newaxis, unravel_index
 from bolt.utils import inshape, tupleize
 from bolt.base import BoltArray
 from bolt.spark.array import BoltArraySpark
@@ -343,7 +343,7 @@ class Data(Base):
             filtered = self.values.filter(func)
             return self._constructor(filtered).__finalize__(self)
 
-    def _map(self, func, axis=(0,), value_shape=None):
+    def _map(self, func, axis=(0,), value_shape=None, with_keys=False):
         """
         Apply a function across an axis.
 
@@ -353,17 +353,29 @@ class Data(Base):
         Parameters
         ----------
         func : function
-            Function of a single array to apply
+            Function of a single array to apply. If with_keys=True,
+            function should be of a (tuple, array) pair.
 
         axis : tuple or int, optional, default=(0,)
             Axis or multiple axes to apply function along.
+
+        value_shape : tuple, optional, default=None
+            Known shape of values resulting from operation
+
+        with_keys : bool, optional, default=False
+            Include keys as an argument to the function
         """
         if self.mode == 'local':
             axes = sorted(tupleize(axis))
             key_shape = [self.shape[axis] for axis in axes]
             reshaped = self._align(axes, key_shape=key_shape)
 
-            mapped = asarray(list(map(func, reshaped)))
+            if with_keys:
+                keys = zip(*unravel_index(range(prod(key_shape)), key_shape))
+                mapped = asarray(list(map(func, zip(keys, reshaped))))
+            else:
+                mapped = asarray(list(map(func, reshaped)))
+
             elem_shape = mapped[0].shape
             expand = list(elem_shape)
             expand = [1] if len(expand) == 0 else expand
@@ -376,7 +388,7 @@ class Data(Base):
 
         if self.mode == 'spark':
             expand = lambda x: array(func(x), ndmin=1)
-            mapped = self.values.map(expand, axis, value_shape)
+            mapped = self.values.map(expand, axis, value_shape, with_keys)
             return self._constructor(mapped, mode=self.mode).__finalize__(self, noprop=('index'))
 
     def _reduce(self, func, axis=0):

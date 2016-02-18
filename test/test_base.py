@@ -85,3 +85,14 @@ def test_map(eng):
     mapped = data.map(lambda x: x + 1)
     assert allclose(mapped.shape, [2, 3])
     assert allclose(mapped.toarray(), [[2, 3, 4], [5, 6, 7]])
+
+
+def test_map_with_keys(eng):
+    data = series.fromlist([array([1, 2, 3]), array([4, 5, 6])], engine=eng)
+    mapped = data.map_with_keys(lambda kv: kv[0] + kv[1])
+    assert allclose(mapped.shape, [2, 3])
+    assert allclose(mapped.toarray(), [[1, 2, 3], [5, 6, 7]])
+    data = images.fromlist([array([[1, 1], [1, 1]]), array([[2, 2], [2, 2]])], engine=eng)
+    mapped = data.map_with_keys(lambda kv: kv[0] + kv[1])
+    assert allclose(mapped.shape, [2, 2, 2])
+    assert allclose(mapped.toarray(), [[[1, 1], [1, 1]], [[3, 3], [3, 3]]])

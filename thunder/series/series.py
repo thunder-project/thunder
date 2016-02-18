@@ -162,6 +162,14 @@ class Series(Data):
         new = self._map(func, axis=self.baseaxes, value_shape=value_shape)
         return self._constructor(new.values, index=index)
 
+    def map_with_keys(self, func, index=None):
+        """
+        Map a function on each series
+        """
+        value_shape = len(index) if index is not None else None
+        new = self._map(func, axis=self.baseaxes, value_shape=value_shape, with_keys=True)
+        return self._constructor(new.values, index=index)
+
     def filter(self, func):
         """
         Filter by applying a function to each series.

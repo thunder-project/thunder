@@ -202,6 +202,12 @@ class Images(Data):
         """
         return self._map(func, axis=0, value_shape=dims)
 
+    def map_with_keys(self, func, dims=None):
+        """
+        Map a function to each image
+        """
+        return self._map(func, axis=0, value_shape=dims, with_keys=True)
+
     def filter(self, func):
         """
         Filter images
