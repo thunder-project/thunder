@@ -202,12 +202,6 @@ class Images(Data):
         """
         return self._map(func, axis=0, value_shape=dims, with_keys=with_keys)
 
-    def map_generic(self, func, with_keys=False, return_dict=False):
-        """
-        Map an array -> any function over each image
-        """
-        return self._map_generic(func, axis=0, with_keys=with_keys, return_dict=return_dict)
-
     def filter(self, func):
         """
         Filter images

@@ -161,13 +161,6 @@ class Series(Data):
         new = self._map(func, axis=self.baseaxes, value_shape=value_shape, with_keys=with_keys)
         return self._constructor(new.values, index=index)
 
-    def map_generic(self, func, with_keys=False, return_dict=False):
-        """
-        Map an array -> any function over each series
-        """
-        return self._map_generic(func, axis=self.baseaxes,
-                                 with_keys=with_keys, return_dict=return_dict)
-
     def filter(self, func):
         """
         Filter by applying a function to each series.

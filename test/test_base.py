@@ -96,15 +96,3 @@ def test_map_with_keys(eng):
     mapped = data.map(lambda kv: kv[0] + kv[1], with_keys=True)
     assert allclose(mapped.shape, [2, 2, 2])
     assert allclose(mapped.toarray(), [[[1, 1], [1, 1]], [[3, 3], [3, 3]]])
-
-
-def test_map_generic(eng):
-    data = series.fromlist([array([1, 2, 3]), array([4, 5, 6])], engine=eng)
-    mapped = data.map_generic(lambda x: '%g' % x[0])
-    assert mapped == ['1', '4']
-
-
-def test_map_generic_with_keys(eng):
-    data = series.fromlist([array([1, 2, 3]), array([4, 5, 6])], engine=eng)
-    mapped = data.map_generic(lambda kv: '%g,%g' % (kv[0][0], kv[1][0]), with_keys=True)
-    assert mapped == ['0,1', '1,4']
