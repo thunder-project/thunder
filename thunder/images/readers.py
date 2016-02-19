@@ -73,7 +73,6 @@ def fromarray(values, npartitions=None, engine=None):
 
     if values.ndim == 2:
         values = expand_dims(values, 0)
-        print(values.shape)
 
     shape = None
     dtype = None

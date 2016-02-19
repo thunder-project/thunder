@@ -6,7 +6,7 @@ from ..base import Data
 
 class Images(Data):
     """
-    Collection of images or volum.es
+    Collection of images or volumes
 
     Backed by an array-like object, including a numpy array
     (for local computation) or a bolt array (for spark computation).
