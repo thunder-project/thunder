@@ -153,21 +153,20 @@ class Series(Data):
 
         return self._constructor(result, index=self.index)
 
-    def map(self, func, index=None):
+    def map(self, func, index=None, with_keys=False):
         """
-        Map a function on each series
+        Map an array -> array function over each series
         """
         value_shape = len(index) if index is not None else None
-        new = self._map(func, axis=self.baseaxes, value_shape=value_shape)
+        new = self._map(func, axis=self.baseaxes, value_shape=value_shape, with_keys=with_keys)
         return self._constructor(new.values, index=index)
 
-    def map_with_keys(self, func, index=None):
+    def map_generic(self, func, with_keys=False, return_dict=False):
         """
-        Map a function on each series
+        Map an array -> any function over each series
         """
-        value_shape = len(index) if index is not None else None
-        new = self._map(func, axis=self.baseaxes, value_shape=value_shape, with_keys=True)
-        return self._constructor(new.values, index=index)
+        return self._map_generic(func, axis=self.baseaxes,
+                                 with_keys=with_keys, return_dict=return_dict)
 
     def filter(self, func):
         """

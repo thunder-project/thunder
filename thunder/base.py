@@ -345,7 +345,7 @@ class Data(Base):
 
     def _map(self, func, axis=(0,), value_shape=None, with_keys=False):
         """
-        Apply a function across an axis.
+        Apply an array -> array function across an axis.
 
         Array will be aligned so that the desired set of axes
         are in the keys, which may require a transpose/reshape.
@@ -390,6 +390,52 @@ class Data(Base):
             expand = lambda x: array(func(x), ndmin=1)
             mapped = self.values.map(expand, axis, value_shape, with_keys)
             return self._constructor(mapped, mode=self.mode).__finalize__(self, noprop=('index'))
+
+    def _map_generic(self, func, axis=(0,), with_keys=False, return_dict=False):
+        """
+        Apply an array -> any function across an axis.
+
+        Array will be aligned so that the desired set of axes
+        are in the keys, which may require a transpose/reshape.
+
+        Result will be immediately evaluated and returned as a list.
+
+        Parameters
+        ----------
+        func : function
+            Function of a single array to apply. If with_keys=True,
+            function should be of a (tuple, array) pair.
+
+        axis : tuple or int, optional, default=(0,)
+            Axis or multiple axes to apply function along.
+        """
+        if self.mode == 'local':
+            axes = sorted(tupleize(axis))
+            key_shape = [self.shape[axis] for axis in axes]
+            reshaped = self._align(axes, key_shape=key_shape)
+
+            if with_keys or return_dict:
+                keys = zip(*unravel_index(range(prod(key_shape)), key_shape))
+
+            if with_keys:
+                mapped = list(map(func, zip(keys, reshaped)))
+            else:
+                mapped = list(map(func, reshaped))
+
+            if return_dict:
+                return {k: v for k, v in zip(keys, mapped)}
+            else:
+                return mapped
+
+        if self.mode == 'spark':
+            if with_keys:
+                mapped = self.tordd().map(lambda kv: (kv[0], func(kv)))
+            else:
+                mapped = self.tordd().mapValues(func)
+            if return_dict:
+                return mapped.collectAsMap()
+            else:
+                return mapped.values().collect()
 
     def _reduce(self, func, axis=0):
         """

@@ -196,17 +196,17 @@ class Images(Data):
 
         return self._constructor(result)
 
-    def map(self, func, dims=None):
+    def map(self, func, dims=None, with_keys=False):
         """
-        Map a function to each image
+        Map an array -> array function over each image
         """
-        return self._map(func, axis=0, value_shape=dims)
+        return self._map(func, axis=0, value_shape=dims, with_keys=with_keys)
 
-    def map_with_keys(self, func, dims=None):
+    def map_generic(self, func, with_keys=False, return_dict=False):
         """
-        Map a function to each image
+        Map an array -> any function over each image
         """
-        return self._map(func, axis=0, value_shape=dims, with_keys=True)
+        return self._map_generic(func, axis=0, with_keys=with_keys, return_dict=return_dict)
 
     def filter(self, func):
         """
