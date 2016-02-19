@@ -1,8 +1,8 @@
-import checkist
 from numpy import sqrt, pi, angle, fft, fix, zeros, roll, dot, mean, \
     array, size, asarray, polyfit, polyval, arange, percentile, ceil, float64, where
 
 from ..series.series import Series
+from ..utils import check_options
 
 
 class TimeSeries(Series):
@@ -104,7 +104,7 @@ class TimeSeries(Series):
         index = ['coherence', 'phase']
         return self.map(lambda x: get(x, freq), index=index)
 
-    def convolve(self, signal, mode='full', var=None):
+    def convolve(self, signal, mode='full'):
         """
         Conolve time series data against another signal
 
@@ -157,7 +157,8 @@ class TimeSeries(Series):
         s = s / norm(s)
 
         if size(s) != size(self.index):
-            raise Exception('Size of signal to cross correlate with, %g, does not match size of series' % size(s))
+            raise Exception('Size of signal to cross correlate with, %g, '
+                            'does not match size of series' % size(s))
 
         # created a matrix with lagged signals
         if lag is not 0:
@@ -201,7 +202,7 @@ class TimeSeries(Series):
         order : int, optional, default = 5
             Order of polynomial, for non-linear detrending only
         """
-        checkist.opts(method, ['linear', 'nonlinear'])
+        check_options(method, ['linear', 'nonlinear'])
 
         if method == 'linear':
             order = 1
@@ -245,7 +246,7 @@ class TimeSeries(Series):
         offset : float, optional, default = 0.1
              Scalar added to baseline during division to avoid division by 0.
         """
-        checkist.opts(method, ['mean', 'percentile', 'window', 'window-exact'])
+        check_options(method, ['mean', 'percentile', 'window', 'window-exact'])
     
         from warnings import warn
         if not (method == 'window' or method == 'window-exact') and window is not None:

@@ -11,6 +11,10 @@ def check_spark():
     finally:
         return SparkContext
 
+def check_options(option, valid):
+    if option not in valid:
+        raise ValueError("Option must be one of %s, got '%s'" % (str(valid)[1:-1], option))
+
 def check_path(path, credentials=None):
     """
     Check that specified output path does not already exist

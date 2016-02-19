@@ -1,9 +1,8 @@
 import itertools
-import checkist
 from io import BytesIO
 from numpy import frombuffer, prod, random, asarray, expand_dims
 
-from ..utils import check_spark
+from ..utils import check_spark, check_options
 spark = check_spark()
 
 
@@ -437,7 +436,7 @@ def fromexample(name=None, engine=None):
             print('- ' + d)
         return
 
-    checkist.opts(name, datasets)
+    check_options(name, datasets)
 
     path = 's3n://thunder-sample-data/images/' + name
 

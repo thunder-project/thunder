@@ -7,7 +7,7 @@ try:
 except NameError:
     buffer = memoryview
 
-from ..utils import check_spark
+from ..utils import check_spark, check_options
 spark = check_spark()
 
 
@@ -433,7 +433,6 @@ def fromexample(name=None, engine=None):
     import os
     import tempfile
     import shutil
-    import checkist
     from boto.s3.connection import S3Connection
 
     datasets = ['iris', 'mouse', 'fish']
@@ -444,7 +443,7 @@ def fromexample(name=None, engine=None):
             print('- ' + d)
         return
 
-    checkist.opts(name, datasets)
+    check_options(name, datasets)
 
     d = tempfile.mkdtemp()
 

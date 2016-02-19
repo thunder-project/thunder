@@ -5,7 +5,6 @@ from numpy import array, sum, mean, median, std, size, arange, percentile,\
     ravel, logical_not, max, min, unravel_index, prod, random, shape, \
     dot, outer, expand_dims, ScalarType, ndarray
 from bolt.utils import tupleize
-# naming changes between Python 2 and 3
 from six import string_types
 
 from ..base import Data
