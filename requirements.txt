@@ -2,5 +2,5 @@ numpy
 scipy
 scikit-image
 boto
-bolt-python >= 0.3.0
+bolt-python >= 0.3.2
 checkist >= 1.0.0
