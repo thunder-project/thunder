@@ -63,5 +63,5 @@ def test_shape(engspark):
     data = fromlist([ones((30, 30)) for _ in range(0, 3)], engine=engspark)
     blocks = data.toblocks((10, 10))
     values = [v for k, v in blocks.tordd().collect()]
-    assert blocks.subshape == (3, 10, 10)
+    assert blocks.blockshape == (3, 10, 10)
     assert all([v.shape == (3, 10, 10) for v in values])

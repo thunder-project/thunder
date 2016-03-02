@@ -13,7 +13,11 @@ class Blocks(Base):
         super(Blocks, self).__init__(values)
 
     @property
-    def subshape(self):
+    def _constructor(self):
+        return Blocks
+
+    @property
+    def blockshape(self):
         return tuple(self.values.plan)
 
     def count(self):
@@ -23,6 +27,13 @@ class Blocks(Base):
         For lazy or distributed data, will force a computation.
         """
         return self.tordd().count()
+
+    def map(self, func, dims=None):
+        """
+        Apply an array -> array function to each block
+        """
+        mapped = self.values.map(func, value_shape=dims)
+        return self._constructor(mapped).__finalize__(self)
 
     def first(self):
         """
