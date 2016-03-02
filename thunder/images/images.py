@@ -64,7 +64,7 @@ class Images(Data):
         ----------
         size : str, or tuple of block size per dimension,
             String interpreted as memory size (e.g. "64M"). Tuple of ints interpreted as
-            "pixels per dimension".
+            "pixels per dimension". Only valid in spark mode.
 
         Returns
         -------
@@ -74,10 +74,14 @@ class Images(Data):
 
         if self.mode == 'spark':
             blocks = self.values.chunk(size).keys_to_values((0,))
-            return Blocks(blocks)
 
         if self.mode == 'local':
-            raise NotImplementedError('Conversion to blocks not implemented for local mode')
+            if size != '150':
+                logger = logging.getLogger('thunder')
+                logger.warn("size has no meaning in Images.toblocks in spark mode")
+            blocks = self.values
+
+        return Blocks(blocks)
 
     def totimeseries(self, size='150'):
         """
@@ -107,7 +111,7 @@ class Images(Data):
         """
         Converts this Images object to a Series object.
 
-        This method is equivalent to images.toBlocks(size).toSeries().
+        This method is equivalent to images.toblocks(size).toSeries().
 
         Parameters
         ----------
@@ -120,7 +124,7 @@ class Images(Data):
 
         See also
         --------
-        Images.toBlocks
+        Images.toblocks
         """
         from thunder.series.series import Series
 
@@ -460,7 +464,7 @@ class Images(Data):
             combined = self.values.concatenate(blurred.values)
         else:
             combined = concatenate((self.values, blurred.values), axis=0)
-        
+
         combinedImages = fromarray(combined)
 
         # Correlate the first N (averaged) records with the last N (original) records

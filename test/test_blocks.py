@@ -3,65 +3,77 @@ from numpy import arange, array, allclose, ones
 
 from thunder.images.readers import fromlist
 
-pytestmark = pytest.mark.usefixtures("engspark")
+pytestmark = pytest.mark.usefixtures("eng")
 
 
-def test_conversion(engspark):
+def test_conversion(eng):
     a = arange(8).reshape((4, 2))
-    data = fromlist([a, a], engine=engspark)
-    vals = data.toblocks((2, 2)).tordd().sortByKey().values().collect()
-    truth = [array([a[0:2, 0:2], a[0:2, 0:2]]), array([a[2:4, 0:2], a[2:4, 0:2]])]
-    assert allclose(vals, truth)
+    data = fromlist([a, a], engine=eng)
+    if data.mode == 'local':
+        pass
+    if data.mode == 'spark':
+        vals = data.toblocks((2, 2)).tordd().sortByKey().values().collect()
+        truth = [array([a[0:2, 0:2], a[0:2, 0:2]]), array([a[2:4, 0:2], a[2:4, 0:2]])]
+        assert allclose(vals, truth)
 
 
-def test_full(engspark):
+def test_full(eng):
     a = arange(8).reshape((4, 2))
-    data = fromlist([a, a], engine=engspark)
-    vals = data.toblocks((4, 2)).tordd().values().collect()
-    truth = [a, a]
-    assert allclose(vals, truth)
+    data = fromlist([a, a], engine=eng)
+    if data.mode == 'local':
+        assert allclose(data.toblocks().values, data.values)
+    if data.mode == 'spark':
+        vals = data.toblocks((4, 2)).tordd().values().collect()
+        truth = [a, a]
+        assert allclose(vals, truth)
 
 
-def test_count(engspark):
+def test_count(eng):
     a = arange(8).reshape((2, 4))
-    data = fromlist([a], engine=engspark)
-    assert data.toblocks((1, 1)).count() == 8
-    assert data.toblocks((1, 2)).count() == 4
-    assert data.toblocks((2, 2)).count() == 2
-    assert data.toblocks((2, 4)).count() == 1
+    data = fromlist([a], engine=eng)
+    if data.mode == 'local':
+        assert data.toblocks().count() == 1
+    if data.mode == 'spark':
+        assert data.toblocks((1, 1)).count() == 8
+        assert data.toblocks((1, 2)).count() == 4
+        assert data.toblocks((2, 2)).count() == 2
+        assert data.toblocks((2, 4)).count() == 1
 
 
-def test_conversion_series(engspark):
+def test_conversion_series(eng):
     a = arange(8).reshape((4, 2))
-    data = fromlist([a], engine=engspark)
+    data = fromlist([a], engine=eng)
     vals = data.toblocks((1, 2)).toseries().toarray()
     assert allclose(vals, a)
 
 
-def test_conversion_series_3d(engspark):
+def test_conversion_series_3d(eng):
     a = arange(24).reshape((2, 3, 4))
-    data = fromlist([a], engine=engspark)
+    data = fromlist([a], engine=eng)
     vals = data.toblocks((2, 3, 4)).toseries().toarray()
     assert allclose(vals, a)
 
 
-def test_roundtrip(engspark):
+def test_roundtrip(eng):
     a = arange(8).reshape((4, 2))
-    data = fromlist([a, a], engine=engspark)
+    data = fromlist([a, a], engine=eng)
     vals = data.toblocks((2, 2)).toimages()
     assert allclose(vals.toarray(), data.toarray())
 
 
-def test_series_roundtrip_simple(engspark):
+def test_series_roundtrip_simple(eng):
     a = arange(8).reshape((4, 2))
-    data = fromlist([a, a], engine=engspark)
+    data = fromlist([a, a], engine=eng)
     vals = data.toseries().toimages()
     assert allclose(vals.toarray(), data.toarray())
 
 
-def test_shape(engspark):
-    data = fromlist([ones((30, 30)) for _ in range(0, 3)], engine=engspark)
+def test_shape(eng):
+    data = fromlist([ones((30, 30)) for _ in range(0, 3)], engine=eng)
     blocks = data.toblocks((10, 10))
-    values = [v for k, v in blocks.tordd().collect()]
-    assert blocks.blockshape == (3, 10, 10)
-    assert all([v.shape == (3, 10, 10) for v in values])
+    if data.mode == 'local':
+        assert blocks.blockshape == (3, 30, 30)
+    if data.mode == 'spark':
+        values = [v for k, v in blocks.tordd().collect()]
+        assert blocks.blockshape == (3, 10, 10)
+        assert all([v.shape == (3, 10, 10) for v in values])
