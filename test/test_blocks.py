@@ -3,7 +3,7 @@ from numpy import arange, array, allclose, ones
 
 from thunder.images.readers import fromlist
 
-pytestmark = pytest.mark.usefixtures("engspark")
+pytestmark = pytest.mark.usefixtures("eng", "engspark")
 
 
 def test_conversion(engspark):
@@ -63,5 +63,14 @@ def test_shape(engspark):
     data = fromlist([ones((30, 30)) for _ in range(0, 3)], engine=engspark)
     blocks = data.toblocks((10, 10))
     values = [v for k, v in blocks.tordd().collect()]
-    assert blocks.subshape == (3, 10, 10)
+    assert blocks.blockshape == (3, 10, 10)
     assert all([v.shape == (3, 10, 10) for v in values])
+
+def test_local_mode(eng):
+    a = arange(64).reshape((8, 8))
+    data = fromlist([a, a])
+    if data.mode == 'local':
+        blocks = data.toblocks((4, 4))
+        assert allclose(blocks.values, data.values)
+        assert blocks.count() == 1
+        assert blocks.blockshape == (2, 8, 8)
