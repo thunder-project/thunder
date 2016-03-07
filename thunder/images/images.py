@@ -63,7 +63,7 @@ class Images(Data):
         Parameters
         ----------
         size : str, or tuple of block size per dimension,
-            String interpreted as memory size (e.g. "64M"). Tuple of ints interpreted as
+            String interpreted as memory size (in megabytes, e.g. "64"). Tuple of ints interpreted as
             "pixels per dimension". Only valid in spark mode.
 
         Returns
@@ -553,3 +553,34 @@ class Images(Data):
         """
         from thunder.images.writers import tobinary
         tobinary(self, path, prefix=prefix, overwrite=overwrite)
+
+    def map_as_series(self, func, value_size=None, block_size='150'):
+        """
+        Efficiently apply a function to each time series
+
+        Applies a function to each time series without transforming all the way
+        to a Series object, but using a Blocks object instead for increased
+        efficiency in the transformation back to Images.
+
+        func: function
+            Function to apply to each time series. Should take one-dimensional
+            ndarray and return the transformed one-dimensional ndarray.
+
+        value_size: int, optional, default=None
+            Size of the one-dimensional ndarray resulting from application of
+            func. If not supplied, will be automatically inferred for an extra
+            computational cost.
+
+        block_size : str, or tuple of block size per dimension,
+            String interpreted as memory size (in megabytes e.g. "64"). Tuple of
+            ints interpreted as "pixels per dimension".
+        """
+        blocks = self.toblocks(size=block_size)
+
+        if value_size is not None:
+            dims = list(blocks.blockshape)
+            dims[0] = value_size
+        else:
+            dims = None
+
+        return blocks.map(func, dims=dims).toimages()

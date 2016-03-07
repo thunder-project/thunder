@@ -1,5 +1,5 @@
 import pytest
-from numpy import arange, allclose, array
+from numpy import arange, allclose, array, mean, apply_along_axis
 
 from thunder.images.readers import fromlist
 from thunder.images.images import Images
@@ -168,6 +168,27 @@ def test_subtract(eng):
     sub = arange(24).reshape((4, 6))
     assert allclose(data.subtract(sub).toarray(), original - sub)
 
+def test_map_as_series(eng):
+    original = arange(4*3).reshape(4, 3)
+    data = fromlist(5*[original], engine=eng)
+
+    # function does not change size of series
+    def f(x):
+        return x - mean(x)
+    result = apply_along_axis(f, 0, data.toarray())
+
+    assert(data.map_as_series(f).toarray() ,result)
+    assert(data.map_as_series(f, value_size=5).toarray(), result)
+    assert(data.map_as_series(f, block_size=(2, 2)).toarray(), result)
+
+    # function does change size of series
+    def f(x):
+        return x[:-1]
+    result = apply_along_axis(f, 0, data.toarray())
+
+    assert(data.map_as_series(f).toarray(), result)
+    assert(data.map_as_series(f, value_size=4).toarray(), result)
+    assert(data.map_as_series(f, block_size=(2, 2)).toarray(), result)
 
 # def test_localcorr(eng):
 #     imgs = [
