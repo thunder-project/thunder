@@ -63,7 +63,7 @@ class Images(Data):
         Parameters
         ----------
         size : str, or tuple of block size per dimension,
-            String interpreted as memory size (e.g. "64M"). Tuple of ints interpreted as
+            String interpreted as memory size (in megabytes, e.g. "64"). Tuple of ints interpreted as
             "pixels per dimension". Only valid in spark mode.
 
         Returns
@@ -572,8 +572,8 @@ class Images(Data):
             computational cost.
 
         block_size : str, or tuple of block size per dimension,
-            String interpreted as memory size (e.g. "64M"). Tuple of ints interpreted as
-            "pixels per dimension".
+            String interpreted as memory size (in megabytes e.g. "64"). Tuple of
+            ints interpreted as "pixels per dimension".
         """
         blocks = self.toblocks(size=block_size)
 
