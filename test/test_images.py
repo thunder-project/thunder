@@ -169,7 +169,7 @@ def test_subtract(eng):
     assert allclose(data.subtract(sub).toarray(), original - sub)
 
 def test_map_as_series(eng):
-    original = arange(4*3).reshape(4, 3)
+    original = arange(4*4).reshape(4, 4)
     data = fromlist(5*[original], engine=eng)
 
     # function does not change size of series
@@ -177,9 +177,9 @@ def test_map_as_series(eng):
         return x - mean(x)
     result = apply_along_axis(f, 0, data.toarray())
 
-    assert(data.map_as_series(f).toarray() ,result)
-    assert(data.map_as_series(f, value_size=5).toarray(), result)
-    assert(data.map_as_series(f, block_size=(2, 2)).toarray(), result)
+    assert allclose(data.map_as_series(f).toarray(), result)
+    assert allclose(data.map_as_series(f, value_size=5).toarray(), result)
+    assert allclose(data.map_as_series(f, block_size=(2, 2)).toarray(), result)
 
     # function does change size of series
     def f(x):

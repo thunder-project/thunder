@@ -1,5 +1,6 @@
 import logging
-from numpy import ndarray, arange, amax, amin, size, asarray, random, prod
+from numpy import ndarray, arange, amax, amin, size, asarray, random, prod, \
+    apply_along_axis
 
 from ..base import Data
 
@@ -583,4 +584,7 @@ class Images(Data):
         else:
             dims = None
 
-        return blocks.map(func, dims=dims).toimages()
+        def f(block):
+            return apply_along_axis(func, 0, block)
+
+        return blocks.map(f, dims=dims).toimages()
