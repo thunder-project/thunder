@@ -332,28 +332,20 @@ class Images(Data):
         """
         Spatially smooth images with a gaussian filter.
 
-        Filtering will be applied to every image in the collection and can be applied
-        to either images or volumes. For volumes, if an single scalar sigma is passed,
-        it will be interpreted as the filter size in x and y, with no filtering in z.
+        Filtering will be applied to every image in the collection.
 
         parameters
         ----------
         sigma : scalar or sequence of scalars, default=2
             Size of the filter size as standard deviation in pixels. A sequence is interpreted
-            as the standard deviation for each axis. For three-dimensional data, a single
-            scalar is interpreted as the standard deviation in x and y, with no filtering in z.
+            as the standard deviation for each axis. A single scalar is applied equally to all
+            axes.
 
         order : choice of 0 / 1 / 2 / 3 or sequence from same set, optional, default = 0
             Order of the gaussian kernel, 0 is a gaussian, higher numbers correspond
             to derivatives of a gaussian.
         """
         from scipy.ndimage.filters import gaussian_filter
-
-        dims = self.dims
-        ndims = len(dims)
-
-        if ndims == 3 and size(sigma) == 1:
-            sigma = [sigma, sigma, sigma]
 
         return self.map(lambda v: gaussian_filter(v, sigma, order), dims=self.dims)
 
