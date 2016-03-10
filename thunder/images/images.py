@@ -353,16 +353,14 @@ class Images(Data):
         """
         Spatially filter images using a uniform filter.
 
-        Filtering will be applied to every image in the collection and can be applied
-        to either images or volumes. For volumes, if an single scalar neighborhood is passed,
-        it will be interpreted as the filter size in x and y, with no filtering in z.
+        Filtering will be applied to every image in the collection.
 
         parameters
         ----------
         size: int, optional, default=2
             Size of the filter neighbourhood in pixels. A sequence is interpreted
-            as the neighborhood size for each axis. For three-dimensional data, a single
-            scalar is intrepreted as the neighborhood in x and y, with no filtering in z.
+            as the neighborhood size for each axis. A single scalar is applied equally to all
+            axes.
         """
         return self._image_filter(filter='uniform', size=size)
 
@@ -370,16 +368,14 @@ class Images(Data):
         """
         Spatially filter images using a median filter.
 
-        Filtering will be applied to every image in the collection and can be applied
-        to either images or volumes. For volumes, if an single scalar neighborhood is passed,
-        it will be interpreted as the filter size in x and y, with no filtering in z.
+        Filtering will be applied to every image in the collection.
 
         parameters
         ----------
         size: int, optional, default=2
             Size of the filter neighbourhood in pixels. A sequence is interpreted
-            as the neighborhood size for each axis. For three-dimensional data, a single
-            scalar is intrepreted as the neighborhood in x and y, with no filtering in z.
+            as the neighborhood size for each axis. A single scalar is applied equally to all
+            axes.
         """
         return self._image_filter(filter='median', size=size)
 
