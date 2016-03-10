@@ -79,7 +79,7 @@ class Images(Data):
         if self.mode == 'local':
             if size != '150':
                 logger = logging.getLogger('thunder')
-                logger.warn("size has no meaning in Images.toblocks in spark mode")
+                logger.warn("size has no meaning in Images.toblocks in local mode")
             blocks = self.values
 
         return Blocks(blocks)
