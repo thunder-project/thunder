@@ -438,7 +438,7 @@ class Images(Data):
         if not isinstance(neighborhood, int):
             raise ValueError("The neighborhood must be specified as an integer.")
 
-        from thunder.images.readers import fromarray
+        from thunder.images.readers import fromarray, fromrdd
         from numpy import corrcoef, concatenate
 
         nimages = self.shape[0]
@@ -451,10 +451,10 @@ class Images(Data):
         # ordered such that the first N images are the averaged ones.
         if self.mode == 'spark':
             combined = self.values.concatenate(blurred.values)
+            combinedImages = fromrdd(combined.tordd())
         else:
             combined = concatenate((self.values, blurred.values), axis=0)
-
-        combinedImages = fromarray(combined)
+            combinedImages = fromarray(combined)
 
         # Correlate the first N (averaged) records with the last N (original) records
         series = combinedImages.toseries()
