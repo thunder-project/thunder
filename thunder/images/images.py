@@ -332,16 +332,14 @@ class Images(Data):
         """
         Spatially smooth images with a gaussian filter.
 
-        Filtering will be applied to every image in the collection and can be applied
-        to either images or volumes. For volumes, if an single scalar sigma is passed,
-        it will be interpreted as the filter size in x and y, with no filtering in z.
+        Filtering will be applied to every image in the collection.
 
         parameters
         ----------
         sigma : scalar or sequence of scalars, default=2
             Size of the filter size as standard deviation in pixels. A sequence is interpreted
-            as the standard deviation for each axis. For three-dimensional data, a single
-            scalar is interpreted as the standard deviation in x and y, with no filtering in z.
+            as the standard deviation for each axis. A single scalar is applied equally to all
+            axes.
 
         order : choice of 0 / 1 / 2 / 3 or sequence from same set, optional, default = 0
             Order of the gaussian kernel, 0 is a gaussian, higher numbers correspond
@@ -349,28 +347,20 @@ class Images(Data):
         """
         from scipy.ndimage.filters import gaussian_filter
 
-        dims = self.dims
-        ndims = len(dims)
-
-        if ndims == 3 and size(sigma) == 1:
-            sigma = [sigma, sigma, sigma]
-
         return self.map(lambda v: gaussian_filter(v, sigma, order), dims=self.dims)
 
     def uniform_filter(self, size=2):
         """
         Spatially filter images using a uniform filter.
 
-        Filtering will be applied to every image in the collection and can be applied
-        to either images or volumes. For volumes, if an single scalar neighborhood is passed,
-        it will be interpreted as the filter size in x and y, with no filtering in z.
+        Filtering will be applied to every image in the collection.
 
         parameters
         ----------
         size: int, optional, default=2
             Size of the filter neighbourhood in pixels. A sequence is interpreted
-            as the neighborhood size for each axis. For three-dimensional data, a single
-            scalar is intrepreted as the neighborhood in x and y, with no filtering in z.
+            as the neighborhood size for each axis. A single scalar is applied equally to all
+            axes.
         """
         return self._image_filter(filter='uniform', size=size)
 
@@ -378,16 +368,14 @@ class Images(Data):
         """
         Spatially filter images using a median filter.
 
-        Filtering will be applied to every image in the collection and can be applied
-        to either images or volumes. For volumes, if an single scalar neighborhood is passed,
-        it will be interpreted as the filter size in x and y, with no filtering in z.
+        Filtering will be applied to every image in the collection.
 
         parameters
         ----------
         size: int, optional, default=2
             Size of the filter neighbourhood in pixels. A sequence is interpreted
-            as the neighborhood size for each axis. For three-dimensional data, a single
-            scalar is intrepreted as the neighborhood in x and y, with no filtering in z.
+            as the neighborhood size for each axis. A single scalar is applied equally to all
+            axes.
         """
         return self._image_filter(filter='median', size=size)
 
@@ -450,7 +438,7 @@ class Images(Data):
         if not isinstance(neighborhood, int):
             raise ValueError("The neighborhood must be specified as an integer.")
 
-        from thunder.images.readers import fromarray
+        from thunder.images.readers import fromarray, fromrdd
         from numpy import corrcoef, concatenate
 
         nimages = self.shape[0]
@@ -463,10 +451,10 @@ class Images(Data):
         # ordered such that the first N images are the averaged ones.
         if self.mode == 'spark':
             combined = self.values.concatenate(blurred.values)
+            combinedImages = fromrdd(combined.tordd())
         else:
             combined = concatenate((self.values, blurred.values), axis=0)
-
-        combinedImages = fromarray(combined)
+            combinedImages = fromarray(combined)
 
         # Correlate the first N (averaged) records with the last N (original) records
         series = combinedImages.toseries()
