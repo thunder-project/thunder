@@ -376,7 +376,11 @@ class Data(Base):
             else:
                 mapped = asarray(list(map(func, reshaped)))
 
-            elem_shape = mapped[0].shape
+            try:
+                elem_shape = mapped[0].shape
+            except:
+                elem_shape = (1,)
+
             expand = list(elem_shape)
             expand = [1] if len(expand) == 0 else expand
 
