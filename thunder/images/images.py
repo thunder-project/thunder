@@ -211,7 +211,7 @@ class Images(Data):
         """
         Filter images
         """
-        return self._filter(func, axis=0)
+        return self._constructor(self._filter(func, axis=0)).__finalize__(self)
 
     def reduce(self, func):
         """

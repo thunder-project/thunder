@@ -175,6 +175,9 @@ def test_min(eng):
     expected = data.toarray().min(axis=0)
     assert allclose(val, expected)
 
+def test_labels(eng):
+    pass
+
 
 def test_index_setting(eng):
     data = fromlist([array([1, 2, 3]), array([2, 2, 4]), array([4, 2, 1])], engine=eng)
