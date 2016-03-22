@@ -32,10 +32,11 @@ class Series(Data):
     Matrix : a Series intended for matrix computation
     """
     _metadata = Data._metadata
-    _attributes = Data._attributes + ['index']
+    _attributes = Data._attributes + ['index', 'labels']
 
-    def __init__(self, values, index=None, mode='local'):
+    def __init__(self, values, index=None, labels=None, mode='local'):
         super(Series, self).__init__(values, mode=mode)
+        self._labels = labels
         self._index = None
         if index is not None:
             self._index = index
@@ -63,6 +64,23 @@ class Series(Data):
             raise ValueError("Length of new index '%g' must match length of original index '%g'"
                              .format(lenvalue, lenself))
         self._index = value
+
+    @property
+    def labels(self):
+        return self._labels
+
+    @labels.setter
+    def labels(self, value):
+        try:
+            value = asarray(value)
+        except:
+            raise ValueError("Labels must be convertible to an ndarray")
+        if value.shape != self.shape[:-1]:
+            raise ValueError("Labels shape {} must be the same as the leading \
+                              dimensions of the Series {}" \
+                              .format(value.shape, self.shape[:-1]))
+
+        self._labels = value
 
     @property
     def length(self):
@@ -108,7 +126,7 @@ class Series(Data):
             logging.getLogger('thunder').warn('images already in local mode')
             pass
 
-        return fromarray(self.toarray(), index=self.index)
+        return fromarray(self.toarray(), index=self.index, labels=self.labels)
 
     def tospark(self, engine=None):
         """
@@ -123,7 +141,7 @@ class Series(Data):
         if engine is None:
             raise ValueError("Must provide SparkContext")
 
-        return fromarray(self.toarray(), index=self.index, engine=engine)
+        return fromarray(self.toarray(), index=self.index, labels=self.lables, engine=engine)
 
     def sample(self, nsamples=100, seed=None):
         """
@@ -151,7 +169,7 @@ class Series(Data):
             inds = [unravel_index(int(k), basedims) for k in random.rand(nsamples) * prod(basedims)]
             result = asarray([self.values[tupleize(i) + (slice(None, None),)] for i in inds])
 
-        return self._constructor(result, index=self.index)
+        return self._constructor(result, index=self.index, labels=self.labels)
 
     def map(self, func, index=None, with_keys=False):
         """
@@ -159,13 +177,23 @@ class Series(Data):
         """
         value_shape = len(index) if index is not None else None
         new = self._map(func, axis=self.baseaxes, value_shape=value_shape, with_keys=with_keys)
-        return self._constructor(new.values, index=index)
+        return self._constructor(new.values, index=index, labels=self.labels)
 
     def filter(self, func):
         """
         Filter by applying a function to each series.
         """
-        return self._filter(func, axis=self.baseaxes)
+        if self.labels is None:
+            filtered = self._filter(func, axis=self.baseaxes)
+            newlabels = None
+        else:
+            mask, filtered = self._filter(func, axis=self.baseaxes, with_labels=True)
+            s1 = prod(asarray(self.shape)[asarray(self.baseaxes)])
+            s2 = prod(self.labels.shape)/s1
+            newlabels = self.labels.reshape(s1, s2)[mask].squeeze()
+        return self._constructor(filtered, labels=newlabels).__finalize__(self, noprop=('labels',))
+
+
 
     def reduce(self, func):
         """
@@ -824,7 +852,7 @@ class Series(Data):
         Convert Series to TimeSeries, a subclass for time series computation.
         """
         from thunder.series.timeseries import TimeSeries
-        return TimeSeries(self.values, index=self.index)
+        return TimeSeries(self.values, index=self.index, labels=self.labels)
 
     def toimages(self, size='150'):
         """

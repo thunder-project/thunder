@@ -1,5 +1,5 @@
 from numpy import array, asarray, ndarray, prod, ufunc, add, subtract, \
-    multiply, divide, isscalar, newaxis, unravel_index
+    multiply, divide, isscalar, newaxis, unravel_index, argsort
 from bolt.utils import inshape, tupleize
 from bolt.base import BoltArray
 from bolt.spark.array import BoltArraySpark
@@ -316,7 +316,7 @@ class Data(Base):
 
         return reshaped
 
-    def _filter(self, func, axis=(0,)):
+    def _filter(self, func, axis=(0,), with_labels=False):
         """
         Filter array along an axis.
 
@@ -337,11 +337,24 @@ class Data(Base):
             axes = sorted(tupleize(axis))
             reshaped = self._align(axes)
             filtered = asarray(list(filter(func, reshaped)))
-            return self._constructor(filtered).__finalize__(self)
+
+            if with_labels:
+                mask = asarray(list(map(func, reshaped)))
+                return mask, filtered
+            else:
+                return filtered
 
         if self.mode == 'spark':
-            filtered = self.values.filter(func)
-            return self._constructor(filtered).__finalize__(self)
+
+            filtered = self.values.filter(func, sort=with_labels)
+
+            if with_labels:
+                keys, vals = zip(*self.values.map(func).tordd().collect())
+                perm = argsort(asarray(keys).flatten())
+                mask = asarray(vals)[perm]
+                return mask, filtered
+            else:
+                return filtered
 
     def _map(self, func, axis=(0,), value_shape=None, with_keys=False):
         """
