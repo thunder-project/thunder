@@ -41,6 +41,24 @@ class Series(Data):
         if index is not None:
             self._index = index
 
+    def __getitem__(self, item):
+        result = super(Series, self).__getitem__(item)
+
+        if self.labels is not None:
+            if isinstance(item, int):
+                label_item = [item]
+            else:
+                label_item = tupleize(item)[:len(self.baseaxes)]
+            newlabels = self.labels
+            for (i, s) in enumerate(zip(label_item)):
+                if isinstance(s, slice):
+                    newlabels = newlabels[[s if j==i else slice(None) for j in label_item.ndim]]
+                else:
+                    newlabels = newlabels.take(s, i)
+            result.labels = newlabels
+
+        return result
+
     @property
     def index(self):
         if self._index is None:
@@ -76,8 +94,7 @@ class Series(Data):
         except:
             raise ValueError("Labels must be convertible to an ndarray")
         if value.shape != self.shape[:-1]:
-            raise ValueError("Labels shape {} must be the same as the leading \
-                              dimensions of the Series {}" \
+            raise ValueError("Labels shape {} must be the same as the leading dimensions of the Series {}"\
                               .format(value.shape, self.shape[:-1]))
 
         self._labels = value
@@ -192,8 +209,6 @@ class Series(Data):
             s2 = prod(self.labels.shape)/s1
             newlabels = self.labels.reshape(s1, s2)[mask].squeeze()
         return self._constructor(filtered, labels=newlabels).__finalize__(self, noprop=('labels',))
-
-
 
     def reduce(self, func):
         """

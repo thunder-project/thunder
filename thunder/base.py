@@ -196,7 +196,7 @@ class Data(Base):
         if isinstance(item, (tuple, list)):
             item = tuple([slice(i, i+1, None) if isinstance(i, int) else i for i in item])
         new = self._values.__getitem__(item)
-        return self._constructor(new).__finalize__(self, noprop=('index'))
+        return self._constructor(new).__finalize__(self, noprop=('index', 'labels'))
 
     def astype(self, dtype, casting='unsafe'):
         """
@@ -333,8 +333,9 @@ class Data(Base):
         axis : tuple or int, optional, default=(0,)
             Axis or multiple axes to filter along.
         """
+        axes = sorted(tupleize(axis))
+
         if self.mode == 'local':
-            axes = sorted(tupleize(axis))
             reshaped = self._align(axes)
             filtered = asarray(list(filter(func, reshaped)))
 
@@ -346,11 +347,11 @@ class Data(Base):
 
         if self.mode == 'spark':
 
-            filtered = self.values.filter(func, sort=with_labels)
+            filtered = self.values.filter(func, axis=axes, sort=with_labels)
 
             if with_labels:
-                keys, vals = zip(*self.values.map(func).tordd().collect())
-                perm = argsort(asarray(keys).flatten())
+                keys, vals = zip(*self.values.map(func, axis=axes, value_shape=(1,)).tordd().collect())
+                perm = sorted(range(len(keys)), key=keys.__getitem__)
                 mask = asarray(vals)[perm]
                 return mask, filtered
             else:
