@@ -193,8 +193,10 @@ class Data(Base):
     def __getitem__(self, item):
         if isinstance(item, int):
             item = slice(item, item+1, None)
-        if isinstance(item, (tuple, list)):
+        if isinstance(item, tuple):
             item = tuple([slice(i, i+1, None) if isinstance(i, int) else i for i in item])
+        if isinstance(item, (list, ndarray)):
+            item = (item,)
         new = self._values.__getitem__(item)
         return self._constructor(new).__finalize__(self, noprop=('index', 'labels'))
 

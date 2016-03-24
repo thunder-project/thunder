@@ -46,15 +46,17 @@ class Series(Data):
 
         if self.labels is not None:
             if isinstance(item, int):
-                label_item = [item]
-            else:
-                label_item = tupleize(item)[:len(self.baseaxes)]
+                label_item = ([item],)
+            elif isinstance(item, (list, ndarray, slice)):
+                label_item = (item, )
+            elif isinstance(item, tuple):
+                label_item = item[:len(self.baseaxes)]
             newlabels = self.labels
-            for (i, s) in enumerate(zip(label_item)):
+            for (i, s) in enumerate(label_item):
                 if isinstance(s, slice):
-                    newlabels = newlabels[[s if j==i else slice(None) for j in label_item.ndim]]
+                    newlabels = newlabels[[s if j==i else slice(None) for j in range(len(label_item))]]
                 else:
-                    newlabels = newlabels.take(s, i)
+                    newlabels = newlabels.take(tupleize(s), i)
             result.labels = newlabels
 
         return result

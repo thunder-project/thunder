@@ -2,6 +2,7 @@ import pytest
 from numpy import allclose, arange, array, asarray, dot, cov
 
 from thunder.series.readers import fromlist
+from thunder.images.readers import fromlist as img_fromlist
 from thunder.series.timeseries import TimeSeries
 
 pytestmark = pytest.mark.usefixtures("eng")
@@ -176,7 +177,30 @@ def test_min(eng):
     assert allclose(val, expected)
 
 def test_labels(eng):
-    pass
+    x = [array([0, 1]), array([2, 3]), array([4, 5]), array([6, 7])]
+    data = fromlist(x, engine=eng)
+    data.labels = [0, 1, 2, 3]
+
+    assert allclose(data.filter(lambda x: x[0]>2).labels, array([2, 3]))
+    assert allclose(data[2:].labels, array([2, 3]))
+    assert allclose(data[1].labels, array([1]))
+    assert allclose(data[1, :].labels, array([1]))
+    assert allclose(data[[0, 2]].labels, array([0, 2]))
+
+    x = [array([[0, 1],[2, 3]]), array([[4, 5], [6, 7]])]
+    data = img_fromlist(x, engine=eng).toseries()
+    data.labels = [[0, 1], [2, 3]]
+
+    assert allclose(data.filter(lambda x: x[0]>1).labels, array([2, 3]))
+    assert allclose(data[0].labels, array([[0, 1]]))
+    assert allclose(data[:, 0].labels, array([[0], [2]]))
+
+def test_labels_setting(eng):
+    x = [array([0, 1]), array([2, 3]), array([4, 5]), array([6, 7])]
+    data = fromlist(x, engine=eng)
+
+    with pytest.raises(ValueError):
+        data.labels = [0, 1, 2]
 
 
 def test_index_setting(eng):
