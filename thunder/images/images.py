@@ -24,8 +24,13 @@ class Images(Data):
     """
     _metadata = Data._metadata
 
-    def __init__(self, values, mode='local'):
+    def __init__(self, values, labels=None, mode='local'):
         super(Images, self).__init__(values, mode=mode)
+        self.labels = labels
+
+    @property
+    def baseaxes(self):
+        return (0,)
 
     @property
     def _constructor(self):

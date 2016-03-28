@@ -32,34 +32,14 @@ class Series(Data):
     Matrix : a Series intended for matrix computation
     """
     _metadata = Data._metadata
-    _attributes = Data._attributes + ['index', 'labels']
+    _attributes = Data._attributes + ['index']
 
     def __init__(self, values, index=None, labels=None, mode='local'):
         super(Series, self).__init__(values, mode=mode)
-        self._labels = labels
+        self.labels = labels
         self._index = None
         if index is not None:
             self._index = index
-
-    def __getitem__(self, item):
-        result = super(Series, self).__getitem__(item)
-
-        if self.labels is not None:
-            if isinstance(item, int):
-                label_item = ([item],)
-            elif isinstance(item, (list, ndarray, slice)):
-                label_item = (item, )
-            elif isinstance(item, tuple):
-                label_item = item[:len(self.baseaxes)]
-            newlabels = self.labels
-            for (i, s) in enumerate(label_item):
-                if isinstance(s, slice):
-                    newlabels = newlabels[[s if j==i else slice(None) for j in range(len(label_item))]]
-                else:
-                    newlabels = newlabels.take(tupleize(s), i)
-            result.labels = newlabels
-
-        return result
 
     @property
     def index(self):
@@ -86,28 +66,12 @@ class Series(Data):
         self._index = value
 
     @property
-    def labels(self):
-        return self._labels
-
-    @labels.setter
-    def labels(self, value):
-        try:
-            value = asarray(value)
-        except:
-            raise ValueError("Labels must be convertible to an ndarray")
-        if value.shape != self.shape[:-1]:
-            raise ValueError("Labels shape {} must be the same as the leading dimensions of the Series {}"\
-                              .format(value.shape, self.shape[:-1]))
-
-        self._labels = value
-
-    @property
     def length(self):
         return len(self.index)
 
     @property
     def baseaxes(self):
-        return tuple(range(0, len(self.shape) - 1))
+        return tuple(range(0, len(self.shape)))
 
     @property
     def _constructor(self):
@@ -188,7 +152,7 @@ class Series(Data):
             inds = [unravel_index(int(k), basedims) for k in random.rand(nsamples) * prod(basedims)]
             result = asarray([self.values[tupleize(i) + (slice(None, None),)] for i in inds])
 
-        return self._constructor(result, index=self.index, labels=self.labels)
+        return self._constructor(result, index=self.index)
 
     def map(self, func, index=None, with_keys=False):
         """
@@ -197,20 +161,6 @@ class Series(Data):
         value_shape = len(index) if index is not None else None
         new = self._map(func, axis=self.baseaxes, value_shape=value_shape, with_keys=with_keys)
         return self._constructor(new.values, index=index, labels=self.labels)
-
-    def filter(self, func):
-        """
-        Filter by applying a function to each series.
-        """
-        if self.labels is None:
-            filtered = self._filter(func, axis=self.baseaxes)
-            newlabels = None
-        else:
-            mask, filtered = self._filter(func, axis=self.baseaxes, with_labels=True)
-            s1 = prod(asarray(self.shape)[asarray(self.baseaxes)])
-            s2 = prod(self.labels.shape)/s1
-            newlabels = self.labels.reshape(s1, s2)[mask].squeeze()
-        return self._constructor(filtered, labels=newlabels).__finalize__(self, noprop=('labels',))
 
     def reduce(self, func):
         """
