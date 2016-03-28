@@ -13,7 +13,7 @@ echo 'export IPYTHON_OPTS="notebook"' >> /root/.bash_profile
 
 echo -e "\n\n\n"
 echo "-----------------------------------------------------------------"
-echo "iPython notebook successfully set up for port forwarding!"
+echo "IPython notebook successfully set up for port forwarding!"
 echo ""
 echo "To use this feature, be sure to append the "
 echo "\"--ssh-port-forwarding local_port:8888\" option to your "

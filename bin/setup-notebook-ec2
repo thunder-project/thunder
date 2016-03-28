@@ -22,7 +22,7 @@ echo 'export IPYTHON_OPTS="notebook"' >> /root/.bash_profile
 
 echo -e "\n\n\n"
 echo "-----------------------------------------------------------------"
-echo "iPython notebook successfully set up!"
+echo "IPython notebook successfully set up!"
 echo "Access at https://$(cat /root/spark-ec2/masters):8888"
 echo "-----------------------------------------------------------------"
 echo -e "\n\n\n"

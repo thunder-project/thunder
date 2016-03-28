@@ -46,7 +46,7 @@ Thunder is designed to run on a cluster, but local testing is a great way to lea
 	>> data = tsc.makeExample("ica")
 	>> model = ICA(c=2).fit(data)
 
-To run in iPython, just set this environmental variable before staring:
+To run in IPython, just set this environmental variable before staring:
 
 	export IPYTHON=1
 
@@ -62,12 +62,12 @@ We also include a script for launching an Amazon EC2 cluster with Thunder preins
 Analyses
 --------
 
-Thunder currently includes two primary data types for distributed spatial and temporal data, and five main analysis packages: classification (decoding), clustering, factorization, image processing, and regression. It also provides an entry point for loading and converting a variety of raw data formats, and utilities for exporting or visually inspecting results. Scripts can be used to run standalone analyses, but the underlying classes and functions can be used from within the PySpark shell or an iPython notebook for easy interactive analysis.
+Thunder currently includes two primary data types for distributed spatial and temporal data, and five main analysis packages: classification (decoding), clustering, factorization, image processing, and regression. It also provides an entry point for loading and converting a variety of raw data formats, and utilities for exporting or visually inspecting results. Scripts can be used to run standalone analyses, but the underlying classes and functions can be used from within the PySpark shell or an IPython notebook for easy interactive analysis.
 
 Input and output
 ----------------
 
-The primary data types in Thunder — Images and Series — can each be loaded from a variety of raw input formats, including text or flat binary files (for Series) and binary, tifs, or pngs (for Images). Files can be stored locally, on a networked file system, on Amazon's S3, on Google Storage, or in HDFS. Where needed, metadata (e.g. model parameters) can be provided as numpy arrays or loaded from JSON or MAT files. Results can be visualized directly from the python shell or in iPython notebook using matplotlib, seaborn, or a new interactive visualization library we are developing called [lightning](http://lightning-viz.org)
+The primary data types in Thunder — Images and Series — can each be loaded from a variety of raw input formats, including text or flat binary files (for Series) and binary, tifs, or pngs (for Images). Files can be stored locally, on a networked file system, on Amazon's S3, on Google Storage, or in HDFS. Where needed, metadata (e.g. model parameters) can be provided as numpy arrays or loaded from JSON or MAT files. Results can be visualized directly from the python shell or in IPython notebook using matplotlib, seaborn, or a new interactive visualization library we are developing called [lightning](http://lightning-viz.org)
 
 Help
 ------------

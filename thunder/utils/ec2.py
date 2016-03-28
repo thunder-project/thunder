@@ -413,7 +413,7 @@ if __name__ == "__main__":
         help="Major version of Hadoop (default: %default)")
     parser.add_option("--ssh-port-forwarding", default=None,
                       help="Set up ssh port forwarding when you login to the cluster.  " +
-                           "This provides a convenient alternative to connecting to iPython " +
+                           "This provides a convenient alternative to connecting to IPython " +
                            "notebook over an open port using SSL.  You must supply an argument " +
                            "of the form \"local_port:remote_port\".")
     parser.add_option(
@@ -561,7 +561,7 @@ if __name__ == "__main__":
 
             # SSH tunnels are a convenient, zero-configuration
             # alternative to opening a port using the EC2 security
-            # group settings and using iPython notebook over SSL.
+            # group settings and using IPython notebook over SSL.
             #
             # If the user has requested ssh port forwarding, we set
             # that up here.
