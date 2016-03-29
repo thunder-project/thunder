@@ -381,7 +381,6 @@ class Data(Base):
 
             if self.labels is not None:
                 mask = asarray(list(map(func, reshaped)))
-                print mask.shape
 
         if self.mode == 'spark':
 
