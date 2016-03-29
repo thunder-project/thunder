@@ -350,8 +350,6 @@ class Data(Base):
         linearized_shape = [prod(key_shape)] + remaining_shape
 
         # compute the transpose permutation
-        print axes
-        print remaining
         transpose_order = list(axes) + remaining
 
         # transpose the array so that the keys being mapped over come first, then linearize keys
@@ -383,6 +381,7 @@ class Data(Base):
 
             if self.labels is not None:
                 mask = asarray(list(map(func, reshaped)))
+                print mask.shape
 
         if self.mode == 'spark':
 
