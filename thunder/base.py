@@ -350,7 +350,9 @@ class Data(Base):
         linearized_shape = [prod(key_shape)] + remaining_shape
 
         # compute the transpose permutation
-        transpose_order = axes + tuple(remaining)
+        print axes
+        print remaining
+        transpose_order = list(axes) + remaining
 
         # transpose the array so that the keys being mapped over come first, then linearize keys
         reshaped = self.values.transpose(*transpose_order).reshape(*linearized_shape)

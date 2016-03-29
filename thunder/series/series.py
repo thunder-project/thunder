@@ -71,7 +71,7 @@ class Series(Data):
 
     @property
     def baseaxes(self):
-        return tuple(range(0, len(self.shape)))
+        return tuple(range(0, len(self.shape)-1))
 
     @property
     def _constructor(self):

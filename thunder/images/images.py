@@ -212,12 +212,6 @@ class Images(Data):
         """
         return self._map(func, axis=0, value_shape=dims, with_keys=with_keys)
 
-    def filter(self, func):
-        """
-        Filter images
-        """
-        return self._constructor(self._filter(func, axis=0)).__finalize__(self)
-
     def reduce(self, func):
         """
         Reduce over images
