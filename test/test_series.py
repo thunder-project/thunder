@@ -1,7 +1,7 @@
 import pytest
 from numpy import allclose, arange, array, asarray, dot, cov
 
-from thunder.series.readers import fromlist
+from thunder.series.readers import fromlist, fromarray
 from thunder.images.readers import fromlist as img_fromlist
 from thunder.series.timeseries import TimeSeries
 
@@ -28,6 +28,12 @@ def test_map_singletons(eng):
 def test_filter(eng):
     data = fromlist([array([1, 2]), array([3, 4])], engine=eng)
     assert allclose(data.filter(lambda x: x.sum() > 3).toarray(), [3, 4])
+
+def test_flatten(eng):
+    arr = arange(2*2*5).reshape(2, 2, 5)
+    data = fromarray(arr, engine=eng)
+    assert data.flatten().shape == (4, 5)
+    assert allclose(data.flatten().toarray(), arr.reshape(2*2, 5))
 
 
 def test_sample(eng):

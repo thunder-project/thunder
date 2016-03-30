@@ -77,6 +77,15 @@ class Series(Data):
     def _constructor(self):
         return Series
 
+    def flatten(self):
+        """
+        Reshape all dimensions but the last into a single dimension
+        """
+
+        size = prod([s for i, s in enumerate(self.shape) if i in self.baseaxes])
+        newvalues = self.values.reshape(size, self.shape[-1])
+        return self._constructor(newvalues).__finalize__(self)
+
     def count(self):
         """
         Explicit count of the number of items.
