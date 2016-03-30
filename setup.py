@@ -4,8 +4,7 @@ from setuptools import setup
 
 version = '1.0.0'
 
-required = open('requirements.txt').read().split('\n')
-extra = {'all': ['mist', 'rime']}
+extra = {'all': ['thunder-regression', 'thunder-registration']}
 
 setup(
     name='thunder-python',
@@ -16,13 +15,11 @@ setup(
     url='https://github.com/thunder-project/thunder',
     packages=[
         'thunder',
-        'thunder',
         'thunder.blocks',
         'thunder.series',
         'thunder.images'
     ],
-    package_data={'thunder.lib': ['thunder_python-' + version + '-py2.7.egg']},
-    install_requires=required,
+    install_requires=open('requirements.txt').read().split('\n'),
     extras_require=extra,
     long_description='See https://github.com/thunder-project/thunder'
 )
