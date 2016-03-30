@@ -7,9 +7,9 @@
 
 > large-scale image and time series analysis in python
 
-Thunder is an ecosystem of tools for the analysis of image and time series data in Python. It provides data structures and algorithms for loading, processing, and analyzing these  data, and can be useful in a variety of domains, including neuroscience, medical imaging, video processing, and geospatial and climate analysis. And it can support large-scale analysis through the distributed computing engine [Spark](https://github.com/apache/spark).
+Thunder is an ecosystem of tools for the analysis of image and time series data in Python. It provides data structures and algorithms for loading, processing, and analyzing these  data, and can be useful in a variety of domains, including neuroscience, medical imaging, video processing, and geospatial and climate analysis. It can be used locally, but also supports large-scale analysis through the distributed computing engine [Spark](https://github.com/apache/spark).
 
-# install
+## install
 
 The core `thunder` package defines data structures and read/write patterns for images and time series. It is built on `numpy`, `scipy`, `scikit-learn`, and `scikit-image`, and is compatible with Python 2.7 and 3.4. You can install it wil
 
@@ -25,16 +25,16 @@ pip install thunder-python[all]
 
 This will additionally install `thunder-regression`, `thunder-registration`, and `thunder-factoriation`.
 
-# example
+## example
 
-# usage
+## usage
 
-# data types
+## data types
 
-# reading and writing
+## reading and writing
 
-Contributing
--------------
+## contributing
+
 Thunder is a community effort! The codebase so far is due to the excellent work of the following individuals:
 
 > Andrew Osheroff, Ben Poole, Chris Stock, Davis Bennett, Jascha Swisher, Jason Wittenbach, Jeremy Freeman, Josh Rosen, Kunal Lillaney, Logan Grosenick, Matt Conlen, Michael Broxton, Noah Young, Ognen Duzlevski, Richard Hofer, Owen Kahn, Ted Fujimoto, Tom Sainsbury, Uri Laseron
