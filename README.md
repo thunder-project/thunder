@@ -23,7 +23,7 @@ If you want to install all related packages at the same time, you can use
 pip install thunder-python[all]
 ```
 
-This will additionally install the latest versions of `thunder-regression`, `thunder-registration`, and `thunder-factoriation`.
+This will additionally install `thunder-regression`, `thunder-registration`, and `thunder-factoriation`.
 
 ## example
 
@@ -31,7 +31,79 @@ This will additionally install the latest versions of `thunder-regression`, `thu
 
 ## data types
 
-## reading and writing
+Primary data types are `images` and `series`. 
+
+Basic description.
+
+For a full list of methods, see...
+
+## reading
+
+Both `images` and `series` can be loaded from a variety of data types and locations. For all loading methods, the optional argument `engine` allows you to specify whether data should be loaded in `"local"` mode, which is backed by a `numpy` array, or in `"spark"` mode, which is backed by an RDD.
+
+All loading methods are available on the module for the corresponding data type, for example
+
+```python
+import thunder as td
+data = td.images.fromtif('/path/to/tifs')
+data = td.series.fromarray(array)
+```
+
+### images
+
+#### `fromarray`
+
+#### `frompng`
+
+#### `fromtif`
+
+#### `frombinary`
+
+#### `fromexample`
+
+#### `fromrandom`
+
+#### `fromlist`
+
+#### `frompath`
+
+#### `fromrdd`
+
+### series
+
+#### `fromrdd`
+
+#### `fromlist`
+
+#### `fromarray`
+
+#### `frombinary`
+
+#### `fromtext`
+
+#### `frommat`
+
+#### `fromnpy`
+
+#### `fromrdd`
+
+#### `fromrandom`
+
+#### `fromexample`
+
+## writing
+
+### images
+
+#### `images.tobinary()`
+
+#### `images.topng()`
+
+#### `images.totif()`
+
+### series
+
+#### `series.tobinary()`
 
 ## contributing
 
