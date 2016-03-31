@@ -186,6 +186,6 @@ def test_map_as_series(eng):
         return x[:-1]
     result = apply_along_axis(f, 0, data.toarray())
 
-    assert(data.map_as_series(f).toarray(), result)
-    assert(data.map_as_series(f, value_size=4).toarray(), result)
-    assert(data.map_as_series(f, block_size=(2, 2)).toarray(), result)
+    assert allclose(data.map_as_series(f).toarray(), result)
+    assert allclose(data.map_as_series(f, value_size=4).toarray(), result)
+    assert allclose(data.map_as_series(f, block_size=(2, 2)).toarray(), result)
