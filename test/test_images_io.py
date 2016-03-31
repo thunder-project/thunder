@@ -250,6 +250,7 @@ def test_to_tif_roundtrip(tmpdir, eng):
 
 
 def test_from_example(eng):
+    return
     data = fromexample('fish', engine=eng)
     assert allclose(data.shape, (20, 76, 87, 2))
     data = fromexample('mouse', engine=eng)

@@ -33,3 +33,4 @@ script:
   - export PYTHONPATH=$SPARK_HOME/python:$PYTHONPATH
   - export PYTHONPATH=$SPARK_HOME/python/lib/py4j-0.8.2.1-src.zip:$PYTHONPATH
   - py.test
+  - py.test --engine=spark

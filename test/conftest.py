@@ -1,15 +1,15 @@
 import pytest
 import station
 
-@pytest.fixture(scope='module', params=['local', 'spark'])
-def eng(request):
-    if request.param == 'local':
-        return None
-    if request.param == 'spark':
-        station.start(spark=True)
-        return station.engine()
+def pytest_addoption(parser):
+    parser.addoption("--engine", action="store", default="local", 
+                     help="engine to run tests with")
 
 @pytest.fixture(scope='module')
-def engspark():
-    station.start(spark=True)
-    return station.engine()
+def eng(request):
+    engine = request.config.getoption("--engine")
+    if engine == 'local':
+        return None
+    if engine == 'spark':
+        station.start(spark=True)
+        return station.engine()
