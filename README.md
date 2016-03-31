@@ -53,43 +53,40 @@ data = td.series.fromarray(array)
 
 ##### `fromarray(values, npartitions=None, engine=None)`
 
-#### `frompng`
+##### `frompng(path, ext='png', start=None, stop=None, recursive=False, npartitions=None, engine=None, credentials=None)`
 
-#### `fromtif`
+##### `fromtif(path, ext='tif', start=None, stop=None, recursive=False, nplanes=None, npartitions=None, engine=None, credentials=None)`
 
-#### `frombinary`
+##### `frombinary(path, shape=None, dtype=None, ext='bin', start=None, stop=None, recursive=False, nplanes=None, npartitions=None, conf='conf.json', order='C', engine=None, credentials=None)`
 
-#### `fromexample`
+##### `fromexample(name=None, engine=None)`
 
-#### `fromrandom`
+##### `fromrandom(shape=(10, 50, 50), npartitions=1, seed=42, engine=None)`
 
 ##### `fromlist(items, accessor=None, keys=None, dims=None, dtype=None, npartitions=None, engine=None)`
 
-#### `frompath`
-
-#### `fromrdd`
+##### `fromrdd(rdd, dims=None, nrecords=None, dtype=None)`
 
 ### series
 
-#### `fromrdd`
+##### `fromarray(values, index=None, npartitions=None, engine=None)`
 
-#### `fromlist`
+##### `frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0, index=None, engine=None, credentials=None)`
 
-#### `fromarray`
+##### `fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None, engine=None, npartitions=None, credentials=None)`
 
-#### `frombinary`
+##### `frommat(path, var, index=None, npartitions=None, engine=None)`
 
-#### `fromtext`
+##### `fromnpy(path,  index=None, npartitions=None, engine=None)`
 
-#### `frommat`
+##### `fromrdd(rdd, nrecords=None, shape=None, index=None, dtype=None)`
 
-#### `fromnpy`
+##### `fromrandom(shape=(100, 10), npartitions=1, seed=42, engine=None)`
 
-#### `fromrdd`
+##### `fromexample(name=None, engine=None)`
 
-#### `fromrandom`
+##### `fromlist(items, accessor=None, index=None, dtype=None, npartitions=None, engine=None)`
 
-#### `fromexample`
 
 ## writing
 
