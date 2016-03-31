@@ -49,58 +49,57 @@ data = td.images.fromtif('/path/to/tifs')
 data = td.series.fromarray(array)
 ```
 
+Every loading method has the optional argument `engine` which can be either `None` (for local use) or a `SparkContext` (for distributed use with Spark). And all methods that load from files e.g. `fromtif` or `frombinary` can load from either a local filesystem or Amazon S3, with the optional argument `credentials` for loading non-public data from S3. An overview of available methods is below; see [link]() for complete API documentation.
+
 ### images
 
-##### `fromarray(values, npartitions=None, engine=None)`
+##### `frompng(path, opts)`
 
-##### `frompng(path, ext='png', start=None, stop=None, recursive=False, npartitions=None, engine=None, credentials=None)`
+##### `fromtif(path, opts)`
 
-##### `fromtif(path, ext='tif', start=None, stop=None, recursive=False, nplanes=None, npartitions=None, engine=None, credentials=None)`
+##### `frombinary(path, opts)`
 
-##### `frombinary(path, shape=None, dtype=None, ext='bin', start=None, stop=None, recursive=False, nplanes=None, npartitions=None, conf='conf.json', order='C', engine=None, credentials=None)`
+##### `fromarray(values, opts)`
 
-##### `fromexample(name=None, engine=None)`
+##### `fromlist(items, opts)`
 
-##### `fromrandom(shape=(10, 50, 50), npartitions=1, seed=42, engine=None)`
+##### `fromrdd(rdd, opts)`
 
-##### `fromlist(items, accessor=None, keys=None, dims=None, dtype=None, npartitions=None, engine=None)`
+##### `fromrandom(shape, opts)`
 
-##### `fromrdd(rdd, dims=None, nrecords=None, dtype=None)`
+##### `fromexample(name, opts)`
 
 ### series
 
-##### `fromarray(values, index=None, npartitions=None, engine=None)`
+##### `frombinary(path, opts)`
 
-##### `frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0, index=None, engine=None, credentials=None)`
+##### `fromtext(path, opts)`
 
-##### `fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None, engine=None, npartitions=None, credentials=None)`
+##### `fromarray(values, opts)`
 
-##### `frommat(path, var, index=None, npartitions=None, engine=None)`
+##### `fromlist(items, opts)`
 
-##### `fromnpy(path,  index=None, npartitions=None, engine=None)`
+##### `fromrdd(rdd, opts)`
 
-##### `fromrdd(rdd, nrecords=None, shape=None, index=None, dtype=None)`
+##### `fromrandom(shape, opts)`
 
-##### `fromrandom(shape=(100, 10), npartitions=1, seed=42, engine=None)`
-
-##### `fromexample(name=None, engine=None)`
-
-##### `fromlist(items, accessor=None, index=None, dtype=None, npartitions=None, engine=None)`
-
+##### `fromexample(name, opts)`
 
 ## writing
 
+All `Images` and `Series` objects can be written to disk in a few different formats. As with reading, data can be written to either a local filesystem or to Amazon S3, with credentials provided as an optional argument. The methods are summarized below, see [link]() for the complete API documentation.
+
 ### images
 
-#### `images.tobinary()`
+#### `images.tobinary(opts)`
 
-#### `images.topng()`
+#### `images.topng(opts)`
 
-#### `images.totif()`
+#### `images.totif(opts)`
 
 ### series
 
-#### `series.tobinary()`
+#### `series.tobinary(opts)`
 
 ## contributing
 

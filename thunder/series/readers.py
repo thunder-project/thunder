@@ -147,62 +147,8 @@ def fromlist(items, accessor=None, index=None, dtype=None, npartitions=None, eng
             items = [accessor(i) for i in items]
         return fromarray(items, index=index)
 
-def frommat(path, var, index=None, npartitions=None, engine=None):
-    """
-    Loads Series data stored in a Matlab .mat file.
-
-    Parameters
-    ----------
-    path : str
-        Path to data file.
-
-    var : str
-        Variable name.
-
-    index : array, optional, default = None
-        Index for records, if not provided will use (0,1,...,N)
-        where N is the length of each record.
-
-    npartitions : int, default = None
-        Number of partitions for parallelization (Spark only)
-
-    engine : object, default = None
-        Computational engine (e.g. a SparkContext for Spark)
-    """
-    from scipy.io import loadmat
-    data = loadmat(path)[var]
-    if data.ndim > 2:
-        raise IOError('Input data must be one or two dimensional')
-
-    return fromarray(data, npartitions=npartitions, index=index, engine=engine)
-
-def fromnpy(path,  index=None, npartitions=None, engine=None):
-    """
-    Loads Series data stored in the numpy save() .npy format.
-
-    Parameters
-    ----------
-    path : str
-        Path to data file.
-
-    index : array, optional, default = None
-        Index for records, if not provided will use (0,1,...,N)
-        where N is the length of each record.
-
-    npartitions : int, default = None
-        Number of partitions for parallelization (Spark only)
-
-    engine : object, default = None
-        Computational engine (e.g. a SparkContext for Spark)
-    """
-    data = load(path)
-    if data.ndim > 2:
-        raise IOError('Input data must be one or two dimensional')
-
-    return fromarray(data, npartitions=npartitions, index=index, engine=engine)
-
 def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None,
-             engine=None, npartitions=None, credentials=None):
+             npartitions=None, engine=None, credentials=None):
     """
     Loads Series data from text files.
 
@@ -232,11 +178,11 @@ def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None,
     index : array, optional, default = None
         Index for records, if not provided will use (0, 1, ...)
 
-    engine : object, default = None
-        Computational engine (e.g. a SparkContext for Spark)
-
     npartitions : int, default = None
         Number of partitions for parallelization (Spark only)
+
+    engine : object, default = None
+        Computational engine (e.g. a SparkContext for Spark)
 
     credentials : dict, default = None
         Credentials for remote storage (e.g. S3) in the form {access: ***, secret: ***}
