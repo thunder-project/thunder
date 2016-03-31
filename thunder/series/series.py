@@ -84,7 +84,14 @@ class Series(Data):
 
         size = prod([s for i, s in enumerate(self.shape) if i in self.baseaxes])
         newvalues = self.values.reshape(size, self.shape[-1])
-        return self._constructor(newvalues).__finalize__(self)
+
+        if self.labels is not None:
+            fullshape = prod(self.labels.shape)
+            newlabels = self.labels.reshape(size, fullshape/size).squeeze()
+        else:
+            newlabels = None
+
+        return self._constructor(newvalues, labels=newlabels).__finalize__(self, noprop=('labels',))
 
     def count(self):
         """

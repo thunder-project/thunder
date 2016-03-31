@@ -192,6 +192,7 @@ def test_labels(eng):
     assert allclose(data[1].labels, array([1]))
     assert allclose(data[1, :].labels, array([1]))
     assert allclose(data[[0, 2]].labels, array([0, 2]))
+    assert allclose(data.flatten().labels, array([0, 1, 2, 3]))
 
     x = [array([[0, 1],[2, 3]]), array([[4, 5], [6, 7]])]
     data = img_fromlist(x, engine=eng).toseries()
@@ -200,6 +201,7 @@ def test_labels(eng):
     assert allclose(data.filter(lambda x: x[0]>1).labels, array([2, 3]))
     assert allclose(data[0].labels, array([[0, 1]]))
     assert allclose(data[:, 0].labels, array([[0], [2]]))
+    assert allclose(data.flatten().labels, array([0, 1, 2, 3]))
 
 def test_labels_setting(eng):
     x = [array([0, 1]), array([2, 3]), array([4, 5]), array([6, 7])]
