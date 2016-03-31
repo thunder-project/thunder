@@ -16,11 +16,6 @@ class Images(Data):
     ----------
     values : array-like
         numpy array or bolt array
-
-    See also
-    --------
-    TimeSeries : a Series where the indices represent time
-    Matrix : a Series intended for matrix computation
     """
     _metadata = Data._metadata
 
@@ -66,10 +61,6 @@ class Images(Data):
         size : str, or tuple of block size per dimension,
             String interpreted as memory size (in megabytes, e.g. "64"). Tuple of ints interpreted as
             "pixels per dimension". Only valid in spark mode.
-
-        Returns
-        -------
-        Blocks instance
         """
         from thunder.blocks.blocks import Blocks
 
@@ -97,14 +88,6 @@ class Images(Data):
 
         units: string, either "pixels" or "splits", default = "pixels"
             What units to use for a tuple size.
-
-        Returns
-        -------
-        new TimeSeries object
-
-        See also
-        --------
-        Images.toBlocks
         """
         return self.toseries(size).totimeseries()
 
@@ -118,14 +101,6 @@ class Images(Data):
         ----------
         size: string memory size, optional, default = "150M"
             String interpreted as memory size (e.g. "64M").
-
-        Returns
-        -------
-        new Series object
-
-        See also
-        --------
-        Images.toblocks
         """
         from thunder.series.series import Series
 
@@ -429,7 +404,7 @@ class Images(Data):
         The neighborhood is currently required to be a single integer,
         which represents the neighborhood size in both x and y.
 
-        parameters
+        Parameters
         ----------
         neighborhood: int, optional, default=2
             Size of the correlation neighborhood (in both the x and y directions), in pixels.
@@ -551,11 +526,11 @@ class Images(Data):
         to a Series object, but using a Blocks object instead for increased
         efficiency in the transformation back to Images.
 
-        func: function
+        func : function
             Function to apply to each time series. Should take one-dimensional
             ndarray and return the transformed one-dimensional ndarray.
 
-        value_size: int, optional, default=None
+        value_size : int, optional, default=None
             Size of the one-dimensional ndarray resulting from application of
             func. If not supplied, will be automatically inferred for an extra
             computational cost.

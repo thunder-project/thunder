@@ -147,8 +147,7 @@ def fromlist(items, accessor=None, index=None, dtype=None, npartitions=None, eng
             items = [accessor(i) for i in items]
         return fromarray(items, index=index)
 
-def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None,
-             npartitions=None, engine=None, credentials=None):
+def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None, npartitions=None, engine=None, credentials=None):
     """
     Loads Series data from text files.
 
@@ -224,8 +223,7 @@ def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None,
 
         return fromarray(values, index=index)
 
-def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0,
-               index=None, engine=None, credentials=None):
+def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0, index=None, engine=None, credentials=None):
     """
     Load a Series object from flat binary files.
 
@@ -260,7 +258,7 @@ def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0
     credentials : dict, default = None
         Credentials for remote storage (e.g. S3) in the form {access: ***, secret: ***}
     """
-    shape, dtype = binaryconfig(path, conf, dtype, shape, credentials)
+    shape, dtype = _binaryconfig(path, conf, dtype, shape, credentials)
 
     from thunder.readers import normalize_scheme, get_parallel_reader
     path = normalize_scheme(path, ext)
@@ -312,7 +310,7 @@ def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0
 
         return fromarray(values, index=index)
 
-def binaryconfig(path, conf, dtype=None, shape=None, credentials=None):
+def _binaryconfig(path, conf, dtype=None, shape=None, credentials=None):
     """
     Collects parameters to use for binary series loading.
     """

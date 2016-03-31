@@ -35,7 +35,7 @@ Primary data types are `images` and `series`.
 
 Basic description.
 
-For a full list of methods, see...
+For a full list of methods, see [link]() for complete API documentation.
 
 ## reading
 

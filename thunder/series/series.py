@@ -566,8 +566,8 @@ class Series(Data):
         the selection can proceed by first selecting one or more levels, and then selecting one
         or more values at each level.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         val : list of lists
             Specifies the selected index values. List must contain one list for each level of the
             multi-index used in the selection. For any singleton lists, the list may be replaced
@@ -661,8 +661,8 @@ class Series(Data):
         return a simple numeric type. Also allows selection of levels within a
         multi-index. See select_by_index for more info on indices and multi-indices.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         function : function
             Aggregating function to map to Series values. Should take a list or ndarray
             as input and return a simple numeric value.
@@ -678,8 +678,8 @@ class Series(Data):
         """
         Compute the desired statistic for each uniue index values (across levels, if multi-index)
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         stat : string
             Statistic to be computed: sum, mean, median, stdev, max, min, count
 
