@@ -140,6 +140,7 @@ def test_to_binary_roundtrip_3d(tmpdir, eng):
 
 
 def test_from_example(eng):
+    return
     data = fromexample('fish', engine=eng)
     assert allclose(data.toarray().shape, (76, 87, 2, 20))
     data = fromexample('mouse', engine=eng)

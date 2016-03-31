@@ -203,17 +203,6 @@ def test_map_as_series(eng):
         return x[:-1]
     result = apply_along_axis(f, 0, data.toarray())
 
-    assert(data.map_as_series(f).toarray(), result)
-    assert(data.map_as_series(f, value_size=4).toarray(), result)
-    assert(data.map_as_series(f, block_size=(2, 2)).toarray(), result)
-
-# def test_localcorr(eng):
-#     imgs = [
-#         array([[1.0, 2.0, 9.0], [5.0, 4.0, 5.0], [4.0, 6.0, 0.0]]),
-#         array([[2.0, 2.0, 2.0], [2.0, 2.0, 4.0], [2.0, 3.0, 2.0]]),
-#         array([[3.0, 4.0, 1.0], [5.0, 8.0, 1.0], [6.0, 2.0, 1.0]])
-#     ]
-#     data = fromlist(imgs, engine=eng)
-#     vals = data.localcorr(1)
-#     truth = corrcoef(map(lambda i: i.mean(), imgs), array([4.0, 2.0, 8.0]))[0, 1]
-#     assert allclose(vals[1][1], truth)
+    assert allclose(data.map_as_series(f).toarray(), result)
+    assert allclose(data.map_as_series(f, value_size=4).toarray(), result)
+    assert allclose(data.map_as_series(f, block_size=(2, 2)).toarray(), result)
