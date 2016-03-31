@@ -23,7 +23,7 @@ If you want to install all related packages at the same time, you can use
 pip install thunder-python[all]
 ```
 
-This will additionally install the latest versions of `thunder-regression`, `thunder-registration`, and `thunder-factoriation`.
+This will additionally install `thunder-regression`, `thunder-registration`, and `thunder-factoriation`.
 
 ## example
 
@@ -31,7 +31,75 @@ This will additionally install the latest versions of `thunder-regression`, `thu
 
 ## data types
 
-## reading and writing
+Primary data types are `images` and `series`. 
+
+Basic description.
+
+For a full list of methods, see [link]() for complete API documentation.
+
+## reading
+
+Both `images` and `series` can be loaded from a variety of data types and locations. For all loading methods, the optional argument `engine` allows you to specify whether data should be loaded in `"local"` mode, which is backed by a `numpy` array, or in `"spark"` mode, which is backed by an RDD.
+
+All loading methods are available on the module for the corresponding data type, for example
+
+```python
+import thunder as td
+data = td.images.fromtif('/path/to/tifs')
+data = td.series.fromarray(array)
+```
+
+Every loading method has the optional argument `engine` which can be either `None` (for local use) or a `SparkContext` (for distributed use with Spark). And all methods that load from files e.g. `fromtif` or `frombinary` can load from either a local filesystem or Amazon S3, with the optional argument `credentials` for loading non-public data from S3. An overview of available methods is below; see [link]() for complete API documentation.
+
+### images
+
+#### `frompng(path, opts)`
+
+#### `fromtif(path, opts)`
+
+#### `frombinary(path, opts)`
+
+#### `fromarray(values, opts)`
+
+#### `fromlist(items, opts)`
+
+#### `fromrdd(rdd, opts)`
+
+#### `fromrandom(shape, opts)`
+
+#### `fromexample(name, opts)`
+
+### series
+
+#### `frombinary(path, opts)`
+
+#### `fromtext(path, opts)`
+
+#### `fromarray(values, opts)`
+
+#### `fromlist(items, opts)`
+
+#### `fromrdd(rdd, opts)`
+
+#### `fromrandom(shape, opts)`
+
+#### `fromexample(name, opts)`
+
+## writing
+
+All `Images` and `Series` objects can be written to disk in a few different formats. As with reading, data can be written to either a local filesystem or to Amazon S3, with credentials provided as an optional argument. The methods are summarized below, see [link]() for the complete API documentation.
+
+### images
+
+#### `images.tobinary(opts)`
+
+#### `images.topng(opts)`
+
+#### `images.totif(opts)`
+
+### series
+
+#### `series.tobinary(opts)`
 
 ## contributing
 

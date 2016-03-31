@@ -26,7 +26,7 @@ def fromrdd(rdd, dims=None, nrecords=None, dtype=None):
         Number of images (if provided will avoid check).
 
     dtype : string, default = None
-       Data numerical type (if provided will avoid check)
+        Data numerical type (if provided will avoid check)
     """
     from .images import Images
     from bolt.spark.array import BoltArraySpark
@@ -132,9 +132,7 @@ def fromlist(items, accessor=None, keys=None, dims=None, dtype=None, npartitions
             items = asarray([accessor(i) for i in items])
         return fromarray(items)
 
-def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=False,
-             npartitions=None, dims=None, dtype=None, recount=False,
-             engine=None, credentials=None):
+def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=False, npartitions=None, dims=None, dtype=None, recount=False, engine=None, credentials=None):
     """
     Load images from a path using the given accessor.
 
@@ -196,9 +194,7 @@ def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=Fal
         return fromarray(values)
 
 
-def frombinary(path, shape=None, dtype=None, ext='bin', start=None, stop=None, recursive=False,
-               nplanes=None, npartitions=None, conf='conf.json', order='C',
-               engine=None, credentials=None):
+def frombinary(path, shape=None, dtype=None, ext='bin', start=None, stop=None, recursive=False, nplanes=None, npartitions=None, conf='conf.json', order='C', engine=None, credentials=None):
     """
     Load images from flat binary files.
 
@@ -294,8 +290,7 @@ def frombinary(path, shape=None, dtype=None, ext='bin', start=None, stop=None, r
                     dims=newdims, dtype=dtype, recount=recount,
                     engine=engine, credentials=credentials)
 
-def fromtif(path, ext='tif', start=None, stop=None, recursive=False,
-            nplanes=None, npartitions=None, engine=None, credentials=None):
+def fromtif(path, ext='tif', start=None, stop=None, recursive=False, nplanes=None, npartitions=None, engine=None, credentials=None):
     """
     Loads images from single or multi-page TIF files.
 
@@ -356,8 +351,7 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False,
                     recursive=recursive, npartitions=npartitions, recount=recount,
                     engine=engine, credentials=credentials)
 
-def frompng(path, ext='png', start=None, stop=None, recursive=False, npartitions=None,
-            engine=None, credentials=None):
+def frompng(path, ext='png', start=None, stop=None, recursive=False, npartitions=None, engine=None, credentials=None):
     """
     Load images from PNG files.
 

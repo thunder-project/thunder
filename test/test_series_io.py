@@ -3,9 +3,8 @@ import os
 import glob
 import json
 from numpy import arange, array, allclose, save, savetxt
-from scipy.io import savemat
 
-from thunder.series.readers import fromarray, fromnpy, frommat, fromtext, frombinary, fromexample
+from thunder.series.readers import fromarray, fromtext, frombinary, fromexample
 
 pytestmark = pytest.mark.usefixtures("eng")
 
@@ -32,28 +31,6 @@ def test_from_array_index(eng):
     a = arange(8, dtype='int16').reshape((4, 2))
     data = fromarray(a, index=[2, 3], engine=eng)
     assert allclose(data.index, [2, 3])
-
-
-def test_from_npy(tmpdir, eng):
-    a = arange(8, dtype='int16').reshape((4, 2))
-    f = os.path.join(str(tmpdir), 'data.npy')
-    save(f, a)
-    data = fromnpy(f, engine=eng)
-    assert data.shape == (4, 2)
-    assert data.dtype == 'int16'
-    assert allclose(data.index, [0, 1])
-    assert allclose(data.toarray(), a)
-
-
-def test_from_mat(tmpdir, eng):
-    a = arange(8, dtype='int16').reshape((4, 2))
-    f = os.path.join(str(tmpdir), 'data.mat')
-    savemat(f, {'var': a})
-    data = frommat(f, 'var', engine=eng)
-    assert data.shape == (4, 2)
-    assert data.dtype == 'int16'
-    assert allclose(data.index, [0, 1])
-    assert allclose(data.toarray(), a)
 
 
 def test_from_text(tmpdir, eng):
