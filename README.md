@@ -53,37 +53,37 @@ Every loading method has the optional argument `engine` which can be either `Non
 
 ### images
 
-##### `frompng(path, opts)`
+#### `frompng(path, opts)`
 
-##### `fromtif(path, opts)`
+#### `fromtif(path, opts)`
 
-##### `frombinary(path, opts)`
+#### `frombinary(path, opts)`
 
-##### `fromarray(values, opts)`
+#### `fromarray(values, opts)`
 
-##### `fromlist(items, opts)`
+#### `fromlist(items, opts)`
 
-##### `fromrdd(rdd, opts)`
+#### `fromrdd(rdd, opts)`
 
-##### `fromrandom(shape, opts)`
+#### `fromrandom(shape, opts)`
 
-##### `fromexample(name, opts)`
+#### `fromexample(name, opts)`
 
 ### series
 
-##### `frombinary(path, opts)`
+#### `frombinary(path, opts)`
 
-##### `fromtext(path, opts)`
+#### `fromtext(path, opts)`
 
-##### `fromarray(values, opts)`
+#### `fromarray(values, opts)`
 
-##### `fromlist(items, opts)`
+#### `fromlist(items, opts)`
 
-##### `fromrdd(rdd, opts)`
+#### `fromrdd(rdd, opts)`
 
-##### `fromrandom(shape, opts)`
+#### `fromrandom(shape, opts)`
 
-##### `fromexample(name, opts)`
+#### `fromexample(name, opts)`
 
 ## writing
 
