@@ -37,12 +37,12 @@ class Blocks(Base):
         if self.mode == 'local':
             return 1
 
-    def map(self, func, dims=None):
+    def map(self, func, dims=None, dtype=None):
         """
         Apply an array -> array function to each block
         """
         if self.mode == 'spark':
-            mapped = self.values.map(func, value_shape=dims)
+            mapped = self.values.map(func, value_shape=dims, dtype=dtype)
 
         if self.mode == 'local':
             if dims is not None:
