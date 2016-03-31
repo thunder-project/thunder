@@ -51,7 +51,7 @@ data = td.series.fromarray(array)
 
 ### images
 
-#### `fromarray(values, npartitions=None, engine=None)`
+##### `fromarray(values, npartitions=None, engine=None)`
 
 #### `frompng`
 
@@ -63,7 +63,7 @@ data = td.series.fromarray(array)
 
 #### `fromrandom`
 
-#### `fromlist(items, accessor=None, keys=None, dims=None, dtype=None, npartitions=None, engine=None)`
+##### `fromlist(items, accessor=None, keys=None, dims=None, dtype=None, npartitions=None, engine=None)`
 
 #### `frompath`
 
