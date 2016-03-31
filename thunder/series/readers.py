@@ -149,7 +149,7 @@ def fromlist(items, accessor=None, index=None, labels=None, dtype=None, npartiti
         rdd = engine.parallelize(items, npartitions)
         if accessor:
             rdd = rdd.mapValues(accessor)
-        return fromrdd(rdd, nrecords=nrecords, index=index, dtype=dtype)
+        return fromrdd(rdd, nrecords=nrecords, index=index, labels=labels, dtype=dtype)
 
     else:
         if accessor:

@@ -184,8 +184,7 @@ def test_min(eng):
 
 def test_labels(eng):
     x = [array([0, 1]), array([2, 3]), array([4, 5]), array([6, 7])]
-    data = fromlist(x, engine=eng)
-    data.labels = [0, 1, 2, 3]
+    data = fromlist(x, labels=[0, 1, 2, 3], engine=eng)
 
     assert allclose(data.filter(lambda x: x[0]>2).labels, array([2, 3]))
     assert allclose(data[2:].labels, array([2, 3]))

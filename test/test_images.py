@@ -34,8 +34,7 @@ def test_sample(eng):
 
 def test_labels(eng):
     x = arange(10).reshape(10, 1, 1)
-    data = fromlist(x, engine=eng)
-    data.labels = range(10)
+    data = fromlist(x, labels=range(10), engine=eng)
 
     assert allclose(data.filter(lambda x: x[0, 0]%2==0).labels, array([0, 2, 4, 6, 8]))
     assert allclose(data[4:6].labels, array([4, 5]))
