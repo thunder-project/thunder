@@ -165,7 +165,7 @@ def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None, n
     ext : str, optional, default = 'txt'
         File extension.
 
-    dtype: dtype or dtype specifier, default 'float64'
+    dtype : dtype or dtype specifier, default 'float64'
         Numerical type to use for data after converting from text.
 
     skip : int, optional, default = 0
@@ -240,7 +240,7 @@ def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0
     conf : str, optional, default = 'conf.json'
         Name of conf file with type and size information.
 
-    dtype: dtype or dtype specifier, default 'float64'
+    dtype : dtype or dtype specifier, default 'float64'
         Numerical type to use for data after converting from text.
 
     shape : tuple or list, optional, default = None

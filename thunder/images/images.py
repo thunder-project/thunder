@@ -83,10 +83,10 @@ class Images(Data):
 
         Parameters
         ----------
-        size: string memory size, optional, default = "150M"
+        size : string memory size, optional, default = "150M"
             String interpreted as memory size (e.g. "64M").
 
-        units: string, either "pixels" or "splits", default = "pixels"
+        units : string, either "pixels" or "splits", default = "pixels"
             What units to use for a tuple size.
         """
         return self.toseries(size).totimeseries()
@@ -99,7 +99,7 @@ class Images(Data):
 
         Parameters
         ----------
-        size: string memory size, optional, default = "150M"
+        size : string memory size, optional, default = "150M"
             String interpreted as memory size (e.g. "64M").
         """
         from thunder.series.series import Series
@@ -309,7 +309,7 @@ class Images(Data):
 
         Filtering will be applied to every image in the collection.
 
-        parameters
+        Parameters
         ----------
         sigma : scalar or sequence of scalars, default=2
             Size of the filter size as standard deviation in pixels. A sequence is interpreted
@@ -406,7 +406,7 @@ class Images(Data):
 
         Parameters
         ----------
-        neighborhood: int, optional, default=2
+        neighborhood : int, optional, default=2
             Size of the correlation neighborhood (in both the x and y directions), in pixels.
         """
 
