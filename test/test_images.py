@@ -61,12 +61,6 @@ def test_toseries_roundtrip(eng):
     assert allclose(data.toseries().toimages().toarray(), data.toarray())
 
 
-def test_totimeseries(eng):
-    data = fromlist([arange(6).reshape((2, 3))], engine=eng)
-    assert isinstance(data.totimeseries(), TimeSeries)
-    assert allclose(data.toseries().toarray(), data.totimeseries().toarray())
-
-
 def test_toseries_pack_2d(eng):
     original = arange(6).reshape((2, 3))
     data = fromlist([original], engine=eng)
