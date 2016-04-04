@@ -1100,13 +1100,6 @@ class Series(Data):
 
         return self.map(get)
 
-    def totimeseries(self):
-        """
-        Convert Series to TimeSeries, a subclass for time series computation.
-        """
-        from thunder.series.timeseries import TimeSeries
-        return TimeSeries(self.values, index=self.index)
-
     def toimages(self, size='150'):
         """
         Converts Series to Images.

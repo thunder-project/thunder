@@ -75,22 +75,6 @@ class Images(Data):
 
         return Blocks(blocks)
 
-    def totimeseries(self, size='150'):
-        """
-        Converts this Images object to a TimeSeries object.
-
-        This method is equivalent to images.asBlocks(size).asSeries().asTimeSeries().
-
-        Parameters
-        ----------
-        size : string memory size, optional, default = "150M"
-            String interpreted as memory size (e.g. "64M").
-
-        units : string, either "pixels" or "splits", default = "pixels"
-            What units to use for a tuple size.
-        """
-        return self.toseries(size).totimeseries()
-
     def toseries(self, size='150'):
         """
         Converts this Images object to a Series object.
