@@ -2,7 +2,6 @@ import pytest
 from numpy import allclose, arange, array, asarray, dot, cov, corrcoef
 
 from thunder.series.readers import fromlist, fromarray
-from thunder.series.timeseries import TimeSeries
 
 pytestmark = pytest.mark.usefixtures("eng")
 
