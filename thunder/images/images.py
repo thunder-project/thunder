@@ -394,20 +394,20 @@ class Images(Data):
 
         return self.map(lambda v: filter_(v), dims=self.dims)
 
-    def localcorr(self, neighborhood=2):
+    def localcorr(self, size=2):
         """
-        Correlate every pixel to the average of its local neighborhood.
+        Correlate every pixel in an image sequence to the average of its local neighborhood.
 
-        This algorithm computes, for every spatial record, the correlation coefficient
-        between that record's series, and the average series of all records within
-        a local neighborhood with a size defined by the neighborhood parameter.
-        The neighborhood is currently required to be a single integer,
-        which represents the neighborhood size in both x and y.
+        This algorithm computes, for every pixel, the correlation coefficient
+        between the sequence of values for that pixel, and the average of all pixels
+        in a local neighborhood. It does this by blurring the image(s) with a uniform filter,
+        and then correlates the original sequence with the blurred sequence.
 
         Parameters
         ----------
-        neighborhood : int, optional, default=2
-            Size of the correlation neighborhood (in both the x and y directions), in pixels.
+        size : int or tuple, optional, default=2
+            Size of the filter in pixels. If a scalar, will use the same filter size
+            along each dimension.
         """
 
         if not isinstance(neighborhood, int):
@@ -418,21 +418,21 @@ class Images(Data):
 
         nimages = self.shape[0]
 
-        # Spatially average the original image set over the specified neighborhood
+        # spatially average the original image set over the specified neighborhood
         blurred = self.uniform_filter((neighborhood * 2) + 1)
 
-        # Union the averaged images with the originals to create an
+        # union the averaged images with the originals to create an
         # Images object containing 2N images (where N is the original number of images),
         # ordered such that the first N images are the averaged ones.
         if self.mode == 'spark':
             combined = self.values.concatenate(blurred.values)
-            combinedImages = fromrdd(combined.tordd())
+            combined_images = fromrdd(combined.tordd())
         else:
             combined = concatenate((self.values, blurred.values), axis=0)
-            combinedImages = fromarray(combined)
+            combined_images = fromarray(combined)
 
-        # Correlate the first N (averaged) records with the last N (original) records
-        series = combinedImages.toseries()
+        # correlate the first N (averaged) records with the last N (original) records
+        series = combined_images.toseries()
         corr = series.map(lambda x: corrcoef(x[:nimages], x[nimages:])[0, 1])
 
         return corr.toarray()
