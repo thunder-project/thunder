@@ -77,18 +77,18 @@ def test_from_tif_multi_lzw(eng):
     path = os.path.join(resources, 'multilayer_tif', 'dotdotdot_lzw.tif')
     data = fromtif(path, engine=eng)
     val = data.toarray()
-    assert allclose(data.shape, (1, 70, 75, 3))
-    assert allclose(data.toarray().shape, (70, 75, 3))
-    assert [val[:, :, i].sum() for i in range(3)] == [1140006, 1119161, 1098917]
+    assert allclose(data.shape, (1, 3, 70, 75))
+    assert allclose(data.toarray().shape, (3, 70, 75))
+    assert [val[i].sum() for i in range(3)] == [1140006, 1119161, 1098917]
 
 
 def test_from_tif_multi_float(eng):
     path = os.path.join(resources, 'multilayer_tif', 'dotdotdot_float32.tif')
     data = fromtif(path, engine=eng)
     val = data.toarray()
-    assert allclose(data.shape, (1, 70, 75, 3))
-    assert allclose(data.toarray().shape, (70, 75, 3))
-    assert [val[:, :, i].sum() for i in range(3)] == [1140006, 1119161, 1098917]
+    assert allclose(data.shape, (1, 3, 70, 75))
+    assert allclose(data.toarray().shape, (3, 70, 75))
+    assert [val[i].sum() for i in range(3)] == [1140006, 1119161, 1098917]
 
 
 def test_from_tif_multi_planes(eng):
@@ -104,8 +104,8 @@ def test_from_tif_multi_planes(eng):
 def test_from_tif_multi_planes_many(eng):
     path = os.path.join(resources, 'multilayer_tif', 'dotdotdot_lzw*.tif')
     data = fromtif(path, nplanes=3, engine=eng)
-    assert allclose(data.shape, (2, 70, 75, 3))
-    assert allclose(data.toarray().shape, (2, 70, 75, 3))
+    assert allclose(data.shape, (2, 3, 70, 75))
+    assert allclose(data.toarray().shape, (2, 3, 70, 75))
     data = fromtif(path, nplanes=1, engine=eng)
     assert allclose(data.shape, (6, 70, 75))
     assert allclose(data.toarray().shape, (6, 70, 75))
