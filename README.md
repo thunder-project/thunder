@@ -11,7 +11,7 @@ Thunder is an ecosystem of tools for the analysis of image and time series data 
 
 ## install
 
-The core `thunder` package defines data structures and read/write patterns for images and time series. It is built on `numpy`, `scipy`, `scikit-learn`, and `scikit-image`, and is compatible with Python 2.7 and 3.4. You can install it using:
+The core `thunder` package defines data structures and read/write patterns for images and series data. It is built on [`numpy`](https://github.com/numpy/numpy), [`scipy`](https://github.com/scipy/scipy), [`scikit-learn`](https://github.com/scikit-learn/scikit-learn), and [`scikit-image`](https://github.com/scikit-image/scikit-image), and is compatible with Python 2.7 and 3.4. You can install it using:
 
 ```
 pip install thunder-python
@@ -23,7 +23,12 @@ If you want to install all related packages at the same time, you can use
 pip install thunder-python[all]
 ```
 
-This will additionally install `thunder-regression`, `thunder-registration`, and `thunder-factoriation`.
+This will additionally install:
+
+- [`thunder-regression`](https://github.com/thunder-project/thunder-regression) mass univariate regression algorithms
+- [`thunder-factorization`](https://github.com/thunder-project/thunder-factorization) matrix factorization algorithms 
+- [`thunder-registration`](https://github.com/thunder-project/thunder-registration) registration for image sequences
+- [`thunder-extraction`](https://github.com/thunder-project/thunder-extraction) feature extraction from image sequences
 
 ## example
 
