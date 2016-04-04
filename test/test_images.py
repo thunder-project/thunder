@@ -4,7 +4,6 @@ from numpy import arange, allclose, array, mean, apply_along_axis
 from thunder.images.readers import fromlist
 from thunder.images.images import Images
 from thunder.series.series import Series
-from thunder.series.timeseries import TimeSeries
 
 
 pytestmark = pytest.mark.usefixtures("eng")
