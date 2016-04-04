@@ -34,7 +34,7 @@ Basic usage
 
 *How should I visualize the results of my analysis?*
 	
-	We recommend running Thunder in an iPython notebook. For simple plots, you can use ``matplotlib``, along with the excellent library ``seaborn``, to look at the output of many analyses directly in the notebook. We are currently developing a separate library, `Lightning <https://github.com/lightning-viz/lightning>`_, for interactive visualization, with many visualizations tailored to render the output of Thunder analyses. It can be used for standalone visualizations, or within the iPython notebook. 
+	We recommend running Thunder in an IPython notebook. For simple plots, you can use ``matplotlib``, along with the excellent library ``seaborn``, to look at the output of many analyses directly in the notebook. We are currently developing a separate library, `Lightning <https://github.com/lightning-viz/lightning>`_, for interactive visualization, with many visualizations tailored to render the output of Thunder analyses. It can be used for standalone visualizations, or within the IPython notebook. 
 
 *I’m running Thunder locally and it's not super fast, why is that?*
 	
