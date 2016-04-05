@@ -3,7 +3,6 @@ from numpy import allclose, arange, array, asarray, dot, cov, corrcoef
 
 from thunder.series.readers import fromlist, fromarray
 from thunder.images.readers import fromlist as img_fromlist
-from thunder.series.timeseries import TimeSeries
 
 pytestmark = pytest.mark.usefixtures("eng")
 
