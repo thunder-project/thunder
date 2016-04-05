@@ -29,10 +29,8 @@ class Series(Data):
         Values must be unique, same length as the arrays in the input data.
         Defaults to arange(len(data)) if not provided.
 
-    See also
-    --------
-    TimeSeries : a Series where the indices represent time
-    Matrix : a Series intended for matrix computation
+    labels : array-like
+        A set of labels, one per series record.
     """
     _metadata = Data._metadata
     _attributes = Data._attributes + ['index']

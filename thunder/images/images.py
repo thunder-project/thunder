@@ -7,7 +7,7 @@ from ..base import Data
 
 class Images(Data):
     """
-    Collection of images or volumes
+    Collection of images or volumes.
 
     Backed by an array-like object, including a numpy array
     (for local computation) or a bolt array (for spark computation).
@@ -16,6 +16,9 @@ class Images(Data):
     ----------
     values : array-like
         numpy array or bolt array
+
+    labels : array-like or list
+        A set of labels, one per image.
     """
     _metadata = Data._metadata
 
@@ -37,7 +40,7 @@ class Images(Data):
 
     def count(self):
         """
-        Explicit count of the number of items.
+        Count the number of images.
 
         For lazy or distributed data, will force a computation.
         """
@@ -59,13 +62,14 @@ class Images(Data):
 
     def toblocks(self, size='150'):
         """
-        Convert to Blocks, each representing a subdivision of the larger Images data.
+        Convert to blocks which represent subdivisions of the images data.
 
         Parameters
         ----------
         size : str, or tuple of block size per dimension,
-            String interpreted as memory size (in megabytes, e.g. "64"). Tuple of ints interpreted as
-            "pixels per dimension". Only valid in spark mode.
+            String interpreted as memory size (in megabytes, e.g. '64'). 
+            Tuple of ints interpreted as 'pixels per dimension'. 
+            Only valid in spark mode.
         """
         from thunder.blocks.blocks import Blocks
 
@@ -75,21 +79,21 @@ class Images(Data):
         if self.mode == 'local':
             if size != '150':
                 logger = logging.getLogger('thunder')
-                logger.warn("size has no meaning in Images.toblocks in local mode")
+                logger.warn('size has no meaning in Images.toblocks in local mode')
             blocks = self.values
 
         return Blocks(blocks)
 
     def toseries(self, size='150'):
         """
-        Converts this Images object to a Series object.
+        Converts to series data.
 
         This method is equivalent to images.toblocks(size).toSeries().
 
         Parameters
         ----------
-        size : string memory size, optional, default = "150M"
-            String interpreted as memory size (e.g. "64M").
+        size : string memory size, optional, default = '150M'
+            String interpreted as memory size (e.g. '64M').
         """
         from thunder.series.series import Series
 
@@ -104,7 +108,7 @@ class Images(Data):
 
     def tolocal(self):
         """
-        Convert to local representation.
+        Convert to local mode.
         """
         from thunder.images.readers import fromarray
 
@@ -116,7 +120,7 @@ class Images(Data):
 
     def tospark(self, engine=None):
         """
-        Convert to spark representation.
+        Convert to distributed spark mode.
         """
         from thunder.images.readers import fromarray
 
@@ -125,13 +129,15 @@ class Images(Data):
             pass
 
         if engine is None:
-            raise ValueError("Must provide a SparkContext")
+            raise ValueError('Must provide a SparkContext')
 
         return fromarray(self.toarray(), engine=engine)
 
     def foreach(self, func):
         """
-        Execute a function on each image
+        Execute a function on each image.
+
+        Functions can have side effects. There is no return value.
         """
         if self.mode == 'spark':
             self.values.tordd().map(lambda kv: (kv[0][0], kv[1])).foreach(func)
@@ -140,7 +146,7 @@ class Images(Data):
 
     def sample(self, nsamples=100, seed=None):
         """
-        Extract random sample of series.
+        Extract a random sample of images.
 
         Parameters
         ----------
@@ -151,7 +157,7 @@ class Images(Data):
             Random seed.
         """
         if nsamples < 1:
-            raise ValueError("number of samples must be larger than 0, got '%g'" % nsamples)
+            raise ValueError("Number of samples must be larger than 0, got '%g'" % nsamples)
 
         if seed is None:
             seed = random.randint(0, 2 ** 32)
@@ -167,49 +173,65 @@ class Images(Data):
 
     def map(self, func, dims=None, with_keys=False):
         """
-        Map an array -> array function over each image
+        Map an array -> array function over each image.
+
+        Parameters
+        ----------
+        func : function
+            The function to apply in the map.
+
+        dims : tuple, optional, default = None
+            If known, the dimensions of the data following function evaluation.
+
+        with_keys : boolean, optional, default = False
+            If true, function should be of both tuple indices and values.
         """
         return self._map(func, axis=0, value_shape=dims, with_keys=with_keys)
 
     def reduce(self, func):
         """
-        Reduce over images
+        Reduce a function over images.
+
+        Parameters
+        ----------
+        func : function
+            A function of two images.
         """
         return self._reduce(func, axis=0)
 
     def mean(self):
         """
-        Compute the mean across images
+        Compute the mean across images.
         """
         return self._constructor(self.values.mean(axis=0, keepdims=True))
 
     def var(self):
         """
-        Compute the variance across images
+        Compute the variance across images.
         """
         return self._constructor(self.values.var(axis=0, keepdims=True))
 
     def std(self):
         """
-        Compute the standard deviation across images
+        Compute the standard deviation across images.
         """
         return self._constructor(self.values.std(axis=0, keepdims=True))
 
     def sum(self):
         """
-        Compute the sum across images
+        Compute the sum across images.
         """
         return self._constructor(self.values.sum(axis=0, keepdims=True))
 
     def max(self):
         """
-        Compute the max across images
+        Compute the max across images.
         """
         return self._constructor(self.values.max(axis=0, keepdims=True))
 
     def min(self):
         """
-        Compute the min across images
+        Compute the min across images.
         """
         return self._constructor(self.values.min(axis=0, keepdims=True))
 
@@ -222,17 +244,16 @@ class Images(Data):
 
     def max_projection(self, axis=2):
         """
-        Compute maximum projections of images / volumes
-        along the specified dimension.
+        Compute maximum projections of images along a dimension.
 
         Parameters
         ----------
         axis : int, optional, default = 2
-            Which axis to compute projection along
+            Which axis to compute projection along.
         """
         if axis >= size(self.dims):
-            raise Exception("Axis for projection (%s) exceeds "
-                            "image dimensions (%s-%s)" % (axis, 0, size(self.dims)-1))
+            raise Exception('Axis for projection (%s) exceeds '
+                            'image dimensions (%s-%s)' % (axis, 0, size(self.dims)-1))
 
         newdims = list(self.dims)
         del newdims[axis]
@@ -240,18 +261,18 @@ class Images(Data):
 
     def max_min_projection(self, axis=2):
         """
-        Compute maximum-minimum projections of images / volumes
-        along the specified dimension. This computes the sum
-        of the maximum and minimum values along the given dimension.
+        Compute maximum-minimum projection along a dimension.
+
+        This computes the sum of the maximum and minimum values.
 
         Parameters
         ----------
         axis : int, optional, default = 2
-            Which axis to compute projection along
+            Which axis to compute projection along.
         """
         if axis >= size(self.dims):
-            raise Exception("Axis for projection (%s) exceeds "
-                            "image dimensions (%s-%s)" % (axis, 0, size(self.dims)-1))
+            raise Exception('Axis for projection (%s) exceeds '
+                            'image dimensions (%s-%s)' % (axis, 0, size(self.dims)-1))
 
         newdims = list(self.dims)
         del newdims[axis]
@@ -259,24 +280,23 @@ class Images(Data):
 
     def subsample(self, factor):
         """
-        Downsample an image volume by an integer factor
+        Downsample an image volume by an integer factor.
 
         Parameters
         ----------
-        sample_factor : positive int or tuple of positive ints
-            Stride to use in subsampling. If a single int is passed, each dimension of the image
-            will be downsampled by this same factor. If a tuple is passed, it must have the same
-            dimensionality of the image. The strides given in a passed tuple will be applied to
-            each image dimension.
+        factor : positive int or tuple of positive ints
+            Stride to use in subsampling. If a single int is passed, 
+            each dimension of the image will be downsampled by this factor. 
+            If a tuple is passed, each dimension will be downsampled by the given factor.
         """
         dims = self.dims
         ndims = len(dims)
-        if not hasattr(factor, "__len__"):
+        if not hasattr(factor, '__len__'):
             factor = [factor] * ndims
         factor = [int(sf) for sf in factor]
 
         if any((sf <= 0 for sf in factor)):
-            raise ValueError("All sampling factors must be positive; got " + str(factor))
+            raise ValueError('All sampling factors must be positive; got ' + str(factor))
 
         def roundup(a, b):
             return (a + b - 1) // b
@@ -294,14 +314,14 @@ class Images(Data):
 
         Parameters
         ----------
-        sigma : scalar or sequence of scalars, default=2
-            Size of the filter size as standard deviation in pixels. A sequence is interpreted
-            as the standard deviation for each axis. A single scalar is applied equally to all
-            axes.
+        sigma : scalar or sequence of scalars, default = 2
+            Size of the filter size as standard deviation in pixels. 
+            A sequence is interpreted as the standard deviation for each axis. 
+            A single scalar is applied equally to all axes.
 
         order : choice of 0 / 1 / 2 / 3 or sequence from same set, optional, default = 0
-            Order of the gaussian kernel, 0 is a gaussian, higher numbers correspond
-            to derivatives of a gaussian.
+            Order of the gaussian kernel, 0 is a gaussian, 
+            higher numbers correspond to derivatives of a gaussian.
         """
         from scipy.ndimage.filters import gaussian_filter
 
@@ -313,12 +333,12 @@ class Images(Data):
 
         Filtering will be applied to every image in the collection.
 
-        parameters
+        Parameters
         ----------
-        size: int, optional, default=2
-            Size of the filter neighbourhood in pixels. A sequence is interpreted
-            as the neighborhood size for each axis. A single scalar is applied equally to all
-            axes.
+        size: int, optional, default = 2
+            Size of the filter neighbourhood in pixels. 
+            A sequence is interpreted as the neighborhood size for each axis. 
+            A single scalar is applied equally to all axes.
         """
         return self._image_filter(filter='uniform', size=size)
 
@@ -330,21 +350,24 @@ class Images(Data):
 
         parameters
         ----------
-        size: int, optional, default=2
-            Size of the filter neighbourhood in pixels. A sequence is interpreted
-            as the neighborhood size for each axis. A single scalar is applied equally to all
-            axes.
+        size: int, optional, default = 2
+            Size of the filter neighbourhood in pixels. 
+            A sequence is interpreted as the neighborhood size for each axis. 
+            A single scalar is applied equally to all axes.
         """
         return self._image_filter(filter='median', size=size)
 
     def _image_filter(self, filter=None, size=2):
         """
-        Generic function for maping a filtering operation to images or volumes.
+        Generic function for maping a filtering operation over images.
 
-        See also
-        --------
-        Images.uniformFilter
-        Images.medianFilter
+        Parameters
+        ----------
+        filter : string
+            Which filter to use.
+
+        size : int or tuple
+            Size parameter for filter.
         """
         from numpy import isscalar
         from scipy.ndimage.filters import median_filter, uniform_filter
@@ -388,13 +411,12 @@ class Images(Data):
 
         Parameters
         ----------
-        size : int or tuple, optional, default=2
+        size : int or tuple, optional, default = 2
             Size of the filter in pixels. If a scalar, will use the same filter size
             along each dimension.
         """
-
         if not isinstance(neighborhood, int):
-            raise ValueError("The neighborhood must be specified as an integer.")
+            raise ValueError('The neighborhood must be specified as an integer.')
 
         from thunder.images.readers import fromarray, fromrdd
         from numpy import corrcoef, concatenate
@@ -422,13 +444,12 @@ class Images(Data):
 
     def subtract(self, val):
         """
-        Subtract a constant value or an image / volume from
-        all images / volumes in the data set.
+        Subtract a constant value or an image from all images.
 
         Parameters
         ----------
         val : int, float, or ndarray
-            Value to subtract
+            Value to subtract.
         """
         if isinstance(val, ndarray):
             if val.shape != self.dims:
@@ -437,7 +458,7 @@ class Images(Data):
 
         return self.map(lambda x: x - val, dims=self.dims)
 
-    def topng(self, path, prefix="image", overwrite=False):
+    def topng(self, path, prefix='image', overwrite=False):
         """
         Write 2d or 3d images as PNG files.
 
@@ -459,7 +480,7 @@ class Images(Data):
         # TODO add back colormap and vmin/vmax
         topng(self, path, prefix=prefix, overwrite=overwrite)
 
-    def totif(self, path, prefix="image", overwrite=False):
+    def totif(self, path, prefix='image', overwrite=False):
         """
         Write 2d or 3d images as TIF files.
 
@@ -481,7 +502,7 @@ class Images(Data):
         # TODO add back colormap and vmin/vmax
         totif(self, path, prefix=prefix, overwrite=overwrite)
 
-    def tobinary(self, path, prefix="image", overwrite=False):
+    def tobinary(self, path, prefix='image', overwrite=False):
         """
         Write out images or volumes as flat binary files.
 
@@ -503,24 +524,27 @@ class Images(Data):
 
     def map_as_series(self, func, value_size=None, block_size='150'):
         """
-        Efficiently apply a function to each time series
+        Efficiently apply a function to images as series data.
 
-        Applies a function to each time series without transforming all the way
-        to a Series object, but using a Blocks object instead for increased
-        efficiency in the transformation back to Images.
+        For images data that represent image sequences, this method
+        applies a function to each pixel's series, and then returns to
+        the images format, using an efficient intermediate block
+        representation.
 
+        Parameters
+        ----------
         func : function
             Function to apply to each time series. Should take one-dimensional
             ndarray and return the transformed one-dimensional ndarray.
 
-        value_size : int, optional, default=None
+        value_size : int, optional, default = None
             Size of the one-dimensional ndarray resulting from application of
             func. If not supplied, will be automatically inferred for an extra
             computational cost.
 
-        block_size : str, or tuple of block size per dimension,
-            String interpreted as memory size (in megabytes e.g. "64"). Tuple of
-            ints interpreted as "pixels per dimension".
+        block_size : str, or tuple of block size per dimension, optional, default = '150'
+            String interpreted as memory size (in megabytes e.g. '64'). Tuple of
+            ints interpreted as 'pixels per dimension'.
         """
         blocks = self.toblocks(size=block_size)
 

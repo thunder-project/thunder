@@ -8,16 +8,16 @@ spark = check_spark()
 
 def fromrdd(rdd, dims=None, nrecords=None, dtype=None, labels=None):
     """
-    Load Images object from a Spark RDD.
+    Load images from a Spark RDD.
 
-    Must be a collection of key-value pairs
+    Input RDD must be a collection of key-value pairs
     where keys are singleton tuples indexing images,
     and values are 2d or 3d ndarrays.
 
     Parameters
     ----------
     rdd : SparkRDD
-        An RDD containing images
+        An RDD containing the images.
 
     dims : tuple or array, optional, default = None
         Image dimensions (if provided will avoid check).
@@ -47,7 +47,7 @@ def fromrdd(rdd, dims=None, nrecords=None, dtype=None, labels=None):
 
 def fromarray(values, labels=None, npartitions=None, engine=None):
     """
-    Load Series object from an array.
+    Load images from an array.
 
     First dimension will be used to index images,
     so remaining dimensions after the first should
@@ -64,10 +64,10 @@ def fromarray(values, labels=None, npartitions=None, engine=None):
         Labels for records. If provided, should be one-dimensional.
 
     npartitions : int, default = None
-        Number of partitions for parallelization (Spark only)
+        Number of partitions for parallelization (spark only)
 
     engine : object, default = None
-        Computational engine (e.g. a SparkContext for Spark)
+        Computational engine (e.g. a SparkContext for spark)
     """
     from .images import Images
     import bolt
@@ -105,17 +105,18 @@ def fromarray(values, labels=None, npartitions=None, engine=None):
     return Images(values, labels=labels)
 
 
-def fromlist(items, accessor=None, keys=None, dims=None, dtype=None, labels=None, npartitions=None, engine=None):
+def fromlist(items, accessor=None, keys=None, dims=None, dtype=None, 
+             labels=None, npartitions=None, engine=None):
     """
     Load images from a list of items using the given accessor.
 
     Parameters
     ----------
     accessor : function
-        Apply to each item from the list to yield an image
+        Apply to each item from the list to yield an image.
 
     keys : list, optional, default=None
-        An optional list of keys
+        An optional list of keys.
 
     dims : tuple, optional, default=None
         Specify a known image dimension to avoid computation.
@@ -124,7 +125,7 @@ def fromlist(items, accessor=None, keys=None, dims=None, dtype=None, labels=None
         Labels for records. If provided, should be one-dimensional.
 
     npartitions : int
-        Number of partitions for computational engine
+        Number of partitions for computational engine.
     """
     if spark and isinstance(engine, spark):
         nrecords = len(items)
@@ -230,22 +231,22 @@ def frombinary(path, shape=None, dtype=None, ext='bin', start=None, stop=None, r
     shape : tuple of positive int
         Dimensions of input image data.
 
-    ext : string, optional, default="bin"
+    ext : string, optional, default = 'bin'
         Extension required on data files to be loaded.
 
-    start, stop : nonnegative int, optional, default=None
+    start, stop : nonnegative int, optional, default = None
         Indices of the first and last-plus-one file to load, relative to the sorted
         filenames matching `path` and `ext`. Interpreted using python slice indexing conventions.
 
-    recursive : boolean, optional, default=False
+    recursive : boolean, optional, default = False
         If true, will recursively descend directories from path, loading all files
         with an extension matching 'ext'.
 
-    nplanes : positive integer, optional, default=None
+    nplanes : positive integer, optional, default = None
         If passed, will cause single files to be subdivided into nplanes separate images.
         Otherwise, each file is taken to represent one image.
 
-    npartitions : int, optional, default=None
+    npartitions : int, optional, default = None
         Number of partitions for computational engine,
         if None will use default for engine.
 
@@ -269,14 +270,14 @@ def frombinary(path, shape=None, dtype=None, ext='bin', start=None, stop=None, r
         shape = params['shape']
 
     if not shape:
-        raise ValueError("Image shape must be specified as argument or in a conf.json file")
+        raise ValueError('Image shape must be specified as argument or in a conf.json file')
 
     if not dtype:
         dtype = 'int16'
 
     if nplanes is not None:
         if nplanes <= 0:
-            raise ValueError("nplanes must be positive if passed, got %d" % nplanes)
+            raise ValueError('nplanes must be positive if passed, got %d' % nplanes)
         if shape[-1] % nplanes:
             raise ValueError("Last dimension '%d' must be divisible by nplanes '%d'" %
                              (shape[-1], nplanes))
@@ -324,22 +325,22 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False,
         Path to data files or directory, specified as either a local filesystem path
         or in a URI-like format, including scheme. May include a single '*' wildcard character.
 
-    ext : string, optional, default="tif"
+    ext : string, optional, default = 'tif'
         Extension required on data files to be loaded.
 
-    start, stop : nonnegative int, optional, default=None
+    start, stop : nonnegative int, optional, default = None
         Indices of the first and last-plus-one file to load, relative to the sorted
         filenames matching 'path' and 'ext'. Interpreted using python slice indexing conventions.
 
-    recursive : boolean, optional, default=False
+    recursive : boolean, optional, default = False
         If true, will recursively descend directories from path, loading all files
         with an extension matching 'ext'.
 
-    nplanes : positive integer, optional, default=None
+    nplanes : positive integer, optional, default = None
         If passed, will cause single files to be subdivided into nplanes separate images.
         Otherwise, each file is taken to represent one image.
 
-    npartitions : int, optional, default=None
+    npartitions : int, optional, default = None
         Number of partitions for computational engine,
         if None will use default for engine.
 
@@ -349,7 +350,7 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False,
     import skimage.external.tifffile as tifffile
 
     if nplanes is not None and nplanes <= 0:
-        raise ValueError("nplanes must be positive if passed, got %d" % nplanes)
+        raise ValueError('nplanes must be positive if passed, got %d' % nplanes)
 
     def getarray(idxAndBuf):
         idx, buf = idxAndBuf
@@ -388,18 +389,18 @@ def frompng(path, ext='png', start=None, stop=None, recursive=False, npartitions
         Path to data files or directory, specified as either a local filesystem path
         or in a URI-like format, including scheme. May include a single '*' wildcard character.
 
-    ext : string, optional, default="tif"
+    ext : string, optional, default = 'tif'
         Extension required on data files to be loaded.
 
-    start, stop : nonnegative int, optional, default=None
+    start, stop : nonnegative int, optional, default = None
         Indices of the first and last-plus-one file to load, relative to the sorted
         filenames matching `path` and `ext`. Interpreted using python slice indexing conventions.
 
-    recursive : boolean, optional, default=False
+    recursive : boolean, optional, default = False
         If true, will recursively descend directories from path, loading all files
         with an extension matching 'ext'.
 
-    npartitions : int, optional, default=None
+    npartitions : int, optional, default = None
         Number of partitions for computational engine,
         if None will use default for engine.
 
