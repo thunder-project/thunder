@@ -78,7 +78,7 @@ def fromarray(values, labels=None, npartitions=None, engine=None):
     values = asarray(values)
 
     if values.ndim < 2:
-        raise ValueError("Array for images must have at least 2 dimensions, got %g" % values.ndim)
+        raise ValueError('Array for images must have at least 2 dimensions, got %g' % values.ndim)
 
     if values.ndim == 2:
         values = expand_dims(values, 0)
@@ -90,10 +90,10 @@ def fromarray(values, labels=None, npartitions=None, engine=None):
             shape = im.shape
             dtype = im.dtype
         if not im.shape == shape:
-            raise ValueError("Arrays must all be of same shape; got both %s and %s" %
+            raise ValueError('Arrays must all be of same shape; got both %s and %s' %
                              (str(shape), str(im.shape)))
         if not im.dtype == dtype:
-            raise ValueError("Arrays must all be of same data type; got both %s and %s" %
+            raise ValueError('Arrays must all be of same data type; got both %s and %s' %
                              (str(dtype), str(im.dtype)))
 
     if spark and isinstance(engine, spark):
@@ -445,13 +445,15 @@ def fromexample(name=None, engine=None):
     """
     Load example image data.
 
-    Data must be downloaded from S3, so this method requires
-    an internet connection.
+    Data are downloaded from S3, so this method requires an internet connection.
 
     Parameters
     ----------
     name : str
         Name of dataset, if not specified will print options.
+
+    engine : object, default = None
+        Computational engine (e.g. a SparkContext for Spark)
     """
     datasets = ['mouse', 'fish']
 

@@ -15,7 +15,7 @@ from ..base import Data
 
 class Series(Data):
     """
-    Collection of 1d array data with axis labels.
+    Collection of indexed 1d array data.
 
     Backed by an array-like object, including a numpy array
     (for local computation) or a bolt array (for spark computation).
@@ -60,7 +60,7 @@ class Series(Data):
         try:
             lenvalue = len(value)
         except:
-            raise TypeError("Index must be an object with a length")
+            raise TypeError('Index must be an object with a length')
         if lenvalue != lenself:
             raise ValueError("Length of new index '%g' must match length of original index '%g'"
                              .format(lenvalue, lenself))
@@ -82,7 +82,6 @@ class Series(Data):
         """
         Reshape all dimensions but the last into a single dimension
         """
-
         size = prod([s for i, s in enumerate(self.shape) if i in self.baseaxes])
         newvalues = self.values.reshape(size, self.shape[-1])
 
@@ -96,7 +95,7 @@ class Series(Data):
 
     def count(self):
         """
-        Explicit count of the number of items.
+        Count the number of records.
 
         For lazy or distributed data, will force a computation.
         """
@@ -118,7 +117,7 @@ class Series(Data):
 
     def tolocal(self):
         """
-        Convert to local representation.
+        Convert to local mode.
         """
         from thunder.series.readers import fromarray
 
@@ -130,7 +129,7 @@ class Series(Data):
 
     def tospark(self, engine=None):
         """
-        Convert to spark representation.
+        Convert to spark mode.
         """
         from thunder.series.readers import fromarray
 
@@ -139,13 +138,13 @@ class Series(Data):
             pass
 
         if engine is None:
-            raise ValueError("Must provide SparkContext")
+            raise ValueError('Must provide SparkContext')
 
         return fromarray(self.toarray(), index=self.index, labels=self.lables, engine=engine)
 
     def sample(self, nsamples=100, seed=None):
         """
-        Extract random sample of series.
+        Extract random sample of records.
 
         Parameters
         ----------
@@ -173,7 +172,18 @@ class Series(Data):
 
     def map(self, func, index=None, with_keys=False):
         """
-        Map an array -> array function over each series
+        Map an array -> array function over each record.
+
+        Parameters
+        ----------
+        func : function
+            A function of a single record.
+
+        index : array-like, optional, default = None
+            If known, the index to be used following function evaluation.
+
+        with_keys : boolean, optional, default = False
+            If true, function should be of both tuple indices and series values.
         """
         value_shape = len(index) if index is not None else None
         new = self._map(func, axis=self.baseaxes, value_shape=value_shape, with_keys=with_keys)
@@ -181,72 +191,77 @@ class Series(Data):
 
     def reduce(self, func):
         """
-        Reduce over series.
+        Reduce a function over records.
+
+        Parameters
+        ----------
+        func : function
+            A function of two records.
         """
         return self._reduce(func, axis=self.baseaxes)
 
     def mean(self):
         """
-        Compute the mean across images
+        Compute the mean across records
         """
         return self._constructor(self.values.mean(axis=self.baseaxes, keepdims=True))
 
     def var(self):
         """
-        Compute the variance across images
+        Compute the variance across records
         """
         return self._constructor(self.values.var(axis=self.baseaxes, keepdims=True))
 
     def std(self):
         """
-        Compute the standard deviation across images
+        Compute the standard deviation across records.
         """
         return self._constructor(self.values.std(axis=self.baseaxes, keepdims=True))
 
     def sum(self):
         """
-        Compute the sum across images
+        Compute the sum across records.
         """
         return self._constructor(self.values.sum(axis=self.baseaxes, keepdims=True))
 
     def max(self):
         """
-        Compute the max across images
+        Compute the max across records.
         """
         return self._constructor(self.values.max(axis=self.baseaxes, keepdims=True))
 
     def min(self):
         """
-        Compute the min across images
+        Compute the min across records.
         """
         return self._constructor(self.values.min(axis=self.baseaxes, keepdims=True))
 
     def between(self, left, right):
         """
-        Select subset of values within the given index range
+        Select subset of values within the given index range.
 
         Inclusive on the left; exclusive on the right.
 
         Parameters
         ----------
         left : int
-            Left-most index in the desired range
+            Left-most index in the desired range.
 
         right: int
-            Right-most index in the desired range
+            Right-most index in the desired range.
         """
         crit = lambda x: left <= x < right
         return self.select(crit)
 
     def select(self, crit):
         """
-        Select subset of values that match a given index criterion
+        Select subset of values that match a given index criterion.
 
         Parameters
         ----------
         crit : function, list, str, int
             Criterion function to map to indices, specific index value,
-            or list of indices
+            or list of indices.
         """
         import types
 
@@ -269,12 +284,12 @@ class Series(Data):
             if crit(index[0]):
                 return self
             else:
-                raise Exception("No indices found matching criterion")
+                raise Exception('No indices found matching criterion')
 
         # determine new index and check the result
         newindex = [i for i in index if crit(i)]
         if len(newindex) == 0:
-            raise Exception("No indices found matching criterion")
+            raise Exception('No indices found matching criterion')
         if array(newindex == index).all():
             return self
 
@@ -298,13 +313,12 @@ class Series(Data):
 
     def center(self, axis=1):
         """
-        Center series data by subtracting the mean
-        either within or across records
+        Subtract the mean either within or across records.
 
         Parameters
         ----------
         axis : int, optional, default = 0
-            Which axis to center along, within (1) or across (0) records
+            Which axis to center along, within (1) or across (0) records.
         """
         if axis == 1:
             return self.map(lambda x: x - mean(x))
@@ -316,8 +330,7 @@ class Series(Data):
 
     def standardize(self, axis=1):
         """
-        Standardize series data by dividing by the standard deviation
-        either within or across records
+        Divide by standard deviation either within or across records.
 
         Parameters
         ----------
@@ -334,9 +347,7 @@ class Series(Data):
 
     def zscore(self, axis=1):
         """
-        Zscore series data by subtracting the mean and
-        dividing by the standard deviation either
-        within or across records
+        Subtract the mean and divide by standard deviation within or across records.
 
         Parameters
         ----------
@@ -354,7 +365,7 @@ class Series(Data):
 
     def squelch(self, threshold):
         """
-        Set all records that do not exceed the given threhsold to 0
+        Set all records that do not exceed the given threhsold to 0.
 
         Parameters
         ----------
@@ -366,13 +377,12 @@ class Series(Data):
 
     def correlate(self, signal):
         """
-        Correlate series data against one or many one-dimensional arrays.
+        Correlate records against one or many one-dimensional arrays.
 
         Parameters
         ----------
-        signal : array, or str
-            Signal(s) to correlate against, can be a numpy array or a
-            MAT file containing the signal as a variable
+        signal : array-like
+            One or more signals to correlate against.
         """
         s = asarray(signal)
 

@@ -1,7 +1,6 @@
 from numpy import array, arange, frombuffer, load, asarray, random, \
     fromstring, expand_dims, unravel_index, prod
 
-# different naming conventions between Python 2 and 3
 try:
     buffer
 except NameError:
@@ -13,7 +12,7 @@ spark = check_spark()
 
 def fromrdd(rdd, nrecords=None, shape=None, index=None, labels=None, dtype=None):
     """
-    Load Series object from a Spark RDD.
+    Load series data from a Spark RDD.
 
     Assumes keys are tuples with increasing and unique indices,
     and values are 1d ndarrays. Will try to infer properties
@@ -62,7 +61,7 @@ def fromrdd(rdd, nrecords=None, shape=None, index=None, labels=None, dtype=None)
 
 def fromarray(values, index=None, labels=None, npartitions=None, engine=None):
     """
-    Load Series object from an array.
+    Load series data from an array.
 
     Assumes that all but final dimension index the records,
     and the size of the final dimension is the length of each record,
@@ -113,7 +112,7 @@ def fromarray(values, index=None, labels=None, npartitions=None, engine=None):
 
 def fromlist(items, accessor=None, index=None, labels=None, dtype=None, npartitions=None, engine=None):
     """
-    Create a Series object from a list of items and optional accessor function.
+    Create series data from a list of items and optional accessor function.
 
     Will call accessor function on each item from the list,
     providing a generic interface for data loading.
@@ -163,7 +162,7 @@ def fromlist(items, accessor=None, index=None, labels=None, dtype=None, npartiti
 def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None,
              labels=None, npartitions=None, engine=None, credentials=None):
     """
-    Loads Series data from text files.
+    Loads series data from text files.
 
     Assumes data are formatted as rows, where each record is a row
     of numbers separated by spaces e.g. 'v v v v v'. You can
@@ -173,7 +172,7 @@ def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None,
     ----------
     path : string
         Directory to load from, can be a URI string with scheme
-        (e.g. "file://", "s3n://", or "gs://"), or a single file,
+        (e.g. 'file://', 's3n://', or 'gs://'), or a single file,
         or a directory, or a directory with a single wildcard character.
 
     ext : str, optional, default = 'txt'
@@ -243,13 +242,13 @@ def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None,
 def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0,
                index=None, labels=None, engine=None, credentials=None):
     """
-    Load a Series object from flat binary files.
+    Load series data from flat binary files.
 
     Parameters
     ----------
     path : string URI or local filesystem path
         Directory to load from, can be a URI string with scheme
-        (e.g. "file://", "s3n://", or "gs://"), or a single file,
+        (e.g. 'file://', 's3n://', or 'gs://'), or a single file,
         or a directory, or a directory with a single wildcard character.
 
     ext : str, optional, default = 'bin'
@@ -361,18 +360,21 @@ def _binaryconfig(path, conf, dtype=None, shape=None, credentials=None):
 
 def fromrandom(shape=(100, 10), npartitions=1, seed=42, engine=None):
     """
-    Generate gaussian random series data.
+    Generate random gaussian series data.
 
     Parameters
     ----------
-    shape : tuple
+    shape : tuple, optional, default = (100,10)
         Dimensions of data.
 
-    npartitions : int
+    npartitions : int, optional, default = 1
         Number of partitions with which to distribute data.
 
-    seed : int
+    seed : int, optional, default = 42
         Randomization seed.
+
+    engine : object, default = None
+        Computational engine (e.g. a SparkContext for Spark)
     """
     seed = hash(seed)
 
@@ -386,14 +388,16 @@ def fromexample(name=None, engine=None):
     """
     Load example series data.
 
-    Data must be downloaded from S3, so this method requires
-    an internet connection.
+    Data are downloaded from S3, so this method requires an internet connection.
 
     Parameters
     ----------
     name : str
         Name of dataset, options include 'iris' | 'mouse' | 'fish'.
         If not specified will print options.
+
+    engine : object, default = None
+        Computational engine (e.g. a SparkContext for Spark)
     """
     import os
     import tempfile
