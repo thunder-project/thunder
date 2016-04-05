@@ -32,11 +32,11 @@ def fromrdd(rdd, nrecords=None, shape=None, index=None, labels=None, dtype=None)
     index : array, optional, default = None
         Index for records, if not provided will use (0, 1, ...)
 
-    labels: array, optional, default = None
+    labels : array, optional, default = None
         Labels for records. If provided, should have shape of shape[:-1].
 
     dtype : string, default = None
-       Data numerical type (if provided will avoid check)
+        Data numerical type (if provided will avoid check)
     """
     from .series import Series
     from bolt.spark.array import BoltArraySpark
@@ -77,7 +77,7 @@ def fromarray(values, index=None, labels=None, npartitions=None, engine=None):
         Index for records, if not provided will use (0,1,...,N)
         where N is the length of each record.
 
-    labels: array, optional, default = None
+    labels : array, optional, default = None
         Labels for records. If provided, should have same shape as values.shape[:-1].
 
     npartitions : int, default = None
@@ -112,7 +112,7 @@ def fromarray(values, index=None, labels=None, npartitions=None, engine=None):
 
 def fromlist(items, accessor=None, index=None, labels=None, dtype=None, npartitions=None, engine=None):
     """
-    Create series data from a list of items and optional accessor function.
+    Load series data from a list with an optional accessor function.
 
     Will call accessor function on each item from the list,
     providing a generic interface for data loading.
@@ -129,11 +129,11 @@ def fromlist(items, accessor=None, index=None, labels=None, dtype=None, npartiti
         Index for records, if not provided will use (0,1,...,N)
         where N is the length of each record.
 
-    labels: array, optional, default = None
+    labels : array, optional, default = None
         Labels for records. If provided, should have same length as items.
 
     dtype : string, default = None
-       Data numerical type (if provided will avoid check)
+        Data numerical type (if provided will avoid check)
 
     npartitions : int, default = None
         Number of partitions for parallelization (Spark only)
@@ -159,8 +159,7 @@ def fromlist(items, accessor=None, index=None, labels=None, dtype=None, npartiti
             items = [accessor(i) for i in items]
         return fromarray(items, index=index, labels=labels)
 
-def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None,
-             labels=None, npartitions=None, engine=None, credentials=None):
+def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None, labels=None, npartitions=None, engine=None, credentials=None):
     """
     Loads series data from text files.
 
@@ -190,7 +189,7 @@ def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None,
     index : array, optional, default = None
         Index for records, if not provided will use (0, 1, ...)
 
-    labels: array, optional, default = None
+    labels : array, optional, default = None
         Labels for records. If provided, should have length equal to number of rows.
 
     npartitions : int, default = None
@@ -239,8 +238,7 @@ def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None,
 
         return fromarray(values, index=index, labels=labels)
 
-def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0,
-               index=None, labels=None, engine=None, credentials=None):
+def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0, index=None, labels=None, engine=None, credentials=None):
     """
     Load series data from flat binary files.
 
@@ -269,7 +267,7 @@ def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0
     index : array, optional, default = None
         Index for records, if not provided will use (0, 1, ...)
 
-    labels: array, optional, default = None
+    labels : array, optional, default = None
         Labels for records. If provided, should have shape of shape[:-1].
 
     engine : object, default = None

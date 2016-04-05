@@ -280,7 +280,7 @@ class Images(Data):
 
     def subsample(self, factor):
         """
-        Downsample an image volume by an integer factor.
+        Downsample images by an integer factor.
 
         Parameters
         ----------
@@ -504,7 +504,7 @@ class Images(Data):
 
     def tobinary(self, path, prefix='image', overwrite=False):
         """
-        Write out images or volumes as flat binary files.
+        Write out images as flat binary files.
 
         Files will be written into a newly-created directory.
 

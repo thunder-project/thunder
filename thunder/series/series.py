@@ -800,7 +800,7 @@ class Series(Data):
 
     def mean_by_window(self, indices, window):
         """
-        Average time series across multiple windows specified by their centers
+        Average series across multiple windows specified by their centers.
 
         Parameters
         ----------
@@ -816,7 +816,7 @@ class Series(Data):
 
     def subsample(self, sampleFactor=2):
         """
-        Subsample time series by an integer factor
+        Subsample series by an integer factor.
 
         Parameters
         ----------
@@ -831,7 +831,7 @@ class Series(Data):
 
     def fourier(self, freq=None):
         """
-        Compute statistics of a Fourier decomposition on time series data
+        Compute statistics of a Fourier decomposition on series data.
 
         Parameters
         ----------
@@ -861,7 +861,7 @@ class Series(Data):
 
     def convolve(self, signal, mode='full'):
         """
-        Conolve time series data against another signal
+        Conolve series data against another signal.
 
         Parameters
         ----------
@@ -895,15 +895,15 @@ class Series(Data):
 
     def crosscorr(self, signal, lag=0):
         """
-        Cross correlate time series data against another signal
+        Cross correlate series data against another signal.
 
         Parameters
         ----------
         signal : array
-            Signal to correlate against (must be 1D)
+            Signal to correlate against (must be 1D).
 
         lag : int
-            Range of lags to consider, will cover (-lag, +lag)
+            Range of lags to consider, will cover (-lag, +lag).
         """
         from scipy.linalg import norm
 
@@ -944,10 +944,11 @@ class Series(Data):
 
         return self.map(lambda x: get(x, s), index=shifts)
 
-    def detrend(self, method='linear', **kwargs):
+    def detrend(self, method='linear', order=5):
         """
-        Detrend time series data with linear or nonlinear detrending
-        Preserve intercept so that subsequent steps can adjust the baseline
+        Detrend series data with linear or nonlinear detrending.
+
+        Preserve intercept so that subsequent operations can adjust the baseline.
 
         Parameters
         ----------
@@ -962,12 +963,6 @@ class Series(Data):
         if method == 'linear':
             order = 1
 
-        if method == 'nonlinear':
-            if 'order' in kwargs:
-                order = kwargs['order']
-            else:
-                order = 5
-
         def func(y):
             x = arange(len(y))
             p = polyfit(x, y, order)
@@ -979,10 +974,12 @@ class Series(Data):
 
     def normalize(self, method='percentile', window=None, perc=20, offset=0.1):
         """
-        Normalize each time series by subtracting and dividing by a baseline.
+        Normalize by subtracting and dividing by a baseline.
 
         Baseline can be derived from a global mean or percentile,
         or a smoothed percentile estimated within a rolling window.
+        Windowed baselines may only be well-defined for
+        temporal series data.
 
         Parameters
         ----------
