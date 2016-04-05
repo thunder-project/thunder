@@ -156,68 +156,8 @@ def fromlist(items, accessor=None, index=None, labels=None, dtype=None, npartiti
             items = [accessor(i) for i in items]
         return fromarray(items, index=index, labels=labels)
 
-def frommat(path, var, index=None, labels=None, npartitions=None, engine=None):
-    """
-    Loads Series data stored in a Matlab .mat file.
-
-    Parameters
-    ----------
-    path : str
-        Path to data file.
-
-    var : str
-        Variable name.
-
-    index : array, optional, default = None
-        Index for records, if not provided will use (0,1,...,N)
-        where N is the length of each record.
-
-    labels: array, optional, default = None
-        Labels for records. If provided, should have shape of shape[:-1].
-
-    npartitions : int, default = None
-        Number of partitions for parallelization (Spark only)
-
-    engine : object, default = None
-        Computational engine (e.g. a SparkContext for Spark)
-    """
-    from scipy.io import loadmat
-    data = loadmat(path)[var]
-    if data.ndim > 2:
-        raise IOError('Input data must be one or two dimensional')
-
-    return fromarray(data, npartitions=npartitions, index=index, labels=labels, engine=engine)
-
-def fromnpy(path, index=None, labels=None, npartitions=None, engine=None):
-    """
-    Loads Series data stored in the numpy save() .npy format.
-
-    Parameters
-    ----------
-    path : str
-        Path to data file.
-
-    index : array, optional, default = None
-        Index for records, if not provided will use (0,1,...,N)
-        where N is the length of each record.
-
-    labels: array, optional, default = None
-        Labels for records. If provided, should have shape of shape[:-1].
-
-    npartitions : int, default = None
-        Number of partitions for parallelization (Spark only)
-
-    engine : object, default = None
-        Computational engine (e.g. a SparkContext for Spark)
-    """
-    data = load(path)
-    if data.ndim > 2:
-        raise IOError('Input data must be one or two dimensional')
-
-    return fromarray(data, npartitions=npartitions, index=index, labels=labels, engine=engine)
-
 def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None,
-             labels=None, engine=None, npartitions=None, credentials=None):
+             labels=None, npartitions=None, engine=None, credentials=None):
     """
     Loads Series data from text files.
 
@@ -235,7 +175,7 @@ def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None,
     ext : str, optional, default = 'txt'
         File extension.
 
-    dtype: dtype or dtype specifier, default 'float64'
+    dtype : dtype or dtype specifier, default 'float64'
         Numerical type to use for data after converting from text.
 
     skip : int, optional, default = 0
@@ -250,11 +190,11 @@ def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None,
     labels: array, optional, default = None
         Labels for records. If provided, should have length equal to number of rows.
 
-    engine : object, default = None
-        Computational engine (e.g. a SparkContext for Spark)
-
     npartitions : int, default = None
         Number of partitions for parallelization (Spark only)
+
+    engine : object, default = None
+        Computational engine (e.g. a SparkContext for Spark)
 
     credentials : dict, default = None
         Credentials for remote storage (e.g. S3) in the form {access: ***, secret: ***}
@@ -314,7 +254,7 @@ def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0
     conf : str, optional, default = 'conf.json'
         Name of conf file with type and size information.
 
-    dtype: dtype or dtype specifier, default 'float64'
+    dtype : dtype or dtype specifier, default 'float64'
         Numerical type to use for data after converting from text.
 
     shape : tuple or list, optional, default = None
@@ -335,7 +275,7 @@ def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0
     credentials : dict, default = None
         Credentials for remote storage (e.g. S3) in the form {access: ***, secret: ***}
     """
-    shape, dtype = binaryconfig(path, conf, dtype, shape, credentials)
+    shape, dtype = _binaryconfig(path, conf, dtype, shape, credentials)
 
     from thunder.readers import normalize_scheme, get_parallel_reader
     path = normalize_scheme(path, ext)
@@ -387,7 +327,7 @@ def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0
 
         return fromarray(values, index=index, labels=labels)
 
-def binaryconfig(path, conf, dtype=None, shape=None, credentials=None):
+def _binaryconfig(path, conf, dtype=None, shape=None, credentials=None):
     """
     Collects parameters to use for binary series loading.
     """

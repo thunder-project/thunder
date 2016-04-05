@@ -360,8 +360,7 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False,
         tfh.close()
 
         if ary.ndim == 3:
-            values = [val.transpose((1, 2, 0)) for val in values]
-            values = [val.squeeze(-1) if val.shape[-1] == 1 else val for val in values]
+            values = [val.squeeze() for val in values]
 
         if nplanes and (pageCount % nplanes):
             raise ValueError("nplanes '%d' does not evenly divide '%d'" % (nplanes, pageCount))

@@ -4,7 +4,6 @@ from numpy import arange, allclose, array, mean, apply_along_axis
 from thunder.images.readers import fromlist, fromarray
 from thunder.images.images import Images
 from thunder.series.series import Series
-from thunder.series.timeseries import TimeSeries
 
 
 pytestmark = pytest.mark.usefixtures("eng")
@@ -76,12 +75,6 @@ def test_toseries_roundtrip(eng):
     assert isinstance(data.toseries(), Series)
     assert isinstance(data.toseries().toimages(), Images)
     assert allclose(data.toseries().toimages().toarray(), data.toarray())
-
-
-def test_totimeseries(eng):
-    data = fromlist([arange(6).reshape((2, 3))], engine=eng)
-    assert isinstance(data.totimeseries(), TimeSeries)
-    assert allclose(data.toseries().toarray(), data.totimeseries().toarray())
 
 
 def test_toseries_pack_2d(eng):

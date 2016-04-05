@@ -400,7 +400,7 @@ class Data(Base):
 
         return self._constructor(filtered, labels=newlabels).__finalize__(self, noprop=('labels',))
 
-    def _map(self, func, axis=(0,), value_shape=None, with_keys=False):
+    def _map(self, func, axis=(0,), value_shape=None, dtype=None, with_keys=False):
         """
         Apply an array -> array function across an axis.
 
@@ -417,7 +417,12 @@ class Data(Base):
             Axis or multiple axes to apply function along.
 
         value_shape : tuple, optional, default=None
-            Known shape of values resulting from operation
+            Known shape of values resulting from operation. Only
+            valid in spark mode.
+
+        dtype: numpy.dtype, optional, default=None
+            Known shape of dtype resulting from operation. Only
+            valid in spark mode.
 
         with_keys : bool, optional, default=False
             Include keys as an argument to the function
@@ -449,8 +454,8 @@ class Data(Base):
 
         if self.mode == 'spark':
             expand = lambda x: array(func(x), ndmin=1)
-            mapped = self.values.map(expand, axis, value_shape, with_keys)
-            return self._constructor(mapped, mode=self.mode).__finalize__(self, noprop=('index'))
+            mapped = self.values.map(expand, axis, value_shape, dtype, with_keys)
+            return self._constructor(mapped, mode=self.mode).__finalize__(self, noprop=('index',))
 
     def _reduce(self, func, axis=0):
         """
