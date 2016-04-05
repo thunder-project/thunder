@@ -14,7 +14,7 @@ This readme provides an overview of the core `thunder` package, its data types, 
 
 ## install
 
-The core `thunder` package defines data structures and read/write patterns for images and series data. It is built on [`numpy`](https://github.com/numpy/numpy), [`scipy`](https://github.com/scipy/scipy), [`scikit-learn`](https://github.com/scikit-learn/scikit-learn), and [`scikit-image`](https://github.com/scikit-image/scikit-image), and is compatible with Python 2.7 and 3.4. You can install it using:
+The core `thunder` package defines data structures and read/write patterns for images and series data. It is built on [`numpy`](https://github.com/numpy/numpy), [`scipy`](https://github.com/scipy/scipy), [`scikit-learn`](https://github.com/scikit-learn/scikit-learn), and [`scikit-image`](https://github.com/scikit-image/scikit-image), and is compatible with Python 2.7+ and 3.4+. You can install it using:
 
 ```
 pip install thunder-python
