@@ -10,7 +10,7 @@ Thunder is an ecosystem of tools for the analysis of image and time series data 
 
 Thunder is designed around modularity and composability — the core `thunder` package, in this repository, only defines common data structures and read/write patterns, and most functionality is broken out into several related packages. Each one is independently versioned, with its own GitHub repository for organizing issues and contributions. 
 
-This readme provides an overview of the core `thunder` package, its data types, and methods for loading and saving. Tutorials, detailed API documentation, and info about all associated packages can be found at the [documentation site](http://thunder-project.org/thunder-docs).
+This readme provides an overview of the core `thunder` package, its data types, and methods for loading and saving. Tutorials, detailed API documentation, and info about all associated packages can be found at the [documentation site](http://docs.thunder-project.org).
 
 ## install
 
@@ -55,7 +55,7 @@ Once loaded, each data type can be manipulated through a variety of statistical 
 
 Both `images` and `series` objects are wrappers for ndarrays: either a local [`numpy`](https://github.com/numpy/numpy) `ndarray` or a distributed ndarray using [`bolt`](https://github.com/bolt-project/bolt) and [`spark`](https://github.com/apache/spark). Calling `toarray()` on an `images` or `series` object at any time returns a local [`numpy`](https://github.com/numpy/numpy) `ndarray`, which is an easy way to move between Thunder and other Python data analysis tools, like [`pandas`](https://github.com/pydata/pandas) and [`scikit-learn`](https://github.com/scikit-learn/scikit-learn).
 
-For a full list of methods on `image` and `series` data, see the [documentation site]().
+For a full list of methods on `image` and `series` data, see the [documentation site](http://docs.thunder-project.org).
 
 ## reading
 
@@ -70,7 +70,7 @@ data = td.series.fromarray(somearray)
 data_distributed = ts.series.fromarray(somearray, engine=sc)
 ```
 
-The argument `engine` can be either `None` (for local use) or a `SparkContext` (for distributed use with Spark). And all methods that load from files e.g. `fromtif` or `frombinary` can load from either a local filesystem or Amazon S3, with the optional argument `credentials` for S3 credentials. See the [documentation site](http/) for a full list of data loading methods.
+The argument `engine` can be either `None` (for local use) or a `SparkContext` (for distributed use with Spark). And all methods that load from files e.g. `fromtif` or `frombinary` can load from either a local filesystem or Amazon S3, with the optional argument `credentials` for S3 credentials. See the [documentation site](http://docs.thunder-project.org) for a full list of data loading methods.
 
 ## contributing
 
