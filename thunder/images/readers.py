@@ -47,7 +47,7 @@ def fromrdd(rdd, dims=None, nrecords=None, dtype=None, labels=None):
 
 def fromarray(values, labels=None, npartitions=None, engine=None):
     """
-    Load Series object from a local array-like.
+    Load Series object from an array.
 
     First dimension will be used to index images,
     so remaining dimensions after the first should
@@ -57,7 +57,8 @@ def fromarray(values, labels=None, npartitions=None, engine=None):
     Parameters
     ----------
     values : array-like
-        The array of images
+        The array of images. Can be a numpy array,
+        a bolt array, or an array-like.
 
     labels : array, optional, default = None
         Labels for records. If provided, should be one-dimensional.
@@ -70,6 +71,9 @@ def fromarray(values, labels=None, npartitions=None, engine=None):
     """
     from .images import Images
     import bolt
+
+    if isinstance(values, bolt.spark.array.BoltArraySpark):
+        return Images(values)
 
     values = asarray(values)
 

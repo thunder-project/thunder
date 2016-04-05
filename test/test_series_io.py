@@ -4,6 +4,7 @@ import glob
 import json
 from numpy import arange, array, allclose, save, savetxt
 
+from bolt import array as barray
 from thunder.series.readers import fromarray, fromtext, frombinary, fromexample
 
 pytestmark = pytest.mark.usefixtures("eng")
@@ -12,6 +13,19 @@ pytestmark = pytest.mark.usefixtures("eng")
 def test_from_array(eng):
     a = arange(8, dtype='int16').reshape((4, 2))
     data = fromarray(a, engine=eng)
+    assert data.shape == (4, 2)
+    assert data.dtype == 'int16'
+    assert allclose(data.index, [0, 1])
+    assert allclose(data.toarray(), a)
+
+
+def test_from_array_bolt(eng):
+    a = arange(8, dtype='int16').reshape((4, 2))
+    if eng is not None:
+        b = barray(a, context=eng)
+    else:
+        b = barray(a)
+    data = fromarray(b, engine=eng)
     assert data.shape == (4, 2)
     assert data.dtype == 'int16'
     assert allclose(data.index, [0, 1])

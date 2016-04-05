@@ -62,7 +62,7 @@ def fromrdd(rdd, nrecords=None, shape=None, index=None, labels=None, dtype=None)
 
 def fromarray(values, index=None, labels=None, npartitions=None, engine=None):
     """
-    Load Series object from a local numpy array.
+    Load Series object from an array.
 
     Assumes that all but final dimension index the records,
     and the size of the final dimension is the length of each record,
@@ -71,7 +71,8 @@ def fromarray(values, index=None, labels=None, npartitions=None, engine=None):
     Parameters
     ----------
     values : array-like
-        An array containing the data.
+        An array containing the data. Can be a numpy array,
+        a bolt array, or an array-like.
 
     index : array, optional, default = None
         Index for records, if not provided will use (0,1,...,N)
@@ -88,6 +89,9 @@ def fromarray(values, index=None, labels=None, npartitions=None, engine=None):
     """
     from .series import Series
     import bolt
+
+    if isinstance(values, bolt.spark.array.BoltArraySpark):
+        return Series(values)
 
     values = asarray(values)
 

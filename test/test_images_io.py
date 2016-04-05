@@ -4,6 +4,7 @@ import glob
 import json
 from numpy import arange, allclose
 
+from bolt import array as barray
 from thunder.images.readers import fromlist, fromarray, frompng, fromtif, frombinary, fromexample
 
 pytestmark = pytest.mark.usefixtures("eng")
@@ -22,6 +23,18 @@ def test_from_list(eng):
 def test_from_array(eng):
     a = arange(8).reshape((1, 2, 4))
     data = fromarray(a, engine=eng)
+    assert allclose(data.shape, a.shape)
+    assert allclose(data.dims, a.shape[1:])
+    assert allclose(data.toarray(), a)
+
+
+def test_from_array_bolt(eng):
+    a = arange(8).reshape((1, 2, 4))
+    if eng is not None:
+        b = barray(a, context=eng)
+    else:
+        b = barray(a)
+    data = fromarray(b)
     assert allclose(data.shape, a.shape)
     assert allclose(data.dims, a.shape[1:])
     assert allclose(data.toarray(), a)
