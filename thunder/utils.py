@@ -1,7 +1,7 @@
 import logging
 
 def notsupported(mode):
-    logging.getLogger('thunder').warn("Operation does nothing in '%s' mode" % mode)
+    logging.getLogger('thunder').warn("Operation not supported in '%s' mode" % mode)
     pass
 
 def check_spark():
