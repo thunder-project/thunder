@@ -70,7 +70,7 @@ data = td.series.fromarray(somearray)
 data_distributed = ts.series.fromarray(somearray, engine=sc)
 ```
 
-The argument `engine` can be either `None` (for local use) or a `SparkContext` (for distributed use with Spark). And all methods that load from files e.g. `fromtif` or `frombinary` can load from either a local filesystem or Amazon S3, with the optional argument `credentials` for loading non-public data from S3. See the [documentation site](http/) for a full list of data loading methods.
+The argument `engine` can be either `None` (for local use) or a `SparkContext` (for distributed use with Spark). And all methods that load from files e.g. `fromtif` or `frombinary` can load from either a local filesystem or Amazon S3, with the optional argument `credentials` for S3 credentials. See the [documentation site](http/) for a full list of data loading methods.
 
 ## contributing
 
