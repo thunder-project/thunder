@@ -37,8 +37,9 @@ class Series(Data):
     _metadata = Data._metadata
     _attributes = Data._attributes + ['index']
 
-    def __init__(self, values, index=None, mode='local'):
+    def __init__(self, values, index=None, labels=None, mode='local'):
         super(Series, self).__init__(values, mode=mode)
+        self.labels = labels
         self._index = None
         if index is not None:
             self._index = index
@@ -73,7 +74,7 @@ class Series(Data):
 
     @property
     def baseaxes(self):
-        return tuple(range(0, len(self.shape) - 1))
+        return tuple(range(0, len(self.shape)-1))
 
     @property
     def _constructor(self):
@@ -86,7 +87,14 @@ class Series(Data):
 
         size = prod([s for i, s in enumerate(self.shape) if i in self.baseaxes])
         newvalues = self.values.reshape(size, self.shape[-1])
-        return self._constructor(newvalues).__finalize__(self)
+
+        if self.labels is not None:
+            fullshape = prod(self.labels.shape)
+            newlabels = self.labels.reshape(size, fullshape/size).squeeze()
+        else:
+            newlabels = None
+
+        return self._constructor(newvalues, labels=newlabels).__finalize__(self, noprop=('labels',))
 
     def count(self):
         """
@@ -120,7 +128,7 @@ class Series(Data):
             logging.getLogger('thunder').warn('images already in local mode')
             pass
 
-        return fromarray(self.toarray(), index=self.index)
+        return fromarray(self.toarray(), index=self.index, labels=self.labels)
 
     def tospark(self, engine=None):
         """
@@ -135,7 +143,7 @@ class Series(Data):
         if engine is None:
             raise ValueError("Must provide SparkContext")
 
-        return fromarray(self.toarray(), index=self.index, engine=engine)
+        return fromarray(self.toarray(), index=self.index, labels=self.lables, engine=engine)
 
     def sample(self, nsamples=100, seed=None):
         """
@@ -171,13 +179,7 @@ class Series(Data):
         """
         value_shape = len(index) if index is not None else None
         new = self._map(func, axis=self.baseaxes, value_shape=value_shape, with_keys=with_keys)
-        return self._constructor(new.values, index=index)
-
-    def filter(self, func):
-        """
-        Filter by applying a function to each series.
-        """
-        return self._filter(func, axis=self.baseaxes)
+        return self._constructor(new.values, index=index, labels=self.labels)
 
     def reduce(self, func):
         """
@@ -1068,8 +1070,9 @@ class Series(Data):
         offset : float, optional, default = 0.1
              Scalar added to baseline during division to avoid division by 0.
         """
+
         check_options(method, ['mean', 'percentile', 'window', 'window-exact'])
-    
+
         from warnings import warn
         if not (method == 'window' or method == 'window-exact') and window is not None:
             warn('Setting window without using method "window" has no effect')

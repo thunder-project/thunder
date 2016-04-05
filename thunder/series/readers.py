@@ -11,7 +11,7 @@ from ..utils import check_spark, check_options
 spark = check_spark()
 
 
-def fromrdd(rdd, nrecords=None, shape=None, index=None, dtype=None):
+def fromrdd(rdd, nrecords=None, shape=None, index=None, labels=None, dtype=None):
     """
     Load Series object from a Spark RDD.
 
@@ -32,6 +32,9 @@ def fromrdd(rdd, nrecords=None, shape=None, index=None, dtype=None):
 
     index : array, optional, default = None
         Index for records, if not provided will use (0, 1, ...)
+
+    labels: array, optional, default = None
+        Labels for records. If provided, should have shape of shape[:-1].
 
     dtype : string, default = None
        Data numerical type (if provided will avoid check)
@@ -55,9 +58,9 @@ def fromrdd(rdd, nrecords=None, shape=None, index=None, dtype=None):
         shape = (nrecords, asarray(index).shape[0])
 
     values = BoltArraySpark(rdd, shape=shape, dtype=dtype, split=len(shape)-1)
-    return Series(values, index=index)
+    return Series(values, index=index, labels=labels)
 
-def fromarray(values, index=None, npartitions=None, engine=None):
+def fromarray(values, index=None, labels=None, npartitions=None, engine=None):
     """
     Load Series object from a local numpy array.
 
@@ -73,6 +76,9 @@ def fromarray(values, index=None, npartitions=None, engine=None):
     index : array, optional, default = None
         Index for records, if not provided will use (0,1,...,N)
         where N is the length of each record.
+
+    labels: array, optional, default = None
+        Labels for records. If provided, should have same shape as values.shape[:-1].
 
     npartitions : int, default = None
         Number of partitions for parallelization (Spark only)
@@ -99,9 +105,9 @@ def fromarray(values, index=None, npartitions=None, engine=None):
         values = bolt.array(values, context=engine, npartitions=npartitions, axis=axis)
         return Series(values, index=index)
 
-    return Series(values, index=index)
+    return Series(values, index=index, labels=labels)
 
-def fromlist(items, accessor=None, index=None, dtype=None, npartitions=None, engine=None):
+def fromlist(items, accessor=None, index=None, labels=None, dtype=None, npartitions=None, engine=None):
     """
     Create a Series object from a list of items and optional accessor function.
 
@@ -119,6 +125,9 @@ def fromlist(items, accessor=None, index=None, dtype=None, npartitions=None, eng
     index : array, optional, default = None
         Index for records, if not provided will use (0,1,...,N)
         where N is the length of each record.
+
+    labels: array, optional, default = None
+        Labels for records. If provided, should have same length as items.
 
     dtype : string, default = None
        Data numerical type (if provided will avoid check)
@@ -140,14 +149,15 @@ def fromlist(items, accessor=None, index=None, dtype=None, npartitions=None, eng
         rdd = engine.parallelize(items, npartitions)
         if accessor:
             rdd = rdd.mapValues(accessor)
-        return fromrdd(rdd, nrecords=nrecords, index=index, dtype=dtype)
+        return fromrdd(rdd, nrecords=nrecords, index=index, labels=labels, dtype=dtype)
 
     else:
         if accessor:
             items = [accessor(i) for i in items]
-        return fromarray(items, index=index)
+        return fromarray(items, index=index, labels=labels)
 
-def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None, npartitions=None, engine=None, credentials=None):
+def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None,
+             labels=None, npartitions=None, engine=None, credentials=None):
     """
     Loads Series data from text files.
 
@@ -176,6 +186,9 @@ def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None, n
 
     index : array, optional, default = None
         Index for records, if not provided will use (0, 1, ...)
+
+    labels: array, optional, default = None
+        Labels for records. If provided, should have length equal to number of rows.
 
     npartitions : int, default = None
         Number of partitions for parallelization (Spark only)
@@ -221,9 +234,10 @@ def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None, n
         if shape:
             values = values.reshape(shape)
 
-        return fromarray(values, index=index)
+        return fromarray(values, index=index, labels=labels)
 
-def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0, index=None, engine=None, credentials=None):
+def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0,
+               index=None, labels=None, engine=None, credentials=None):
     """
     Load a Series object from flat binary files.
 
@@ -251,6 +265,9 @@ def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0
 
     index : array, optional, default = None
         Index for records, if not provided will use (0, 1, ...)
+
+    labels: array, optional, default = None
+        Labels for records. If provided, should have shape of shape[:-1].
 
     engine : object, default = None
         Computational engine (e.g. a SparkContext for Spark)
@@ -308,7 +325,7 @@ def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0
         if shape:
             values = values.reshape(shape)
 
-        return fromarray(values, index=index)
+        return fromarray(values, index=index, labels=labels)
 
 def _binaryconfig(path, conf, dtype=None, shape=None, credentials=None):
     """

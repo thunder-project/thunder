@@ -6,7 +6,7 @@ from ..utils import check_spark, check_options
 spark = check_spark()
 
 
-def fromrdd(rdd, dims=None, nrecords=None, dtype=None):
+def fromrdd(rdd, dims=None, nrecords=None, dtype=None, labels=None):
     """
     Load Images object from a Spark RDD.
 
@@ -26,7 +26,10 @@ def fromrdd(rdd, dims=None, nrecords=None, dtype=None):
         Number of images (if provided will avoid check).
 
     dtype : string, default = None
-        Data numerical type (if provided will avoid check)
+       Data numerical type (if provided will avoid check)
+
+    labels : array, optional, default = None
+        Labels for records. If provided, should be one-dimensional.
     """
     from .images import Images
     from bolt.spark.array import BoltArraySpark
@@ -40,9 +43,9 @@ def fromrdd(rdd, dims=None, nrecords=None, dtype=None):
         nrecords = rdd.count()
 
     values = BoltArraySpark(rdd, shape=(nrecords,) + tuple(dims), dtype=dtype, split=1)
-    return Images(values)
+    return Images(values, labels=labels)
 
-def fromarray(values, npartitions=None, engine=None):
+def fromarray(values, labels=None, npartitions=None, engine=None):
     """
     Load Series object from a local array-like.
 
@@ -55,6 +58,9 @@ def fromarray(values, npartitions=None, engine=None):
     ----------
     values : array-like
         The array of images
+
+    labels : array, optional, default = None
+        Labels for records. If provided, should be one-dimensional.
 
     npartitions : int, default = None
         Number of partitions for parallelization (Spark only)
@@ -92,10 +98,10 @@ def fromarray(values, npartitions=None, engine=None):
         values = bolt.array(values, context=engine, npartitions=npartitions, axis=(0,))
         return Images(values)
 
-    return Images(values)
+    return Images(values, labels=labels)
 
 
-def fromlist(items, accessor=None, keys=None, dims=None, dtype=None, npartitions=None, engine=None):
+def fromlist(items, accessor=None, keys=None, dims=None, dtype=None, labels=None, npartitions=None, engine=None):
     """
     Load images from a list of items using the given accessor.
 
@@ -109,6 +115,9 @@ def fromlist(items, accessor=None, keys=None, dims=None, dtype=None, npartitions
 
     dims : tuple, optional, default=None
         Specify a known image dimension to avoid computation.
+
+    labels : array, optional, default = None
+        Labels for records. If provided, should be one-dimensional.
 
     npartitions : int
         Number of partitions for computational engine
@@ -125,14 +134,16 @@ def fromlist(items, accessor=None, keys=None, dims=None, dtype=None, npartitions
         rdd = engine.parallelize(items, npartitions)
         if accessor:
             rdd = rdd.mapValues(accessor)
-        return fromrdd(rdd, nrecords=nrecords, dims=dims, dtype=dtype)
+        return fromrdd(rdd, nrecords=nrecords, dims=dims, dtype=dtype, labels=labels)
 
     else:
         if accessor:
             items = asarray([accessor(i) for i in items])
-        return fromarray(items)
+        return fromarray(items, labels=labels)
 
-def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=False, npartitions=None, dims=None, dtype=None, recount=False, engine=None, credentials=None):
+def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=False,
+             npartitions=None, dims=None, dtype=None, labels=None, recount=False,
+             engine=None, credentials=None):
     """
     Load images from a path using the given accessor.
 
@@ -155,6 +166,9 @@ def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=Fal
 
     dtype : str, optional, default=None
         Numerical type of images.
+
+    labels : array, optional, default = None
+        Labels for records. If provided, should be one-dimensional.
 
     start, stop: nonnegative int, optional, default=None
         Indices of files to load, interpreted using Python slicing conventions.
@@ -184,17 +198,19 @@ def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=Fal
             data = data.values().zipWithIndex().map(switch)
         else:
             nrecords = reader.nfiles
-        return fromrdd(data, nrecords=nrecords, dims=dims, dtype=dtype)
+        return fromrdd(data, nrecords=nrecords, dims=dims, dtype=dtype, labels=labels)
 
     else:
         if accessor:
             data = [accessor(d) for d in data]
         flattened = list(itertools.chain(*data))
         values = [kv[1] for kv in flattened]
-        return fromarray(values)
+        return fromarray(values, labels=labels)
 
 
-def frombinary(path, shape=None, dtype=None, ext='bin', start=None, stop=None, recursive=False, nplanes=None, npartitions=None, conf='conf.json', order='C', engine=None, credentials=None):
+def frombinary(path, shape=None, dtype=None, ext='bin', start=None, stop=None, recursive=False,
+               nplanes=None, npartitions=None, labels=None, conf='conf.json', order='C',
+               engine=None, credentials=None):
     """
     Load images from flat binary files.
 
@@ -228,6 +244,9 @@ def frombinary(path, shape=None, dtype=None, ext='bin', start=None, stop=None, r
     npartitions : int, optional, default=None
         Number of partitions for computational engine,
         if None will use default for engine.
+
+    labels : array, optional, default = None
+        Labels for records. If provided, should be one-dimensional.
     """
     import json
     from thunder.readers import get_file_reader, FileNotFoundError
@@ -287,10 +306,11 @@ def frombinary(path, shape=None, dtype=None, ext='bin', start=None, stop=None, r
     newdims = tuple(list(shape[:-1]) + append) if nplanes else shape
     return frompath(path, accessor=getarray, ext=ext, start=start,
                     stop=stop, recursive=recursive, npartitions=npartitions,
-                    dims=newdims, dtype=dtype, recount=recount,
+                    dims=newdims, dtype=dtype, labels=labels, recount=recount,
                     engine=engine, credentials=credentials)
 
-def fromtif(path, ext='tif', start=None, stop=None, recursive=False, nplanes=None, npartitions=None, engine=None, credentials=None):
+def fromtif(path, ext='tif', start=None, stop=None, recursive=False,
+            nplanes=None, npartitions=None, labels=None, engine=None, credentials=None):
     """
     Loads images from single or multi-page TIF files.
 
@@ -318,6 +338,9 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False, nplanes=Non
     npartitions : int, optional, default=None
         Number of partitions for computational engine,
         if None will use default for engine.
+
+    labels : array, optional, default = None
+        Labels for records. If provided, should be one-dimensional.
     """
     import skimage.external.tifffile as tifffile
 
@@ -348,9 +371,10 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False, nplanes=Non
     recount = False if nplanes is None else True
     return frompath(path, accessor=getarray, ext=ext, start=start, stop=stop,
                     recursive=recursive, npartitions=npartitions, recount=recount,
-                    engine=engine, credentials=credentials)
+                    labels=labels, engine=engine, credentials=credentials)
 
-def frompng(path, ext='png', start=None, stop=None, recursive=False, npartitions=None, engine=None, credentials=None):
+def frompng(path, ext='png', start=None, stop=None, recursive=False, npartitions=None,
+            labels=None, engine=None, credentials=None):
     """
     Load images from PNG files.
 
@@ -374,6 +398,9 @@ def frompng(path, ext='png', start=None, stop=None, recursive=False, npartitions
     npartitions : int, optional, default=None
         Number of partitions for computational engine,
         if None will use default for engine.
+
+    labels : array, optional, default = None
+        Labels for records. If provided, should be one-dimensional.
     """
     from scipy.misc import imread
 
@@ -384,7 +411,7 @@ def frompng(path, ext='png', start=None, stop=None, recursive=False, npartitions
 
     return frompath(path, accessor=getarray, ext=ext, start=start,
                     stop=stop, recursive=recursive, npartitions=npartitions,
-                    engine=engine, credentials=credentials)
+                    labels=labels, engine=engine, credentials=credentials)
 
 def fromrandom(shape=(10, 50, 50), npartitions=1, seed=42, engine=None):
     """

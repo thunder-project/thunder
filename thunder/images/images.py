@@ -19,8 +19,13 @@ class Images(Data):
     """
     _metadata = Data._metadata
 
-    def __init__(self, values, mode='local'):
+    def __init__(self, values, labels=None, mode='local'):
         super(Images, self).__init__(values, mode=mode)
+        self.labels = labels
+
+    @property
+    def baseaxes(self):
+        return (0,)
 
     @property
     def _constructor(self):
@@ -165,12 +170,6 @@ class Images(Data):
         Map an array -> array function over each image
         """
         return self._map(func, axis=0, value_shape=dims, with_keys=with_keys)
-
-    def filter(self, func):
-        """
-        Filter images
-        """
-        return self._filter(func, axis=0)
 
     def reduce(self, func):
         """

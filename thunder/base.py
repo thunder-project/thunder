@@ -1,5 +1,5 @@
 from numpy import array, asarray, ndarray, prod, ufunc, add, subtract, \
-    multiply, divide, isscalar, newaxis, unravel_index
+    multiply, divide, isscalar, newaxis, unravel_index, argsort
 from bolt.utils import inshape, tupleize
 from bolt.base import BoltArray
 from bolt.spark.array import BoltArraySpark
@@ -189,14 +189,61 @@ class Data(Base):
     functions along axes in a backend-specific manner.
     """
     _metadata = Base._metadata
+    _attributes = Base._attributes + ['labels']
 
     def __getitem__(self, item):
+        # handle values
         if isinstance(item, int):
             item = slice(item, item+1, None)
-        if isinstance(item, (tuple, list)):
+        if isinstance(item, tuple):
             item = tuple([slice(i, i+1, None) if isinstance(i, int) else i for i in item])
+        if isinstance(item, (list, ndarray)):
+            item = (item,)
         new = self._values.__getitem__(item)
-        return self._constructor(new).__finalize__(self, noprop=('index'))
+        result = self._constructor(new).__finalize__(self, noprop=('index', 'labels'))
+
+        # handle labels
+        if self.labels is not None:
+            if isinstance(item, int):
+                label_item = ([item],)
+            elif isinstance(item, (list, ndarray, slice)):
+                label_item = (item, )
+            elif isinstance(item, tuple):
+                label_item = item[:len(self.baseaxes)]
+            newlabels = self.labels
+            for (i, s) in enumerate(label_item):
+                if isinstance(s, slice):
+                    newlabels = newlabels[[s if j==i else slice(None) for j in range(len(label_item))]]
+                else:
+                    newlabels = newlabels.take(tupleize(s), i)
+            result.labels = newlabels
+
+        return result
+
+    @property
+    def baseaxes(self):
+        raise NotImplementedError
+
+    @property
+    def baseshape(self):
+        return self.shape[:len(self.baseaxes)]
+
+    @property
+    def labels(self):
+        return self._labels
+
+    @labels.setter
+    def labels(self, value):
+        if value is not None:
+            try:
+                value = asarray(value)
+            except:
+                raise ValueError("Labels must be convertible to an ndarray")
+            if value.shape != self.baseshape:
+                raise ValueError("Labels shape {} must be the same as the leading dimensions of the Series {}"\
+                                  .format(value.shape, self.baseshape))
+
+        self._labels = value
 
     def astype(self, dtype, casting='unsafe'):
         """
@@ -273,12 +320,6 @@ class Data(Base):
         """
         raise NotImplementedError
 
-    def filter(self, func):
-        """
-        Filter elements.
-        """
-        raise NotImplementedError
-
     def map(self, func, **kwargs):
         """
         Map a function over elements.
@@ -309,14 +350,14 @@ class Data(Base):
         linearized_shape = [prod(key_shape)] + remaining_shape
 
         # compute the transpose permutation
-        transpose_order = axes + remaining
+        transpose_order = list(axes) + remaining
 
         # transpose the array so that the keys being mapped over come first, then linearize keys
         reshaped = self.values.transpose(*transpose_order).reshape(*linearized_shape)
 
         return reshaped
 
-    def _filter(self, func, axis=(0,)):
+    def filter(self, func):
         """
         Filter array along an axis.
 
@@ -333,15 +374,31 @@ class Data(Base):
         axis : tuple or int, optional, default=(0,)
             Axis or multiple axes to filter along.
         """
+
         if self.mode == 'local':
-            axes = sorted(tupleize(axis))
-            reshaped = self._align(axes)
+            reshaped = self._align(self.baseaxes)
             filtered = asarray(list(filter(func, reshaped)))
-            return self._constructor(filtered).__finalize__(self)
+
+            if self.labels is not None:
+                mask = asarray(list(map(func, reshaped)))
 
         if self.mode == 'spark':
-            filtered = self.values.filter(func)
-            return self._constructor(filtered).__finalize__(self)
+
+            sort = False if self.labels is None else True
+            filtered = self.values.filter(func, axis=self.baseaxes, sort=sort)
+
+            if self.labels is not None:
+                keys, vals = zip(*self.values.map(func, axis=self.baseaxes, value_shape=(1,)).tordd().collect())
+                perm = sorted(range(len(keys)), key=keys.__getitem__)
+                mask = asarray(vals)[perm]
+
+        if self.labels is not None:
+            s1 = prod(self.baseshape)
+            newlabels = self.labels.reshape(s1, 1)[mask].squeeze()
+        else:
+            newlabels = None
+
+        return self._constructor(filtered, labels=newlabels).__finalize__(self, noprop=('labels',))
 
     def _map(self, func, axis=(0,), value_shape=None, dtype=None, with_keys=False):
         """

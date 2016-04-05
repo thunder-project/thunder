@@ -1,7 +1,7 @@
 import pytest
 from numpy import arange, allclose, array, mean, apply_along_axis
 
-from thunder.images.readers import fromlist
+from thunder.images.readers import fromlist, fromarray
 from thunder.images.images import Images
 from thunder.series.series import Series
 
@@ -30,6 +30,23 @@ def test_sample(eng):
     assert allclose(data.sample(2).shape, (2, 2, 2))
     assert allclose(data.sample(1).shape, (1, 2, 2))
     assert allclose(data.filter(lambda x: x.max() > 5).sample(1).toarray(), [[1, 10], [1, 10]])
+
+def test_labels(eng):
+    x = arange(10).reshape(10, 1, 1)
+    data = fromlist(x, labels=range(10), engine=eng)
+
+    assert allclose(data.filter(lambda x: x[0, 0]%2==0).labels, array([0, 2, 4, 6, 8]))
+    assert allclose(data[4:6].labels, array([4, 5]))
+    assert allclose(data[5].labels, array([5]))
+    assert allclose(data[[0, 3, 8]].labels, array([0, 3, 8]))
+
+
+def test_labels_setting(eng):
+    x = arange(10).reshape(10, 1, 1)
+    data = fromlist(x, engine=eng)
+
+    with pytest.raises(ValueError):
+        data.labels = range(8)
 
 
 def test_first(eng):
