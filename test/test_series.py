@@ -58,19 +58,6 @@ def test_select(eng):
     assert data.select(['label1']).index == ['label1']
 
 
-def test_series_stats(eng):
-    data = fromlist([array([1, 2, 3, 4, 5])], engine=eng)
-    assert allclose(data.series_mean().toarray(), 3.0)
-    assert allclose(data.series_sum().toarray(), 15.0)
-    assert allclose(data.series_median().toarray(), 3.0)
-    assert allclose(data.series_std().toarray(), 1.4142135)
-    assert allclose(data.series_stat('mean').toarray(), 3.0)
-    assert allclose(data.series_stats().select('mean').toarray(), 3.0)
-    assert allclose(data.series_stats().select('count').toarray(), 5)
-    assert allclose(data.series_percentile(25).toarray(), 2.0)
-    assert allclose(data.series_percentile((25, 75)).toarray(), array([2.0, 4.0]))
-
-
 def test_standardize_axis1(eng):
     data = fromlist([array([1, 2, 3, 4, 5])], engine=eng)
     centered = data.center(1)
