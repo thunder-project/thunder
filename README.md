@@ -6,11 +6,11 @@
 
 > scalable analysis of image and time series analysis in python
 
-Thunder is an ecosystem of tools for the analysis of image and time series data in Python. It provides data structures and algorithms for loading, processing, and analyzing these  data, and can be useful in a variety of domains, including neuroscience, medical imaging, video processing, and geospatial and climate analysis. It can be used locally, but also supports large-scale analysis through the distributed computing engine [Spark](https://github.com/apache/spark).
+Thunder is an ecosystem of tools for the analysis of image and time series data in Python. It provides data structures and algorithms for loading, processing, and analyzing these  data, and can be useful in a variety of domains, including neuroscience, medical imaging, video processing, and geospatial and climate analysis. It can be used locally, but also supports large-scale analysis through the distributed computing engine [`spark`](https://github.com/apache/spark).
 
-Thunder designed around modularity and composability — the core [`thunder`](https://github.com/thunder-project/thunder) package in this repository only defines common data structures and read/write patterns, and most functionality is broken out into several related packages. Each one is independently versioned, with its own GitHub repository for organizing issues and contributions. 
+Thunder is designed around modularity and composability — the core `thunder` package, in this repository, only defines common data structures and read/write patterns, and most functionality is broken out into several related packages. Each one is independently versioned, with its own GitHub repository for organizing issues and contributions. 
 
-This readme provides an overview of the core `thunder` packages, its data types, and methods for loading and saving. Tutorials, detailed API documentation, and info about all associated packages can be found at the [documentation site](http://thunder-project.org/thunder-docs).
+This readme provides an overview of the core `thunder` package, its data types, and methods for loading and saving. Tutorials, detailed API documentation, and info about all associated packages can be found at the [documentation site](http://thunder-project.org/thunder-docs).
 
 ## install
 
@@ -35,7 +35,7 @@ This will additionally install:
 
 ## example
 
-Here's a short snippet showing how to load an image sequence, median filter it, transform it to a series, detrend and compute a fourier transform on each pixel, then convert it to an array.
+Here's a short snippet showing how to load an image sequence (in this case random data), median filter it, transform it to a series, detrend and compute a fourier transform on each pixel, then convert it to an array.
 
 ```python
 import thunder as td
@@ -53,7 +53,7 @@ The two primary data types are `images` and `series`. `images` are used for coll
 
 Once loaded, each data type can be manipulated through a variety of statistical operators, including simple statistical aggregiations like `mean` `min` and `max` or more complex operations like `gaussian_filter` `detrend` and `subsample`. All operations are parallelized if running against a distributed execution engine like [`spark`](https://github.com/apache/spark). For distributed engines, chained operations will be lazily executed, whereas for local operation they will be executed eagerly.
 
-Both `images` and `series` objects are wrappers for ndarrays: either a local [`numpy`](https://github.com/numpy/numpy) `ndarray` or a distributed ndarray using [`bolt`](https://github.com/bolt-project/bolt) and [`spark`](https://github.com/apache/spark). Calling `toarray()` on an `images` or `series` object at any time returns a local [`numpy`](https://github.com/numpy/numpy) `ndarray`, which is an easy way to move between Thunder and other Python data analysis tools like [`pandas`].
+Both `images` and `series` objects are wrappers for ndarrays: either a local [`numpy`](https://github.com/numpy/numpy) `ndarray` or a distributed ndarray using [`bolt`](https://github.com/bolt-project/bolt) and [`spark`](https://github.com/apache/spark). Calling `toarray()` on an `images` or `series` object at any time returns a local [`numpy`](https://github.com/numpy/numpy) `ndarray`, which is an easy way to move between Thunder and other Python data analysis tools, like [`pandas`](https://github.com/pydata/pandas) and [`scikit-learn`](https://github.com/scikit-learn/scikit-learn).
 
 For a full list of methods on `image` and `series` data, see the [documentation site]().
 
@@ -78,4 +78,4 @@ Thunder is a community effort! The codebase so far is due to the excellent work 
 
 > Andrew Osheroff, Ben Poole, Chris Stock, Davis Bennett, Jascha Swisher, Jason Wittenbach, Jeremy Freeman, Josh Rosen, Kunal Lillaney, Logan Grosenick, Matt Conlen, Michael Broxton, Noah Young, Ognen Duzlevski, Richard Hofer, Owen Kahn, Ted Fujimoto, Tom Sainsbury, Uri Laseron
 
-If you run into a problem, have a feature request, or want to contribute, submit an issue or a pull request, or come talk to us in the [chatroom](https://gitter.im/thunder-project/thunder).
+If you run into a problem, have a feature request, or want to contribute, submit an issue or a pull request, or come talk to us in the [chatroom](https://gitter.im/thunder-project/thunder)!
