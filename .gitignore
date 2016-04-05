@@ -21,3 +21,5 @@ doc/generated
 thunder/lib/*dev*.egg
 
 .coverage*
+
+.cache

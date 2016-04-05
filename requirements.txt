@@ -1,7 +1,5 @@
-argparse
 numpy
 scipy
-scikit-learn
 scikit-image
-matplotlib
-zope.cachedescriptors
+boto
+bolt-python >= 0.5.1
