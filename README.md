@@ -9,6 +9,10 @@
 
 Thunder is an ecosystem of tools for the analysis of image and time series data in Python. It provides data structures and algorithms for loading, processing, and analyzing these  data, and can be useful in a variety of domains, including neuroscience, medical imaging, video processing, and geospatial and climate analysis. It can be used locally, but also supports large-scale analysis through the distributed computing engine [Spark](https://github.com/apache/spark).
 
+Thunder designed around modularity and composability — the core [`thunder`](https://github.com/thunder-project/thunder) package in this repository only defines common data structures and read/write patterns, and most functionality is broken out into several related packages. Each one is independently versioned, with its own GitHub repository for organizing issues and contributions. 
+
+This readme provides an overview of the core `thunder` packages, its data types, and methods for loading and saving. Tutorials, detailed API documentation, and info about all associated packages can be found at the [documentation site](http://thunder-project.org/thunder-docs).
+
 ## install
 
 The core `thunder` package defines data structures and read/write patterns for images and series data. It is built on [`numpy`](https://github.com/numpy/numpy), [`scipy`](https://github.com/scipy/scipy), [`scikit-learn`](https://github.com/scikit-learn/scikit-learn), and [`scikit-image`](https://github.com/scikit-image/scikit-image), and is compatible with Python 2.7 and 3.4. You can install it using:
@@ -32,79 +36,42 @@ This will additionally install:
 
 ## example
 
+Here's a short snippet showing how to load an image sequence, median filter it, transform it to a series, detrend and compute a fourier transform on each pixel, then convert it to an array.
+
+```python
+import thunder as td
+
+data = td.images.fromrandom()
+ts = data.median_filter(3).toseries()
+frequencies = ts.detrend().fourier(freq=3).toarray()
+```
+
 ## usage
 
-## data types
+Most workflows in Thunder begin by loading data, which can come from a variety of sources and locations, and can be either local or distributed (see below).
 
-Primary data types are `images` and `series`. 
+The two primary data types are `images` and `series`. `images` are used for collections or sequences of images, and are especially useful when working with movie data. `series` are used for collections of one-dimensional arrays, often representing time series.
 
-Basic description.
+Once loaded, each data type can be manipulated through a variety of statistical operators, including simple statistical aggregiations like `mean` `min` and `max` or more complex operations like `gaussian_filter` `detrend` and `subsample`. All operations are parallelized if running against a distributed execution engine like [`spark`](https://github.com/apache/spark). For distributed engines, chained operations will be lazily executed, whereas for local operation they will be executed eagerly.
 
-For a full list of methods, see [link]() for complete API documentation.
+Both `images` and `series` objects are wrappers for ndarrays: either a local [`numpy`](https://github.com/numpy/numpy) `ndarray` or a distributed ndarray using [`bolt`](https://github.com/bolt-project/bolt) and [`spark`](https://github.com/apache/spark). Calling `toarray()` on an `images` or `series` object at any time returns a local [`numpy`](https://github.com/numpy/numpy) `ndarray`, which is an easy way to move between Thunder and other Python data analysis tools like [`pandas`].
+
+For a full list of methods on `image` and `series` data, see the [documentation site]().
 
 ## reading
 
-Both `images` and `series` can be loaded from a variety of data types and locations. For all loading methods, the optional argument `engine` allows you to specify whether data should be loaded in `"local"` mode, which is backed by a `numpy` array, or in `"spark"` mode, which is backed by an RDD.
+Both `images` and `series` can be loaded from a variety of data types and locations. For all loading methods, the optional argument `engine` allows you to specify whether data should be loaded in `'local'` mode, which is backed by a `numpy` array, or in `'spark'` mode, which is backed by an RDD.
 
 All loading methods are available on the module for the corresponding data type, for example
 
 ```python
 import thunder as td
 data = td.images.fromtif('/path/to/tifs')
-data = td.series.fromarray(array)
+data = td.series.fromarray(somearray)
+data_distributed = ts.series.fromarray(somearray, engine=sc)
 ```
 
-Every loading method has the optional argument `engine` which can be either `None` (for local use) or a `SparkContext` (for distributed use with Spark). And all methods that load from files e.g. `fromtif` or `frombinary` can load from either a local filesystem or Amazon S3, with the optional argument `credentials` for loading non-public data from S3. An overview of available methods is below; see [link]() for complete API documentation.
-
-### images
-
-#### `frompng(path, opts)`
-
-#### `fromtif(path, opts)`
-
-#### `frombinary(path, opts)`
-
-#### `fromarray(values, opts)`
-
-#### `fromlist(items, opts)`
-
-#### `fromrdd(rdd, opts)`
-
-#### `fromrandom(shape, opts)`
-
-#### `fromexample(name, opts)`
-
-### series
-
-#### `frombinary(path, opts)`
-
-#### `fromtext(path, opts)`
-
-#### `fromarray(values, opts)`
-
-#### `fromlist(items, opts)`
-
-#### `fromrdd(rdd, opts)`
-
-#### `fromrandom(shape, opts)`
-
-#### `fromexample(name, opts)`
-
-## writing
-
-All `Images` and `Series` objects can be written to disk in a few different formats. As with reading, data can be written to either a local filesystem or to Amazon S3, with credentials provided as an optional argument. The methods are summarized below, see [link]() for the complete API documentation.
-
-### images
-
-#### `images.tobinary(opts)`
-
-#### `images.topng(opts)`
-
-#### `images.totif(opts)`
-
-### series
-
-#### `series.tobinary(opts)`
+The argument `engine` can be either `None` (for local use) or a `SparkContext` (for distributed use with Spark). And all methods that load from files e.g. `fromtif` or `frombinary` can load from either a local filesystem or Amazon S3, with the optional argument `credentials` for loading non-public data from S3. See the [documentation site](http/) for a full list of data loading methods.
 
 ## contributing
 
