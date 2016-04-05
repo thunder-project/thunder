@@ -402,7 +402,7 @@ class Images(Data):
         nimages = self.shape[0]
 
         # spatially average the original image set over the specified neighborhood
-        blurred = self.uniform_filter((neighborhood * 2) + 1)
+        blurred = self.uniform_filter(size)
 
         # union the averaged images with the originals to create an
         # Images object containing 2N images (where N is the original number of images),
