@@ -31,7 +31,6 @@ This will additionally install:
 - [`thunder-regression`](https://github.com/thunder-project/thunder-regression) mass univariate regression algorithms
 - [`thunder-factorization`](https://github.com/thunder-project/thunder-factorization) matrix factorization algorithms 
 - [`thunder-registration`](https://github.com/thunder-project/thunder-registration) registration for image sequences
-- [`thunder-extraction`](https://github.com/thunder-project/thunder-extraction) feature extraction from image sequences
 
 ## example
 
