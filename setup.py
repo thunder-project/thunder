@@ -4,7 +4,7 @@ from setuptools import setup
 
 version = '1.0.0'
 
-extra = {'all': ['thunder-regression', 'thunder-registration', 'thunder-factorization', 'thunder-extraction']}
+extra = {'all': ['thunder-regression', 'thunder-registration', 'thunder-factorization']}
 
 setup(
     name='thunder-python',
