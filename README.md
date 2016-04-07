@@ -28,7 +28,7 @@ Lots of functionality in Thunder, especially for specific types of analyses, is 
 - [`thunder-factorization`](https://github.com/thunder-project/thunder-factorization) matrix factorization algorithms 
 - [`thunder-registration`](https://github.com/thunder-project/thunder-registration) registration for image sequences
 
-You can install the ones you want with `pip`
+You can install the ones you want with `pip`, for example
 
 ```
 pip install thunder-regression
