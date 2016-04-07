@@ -4,8 +4,6 @@ from setuptools import setup
 
 version = '1.0.0'
 
-extra = {'all': ['thunder-regression', 'thunder-registration', 'thunder-factorization']}
-
 setup(
     name='thunder-python',
     version=version,
@@ -20,6 +18,5 @@ setup(
         'thunder.images'
     ],
     install_requires=open('requirements.txt').read().split('\n'),
-    extras_require=extra,
     long_description='See https://github.com/thunder-project/thunder'
 )
