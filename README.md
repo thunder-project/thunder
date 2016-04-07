@@ -59,7 +59,7 @@ Both `images` and `series` objects are wrappers for ndarrays: either a local [`n
 
 For a full list of methods on `image` and `series` data, see the [documentation site](http://docs.thunder-project.org).
 
-## reading
+## loading data
 
 Both `images` and `series` can be loaded from a variety of data types and locations. For all loading methods, the optional argument `engine` allows you to specify whether data should be loaded in `'local'` mode, which is backed by a `numpy` array, or in `'spark'` mode, which is backed by an RDD.
 
@@ -75,7 +75,7 @@ data_distributed = ts.series.fromarray(somearray, engine=sc)
 
 The argument `engine` can be either `None` for local use or a `SparkContext` for distributed use with Spark. And in either case, methods that load from files e.g. `fromtif` or `frombinary` can load from either a local filesystem or Amazon S3, with the optional argument `credentials` for S3 credentials. See the [documentation site](http://docs.thunder-project.org) for a full list of data loading methods.
 
-## use with spark
+## using with spark
 
 Thunder doesn't require Spark and can run locally without it, but Spark and Thunder work great together for parallelizing your computation. To install and configure a Spark cluster, consult the official [Spark documentation](http://spark.apache.org/docs/latest). Thunder supports Spark version 1.5+, and uses the Python API PySpark. Once you have a running cluster with a valid `SparkContext`, you can pass it as the `engine` to any of Thunder's loading methods, and this will load your data in distributed `'spark'` mode. In this mode, all operations will be performed in parallel. Here's an example where we load distributed `series` data (in this case random data) and use parallelized versions of `detrend()` and `convolve()`, and then call `toarray()` to return a local [`numpy`](https://github.com/numpy/numpy) array.
 
