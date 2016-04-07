@@ -20,17 +20,20 @@ The core `thunder` package defines data structures and read/write patterns for i
 pip install thunder-python
 ```
 
-If you want to install all related packages at the same time, you can use
+## related packages
 
-```
-pip install thunder-python[all]
-```
-
-This will additionally install:
+Lots of functionality in Thunder, especially for specific types of analyses, is broken out into the following separate packages. 
 
 - [`thunder-regression`](https://github.com/thunder-project/thunder-regression) mass univariate regression algorithms
 - [`thunder-factorization`](https://github.com/thunder-project/thunder-factorization) matrix factorization algorithms 
 - [`thunder-registration`](https://github.com/thunder-project/thunder-registration) registration for image sequences
+
+You can install the ones you want with `pip`
+
+```
+pip install thunder-regression
+pip install thunder-registration
+```
 
 ## example
 
