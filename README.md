@@ -6,7 +6,7 @@
 
 > scalable analysis of image and time series analysis in python
 
-Thunder is an ecosystem of tools for the analysis of image and time series data in Python. It provides data structures and algorithms for loading, processing, and analyzing these  data, and can be useful in a variety of domains, including neuroscience, medical imaging, video processing, and geospatial and climate analysis. It can be used locally, but also supports large-scale analysis through the distributed computing engine [`spark`](https://github.com/apache/spark).
+Thunder is an ecosystem of tools for the analysis of image and time series data in Python. It provides data structures and algorithms for loading, processing, and analyzing these  data, and can be useful in a variety of domains, including neuroscience, medical imaging, video processing, and geospatial and climate analysis. It can be used locally, but also supports large-scale analysis through the distributed computing engine [`spark`](https://github.com/apache/spark). All data structures and analyses in Thunder are designed to **run identically and with the same API** whether local or distributed.
 
 Thunder is designed around modularity and composability — the core `thunder` package, in this repository, only defines common data structures and read/write patterns, and most functionality is broken out into several related packages. Each one is independently versioned, with its own GitHub repository for organizing issues and contributions. 
 
@@ -74,6 +74,17 @@ data_distributed = ts.series.fromarray(somearray, engine=sc)
 ```
 
 The argument `engine` can be either `None` for local use or a `SparkContext` for distributed use with Spark. And in either case, methods that load from files e.g. `fromtif` or `frombinary` can load from either a local filesystem or Amazon S3, with the optional argument `credentials` for S3 credentials. See the [documentation site](http://docs.thunder-project.org) for a full list of data loading methods.
+
+## use with spark
+
+Thunder doesn't require Spark and can run locally without it, but Spark and Thunder work great together for parallelizing your computation. To install and configure a Spark cluster, consult the official [Spark documentation](http://spark.apache.org/docs/latest). Thunder supports Spark version 1.5+, and uses the Python API PySpark. Once you have a running cluster with a valid `SparkContext`, you can pass it as the `engine` to any of Thunder's loading methods, and this will load your data in distributed `'spark'` mode. In this mode, all operations will be performed in parallel. Here's an example where we load distributed `series` data (in this case random data) and use parallelized versions of `detrend()` and `convolve()`, and then call `toarray()` to return a local [`numpy`](https://github.com/numpy/numpy) array.
+
+```python
+import thunder as td
+
+data = td.series.fromrandom(engine=sc)
+ts = data.detrend().convolve(signal).toarray()
+```
 
 ## contributing
 
