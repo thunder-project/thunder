@@ -53,9 +53,7 @@ Most workflows in Thunder begin by loading data, which can come from a variety o
 
 The two primary data types are `images` and `series`. `images` are used for collections or sequences of images, and are especially useful when working with movie data. `series` are used for collections of one-dimensional arrays, often representing time series.
 
-Once loaded, each data type can be manipulated through a variety of statistical operators, including simple statistical aggregiations like `mean` `min` and `max` or more complex operations like `gaussian_filter` `detrend` and `subsample`. All operations are parallelized if running against a distributed execution engine like [`spark`](https://github.com/apache/spark). For distributed engines, chained operations will be lazily executed, whereas for local operation they will be executed eagerly.
-
-Both `images` and `series` objects are wrappers for ndarrays: either a local [`numpy`](https://github.com/numpy/numpy) `ndarray` or a distributed ndarray using [`bolt`](https://github.com/bolt-project/bolt) and [`spark`](https://github.com/apache/spark). Calling `toarray()` on an `images` or `series` object at any time returns a local [`numpy`](https://github.com/numpy/numpy) `ndarray`, which is an easy way to move between Thunder and other Python data analysis tools, like [`pandas`](https://github.com/pydata/pandas) and [`scikit-learn`](https://github.com/scikit-learn/scikit-learn).
+Once loaded, each data type can be manipulated through a variety of statistical operators, including simple statistical aggregiations like `mean` `min` and `max` or more complex operations like `gaussian_filter` `detrend` and `subsample`. Both `images` and `series` objects are wrappers for ndarrays: either a local [`numpy`](https://github.com/numpy/numpy) `ndarray` or a distributed ndarray using [`bolt`](https://github.com/bolt-project/bolt) and [`spark`](https://github.com/apache/spark). Calling `toarray()` on an `images` or `series` object at any time returns a local [`numpy`](https://github.com/numpy/numpy) `ndarray`, which is an easy way to move between Thunder and other Python data analysis tools, like [`pandas`](https://github.com/pydata/pandas) and [`scikit-learn`](https://github.com/scikit-learn/scikit-learn).
 
 For a full list of methods on `image` and `series` data, see the [documentation site](http://docs.thunder-project.org).
 
@@ -77,13 +75,17 @@ The argument `engine` can be either `None` for local use or a `SparkContext` for
 
 ## using with spark
 
-Thunder doesn't require Spark and can run locally without it, but Spark and Thunder work great together for parallelizing your computation. To install and configure a Spark cluster, consult the official [Spark documentation](http://spark.apache.org/docs/latest). Thunder supports Spark version 1.5+, and uses the Python API PySpark. Once you have a running cluster with a valid `SparkContext`, you can pass it as the `engine` to any of Thunder's loading methods, and this will load your data in distributed `'spark'` mode. In this mode, all operations will be performed in parallel. Here's an example where we load distributed `series` data (in this case random data) and use parallelized versions of `detrend()` and `convolve()`, and then call `toarray()` to return a local [`numpy`](https://github.com/numpy/numpy) array.
+Thunder doesn't require Spark and can run locally without it, but Spark and Thunder work great together! To install and configure a Spark cluster, consult the official [Spark documentation](http://spark.apache.org/docs/latest). Thunder supports Spark version 1.5+, and uses the Python API PySpark. If you have Spark installed, you can install Thunder just by calling `pip install thunder-python` on both the master node and all worker nodes of your cluster. Alternatively, you can clone this GitHub repository, and make sure it is on the `PYTHONPATH` of both the master and worker nodes. 
+
+Once you have a running cluster with a valid `SparkContext` — this is created automatically as the variable `sc` if you call the `pyspark` executable — you can pass it as the `engine` to any of Thunder's loading methods, and this will load your data in distributed `'spark'` mode. In this mode, all operations will be parallelized, and chained operations will be lazily executed.
+
+Here's an example where we load distributed `series` data (in this case random data) and use parallelized versions of `detrend()` and `convolve()` and `max()`, and then call `toarray()` to return a local [`numpy`](https://github.com/numpy/numpy) array.
 
 ```python
 import thunder as td
 
 data = td.series.fromrandom(engine=sc)
-ts = data.detrend().convolve(signal).toarray()
+ts = data.detrend().convolve(signal).max().toarray()
 ```
 
 ## contributing
