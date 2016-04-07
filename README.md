@@ -67,6 +67,7 @@ All loading methods are available on the module for the corresponding data type,
 
 ```python
 import thunder as td
+
 data = td.images.fromtif('/path/to/tifs')
 data = td.series.fromarray(somearray)
 data_distributed = ts.series.fromarray(somearray, engine=sc)
