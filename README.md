@@ -79,15 +79,6 @@ Thunder doesn't require Spark and can run locally without it, but Spark and Thun
 
 Once you have a running cluster with a valid `SparkContext` — this is created automatically as the variable `sc` if you call the `pyspark` executable — you can pass it as the `engine` to any of Thunder's loading methods, and this will load your data in distributed `'spark'` mode. In this mode, all operations will be parallelized, and chained operations will be lazily executed.
 
-Here's an example where we load distributed `series` data (in this case random data) and use parallelized versions of `detrend()` and `convolve()` and `max()`, and then call `toarray()` to return a local [`numpy`](https://github.com/numpy/numpy) array.
-
-```python
-import thunder as td
-
-data = td.series.fromrandom(engine=sc)
-ts = data.detrend().convolve(signal).max().toarray()
-```
-
 ## contributing
 
 Thunder is a community effort! The codebase so far is due to the excellent work of the following individuals:
