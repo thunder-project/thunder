@@ -13,6 +13,12 @@ def test_first(eng):
     assert allclose(data.first(), [[1, 2], [3, 4]])
 
 
+def test_asarray(eng):
+     data = series.fromlist([array([1, 2, 3]), array([4, 5, 6])], engine=eng)
+     converted = asarray(data)
+     assert allclose(converted, [[1, 2, 3], [4, 5, 6]])
+
+
 def test_casting(eng):
     data = series.fromlist([array([1, 2, 3], 'int16')], engine=eng)
     assert data.astype('int64').toarray().dtype == 'int64'

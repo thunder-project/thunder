@@ -67,6 +67,9 @@ class Base(object):
                         object.__setattr__(self, name, attr)
         return self
 
+    def __array__(self):
+        return self.toarray()
+
     @property
     def _constructor(self):
         return Data
