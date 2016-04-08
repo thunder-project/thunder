@@ -3,7 +3,7 @@ import json
 
 def topng(images, path, prefix="image", overwrite=False, credentials=None):
     """
-    Write out PNG files for 2d or 3d image data.
+    Write out PNG files for 2d image data.
 
     See also
     --------
@@ -30,7 +30,7 @@ def topng(images, path, prefix="image", overwrite=False, credentials=None):
 
 def totif(images, path, prefix="image", overwrite=False, credentials=None):
     """
-    Write out TIF files for 2d or 3d image data.
+    Write out TIF files for 2d image data.
 
     See also
     --------
