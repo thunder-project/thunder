@@ -142,30 +142,30 @@ class Series(Data):
 
         return fromarray(self.toarray(), index=self.index, labels=self.lables, engine=engine)
 
-    def sample(self, nsamples=100, seed=None):
+    def sample(self, n=100, seed=None):
         """
         Extract random sample of records.
 
         Parameters
         ----------
-        nsamples : int, optional, default = 100
+        n : int, optional, default = 100
             The number of data points to sample.
 
         seed : int, optional, default = None
             Random seed.
         """
-        if nsamples < 1:
-            raise ValueError("Number of samples must be larger than 0, got '%g'" % nsamples)
+        if n < 1:
+            raise ValueError("Number of samples must be larger than 0, got '%g'" % n)
 
         if seed is None:
             seed = random.randint(0, 2 ** 32)
 
         if self.mode == 'spark':
-            result = asarray(self.values.tordd().values().takeSample(False, nsamples, seed))
+            result = asarray(self.values.tordd().values().takeSample(False, n, seed))
 
         else:
             basedims = [self.shape[d] for d in self.baseaxes]
-            inds = [unravel_index(int(k), basedims) for k in random.rand(nsamples) * prod(basedims)]
+            inds = [unravel_index(int(k), basedims) for k in random.rand(n) * prod(basedims)]
             result = asarray([self.values[tupleize(i) + (slice(None, None),)] for i in inds])
 
         return self._constructor(result, index=self.index)
