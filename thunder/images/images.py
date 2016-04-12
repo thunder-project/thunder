@@ -415,8 +415,6 @@ class Images(Data):
             Size of the filter in pixels. If a scalar, will use the same filter size
             along each dimension.
         """
-        if not isinstance(neighborhood, int):
-            raise ValueError('The neighborhood must be specified as an integer.')
 
         from thunder.images.readers import fromarray, fromrdd
         from numpy import corrcoef, concatenate
