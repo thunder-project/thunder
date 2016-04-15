@@ -1,83 +1,90 @@
+# thunder
 
-Thunder
-=======
-
-<div class="row">
-  <a href="http://thunder-project.org">
-      <img src="http://thunder-project.org/thunder/docs/_static/thumbnail_row.png" width="800px" height="125px">
-  </a>
-</div>
-
-Large-scale image and time series analysis with Spark - [project page](http://thunder-project.org)
-
-[![Latest Version](https://img.shields.io/pypi/v/thunder-python.svg)](https://pypi.python.org/pypi/thunder-python)
-[![Build Status](https://img.shields.io/travis/thunder-project/thunder/master.svg)](https://travis-ci.org/thunder-project/thunder) 
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/thunder-project/thunder?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
-About
------
-
-Thunder is a library for analyzing large-scale spatial and temporal data. It's fast to run, easy to extend, and designed for interactivity. It is built on Spark, a new framework for cluster computing.
-
-Thunder includes utilities for loading and saving different formats, classes for working with distributed spatial and temporal data, and modular functions for time series analysis, factorization, and model fitting. Analyses can easily be scripted or combined. It is written against Spark's Python API (Pyspark), making use of scipy, numpy, and scikit-learn.
-
-Documentation
--------------
-
-This README contains basic info on installation and usage and how to get help. See the complete [documentation](http://thunder-project.org/thunder/docs) for more details, tutorials, and API references. We also maintain  separate [development documentation](http://thunder-project.org/thunder/docs-dev) for reference if you are running on Thunder's master branch. 
-
-Quick start
------------
-
-Thunder is designed to run on a cluster, but local testing is a great way to learn and develop. Many computers can install it with just a few simple steps. If you aren't currently using Python for scientific computing, [Anaconda](https://store.continuum.io/cshop/anaconda/) is highly recommended.
-
-1) Download the latest "pre-built for Hadoop 1.x" version of [Spark](http://spark.apache.org/downloads.html) and set an environmental variable
-
-	export SPARK_HOME=/your/path/to/spark
-
-2) Install Thunder
-
-	pip install thunder-python
-
-3) Start Thunder from the terminal
-
-	thunder
-	>> from thunder import ICA
-	>> data = tsc.makeExample("ica")
-	>> model = ICA(c=2).fit(data)
-
-To run in IPython, just set this environmental variable before staring:
-
-	export IPYTHON=1
-
-To run analyses as standalone jobs, use the submit script
-
-	thunder-submit <analysis name or script file> <datadirectory> <outputdirectory> <opts>
-
-We also include a script for launching an Amazon EC2 cluster with Thunder preinstalled
-
-	thunder-ec2 -k mykey -i mykey.pem -s <number-of-nodes> launch <cluster-name>
+[![Latest Version](https://img.shields.io/pypi/v/thunder-python.svg?style=flat-square)](https://pypi.python.org/pypi/thunder-python)
+[![Build Status](https://img.shields.io/travis/thunder-project/thunder/master.svg?style=flat-square)](https://travis-ci.org/thunder-project/thunder) 
+[![Gitter](https://img.shields.io/gitter/room/thunder-project/thunder.svg?style=flat-square)](https://gitter.im/thunder-project/thunder)
+[![Binder](https://img.shields.io/badge/launch-binder-red.svg?style=flat-square)](http://mybinder.org/repo/thunder-project/thunder-docs)
 
 
-Analyses
---------
+> scalable analysis of image and time series analysis in python
 
-Thunder currently includes two primary data types for distributed spatial and temporal data, and five main analysis packages: classification (decoding), clustering, factorization, image processing, and regression. It also provides an entry point for loading and converting a variety of raw data formats, and utilities for exporting or visually inspecting results. Scripts can be used to run standalone analyses, but the underlying classes and functions can be used from within the PySpark shell or an IPython notebook for easy interactive analysis.
+Thunder is an ecosystem of tools for the analysis of image and time series data in Python. It provides data structures and algorithms for loading, processing, and analyzing these  data, and can be useful in a variety of domains, including neuroscience, medical imaging, video processing, and geospatial and climate analysis. It can be used locally, but also supports large-scale analysis through the distributed computing engine [`spark`](https://github.com/apache/spark). All data structures and analyses in Thunder are designed to **run identically and with the same API** whether local or distributed.
 
-Input and output
-----------------
+Thunder is designed around modularity and composability — the core `thunder` package, in this repository, only defines common data structures and read/write patterns, and most functionality is broken out into several related packages. Each one is independently versioned, with its own GitHub repository for organizing issues and contributions. 
 
-The primary data types in Thunder — Images and Series — can each be loaded from a variety of raw input formats, including text or flat binary files (for Series) and binary, tifs, or pngs (for Images). Files can be stored locally, on a networked file system, on Amazon's S3, on Google Storage, or in HDFS. Where needed, metadata (e.g. model parameters) can be provided as numpy arrays or loaded from JSON or MAT files. Results can be visualized directly from the python shell or in IPython notebook using matplotlib, seaborn, or a new interactive visualization library we are developing called [lightning](http://lightning-viz.org)
+This readme provides an overview of the core `thunder` package, its data types, and methods for loading and saving. Tutorials, detailed API documentation, and info about all associated packages can be found at the [documentation site](http://docs.thunder-project.org).
 
-Help
-------------
-We maintain a [chatroom](https://gitter.im/thunder-project/thunder?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) on gitter. You can also post questions or ideas to the [mailing list](https://groups.google.com/forum/?hl=en#!forum/thunder-user). If you find a reproducible bug, submit an [issue](https://github.com/thunder-project/thunder/issues). If posting an issue, please provide information about your environment (e.g. local usage or EC2, operating system) and instructions for reproducing the error.
+## install
 
+The core `thunder` package defines data structures and read/write patterns for images and series data. It is built on [`numpy`](https://github.com/numpy/numpy), [`scipy`](https://github.com/scipy/scipy), [`scikit-learn`](https://github.com/scikit-learn/scikit-learn), and [`scikit-image`](https://github.com/scikit-image/scikit-image), and is compatible with Python 2.7+ and 3.4+. You can install it using:
 
-Contributions
--------------
-Thunder is a community effort, and thus far features contributions from the following individuals:
+```
+pip install thunder-python
+```
 
-Andrew Osheroff, Ben Poole, Chris Stock, Davis Bennett, Jascha Swisher, Jason Wittenbach, Jeremy Freeman, Josh Rosen, Kunal Lillaney, Logan Grosenick, Matt Conlen, Michael Broxton, Noah Young, Ognen Duzlevski, Richard Hofer, Owen Kahn, Ted Fujimoto, Tom Sainsbury, Uri Laseron
+## related packages
 
-If you have ideas or want to contribute, submit an issue or pull request, or reach out to us on [gitter](https://gitter.im/thunder-project/thunder), [twitter](https://twitter.com/thefreemanlab), or the [mailing list](https://groups.google.com/forum/?hl=en#!forum/thunder-user).
+Lots of functionality in Thunder, especially for specific types of analyses, is broken out into the following separate packages. 
+
+- [`thunder-regression`](https://github.com/thunder-project/thunder-regression) mass univariate regression algorithms
+- [`thunder-factorization`](https://github.com/thunder-project/thunder-factorization) matrix factorization algorithms 
+- [`thunder-registration`](https://github.com/thunder-project/thunder-registration) registration for image sequences
+
+You can install the ones you want with `pip`, for example
+
+```
+pip install thunder-regression
+pip install thunder-registration
+```
+
+## example
+
+Here's a short snippet showing how to load an image sequence (in this case random data), median filter it, transform it to a series, detrend and compute a fourier transform on each pixel, then convert it to an array.
+
+```python
+import thunder as td
+
+data = td.images.fromrandom()
+ts = data.median_filter(3).toseries()
+frequencies = ts.detrend().fourier(freq=3).toarray()
+```
+
+## usage
+
+Most workflows in Thunder begin by loading data, which can come from a variety of sources and locations, and can be either local or distributed (see below).
+
+The two primary data types are `images` and `series`. `images` are used for collections or sequences of images, and are especially useful when working with movie data. `series` are used for collections of one-dimensional arrays, often representing time series.
+
+Once loaded, each data type can be manipulated through a variety of statistical operators, including simple statistical aggregiations like `mean` `min` and `max` or more complex operations like `gaussian_filter` `detrend` and `subsample`. Both `images` and `series` objects are wrappers for ndarrays: either a local [`numpy`](https://github.com/numpy/numpy) `ndarray` or a distributed ndarray using [`bolt`](https://github.com/bolt-project/bolt) and [`spark`](https://github.com/apache/spark). Calling `toarray()` on an `images` or `series` object at any time returns a local [`numpy`](https://github.com/numpy/numpy) `ndarray`, which is an easy way to move between Thunder and other Python data analysis tools, like [`pandas`](https://github.com/pydata/pandas) and [`scikit-learn`](https://github.com/scikit-learn/scikit-learn).
+
+For a full list of methods on `image` and `series` data, see the [documentation site](http://docs.thunder-project.org).
+
+## loading data
+
+Both `images` and `series` can be loaded from a variety of data types and locations. For all loading methods, the optional argument `engine` allows you to specify whether data should be loaded in `'local'` mode, which is backed by a `numpy` array, or in `'spark'` mode, which is backed by an RDD.
+
+All loading methods are available on the module for the corresponding data type, for example
+
+```python
+import thunder as td
+
+data = td.images.fromtif('/path/to/tifs')
+data = td.series.fromarray(somearray)
+data_distributed = ts.series.fromarray(somearray, engine=sc)
+```
+
+The argument `engine` can be either `None` for local use or a `SparkContext` for distributed use with Spark. And in either case, methods that load from files e.g. `fromtif` or `frombinary` can load from either a local filesystem or Amazon S3, with the optional argument `credentials` for S3 credentials. See the [documentation site](http://docs.thunder-project.org) for a full list of data loading methods.
+
+## using with spark
+
+Thunder doesn't require Spark and can run locally without it, but Spark and Thunder work great together! To install and configure a Spark cluster, consult the official [Spark documentation](http://spark.apache.org/docs/latest). Thunder supports Spark version 1.5+, and uses the Python API PySpark. If you have Spark installed, you can install Thunder just by calling `pip install thunder-python` on both the master node and all worker nodes of your cluster. Alternatively, you can clone this GitHub repository, and make sure it is on the `PYTHONPATH` of both the master and worker nodes. 
+
+Once you have a running cluster with a valid `SparkContext` — this is created automatically as the variable `sc` if you call the `pyspark` executable — you can pass it as the `engine` to any of Thunder's loading methods, and this will load your data in distributed `'spark'` mode. In this mode, all operations will be parallelized, and chained operations will be lazily executed.
+
+## contributing
+
+Thunder is a community effort! The codebase so far is due to the excellent work of the following individuals:
+
+> Andrew Osheroff, Ben Poole, Chris Stock, Davis Bennett, Jascha Swisher, Jason Wittenbach, Jeremy Freeman, Josh Rosen, Kunal Lillaney, Logan Grosenick, Matt Conlen, Michael Broxton, Noah Young, Ognen Duzlevski, Richard Hofer, Owen Kahn, Ted Fujimoto, Tom Sainsbury, Uri Laseron
+
+If you run into a problem, have a feature request, or want to contribute, submit an issue or a pull request, or come talk to us in the [chatroom](https://gitter.im/thunder-project/thunder)!

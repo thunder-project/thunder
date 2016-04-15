@@ -1,2 +1,2 @@
-nose
-termcolor
+pytest
+station >= 2.0.0
