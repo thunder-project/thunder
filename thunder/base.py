@@ -1,6 +1,6 @@
 from numpy import array, asarray, ndarray, prod, ufunc, add, subtract, \
     multiply, divide, isscalar, newaxis, unravel_index, argsort
-from bolt.utils import inshape, tupleize
+from bolt.utils import inshape, tupleize, slicify
 from bolt.base import BoltArray
 from bolt.spark.array import BoltArraySpark
 from bolt.spark.chunk import ChunkedArray
@@ -195,11 +195,11 @@ class Data(Base):
     _attributes = Base._attributes + ['labels']
 
     def __getitem__(self, item):
-        # handle values
+        # handle values -- convert ints to slices so no dimensions are dropped
         if isinstance(item, int):
-            item = slice(item, item+1, None)
+            item = tuple([slicify(item, self.shape[0])])
         if isinstance(item, tuple):
-            item = tuple([slice(i, i+1, None) if isinstance(i, int) else i for i in item])
+            item = tuple([slicify(i, n) if isinstance(i, int) else i for i, n in zip(item, self.shape[:len(item)])])
         if isinstance(item, (list, ndarray)):
             item = (item,)
         new = self._values.__getitem__(item)
