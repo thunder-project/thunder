@@ -33,7 +33,17 @@ class Blocks(Base):
             return self.tordd().count()
 
         if self.mode == 'local':
-            return prod(self.values.shape)
+            return prod(self.values.values.shape)
+
+    def collect_blocks(self):
+        """
+        Collect the blocks in a list
+        """
+        if self.mode == 'spark':
+            return self.values.tordd().values().collect()
+
+        if self.mode == 'local':
+            return self.values.values.flatten().tolist()
 
     def map(self, func, dims=None, dtype=None):
         """

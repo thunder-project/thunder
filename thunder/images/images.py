@@ -79,6 +79,8 @@ class Images(Data):
             blocks = self.values.chunk(size).keys_to_values((0,))
 
         if self.mode == 'local':
+            if isinstance(size, basestring):
+                raise ValueError("block size must be a tuple for local mode")
             plan = (self.shape[0],) + tuple(size)
             blocks = LocalBlocks.block(self.values, plan)
 
