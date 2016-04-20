@@ -6,11 +6,9 @@ from thunder.images.readers import fromlist
 pytestmark = pytest.mark.usefixtures("eng")
 
 def test_conversion(eng):
-    if eng is None:
-        return
     a = arange(8).reshape((4, 2))
     data = fromlist([a, a], engine=eng)
-    vals = data.toblocks((2, 2)).tordd().sortByKey().values().collect()
+    vals = data.toblocks((2, 2)).collect_blocks()
     truth = [array([a[0:2, 0:2], a[0:2, 0:2]]), array([a[2:4, 0:2], a[2:4, 0:2]])]
     assert allclose(vals, truth)
 
