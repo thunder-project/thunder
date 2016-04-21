@@ -41,7 +41,7 @@ class LocalBlocks:
             self.dtype = self.first.dtype
 
         if self.padding is None:
-            padding = len(self.shape)*(0,)
+            self.padding = len(self.shape)*(0,)
 
     @property
     def first(self):
@@ -112,7 +112,7 @@ class LocalBlocks:
         -------
         ndarray
         """
-        if self.padding is not None:
+        if self.padding != len(self.shape)*(0,):
             shape = self.values.shape
             arr = empty(shape, dtype=object)
             for inds in product(*[arange(s) for s in shape]):

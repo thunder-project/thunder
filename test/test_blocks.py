@@ -21,6 +21,22 @@ def test_full(eng):
     assert allclose(vals, truth)
 
 
+def test_padding(eng):
+    a = arange(30).reshape((5, 6))
+    data = fromlist([a, a], engine=eng)
+
+    blocks = data.toblocks((2, 3), padding=(1, 1))
+    vals = blocks.collect_blocks()
+    shapes = list(map(lambda x: x.shape, vals))
+    truth = [(2, 3, 4), (2, 3, 4), (2, 4, 4), (2, 4, 4), (2, 2, 4), (2, 2, 4)]
+    assert allclose(array(shapes), array(truth))
+
+    truth = data.toarray()
+    assert allclose(data.toblocks((2, 3), padding=1).toarray(), truth)
+    assert allclose(data.toblocks((2, 3), padding=(0, 1)).toarray(), truth)
+    assert allclose(data.toblocks((2, 3), padding=(1, 1)).toarray(), truth)
+
+
 def test_count(eng):
     a = arange(8).reshape((2, 4))
     data = fromlist([a], engine=eng)

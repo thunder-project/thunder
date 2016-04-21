@@ -25,7 +25,7 @@ class Blocks(Base):
 
     @property
     def padding(self):
-        return self.values.padding
+        return tuple(self.values.padding)
 
     def count(self):
         """
@@ -94,3 +94,13 @@ class Blocks(Base):
             values = rollaxis(values, 0, values.ndim)
 
         return Series(values)
+
+    def toarray(self):
+        """
+        Convert blocks to local ndarray
+        """
+        if self.mode == 'spark':
+            return self.values.unchunk().toarray()
+
+        if self.mode == 'local':
+            return self.values.unblock()
