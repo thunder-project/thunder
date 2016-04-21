@@ -186,16 +186,15 @@ def test_map_as_series(eng):
     def f(x):
         return x - mean(x)
     result = apply_along_axis(f, 0, data.toarray())
+    size = (2, 2)
 
-    assert allclose(data.map_as_series(f).toarray(), result)
-    assert allclose(data.map_as_series(f, value_size=5).toarray(), result)
-    assert allclose(data.map_as_series(f, block_size=(2, 2)).toarray(), result)
+    assert allclose(data.map_as_series(f, block_size=size).toarray(), result)
+    assert allclose(data.map_as_series(f, block_size=size, value_size=5).toarray(), result)
 
     # function does change size of series
     def f(x):
         return x[:-1]
     result = apply_along_axis(f, 0, data.toarray())
 
-    assert allclose(data.map_as_series(f).toarray(), result)
-    assert allclose(data.map_as_series(f, value_size=4).toarray(), result)
-    assert allclose(data.map_as_series(f, block_size=(2, 2)).toarray(), result)
+    assert allclose(data.map_as_series(f, block_size=size).toarray(), result)
+    assert allclose(data.map_as_series(f, block_size=size, value_size=4).toarray(), result)
