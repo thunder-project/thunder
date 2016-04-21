@@ -10,7 +10,7 @@ class Blocks(Base):
 
     Subclasses of Blocks will be returned by an images.toBlocks() call.
     """
-    _metadata = Base._metadata + ['blockshape']
+    _metadata = Base._metadata + ['blockshape', 'padding']
 
     def __init__(self, values):
         super(Blocks, self).__init__(values)
@@ -22,6 +22,10 @@ class Blocks(Base):
     @property
     def blockshape(self):
         return tuple(self.values.plan)
+
+    @property
+    def padding(self):
+        return self.values.padding
 
     def count(self):
         """

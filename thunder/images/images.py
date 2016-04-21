@@ -62,7 +62,7 @@ class Images(Data):
         if self.mode == 'spark':
             return self.values.tordd().values().first()
 
-    def toblocks(self, size='150'):
+    def toblocks(self, size='150', padding=None):
         """
         Convert to blocks which represent subdivisions of the images data.
 
@@ -72,17 +72,21 @@ class Images(Data):
             String interpreted as memory size (in megabytes, e.g. '64').
             Tuple of ints interpreted as 'pixels per dimension'.
             Only valid in spark mode.
+
+        padding : tuple or int
+            Amount of padding along each dimensions for blocks. If an int, then
+            the same amount of padding is used for all dimensions
         """
         from thunder.blocks.blocks import Blocks
 
         if self.mode == 'spark':
-            blocks = self.values.chunk(size).keys_to_values((0,))
+            blocks = self.values.chunk(size, padding=padding).keys_to_values((0,))
 
         if self.mode == 'local':
             if isinstance(size, str):
                 raise ValueError("block size must be a tuple for local mode")
             plan = (self.shape[0],) + tuple(size)
-            blocks = LocalBlocks.block(self.values, plan)
+            blocks = LocalBlocks.block(self.values, plan, padding=padding)
 
         return Blocks(blocks)
 
