@@ -56,6 +56,12 @@ class Blocks(Base):
         mapped = self.values.map(func, value_shape=dims, dtype=dtype)
         return self._constructor(mapped).__finalize__(self, noprop=('dtype',))
 
+    def map_generic(self, func):
+        """
+        Apply an arbitrary array -> object function to each blocks.
+        """
+        return self.values.map_generic(func) 
+
     def first(self):
         """
         Return the first element.

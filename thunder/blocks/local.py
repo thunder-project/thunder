@@ -160,3 +160,12 @@ class LocalBlocks:
         for i, a in enumerate(self.values.flatten()):
             mapped[i] = func(a)
         return LocalBlocks(mapped.reshape(self.values.shape), newshape, value_shape, dtype)
+
+    def map_generic(self, func):
+
+        shape = self.values.shape
+        n = prod(shape)
+        arr = empty(n, dtype=object)
+        for i, x in enumerate(self.values.flatten()):
+            arr[i] = func(x)
+        return arr.reshape(shape)
