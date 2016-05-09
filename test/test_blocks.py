@@ -67,16 +67,6 @@ def test_shape(eng):
     assert all([v.shape == (3, 10, 10) for v in values])
 
 
-def test_local_mode(eng):
-    a = arange(64).reshape((8, 8))
-    data = fromlist([a, a])
-    if data.mode == 'local':
-        blocks = data.toblocks((4, 4))
-        assert allclose(blocks.values, data.values)
-        assert blocks.count() == 1
-        assert blocks.blockshape == (2, 8, 8)
-
-
 def test_map(eng):
     a = arange(8).reshape((4, 2))
     data = fromlist([a, a], engine=eng)
