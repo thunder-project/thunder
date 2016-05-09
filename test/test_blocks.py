@@ -80,6 +80,7 @@ def test_local_mode(eng):
 def test_map(eng):
     a = arange(8).reshape((4, 2))
     data = fromlist([a, a], engine=eng)
-    blocks = data.toblocks((4, 2))
-    assert blocks.map(lambda x: 1.0 * x, dtype=float64).dtype == float64
-    assert blocks.map(lambda x: 1.0 * x).dtype == float64
+    map1 = data.toblocks((4, 2)).map(lambda x: 1.0 * x, dtype=float64).toimages()
+    map2 = data.toblocks((4, 2)).map(lambda x: 1.0 * x).toimages()
+    assert map1.dtype == float64
+    assert map2.dtype == float64
