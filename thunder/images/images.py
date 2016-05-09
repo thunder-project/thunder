@@ -173,7 +173,7 @@ class Images(Data):
 
         return self._constructor(result)
 
-    def map(self, func, dims=None, with_keys=False):
+    def map(self, func, dims=None, dtype=None, with_keys=False):
         """
         Map an array -> array function over each image.
 
@@ -185,10 +185,13 @@ class Images(Data):
         dims : tuple, optional, default = None
             If known, the dimensions of the data following function evaluation.
 
+        dtype : numpy.dtype, optional, default = None
+            If known, the type of the data following function evaluation.
+
         with_keys : boolean, optional, default = False
             If true, function should be of both tuple indices and values.
         """
-        return self._map(func, axis=0, value_shape=dims, with_keys=with_keys)
+        return self._map(func, axis=0, value_shape=dims, dtype=dtype, with_keys=with_keys)
 
     def reduce(self, func):
         """
