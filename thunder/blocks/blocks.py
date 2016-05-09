@@ -1,3 +1,5 @@
+from numpy import prod, rollaxis
+
 from ..base import Base
 import logging
 
@@ -19,11 +21,7 @@ class Blocks(Base):
 
     @property
     def blockshape(self):
-        if self.mode == 'spark':
-            return tuple(self.values.plan)
-
-        if self.mode == 'local':
-            return tuple(self.values.shape)
+        return tuple(self.values.plan)
 
     def count(self):
         """
@@ -35,21 +33,23 @@ class Blocks(Base):
             return self.tordd().count()
 
         if self.mode == 'local':
-            return 1
+            return prod(self.values.values.shape)
+
+    def collect_blocks(self):
+        """
+        Collect the blocks in a list
+        """
+        if self.mode == 'spark':
+            return self.values.tordd().values().collect()
+
+        if self.mode == 'local':
+            return self.values.values.flatten().tolist()
 
     def map(self, func, dims=None, dtype=None):
         """
         Apply an array -> array function to each block
         """
-        if self.mode == 'spark':
-            mapped = self.values.map(func, value_shape=dims, dtype=dtype)
-
-        if self.mode == 'local':
-            if dims is not None:
-                logger = logging.getLogger('thunder')
-                logger.warn("dims has no meaning in Blocks.map in local mode")
-            mapped = func(self.values)
-
+        mapped = self.values.map(func, value_shape=dims, dtype=dtype)
         return self._constructor(mapped).__finalize__(self, noprop=('dtype',))
 
     def first(self):
@@ -60,7 +60,7 @@ class Blocks(Base):
             return self.values.tordd().values().first()
 
         if self.mode == 'local':
-            return self.values
+            return self.values.first
 
     def toimages(self):
         """
@@ -72,7 +72,7 @@ class Blocks(Base):
             values = self.values.values_to_keys((0,)).unchunk()
 
         if self.mode == 'local':
-            values = self.values
+            values = self.values.unblock()
 
         return Images(values)
 
@@ -86,7 +86,7 @@ class Blocks(Base):
             values = self.values.values_to_keys(tuple(range(1, len(self.shape)))).unchunk()
 
         if self.mode == 'local':
-            n = len(self.shape) - 1
-            values = self.values.transpose(tuple(range(1, n+1)) + (0,))
+            values = self.values.unblock()
+            values = rollaxis(values, 0, values.ndim)
 
         return Series(values)

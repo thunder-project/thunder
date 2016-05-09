@@ -1,8 +1,10 @@
 import logging
 from numpy import ndarray, arange, amax, amin, size, asarray, random, prod, \
     apply_along_axis
+from itertools import product
 
 from ..base import Data
+from ..blocks.local import LocalBlocks
 
 
 class Images(Data):
@@ -67,8 +69,8 @@ class Images(Data):
         Parameters
         ----------
         size : str, or tuple of block size per dimension,
-            String interpreted as memory size (in megabytes, e.g. '64'). 
-            Tuple of ints interpreted as 'pixels per dimension'. 
+            String interpreted as memory size (in megabytes, e.g. '64').
+            Tuple of ints interpreted as 'pixels per dimension'.
             Only valid in spark mode.
         """
         from thunder.blocks.blocks import Blocks
@@ -77,10 +79,10 @@ class Images(Data):
             blocks = self.values.chunk(size).keys_to_values((0,))
 
         if self.mode == 'local':
-            if size != '150':
-                logger = logging.getLogger('thunder')
-                logger.warn('size has no meaning in Images.toblocks in local mode')
-            blocks = self.values
+            if isinstance(size, str):
+                raise ValueError("block size must be a tuple for local mode")
+            plan = (self.shape[0],) + tuple(size)
+            blocks = LocalBlocks.block(self.values, plan)
 
         return Blocks(blocks)
 
@@ -288,8 +290,8 @@ class Images(Data):
         Parameters
         ----------
         factor : positive int or tuple of positive ints
-            Stride to use in subsampling. If a single int is passed, 
-            each dimension of the image will be downsampled by this factor. 
+            Stride to use in subsampling. If a single int is passed,
+            each dimension of the image will be downsampled by this factor.
             If a tuple is passed, each dimension will be downsampled by the given factor.
         """
         dims = self.dims
@@ -318,12 +320,12 @@ class Images(Data):
         Parameters
         ----------
         sigma : scalar or sequence of scalars, default = 2
-            Size of the filter size as standard deviation in pixels. 
-            A sequence is interpreted as the standard deviation for each axis. 
+            Size of the filter size as standard deviation in pixels.
+            A sequence is interpreted as the standard deviation for each axis.
             A single scalar is applied equally to all axes.
 
         order : choice of 0 / 1 / 2 / 3 or sequence from same set, optional, default = 0
-            Order of the gaussian kernel, 0 is a gaussian, 
+            Order of the gaussian kernel, 0 is a gaussian,
             higher numbers correspond to derivatives of a gaussian.
         """
         from scipy.ndimage.filters import gaussian_filter
@@ -339,8 +341,8 @@ class Images(Data):
         Parameters
         ----------
         size: int, optional, default = 2
-            Size of the filter neighbourhood in pixels. 
-            A sequence is interpreted as the neighborhood size for each axis. 
+            Size of the filter neighbourhood in pixels.
+            A sequence is interpreted as the neighborhood size for each axis.
             A single scalar is applied equally to all axes.
         """
         return self._image_filter(filter='uniform', size=size)
@@ -354,8 +356,8 @@ class Images(Data):
         parameters
         ----------
         size: int, optional, default = 2
-            Size of the filter neighbourhood in pixels. 
-            A sequence is interpreted as the neighborhood size for each axis. 
+            Size of the filter neighbourhood in pixels.
+            A sequence is interpreted as the neighborhood size for each axis.
             A single scalar is applied equally to all axes.
         """
         return self._image_filter(filter='median', size=size)
