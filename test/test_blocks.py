@@ -1,9 +1,10 @@
 import pytest
-from numpy import arange, array, allclose, ones
+from numpy import arange, array, allclose, ones, float64
 
 from thunder.images.readers import fromlist
 
 pytestmark = pytest.mark.usefixtures("eng")
+
 
 def test_conversion(eng):
     if eng is None:
@@ -81,6 +82,7 @@ def test_shape(eng):
     assert blocks.blockshape == (3, 10, 10)
     assert all([v.shape == (3, 10, 10) for v in values])
 
+
 def test_local_mode(eng):
     a = arange(64).reshape((8, 8))
     data = fromlist([a, a])
@@ -89,3 +91,13 @@ def test_local_mode(eng):
         assert allclose(blocks.values, data.values)
         assert blocks.count() == 1
         assert blocks.blockshape == (2, 8, 8)
+
+
+def test_map(eng):
+    if eng is None:
+        return
+    a = arange(8).reshape((4, 2))
+    data = fromlist([a, a], engine=eng)
+    blocks = data.toblocks((4, 2))
+    assert blocks.map(lambda x: 1.0 * x, dtype=float64).dtype == float64
+    assert blocks.map(lambda x: 1.0 * x).dtype == float64
