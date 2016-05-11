@@ -60,7 +60,7 @@ class Blocks(Base):
         """
         Apply an arbitrary array -> object function to each blocks.
         """
-        return self.values.map_generic(func) 
+        return self.values.map_generic(func)[0] 
 
     def first(self):
         """
