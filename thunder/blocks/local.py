@@ -32,11 +32,14 @@ class LocalChunks:
         self.values = values
         self.shape = shape
         self.plan = plan
+        self.dtype = dtype
         self.padding = padding
-        if dtype is None:
+
+        if self.dtype is None:
             self.dtype = self.first.dtype
-        if dtype is None:
-            print("NONE!")
+
+        if self.padding is None:
+            self.padding = len(self.shape)*(0,)
 
     @property
     def first(self):
@@ -70,9 +73,9 @@ class LocalChunks:
         if padding is None:
             pad = arr.ndim*(0,)
         elif isinstance(padding, int):
-            pad = arr.ndim*(padding,)
+            pad = (0,) + (arr.ndim-1)*(padding,)
         else:
-            pad = padding
+            pad = (0,) + padding
 
         shape = arr.shape
 
@@ -84,8 +87,12 @@ class LocalChunks:
             raise ValueError("Padding sizes %s cannot exceed chunk sizes %s along any axis"
                              % (tuple(pad), tuple(plan)))
 
+        def rectify(x):
+            x[x<0] = 0
+            return x
+
         breaks = [r_[arange(0, n, s), n] for n, s in zip(shape, plan)]
-        limits = [zip(array(b[:-1])-p, array(b[1:])+p) for b, p in zip(breaks, pad)]
+        limits = [zip(rectify(b[:-1]-p), b[1:]+p) for b, p in zip(breaks, pad)]
         slices = product(*[[slice(x[0], x[1]) for x in l] for l in limits])
         vals = [arr[s] for s in slices]
         newarr = empty(len(vals), dtype=object)
@@ -93,7 +100,7 @@ class LocalChunks:
             newarr[i] = vals[i]
         newsize = [b.shape[0]-1 for b in breaks]
         newarr = newarr.reshape(*newsize)
-        return LocalChunks(newarr, shape, plan, dtype=arr.dtype, padding=padding)
+        return LocalChunks(newarr, shape, plan, dtype=arr.dtype, padding=pad)
 
     def unchunk(self):
         """
@@ -103,20 +110,20 @@ class LocalChunks:
         -------
         ndarray
         """
-        if self.padding is not None:
+        if self.padding != len(self.shape)*(0,):
             shape = self.values.shape
             arr = empty(shape, dtype=object)
-            for inds in product([arange(s) for s in shape]):
+            for inds in product(*[arange(s) for s in shape]):
                 slices = []
                 for i, p, n in zip(inds, self.padding, shape):
-                    start = None if i == 0 else p
-                    stop = None if i == n else -p
-                    slices += slice(start, stop, None)
-                arr[inds] = arr[inds][slices]
+                    start = None if (i == 0 or p == 0) else p
+                    stop = None if (i == n-1 or p == 0) else -p
+                    slices.append(slice(start, stop, None))
+                arr[inds] = self.values[inds][tuple(slices)]
         else:
             arr = self.values
 
-        return allstack(self.values.tolist())
+        return allstack(arr.tolist())
 
     def map(self, func, value_shape=None, dtype=None):
 
