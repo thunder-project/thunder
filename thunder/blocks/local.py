@@ -100,7 +100,7 @@ class LocalChunks:
             newarr[i] = vals[i]
         newsize = [b.shape[0]-1 for b in breaks]
         newarr = newarr.reshape(*newsize)
-        return LocalChunks(newarr, shape, plan, dtype=arr.dtype, padding=padding)
+        return LocalChunks(newarr, shape, plan, dtype=arr.dtype, padding=pad)
 
     def unchunk(self):
         """
