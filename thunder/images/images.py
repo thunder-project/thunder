@@ -4,7 +4,6 @@ from numpy import ndarray, arange, amax, amin, size, asarray, random, prod, \
 from itertools import product
 
 from ..base import Data
-from ..blocks.local import LocalBlocks
 
 
 class Images(Data):
@@ -78,17 +77,18 @@ class Images(Data):
             the same amount of padding is used for all dimensions
         """
         from thunder.blocks.blocks import Blocks
+        from thunder.blocks.local import LocalChunks
 
         if self.mode == 'spark':
-            blocks = self.values.chunk(size, padding=padding).keys_to_values((0,))
+            chunks = self.values.chunk(size, padding=padding).keys_to_values((0,))
 
         if self.mode == 'local':
             if isinstance(size, str):
                 raise ValueError("block size must be a tuple for local mode")
             plan = (self.shape[0],) + tuple(size)
-            blocks = LocalBlocks.block(self.values, plan, padding=padding)
+            chunks = LocalChunks.chunk(self.values, plan, padding=padding)
 
-        return Blocks(blocks)
+        return Blocks(chunks)
 
     def toseries(self, size='150'):
         """
@@ -177,7 +177,7 @@ class Images(Data):
 
         return self._constructor(result)
 
-    def map(self, func, dims=None, with_keys=False):
+    def map(self, func, dims=None, dtype=None, with_keys=False):
         """
         Map an array -> array function over each image.
 
@@ -189,10 +189,13 @@ class Images(Data):
         dims : tuple, optional, default = None
             If known, the dimensions of the data following function evaluation.
 
+        dtype : numpy.dtype, optional, default = None
+            If known, the type of the data following function evaluation.
+
         with_keys : boolean, optional, default = False
             If true, function should be of both tuple indices and values.
         """
-        return self._map(func, axis=0, value_shape=dims, with_keys=with_keys)
+        return self._map(func, axis=0, value_shape=dims, dtype=dtype, with_keys=with_keys)
 
     def reduce(self, func):
         """

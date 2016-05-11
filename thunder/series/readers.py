@@ -56,7 +56,13 @@ def fromrdd(rdd, nrecords=None, shape=None, index=None, labels=None, dtype=None)
     if shape is None:
         shape = (nrecords, asarray(index).shape[0])
 
-    values = BoltArraySpark(rdd, shape=shape, dtype=dtype, split=len(shape)-1)
+    def process_keys(record):
+        k, v = record
+        if isinstance(k, int):
+            k = (k,)
+        return k, v
+
+    values = BoltArraySpark(rdd.map(process_keys), shape=shape, dtype=dtype, split=len(shape)-1)
     return Series(values, index=index, labels=labels)
 
 def fromarray(values, index=None, labels=None, npartitions=None, engine=None):

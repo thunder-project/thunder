@@ -42,7 +42,13 @@ def fromrdd(rdd, dims=None, nrecords=None, dtype=None, labels=None):
     if nrecords is None:
         nrecords = rdd.count()
 
-    values = BoltArraySpark(rdd, shape=(nrecords,) + tuple(dims), dtype=dtype, split=1)
+    def process_keys(record):
+        k, v = record
+        if isinstance(k, int):
+            k = (k,)
+        return k, v
+
+    values = BoltArraySpark(rdd.map(process_keys), shape=(nrecords,) + tuple(dims), dtype=dtype, split=1)
     return Images(values, labels=labels)
 
 def fromarray(values, labels=None, npartitions=None, engine=None):
