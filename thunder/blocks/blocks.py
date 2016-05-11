@@ -103,4 +103,4 @@ class Blocks(Base):
             return self.values.unchunk().toarray()
 
         if self.mode == 'local':
-            return self.values.unblock()
+            return self.values.unchunk()

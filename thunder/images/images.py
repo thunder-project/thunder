@@ -86,7 +86,7 @@ class Images(Data):
             if isinstance(size, str):
                 raise ValueError("block size must be a tuple for local mode")
             plan = (self.shape[0],) + tuple(size)
-            chunks = LocalBlocks.block(self.values, plan, padding=padding)
+            chunks = LocalChunks.chunk(self.values, plan, padding=padding)
 
         return Blocks(chunks)
 
