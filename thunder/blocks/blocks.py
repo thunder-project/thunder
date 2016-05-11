@@ -72,7 +72,7 @@ class Blocks(Base):
             values = self.values.values_to_keys((0,)).unchunk()
 
         if self.mode == 'local':
-            values = self.values.unblock()
+            values = self.values.unchunk()
 
         return Images(values)
 
@@ -86,7 +86,7 @@ class Blocks(Base):
             values = self.values.values_to_keys(tuple(range(1, len(self.shape)))).unchunk()
 
         if self.mode == 'local':
-            values = self.values.unblock()
+            values = self.values.unchunk()
             values = rollaxis(values, 0, values.ndim)
 
         return Series(values)

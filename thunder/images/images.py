@@ -4,7 +4,6 @@ from numpy import ndarray, arange, amax, amin, size, asarray, random, prod, \
 from itertools import product
 
 from ..base import Data
-from ..blocks.local import LocalBlocks
 
 
 class Images(Data):
@@ -74,17 +73,18 @@ class Images(Data):
             Only valid in spark mode.
         """
         from thunder.blocks.blocks import Blocks
+        from thunder.blocks.local import LocalChunks
 
         if self.mode == 'spark':
-            blocks = self.values.chunk(size).keys_to_values((0,))
+            chunks = self.values.chunk(size).keys_to_values((0,))
 
         if self.mode == 'local':
             if isinstance(size, str):
                 raise ValueError("block size must be a tuple for local mode")
             plan = (self.shape[0],) + tuple(size)
-            blocks = LocalBlocks.block(self.values, plan)
+            chunks = LocalChunks.chunk(self.values, plan)
 
-        return Blocks(blocks)
+        return Blocks(chunks)
 
     def toseries(self, size='150'):
         """
