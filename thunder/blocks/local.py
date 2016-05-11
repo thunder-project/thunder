@@ -6,30 +6,28 @@ from ..base import Base
 import logging
 
 
-class LocalBlocks:
+class LocalChunks:
     """
-    Light-weight class for a blocked local ndarray.
-
+    Simple helper class for a local chunked ndarray.
     """
 
     def __init__(self, values, shape, plan, dtype=None, padding=None):
         """
-        Create a blocked ndarray from the required values
+        Create a chunked ndarray.
 
         Parameters
         ----------
         values : ndarray (dtype 'object') or ndarrays
-            Array containing all of blocks
+            Array containing all the chunks.
 
         shape : tuple
-            Shape of the full unblocked array
+            Shape of the full unchunked array.
 
         plan : tuple
-            Shape of each block (excluding edge effects)
+            Shape of each chunk (excluding edge effects).
 
-        dtype : NumPy dtype, optional, default = None
-            dtype of blocks. If not given, will be inferred from first block
-
+        dtype : numpy dtype, optional, default = None
+            dtype of chunks. If not given, will be inferred from first chunk.
         """
         self.values = values
         self.shape = shape
@@ -46,30 +44,30 @@ class LocalBlocks:
     @property
     def first(self):
         """
-        first block
+        First chunk
         """
         return self.values[tuple(zeros(len(self.values.shape)))]
 
     @staticmethod
-    def block(arr, plan, padding=None):
+    def chunk(arr, plan, padding=None):
         """
-        Create a blocks array from a full array and a blocking plan
+        Created a chunked array from a full array and a chunking plan.
 
         Parameters
         ----------
         array : ndarray
-            Array that will be broken into blocks
+            Array that will be broken into chunks
 
         plan : tuple
-            Shape of desired blocks (up to edge effects)
+            Shape of desired chunks (up to edge effects)
 
         padding : tuple or int
-            Amount of padding along each dimensions for blocks. If an int, then
+            Amount of padding along each dimensions for chunks. If an int, then
             the same amount of padding is used for all dimensions
 
         Returns
         -------
-        LocalBlocks
+        LocalChunks
         """
 
         if padding is None:
@@ -102,11 +100,11 @@ class LocalBlocks:
             newarr[i] = vals[i]
         newsize = [b.shape[0]-1 for b in breaks]
         newarr = newarr.reshape(*newsize)
-        return LocalBlocks(newarr, shape, plan, dtype=arr.dtype, padding=pad)
+        return LocalChunks(newarr, shape, plan, dtype=arr.dtype, padding=padding)
 
-    def unblock(self):
+    def unchunk(self):
         """
-        Reconstitute the blocked array back into a full ndarray
+        Reconstitute the chunked array back into a full ndarray.
 
         Returns
         -------
@@ -146,7 +144,7 @@ class LocalBlocks:
 
         # check that no dimensions are dropped
         if len(value_shape) != len(self.plan):
-            raise NotImplementedError('map on ChunkedArray cannot drop dimensions')
+            raise NotImplementedError('map on chunked array cannot drop dimensions')
 
         # check that chunked dimensions did not change shape
         if any([value_shape[i] != self.plan[i] for i in blocked_dims]):
@@ -159,4 +157,4 @@ class LocalBlocks:
         mapped = empty(c, dtype=object)
         for i, a in enumerate(self.values.flatten()):
             mapped[i] = func(a)
-        return LocalBlocks(mapped.reshape(self.values.shape), newshape, value_shape, dtype)
+        return LocalChunks(mapped.reshape(self.values.shape), newshape, value_shape, dtype)

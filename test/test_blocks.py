@@ -1,9 +1,10 @@
 import pytest
-from numpy import arange, array, allclose, ones
+from numpy import arange, array, allclose, ones, float64
 
 from thunder.images.readers import fromlist
 
 pytestmark = pytest.mark.usefixtures("eng")
+
 
 def test_conversion(eng):
     a = arange(8).reshape((4, 2))
@@ -80,3 +81,12 @@ def test_shape(eng):
     values = blocks.collect_blocks()
     assert blocks.blockshape == (3, 10, 10)
     assert all([v.shape == (3, 10, 10) for v in values])
+
+
+def test_map(eng):
+    a = arange(8).reshape((4, 2))
+    data = fromlist([a, a], engine=eng)
+    map1 = data.toblocks((4, 2)).map(lambda x: 1.0 * x, dtype=float64).toimages()
+    map2 = data.toblocks((4, 2)).map(lambda x: 1.0 * x).toimages()
+    assert map1.dtype == float64
+    assert map2.dtype == float64
