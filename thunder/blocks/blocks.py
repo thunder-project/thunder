@@ -40,7 +40,7 @@ class Blocks(Base):
         Collect the blocks in a list
         """
         if self.mode == 'spark':
-            return self.values.tordd().values().collect()
+            return self.values.tordd().sortByKey().values().collect()
 
         if self.mode == 'local':
             return self.values.values.flatten().tolist()
