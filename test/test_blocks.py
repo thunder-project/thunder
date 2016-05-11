@@ -1,5 +1,5 @@
 import pytest
-from numpy import arange, array, allclose, ones, float64
+from numpy import arange, array, allclose, ones, float64, asarray
 
 from thunder.images.readers import fromlist
 
@@ -90,3 +90,12 @@ def test_map(eng):
     map2 = data.toblocks((4, 2)).map(lambda x: 1.0 * x).toimages()
     assert map1.dtype == float64
     assert map2.dtype == float64
+
+def test_map_generic(eng):
+    a = arange(3*4).reshape((3, 4))
+    data = fromlist([a, a], engine=eng)
+    b = asarray(data.toblocks((2, 2)).map_generic(lambda x: [0, 1]))
+    assert b.shape == (2, 2)
+    assert b.dtype == object
+    truth = [v == [0, 1] for v in b.flatten()]
+    assert all(truth)

@@ -28,6 +28,9 @@ class LocalChunks:
 
         dtype : numpy dtype, optional, default = None
             dtype of chunks. If not given, will be inferred from first chunk.
+
+        padding: tuple, optional, default = None
+            amount of padding in each dimension to include in each block
         """
         self.values = values
         self.shape = shape
@@ -158,3 +161,12 @@ class LocalChunks:
         for i, a in enumerate(self.values.flatten()):
             mapped[i] = func(a)
         return LocalChunks(mapped.reshape(self.values.shape), newshape, value_shape, dtype)
+
+    def map_generic(self, func):
+
+        shape = self.values.shape
+        n = prod(shape)
+        arr = empty(n, dtype=object)
+        for i, x in enumerate(self.values.flatten()):
+            arr[i] = func(x)
+        return arr.reshape(shape)
