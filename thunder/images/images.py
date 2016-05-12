@@ -551,7 +551,7 @@ class Images(Data):
 
         dtype : str, optional, default = None
             dtype of one-dimensional ndarray resulting from application of func.
-            if not supplied it will be automatically inferred for an extra computational cost.
+            If not supplied it will be automatically inferred for an extra computational cost.
 
         block_size : str, or tuple of block size per dimension, optional, default = '150'
             String interpreted as memory size (in megabytes e.g. '64'). Tuple of
