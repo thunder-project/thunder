@@ -529,7 +529,7 @@ class Images(Data):
         from thunder.images.writers import tobinary
         tobinary(self, path, prefix=prefix, overwrite=overwrite)
 
-    def map_as_series(self, func, value_size=None, block_size='150'):
+    def map_as_series(self, func, value_size=None, dtype=None, block_size='150'):
         """
         Efficiently apply a function to images as series data.
 
@@ -549,6 +549,10 @@ class Images(Data):
             func. If not supplied, will be automatically inferred for an extra
             computational cost.
 
+        dtype : str, optional, default = None
+            dtype of one-dimensional ndarray resulting from application of func.
+            if not supplied it will be automatically inferred for an extra computational cost.
+
         block_size : str, or tuple of block size per dimension, optional, default = '150'
             String interpreted as memory size (in megabytes e.g. '64'). Tuple of
             ints interpreted as 'pixels per dimension'.
@@ -564,4 +568,4 @@ class Images(Data):
         def f(block):
             return apply_along_axis(func, 0, block)
 
-        return blocks.map(f, dims=dims).toimages()
+        return blocks.map(f, dims=dims, dtype=dtype).toimages()
