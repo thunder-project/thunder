@@ -7,6 +7,8 @@ pytestmark = pytest.mark.usefixtures("eng")
 
 
 def test_first(eng):
+    assert False
+    print eng
     data = series.fromlist([array([1, 2, 3]), array([4, 5, 6])], engine=eng)
     assert allclose(data.first(), [1, 2, 3])
     data = images.fromlist([array([[1, 2], [3, 4]]), array([[5, 6], [7, 8]])], engine=eng)

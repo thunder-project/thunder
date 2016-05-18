@@ -12,4 +12,5 @@ def eng(request):
         return None
     if engine == 'spark':
         station.start(spark=True)
+        print station
         return station.engine()
