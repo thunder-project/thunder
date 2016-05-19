@@ -1,5 +1,5 @@
 from numpy import array, asarray, ndarray, prod, ufunc, add, subtract, \
-    multiply, divide, isscalar, newaxis, unravel_index, argsort
+    multiply, divide, isscalar, newaxis, unravel_index, dtype
 from bolt.utils import inshape, tupleize, slicify
 from bolt.base import BoltArray
 from bolt.spark.array import BoltArraySpark
@@ -76,7 +76,7 @@ class Base(object):
 
     @property
     def dtype(self):
-        return self._values.dtype
+        return dtype(self._values.dtype)
 
     @property
     def shape(self):
