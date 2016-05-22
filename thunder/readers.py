@@ -149,9 +149,9 @@ class LocalParallelReader(object):
         if spark and isinstance(self.engine, spark):
             npartitions = min(npartitions, nfiles) if npartitions else nfiles
             rdd = self.engine.parallelize(enumerate(files), npartitions)
-            return rdd.map(lambda kv: (kv[0], readlocal(kv[1])))
+            return rdd.map(lambda kv: (kv[0], readlocal(kv[1]), kv[1]))
         else:
-            return [(k, readlocal(v)) for k, v in enumerate(files)]
+            return [(k, readlocal(v), v) for k, v in enumerate(files)]
 
 
 class LocalFileReader(object):

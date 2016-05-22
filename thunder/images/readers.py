@@ -1,4 +1,5 @@
 import itertools
+import warnings
 from io import BytesIO
 from numpy import frombuffer, prod, random, asarray, expand_dims
 
@@ -283,8 +284,8 @@ def frombinary(path, shape=None, dtype=None, ext='bin', start=None, stop=None, r
             raise ValueError("Last dimension '%d' must be divisible by nplanes '%d'" %
                              (shape[-1], nplanes))
 
-    def getarray(idxAndBuf):
-        idx, buf = idxAndBuf
+    def getarray(idx_buffer_filename):
+        idx, buf, _ = idx_buffer_filename
         ary = frombuffer(buf, dtype=dtype, count=int(prod(shape))).reshape(shape, order=order)
         if nplanes is None:
             yield (idx,), ary
@@ -294,17 +295,17 @@ def frombinary(path, shape=None, dtype=None, ext='bin', start=None, stop=None, r
             if shape[-1] % nplanes:
                 npoints += 1
             timepoint = 0
-            lastPlane = 0
-            curPlane = 1
-            while curPlane < ary.shape[-1]:
-                if curPlane % nplanes == 0:
-                    slices = [slice(None)] * (ary.ndim - 1) + [slice(lastPlane, curPlane)]
+            last_plane = 0
+            current_plane = 1
+            while current_plane < ary.shape[-1]:
+                if current_plane % nplanes == 0:
+                    slices = [slice(None)] * (ary.ndim - 1) + [slice(last_plane, current_plane)]
                     yield idx*npoints + timepoint, ary[slices].squeeze()
                     timepoint += 1
-                    lastPlane = curPlane
-                curPlane += 1
+                    last_plane = current_plane
+                current_plane += 1
             # yield remaining planes
-            slices = [slice(None)] * (ary.ndim - 1) + [slice(lastPlane, ary.shape[-1])]
+            slices = [slice(None)] * (ary.ndim - 1) + [slice(last_plane, ary.shape[-1])]
             yield (idx*npoints + timepoint,), ary[slices].squeeze()
 
     recount = False if nplanes is None else True
@@ -352,14 +353,18 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False, nplanes=Non
     if nplanes is not None and nplanes <= 0:
         raise ValueError('nplanes must be positive if passed, got %d' % nplanes)
 
-    def getarray(idxAndBuf):
-        idx, buf = idxAndBuf
+    def getarray(idx_buffer_filename):
+        idx, buf, fname = idx_buffer_filename
         fbuf = BytesIO(buf)
         tfh = tifffile.TiffFile(fbuf)
         ary = tfh.asarray()
         pageCount = ary.shape[0]
         if nplanes is not None:
-            values = [ary[i:(i+nplanes)] for i in range(0, ary.shape[0], nplanes)]
+            extra = pageCount % nplanes
+            if extra:
+                pageCount = pageCount - extra
+                warnings.warn('Ignored %d pages in file %s' % (extra, fname), RuntimeWarning)
+            values = [ary[i:(i+nplanes)] for i in range(0, pageCount, nplanes)]
         else:
             values = [ary]
         tfh.close()
@@ -367,8 +372,6 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False, nplanes=Non
         if ary.ndim == 3:
             values = [val.squeeze() for val in values]
 
-        if nplanes and (pageCount % nplanes):
-            raise ValueError("nplanes '%d' does not evenly divide '%d'" % (nplanes, pageCount))
         nvals = len(values)
         keys = [(idx*nvals + timepoint,) for timepoint in range(nvals)]
         return zip(keys, values)
@@ -408,8 +411,8 @@ def frompng(path, ext='png', start=None, stop=None, recursive=False, npartitions
     """
     from scipy.misc import imread
 
-    def getarray(idxAndBuf):
-        idx, buf = idxAndBuf
+    def getarray(idx_buffer_filename):
+        idx, buf, _ = idx_buffer_filename
         fbuf = BytesIO(buf)
         yield (idx,), imread(fbuf)
 
