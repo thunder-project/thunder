@@ -114,6 +114,16 @@ def test_from_tif_multi_planes(eng):
     assert [x.sum() for x in data.toarray()] == [1140006, 1119161, 1098917]
 
 
+def test_from_tif_multi_planes_discard_extra(eng):
+    path = os.path.join(resources, 'multilayer_tif', 'dotdotdot_lzw.tif')
+    data = fromtif(path, nplanes=2, engine=eng, discard_extra=True)
+    assert data.shape[0] == 1
+    assert data.shape[1] == 2
+    with pytest.raises(BaseException) as error_msg:
+        data = fromtif(path, nplanes=2, engine=eng, discard_extra=False)
+    assert 'nplanes' in str(error_msg.value)
+
+
 def test_from_tif_multi_planes_many(eng):
     path = os.path.join(resources, 'multilayer_tif', 'dotdotdot_lzw*.tif')
     data = fromtif(path, nplanes=3, engine=eng)

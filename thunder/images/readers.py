@@ -1,5 +1,5 @@
 import itertools
-import warnings
+import logging
 from io import BytesIO
 from numpy import frombuffer, prod, random, asarray, expand_dims
 
@@ -316,7 +316,7 @@ def frombinary(path, shape=None, dtype=None, ext='bin', start=None, stop=None, r
                     dims=newdims, dtype=dtype, labels=labels, recount=recount,
                     engine=engine, credentials=credentials)
 
-def fromtif(path, ext='tif', start=None, stop=None, recursive=False, nplanes=None, npartitions=None, labels=None, engine=None, credentials=None):
+def fromtif(path, ext='tif', start=None, stop=None, recursive=False, nplanes=None, npartitions=None, labels=None, engine=None, credentials=None, discard_extra=False):
     """
     Loads images from single or multi-page TIF files.
 
@@ -347,6 +347,10 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False, nplanes=Non
 
     labels : array, optional, default = None
         Labels for records. If provided, should be one-dimensional.
+
+    discard_extra : boolean, optional, default = False
+        If True and nplanes doesn't divide by the number of pages in a multi-page tiff, the reminder will
+        be discarded and a warning will be shown. If False, it will raise an error
     """
     import skimage.external.tifffile as tifffile
 
@@ -362,8 +366,11 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False, nplanes=Non
         if nplanes is not None:
             extra = pageCount % nplanes
             if extra:
-                pageCount = pageCount - extra
-                warnings.warn('Ignored %d pages in file %s' % (extra, fname), RuntimeWarning)
+                if discard_extra:
+                    pageCount = pageCount - extra
+                    logging.getLogger('thunder').warn('Ignored %d pages in file %s' % (extra, fname))
+                else:
+                    raise ValueError("nplanes '%d' does not evenly divide '%d'" % (nplanes, pageCount))
             values = [ary[i:(i+nplanes)] for i in range(0, pageCount, nplanes)]
         else:
             values = [ary]
