@@ -537,7 +537,7 @@ class Data(Base):
                 return k1, op(x, y)
 
             rdd = self.tordd().zip(other.tordd()).map(func)
-            barray = BoltArraySpark(rdd, shape=self.shape, dtype=self.dtype)
+            barray = BoltArraySpark(rdd, shape=self.shape, dtype=self.dtype, split=self.values.split)
             return self._constructor(barray).__finalize__(self)
 
     def plus(self, other):
