@@ -102,3 +102,14 @@ def test_map_with_keys(eng):
     mapped = data.map(lambda kv: kv[0] + kv[1], with_keys=True)
     assert allclose(mapped.shape, [2, 2, 2])
     assert allclose(mapped.toarray(), [[[1, 1], [1, 1]], [[3, 3], [3, 3]]])
+
+
+def test_repartition(eng):
+    if eng is not None:
+        data = images.fromlist([array([1, 1]), array([2, 2]), array([3, 3]), array([4, 4]),
+                                array([5, 5]), array([6, 6]), array([7, 7]), array([8, 8]),
+                                array([9, 9]), array([10, 10]), array([11, 11]), array([12, 12])],
+                               engine=eng, npartitions=10)
+        assert allclose(data.first(), array([1, 1]))
+        data = data.repartition(3)
+        assert allclose(data.first(), array([1, 1]))

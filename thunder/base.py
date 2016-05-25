@@ -175,7 +175,7 @@ class Base(object):
             Number of partitions after repartitions.
         """
         if self.mode == 'spark':
-            self.values._rdd = self.values._rdd.repartition(npartitions)
+            self.values._rdd = self.values._rdd.repartition(npartitions).sortByKey()
             return self
         else:
             notsupported(self.mode)
