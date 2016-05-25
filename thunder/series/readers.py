@@ -50,7 +50,10 @@ def fromrdd(rdd, nrecords=None, shape=None, index=None, labels=None, dtype=None)
     if dtype is None:
         dtype = item.dtype
 
-    if shape is None or nrecords is None:
+    if nrecords is None and shape is not None:
+        nrecords = prod(shape[:-1])
+
+    if nrecords is None:
         nrecords = rdd.count()
 
     if shape is None:
