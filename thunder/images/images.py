@@ -59,7 +59,7 @@ class Images(Data):
             return self.values[0]
 
         if self.mode == 'spark':
-            return self.values.tordd().values().first()
+            return self.values.first()
 
     def toblocks(self, size='150', padding=None):
         """

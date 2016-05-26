@@ -113,7 +113,7 @@ class Series(Data):
             return self.values[tuple(zeros(len(self.baseaxes))) + (slice(None, None),)]
 
         if self.mode == 'spark':
-            return self.values.tordd().values().first()
+            return self.values.first()
 
     def tolocal(self):
         """
