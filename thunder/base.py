@@ -175,7 +175,7 @@ class Base(object):
             Number of partitions after repartitions.
         """
         if self.mode == 'spark':
-            return self._constructor(self.values.repartition(npartitions), mode=self.mode).__finalize__(self)
+            return self._constructor(self.values.repartition(npartitions)).__finalize__(self)
         else:
             notsupported(self.mode)
 
