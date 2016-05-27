@@ -61,16 +61,17 @@ class Images(Data):
         if self.mode == 'spark':
             return self.values.first()
 
-    def toblocks(self, size='150', padding=None):
+    def toblocks(self, chunk_size='auto', padding=None):
         """
         Convert to blocks which represent subdivisions of the images data.
 
         Parameters
         ----------
-        size : str, or tuple of block size per dimension,
-            String interpreted as memory size (in megabytes, e.g. '64').
+        chunk_size : str or tuple, size of image chunk used during conversion, default = 'auto'
+            String interpreted as memory size (in kilobytes, e.g. '64').
+            The exception is the string 'auto'. In spark mode, 'auto' will choose a chunk size to make the
+            resulting blocks ~100 MB in size. In local mode, 'auto' will create a single block.
             Tuple of ints interpreted as 'pixels per dimension'.
-            Only valid in spark mode.
 
         padding : tuple or int
             Amount of padding along each dimensions for blocks. If an int, then
@@ -80,17 +81,18 @@ class Images(Data):
         from thunder.blocks.local import LocalChunks
 
         if self.mode == 'spark':
-            chunks = self.values.chunk(size, padding=padding).keys_to_values((0,))
+            if chunk_size is 'auto':
+                chunk_size = str(int(100000.0/self.shape[0]))
+            chunks = self.values.chunk(chunk_size, padding=padding).keys_to_values((0,))
 
         if self.mode == 'local':
-            if isinstance(size, str):
-                raise ValueError("block size must be a tuple for local mode")
-            plan = (self.shape[0],) + tuple(size)
-            chunks = LocalChunks.chunk(self.values, plan, padding=padding)
+            if chunk_size is 'auto':
+                chunk_size = self.shape[1:]
+            chunks = LocalChunks.chunk(self.values, chunk_size, padding=padding)
 
         return Blocks(chunks)
 
-    def toseries(self, size='150'):
+    def toseries(self, chunk_size='auto'):
         """
         Converts to series data.
 
@@ -98,16 +100,22 @@ class Images(Data):
 
         Parameters
         ----------
-        size : string memory size, optional, default = '150M'
-            String interpreted as memory size (e.g. '64M').
+        chunk_size : str or tuple, size of image chunk used during conversion, default = 'auto'
+            String interpreted as memory size (in kilobytes, e.g. '64').
+            The exception is the string 'auto', which will choose a chunk size to make the
+            resulting blocks ~100 MB in size. Tuple of ints interpreted as 'pixels per dimension'.
+            Only valid in spark mode.
         """
         from thunder.series.series import Series
+
+        if chunk_size is 'auto':
+            chunk_size = str(int(1000000.0/self.shape[0]))
 
         n = len(self.shape) - 1
         index = arange(self.shape[0])
 
         if self.mode == 'spark':
-            return Series(self.values.swap((0,), tuple(range(n)), size=size), index=index)
+            return Series(self.values.swap((0,), tuple(range(n)), size=chunk_size), index=index)
 
         if self.mode == 'local':
             return Series(self.values.transpose(tuple(range(1, n+1)) + (0,)), index=index)
@@ -529,7 +537,7 @@ class Images(Data):
         from thunder.images.writers import tobinary
         tobinary(self, path, prefix=prefix, overwrite=overwrite)
 
-    def map_as_series(self, func, value_size=None, dtype=None, block_size='150'):
+    def map_as_series(self, func, value_size=None, dtype=None, chunk_size='auto'):
         """
         Efficiently apply a function to images as series data.
 
@@ -553,11 +561,13 @@ class Images(Data):
             dtype of one-dimensional ndarray resulting from application of func.
             If not supplied it will be automatically inferred for an extra computational cost.
 
-        block_size : str, or tuple of block size per dimension, optional, default = '150'
-            String interpreted as memory size (in megabytes e.g. '64'). Tuple of
-            ints interpreted as 'pixels per dimension'.
+        chunk_size : str or tuple, size of image chunk used during conversion, default = 'auto'
+            String interpreted as memory size (in kilobytes, e.g. '64').
+            The exception is the string 'auto'. In spark mode, 'auto' will choose a chunk size to make the
+            resulting blocks ~100 MB in size. In local mode, 'auto' will create a single block.
+            Tuple of ints interpreted as 'pixels per dimension'.
         """
-        blocks = self.toblocks(size=block_size)
+        blocks = self.toblocks(chunk_size=chunk_size)
 
         if value_size is not None:
             dims = list(blocks.blockshape)
