@@ -63,7 +63,7 @@ class Images(Data):
 
     def toblocks(self, chunk_size='auto', padding=None):
         """
-        Convert to blocks which represent stubdivisions of the images data.
+        Convert to blocks which represent subdivisions of the images data.
 
         Parameters
         ----------
