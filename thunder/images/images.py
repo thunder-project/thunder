@@ -59,7 +59,7 @@ class Images(Data):
             return self.values[0]
 
         if self.mode == 'spark':
-            return self.values.first()
+            return self.values.first().toarray()
 
     def toblocks(self, chunk_size='auto', padding=None):
         """
