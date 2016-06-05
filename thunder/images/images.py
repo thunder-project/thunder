@@ -109,7 +109,7 @@ class Images(Data):
         from thunder.series.series import Series
 
         if chunk_size is 'auto':
-            chunk_size = str(int(1000000.0/self.shape[0]))
+            chunk_size = str(int(100000.0/self.shape[0]))
 
         n = len(self.shape) - 1
         index = arange(self.shape[0])
