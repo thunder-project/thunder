@@ -1,5 +1,5 @@
 import pytest
-from numpy import allclose, array, asarray, add
+from numpy import allclose, array, asarray, add, ndarray, generic
 
 from thunder import series, images
 
@@ -111,6 +111,7 @@ def test_repartition(eng):
                                 array([9, 9]), array([10, 10]), array([11, 11]), array([12, 12])],
                                engine=eng, npartitions=10)
         assert allclose(data.first(), array([1, 1]))
+        assert isinstance(data.first(), (ndarray, generic))
         data = data.repartition(3)
         assert allclose(data.first(), array([1, 1]))
 
@@ -121,3 +122,4 @@ def test_repartition(eng):
         assert allclose(data.first(), array([1, 1]))
         data = data.repartition(3)
         assert allclose(data.first(), array([1, 1]))
+        assert isinstance(data.first(), (ndarray, generic))
