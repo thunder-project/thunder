@@ -391,7 +391,7 @@ class BotoParallelReader(BotoClient):
                     idx, keyName = kv
                     key = bucket.get_key(keyName)
                     buf = key.get_contents_as_string()
-                    yield idx, buf
+                    yield idx, buf, keyName
 
             npartitions = min(npartitions, self.nfiles) if npartitions else self.nfiles
             rdd = self.engine.parallelize(enumerate(keylist), npartitions)
@@ -412,7 +412,7 @@ class BotoParallelReader(BotoClient):
                 idx, keyName = kv
                 key = bucket.get_key(keyName)
                 buf = key.get_contents_as_string()
-                return idx, buf
+                return idx, buf, keyName
 
             return [getsplit(kv) for kv in enumerate(keylist)]
 
