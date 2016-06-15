@@ -10,7 +10,7 @@ from ..utils import check_spark, check_options
 spark = check_spark()
 
 
-def fromrdd(rdd, nrecords=None, shape=None, index=None, labels=None, dtype=None):
+def fromrdd(rdd, nrecords=None, shape=None, index=None, labels=None, dtype=None, ordered=False):
     """
     Load series data from a Spark RDD.
 
@@ -37,6 +37,9 @@ def fromrdd(rdd, nrecords=None, shape=None, index=None, labels=None, dtype=None)
 
     dtype : string, default = None
         Data numerical type (if provided will avoid check)
+
+    ordered : boolean, optional, default = False
+        Whether or not the rdd is ordered by key
     """
     from .series import Series
     from bolt.spark.array import BoltArraySpark
@@ -65,7 +68,7 @@ def fromrdd(rdd, nrecords=None, shape=None, index=None, labels=None, dtype=None)
             k = (k,)
         return k, v
 
-    values = BoltArraySpark(rdd.map(process_keys), shape=shape, dtype=dtype, split=len(shape)-1)
+    values = BoltArraySpark(rdd.map(process_keys), shape=shape, dtype=dtype, split=len(shape)-1, ordered=ordered)
     return Series(values, index=index, labels=labels)
 
 def fromarray(values, index=None, labels=None, npartitions=None, engine=None):

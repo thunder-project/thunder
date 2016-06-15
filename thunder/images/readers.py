@@ -7,7 +7,7 @@ from ..utils import check_spark, check_options
 spark = check_spark()
 
 
-def fromrdd(rdd, dims=None, nrecords=None, dtype=None, labels=None):
+def fromrdd(rdd, dims=None, nrecords=None, dtype=None, labels=None, ordered=False):
     """
     Load images from a Spark RDD.
 
@@ -31,6 +31,9 @@ def fromrdd(rdd, dims=None, nrecords=None, dtype=None, labels=None):
 
     labels : array, optional, default = None
         Labels for records. If provided, should be one-dimensional.
+
+    ordered : boolean, optional, default = False
+        Whether or not the rdd is ordered by key
     """
     from .images import Images
     from bolt.spark.array import BoltArraySpark
@@ -49,7 +52,7 @@ def fromrdd(rdd, dims=None, nrecords=None, dtype=None, labels=None):
             k = (k,)
         return k, v
 
-    values = BoltArraySpark(rdd.map(process_keys), shape=(nrecords,) + tuple(dims), dtype=dtype, split=1)
+    values = BoltArraySpark(rdd.map(process_keys), shape=(nrecords,) + tuple(dims), dtype=dtype, split=1, ordered=ordered)
     return Images(values, labels=labels)
 
 def fromarray(values, labels=None, npartitions=None, engine=None):
