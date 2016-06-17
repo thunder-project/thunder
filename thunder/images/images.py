@@ -35,10 +35,6 @@ class Images(Data):
     def _constructor(self):
         return Images
 
-    @property
-    def dims(self):
-        return self.shape[1:]
-
     def count(self):
         """
         Count the number of images.
@@ -248,13 +244,13 @@ class Images(Data):
         axis : int, optional, default = 2
             Which axis to compute projection along.
         """
-        if axis >= size(self.dims):
+        if axis >= size(self.value_shape):
             raise Exception('Axis for projection (%s) exceeds '
-                            'image dimensions (%s-%s)' % (axis, 0, size(self.dims)-1))
+                            'image dimensions (%s-%s)' % (axis, 0, size(self.value_shape)-1))
 
-        newdims = list(self.dims)
-        del newdims[axis]
-        return self.map(lambda x: amax(x, axis), value_shape=newdims)
+        new_value_shape = list(self.value_shape)
+        del new_value_shape[axis]
+        return self.map(lambda x: amax(x, axis), value_shape=new_value_shape)
 
     def max_min_projection(self, axis=2):
         """
@@ -267,13 +263,13 @@ class Images(Data):
         axis : int, optional, default = 2
             Which axis to compute projection along.
         """
-        if axis >= size(self.dims):
+        if axis >= size(self.value_shape):
             raise Exception('Axis for projection (%s) exceeds '
-                            'image dimensions (%s-%s)' % (axis, 0, size(self.dims)-1))
+                            'image dimensions (%s-%s)' % (axis, 0, size(self.value_shape)-1))
 
-        newdims = list(self.dims)
-        del newdims[axis]
-        return self.map(lambda x: amax(x, axis) + amin(x, axis), value_shape=newdims)
+        new_value_shape = list(self.value_shape)
+        del new_value_shape[axis]
+        return self.map(lambda x: amax(x, axis) + amin(x, axis), value_shape=new_value_shape)
 
     def subsample(self, factor):
         """
@@ -286,8 +282,8 @@ class Images(Data):
             each dimension of the image will be downsampled by this factor.
             If a tuple is passed, each dimension will be downsampled by the given factor.
         """
-        dims = self.dims
-        ndims = len(dims)
+        value_shape = self.value_shape
+        ndims = len(value_shape)
         if not hasattr(factor, '__len__'):
             factor = [factor] * ndims
         factor = [int(sf) for sf in factor]
@@ -298,10 +294,10 @@ class Images(Data):
         def roundup(a, b):
             return (a + b - 1) // b
 
-        slices = [slice(0, dims[i], factor[i]) for i in range(ndims)]
-        newdims = tuple([roundup(dims[i], factor[i]) for i in range(ndims)])
+        slices = [slice(0, value_shape[i], factor[i]) for i in range(ndims)]
+        new_value_shape = tuple([roundup(value_shape[i], factor[i]) for i in range(ndims)])
 
-        return self.map(lambda v: v[slices], value_shape=newdims)
+        return self.map(lambda v: v[slices], value_shape=new_value_shape)
 
     def gaussian_filter(self, sigma=2, order=0):
         """
@@ -322,7 +318,7 @@ class Images(Data):
         """
         from scipy.ndimage.filters import gaussian_filter
 
-        return self.map(lambda v: gaussian_filter(v, sigma, order), value_shape=self.dims)
+        return self.map(lambda v: gaussian_filter(v, sigma, order), value_shape=self.value_shape)
 
     def uniform_filter(self, size=2):
         """
@@ -377,8 +373,8 @@ class Images(Data):
         func = FILTERS[filter]
 
         mode = self.mode
-        dims = self.dims
-        ndims = len(dims)
+        value_shape = self.value_shape
+        ndims = len(value_shape)
 
         if ndims == 3 and isscalar(size) == 1:
             size = [size, size, size]
@@ -389,13 +385,13 @@ class Images(Data):
                     im.setflags(write=True)
                 else:
                     im = im.copy()
-                for z in arange(0, dims[2]):
+                for z in arange(0, value_shape[2]):
                     im[:, :, z] = func(im[:, :, z], size[0:2])
                 return im
         else:
             filter_ = lambda x: func(x, size)
 
-        return self.map(lambda v: filter_(v), value_shape=self.dims)
+        return self.map(lambda v: filter_(v), value_shape=self.value_shape)
 
     def localcorr(self, size=2):
         """
@@ -447,11 +443,11 @@ class Images(Data):
             Value to subtract.
         """
         if isinstance(val, ndarray):
-            if val.shape != self.dims:
+            if val.shape != self.value_shape:
                 raise Exception('Cannot subtract image with dimensions %s '
-                                'from images with dimension %s' % (str(val.shape), str(self.dims)))
+                                'from images with dimension %s' % (str(val.shape), str(self.value_shape)))
 
-        return self.map(lambda x: x - val, value_shape=self.dims)
+        return self.map(lambda x: x - val, value_shape=self.value_shape)
 
     def topng(self, path, prefix='image', overwrite=False):
         """

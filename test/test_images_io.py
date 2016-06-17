@@ -16,7 +16,7 @@ def test_from_list(eng):
     a = arange(8).reshape((2, 4))
     data = fromlist([a], engine=eng)
     assert allclose(data.shape, (1,) + a.shape)
-    assert allclose(data.dims, a.shape)
+    assert allclose(data.value_shape, a.shape)
     assert allclose(data.toarray(), a)
 
 
@@ -24,7 +24,7 @@ def test_from_array(eng):
     a = arange(8).reshape((1, 2, 4))
     data = fromarray(a, engine=eng)
     assert allclose(data.shape, a.shape)
-    assert allclose(data.dims, a.shape[1:])
+    assert allclose(data.value_shape, a.shape[1:])
     assert allclose(data.toarray(), a)
 
 
@@ -36,7 +36,7 @@ def test_from_array_bolt(eng):
         b = barray(a)
     data = fromarray(b)
     assert allclose(data.shape, a.shape)
-    assert allclose(data.dims, a.shape[1:])
+    assert allclose(data.value_shape, a.shape[1:])
     assert allclose(data.toarray(), a)
 
 
@@ -44,7 +44,7 @@ def test_from_array_single(eng):
     a = arange(8).reshape((2, 4))
     data = fromarray(a, engine=eng)
     assert allclose(data.shape, (1,) + a.shape)
-    assert allclose(data.dims, a.shape)
+    assert allclose(data.value_shape, a.shape)
     assert allclose(data.toarray(), a)
 
 

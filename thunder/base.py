@@ -231,6 +231,10 @@ class Data(Base):
         return self.shape[:len(self.baseaxes)]
 
     @property
+    def value_shape(self):
+        return self.shape[len(self.baseaxes):]
+
+    @property
     def labels(self):
         return self._labels
 
