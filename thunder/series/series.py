@@ -200,7 +200,6 @@ class Series(Data):
             values_shape = (value_shape, )
         new = super(Series, self).map(func, value_shape=value_shape, dtype=dtype, with_keys=with_keys)
 
-        print(new)
         if index is not None:
             new.index = index
         # if series shape did not change and no index was supplied, propagate original index
