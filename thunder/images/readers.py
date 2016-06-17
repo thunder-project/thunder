@@ -110,6 +110,7 @@ def fromarray(values, labels=None, npartitions=None, engine=None):
         if not npartitions:
             npartitions = engine.defaultParallelism
         values = bolt.array(values, context=engine, npartitions=npartitions, axis=(0,))
+        values._ordered = True
         return Images(values)
 
     return Images(values, labels=labels)
@@ -148,7 +149,7 @@ def fromlist(items, accessor=None, keys=None, dims=None, dtype=None, labels=None
         rdd = engine.parallelize(items, npartitions)
         if accessor:
             rdd = rdd.mapValues(accessor)
-        return fromrdd(rdd, nrecords=nrecords, dims=dims, dtype=dtype, labels=labels)
+        return fromrdd(rdd, nrecords=nrecords, dims=dims, dtype=dtype, labels=labels, ordered=True)
 
     else:
         if accessor:
@@ -210,7 +211,7 @@ def frompath(path, accessor=None, ext=None, start=None, stop=None, recursive=Fal
             data = data.values().zipWithIndex().map(switch)
         else:
             nrecords = reader.nfiles
-        return fromrdd(data, nrecords=nrecords, dims=dims, dtype=dtype, labels=labels)
+        return fromrdd(data, nrecords=nrecords, dims=dims, dtype=dtype, labels=labels, ordered=True)
 
     else:
         if accessor:
