@@ -118,6 +118,7 @@ def fromarray(values, index=None, labels=None, npartitions=None, engine=None):
     if spark and isinstance(engine, spark):
         axis = tuple(range(values.ndim - 1))
         values = bolt.array(values, context=engine, npartitions=npartitions, axis=axis)
+        values._ordered = True
         return Series(values, index=index)
 
     return Series(values, index=index, labels=labels)
@@ -164,7 +165,7 @@ def fromlist(items, accessor=None, index=None, labels=None, dtype=None, npartiti
         rdd = engine.parallelize(items, npartitions)
         if accessor:
             rdd = rdd.mapValues(accessor)
-        return fromrdd(rdd, nrecords=nrecords, index=index, labels=labels, dtype=dtype)
+        return fromrdd(rdd, nrecords=nrecords, index=index, labels=labels, dtype=dtype, ordered=True)
 
     else:
         if accessor:
@@ -230,7 +231,7 @@ def fromtext(path, ext='txt', dtype='float64', skip=0, shape=None, index=None, l
             return (idx,), ary
 
         rdd = data.zipWithIndex().map(switch)
-        return fromrdd(rdd, dtype=str(dtype), shape=shape, index=index)
+        return fromrdd(rdd, dtype=str(dtype), shape=shape, index=index, ordered=True)
 
     else:
         reader = get_parallel_reader(path)(engine, credentials=credentials)
@@ -314,7 +315,7 @@ def frombinary(path, ext='bin', conf='conf.json', dtype=None, shape=None, skip=0
         if not index:
             index = arange(shape[-1])
 
-        return fromrdd(rdd, dtype=dtype, shape=shape, index=index)
+        return fromrdd(rdd, dtype=dtype, shape=shape, index=index, ordered=True)
 
     else:
         reader = get_parallel_reader(path)(engine, credentials=credentials)
