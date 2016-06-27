@@ -428,3 +428,16 @@ def test_mean_by_window(eng):
     assert allclose(test3, [2, 3, 4, 5])
     test4 = data.mean_by_window(indices=[3], window=4).toarray()
     assert allclose(test4, [1, 2, 3, 4])
+
+def test_reshape_keys(eng):
+    original =  fromarray(arange(72).reshape(6, 6, 2), engine=eng)
+    arr = original.toarray()
+
+    reshaped = original.reshape_keys(12, 3)
+    assert allclose(arr.reshape(12, 3, 2), reshaped.toarray())
+
+    reshaped = original.reshape_keys(36)
+    assert allclose(arr.reshape(36, 2), reshaped.toarray())
+
+    reshaped = original.reshape_keys(4, 3, 3)
+    assert allclose(arr.reshape(4, 3, 3, 2), reshaped.toarray())

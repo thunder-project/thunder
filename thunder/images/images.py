@@ -235,6 +235,21 @@ class Images(Data):
         axis = tuple(range(1, len(self.shape) - 1)) if prod(self.shape[1:]) == 1 else None
         return self.map(lambda x: x.squeeze(axis=axis))
 
+    def reshape_values(self, *shape):
+        """
+        Reshape images
+
+        Parameters
+        ----------
+        shape: one or more ints
+            New shape of images
+        """
+        if prod(self.value_shape) != prod(shape):
+            raise ValueError("Total number of elements in each image must be unchanged")
+
+        newshape = (self.shape[0], ) + shape
+        return self._constructor(self.values.reshape(newshape)).__finalize__(self)
+
     def max_projection(self, axis=2):
         """
         Compute maximum projections of images along a dimension.

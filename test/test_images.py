@@ -200,3 +200,16 @@ def test_map_as_series(eng):
 
     assert allclose(data.map_as_series(f, chunk_size=size).toarray(), result)
     assert allclose(data.map_as_series(f, chunk_size=size, value_size=4).toarray(), result)
+
+def test_reshape_values(eng):
+    original = fromarray(arange(72).reshape(2, 6, 6), engine=eng)
+    arr = original.toarray()
+
+    reshaped = original.reshape_values(12, 3)
+    assert allclose(arr.reshape(2, 12, 3), reshaped.toarray())
+
+    reshaped = original.reshape_values(36)
+    assert allclose(arr.reshape(2, 36), reshaped.toarray())
+
+    reshaped = original.reshape_values(4, 3, 3)
+    assert allclose(arr.reshape(2, 4, 3, 3), reshaped.toarray())

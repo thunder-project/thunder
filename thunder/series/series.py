@@ -256,6 +256,21 @@ class Series(Data):
         """
         return self._constructor(self.values.min(axis=self.baseaxes, keepdims=True))
 
+    def reshape_keys(self, *shape):
+        """
+        Reshape the keys of the time series
+
+        Parameters
+        ----------
+        shape: one or more ints
+            Shape of the new keys
+        """
+        if prod(self.baseshape) != prod(shape):
+            raise ValueError("Total number of series elements must remain unchanged")
+
+        newshape = shape + (self.shape[-1], )
+        return self._constructor(self.values.reshape(newshape)).__finalize__(self)
+
     def between(self, left, right):
         """
         Select subset of values within the given index range.
