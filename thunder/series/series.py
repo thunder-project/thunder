@@ -140,7 +140,7 @@ class Series(Data):
         if engine is None:
             raise ValueError('Must provide SparkContext')
 
-        return fromarray(self.toarray(), index=self.index, labels=self.lables, engine=engine)
+        return fromarray(self.toarray(), index=self.index, labels=self.labels, engine=engine)
 
     def sample(self, n=100, seed=None):
         """
