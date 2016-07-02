@@ -374,7 +374,8 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False, nplanes=Non
                     pageCount = pageCount - extra
                     logging.getLogger('thunder').warn('Ignored %d pages in file %s' % (extra, fname))
                 else:
-                    raise ValueError("nplanes '%d' does not evenly divide '%d'" % (nplanes, pageCount))
+                    raise ValueError("nplanes '%d' does not evenly divide '%d in file %s'" % (nplanes, pageCount,
+                                                                                              fname))
             values = [ary[i:(i+nplanes)] for i in range(0, pageCount, nplanes)]
         else:
             values = [ary]
