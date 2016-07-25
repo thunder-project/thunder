@@ -881,18 +881,15 @@ class Series(Data):
 
     def convolve(self, signal, mode='full'):
         """
-        Conolve series data against another signal.
+        Convolve series data against another signal.
 
         Parameters
         ----------
         signal : array
             Signal to convolve with (must be 1D)
 
-        var : str
-            Variable name if loading from a MAT file
-
         mode : str, optional, default='full'
-            Mode of convolution, options are 'full', 'same', and 'same'
+            Mode of convolution, options are 'full', 'same', and 'valid'
         """
 
         from numpy import convolve
