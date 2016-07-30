@@ -259,13 +259,13 @@ class Data(Base):
         ----------
         dtype : str or dtype
             Typecode or data-type to which the array is cast.
-        casting : {‘no’, ‘equiv’, ‘safe’, ‘same_kind’, ‘unsafe’}, optional
-            Controls what kind of data casting may occur. Defaults to ‘unsafe’ for backwards compatibility.
-            ‘no’ means the data types should not be cast at all.
-            ‘equiv’ means only byte-order changes are allowed.
-            ‘safe’ means only casts which can preserve values are allowed.
-            ‘same_kind’ means only safe casts or casts within a kind, like float64 to float32, are allowed.
-            ‘unsafe’ means any data conversions may be done.
+        casting : ['no', 'equiv', 'safe', 'same_kind', 'unsafe'], optional
+            Controld what kind of data casting may occur. Defaluts to 'unsafe' for backwards compatibility.
+            'no' means the data types should not be cast at all.
+            'equiv' means only byte-order changes are allowed.
+            'safe' means only casts which can preserve values are allowed.
+            'same_kind' means only safe casts or casts within a kind, like float64 to float32, are allowed.
+            'unsafe' means any data conversions may be done.
         """
         return self._constructor(
             self.values.astype(dtype=dtype, casting=casting)).__finalize__(self)
