@@ -139,7 +139,7 @@ class Base(object):
 
     def uncache(self):
         """
-        Enable in-memory caching.
+        Disable in-memory caching (Spark only).
         """
         if self.mode == 'spark':
             self.values.unpersist()
@@ -149,7 +149,7 @@ class Base(object):
 
     def iscached(self):
         """
-        Get whether object is cached.
+        Get whether object is cached (Spark only).
         """
         if self.mode == 'spark':
             return self.tordd().iscached
@@ -158,7 +158,7 @@ class Base(object):
 
     def npartitions(self):
         """
-        Get number of partitions.
+        Get number of partitions (Spark only).
         """
         if self.mode == 'spark':
             return self.tordd().getNumPartitions()
@@ -254,6 +254,18 @@ class Data(Base):
     def astype(self, dtype, casting='unsafe'):
         """
         Cast values to the specified type.
+        
+        Parameters
+        ----------
+        dtype : str or dtype
+            Typecode or data-type to which the array is cast.
+        casting : {‘no’, ‘equiv’, ‘safe’, ‘same_kind’, ‘unsafe’}, optional
+            Controls what kind of data casting may occur. Defaults to ‘unsafe’ for backwards compatibility.
+            ‘no’ means the data types should not be cast at all.
+            ‘equiv’ means only byte-order changes are allowed.
+            ‘safe’ means only casts which can preserve values are allowed.
+            ‘same_kind’ means only safe casts or casts within a kind, like float64 to float32, are allowed.
+            ‘unsafe’ means any data conversions may be done.
         """
         return self._constructor(
             self.values.astype(dtype=dtype, casting=casting)).__finalize__(self)
@@ -376,9 +388,6 @@ class Data(Base):
         ----------
         func : function
             Function to apply, should return boolean
-
-        axis : tuple or int, optional, default=(0,)
-            Axis or multiple axes to filter along.
         """
 
         if self.mode == 'local':
@@ -548,40 +557,24 @@ class Data(Base):
     def plus(self, other):
         """
         Elementwise addition.
-
-        See also
-        --------
-        elementwise
         """
         return self.element_wise(other, add)
 
     def minus(self, other):
         """
         Elementwise subtraction.
-
-        See also
-        --------
-        elementwise
         """
         return self.element_wise(other, subtract)
 
     def dottimes(self, other):
         """
         Elementwise multiplication.
-
-        See also
-        --------
-        elementwise
         """
         return self.element_wise(other, multiply)
 
     def dotdivide(self, other):
         """
         Elementwise divison.
-
-        See also
-        --------
-        elementwise
         """
         return self.element_wise(other, divide)
 
