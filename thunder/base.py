@@ -429,7 +429,7 @@ class Data(Base):
             Known shape of values resulting from operation. Only
             valid in spark mode.
 
-        dtype: numpy dtype, optional, default=None
+        dtype : numpy dtype, optional, default=None
             Known shape of dtype resulting from operation. Only
             valid in spark mode.
 
