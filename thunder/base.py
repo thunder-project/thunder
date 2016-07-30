@@ -338,12 +338,6 @@ class Data(Base):
         """
         raise NotImplementedError
 
-    def map(self, func, **kwargs):
-        """
-        Map a function over elements.
-        """
-        raise NotImplementedError
-
     def _align(self, axes, key_shape=None):
         """
         Align local arrays so that axes for iteration are in the keys.
@@ -435,7 +429,7 @@ class Data(Base):
             Known shape of values resulting from operation. Only
             valid in spark mode.
 
-        dtype: numpy.dtype, optional, default=None
+        dtype: numpy dtype, optional, default=None
             Known shape of dtype resulting from operation. Only
             valid in spark mode.
 
@@ -524,7 +518,7 @@ class Data(Base):
         Parameters
         ----------
         other : Data or numpy array
-           Data to apply elementwise operation to
+            Data to apply elementwise operation to
 
         op : function
             Binary operator to use for elementwise operations, e.g. add, subtract
