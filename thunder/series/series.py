@@ -82,16 +82,8 @@ class Series(Data):
         """
         Reshape all dimensions but the last into a single dimension
         """
-        size = prod([s for i, s in enumerate(self.shape) if i in self.baseaxes])
-        newvalues = self.values.reshape(size, self.shape[-1])
-
-        if self.labels is not None:
-            fullshape = prod(self.labels.shape)
-            newlabels = self.labels.reshape(size, fullshape/size).squeeze()
-        else:
-            newlabels = None
-
-        return self._constructor(newvalues, labels=newlabels).__finalize__(self, noprop=('labels',))
+        size = prod(self.shape[:-1])
+        return self.reshape(size, self.shape[-1])
 
     def count(self):
         """
@@ -256,20 +248,29 @@ class Series(Data):
         """
         return self._constructor(self.values.min(axis=self.baseaxes, keepdims=True))
 
-    def reshape_keys(self, *shape):
+    def reshape(self, *shape):
         """
-        Reshape the keys of the time series
+        Reshape the Series object
+
+        Cannot change the last dimension.
 
         Parameters
         ----------
         shape: one or more ints
-            Shape of the new keys
+            New shape
         """
-        if prod(self.baseshape) != prod(shape):
-            raise ValueError("Total number of series elements must remain unchanged")
+        if prod(self.shape) != prod(shape):
+            raise ValueError("Reshaping must leave the number of elements unchanged")
 
-        newshape = shape + (self.shape[-1], )
-        return self._constructor(self.values.reshape(newshape)).__finalize__(self)
+        if self.shape[-1] != shape[-1]:
+            raise ValueError("Reshaping cannot change the size of the constituent series (last dimension)")
+
+        if self.labels is not None:
+            newlabels = self.labels.reshape(*shape[:-1])
+        else:
+            newlabels = None
+
+        return self._constructor(self.values.reshape(shape), labels=newlabels).__finalize__(self, noprop=('labels',))
 
     def between(self, left, right):
         """

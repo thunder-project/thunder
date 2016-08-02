@@ -205,11 +205,21 @@ def test_reshape_values(eng):
     original = fromarray(arange(72).reshape(2, 6, 6), engine=eng)
     arr = original.toarray()
 
-    reshaped = original.reshape_values(12, 3)
-    assert allclose(arr.reshape(2, 12, 3), reshaped.toarray())
+    assert allclose(arr.reshape(2, 12, 3), original.reshape(2, 12, 3).toarray())
+    assert allclose(arr.reshape(2, 4, 3, 3), original.reshape(2, 4, 3, 3).toarray())
 
-    reshaped = original.reshape_values(36)
-    assert allclose(arr.reshape(2, 36), reshaped.toarray())
+    # must converve number or elements
+    with pytest.raises(ValueError):
+        original.reshape(2, 3, 6)
 
-    reshaped = original.reshape_values(4, 3, 3)
-    assert allclose(arr.reshape(2, 4, 3, 3), reshaped.toarray())
+    # cannot change number of images
+    with pytest.raises(ValueError):
+        original.reshape(4, 3, 6)
+
+    # cannot create images with less than 2 dimensions
+    with pytest.raises(ValueError):
+        original.reshape(2, 36)
+
+    # cannot create images with more than 3 dimensions
+    with pytest.raises(ValueError):
+        original.reshape(2, 2, 2, 3, 3)

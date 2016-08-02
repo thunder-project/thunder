@@ -429,15 +429,18 @@ def test_mean_by_window(eng):
     test4 = data.mean_by_window(indices=[3], window=4).toarray()
     assert allclose(test4, [1, 2, 3, 4])
 
-def test_reshape_keys(eng):
+def test_reshape(eng):
     original =  fromarray(arange(72).reshape(6, 6, 2), engine=eng)
     arr = original.toarray()
 
-    reshaped = original.reshape_keys(12, 3)
-    assert allclose(arr.reshape(12, 3, 2), reshaped.toarray())
+    assert allclose(arr.reshape(12, 3, 2), original.reshape(12, 3, 2).toarray())
+    assert allclose(arr.reshape(36, 2), original.reshape(36, 2).toarray())
+    assert allclose(arr.reshape(4, 3, 3, 2), original.reshape(4, 3, 3, 2).toarray())
 
-    reshaped = original.reshape_keys(36)
-    assert allclose(arr.reshape(36, 2), reshaped.toarray())
+    # must conserve number of elements
+    with pytest.raises(ValueError):
+        original.reshape(6, 3, 2)
 
-    reshaped = original.reshape_keys(4, 3, 3)
-    assert allclose(arr.reshape(4, 3, 3, 2), reshaped.toarray())
+    # cannot change length of series
+    with pytest.raises(ValueError):
+        original.reshape(6, 3, 4)
