@@ -955,7 +955,7 @@ class Series(Data):
             if n == 0:
                 b = zeros((s.shape[0],))
             else:
-                y /= norm(y)
+                y /= n
                 b = dot(s, y)
             return b
 
