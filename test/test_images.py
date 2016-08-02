@@ -200,3 +200,26 @@ def test_map_as_series(eng):
 
     assert allclose(data.map_as_series(f, chunk_size=size).toarray(), result)
     assert allclose(data.map_as_series(f, chunk_size=size, value_size=4).toarray(), result)
+
+def test_reshape_values(eng):
+    original = fromarray(arange(72).reshape(2, 6, 6), engine=eng)
+    arr = original.toarray()
+
+    assert allclose(arr.reshape(2, 12, 3), original.reshape(2, 12, 3).toarray())
+    assert allclose(arr.reshape(2, 4, 3, 3), original.reshape(2, 4, 3, 3).toarray())
+
+    # must converve number or elements
+    with pytest.raises(ValueError):
+        original.reshape(2, 3, 6)
+
+    # cannot change number of images
+    with pytest.raises(ValueError):
+        original.reshape(4, 3, 6)
+
+    # cannot create images with less than 2 dimensions
+    with pytest.raises(ValueError):
+        original.reshape(2, 36)
+
+    # cannot create images with more than 3 dimensions
+    with pytest.raises(ValueError):
+        original.reshape(2, 2, 2, 3, 3)
