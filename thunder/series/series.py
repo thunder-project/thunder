@@ -2,7 +2,7 @@ from numpy import array, mean, median, std, size, arange, percentile,\
     asarray, zeros, corrcoef, where, unique, array_equal, delete, \
     ravel, logical_not, unravel_index, prod, random, shape, \
     dot, outer, expand_dims, ScalarType, ndarray, sqrt, pi, angle, fft, \
-    roll, polyfit, polyval, ceil, float64, fix
+    roll, polyfit, polyval, ceil, float64, fix, floor
 import logging
 from itertools import product
 from bolt.utils import tupleize
@@ -850,20 +850,36 @@ class Series(Data):
         newindex = arange(0, len(masks[0]))
         return self.map(lambda x: mean([x[m] for m in masks], axis=0), index=newindex)
 
-    def subsample(self, sampleFactor=2):
+    def subsample(self, sample_factor=2):
         """
         Subsample series by an integer factor.
 
         Parameters
         ----------
-        sampleFactor : positive integer, optional, default=2
-
+        sample_factor : positive integer, optional, default=2
+            Factor for downsampling.
         """
-        if sampleFactor < 0:
-            raise Exception('Factor for subsampling must be postive, got %g' % sampleFactor)
-        s = slice(0, len(self.index), sampleFactor)
+        if sample_factor < 0:
+            raise Exception('Factor for subsampling must be postive, got %g' % sample_factor)
+        s = slice(0, len(self.index), sample_factor)
         newindex = self.index[s]
         return self.map(lambda v: v[s], index=newindex)
+
+    def downsample(self, sample_factor=2):
+        """
+        Downsample series by an integer factor by averaging.
+
+        Parameters
+        ----------
+        sample_factor : positive integer, optional, default=2
+            Factor for downsampling.
+        """
+        if sample_factor < 0:
+            raise Exception('Factor for subsampling must be postive, got %g' % sample_factor)
+        newlength = floor(len(self.index) / sample_factor)
+        func = lambda v: v[0:newlength * sample_factor].reshape(-1, sample_factor).mean(axis=1)
+        newindex = arange(newlength)
+        return self.map(func, index=newindex)
 
     def fourier(self, freq=None):
         """
