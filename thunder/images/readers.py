@@ -356,7 +356,7 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False, nplanes=Non
         If True and nplanes doesn't divide by the number of pages in a multi-page tiff, the reminder will
         be discarded and a warning will be shown. If False, it will raise an error
     """
-    import skimage.external.tifffile as tifffile
+    from tifffile import TiffFile
 
     if nplanes is not None and nplanes <= 0:
         raise ValueError('nplanes must be positive if passed, got %d' % nplanes)
@@ -364,7 +364,7 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False, nplanes=Non
     def getarray(idx_buffer_filename):
         idx, buf, fname = idx_buffer_filename
         fbuf = BytesIO(buf)
-        tfh = tifffile.TiffFile(fbuf)
+        tfh = TiffFile(fbuf)
         ary = tfh.asarray()
         pageCount = ary.shape[0]
         if nplanes is not None:
