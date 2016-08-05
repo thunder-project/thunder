@@ -877,7 +877,7 @@ class Series(Data):
         if sample_factor < 0:
             raise Exception('Factor for subsampling must be postive, got %g' % sample_factor)
         newlength = floor(len(self.index) / sample_factor)
-        func = lambda v: v[0:newlength * sample_factor].reshape(-1, sample_factor).mean(axis=1)
+        func = lambda v: v[0:int(newlength * sample_factor)].reshape(-1, sample_factor).mean(axis=1)
         newindex = arange(newlength)
         return self.map(func, index=newindex)
 
