@@ -22,7 +22,7 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - conda create --yes -q -n test python=$TRAVIS_PYTHON_VERSION pip numpy scipy scikit-learn scikit-image matplotlib pytest boto
+  - conda create --yes -q -n test python=$TRAVIS_PYTHON_VERSION pip numpy scipy pytest boto
   - source activate test
   - pip install .
   - pip install -r requirements-dev.txt

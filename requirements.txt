@@ -1,5 +1,6 @@
 numpy
 scipy
+six
 boto >= 2.36.0
 bolt-python >= 0.7.0
 tifffile >= 0.9.2
