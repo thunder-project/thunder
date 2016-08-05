@@ -264,8 +264,24 @@ def test_to_tif(tmpdir, eng):
     assert sorted(files) == ['image-00000.tif', 'image-00001.tif']
 
 
-def test_to_tif_roundtrip(tmpdir, eng):
+def test_to_tif_roundtrip_multipage(tmpdir, eng):
+    a = [arange(24, dtype='int16').reshape((2, 3, 4)), arange(24, dtype='int16').reshape((2, 3, 4))]
+    data = fromlist(a, engine=eng)
+    data.totif(os.path.join(str(tmpdir), 'images'), prefix='image')
+    loaded = fromtif(os.path.join(str(tmpdir), 'images'))
+    assert allclose(data.toarray(), loaded.toarray())
+
+
+def test_to_tif_roundtrip_8bit(tmpdir, eng):
     a = [arange(8, dtype='uint8').reshape((4, 2))]
+    data = fromlist(a, engine=eng)
+    data.totif(os.path.join(str(tmpdir), 'images'), prefix='image')
+    loaded = fromtif(os.path.join(str(tmpdir), 'images'))
+    assert allclose(data.toarray(), loaded.toarray())
+
+
+def test_to_tif_roundtrip_16bit(tmpdir, eng):
+    a = [arange(8, dtype='uint16').reshape((4, 2))]
     data = fromlist(a, engine=eng)
     data.totif(os.path.join(str(tmpdir), 'images'), prefix='image')
     loaded = fromtif(os.path.join(str(tmpdir), 'images'))
