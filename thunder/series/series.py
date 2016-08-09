@@ -353,7 +353,7 @@ class Series(Data):
 
         Parameters
         ----------
-        axis : int, optional, default = 0
+        axis : int, optional, default = 1
             Which axis to center along, within (1) or across (0) records.
         """
         if axis == 1:
