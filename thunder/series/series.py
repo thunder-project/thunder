@@ -1080,23 +1080,29 @@ class Series(Data):
 
         return self.map(get)
 
-    def toimages(self, size='150'):
+    def toimages(self, chunk_size='auto'):
         """
-        Converts Series to Images.
+        Converts to images data.
 
-        Equivalent to calling series.toBlocks(size).toImages()
+        This method is equivalent to series.toblocks(size).toimages().
 
         Parameters
         ----------
-        size : str, optional, default = "150M"
-            String interpreted as memory size.
+        chunk_size : str or tuple, size of series chunk used during conversion, default = 'auto'
+            String interpreted as memory size (in kilobytes, e.g. '64').
+            The exception is the string 'auto', which will choose a chunk size to make the
+            resulting blocks ~100 MB in size. Int interpreted as 'number of elements'.
+            Only valid in spark mode.
         """
         from thunder.images.images import Images
+
+        if chunk_size is 'auto':
+            chunk_size = str(max([int(1e5/prod(self.baseshape)), 1]))
 
         n = len(self.shape) - 1
 
         if self.mode == 'spark':
-            return Images(self.values.swap(tuple(range(n)), (0,), size=size))
+            return Images(self.values.swap(tuple(range(n)), (0,), size=chunk_size))
 
         if self.mode == 'local':
             return Images(self.values.transpose((n,) + tuple(range(0, n))))
