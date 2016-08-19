@@ -78,7 +78,7 @@ class Images(Data):
 
         if self.mode == 'spark':
             if chunk_size is 'auto':
-                chunk_size = str(int(100000.0/self.shape[0]))
+                chunk_size = str(max([int(1e5/self.shape[0]), 1]))
             chunks = self.values.chunk(chunk_size, padding=padding).keys_to_values((0,))
 
         if self.mode == 'local':
