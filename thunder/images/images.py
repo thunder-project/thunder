@@ -78,7 +78,7 @@ class Images(Data):
 
         if self.mode == 'spark':
             if chunk_size is 'auto':
-                chunk_size = str(int(100000.0/self.shape[0]))
+                chunk_size = str(max([int(1e5/self.shape[0]), 1]))
             chunks = self.values.chunk(chunk_size, padding=padding).keys_to_values((0,))
 
         if self.mode == 'local':
@@ -105,7 +105,7 @@ class Images(Data):
         from thunder.series.series import Series
 
         if chunk_size is 'auto':
-            chunk_size = str(max([int(100000.0/self.shape[0]), 1]))
+            chunk_size = str(max([int(1e5/self.shape[0]), 1]))
 
         n = len(self.shape) - 1
         index = arange(self.shape[0])
