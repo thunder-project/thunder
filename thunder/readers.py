@@ -76,9 +76,11 @@ def listrecursive(path, ext=None):
     filenames = set()
     for root, dirs, files in os.walk(path):
         if ext:
-            files = fnmatch.filter(files, '*.' + ext)
             if ext == 'tif':
-                files = files + fnmatch.filter(files, '*.' + 'tiff')
+                tmp = fnmatch.filter(files, '*.' + 'tiff')
+                files = tmp + fnmatch.filter(files, '*.' + 'tif')
+            else:
+                files = fnmatch.filter(files, '*.' + ext)
         for filename in files:
             filenames.add(os.path.join(root, filename))
     filenames = list(filenames)
@@ -93,13 +95,13 @@ def listflat(path, ext=None):
         if ext:
             files = glob.glob(os.path.join(path, '*.' + ext))
             if ext == 'tif':
-                files.append(glob.glob(os.path.join(path, '*.' + 'tiff')))
+                files = files + glob.glob(os.path.join(path, '*.tiff'))
         else:
             files = [os.path.join(path, fname) for fname in os.listdir(path)]
     else:
         files = glob.glob(path)
     # filter out directories
-    files = [fpath for fpath in files if not os.path.isdir(fpath)]
+    files = [fpath for fpath in files if not isinstance(fpath, list) and not os.path.isdir(fpath)]
     return sorted(files)
 
 def uri_to_path(uri):
