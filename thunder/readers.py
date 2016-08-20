@@ -93,7 +93,7 @@ def listflat(path, ext=None):
         if ext:
             files = glob.glob(os.path.join(path, '*.' + ext))
             if ext == 'tif':
-                files.append(glob.glob(os.path.join(path, '*.' + ext)))
+                files.append(glob.glob(os.path.join(path, '*.' + 'tiff')))
         else:
             files = [os.path.join(path, fname) for fname in os.listdir(path)]
     else:
