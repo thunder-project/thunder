@@ -77,6 +77,8 @@ def listrecursive(path, ext=None):
     for root, dirs, files in os.walk(path):
         if ext:
             files = fnmatch.filter(files, '*.' + ext)
+            if ext == 'tif':
+                files = files + fnmatch.filter(files, '*.' + 'tiff')
         for filename in files:
             filenames.add(os.path.join(root, filename))
     filenames = list(filenames)
@@ -90,6 +92,8 @@ def listflat(path, ext=None):
     if os.path.isdir(path):
         if ext:
             files = glob.glob(os.path.join(path, '*.' + ext))
+            if ext == 'tif':
+                files.append(glob.glob(os.path.join(path, '*.' + ext)))
         else:
             files = [os.path.join(path, fname) for fname in os.listdir(path)]
     else:
@@ -342,6 +346,8 @@ class BotoParallelReader(BotoClient):
         keylist = [key.name for key in keys]
         if ext:
             keylist = [keyname for keyname in keylist if keyname.endswith(ext)]
+            if ext == 'tif':
+                keylist.append([keyname for keyname in keylist if keyname.endswith('tiff')])
         keylist.sort()
         keylist = select(keylist, start, stop)
 
