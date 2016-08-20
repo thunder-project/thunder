@@ -389,9 +389,12 @@ def fromtif(path, ext='tif', start=None, stop=None, recursive=False, nplanes=Non
         return zip(keys, values)
 
     recount = False if nplanes is None else True
-    return frompath(path, accessor=getarray, ext=ext, start=start, stop=stop,
+    data = frompath(path, accessor=getarray, ext=ext, start=start, stop=stop,
                     recursive=recursive, npartitions=npartitions, recount=recount,
                     labels=labels, engine=engine, credentials=credentials)
+    if engine is not None and npartitions is not None and data.npartitions() < npartitions:
+        data = data.repartition(npartitions)
+    return data
 
 def frompng(path, ext='png', start=None, stop=None, recursive=False, npartitions=None, labels=None, engine=None, credentials=None):
     """
