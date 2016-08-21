@@ -76,7 +76,7 @@ def listrecursive(path, ext=None):
     filenames = set()
     for root, dirs, files in os.walk(path):
         if ext:
-            if ext == 'tif':
+            if ext == 'tif' or ext == 'tiff':
                 tmp = fnmatch.filter(files, '*.' + 'tiff')
                 files = tmp + fnmatch.filter(files, '*.' + 'tif')
             else:
@@ -93,9 +93,11 @@ def listflat(path, ext=None):
     """
     if os.path.isdir(path):
         if ext:
-            files = glob.glob(os.path.join(path, '*.' + ext))
-            if ext == 'tif':
+            if ext == 'tif' or ext == 'tiff':
+                files = glob.glob(os.path.join(path, '*.tif'))
                 files = files + glob.glob(os.path.join(path, '*.tiff'))
+            else:
+                files = glob.glob(os.path.join(path, '*.' + ext))
         else:
             files = [os.path.join(path, fname) for fname in os.listdir(path)]
     else:
@@ -347,9 +349,12 @@ class BotoParallelReader(BotoClient):
             bucket, parse[2], prefix=parse[3], postfix=parse[4], recursive=recursive)
         keylist = [key.name for key in keys]
         if ext:
-            keylist = [keyname for keyname in keylist if keyname.endswith(ext)]
-            if ext == 'tif':
+            if ext == 'tif' or ext == 'tiff':
+                keylist = [keyname for keyname in keylist if keyname.endswith('tif')]
                 keylist.append([keyname for keyname in keylist if keyname.endswith('tiff')])
+            else:
+                keylist = [keyname for keyname in keylist if keyname.endswith(ext)]
+
         keylist.sort()
         keylist = select(keylist, start, stop)
 
