@@ -316,6 +316,6 @@ def test_to_tif_roundtrip_16bit(tmpdir, eng):
 def test_from_example(eng):
     return
     data = fromexample('fish', engine=eng)
-    assert allclose(data.shape, (20, 76, 87, 2))
+    assert allclose(data.shape, (20, 2, 76, 87))
     data = fromexample('mouse', engine=eng)
     assert allclose(data.shape, (20, 64, 64))
