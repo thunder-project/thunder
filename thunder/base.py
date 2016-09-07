@@ -152,7 +152,7 @@ class Base(object):
         Get whether object is cached (Spark only).
         """
         if self.mode == 'spark':
-            return self.tordd().iscached
+            return self.tordd().is_cached
         else:
             notsupported(self.mode)
 
