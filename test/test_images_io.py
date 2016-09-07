@@ -284,6 +284,19 @@ def test_to_tif_roundtrip_multipage(tmpdir, eng):
     assert allclose(data.toarray(), loaded.toarray())
 
 
+def test_to_tiff_roundtrip_multipage(tmpdir, eng):
+    a = [arange(24, dtype='int16').reshape((2, 3, 4)), arange(24, dtype='int16').reshape((2, 3, 4))]
+    data = fromlist(a, engine=eng)
+    data.totif(os.path.join(str(tmpdir), 'images'), prefix='image')
+    # rename to tiff
+    for filename in glob.iglob(os.path.join(str(tmpdir), 'images', '*.tif')):
+        os.rename(filename, filename[:-4] + '.tiff')
+    files = [os.path.basename(f) for f in glob.glob(str(tmpdir) + '/images/image*')]
+    assert sorted(files) == ['image-00000.tiff', 'image-00001.tiff']
+    loaded = fromtif(os.path.join(str(tmpdir), 'images'))
+    assert allclose(data.toarray(), loaded.toarray())
+
+
 def test_to_tif_roundtrip_8bit(tmpdir, eng):
     a = [arange(8, dtype='uint8').reshape((4, 2))]
     data = fromlist(a, engine=eng)
@@ -303,6 +316,6 @@ def test_to_tif_roundtrip_16bit(tmpdir, eng):
 def test_from_example(eng):
     return
     data = fromexample('fish', engine=eng)
-    assert allclose(data.shape, (20, 76, 87, 2))
+    assert allclose(data.shape, (20, 2, 76, 87))
     data = fromexample('mouse', engine=eng)
     assert allclose(data.shape, (20, 64, 64))
